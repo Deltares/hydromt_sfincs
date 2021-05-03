@@ -1,0 +1,49 @@
+[build-system]
+requires = ["flit_core >=3.2.0,<3.3"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "hydromt_fiat"
+authors = [
+    {name = "Laurens Leunge", email = "laurens.leunge@deltares.nl"},
+    {name = "Dirk Eilander", email = "dirk.eilander@deltares.nl"},
+]
+dependencies = [
+    "hydromt",
+]
+requires-python = ">=3.8" # fix tests to support older versions
+readme = "README.rst"
+classifiers = [
+    # https://pypi.python.org/pypi?%3Aaction=list_classifiers
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Hydrology",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+]
+dynamic = ['version', 'description']
+
+[project.optional-dependencies]
+test = [
+	"testpath",
+	"responses",
+	"pytest>=2.7.3",
+	"pytest-cov",
+]
+doc = [
+	"sphinx",
+	"sphinx_rtd_theme",
+	"black",
+]
+
+[project.urls]
+Documentation = "https://deltares.github.io/hydromt_fiat/"
+Source = "https://github.com/Deltares/hydromt_fiat"
+
+[project.entry-points."hydromt.models"]
+fiat = "hydromt_fiat.fiat:FiatModel"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
