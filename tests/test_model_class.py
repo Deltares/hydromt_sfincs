@@ -1,4 +1,4 @@
-"""Test fiat model class against hydromt.models.model_api"""
+"""Test sfincs model class against hydromt.models.model_api"""
 
 import pytest
 from os.path import join, dirname, abspath
@@ -17,8 +17,8 @@ EXAMPLEDIR = join(dirname(abspath(__file__)), "..", "examples")
 
 def test_model_class():
     # read model in examples folder
-    root = join(EXAMPLEDIR, "fiat_test")
-    mod = MODELS.get("fiat")(root=root, mode="r")
+    root = join(EXAMPLEDIR, "sfincs_test")
+    mod = MODELS.get("sfincs")(root=root, mode="r")
     mod.read()
     # run test_model_api() method
     non_compliant_list = mod.test_model_api()
@@ -29,18 +29,18 @@ def test_model_class():
 def test_model_build(tmpdir):
     # test build method
     # compare results with model from examples folder
-    model = "fiat"
+    model = "sfincs"
     root = str(tmpdir.join(model))
     config = join(EXAMPLEDIR, "model_build.ini")
-    region = "{'bbox': [11.70, 45.35, 12.95, 46.70]}"
+    region = "{'bbox': [115.15,-8.80,115.26,-8.71]}"
     # Build model
     r = CliRunner().invoke(
-        hydromt_cli, ["build", model, root, region, "-i", config, "-vv"]
+        hydromt_cli, ["build", model, root, region, "-i", config, "-vv", "--dd"]
     )
     assert r.exit_code == 0
 
     # Compare with model from examples folder
-    root0 = join(EXAMPLEDIR, "fiat_test")
+    root0 = join(EXAMPLEDIR, "sfincs_test")
     mod0 = MODELS.get(model)(root=root0, mode="r")
     mod0.read()
     mod1 = MODELS.get(model)(root=root, mode="r")

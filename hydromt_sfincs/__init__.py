@@ -1,4 +1,4 @@
-"""hydroMT plugin for fiat models."""
+"""hydroMT plugin for sfincs models."""
 
 from os.path import dirname, join, abspath
 

@@ -3,10 +3,10 @@ requires = ["flit_core >=3.2.0,<3.3"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "hydromt_fiat"
+name = "hydromt_sfincs"
 authors = [
-    {name = "Laurens Leunge", email = "laurens.leunge@deltares.nl"},
     {name = "Dirk Eilander", email = "dirk.eilander@deltares.nl"},
+    {name = "Hélène Boisgontier", email = "helene.boisgontier@deltares.nl"},
 ]
 dependencies = [
     "hydromt",
@@ -38,11 +38,11 @@ doc = [
 ]
 
 [project.urls]
-Documentation = "https://deltares.github.io/hydromt_fiat/"
-Source = "https://github.com/Deltares/hydromt_fiat"
+Documentation = "https://deltares.github.io/hydromt_sfincs/"
+Source = "https://github.com/Deltares/hydromt_sfincs"
 
 [project.entry-points."hydromt.models"]
-fiat = "hydromt_fiat.fiat:FiatModel"
+sfincs = "hydromt_sfincs.sfincs:SfincsModel"
 
 [tool.black]
 line-length = 88

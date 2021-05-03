@@ -1,10 +1,27 @@
-hydroMT-fiat: fiat plugin for hydroMT
-#####################################
+hydroMT-sfincs: sfincs plugin for hydroMT
+###########################################
+
+FIXME add badges with correct links
+
+.. note::
+
+  This minimal branch from the hydromt_sfincs plugin can be used as a **template** to easily 
+  implement new plugins for hydroMT. To implement a new model do:
+  
+  - replace all instances of `plugin` with the model name
+  - edit license (default GPLv3)
+  - edit model class (plugin.py) to be adapted for the new model
+  - check and fix git installation (including pyproject.toml) including entry point
+  - test "hydromt --models"
+  - edit installation guide 
+  - edit .github actions and envs/hydromt-plugin.yml environment
+  - edit template documentation
+
 
 hydroMT_ is a python package, developed by Deltares, to build and analysis hydro models.
 It provides a generic model api with attributes to access the model schematization,
 (dynamic) forcing data, results and states. This plugin provides an implementation 
-for the fiat model.
+for the sfincs model.
 
 
 .. _hydromt: https://deltares.github.io/hydromt
@@ -18,12 +35,12 @@ FIXME installation guide
 Documentation
 -------------
 
-Learn more about hydroMT in its `online documentation <https://deltares.github.io/hydromt_fiat/>`_
+Learn more about hydroMT in its `online documentation <https://deltares.github.io/hydromt_sfincs/>`_
 
 Contributing
 ------------
 
-You can find information about contributing to hydroMT at our `Contributing page <https://deltares.github.io/hydromt_fiat/latest/contributing.html>`_.
+You can find information about contributing to hydroMT at our `Contributing page <https://deltares.github.io/hydromt_sfincs/latest/contributing.html>`_.
 
 License
 -------

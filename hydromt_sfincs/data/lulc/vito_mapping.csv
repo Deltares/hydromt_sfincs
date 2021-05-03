@@ -1,0 +1,24 @@
+vito,description,landuse,Kext,N,PathFrac,RootingDepth,Sl,Swood,WaterFrac
+20,Shrubs,20,0.070,0.500,0.00,410.00,0.0700,0.10,0.00
+30,Herbaceous vegetation,30,0.600,0.150,0.00,106.80,0.1272,0.00,0.00
+40,Cultivated and managed vegetation/agriculture (cropland),40,0.600,0.200,0.00,390.40,0.1272,0.00,0.00
+50,Urban / built up,50,0.700,0.011,0.90,257.40,0.0400,0.01,0.00
+60,Bare / sparse vegetation,60,0.600,0.020,0.00,10.70,0.0400,0.04,0.00
+70,Snow and Ice,70,0.600,0.010,0.00,0.00,0.0000,0.00,0.00
+80,Permanent water bodies,80,0.700,0.010,0.00,0.00,0.0000,0.00,1.00
+90,Herbaceous wetland,90,0.600,0.150,0.00,106.80,0.1272,0.00,0.00
+100,Moss and lichen,100,0.600,0.085,0.00,136.90,0.0400,0.00,0.00
+111,Closed forest evergreen needle leaf,111,0.800,0.400,0.00,382.20,0.0450,0.50,0.00
+112,Closed forest evergreen broad leaf,112,0.800,0.600,0.00,294.10,0.0360,0.50,0.00
+113,Closed forest deciduous needle leaf,113,0.800,0.400,0.00,215.30,0.0450,0.50,0.00
+114,Closed forest deciduous broad leaf,114,0.800,0.600,0.00,429.80,0.0360,0.50,0.00
+115,Closed forest mixed,115,0.800,0.500,0.00,406.00,0.0393,0.50,0.00
+116,Closed forest unknown,116,0.800,0.500,0.00,406.00,0.0393,0.50,0.00
+121,Open forest evergreen needle leaf,121,0.800,0.450,0.00,396.10,0.0575,0.50,0.00
+122,Open forest evergreen broad leaf,122,0.800,0.550,0.00,352.00,0.0530,0.50,0.00
+123,Open forest deciduous needle leaf,123,0.800,0.450,0.00,312.60,0.0575,0.50,0.00
+124,Open forest deciduous broad leaf,124,0.800,0.550,0.00,419.90,0.0530,0.50,0.00
+125,Open forest mixed,125,0.800,0.500,0.00,408.00,0.0553,0.50,0.00
+126,Open forest unknown,126,0.800,0.500,0.00,408.00,0.0553,0.50,0.00
+200,Open sea,200,0.700,0.010,0.00,0.00,0.0000,0.00,1.00
+0,No data,0,-999.000,-999.000,-999.00,-999.00,-999.0000,-999.00,-999.00

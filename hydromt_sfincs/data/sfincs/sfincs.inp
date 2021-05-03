@@ -1,0 +1,37 @@
+mmax           = 1000
+nmax           = 1000
+dx             = 1000
+dy             = 1000
+x0             = 0
+y0             = 0
+rotation       = 0
+
+tref           = 20000101 000000
+tstart         = 20000101 000000
+tstop          = 20000102 000000
+dtout          = 3600
+dthisout       = 600
+
+advection      = 0
+alpha          = 0.75
+huthresh       = 0.05
+theta          = 0.9
+min_lev_hmax   = -1
+
+zsini          = 0
+
+qinf           = 0
+manning_land   = 0.04
+manning_sea    = 0.02
+rgh_lev_land   = 0
+
+depfile        = sfincs.dep
+mskfile        = sfincs.msk
+indexfile      = sfincs.ind
+bndfile        = sfincs.bnd
+bzsfile        = sfincs.bzs
+srcfile        = sfincs.src
+disfile        = sfincs.dis
+
+inputformat    = bin
+outputformat   = net

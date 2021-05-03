@@ -1,4 +1,4 @@
-name: hydromt-fiat
+name: hydromt-sfincs
 
 channels:
   - conda-forge
