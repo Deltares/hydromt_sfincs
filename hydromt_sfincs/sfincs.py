@@ -23,7 +23,6 @@ from hydromt.raster import RasterDataset
 
 from . import workflows, DATADIR
 
-
 __all__ = ["SfincsModel"]
 
 logger = logging.getLogger(__name__)
@@ -141,6 +140,7 @@ class SfincsModel(Model):
         res=100,
         crs="utm",
         basemaps_fn="merit_hydro",
+        basin_index_fn="merit_hydro_index",
         landmask_fn="osm_landareas",
         bathymetry_fn="gebco",
         mdt_fn="dtu10mdt_egm96",
@@ -218,19 +218,27 @@ class SfincsModel(Model):
         ds_org = self.data_catalog.get_rasterdataset(
             basemaps_fn, single_var_as_array=False
         )
-        # parse region (requires ds_org if 'basin', 'subbasin' or 'interbasin')
+        # get basin geometry and clip data
+        kind, region = hydromt.workflows.parse_region(region, logger=self.logger)
+        basin_geom = None
         geom = region.get("geom", None)
         bbox = region.get("bbox", None)
-        basin_geom = None
-        if region.get("kind", None) in ["basin", "subbasin", "interbasin"]:
-            basin_geom = hydromt.workflows.get_basin_geometry(
+        if kind == "interbasin":
+            bas_index = self.data_catalog[basin_index_fn]
+            basin_geom = workflows.get_basin_geometry(
                 ds=ds_org,
-                root=dirname(ds_org.attrs.get("path", "")),
+                kind=kind,
+                basin_index=bas_index,
                 logger=self.logger,
                 **region,
             )[0]
             if bbox is None and geom is None:
                 geom = basin_geom
+        elif kind not in ["bbox", "geom"]:
+            raise ValueError(
+                "Unknown region kind for SFINCS model: {kind}, "
+                "select from ['bbox', 'geom', 'interbasin']"
+            )
         if geom is not None and geom.crs is None:
             raise ValueError('SFINCS region "geom" has no CRS')
         # parse dst_crs. if 'utm' the best utm zone is calculated based on bbox_epsg4326

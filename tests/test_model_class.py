@@ -17,7 +17,7 @@ EXAMPLEDIR = join(dirname(abspath(__file__)), "..", "examples")
 
 def test_model_class():
     # read model in examples folder
-    root = join(EXAMPLEDIR, "sfincs_test")
+    root = join(EXAMPLEDIR, "venice")
     mod = MODELS.get("sfincs")(root=root, mode="r")
     mod.read()
     # run test_model_api() method
@@ -31,16 +31,16 @@ def test_model_build(tmpdir):
     # compare results with model from examples folder
     model = "sfincs"
     root = str(tmpdir.join(model))
-    config = join(EXAMPLEDIR, "model_build.ini")
-    region = "{'bbox': [115.15,-8.80,115.26,-8.71]}"
+    config = join(EXAMPLEDIR, "sfincs_coastal.ini")
+    region = "{'bbox': [12.00,45.35,12.80,45.65]}"
     # Build model
     r = CliRunner().invoke(
-        hydromt_cli, ["build", model, root, region, "-i", config, "-vv", "--dd"]
+        hydromt_cli, ["build", model, root, region, "-i", config, "-vv"]
     )
     assert r.exit_code == 0
 
     # Compare with model from examples folder
-    root0 = join(EXAMPLEDIR, "sfincs_test")
+    root0 = join(EXAMPLEDIR, "venice")
     mod0 = MODELS.get(model)(root=root0, mode="r")
     mod0.read()
     mod1 = MODELS.get(model)(root=root, mode="r")
