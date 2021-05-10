@@ -402,29 +402,6 @@ class SfincsModel(Model):
         dst_crs = self.crs.to_epsg()
         basmsk = ds.raster.geometry_mask(self.region)
 
-        # NOTE experimental
-        # self.logger.debug(f"Set outflow points (msk=3).")
-        # # # initialize flwdir for all cell within model domain
-        # ds["mask"] =  np.logical_and(ds["uparea"] >= river_upa, basmsk)
-        # flwdir = hydromt.flw.flwdir_from_da(ds["flwdir"], mask=True)
-        # # git pits at domain edge
-        # idxs0 = flwdir.idxs_pit
-        # _msk = ndimage.binary_erosion(basmsk, structure=np.ones((3, 3)))
-        # edge = np.logical_xor(_msk, basmsk)
-        # idxs_outflw = np.unique(idxs0[edge.values.flat[idxs0]])
-        # if len(idxs_outflw) > 0:
-        #     da_mask = self.staticmaps[self._MAPS['mask']]
-        #     gdf_outflw = gpd.GeoDataFrame(
-        #         geometry=gpd.points_from_xy(*flwdir.xy(idxs_outflw)), crs=src_crs
-        #     ).to_crs(dst_crs)
-        #     xs, ys = gdf_outflw.geometry.x, gdf_outflw.geometry.y
-        #     idxs_map_outflw = da_mask.raster.xy_to_idx(xs, ys)
-        #     msk = da_mask.values
-        #     msk.flat[idxs_map_outflw] = 3  # msk == 3 at outflow points
-        #     da_mask.data = msk
-        #     self.set_staticmaps(da_mask)
-        #     self.logger.debug(f"{len(idxs_outflw)} river outflow point locations set.")
-
         self.logger.debug(f"Get river cells; upstream area threshold: {river_upa} km2.")
         # initialize flwdir with river cells only (including outside basin)
         rivmsk = ds["uparea"] >= river_upa
@@ -454,6 +431,77 @@ class SfincsModel(Model):
         gdf_riv.index = gdf_riv.index.values + 1  # one based index
         gdf_riv = gdf_riv.to_crs(dst_crs)
         self.set_staticgeoms(gdf_riv, name="rivers")
+
+    def setup_rivers_downstream(self, river_upa=25.0, outflw_width=1000, basemaps_fn="merit_hydro"):
+        """Setup river source points where a river flows out of the model domain downstream.
+
+        NOTE: to ensure a river only leaves the model domain once, use the 'basin',
+        subbasin, or outlet region options.
+
+        Adds / edits model layers:
+
+        * **msk** map: edited by adding outflow points (msk=3)
+        * **src** geoms: discharge boundary point locations
+        * **river** geoms: river centerline
+        * **dis** forcing: dummy discharge timeseries
+
+        Parameters
+        ----------
+        basemaps_f: str, Path
+            Path or data source name for hydrography raster data, by default 'merit_hydro'.
+
+            * Required layers: ['uparea', 'flwdir'].
+        river_upa: float, optional
+            Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.
+        """
+        # read data and rasterize basin mask > used to initialize flwdir in river workflow
+        ds = self.data_catalog.get_rasterdataset(basemaps_fn, geom=self.region, buffer=2)
+        src_crs = ds.raster.crs.to_epsg()
+        dst_crs = self.crs.to_epsg()
+        basmsk = ds.raster.geometry_mask(self.region)  # Q: okay that this is ds.raster instead of .rio?
+
+        self.logger.debug(f"Get river cells; upstream area threshold: {river_upa} km2.")
+        # initialize flwdir with river cells only (including outside basin)
+        rivmsk = ds["uparea"] >= river_upa
+        ds["mask"] = np.logical_and(ds["uparea"] >= river_upa, basmsk)
+        flwdir = hydromt.flw.flwdir_from_da(ds["flwdir"], mask=True)
+
+        # git pits at domain edge
+        idxs0 = flwdir.idxs_pit
+        _msk = ndimage.binary_erosion(basmsk, structure=np.ones((3, 3)))
+        edge = np.logical_xor(_msk, basmsk)
+        tmp = edge.values.flat[idxs0]
+        idxs_outflw = np.unique(idxs0[edge.values.flat[idxs0]])
+        edge.astype('int').raster.to_raster(r'edge.tif')
+        rivmsk.astype('int').raster.to_raster(r'rivmsk.tif')
+
+        if len(idxs_outflw) > 0:
+            self.logger.debug(f"Set msk=3 outflow points.")
+            da_mask = self.staticmaps[self._MAPS["mask"]]
+            gdf_outflw = gpd.GeoDataFrame(
+                geometry=gpd.points_from_xy(*flwdir.xy(idxs_outflw)), crs=src_crs
+            ).to_crs(dst_crs)
+            # apply buffer
+            gdf_outflw_buf = gpd.GeoDataFrame(
+                geometry=gdf_outflw.buffer(outflw_width / 2.0), crs=gdf_outflw.crs
+            )
+            msk = da_mask.values
+            _msk = ndimage.binary_erosion(msk, structure=np.ones((3, 3)))  # Q: double line?
+            outflw_buf = da_mask.raster.geometry_mask(gdf_outflw_buf).values
+            outflw_msk = np.logical_and(outflw_buf, np.logical_xor(_msk, msk))
+
+            msk[outflw_msk] = 3
+            da_mask.data = msk
+            self.set_staticmaps(da_mask)
+            self.logger.debug(f"{len(idxs_outflw)} river outflow point locations set.")
+
+        # vectorize river
+        self.logger.debug(f"Vectorize river downstream.")
+        feats = flwdir.vectorize(mask=np.logical_and(basmsk, rivmsk).values)
+        gdf_riv = gpd.GeoDataFrame.from_features(feats, crs=src_crs)
+        gdf_riv.index = gdf_riv.index.values + 1  # one based index
+        gdf_riv = gdf_riv.to_crs(dst_crs)
+        self.set_staticgeoms(gdf_riv, name="rivers_downstream")
 
     def setup_cn_infiltration(self, cn_fn="gcn250", antecedent_runoff_conditions="avg"):
         """Setup model curve number map from gridded curve number map.

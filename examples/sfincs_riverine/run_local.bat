@@ -1,0 +1,1 @@
+call "c:\Users\leijnse\Checkout\SFINCS_src\branches\subgrid_openacc_11\sfincs\x64\Release\sfincs.exe">sfincs_log.txt
