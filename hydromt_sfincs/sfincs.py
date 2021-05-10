@@ -957,7 +957,7 @@ class SfincsModel(Model):
                 if vmin < 0:
                     c_all = np.vstack((c_bat, c_dem))
                     cmap = colors.LinearSegmentedColormap.from_list("bat_dem", c_all)
-                    norm = colors.DivergingNorm(vmin=vmin, vcenter=0, vmax=vmax)
+                    norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
                 else:
                     cmap = colors.LinearSegmentedColormap.from_list("dem", c_dem)
                     norm = colors.Normalize(vmin=vmin, vmax=vmax)
