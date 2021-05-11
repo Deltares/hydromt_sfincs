@@ -35,5 +35,4 @@ dependencies:
   - zarr
   - pip:
     - git+https://github.com/Deltares/hydromt.git
-    - git+https://github.com/Deltares/hydromt_sfincs.git
 

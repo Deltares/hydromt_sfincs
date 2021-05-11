@@ -7,10 +7,11 @@ To run these examples start with the **binder** badge above.
 
 To run these examples on your local machine create a conda e nvironment based on the 
 environment.yml in the root of this repository and than start jupyer notebook. 
-Run the following steps the examples folder:
+Run the following steps from the repository root:
 
 .. code-block:: console
 
-  conda env create -f ../environment.yml
+  conda env create -f binder/environment.yml
   conda activate hydromt-sfincs
-  jupyter notebook
+  flit install
+  jupyter lab
