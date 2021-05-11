@@ -225,7 +225,7 @@ class SfincsModel(Model):
         bbox = region.get("bbox", None)
         if kind == "interbasin":
             bas_index = self.data_catalog[basin_index_fn]
-            basin_geom = workflows.get_basin_geometry(
+            basin_geom = hydromt.workflows.get_basin_geometry(
                 ds=ds_org,
                 kind=kind,
                 basin_index=bas_index,
@@ -609,7 +609,7 @@ class SfincsModel(Model):
         if gauges_fn is not None:
             name = self._GEOMS["gauges"]
             gdf = self.data_catalog.get_geodataframe(
-                filename, geom=self.region, assert_gtype="Point"
+                str(gauges_fn), geom=self.region, assert_gtype="Point"
             ).to_crs(self.crs)
             self.set_staticgeoms(gdf, name)
             self.set_config(f"{name}file", f"sfincs.{name}")
@@ -869,7 +869,7 @@ class SfincsModel(Model):
             # read timeseries data and match with existing gdf
             gdf = self.staticgeoms[self._GEOMS[name]]
             if timeseries_fn is not None:
-                da_ts = hydromt.open_timeseries(timeseries_fn, name=name).sel(
+                da_ts = hydromt.open_timeseries_from_table(timeseries_fn, name=name).sel(
                     time=slice(tstart, tstop)
                 )
                 da = GeoDataArray.from_gdf(gdf, da_ts, index_dim="index")
