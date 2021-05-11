@@ -966,7 +966,7 @@ class SfincsModel(Model):
         bmap="sat",
         zoomlevel=11,
         figsize=[6.4 * 1.2, 4.8 * 1.2],
-        geoms=["rivers", "src", "bnd"],
+        geoms=["rivers_downstream", "rivers","src"],
         geom_kwargs={},
         **kwargs,
     ):
@@ -1034,9 +1034,9 @@ class SfincsModel(Model):
 
         # add geoms
         geom_kwargs0 = {
-            "rivers": dict(linestyle="--", linewidth=0.5, color="b"),
-            "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
-            "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
+            "rivers_downstream": dict(linestyle="--", linewidth=1.0, color="r"),
+            "rivers": dict(linestyle="--", linewidth=1.0, color="b"),
+            "src": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
         }
         geom_kwargs0.update(geom_kwargs)
         ann_kwargs = dict(
@@ -1068,6 +1068,7 @@ class SfincsModel(Model):
         ax.set_xlabel(f"x coordinate UTM zone {utm_zone} [m]")
         variable = "base" if variable is None else variable
         ax.set_title(f"SFINCS {variable} map")
+        ax.legend(geom_kwargs0)
 
         if fn_out is not None:
             if not os.path.isabs(fn_out):
