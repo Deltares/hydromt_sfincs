@@ -608,12 +608,14 @@ class SfincsModel(Model):
         """
         if gauges_fn is not None:
             name = self._GEOMS["gauges"]
+            # ensure the catalog is loaded before adding any new entries
+            self.data_catalog.sources
             gdf = self.data_catalog.get_geodataframe(
-                str(gauges_fn), geom=self.region, assert_gtype="Point"
+                str(gauges_fn), geom=self.region, assert_gtype="Point", **kwargs
             ).to_crs(self.crs)
             self.set_staticgeoms(gdf, name)
             self.set_config(f"{name}file", f"sfincs.{name}")
-            self.logger.info(f"{name} set based on {filename}")
+            self.logger.info(f"{name} set based on {gauges_fn}")
 
     ### FORCING
     def setup_h_forcing(
@@ -1005,7 +1007,7 @@ class SfincsModel(Model):
                 if vmin < 0:
                     c_all = np.vstack((c_bat, c_dem))
                     cmap = colors.LinearSegmentedColormap.from_list("bat_dem", c_all)
-                    norm = colors.DivergingNorm(vmin=vmin, vcenter=0, vmax=vmax)
+                    norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
                 else:
                     cmap = colors.LinearSegmentedColormap.from_list("dem", c_dem)
                     norm = colors.Normalize(vmin=vmin, vmax=vmax)
@@ -1068,8 +1070,6 @@ class SfincsModel(Model):
         ax.set_xlabel(f"x coordinate UTM zone {utm_zone} [m]")
         variable = "base" if variable is None else variable
         ax.set_title(f"SFINCS {variable} map")
-        ax.legend(geom_kwargs0)
-
         if fn_out is not None:
             if not os.path.isabs(fn_out):
                 fn_out = join(self.root, "figs", fn_out)
