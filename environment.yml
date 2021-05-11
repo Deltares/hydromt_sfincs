@@ -1,0 +1,39 @@
+name: hydromt-sfincs
+
+channels:
+  - conda-forge
+
+dependencies:
+  - affine
+  - click
+  - black
+  - bottleneck
+  - cartopy # to run examples
+  - dask>=2.30
+  - descartes # to run examples
+  - entrypoints
+  - flit>=3.2
+  - git  # to install git repositories with pip
+  - gdal>=3.1
+  - geopandas
+#  - hydromt>=0.4.0
+  - jupyter # to run examples
+  - netcdf4
+  - matplotlib # to run examples
+  - numba
+  - numpy
+  - openpyxl
+  - pandas
+  - pip
+  - pyflwdir>=0.4.7
+  - pygeos>=0.8
+  - python>=3.7
+  - rasterio
+  - requests
+  - scipy
+  - xarray
+  - zarr
+  - pip:
+    - git+https://github.com/Deltares/hydromt.git
+    - git+https://github.com/Deltares/hydromt_sfincs.git
+
