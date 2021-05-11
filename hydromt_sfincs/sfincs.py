@@ -561,11 +561,11 @@ class SfincsModel(Model):
         if gauges_fn is not None:
             name = self._GEOMS["gauges"]
             gdf = self.data_catalog.get_geodataframe(
-                filename, geom=self.region, assert_gtype="Point"
+                str(gauges_fn), geom=self.region, assert_gtype="Point", **kwargs
             ).to_crs(self.crs)
             self.set_staticgeoms(gdf, name)
             self.set_config(f"{name}file", f"sfincs.{name}")
-            self.logger.info(f"{name} set based on {filename}")
+            self.logger.info(f"{name} set based on {gauges_fn}")
 
     ### FORCING
     def setup_h_forcing(
