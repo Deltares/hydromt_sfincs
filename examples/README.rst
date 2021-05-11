@@ -5,8 +5,8 @@ This folder contains several ipython notebook examples for **hydroMT-sfincs**.
 
 To run these examples start with the **binder** badge above.
 
-To run these examples on your local machine create a conda e nvironment based on the 
-environment.yml in the root of this repository and than start jupyer notebook. 
+To run these examples on your local machine create a conda environment based on the
+environment.yml in the root of this repository and then start jupyter notebook.
 Run the following steps from the repository root:
 
 .. code-block:: console
@@ -14,4 +14,4 @@ Run the following steps from the repository root:
   conda env create -f binder/environment.yml
   conda activate hydromt-sfincs
   flit install --dep production
-  jupyter lab
+  jupyter notebook
