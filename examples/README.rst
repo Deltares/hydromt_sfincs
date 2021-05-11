@@ -14,4 +14,4 @@ Run the following steps from the repository root:
   conda env create -f binder/environment.yml
   conda activate hydromt-sfincs
   flit install --dep production
-  jupyter lab
+  jupyter notebook
