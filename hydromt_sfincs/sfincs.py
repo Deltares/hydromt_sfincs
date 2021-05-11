@@ -560,6 +560,8 @@ class SfincsModel(Model):
         """
         if gauges_fn is not None:
             name = self._GEOMS["gauges"]
+            # ensure the catalog is loaded before adding any new entries
+            self.data_catalog.sources
             gdf = self.data_catalog.get_geodataframe(
                 str(gauges_fn), geom=self.region, assert_gtype="Point", **kwargs
             ).to_crs(self.crs)
