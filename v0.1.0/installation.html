@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>HydroMT plugin: SFINCS &mdash; hydromt_sfincs  documentation</title>
+  <title>Installation &mdash; hydromt_sfincs  documentation</title>
   
 
   
@@ -41,7 +41,8 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Introduction" href="intro.html" /> 
+    <link rel="next" title="Examples" href="examples/index.html" />
+    <link rel="prev" title="Introduction" href="intro.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -55,7 +56,7 @@
           
 
           
-            <a href="#" class="icon icon-home"> hydromt_sfincs
+            <a href="index.html" class="icon icon-home"> hydromt_sfincs
           
 
           
@@ -91,9 +92,13 @@
             
             
               <p class="caption"><span class="caption-text">Getting Started</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#user-install">User install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#developper-install">Developper install</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
 </ul>
 <p class="caption"><span class="caption-text">User Guide</span></p>
@@ -122,7 +127,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">hydromt_sfincs</a>
+          <a href="index.html">hydromt_sfincs</a>
         
       </nav>
 
@@ -153,15 +158,15 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>HydroMT plugin: SFINCS</li>
+      <li>Installation</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -198,50 +203,62 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="hydromt-plugin-sfincs">
-<h1>HydroMT plugin: SFINCS<a class="headerlink" href="#hydromt-plugin-sfincs" title="Permalink to this headline">¶</a></h1>
-<p><a class="reference external" href="https://github.com/Deltares/hydromt">HydroMT</a> is a python package, developed by Deltares, to build
-and analyse hydro models. It provides a generic model api with attributes to access the model schematization,
-(dynamic) forcing data, results and states.</p>
-<p>This plugin provides an implementation for the
-<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/">SFINCS</a> hydrological modelling framework. It details the different steps and explains how to
-use HydroMT to easily get started and work on your own sfincs model.</p>
-<p>For detailed information on HydroMT itself, you can visit the <a class="reference external" href="https://deltares.github.io/hydromt/">core documentation</a>.</p>
-<div class="section" id="documentation">
-<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
-<p><strong>Getting Started</strong></p>
-<ul class="simple">
-<li><p><a class="reference internal" href="intro.html"><span class="doc">Introduction</span></a></p></li>
-<li><p><a class="reference internal" href="installation.html"><span class="doc">Installation</span></a></p></li>
-<li><p><a class="reference internal" href="examples/index.html"><span class="doc">Examples</span></a></p></li>
-</ul>
-<div class="toctree-wrapper compound">
+<div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="user-install">
+<h2>User install<a class="headerlink" href="#user-install" title="Permalink to this headline">¶</a></h2>
+<p>The hydromt_sfincs plugin is currently only available from PyPi.
+We are working on a release from conda-forge.</p>
+<p>If you haven’t installed the <a class="reference external" href="https://github.com/Deltares/hydromt">hydroMT core package</a>
+we recommend installing it from conda-forge to get all dependencies and then install the plugin.</p>
+<p>To install hydromt and the toml package using conda-forge do:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda install hydromt toml -c conda-forge</span>
+</pre></div>
 </div>
-<p><strong>User Guide</strong></p>
-<ul class="simple">
-<li><p><a class="reference internal" href="user_guide/sfincs.html"><span class="doc">SFINCS model components</span></a></p></li>
-<li><p><a class="reference internal" href="user_guide/sfincs_coastal.html"><span class="doc">Setting up a coastal model</span></a></p></li>
-<li><p><a class="reference internal" href="user_guide/sfincs_riverine.html"><span class="doc">Setting up a riverine model</span></a></p></li>
-</ul>
-<div class="toctree-wrapper compound">
+<p>To install hydromt_sfincs using pip do:
+Note: make sure this is installed in the same environment as hydromt.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pip install hydromt_sfincs</span>
+</pre></div>
 </div>
-<p><strong>References &amp; Help</strong></p>
-<ul class="simple">
-<li><p><a class="reference internal" href="api/api_index.html"><span class="doc">API reference</span></a></p></li>
-<li><p><a class="reference internal" href="contributing.html"><span class="doc">Contributing</span></a></p></li>
-<li><p><a class="reference internal" href="changelog.html"><span class="doc">Changelog</span></a></p></li>
-</ul>
-<div class="toctree-wrapper compound">
+<p>The hydroMT core and sfincs plugin can be easily installed together in a single hydromt-sfincs environment
+using the environment.yml file in the repository root. This environment includes some packages that are
+required to run the example notebooks.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda env create -f environment.yml</span>
+</pre></div>
 </div>
-<div class="section" id="license">
-<h3>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h3>
-<p>Copyright (c) 2021, Deltares</p>
-<p>This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
-License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p>
-<p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.</p>
-<p>You can find the full terms of the GNU General Public License at &lt;<a class="reference external" href="https://www.gnu.org/licenses/">https://www.gnu.org/licenses/</a>&gt;.</p>
 </div>
+<div class="section" id="developper-install">
+<h2>Developper install<a class="headerlink" href="#developper-install" title="Permalink to this headline">¶</a></h2>
+<p>If you want to download the sfincs plugin directly from git to easily have access to the latest developments or
+make changes to the code you can use the following steps.</p>
+<p>First, clone hydromt’s sfincs plugin <code class="docutils literal notranslate"><span class="pre">git</span></code> repo from
+<a class="reference external" href="https://github.com/Deltares/hydromt_sfincs">github</a>, then navigate into the
+the code folder (where the envs folder and pyproject.toml are located):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git clone https://github.com/Deltares/hydromt_sfincs.git
+<span class="gp">$ </span><span class="nb">cd</span> hydromt_sfincs
+</pre></div>
+</div>
+<p>Then, make and activate a new hydromt-sfincs conda environment based on the envs/hydromt-sfincs.yml
+file contained in the repository:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>conda env create -f envs/hydromt-sfincs.yml
+<span class="gp">$ </span>conda activate hydromt-sfincs
+</pre></div>
+</div>
+<p>Finally, build and install hydromt_sfincs using pip.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pip install .
+</pre></div>
+</div>
+<p>If you wish to make changes in hydromt_sfincs, you should make an editable install of hydromt.
+This is possible using the <a class="reference external" href="https://flit.readthedocs.io/en/latest/">flit</a> package and install command.</p>
+<p>For Windows:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>flit install --pth-file
+</pre></div>
+</div>
+<p>For Linux:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>flit install -s
+</pre></div>
+</div>
+<p>For more information about how to contribute, see <a class="reference external" href="https://hydromt.readthedocs.io/en/latest/contributing.html">HydroMT contributing guidelines</a>.</p>
 </div>
 </div>
 
@@ -251,7 +268,8 @@ of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Publ
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="intro.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="examples/index.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="intro.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
