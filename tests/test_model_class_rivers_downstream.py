@@ -19,8 +19,10 @@ EXAMPLEDIR = join(dirname(abspath(__file__)), "..", "examples")
 model = "sfincs"
 root = r'd:\repos\hydromt_sfincs\examples\sfincs_riverine'
 config = join(EXAMPLEDIR, "sfincs_riverine.ini")
-region = "{'bbox': [12.479, 45.600, 12.620, 45.688]}"
+
+region = "{'bbox': [11.975098,45.786918,12.271385,45.938019]}"
+
 # Build model
 r = CliRunner().invoke(
-    hydromt_cli, ["build", model, root, region, "-i", config, "-vv"]
+    hydromt_cli, ["build", model, root, region, "-i", config, "-r", 50, "-vv"]
 )

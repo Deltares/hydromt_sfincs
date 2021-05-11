@@ -2,6 +2,6 @@
 "type": "FeatureCollection",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32633" } },
 "features": [
-{ "type": "Feature", "properties": { }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 314700.0, 5052300.0 ], [ 314700.0, 5062500.0 ], [ 303300.0, 5062500.0 ], [ 303300.0, 5052300.0 ], [ 314700.0, 5052300.0 ] ] ] } }
+{ "type": "Feature", "properties": { }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 288500.0, 5073950.0 ], [ 288500.0, 5091650.0 ], [ 264850.0, 5091650.0 ], [ 264850.0, 5073950.0 ], [ 288500.0, 5073950.0 ] ] ] } }
 ]
 }
