@@ -17,7 +17,7 @@ EXAMPLEDIR = join(dirname(abspath(__file__)), "..", "examples")
 # test build method
 # compare results with model from examples folder
 model = "sfincs"
-root = r'd:\repos\hydromt_sfincs\examples\sfincs_riverine'
+root = r"d:\repos\hydromt_sfincs\examples\sfincs_riverine"
 config = join(EXAMPLEDIR, "sfincs_riverine.ini")
 
 region = "{'bbox': [11.975098,45.786918,12.271385,45.938019]}"
