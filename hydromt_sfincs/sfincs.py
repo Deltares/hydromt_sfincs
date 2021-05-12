@@ -2,6 +2,7 @@
 import os
 from os.path import join, isfile, abspath, dirname, basename
 import glob
+from hydromt import vector
 import numpy as np
 import logging
 from configparser import ConfigParser
@@ -373,8 +374,8 @@ class SfincsModel(Model):
         ncells = np.sum(msk == 1)
         self.logger.info(f"Mask generated; {ncells:d} active cells.")
 
-    def setup_rivers(self, river_upa=25.0, basemaps_fn="merit_hydro"):
-        """Setup river source points where a river enters the model domain.
+    def setup_river_inflow(self, river_upa=25.0, basemaps_fn="merit_hydro"):
+        """Setup river inflow (source) points where a river enters the model domain.
 
         NOTE: to ensure a river only enters the model domain once, use the 'basin',
         subbasin, or outlet region options.
@@ -382,7 +383,8 @@ class SfincsModel(Model):
         Adds model layers:
 
         * **src** geoms: discharge boundary point locations
-        * **river** geoms: river centerline
+        * **dis** forcing: dummy discharge timeseries
+        * **river** geoms: river centerline (not used by SFINCS; for plotting only)
 
         Parameters
         ----------
@@ -402,7 +404,9 @@ class SfincsModel(Model):
         dst_crs = self.crs.to_epsg()
         basmsk = ds.raster.geometry_mask(self.region)
 
-        self.logger.debug(f"Get river cells; upstream area threshold: {river_upa} km2.")
+        self.logger.debug(
+            f"Get river cells for inflow source points; upstream area threshold: {river_upa} km2."
+        )
         # initialize flwdir with river cells only (including outside basin)
         rivmsk = ds["uparea"] >= river_upa
         ds["mask"] = rivmsk
@@ -423,27 +427,27 @@ class SfincsModel(Model):
             gdf_src["uparea"] = ds["uparea"].values.flat[idxs_source]
             self.logger.debug(f"{len(idxs_source)} river inflow point locations set.")
             self.set_staticgeoms(gdf_src, name=self._GEOMS["discharge"])
+            # set dummy timeseries to keep valid sfincs model
+            da = self._dummy_ts(gdf_src, name="discharge", fill_value=0)
+            self._update_forcing_1d(da, name="discharge")
 
         # vectorize river
         self.logger.debug(f"Vectorize river.")
         feats = flwdir.vectorize(mask=np.logical_and(basmsk, rivmsk).values)
         gdf_riv = gpd.GeoDataFrame.from_features(feats, crs=src_crs)
-        gdf_riv.index = gdf_riv.index.values + 1  # one based index
         gdf_riv = gdf_riv.to_crs(dst_crs)
+        gdf_riv.index = gdf_riv.index.values + 1  # one based index
         self.set_staticgeoms(gdf_riv, name="rivers")
 
-    def setup_rivers_downstream(self, river_upa=25.0, outflw_width=1000, basemaps_fn="merit_hydro"):
-        """Setup river source points where a river flows out of the model domain downstream.
-
-        NOTE: to ensure a river only leaves the model domain once, use the 'basin',
-        subbasin, or outlet region options.
+    def setup_river_outflow(
+        self, river_upa=25.0, outflow_width=2000, basemaps_fn="merit_hydro"
+    ):
+        """Setup river outflow boundary (msk=3) where a river flows out of the model domain.
 
         Adds / edits model layers:
 
         * **msk** map: edited by adding outflow points (msk=3)
-        * **src** geoms: discharge boundary point locations
-        * **river** geoms: river centerline
-        * **dis** forcing: dummy discharge timeseries
+        * **river_out** geoms: river centerline (not used by SFINCS; for plotting only)
 
         Parameters
         ----------
@@ -451,29 +455,33 @@ class SfincsModel(Model):
             Path or data source name for hydrography raster data, by default 'merit_hydro'.
 
             * Required layers: ['uparea', 'flwdir'].
+        outflow_width: int, optional
+            The width [m] of the outflow boundary in the SFINCS msk file.
+            By default 2km, i.e.: 1km to each side of the outflow point.
         river_upa: float, optional
             Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.
         """
         # read data and rasterize basin mask > used to initialize flwdir in river workflow
-        ds = self.data_catalog.get_rasterdataset(basemaps_fn, geom=self.region, buffer=2)
+        ds = self.data_catalog.get_rasterdataset(
+            basemaps_fn, geom=self.region, buffer=2
+        )
         src_crs = ds.raster.crs.to_epsg()
         dst_crs = self.crs.to_epsg()
-        basmsk = ds.raster.geometry_mask(self.region)  # Q: okay that this is ds.raster instead of .rio?
+        basmsk = ds.raster.geometry_mask(self.region)
 
-        self.logger.debug(f"Get river cells; upstream area threshold: {river_upa} km2.")
+        self.logger.debug(
+            f"Get river cells for outflow points; upstream area threshold: {river_upa} km2."
+        )
         # initialize flwdir with river cells only (including outside basin)
         rivmsk = ds["uparea"] >= river_upa
         ds["mask"] = np.logical_and(ds["uparea"] >= river_upa, basmsk)
         flwdir = hydromt.flw.flwdir_from_da(ds["flwdir"], mask=True)
 
-        # git pits at domain edge
+        # git pits at domain edge on flwdir grid
         idxs0 = flwdir.idxs_pit
-        _msk = ndimage.binary_erosion(basmsk, structure=np.ones((3, 3)))
-        edge = np.logical_xor(_msk, basmsk)
-        tmp = edge.values.flat[idxs0]
-        idxs_outflw = np.unique(idxs0[edge.values.flat[idxs0]])
-        edge.astype('int').raster.to_raster(r'edge.tif')
-        rivmsk.astype('int').raster.to_raster(r'rivmsk.tif')
+        basmsk_eroded = ndimage.binary_erosion(basmsk, structure=np.ones((3, 3)))
+        edge_basmask = np.logical_xor(basmsk_eroded, basmsk)
+        idxs_outflw = np.unique(idxs0[edge_basmask.values.flat[idxs0]])
 
         if len(idxs_outflw) > 0:
             self.logger.debug(f"Set msk=3 outflow points.")
@@ -483,25 +491,27 @@ class SfincsModel(Model):
             ).to_crs(dst_crs)
             # apply buffer
             gdf_outflw_buf = gpd.GeoDataFrame(
-                geometry=gdf_outflw.buffer(outflw_width / 2.0), crs=gdf_outflw.crs
+                geometry=gdf_outflw.buffer(outflow_width / 2.0), crs=gdf_outflw.crs
             )
+            # find intersect of buffer and model grid
             msk = da_mask.values
-            _msk = ndimage.binary_erosion(msk, structure=np.ones((3, 3)))  # Q: double line?
+            msk_eroded = ndimage.binary_erosion(msk, structure=np.ones((3, 3)))
+            edge_model = np.logical_xor(msk_eroded, msk)
             outflw_buf = da_mask.raster.geometry_mask(gdf_outflw_buf).values
-            outflw_msk = np.logical_and(outflw_buf, np.logical_xor(_msk, msk))
-
+            outflw_msk = np.logical_and(outflw_buf, edge_model)
+            # assign mask == 3 boundary and update staticmaps
             msk[outflw_msk] = 3
             da_mask.data = msk
             self.set_staticmaps(da_mask)
             self.logger.debug(f"{len(idxs_outflw)} river outflow point locations set.")
 
         # vectorize river
-        self.logger.debug(f"Vectorize river downstream.")
+        self.logger.debug(f"Vectorize rivers used for setting outflow points.")
         feats = flwdir.vectorize(mask=np.logical_and(basmsk, rivmsk).values)
         gdf_riv = gpd.GeoDataFrame.from_features(feats, crs=src_crs)
         gdf_riv.index = gdf_riv.index.values + 1  # one based index
         gdf_riv = gdf_riv.to_crs(dst_crs)
-        self.set_staticgeoms(gdf_riv, name="rivers_downstream")
+        self.set_staticgeoms(gdf_riv, name="rivers_out")
 
     def setup_cn_infiltration(self, cn_fn="gcn250", antecedent_runoff_conditions="avg"):
         """Setup model curve number map from gridded curve number map.
@@ -522,9 +532,6 @@ class SfincsModel(Model):
             None if data has no atecedent runoff conditions.
             By default `avg`
         """
-        # FIXME remove with new ini files
-        if cn_fn is None:
-            return
         # get data
         v = "cn"
         if antecedent_runoff_conditions:
@@ -565,9 +572,6 @@ class SfincsModel(Model):
             CSV mapping file with lulc classes in the index column and manning values
             in another column with 'N' as header.
         """
-        # FIXME remove with new ini files
-        if lulc_fn is None:
-            return
         if map_fn is None:
             map_fn = join(DATADIR, "lulc", f"{lulc_fn}_mapping.csv")
         if not os.path.isfile(map_fn):
@@ -681,7 +685,7 @@ class SfincsModel(Model):
         if gauges_fn is not None:
             # read amd clip data
             fext = str(gauges_fn).split(".")[-1].lower()
-            if fext in self._GEOMS and driver not in kwargs:
+            if fext in self._GEOMS and fext not in kwargs:
                 kwargs.update(driver="xy")
             da = self.data_catalog.get_geodataset(
                 gauges_fn,
@@ -765,7 +769,7 @@ class SfincsModel(Model):
         elif self._GEOMS[name] not in self.staticgeoms:
             self.logger.warning(
                 "No discharge inflow points in staticgeoms. "
-                "Run ``setup_rivers()`` method first to determine inflow locations."
+                "Run ``setup_river_inflow()`` method first to determine inflow locations."
             )
             return
         gdf = self.staticgeoms[self._GEOMS[name]]
@@ -850,14 +854,14 @@ class SfincsModel(Model):
             if timeseries_fn is not None:
                 self.logger.warning(
                     "No discharge inflow points in staticgeoms. "
-                    "Run ``setup_rivers()`` method first to determine inflow locations."
+                    "Run ``setup_river_inflow()`` method first to determine inflow locations."
                 )
             self._update_forcing_1d(None, name)  # remove dis/src from config
             return
         elif gauges_fn is not None:
             # read amd clip data
             fext = str(gauges_fn).split(".")[-1].lower()
-            if fext in self._GEOMS and driver not in kwargs:
+            if fext in self._GEOMS and fext not in kwargs:
                 kwargs.update(driver="xy")
             da = self.data_catalog.get_geodataset(
                 gauges_fn,
@@ -871,9 +875,9 @@ class SfincsModel(Model):
             # read timeseries data and match with existing gdf
             gdf = self.staticgeoms[self._GEOMS[name]]
             if timeseries_fn is not None:
-                da_ts = hydromt.open_timeseries_from_table(timeseries_fn, name=name).sel(
-                    time=slice(tstart, tstop)
-                )
+                da_ts = hydromt.open_timeseries_from_table(
+                    timeseries_fn, name=name
+                ).sel(time=slice(tstart, tstop))
                 da = GeoDataArray.from_gdf(gdf, da_ts, index_dim="index")
                 self.logger.debug(f"{name} forcing: add time series to preset gauges.")
             else:
@@ -967,9 +971,10 @@ class SfincsModel(Model):
         shaded=True,
         bmap="sat",
         zoomlevel=11,
-        figsize=[6.4 * 1.2, 4.8 * 1.2],
+        figsize=None,
         geoms=["rivers", "src", "bnd", "obs"],
         geom_kwargs={},
+        legend_kwargs={},
         **kwargs,
     ):
         import matplotlib.pyplot as plt
@@ -987,6 +992,9 @@ class SfincsModel(Model):
         extent = np.array(ds.raster.box.buffer(2e3).total_bounds)[[0, 2, 1, 3]]
 
         # create fig with geo-axis and set background
+        if figsize is None:
+            ratio = ds.raster.ycoords.size / (ds.raster.xcoords.size * 1.2)
+            figsize = (10, 10 * ratio)
         fig = plt.figure(figsize=figsize)
         ax = plt.subplot(projection=utm)
         ax.set_extent(extent, crs=utm)
@@ -1034,13 +1042,15 @@ class SfincsModel(Model):
                 rgb = xr.where(np.isnan(da), np.nan, rgb)
                 rgb.plot.imshow(transform=utm, ax=ax, zorder=1)
 
+        # TODO add vectorized boundary (points) from msk==2 and msk==3.
+
         # add geoms
         geom_kwargs0 = {
-            "rivers": dict(linestyle="--", linewidth=0.5, color="b"),
-            "rivers_downstream": dict(linestyle="--", linewidth=1.0, color="r"),
+            "rivers": dict(linestyle="--", linewidth=1.0, color="b"),
+            "rivers_out": dict(linestyle="--", linewidth=1.0, color="r"),
             "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
             "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
-            "obs": dict(marker="o", markersize=75, c="w", edgecolor="r", annotate=True),
+            "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
         }
         geom_kwargs0.update(geom_kwargs)
         ann_kwargs = dict(
@@ -1058,7 +1068,7 @@ class SfincsModel(Model):
                 if gdf is None:
                     continue
                 annotate = geom_kwargs0[name].pop("annotate", False)
-                gdf.plot(ax=ax, zorder=3, **geom_kwargs0[name])
+                gdf.plot(ax=ax, zorder=3, **geom_kwargs0[name], label=name)
                 if annotate:
                     for label, row in gdf.iterrows():
                         x, y = row.geometry.x, row.geometry.y
@@ -1072,7 +1082,16 @@ class SfincsModel(Model):
         ax.set_xlabel(f"x coordinate UTM zone {utm_zone} [m]")
         variable = "base" if variable is None else variable
         ax.set_title(f"SFINCS {variable} map")
-        
+        # NOTE without defined loc it takes forever to find a 'best' location
+        legend_kwargs0 = dict(
+            title="Legend",
+            loc="lower right",
+            frameon=True,
+            framealpha=0.7,
+        )
+        legend_kwargs0.update(**legend_kwargs)
+        ax.legend(**legend_kwargs0)
+
         if fn_out is not None:
             if not os.path.isabs(fn_out):
                 fn_out = join(self.root, "figs", fn_out)
