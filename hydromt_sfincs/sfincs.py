@@ -968,7 +968,7 @@ class SfincsModel(Model):
         bmap="sat",
         zoomlevel=11,
         figsize=[6.4 * 1.2, 4.8 * 1.2],
-        geoms=["rivers_downstream", "rivers","src"],
+        geoms=["rivers", "src", "bnd", "obs"],
         geom_kwargs={},
         **kwargs,
     ):
@@ -1036,9 +1036,11 @@ class SfincsModel(Model):
 
         # add geoms
         geom_kwargs0 = {
+            "rivers": dict(linestyle="--", linewidth=0.5, color="b"),
             "rivers_downstream": dict(linestyle="--", linewidth=1.0, color="r"),
-            "rivers": dict(linestyle="--", linewidth=1.0, color="b"),
-            "src": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
+            "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
+            "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
+            "obs": dict(marker="o", markersize=75, c="w", edgecolor="r", annotate=True),
         }
         geom_kwargs0.update(geom_kwargs)
         ann_kwargs = dict(
@@ -1070,6 +1072,7 @@ class SfincsModel(Model):
         ax.set_xlabel(f"x coordinate UTM zone {utm_zone} [m]")
         variable = "base" if variable is None else variable
         ax.set_title(f"SFINCS {variable} map")
+        
         if fn_out is not None:
             if not os.path.isabs(fn_out):
                 fn_out = join(self.root, "figs", fn_out)
