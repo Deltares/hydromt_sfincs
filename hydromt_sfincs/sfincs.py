@@ -266,7 +266,7 @@ class SfincsModel(Model):
         # land mask contains all valid dep values inside land geometry
         if landmask_fn is not None:
             gdf_mask = self.data_catalog.get_geodataframe(
-                landmask_fn, geom=dst_geom
+                str(landmask_fn), geom=dst_geom
             ).to_crs(da_elv.raster.crs)
             lnd_msk = da_elv.raster.geometry_mask(gdf_mask, all_touched=True)
             da_elv = da_elv.where(lnd_msk)
