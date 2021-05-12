@@ -25,6 +25,7 @@ outputformat    = net
 epsg            = 32633
 scsfile         = sfincs.scs
 manningfile     = sfincs.man
+obsfile         = sfincs.obs
 srcfile         = sfincs.src
 disfile         = sfincs.dis
 

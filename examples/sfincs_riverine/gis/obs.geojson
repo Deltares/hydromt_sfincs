@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32633" } },
+"features": [
+{ "type": "Feature", "properties": { "ID": 1003, "name": "Riverine3" }, "geometry": { "type": "Point", "coordinates": [ 287143.374286372913048, 5076190.386894877068698 ] } },
+{ "type": "Feature", "properties": { "ID": 1001, "name": "Riverine1" }, "geometry": { "type": "Point", "coordinates": [ 274327.436274077394046, 5079997.071567848324776 ] } },
+{ "type": "Feature", "properties": { "ID": 1002, "name": "Riverine2" }, "geometry": { "type": "Point", "coordinates": [ 281239.177132738870569, 5085972.287594785913825 ] } }
+]
+}
