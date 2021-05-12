@@ -9,7 +9,7 @@ To build a **coastal flood model** with h (waterlevel) and p (precipitation) but
 see example below, or a geometry file.
 
 A typical workflow to setup a coastal model schematization is privided in the
-:download:`sfincs_coastal.ini <../../examples/sfincs_coastal.ini>` and shown below. 
+:download:`sfincs_coastal.ini <../_examples/sfincs_coastal.ini>` and shown below. 
 Each section corresponds to one of the model :ref:`components` and the `[global]` section can be used to pass
 aditional arguments to the :py:class:`~hydromt.models.sfincs.SfincsModel`. initialization.
 An example is provided in :ref:`examples` section.
@@ -20,7 +20,7 @@ An example is provided in :ref:`examples` section.
     hydromt build sfincs /path/to/model_root "{'bbox': [xmin, ymin, xmax, ymax]}" -i sfincs_coastal.ini -vv
 
 
-.. literalinclude:: ../../examples/sfincs_coastal.ini
+.. literalinclude:: ../_examples/sfincs_coastal.ini
    :language: Ini
 
 

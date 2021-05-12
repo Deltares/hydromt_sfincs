@@ -26,7 +26,8 @@ Build components
 
    sfincs.SfincsModel.setup_config
    sfincs.SfincsModel.setup_basemaps
-   sfincs.SfincsModel.setup_rivers
+   sfincs.SfincsModel.setup_river_inflow
+   sfincs.SfincsModel.setup_river_outflow
    sfincs.SfincsModel.setup_gauges
    sfincs.SfincsModel.setup_manning_roughness
    sfincs.SfincsModel.setup_cn_infiltration
