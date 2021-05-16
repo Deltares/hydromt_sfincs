@@ -323,7 +323,7 @@ class SfincsModel(Model):
             bas_msk = da_elv.raster.geometry_mask(basin_geom, all_touched=True)
             lnd_msk = np.logical_or(lnd_msk, bas_msk)
         else:
-            bas_msk = xr.full_like(da_elv, True, np.bool)
+            bas_msk = xr.full_like(da_elv, True, bool)
         msk = lnd_msk.values
         if mask_fn:
             # active cells: valid dep values inside polygon AND basin
