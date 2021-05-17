@@ -44,7 +44,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Plot sfincs_map.nc results" href="plot_sfincs_map.html" />
-    <link rel="prev" title="Build a riverine SFINCS model from scratch" href="build_model_riverine.html" /> 
+    <link rel="prev" title="Build a riverine SFINCS model from scratch" href="build_riverine_model.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -99,7 +99,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../examples/index.html">Examples</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="build_coastal_model.html">Build a coastal SFINCS model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="build_model_riverine.html">Build a riverine SFINCS model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build_riverine_model.html">Build a riverine SFINCS model</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Update SFINCS model components</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#Add-precipitation-forcing-to-an-existing-model">Add precipitation forcing to an existing model</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#Update-sfincs-precipitation">Update sfincs precipitation</a></li>
@@ -593,25 +593,25 @@ Options:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2021-05-11 22:07:48,539 - update - log - INFO - HydroMT version: 0.4.0
-2021-05-11 22:07:48,539 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice (r).
-2021-05-11 22:07:48,539 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_precip
-2021-05-11 22:07:48,539 - update - main - INFO - User settings:
-2021-05-11 22:07:48,540 - update - cli_utils - INFO - setup_config.tref: 20100101 000000
-2021-05-11 22:07:48,540 - update - cli_utils - INFO - setup_config.tstart: 20100201 000000
-2021-05-11 22:07:48,540 - update - cli_utils - INFO - setup_config.tstop: 20100210 000000
-2021-05-11 22:07:48,540 - update - cli_utils - INFO - setup_p_forcing_gridded.precip_fn: era5_hourly
-2021-05-11 22:07:48,540 - update - cli_utils - INFO - setup_p_forcing_gridded.dst_res: None
-2021-05-11 22:07:48,663 - update - sfincs - INFO - Model read
-2021-05-11 22:07:48,663 - update - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_precip/.
-2021-05-11 22:07:48,687 - update - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.2/data_catalog.yml
-2021-05-11 22:07:48,767 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.2/era5_hourly.nc
-2021-05-11 22:07:48,913 - update - model_api - WARNING - Replacing forcing: netampr
-2021-05-11 22:07:48,913 - update - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_precip
-2021-05-11 22:07:48,914 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_precip/sfincs.inp
-2021-05-11 22:07:48,922 - update - sfincs - INFO - Write GIS raster files to &#39;gis&#39; subfolder
-2021-05-11 22:07:48,950 - update - sfincs - INFO - Write staticgeom files
-2021-05-11 22:07:48,958 - update - sfincs - INFO - Write forcing files
+2021-05-17 08:28:39,293 - update - log - INFO - HydroMT version: 0.4.0
+2021-05-17 08:28:39,293 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice (r).
+2021-05-17 08:28:39,293 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_precip
+2021-05-17 08:28:39,293 - update - main - INFO - User settings:
+2021-05-17 08:28:39,294 - update - cli_utils - INFO - setup_config.tref: 20100101 000000
+2021-05-17 08:28:39,294 - update - cli_utils - INFO - setup_config.tstart: 20100201 000000
+2021-05-17 08:28:39,294 - update - cli_utils - INFO - setup_config.tstop: 20100210 000000
+2021-05-17 08:28:39,294 - update - cli_utils - INFO - setup_p_forcing_gridded.precip_fn: era5_hourly
+2021-05-17 08:28:39,294 - update - cli_utils - INFO - setup_p_forcing_gridded.dst_res: None
+2021-05-17 08:28:39,408 - update - sfincs - INFO - Model read
+2021-05-17 08:28:39,408 - update - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_precip/.
+2021-05-17 08:28:39,429 - update - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.2/data_catalog.yml
+2021-05-17 08:28:39,503 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.2/era5_hourly.nc
+2021-05-17 08:28:39,634 - update - model_api - WARNING - Replacing forcing: netampr
+2021-05-17 08:28:39,635 - update - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_precip
+2021-05-17 08:28:39,635 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_precip/sfincs.inp
+2021-05-17 08:28:39,642 - update - sfincs - INFO - Write GIS raster files to &#39;gis&#39; subfolder
+2021-05-17 08:28:39,669 - update - sfincs - INFO - Write staticgeom files
+2021-05-17 08:28:39,676 - update - sfincs - INFO - Write forcing files
 
 </pre></div></div>
 </div>
@@ -705,7 +705,7 @@ hydromt.log  sfincs.bnd  sfincs.dep  sfincs.inp  sfincs.msk
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.collections.QuadMesh at 0x7f2c3c694dc0&gt;
+&lt;matplotlib.collections.QuadMesh at 0x7f13fcdf8be0&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -845,36 +845,36 @@ dst_res = None                  # output resolution (m)
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2021-05-11 22:07:54,069 - update - log - INFO - HydroMT version: 0.4.0
-2021-05-11 22:07:54,069 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice (r).
-2021-05-11 22:07:54,069 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_forcing
-2021-05-11 22:07:54,069 - update - main - INFO - User settings:
-2021-05-11 22:07:54,070 - update - cli_utils - INFO - setup_config.tref: 20100101 000000
-2021-05-11 22:07:54,070 - update - cli_utils - INFO - setup_config.tstart: 20100201 000000
-2021-05-11 22:07:54,070 - update - cli_utils - INFO - setup_config.tstop: 20100210 000000
-2021-05-11 22:07:54,070 - update - cli_utils - INFO - setup_gauges.gauges_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_gauges.csv
-2021-05-11 22:07:54,070 - update - cli_utils - INFO - setup_gauges.crs: 4326
-2021-05-11 22:07:54,071 - update - cli_utils - INFO - setup_h_forcing.gauges_fn: gtsmv3_eu_era5
-2021-05-11 22:07:54,071 - update - cli_utils - INFO - setup_h_forcing.timeseries_fn: None
-2021-05-11 22:07:54,071 - update - cli_utils - INFO - setup_h_forcing.mdt_fn: dtu10mdt_egm96
-2021-05-11 22:07:54,071 - update - cli_utils - INFO - setup_h_forcing.buffer: 10000.0
-2021-05-11 22:07:54,071 - update - cli_utils - INFO - setup_p_forcing_gridded.precip_fn: era5_hourly
-2021-05-11 22:07:54,071 - update - cli_utils - INFO - setup_p_forcing_gridded.dst_res: None
-2021-05-11 22:07:54,192 - update - sfincs - INFO - Model read
-2021-05-11 22:07:54,192 - update - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_forcing/.
-2021-05-11 22:07:54,205 - update - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.2/data_catalog.yml
-2021-05-11 22:07:54,297 - update - data_adapter - INFO - DataCatalog: Getting venice_gauges GeoDataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_gauges.csv
-2021-05-11 22:07:54,371 - update - sfincs - INFO - obs set based on /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_gauges.csv
-2021-05-11 22:07:54,384 - update - data_adapter - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.2/gtsmv3_eu_era5.nc
-2021-05-11 22:07:54,384 - update - data_adapter - INFO - GeoDataset: Read nc data and clip to geom - [264900.000, 5024100.000, 328600.000, 5059600.000]
-2021-05-11 22:07:54,526 - update - model_api - WARNING - Replacing forcing: bzs
-2021-05-11 22:07:54,548 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.2/era5_hourly.nc
-2021-05-11 22:07:54,691 - update - model_api - WARNING - Replacing forcing: netampr
-2021-05-11 22:07:54,691 - update - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_forcing
-2021-05-11 22:07:54,692 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_forcing/sfincs.inp
-2021-05-11 22:07:54,700 - update - sfincs - INFO - Write GIS raster files to &#39;gis&#39; subfolder
-2021-05-11 22:07:54,728 - update - sfincs - INFO - Write staticgeom files
-2021-05-11 22:07:54,755 - update - sfincs - INFO - Write forcing files
+2021-05-17 08:28:44,472 - update - log - INFO - HydroMT version: 0.4.0
+2021-05-17 08:28:44,472 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice (r).
+2021-05-17 08:28:44,473 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_forcing
+2021-05-17 08:28:44,473 - update - main - INFO - User settings:
+2021-05-17 08:28:44,474 - update - cli_utils - INFO - setup_config.tref: 20100101 000000
+2021-05-17 08:28:44,474 - update - cli_utils - INFO - setup_config.tstart: 20100201 000000
+2021-05-17 08:28:44,474 - update - cli_utils - INFO - setup_config.tstop: 20100210 000000
+2021-05-17 08:28:44,474 - update - cli_utils - INFO - setup_gauges.gauges_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_gauges.csv
+2021-05-17 08:28:44,474 - update - cli_utils - INFO - setup_gauges.crs: 4326
+2021-05-17 08:28:44,474 - update - cli_utils - INFO - setup_h_forcing.gauges_fn: gtsmv3_eu_era5
+2021-05-17 08:28:44,474 - update - cli_utils - INFO - setup_h_forcing.timeseries_fn: None
+2021-05-17 08:28:44,474 - update - cli_utils - INFO - setup_h_forcing.mdt_fn: dtu10mdt_egm96
+2021-05-17 08:28:44,474 - update - cli_utils - INFO - setup_h_forcing.buffer: 10000.0
+2021-05-17 08:28:44,474 - update - cli_utils - INFO - setup_p_forcing_gridded.precip_fn: era5_hourly
+2021-05-17 08:28:44,474 - update - cli_utils - INFO - setup_p_forcing_gridded.dst_res: None
+2021-05-17 08:28:44,587 - update - sfincs - INFO - Model read
+2021-05-17 08:28:44,587 - update - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_forcing/.
+2021-05-17 08:28:44,599 - update - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.2/data_catalog.yml
+2021-05-17 08:28:44,684 - update - data_adapter - INFO - DataCatalog: Getting venice_gauges GeoDataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_gauges.csv
+2021-05-17 08:28:44,753 - update - sfincs - INFO - obs set based on /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_gauges.csv
+2021-05-17 08:28:44,764 - update - data_adapter - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.2/gtsmv3_eu_era5.nc
+2021-05-17 08:28:44,765 - update - data_adapter - INFO - GeoDataset: Read nc data and clip to geom - [264900.000, 5024100.000, 328600.000, 5059600.000]
+2021-05-17 08:28:44,894 - update - model_api - WARNING - Replacing forcing: bzs
+2021-05-17 08:28:44,913 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.2/era5_hourly.nc
+2021-05-17 08:28:45,043 - update - model_api - WARNING - Replacing forcing: netampr
+2021-05-17 08:28:45,044 - update - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_forcing
+2021-05-17 08:28:45,044 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_forcing/sfincs.inp
+2021-05-17 08:28:45,051 - update - sfincs - INFO - Write GIS raster files to &#39;gis&#39; subfolder
+2021-05-17 08:28:45,078 - update - sfincs - INFO - Write staticgeom files
+2021-05-17 08:28:45,104 - update - sfincs - INFO - Write forcing files
 
 </pre></div></div>
 </div>
@@ -930,7 +930,7 @@ dst_res = None                  # output resolution (m)
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
         <a href="plot_sfincs_map.html" class="btn btn-neutral float-right" title="Plot sfincs_map.nc results" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-        <a href="build_model_riverine.html" class="btn btn-neutral float-left" title="Build a riverine SFINCS model from scratch" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="build_riverine_model.html" class="btn btn-neutral float-left" title="Build a riverine SFINCS model from scratch" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

@@ -176,6 +176,7 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span><span class="p">,</span> <span class="n">isfile</span><span class="p">,</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">basename</span>
 <span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">from</span> <span class="nn">hydromt</span> <span class="kn">import</span> <span class="n">vector</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">configparser</span> <span class="kn">import</span> <span class="n">ConfigParser</span>
@@ -188,7 +189,6 @@
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
 <span class="kn">import</span> <span class="nn">pyproj</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">import</span> <span class="nn">pyflwdir</span>
 
 <span class="kn">import</span> <span class="nn">hydromt</span>
 <span class="kn">from</span> <span class="nn">hydromt.models.model_api</span> <span class="kn">import</span> <span class="n">Model</span>
@@ -399,7 +399,7 @@
         <span class="n">bbox</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bbox&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;interbasin&quot;</span><span class="p">:</span>
             <span class="n">bas_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="p">[</span><span class="n">basin_index_fn</span><span class="p">]</span>
-            <span class="n">basin_geom</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">get_basin_geometry</span><span class="p">(</span>
+            <span class="n">basin_geom</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">workflows</span><span class="o">.</span><span class="n">get_basin_geometry</span><span class="p">(</span>
                 <span class="n">ds</span><span class="o">=</span><span class="n">ds_org</span><span class="p">,</span>
                 <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span>
                 <span class="n">basin_index</span><span class="o">=</span><span class="n">bas_index</span><span class="p">,</span>
@@ -429,12 +429,15 @@
         <span class="c1"># reproject to destination CRS and clip to actual extent</span>
         <span class="n">da_elv</span> <span class="o">=</span> <span class="n">ds_org</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span> <span class="o">!=</span> <span class="n">dst_crs</span><span class="p">:</span>
-            <span class="n">da_elv</span> <span class="o">=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_geom</span><span class="p">(</span><span class="n">geom</span><span class="o">=</span><span class="n">dst_geom</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
-                <span class="n">dst_res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">dst_crs</span><span class="o">=</span><span class="n">dst_crs</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span>
+            <span class="n">da_elv</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_geom</span><span class="p">(</span><span class="n">geom</span><span class="o">=</span><span class="n">dst_geom</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">load</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
+                    <span class="n">dst_res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">dst_crs</span><span class="o">=</span><span class="n">dst_crs</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_geom</span><span class="p">(</span><span class="n">dst_geom</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="n">res</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>  <span class="c1"># force nodata value to be np.nan</span>
             <span class="p">)</span>
-        <span class="n">da_elv</span> <span class="o">=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_geom</span><span class="p">(</span><span class="n">dst_geom</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="n">res</span><span class="p">)</span>
-        <span class="c1"># force nodata value to be np.nan</span>
-        <span class="n">da_elv</span> <span class="o">=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
 
         <span class="c1"># read and rasterize land geometry</span>
         <span class="c1"># land mask contains all valid dep values inside land geometry</span>
@@ -454,6 +457,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                     <span class="n">bathymetry_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">dst_geom</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
                 <span class="p">)</span>
+                <span class="o">.</span><span class="n">load</span><span class="p">()</span>
                 <span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">da_elv</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
             <span class="p">)</span>
@@ -496,7 +500,7 @@
             <span class="n">bas_msk</span> <span class="o">=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">basin_geom</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">lnd_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">lnd_msk</span><span class="p">,</span> <span class="n">bas_msk</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">bas_msk</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">da_elv</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+            <span class="n">bas_msk</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">da_elv</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
         <span class="n">msk</span> <span class="o">=</span> <span class="n">lnd_msk</span><span class="o">.</span><span class="n">values</span>
         <span class="k">if</span> <span class="n">mask_fn</span><span class="p">:</span>
             <span class="c1"># active cells: valid dep values inside polygon AND basin</span>
@@ -547,8 +551,8 @@
         <span class="n">ncells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">msk</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mask generated; </span><span class="si">{</span><span class="n">ncells</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> active cells.&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_rivers"><a class="viewcode-back" href="../../generated/hydromt_sfincs.sfincs.SfincsModel.setup_rivers.html#hydromt_sfincs.sfincs.SfincsModel.setup_rivers">[docs]</a>    <span class="k">def</span> <span class="nf">setup_rivers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">river_upa</span><span class="o">=</span><span class="mf">25.0</span><span class="p">,</span> <span class="n">basemaps_fn</span><span class="o">=</span><span class="s2">&quot;merit_hydro&quot;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Setup river source points where a river enters the model domain.</span>
+<div class="viewcode-block" id="SfincsModel.setup_river_inflow"><a class="viewcode-back" href="../../generated/hydromt_sfincs.sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.sfincs.SfincsModel.setup_river_inflow">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_inflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">river_upa</span><span class="o">=</span><span class="mf">25.0</span><span class="p">,</span> <span class="n">basemaps_fn</span><span class="o">=</span><span class="s2">&quot;merit_hydro&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Setup river inflow (source) points where a river enters the model domain.</span>
 
 <span class="sd">        NOTE: to ensure a river only enters the model domain once, use the &#39;basin&#39;,</span>
 <span class="sd">        subbasin, or outlet region options.</span>
@@ -556,7 +560,8 @@
 <span class="sd">        Adds model layers:</span>
 
 <span class="sd">        * **src** geoms: discharge boundary point locations</span>
-<span class="sd">        * **river** geoms: river centerline</span>
+<span class="sd">        * **dis** forcing: dummy discharge timeseries</span>
+<span class="sd">        * **river** geoms: river centerline (not used by SFINCS; for plotting only)</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -576,30 +581,9 @@
         <span class="n">dst_crs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">()</span>
         <span class="n">basmsk</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)</span>
 
-        <span class="c1"># NOTE experimental</span>
-        <span class="c1"># self.logger.debug(f&quot;Set outflow points (msk=3).&quot;)</span>
-        <span class="c1"># # # initialize flwdir for all cell within model domain</span>
-        <span class="c1"># ds[&quot;mask&quot;] =  np.logical_and(ds[&quot;uparea&quot;] &gt;= river_upa, basmsk)</span>
-        <span class="c1"># flwdir = hydromt.flw.flwdir_from_da(ds[&quot;flwdir&quot;], mask=True)</span>
-        <span class="c1"># # git pits at domain edge</span>
-        <span class="c1"># idxs0 = flwdir.idxs_pit</span>
-        <span class="c1"># _msk = ndimage.binary_erosion(basmsk, structure=np.ones((3, 3)))</span>
-        <span class="c1"># edge = np.logical_xor(_msk, basmsk)</span>
-        <span class="c1"># idxs_outflw = np.unique(idxs0[edge.values.flat[idxs0]])</span>
-        <span class="c1"># if len(idxs_outflw) &gt; 0:</span>
-        <span class="c1">#     da_mask = self.staticmaps[self._MAPS[&#39;mask&#39;]]</span>
-        <span class="c1">#     gdf_outflw = gpd.GeoDataFrame(</span>
-        <span class="c1">#         geometry=gpd.points_from_xy(*flwdir.xy(idxs_outflw)), crs=src_crs</span>
-        <span class="c1">#     ).to_crs(dst_crs)</span>
-        <span class="c1">#     xs, ys = gdf_outflw.geometry.x, gdf_outflw.geometry.y</span>
-        <span class="c1">#     idxs_map_outflw = da_mask.raster.xy_to_idx(xs, ys)</span>
-        <span class="c1">#     msk = da_mask.values</span>
-        <span class="c1">#     msk.flat[idxs_map_outflw] = 3  # msk == 3 at outflow points</span>
-        <span class="c1">#     da_mask.data = msk</span>
-        <span class="c1">#     self.set_staticmaps(da_mask)</span>
-        <span class="c1">#     self.logger.debug(f&quot;{len(idxs_outflw)} river outflow point locations set.&quot;)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Get river cells; upstream area threshold: </span><span class="si">{</span><span class="n">river_upa</span><span class="si">}</span><span class="s2"> km2.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Get river cells for inflow source points; upstream area threshold: </span><span class="si">{</span><span class="n">river_upa</span><span class="si">}</span><span class="s2"> km2.&quot;</span>
+        <span class="p">)</span>
         <span class="c1"># initialize flwdir with river cells only (including outside basin)</span>
         <span class="n">rivmsk</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">river_upa</span>
         <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rivmsk</span>
@@ -620,14 +604,91 @@
             <span class="n">gdf_src</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="n">idxs_source</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">idxs_source</span><span class="p">)</span><span class="si">}</span><span class="s2"> river inflow point locations set.&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_staticgeoms</span><span class="p">(</span><span class="n">gdf_src</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_GEOMS</span><span class="p">[</span><span class="s2">&quot;discharge&quot;</span><span class="p">])</span>
+            <span class="c1"># set dummy timeseries to keep valid sfincs model</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dummy_ts</span><span class="p">(</span><span class="n">gdf_src</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;discharge&quot;</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_forcing_1d</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;discharge&quot;</span><span class="p">)</span>
 
         <span class="c1"># vectorize river</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Vectorize river.&quot;</span><span class="p">)</span>
         <span class="n">feats</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">mask</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">basmsk</span><span class="p">,</span> <span class="n">rivmsk</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
         <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="o">.</span><span class="n">from_features</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">src_crs</span><span class="p">)</span>
+        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">dst_crs</span><span class="p">)</span>
+        <span class="n">gdf_riv</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># one based index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_staticgeoms</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivers&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SfincsModel.setup_river_outflow"><a class="viewcode-back" href="../../generated/hydromt_sfincs.sfincs.SfincsModel.setup_river_outflow.html#hydromt_sfincs.sfincs.SfincsModel.setup_river_outflow">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_outflow</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">river_upa</span><span class="o">=</span><span class="mf">25.0</span><span class="p">,</span> <span class="n">outflow_width</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">basemaps_fn</span><span class="o">=</span><span class="s2">&quot;merit_hydro&quot;</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Setup river outflow boundary (msk=3) where a river flows out of the model domain.</span>
+
+<span class="sd">        Adds / edits model layers:</span>
+
+<span class="sd">        * **msk** map: edited by adding outflow points (msk=3)</span>
+<span class="sd">        * **river_out** geoms: river centerline (not used by SFINCS; for plotting only)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        basemaps_f: str, Path</span>
+<span class="sd">            Path or data source name for hydrography raster data, by default &#39;merit_hydro&#39;.</span>
+
+<span class="sd">            * Required layers: [&#39;uparea&#39;, &#39;flwdir&#39;].</span>
+<span class="sd">        outflow_width: int, optional</span>
+<span class="sd">            The width [m] of the outflow boundary in the SFINCS msk file.</span>
+<span class="sd">            By default 2km, i.e.: 1km to each side of the outflow point.</span>
+<span class="sd">        river_upa: float, optional</span>
+<span class="sd">            Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># read data and rasterize basin mask &gt; used to initialize flwdir in river workflow</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">basemaps_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="n">src_crs</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">()</span>
+        <span class="n">dst_crs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">()</span>
+        <span class="n">basmsk</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Get river cells for outflow points; upstream area threshold: </span><span class="si">{</span><span class="n">river_upa</span><span class="si">}</span><span class="s2"> km2.&quot;</span>
+        <span class="p">)</span>
+        <span class="c1"># initialize flwdir with river cells only (including outside basin)</span>
+        <span class="n">rivmsk</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">river_upa</span>
+        <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">river_upa</span><span class="p">,</span> <span class="n">basmsk</span><span class="p">)</span>
+        <span class="n">flwdir</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">flw</span><span class="o">.</span><span class="n">flwdir_from_da</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;flwdir&quot;</span><span class="p">],</span> <span class="n">mask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># git pits at domain edge on flwdir grid</span>
+        <span class="n">idxs0</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">idxs_pit</span>
+        <span class="n">basmsk_eroded</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_erosion</span><span class="p">(</span><span class="n">basmsk</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)))</span>
+        <span class="n">edge_basmask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span><span class="n">basmsk_eroded</span><span class="p">,</span> <span class="n">basmsk</span><span class="p">)</span>
+        <span class="n">idxs_outflw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">idxs0</span><span class="p">[</span><span class="n">edge_basmask</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="n">idxs0</span><span class="p">]])</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idxs_outflw</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Set msk=3 outflow points.&quot;</span><span class="p">)</span>
+            <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]]</span>
+            <span class="n">gdf_outflw</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span>
+                <span class="n">geometry</span><span class="o">=</span><span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="o">*</span><span class="n">flwdir</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">idxs_outflw</span><span class="p">)),</span> <span class="n">crs</span><span class="o">=</span><span class="n">src_crs</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">dst_crs</span><span class="p">)</span>
+            <span class="c1"># apply buffer</span>
+            <span class="n">gdf_outflw_buf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span>
+                <span class="n">geometry</span><span class="o">=</span><span class="n">gdf_outflw</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">outflow_width</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">gdf_outflw</span><span class="o">.</span><span class="n">crs</span>
+            <span class="p">)</span>
+            <span class="c1"># find intersect of buffer and model grid</span>
+            <span class="n">msk</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">msk_eroded</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_erosion</span><span class="p">(</span><span class="n">msk</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)))</span>
+            <span class="n">edge_model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span><span class="n">msk_eroded</span><span class="p">,</span> <span class="n">msk</span><span class="p">)</span>
+            <span class="n">outflw_buf</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_outflw_buf</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">outflw_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">outflw_buf</span><span class="p">,</span> <span class="n">edge_model</span><span class="p">)</span>
+            <span class="c1"># assign mask == 3 boundary and update staticmaps</span>
+            <span class="n">msk</span><span class="p">[</span><span class="n">outflw_msk</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span>
+            <span class="n">da_mask</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">msk</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_staticmaps</span><span class="p">(</span><span class="n">da_mask</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">idxs_outflw</span><span class="p">)</span><span class="si">}</span><span class="s2"> river outflow point locations set.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># vectorize river</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Vectorize rivers used for setting outflow points.&quot;</span><span class="p">)</span>
+        <span class="n">feats</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">mask</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">basmsk</span><span class="p">,</span> <span class="n">rivmsk</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="o">.</span><span class="n">from_features</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">src_crs</span><span class="p">)</span>
         <span class="n">gdf_riv</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># one based index</span>
         <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">dst_crs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_staticgeoms</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivers&quot;</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_staticgeoms</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivers_out&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SfincsModel.setup_cn_infiltration"><a class="viewcode-back" href="../../generated/hydromt_sfincs.sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.sfincs.SfincsModel.setup_cn_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cn_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn_fn</span><span class="o">=</span><span class="s2">&quot;gcn250&quot;</span><span class="p">,</span> <span class="n">antecedent_runoff_conditions</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup model curve number map from gridded curve number map.</span>
@@ -648,9 +709,6 @@
 <span class="sd">            None if data has no atecedent runoff conditions.</span>
 <span class="sd">            By default `avg`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># FIXME remove with new ini files</span>
-        <span class="k">if</span> <span class="n">cn_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
         <span class="c1"># get data</span>
         <span class="n">v</span> <span class="o">=</span> <span class="s2">&quot;cn&quot;</span>
         <span class="k">if</span> <span class="n">antecedent_runoff_conditions</span><span class="p">:</span>
@@ -691,9 +749,6 @@
 <span class="sd">            CSV mapping file with lulc classes in the index column and manning values</span>
 <span class="sd">            in another column with &#39;N&#39; as header.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># FIXME remove with new ini files</span>
-        <span class="k">if</span> <span class="n">lulc_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
         <span class="k">if</span> <span class="n">map_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">map_fn</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">DATADIR</span><span class="p">,</span> <span class="s2">&quot;lulc&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">lulc_fn</span><span class="si">}</span><span class="s2">_mapping.csv&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">map_fn</span><span class="p">):</span>
@@ -807,7 +862,7 @@
         <span class="k">if</span> <span class="n">gauges_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># read amd clip data</span>
             <span class="n">fext</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">gauges_fn</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">fext</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GEOMS</span> <span class="ow">and</span> <span class="n">driver</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fext</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GEOMS</span> <span class="ow">and</span> <span class="n">fext</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">driver</span><span class="o">=</span><span class="s2">&quot;xy&quot;</span><span class="p">)</span>
             <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataset</span><span class="p">(</span>
                 <span class="n">gauges_fn</span><span class="p">,</span>
@@ -891,7 +946,7 @@
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GEOMS</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticgeoms</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="s2">&quot;No discharge inflow points in staticgeoms. &quot;</span>
-                <span class="s2">&quot;Run ``setup_rivers()`` method first to determine inflow locations.&quot;</span>
+                <span class="s2">&quot;Run ``setup_river_inflow()`` method first to determine inflow locations.&quot;</span>
             <span class="p">)</span>
             <span class="k">return</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticgeoms</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_GEOMS</span><span class="p">[</span><span class="n">name</span><span class="p">]]</span>
@@ -976,14 +1031,14 @@
             <span class="k">if</span> <span class="n">timeseries_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                     <span class="s2">&quot;No discharge inflow points in staticgeoms. &quot;</span>
-                    <span class="s2">&quot;Run ``setup_rivers()`` method first to determine inflow locations.&quot;</span>
+                    <span class="s2">&quot;Run ``setup_river_inflow()`` method first to determine inflow locations.&quot;</span>
                 <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_forcing_1d</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>  <span class="c1"># remove dis/src from config</span>
             <span class="k">return</span>
         <span class="k">elif</span> <span class="n">gauges_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># read amd clip data</span>
             <span class="n">fext</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">gauges_fn</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">fext</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GEOMS</span> <span class="ow">and</span> <span class="n">driver</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fext</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GEOMS</span> <span class="ow">and</span> <span class="n">fext</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">driver</span><span class="o">=</span><span class="s2">&quot;xy&quot;</span><span class="p">)</span>
             <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataset</span><span class="p">(</span>
                 <span class="n">gauges_fn</span><span class="p">,</span>
@@ -997,9 +1052,9 @@
             <span class="c1"># read timeseries data and match with existing gdf</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticgeoms</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_GEOMS</span><span class="p">[</span><span class="n">name</span><span class="p">]]</span>
             <span class="k">if</span> <span class="n">timeseries_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">da_ts</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">open_timeseries</span><span class="p">(</span><span class="n">timeseries_fn</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span>
-                    <span class="n">time</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">)</span>
-                <span class="p">)</span>
+                <span class="n">da_ts</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">open_timeseries_from_table</span><span class="p">(</span>
+                    <span class="n">timeseries_fn</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">))</span>
                 <span class="n">da</span> <span class="o">=</span> <span class="n">GeoDataArray</span><span class="o">.</span><span class="n">from_gdf</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">da_ts</span><span class="p">,</span> <span class="n">index_dim</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> forcing: add time series to preset gauges.&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -1093,9 +1148,10 @@
         <span class="n">shaded</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span>
         <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span>
-        <span class="n">figsize</span><span class="o">=</span><span class="p">[</span><span class="mf">6.4</span> <span class="o">*</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mf">4.8</span> <span class="o">*</span> <span class="mf">1.2</span><span class="p">],</span>
+        <span class="n">figsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">geoms</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;rivers&quot;</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;bnd&quot;</span><span class="p">,</span> <span class="s2">&quot;obs&quot;</span><span class="p">],</span>
         <span class="n">geom_kwargs</span><span class="o">=</span><span class="p">{},</span>
+        <span class="n">legend_kwargs</span><span class="o">=</span><span class="p">{},</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -1113,6 +1169,9 @@
         <span class="n">extent</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mf">2e3</span><span class="p">)</span><span class="o">.</span><span class="n">total_bounds</span><span class="p">)[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]]</span>
 
         <span class="c1"># create fig with geo-axis and set background</span>
+        <span class="k">if</span> <span class="n">figsize</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ratio</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">ycoords</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">xcoords</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="mf">1.2</span><span class="p">)</span>
+            <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">)</span>
         <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
         <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="n">utm</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_extent</span><span class="p">(</span><span class="n">extent</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">utm</span><span class="p">)</span>
@@ -1160,12 +1219,15 @@
                 <span class="n">rgb</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">rgb</span><span class="p">)</span>
                 <span class="n">rgb</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">transform</span><span class="o">=</span><span class="n">utm</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
+        <span class="c1"># TODO add vectorized boundary (points) from msk==2 and msk==3.</span>
+
         <span class="c1"># add geoms</span>
         <span class="n">geom_kwargs0</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;rivers&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;rivers&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;rivers_out&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">),</span>
             <span class="s2">&quot;bnd&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">annotate</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
             <span class="s2">&quot;src&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">annotate</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-            <span class="s2">&quot;obs&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">annotate</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="s2">&quot;obs&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">annotate</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="p">}</span>
         <span class="n">geom_kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">geom_kwargs</span><span class="p">)</span>
         <span class="n">ann_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
@@ -1183,7 +1245,7 @@
                 <span class="k">if</span> <span class="n">gdf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">continue</span>
                 <span class="n">annotate</span> <span class="o">=</span> <span class="n">geom_kwargs0</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;annotate&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-                <span class="n">gdf</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="o">**</span><span class="n">geom_kwargs0</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+                <span class="n">gdf</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="o">**</span><span class="n">geom_kwargs0</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">annotate</span><span class="p">:</span>
                     <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
                         <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">y</span>
@@ -1197,6 +1259,16 @@
         <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;x coordinate UTM zone </span><span class="si">{</span><span class="n">utm_zone</span><span class="si">}</span><span class="s2"> [m]&quot;</span><span class="p">)</span>
         <span class="n">variable</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span> <span class="k">if</span> <span class="n">variable</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">variable</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SFINCS </span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s2"> map&quot;</span><span class="p">)</span>
+        <span class="c1"># NOTE without defined loc it takes forever to find a &#39;best&#39; location</span>
+        <span class="n">legend_kwargs0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Legend&quot;</span><span class="p">,</span>
+            <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;lower right&quot;</span><span class="p">,</span>
+            <span class="n">frameon</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">framealpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">legend_kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">legend_kwargs</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="o">**</span><span class="n">legend_kwargs0</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">fn_out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">fn_out</span><span class="p">):</span>
                 <span class="n">fn_out</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;figs&quot;</span><span class="p">,</span> <span class="n">fn_out</span><span class="p">)</span>

@@ -205,11 +205,51 @@
 (discharge) boundary conditions, the model <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/cli.html#region-options">region</a> is typically defined by a bounding box,
 see example below, or a geometry file.</p>
 <p>A typical workflow to setup a coastal model schematization is privided in the
-<code class="xref download docutils literal notranslate"><span class="pre">sfincs_coastal.ini</span></code> and shown below.
+<a class="reference download internal" download="" href="../_downloads/b733e198033df34218817f2758b4e45f/sfincs_coastal.ini"><code class="xref download docutils literal notranslate"><span class="pre">sfincs_coastal.ini</span></code></a> and shown below.
 Each section corresponds to one of the model <a class="reference internal" href="sfincs.html#components"><span class="std std-ref">Model components</span></a> and the <cite>[global]</cite> section can be used to pass
 aditional arguments to the <code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code>. initialization.
 An example is provided in <a class="reference internal" href="../examples/index.html#examples"><span class="std std-ref">Examples</span></a> section.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">hydromt build sfincs /path/to/model_root &quot;{&#39;bbox&#39;: [xmin, ymin, xmax, ymax]}&quot; -i sfincs_coastal.ini -vv</span>
+</pre></div>
+</div>
+<div class="highlight-Ini notranslate"><div class="highlight"><pre><span></span><span class="k">[global]</span>
+<span class="na">write_gis</span> <span class="o">=</span> <span class="s">True                # write addtional geotif and geojson files to gis subfolder</span>
+<span class="na">config_fn</span> <span class="o">=</span> <span class="s">sfincs.inp          # name of sfincs config (inp) file</span>
+
+<span class="k">[setup_config]</span>
+<span class="na">tref</span> <span class="o">=</span> <span class="s">20100101 000000</span>
+<span class="na">tstart</span> <span class="o">=</span> <span class="s">20100201 000000</span>
+<span class="na">tstop</span> <span class="o">=</span> <span class="s">20100210 000000</span>
+<span class="na">alpha</span> <span class="o">=</span> <span class="s">0.5</span>
+<span class="na">zsini</span> <span class="o">=</span> <span class="s">0.5</span>
+
+<span class="k">[setup_basemaps]</span>
+<span class="na">basemaps_fn</span> <span class="o">=</span> <span class="s">merit_hydro       # hydrography basemaps [&#39;elevtn&#39;, &#39;flwdir&#39;, &#39;uparea&#39;, &#39;basins&#39;]</span>
+<span class="na">landmask_fn</span> <span class="o">=</span> <span class="s">osm_landareas     # land polygon</span>
+<span class="na">crs</span> <span class="o">=</span> <span class="s">utm                       # model CRS (must be UTM zone)</span>
+<span class="na">bathymetry_fn</span> <span class="o">=</span> <span class="s">gebco           # bathymetry [&#39;elevtn&#39;]</span>
+<span class="na">mdt_fn</span> <span class="o">=</span> <span class="s">dtu10mdt_egm96         # mean dynamic topography [&#39;mdt&#39;]</span>
+<span class="na">merge_buffer</span> <span class="o">=</span> <span class="s">0                # buffer (cells) between elevation and bathymetry data filled with &#39;linear&#39; interpolation</span>
+<span class="na">mask_fn</span> <span class="o">=</span> <span class="s">None                  # polygon to mask active model cells </span>
+<span class="na">dep_contour</span> <span class="o">=</span> <span class="s">-1                # mimimum depth threshold for active model cells</span>
+
+<span class="k">[setup_cn_infiltration]</span>
+<span class="na">cn_fn</span> <span class="o">=</span> <span class="s">gcn250                  # curve number source</span>
+<span class="na">antecedent_runoff_conditions</span> <span class="o">=</span> <span class="s">avg # for gcn250: {&#39;dry&#39;, &#39;avg&#39;, &#39;wet&#39;}</span>
+
+<span class="k">[setup_manning_roughness]</span>
+<span class="na">lulc_fn</span> <span class="o">=</span> <span class="s">vito                  # land-use land-cover source</span>
+<span class="na">map_fn</span> <span class="o">=</span> <span class="s">None                   # mapping file. read from hydromt/data/lulc/{lulc_fn}_mapping.csv if None</span>
+
+<span class="k">[setup_h_forcing]</span>
+<span class="na">gauges_fn</span> <span class="o">=</span> <span class="s">gtsmv3_eu_era5      # waterlevel gauge data</span>
+<span class="na">timeseries_fn</span> <span class="o">=</span> <span class="s">None            # timeseries data at waterlevel gauges</span>
+<span class="na">mdt_fn</span> <span class="o">=</span> <span class="s">dtu10mdt_egm96         # mean dynamic topography [&#39;mdt&#39;]</span>
+<span class="na">buffer</span> <span class="o">=</span> <span class="s">1e4                    # buffer around model region to select gauges</span>
+
+<span class="k">[setup_p_forcing_gridded]</span>
+<span class="na">precip_fn</span> <span class="o">=</span> <span class="s">era5_hourly         # gridded precipitation data [&#39;precip&#39;]</span>
+<span class="na">dst_res</span> <span class="o">=</span> <span class="s">None                  # output resolution (m)</span>
 </pre></div>
 </div>
 </div>

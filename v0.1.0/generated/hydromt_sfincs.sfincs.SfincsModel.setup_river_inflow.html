@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>hydromt_sfincs.sfincs.SfincsModel.setup_rivers &mdash; hydromt_sfincs  documentation</title>
+  <title>hydromt_sfincs.sfincs.SfincsModel.setup_river_inflow &mdash; hydromt_sfincs  documentation</title>
   
 
   
@@ -41,7 +41,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.sfincs.SfincsModel.setup_gauges" href="hydromt_sfincs.sfincs.SfincsModel.setup_gauges.html" />
+    <link rel="next" title="hydromt_sfincs.sfincs.SfincsModel.setup_river_outflow" href="hydromt_sfincs.sfincs.SfincsModel.setup_river_outflow.html" />
     <link rel="prev" title="hydromt_sfincs.sfincs.SfincsModel.setup_basemaps" href="hydromt_sfincs.sfincs.SfincsModel.setup_basemaps.html" /> 
 </head>
 
@@ -103,7 +103,8 @@
 <li class="toctree-l2 current"><a class="reference internal" href="../user_guide/sfincs.html#components">Model components</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.sfincs.SfincsModel.setup_config.html">hydromt_sfincs.sfincs.SfincsModel.setup_config</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.sfincs.SfincsModel.setup_basemaps.html">hydromt_sfincs.sfincs.SfincsModel.setup_basemaps</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">hydromt_sfincs.sfincs.SfincsModel.setup_rivers</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">hydromt_sfincs.sfincs.SfincsModel.setup_river_inflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.sfincs.SfincsModel.setup_river_outflow.html">hydromt_sfincs.sfincs.SfincsModel.setup_river_outflow</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.sfincs.SfincsModel.setup_gauges.html">hydromt_sfincs.sfincs.SfincsModel.setup_gauges</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.sfincs.SfincsModel.setup_manning_roughness.html">hydromt_sfincs.sfincs.SfincsModel.setup_manning_roughness</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.sfincs.SfincsModel.setup_cn_infiltration.html">hydromt_sfincs.sfincs.SfincsModel.setup_cn_infiltration</a></li>
@@ -173,13 +174,13 @@
         
           <li><a href="../user_guide/sfincs.html">SFINCS model components</a> &raquo;</li>
         
-      <li>hydromt_sfincs.sfincs.SfincsModel.setup_rivers</li>
+      <li>hydromt_sfincs.sfincs.SfincsModel.setup_river_inflow</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="../_sources/generated/hydromt_sfincs.sfincs.SfincsModel.setup_rivers.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/generated/hydromt_sfincs.sfincs.SfincsModel.setup_river_inflow.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -216,18 +217,19 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="hydromt-sfincs-sfincs-sfincsmodel-setup-rivers">
-<h1>hydromt_sfincs.sfincs.SfincsModel.setup_rivers<a class="headerlink" href="#hydromt-sfincs-sfincs-sfincsmodel-setup-rivers" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="hydromt-sfincs-sfincs-sfincsmodel-setup-river-inflow">
+<h1>hydromt_sfincs.sfincs.SfincsModel.setup_river_inflow<a class="headerlink" href="#hydromt-sfincs-sfincs-sfincsmodel-setup-river-inflow" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
-<dt class="sig sig-object py" id="hydromt_sfincs.sfincs.SfincsModel.setup_rivers">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_rivers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river_upa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basemaps_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'merit_hydro'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_rivers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.sfincs.SfincsModel.setup_rivers" title="Permalink to this definition">¶</a></dt>
-<dd><p>Setup river source points where a river enters the model domain.</p>
+<dt class="sig sig-object py" id="hydromt_sfincs.sfincs.SfincsModel.setup_river_inflow">
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_river_inflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river_upa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basemaps_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'merit_hydro'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_river_inflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.sfincs.SfincsModel.setup_river_inflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup river inflow (source) points where a river enters the model domain.</p>
 <p>NOTE: to ensure a river only enters the model domain once, use the ‘basin’,
 subbasin, or outlet region options.</p>
 <p>Adds model layers:</p>
 <ul class="simple">
 <li><p><strong>src</strong> geoms: discharge boundary point locations</p></li>
-<li><p><strong>river</strong> geoms: river centerline</p></li>
+<li><p><strong>dis</strong> forcing: dummy discharge timeseries</p></li>
+<li><p><strong>river</strong> geoms: river centerline (not used by SFINCS; for plotting only)</p></li>
 </ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -251,7 +253,7 @@ subbasin, or outlet region options.</p>
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="hydromt_sfincs.sfincs.SfincsModel.setup_gauges.html" class="btn btn-neutral float-right" title="hydromt_sfincs.sfincs.SfincsModel.setup_gauges" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="hydromt_sfincs.sfincs.SfincsModel.setup_river_outflow.html" class="btn btn-neutral float-right" title="hydromt_sfincs.sfincs.SfincsModel.setup_river_outflow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="hydromt_sfincs.sfincs.SfincsModel.setup_basemaps.html" class="btn btn-neutral float-left" title="hydromt_sfincs.sfincs.SfincsModel.setup_basemaps" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 

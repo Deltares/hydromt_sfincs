@@ -209,10 +209,58 @@ more than one time, where only the most downstream contiguous area is kept. The 
 is based on gridded flow direction data and provides a good setup to set upstream
 dischage boundary points.</p>
 <p>A typical workflow to setup a riverine model schematization is privided in the
-<code class="xref download docutils literal notranslate"><span class="pre">sfincs_coastal.ini</span></code> and shown below.
+<a class="reference download internal" download="" href="../_downloads/51689978eab93efb62c12d4cc98256c2/sfincs_riverine.ini"><code class="xref download docutils literal notranslate"><span class="pre">sfincs_riverine.ini</span></code></a> and shown below.
 Each section corresponds to one of the model <a class="reference internal" href="sfincs.html#components"><span class="std std-ref">Model components</span></a> and the <cite>[global]</cite> section can be used to pass
 aditional arguments to the <code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code>. initialization.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">hydromt build sfincs /path/to/model_root &quot;{&#39;interbasin&#39;: [xmin, ymin, xmax, ymax], buffer: &#39;20&#39;}&quot; -i sfincs_coastal.ini -vv</span>
+</pre></div>
+</div>
+<div class="highlight-Ini notranslate"><div class="highlight"><pre><span></span><span class="k">[global]</span>
+<span class="na">write_gis</span> <span class="o">=</span> <span class="s">True                # write addtional geotif and geojson files to gis subfolder</span>
+<span class="na">config_fn</span> <span class="o">=</span> <span class="s">sfincs.inp          # name of sfincs config (inp) file</span>
+
+<span class="k">[setup_config]</span>
+<span class="na">tref</span> <span class="o">=</span> <span class="s">20210101 000000</span>
+<span class="na">tstart</span> <span class="o">=</span> <span class="s">20210101 000000</span>
+<span class="na">tstop</span> <span class="o">=</span> <span class="s">20210103 000000</span>
+<span class="na">alpha</span> <span class="o">=</span> <span class="s">0.5</span>
+<span class="na">zsini</span> <span class="o">=</span> <span class="s">0.0</span>
+<span class="na">dtmaxout</span> <span class="o">=</span> <span class="s">172800</span>
+
+<span class="k">[setup_basemaps]</span>
+<span class="na">basemaps_fn</span> <span class="o">=</span> <span class="s">merit_hydro       # hydrography basemaps [&#39;elevtn&#39;, &#39;flwdir&#39;, &#39;uparea&#39;, &#39;basins&#39;]</span>
+<span class="na">landmask_fn</span> <span class="o">=</span> <span class="s">osm_landareas     # land polygon</span>
+<span class="na">crs</span> <span class="o">=</span> <span class="s">utm                       # model CRS (must be UTM zone)</span>
+<span class="na">bathymetry_fn</span> <span class="o">=</span> <span class="s">gebco           # bathymetry [&#39;elevtn&#39;]</span>
+<span class="na">mdt_fn</span> <span class="o">=</span> <span class="s">dtu10mdt_egm96         # mean dynamic topography [&#39;mdt&#39;]</span>
+<span class="na">merge_buffer</span> <span class="o">=</span> <span class="s">0                # buffer (cells) between elevation and bathymetry data filled with &#39;linear&#39; interpolation</span>
+<span class="na">mask_fn</span> <span class="o">=</span> <span class="s">None                  # polygon to mask active model cells </span>
+<span class="na">dep_contour</span> <span class="o">=</span> <span class="s">-1                # mimimum depth threshold for active model cells</span>
+
+<span class="k">[setup_cn_infiltration]</span>
+<span class="na">cn_fn</span> <span class="o">=</span> <span class="s">gcn250                  # curve number source</span>
+<span class="na">antecedent_runoff_conditions</span> <span class="o">=</span> <span class="s">avg # for gcn250: {&#39;dry&#39;, &#39;avg&#39;, &#39;wet&#39;}</span>
+
+<span class="k">[setup_manning_roughness]</span>
+<span class="na">lulc_fn</span> <span class="o">=</span> <span class="s">vito                  # land-use land-cover source</span>
+<span class="na">map_fn</span> <span class="o">=</span> <span class="s">None                   # mapping file. read from hydromt/data/lulc/{lulc_fn}_mapping.csv if None</span>
+
+<span class="k">[setup_river_inflow]</span>
+<span class="na">basemaps_fn</span> <span class="o">=</span> <span class="s">merit_hydro       # hydrography basemaps [flwdir&#39;, &#39;uparea&#39;], should be same as under [basemaps]</span>
+<span class="na">river_upa</span> <span class="o">=</span> <span class="s">25                  # Mimimum upstream area threshold (km2) of river cells</span>
+
+<span class="k">[setup_river_outflow]</span>
+<span class="na">basemaps_fn</span> <span class="o">=</span> <span class="s">merit_hydro       # hydrography basemaps [flwdir&#39;, &#39;uparea&#39;], should be same as under [basemaps]</span>
+<span class="na">river_upa</span> <span class="o">=</span> <span class="s">5                   # Mimimum upstream area threshold (km2) of river cells</span>
+<span class="na">outflow_width</span> <span class="o">=</span> <span class="s">2500             # The width [m] of the outflow boundary</span>
+
+<span class="k">[setup_gauges]</span>
+<span class="na">gauges_fn</span> <span class="o">=</span> <span class="s">riverine_gauges.csv   # gauges point locations</span>
+<span class="na">crs</span> <span class="o">=</span> <span class="s">4326                      # epsg-code for gauges (only used if not in gauges_fn metadata, e.g. when csv file)</span>
+
+<span class="k">[setup_q_forcing]</span>
+<span class="na">gauges_fn</span> <span class="o">=</span> <span class="s">None                #  discharge gauge data (locations point file or nc file with timeseries and point coordinates)</span>
+<span class="na">timeseries_fn</span> <span class="o">=</span> <span class="s">discharge_input_sfincs.csv   # timeseries data at discharge gauges</span>
 </pre></div>
 </div>
 </div>
