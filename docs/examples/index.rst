@@ -11,7 +11,7 @@ Examples
    :maxdepth: 1
 
    Build a coastal SFINCS model <../_examples/build_coastal_model>
-   Build a riverine SFINCS model <../_examples/build_model_riverine>
+   Build a riverine SFINCS model <../_examples/build_riverine_model>
 
 **Update a model schematization from command line interface**
 

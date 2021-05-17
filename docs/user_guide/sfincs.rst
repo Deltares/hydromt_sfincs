@@ -35,7 +35,8 @@ The following components are available to build or update SFINCS model schematiz
 
    SfincsModel.setup_config
    SfincsModel.setup_basemaps
-   SfincsModel.setup_rivers
+   SfincsModel.setup_river_inflow
+   SfincsModel.setup_river_outflow
    SfincsModel.setup_gauges
    SfincsModel.setup_manning_roughness
    SfincsModel.setup_cn_infiltration
@@ -48,7 +49,7 @@ The following components are available to build or update SFINCS model schematiz
 .. warning::
 
     In SFINCS, the order in which the components are listed in the ini file is important: 
-    `setup_rivers` should be run before `setup_q_forcing` or `setup_q_forcing_from_grid`.
+    `setup_river_inflow` should be run before `setup_q_forcing` or `setup_q_forcing_from_grid`.
 
 .. _data: https://deltares.github.io/hydromt/latest/user_guide/data.html
 .. _region: https://deltares.github.io/hydromt/latest/user_guide/cli.html#region-options
