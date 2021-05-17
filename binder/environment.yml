@@ -9,7 +9,7 @@ dependencies:
   - black
   - bottleneck
   - cartopy # to run examples
-  - dask>=2.30
+  - dask=2021.4
   - descartes # to run examples
   - entrypoints
   - ffmpeg  # to run examples (animation)

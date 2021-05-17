@@ -15,7 +15,6 @@ import pandas as pd
 import xarray as xr
 import pyproj
 from datetime import datetime
-import pyflwdir
 
 import hydromt
 from hydromt.models.model_api import Model
@@ -256,12 +255,15 @@ class SfincsModel(Model):
         # reproject to destination CRS and clip to actual extent
         da_elv = ds_org["elevtn"]
         if da_elv.raster.crs != dst_crs:
-            da_elv = da_elv.raster.clip_geom(geom=dst_geom, buffer=5).raster.reproject(
-                dst_res=res, dst_crs=dst_crs, align=True, method=method
+            da_elv = (
+                da_elv.raster.clip_geom(geom=dst_geom, buffer=5)
+                .load()
+                .raster.reproject(
+                    dst_res=res, dst_crs=dst_crs, align=True, method=method
+                )
+                .raster.clip_geom(dst_geom, align=res)
+                .raster.mask_nodata()  # force nodata value to be np.nan
             )
-        da_elv = da_elv.raster.clip_geom(dst_geom, align=res)
-        # force nodata value to be np.nan
-        da_elv = da_elv.raster.mask_nodata()
 
         # read and rasterize land geometry
         # land mask contains all valid dep values inside land geometry
@@ -281,6 +283,7 @@ class SfincsModel(Model):
                 self.data_catalog.get_rasterdataset(
                     bathymetry_fn, geom=dst_geom, buffer=2, variables=["elevtn"]
                 )
+                .load()
                 .raster.reproject_like(da_elv, method=method)
                 .raster.mask_nodata()
             )
