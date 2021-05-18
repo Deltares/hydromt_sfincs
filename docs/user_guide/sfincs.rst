@@ -20,7 +20,7 @@ See :ref:`Coastal SFINCS model schematization <sfincs_coastal>` and
 :ref:`Riverine SFINCS model schematization <sfincs_riverine>` for suggested components
 and options to use for coastal or riverine applications.
 
-For python users all SFINCS attributes and methods are available, see :ref:<api_model>
+For python users all SFINCS attributes and methods are available, see :ref:`api_model`
 
 .. _components:
 

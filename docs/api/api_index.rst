@@ -6,7 +6,6 @@ API reference
 
 .. _api_model:
 
-
 SFINCS model class
 ==================
 

@@ -14,7 +14,7 @@ To install hydromt and the toml package using conda-forge do:
 
 .. code-block:: console
 
-  conda install hydromt toml -c conda-forge
+  conda install hydromt -c conda-forge
 
 To install hydromt_sfincs using pip do:
 Note: make sure this is installed in the same environment as hydromt.
@@ -24,12 +24,14 @@ Note: make sure this is installed in the same environment as hydromt.
   pip install hydromt_sfincs
 
 The hydroMT core and sfincs plugin can be easily installed together in a single hydromt-sfincs environment 
-using the environment.yml file in the repository root. This environment includes some packages that are 
+using the environment.yml file in the repository binder folder. This environment includes some packages that are 
 required to run the example notebooks.
 
 .. code-block:: console
 
-  conda env create -f environment.yml
+  conda env create -f binder/environment.yml
+  conda activate hydromt-sfincs
+  pip install hydromt_sfincs
 
 
 Developper install
@@ -54,14 +56,7 @@ file contained in the repository:
     $ conda env create -f envs/hydromt-sfincs.yml
     $ conda activate hydromt-sfincs
 
-Finally, build and install hydromt_sfincs using pip.
-
-.. code-block:: console
-
-    $ pip install .
-
-If you wish to make changes in hydromt_sfincs, you should make an editable install of hydromt. 
-This is possible using the `flit <https://flit.readthedocs.io/en/latest/>`_ package and install command.
+Finally, build and install an editable version of hydromt_sfincs using `flit <https://flit.readthedocs.io/en/latest/>`_.
 
 For Windows:
 
