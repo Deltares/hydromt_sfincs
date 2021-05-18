@@ -592,8 +592,8 @@ Options:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2021-05-18 08:56:25,035 - build - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/texel_sfincs/.
-2021-05-18 08:56:28,816 - build - main - ERROR - index 0 is out of bounds for axis 0 with size 0
+2021-05-18 09:07:04,457 - build - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/texel_sfincs/.
+2021-05-18 09:07:07,303 - build - main - ERROR - index 0 is out of bounds for axis 0 with size 0
 Traceback (most recent call last):
   File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/cli/main.py&#34;, line 196, in build
     mod.build(region, res, opt=opt)
@@ -700,43 +700,43 @@ datasets using data yml files <a class="reference external" href="https://deltar
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2021-05-18 08:56:31,110 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs/hydromt.log.
-2021-05-18 08:56:31,110 - build - log - INFO - HydroMT version: 0.4.1
-2021-05-18 08:56:31,110 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs.
-2021-05-18 08:56:31,110 - build - main - INFO - User settings:
-2021-05-18 08:56:31,110 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.1.0).
-2021-05-18 08:56:31,110 - build - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs/.
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.region: {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.res: 100
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.crs: utm
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.basemaps_fn: merit_hydro
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.basin_index_fn: merit_hydro_index
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.landmask_fn: osm_landareas
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.bathymetry_fn: gebco
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.mdt_fn: dtu10mdt_egm96
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.merge_buffer: 0
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.mask_fn: None
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.dep_contour: -1
-2021-05-18 08:56:31,111 - build - model_api - INFO - setup_basemaps.method: bilinear
-2021-05-18 08:56:31,111 - build - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.4/data_catalog.yml
-2021-05-18 08:56:31,194 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/merit_hydro/{variable}.tif
-2021-05-18 08:56:31,290 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
-2021-05-18 08:56:31,501 - build - data_adapter - INFO - DataCatalog: Getting osm_landareas GeoDataFrame vector data from /home/runner/.hydromt_data/data/v0.0.4/osm_landareas.gpkg
-2021-05-18 08:56:31,619 - build - data_adapter - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/gebco.tif
-2021-05-18 08:56:31,660 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
-2021-05-18 08:56:31,781 - build - data_adapter - INFO - DataCatalog: Getting dtu10mdt_egm96 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/dtu10mdt_egm96.tif
-2021-05-18 08:56:31,821 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
-2021-05-18 08:56:31,970 - build - sfincs - DEBUG - Mean vertical corection from MDT: 0.195
-2021-05-18 08:56:32,112 - build - sfincs - DEBUG - Interpolate bathymetry at 6892 cells
-2021-05-18 08:56:40,766 - build - sfincs - INFO - Bathymetry data merged; buffer 0 cells
-2021-05-18 08:56:40,768 - build - sfincs - INFO - Bathymetry generated
-2021-05-18 08:56:40,802 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
-2021-05-18 08:56:40,842 - build - sfincs - INFO - Mask generated; 192747 active cells.
-2021-05-18 08:56:40,843 - build - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs
-2021-05-18 08:56:40,843 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs/sfincs.inp
-2021-05-18 08:56:40,843 - build - sfincs - DEBUG - Derive indices from mask.
-2021-05-18 08:56:40,848 - build - sfincs - INFO - Write GIS raster files to &#39;gis&#39; subfolder
-2021-05-18 08:56:40,864 - build - sfincs - INFO - Write staticgeom files
+2021-05-18 09:07:09,188 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs/hydromt.log.
+2021-05-18 09:07:09,188 - build - log - INFO - HydroMT version: 0.4.1
+2021-05-18 09:07:09,188 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs.
+2021-05-18 09:07:09,188 - build - main - INFO - User settings:
+2021-05-18 09:07:09,188 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.1.0).
+2021-05-18 09:07:09,188 - build - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs/.
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.region: {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.res: 100
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.crs: utm
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.basemaps_fn: merit_hydro
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.basin_index_fn: merit_hydro_index
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.landmask_fn: osm_landareas
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.bathymetry_fn: gebco
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.mdt_fn: dtu10mdt_egm96
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.merge_buffer: 0
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.mask_fn: None
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.dep_contour: -1
+2021-05-18 09:07:09,189 - build - model_api - INFO - setup_basemaps.method: bilinear
+2021-05-18 09:07:09,189 - build - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.4/data_catalog.yml
+2021-05-18 09:07:09,253 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/merit_hydro/{variable}.tif
+2021-05-18 09:07:09,329 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
+2021-05-18 09:07:09,506 - build - data_adapter - INFO - DataCatalog: Getting osm_landareas GeoDataFrame vector data from /home/runner/.hydromt_data/data/v0.0.4/osm_landareas.gpkg
+2021-05-18 09:07:09,606 - build - data_adapter - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/gebco.tif
+2021-05-18 09:07:09,642 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
+2021-05-18 09:07:09,749 - build - data_adapter - INFO - DataCatalog: Getting dtu10mdt_egm96 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/dtu10mdt_egm96.tif
+2021-05-18 09:07:09,784 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
+2021-05-18 09:07:09,912 - build - sfincs - DEBUG - Mean vertical corection from MDT: 0.195
+2021-05-18 09:07:10,033 - build - sfincs - DEBUG - Interpolate bathymetry at 6892 cells
+2021-05-18 09:07:17,923 - build - sfincs - INFO - Bathymetry data merged; buffer 0 cells
+2021-05-18 09:07:17,925 - build - sfincs - INFO - Bathymetry generated
+2021-05-18 09:07:17,955 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
+2021-05-18 09:07:17,989 - build - sfincs - INFO - Mask generated; 192747 active cells.
+2021-05-18 09:07:17,990 - build - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs
+2021-05-18 09:07:17,990 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs/sfincs.inp
+2021-05-18 09:07:17,990 - build - sfincs - DEBUG - Derive indices from mask.
+2021-05-18 09:07:17,995 - build - sfincs - INFO - Write GIS raster files to &#39;gis&#39; subfolder
+2021-05-18 09:07:18,008 - build - sfincs - INFO - Write staticgeom files
 
 </pre></div></div>
 </div>
@@ -834,43 +834,43 @@ epsg            = 32633
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2021-05-18 08:56:43,340 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150/hydromt.log.
-2021-05-18 08:56:43,341 - build - log - INFO - HydroMT version: 0.4.1
-2021-05-18 08:56:43,341 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150.
-2021-05-18 08:56:43,341 - build - main - INFO - User settings:
-2021-05-18 08:56:43,341 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.1.0).
-2021-05-18 08:56:43,341 - build - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150/.
-2021-05-18 08:56:43,341 - build - model_api - INFO - setup_basemaps.region: {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
-2021-05-18 08:56:43,341 - build - model_api - INFO - setup_basemaps.res: 150.0
-2021-05-18 08:56:43,341 - build - model_api - INFO - setup_basemaps.crs: utm
-2021-05-18 08:56:43,341 - build - model_api - INFO - setup_basemaps.basemaps_fn: merit_hydro
-2021-05-18 08:56:43,341 - build - model_api - INFO - setup_basemaps.basin_index_fn: merit_hydro_index
-2021-05-18 08:56:43,341 - build - model_api - INFO - setup_basemaps.landmask_fn: osm_landareas
-2021-05-18 08:56:43,342 - build - model_api - INFO - setup_basemaps.bathymetry_fn: gebco
-2021-05-18 08:56:43,342 - build - model_api - INFO - setup_basemaps.mdt_fn: dtu10mdt_egm96
-2021-05-18 08:56:43,342 - build - model_api - INFO - setup_basemaps.merge_buffer: 0
-2021-05-18 08:56:43,342 - build - model_api - INFO - setup_basemaps.mask_fn: None
-2021-05-18 08:56:43,342 - build - model_api - INFO - setup_basemaps.dep_contour: -1
-2021-05-18 08:56:43,342 - build - model_api - INFO - setup_basemaps.method: bilinear
-2021-05-18 08:56:43,342 - build - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.4/data_catalog.yml
-2021-05-18 08:56:43,423 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/merit_hydro/{variable}.tif
-2021-05-18 08:56:43,518 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
-2021-05-18 08:56:43,709 - build - data_adapter - INFO - DataCatalog: Getting osm_landareas GeoDataFrame vector data from /home/runner/.hydromt_data/data/v0.0.4/osm_landareas.gpkg
-2021-05-18 08:56:43,825 - build - data_adapter - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/gebco.tif
-2021-05-18 08:56:43,865 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
-2021-05-18 08:56:43,967 - build - data_adapter - INFO - DataCatalog: Getting dtu10mdt_egm96 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/dtu10mdt_egm96.tif
-2021-05-18 08:56:44,007 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
-2021-05-18 08:56:44,137 - build - sfincs - DEBUG - Mean vertical corection from MDT: 0.193
-2021-05-18 08:56:44,235 - build - sfincs - DEBUG - Interpolate bathymetry at 3488 cells
-2021-05-18 08:56:48,009 - build - sfincs - INFO - Bathymetry data merged; buffer 0 cells
-2021-05-18 08:56:48,011 - build - sfincs - INFO - Bathymetry generated
-2021-05-18 08:56:48,032 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
-2021-05-18 08:56:48,070 - build - sfincs - INFO - Mask generated; 85974 active cells.
-2021-05-18 08:56:48,070 - build - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150
-2021-05-18 08:56:48,071 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150/sfincs.inp
-2021-05-18 08:56:48,071 - build - sfincs - DEBUG - Derive indices from mask.
-2021-05-18 08:56:48,075 - build - sfincs - INFO - Write GIS raster files to &#39;gis&#39; subfolder
-2021-05-18 08:56:48,088 - build - sfincs - INFO - Write staticgeom files
+2021-05-18 09:07:20,092 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150/hydromt.log.
+2021-05-18 09:07:20,092 - build - log - INFO - HydroMT version: 0.4.1
+2021-05-18 09:07:20,092 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150.
+2021-05-18 09:07:20,092 - build - main - INFO - User settings:
+2021-05-18 09:07:20,092 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.1.0).
+2021-05-18 09:07:20,092 - build - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150/.
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.region: {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.res: 150.0
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.crs: utm
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.basemaps_fn: merit_hydro
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.basin_index_fn: merit_hydro_index
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.landmask_fn: osm_landareas
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.bathymetry_fn: gebco
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.mdt_fn: dtu10mdt_egm96
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.merge_buffer: 0
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.mask_fn: None
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.dep_contour: -1
+2021-05-18 09:07:20,093 - build - model_api - INFO - setup_basemaps.method: bilinear
+2021-05-18 09:07:20,093 - build - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.4/data_catalog.yml
+2021-05-18 09:07:20,163 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/merit_hydro/{variable}.tif
+2021-05-18 09:07:20,244 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
+2021-05-18 09:07:20,405 - build - data_adapter - INFO - DataCatalog: Getting osm_landareas GeoDataFrame vector data from /home/runner/.hydromt_data/data/v0.0.4/osm_landareas.gpkg
+2021-05-18 09:07:20,501 - build - data_adapter - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/gebco.tif
+2021-05-18 09:07:20,535 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
+2021-05-18 09:07:20,619 - build - data_adapter - INFO - DataCatalog: Getting dtu10mdt_egm96 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/dtu10mdt_egm96.tif
+2021-05-18 09:07:20,653 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
+2021-05-18 09:07:20,764 - build - sfincs - DEBUG - Mean vertical corection from MDT: 0.193
+2021-05-18 09:07:20,839 - build - sfincs - DEBUG - Interpolate bathymetry at 3488 cells
+2021-05-18 09:07:24,203 - build - sfincs - INFO - Bathymetry data merged; buffer 0 cells
+2021-05-18 09:07:24,205 - build - sfincs - INFO - Bathymetry generated
+2021-05-18 09:07:24,224 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
+2021-05-18 09:07:24,259 - build - sfincs - INFO - Mask generated; 85974 active cells.
+2021-05-18 09:07:24,259 - build - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150
+2021-05-18 09:07:24,259 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150/sfincs.inp
+2021-05-18 09:07:24,260 - build - sfincs - DEBUG - Derive indices from mask.
+2021-05-18 09:07:24,263 - build - sfincs - INFO - Write GIS raster files to &#39;gis&#39; subfolder
+2021-05-18 09:07:24,274 - build - sfincs - INFO - Write staticgeom files
 
 </pre></div></div>
 </div>
@@ -1006,69 +1006,69 @@ lookup table that relates land use classes to manning roughness values in sec m<
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2021-05-18 08:56:50,400 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full/hydromt.log.
-2021-05-18 08:56:50,400 - build - log - INFO - HydroMT version: 0.4.1
-2021-05-18 08:56:50,401 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full.
-2021-05-18 08:56:50,401 - build - main - INFO - User settings:
-2021-05-18 08:56:50,403 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.1.0).
-2021-05-18 08:56:50,403 - build - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full/.
-2021-05-18 08:56:50,403 - build - model_api - DEBUG - Setting model config options.
-2021-05-18 08:56:50,405 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.region: {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.res: 150.0
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.crs: utm
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.basemaps_fn: merit_hydro
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.basin_index_fn: merit_hydro_index
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.landmask_fn: osm_landareas
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.bathymetry_fn: gebco
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.mdt_fn: dtu10mdt_egm96
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.merge_buffer: 0
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.mask_fn: None
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.dep_contour: -1
-2021-05-18 08:56:50,405 - build - model_api - INFO - setup_basemaps.method: bilinear
-2021-05-18 08:56:50,405 - build - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.4/data_catalog.yml
-2021-05-18 08:56:50,488 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/merit_hydro/{variable}.tif
-2021-05-18 08:56:50,582 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
-2021-05-18 08:56:50,770 - build - data_adapter - INFO - DataCatalog: Getting osm_landareas GeoDataFrame vector data from /home/runner/.hydromt_data/data/v0.0.4/osm_landareas.gpkg
-2021-05-18 08:56:50,885 - build - data_adapter - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/gebco.tif
-2021-05-18 08:56:50,924 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
-2021-05-18 08:56:51,025 - build - data_adapter - INFO - DataCatalog: Getting dtu10mdt_egm96 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/dtu10mdt_egm96.tif
-2021-05-18 08:56:51,065 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
-2021-05-18 08:56:51,195 - build - sfincs - DEBUG - Mean vertical corection from MDT: 0.193
-2021-05-18 08:56:51,272 - build - sfincs - DEBUG - Interpolate bathymetry at 3488 cells
-2021-05-18 08:56:55,066 - build - sfincs - INFO - Bathymetry data merged; buffer 0 cells
-2021-05-18 08:56:55,068 - build - sfincs - INFO - Bathymetry generated
-2021-05-18 08:56:55,125 - build - sfincs - INFO - Mask generated; 85974 active cells.
-2021-05-18 08:56:55,125 - build - model_api - INFO - setup_cn_infiltration.cn_fn: gcn250
-2021-05-18 08:56:55,126 - build - model_api - INFO - setup_cn_infiltration.antecedent_runoff_conditions: avg
-2021-05-18 08:56:55,126 - build - data_adapter - INFO - DataCatalog: Getting gcn250 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/gcn250/{variable}.tif
-2021-05-18 08:56:55,166 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.021, 45.198, 12.837, 45.666]
-2021-05-18 08:56:55,259 - build - model_api - INFO - setup_manning_roughness.lulc_fn: vito
-2021-05-18 08:56:55,259 - build - model_api - INFO - setup_manning_roughness.map_fn: None
-2021-05-18 08:56:55,259 - build - data_adapter - INFO - DataCatalog: Getting vito RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/vito.tif
-2021-05-18 08:56:55,299 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.021, 45.198, 12.837, 45.666]
-2021-05-18 08:56:55,372 - build - landuse - INFO - Deriving N using average resampling (nodata=-999.0).
-2021-05-18 08:56:55,516 - build - model_api - INFO - setup_h_forcing.gauges_fn: gtsmv3_eu_era5
-2021-05-18 08:56:55,516 - build - model_api - INFO - setup_h_forcing.timeseries_fn: None
-2021-05-18 08:56:55,516 - build - model_api - INFO - setup_h_forcing.mdt_fn: dtu10mdt_egm96
-2021-05-18 08:56:55,516 - build - model_api - INFO - setup_h_forcing.buffer: 10000.0
-2021-05-18 08:56:55,518 - build - data_adapter - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.4/gtsmv3_eu_era5.nc
-2021-05-18 08:56:55,982 - build - data_adapter - INFO - GeoDataset: Read netcdf data and clip to geom - [267900.000, 5008500.000, 331200.000, 5059200.000].
-2021-05-18 08:56:56,070 - build - data_adapter - DEBUG - GeoDataset: Slicing time dim (datetime.datetime(2010, 2, 1, 0, 0), datetime.datetime(2010, 2, 10, 0, 0))
-2021-05-18 08:56:56,072 - build - sfincs - DEBUG - waterlevel forcing: setting data at 16 points.
-2021-05-18 08:56:56,145 - build - sfincs - DEBUG - waterlevel forcing: updating sfincs.inp.
-2021-05-18 08:56:56,146 - build - model_api - INFO - setup_p_forcing_gridded.precip_fn: era5_hourly
-2021-05-18 08:56:56,146 - build - model_api - INFO - setup_p_forcing_gridded.dst_res: None
-2021-05-18 08:56:56,146 - build - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.4/era5_hourly.nc
-2021-05-18 08:56:56,159 - build - data_adapter - DEBUG - RasterDataset: Slicing time dim (datetime.datetime(2010, 2, 1, 0, 0), datetime.datetime(2010, 2, 10, 0, 0))
-2021-05-18 08:56:56,195 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.021, 45.198, 12.837, 45.666]
-2021-05-18 08:56:56,260 - build - data_adapter - DEBUG - RasterDataset: Convert units for 1 variables.
-2021-05-18 08:56:56,287 - build - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full
-2021-05-18 08:56:56,288 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full/sfincs.inp
-2021-05-18 08:56:56,288 - build - sfincs - DEBUG - Derive indices from mask.
-2021-05-18 08:56:56,339 - build - sfincs - INFO - Write GIS raster files to &#39;gis&#39; subfolder
-2021-05-18 08:56:56,400 - build - sfincs - INFO - Write staticgeom files
-2021-05-18 08:56:56,425 - build - sfincs - INFO - Write forcing files
+2021-05-18 09:07:26,210 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full/hydromt.log.
+2021-05-18 09:07:26,210 - build - log - INFO - HydroMT version: 0.4.1
+2021-05-18 09:07:26,210 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full.
+2021-05-18 09:07:26,210 - build - main - INFO - User settings:
+2021-05-18 09:07:26,212 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.1.0).
+2021-05-18 09:07:26,212 - build - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full/.
+2021-05-18 09:07:26,212 - build - model_api - DEBUG - Setting model config options.
+2021-05-18 09:07:26,213 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
+2021-05-18 09:07:26,213 - build - model_api - INFO - setup_basemaps.region: {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
+2021-05-18 09:07:26,213 - build - model_api - INFO - setup_basemaps.res: 150.0
+2021-05-18 09:07:26,214 - build - model_api - INFO - setup_basemaps.crs: utm
+2021-05-18 09:07:26,214 - build - model_api - INFO - setup_basemaps.basemaps_fn: merit_hydro
+2021-05-18 09:07:26,214 - build - model_api - INFO - setup_basemaps.basin_index_fn: merit_hydro_index
+2021-05-18 09:07:26,214 - build - model_api - INFO - setup_basemaps.landmask_fn: osm_landareas
+2021-05-18 09:07:26,214 - build - model_api - INFO - setup_basemaps.bathymetry_fn: gebco
+2021-05-18 09:07:26,214 - build - model_api - INFO - setup_basemaps.mdt_fn: dtu10mdt_egm96
+2021-05-18 09:07:26,214 - build - model_api - INFO - setup_basemaps.merge_buffer: 0
+2021-05-18 09:07:26,214 - build - model_api - INFO - setup_basemaps.mask_fn: None
+2021-05-18 09:07:26,214 - build - model_api - INFO - setup_basemaps.dep_contour: -1
+2021-05-18 09:07:26,214 - build - model_api - INFO - setup_basemaps.method: bilinear
+2021-05-18 09:07:26,214 - build - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.4/data_catalog.yml
+2021-05-18 09:07:26,287 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/merit_hydro/{variable}.tif
+2021-05-18 09:07:26,367 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [12.047909, 45.15809, 12.833432, 45.646944]}
+2021-05-18 09:07:26,538 - build - data_adapter - INFO - DataCatalog: Getting osm_landareas GeoDataFrame vector data from /home/runner/.hydromt_data/data/v0.0.4/osm_landareas.gpkg
+2021-05-18 09:07:26,644 - build - data_adapter - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/gebco.tif
+2021-05-18 09:07:26,680 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
+2021-05-18 09:07:26,771 - build - data_adapter - INFO - DataCatalog: Getting dtu10mdt_egm96 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/dtu10mdt_egm96.tif
+2021-05-18 09:07:26,808 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.022, 45.140, 12.852, 45.665]
+2021-05-18 09:07:26,924 - build - sfincs - DEBUG - Mean vertical corection from MDT: 0.193
+2021-05-18 09:07:26,993 - build - sfincs - DEBUG - Interpolate bathymetry at 3488 cells
+2021-05-18 09:07:30,353 - build - sfincs - INFO - Bathymetry data merged; buffer 0 cells
+2021-05-18 09:07:30,354 - build - sfincs - INFO - Bathymetry generated
+2021-05-18 09:07:30,408 - build - sfincs - INFO - Mask generated; 85974 active cells.
+2021-05-18 09:07:30,409 - build - model_api - INFO - setup_cn_infiltration.cn_fn: gcn250
+2021-05-18 09:07:30,409 - build - model_api - INFO - setup_cn_infiltration.antecedent_runoff_conditions: avg
+2021-05-18 09:07:30,409 - build - data_adapter - INFO - DataCatalog: Getting gcn250 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/gcn250/{variable}.tif
+2021-05-18 09:07:30,447 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.021, 45.198, 12.837, 45.666]
+2021-05-18 09:07:30,533 - build - model_api - INFO - setup_manning_roughness.lulc_fn: vito
+2021-05-18 09:07:30,534 - build - model_api - INFO - setup_manning_roughness.map_fn: None
+2021-05-18 09:07:30,534 - build - data_adapter - INFO - DataCatalog: Getting vito RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.4/vito.tif
+2021-05-18 09:07:30,571 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.021, 45.198, 12.837, 45.666]
+2021-05-18 09:07:30,640 - build - landuse - INFO - Deriving N using average resampling (nodata=-999.0).
+2021-05-18 09:07:30,766 - build - model_api - INFO - setup_h_forcing.gauges_fn: gtsmv3_eu_era5
+2021-05-18 09:07:30,767 - build - model_api - INFO - setup_h_forcing.timeseries_fn: None
+2021-05-18 09:07:30,767 - build - model_api - INFO - setup_h_forcing.mdt_fn: dtu10mdt_egm96
+2021-05-18 09:07:30,767 - build - model_api - INFO - setup_h_forcing.buffer: 10000.0
+2021-05-18 09:07:30,768 - build - data_adapter - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.4/gtsmv3_eu_era5.nc
+2021-05-18 09:07:31,164 - build - data_adapter - INFO - GeoDataset: Read netcdf data and clip to geom - [267900.000, 5008500.000, 331200.000, 5059200.000].
+2021-05-18 09:07:31,245 - build - data_adapter - DEBUG - GeoDataset: Slicing time dim (datetime.datetime(2010, 2, 1, 0, 0), datetime.datetime(2010, 2, 10, 0, 0))
+2021-05-18 09:07:31,246 - build - sfincs - DEBUG - waterlevel forcing: setting data at 16 points.
+2021-05-18 09:07:31,305 - build - sfincs - DEBUG - waterlevel forcing: updating sfincs.inp.
+2021-05-18 09:07:31,305 - build - model_api - INFO - setup_p_forcing_gridded.precip_fn: era5_hourly
+2021-05-18 09:07:31,305 - build - model_api - INFO - setup_p_forcing_gridded.dst_res: None
+2021-05-18 09:07:31,305 - build - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.4/era5_hourly.nc
+2021-05-18 09:07:31,316 - build - data_adapter - DEBUG - RasterDataset: Slicing time dim (datetime.datetime(2010, 2, 1, 0, 0), datetime.datetime(2010, 2, 10, 0, 0))
+2021-05-18 09:07:31,346 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.021, 45.198, 12.837, 45.666]
+2021-05-18 09:07:31,403 - build - data_adapter - DEBUG - RasterDataset: Convert units for 1 variables.
+2021-05-18 09:07:31,427 - build - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full
+2021-05-18 09:07:31,427 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full/sfincs.inp
+2021-05-18 09:07:31,428 - build - sfincs - DEBUG - Derive indices from mask.
+2021-05-18 09:07:31,462 - build - sfincs - INFO - Write GIS raster files to &#39;gis&#39; subfolder
+2021-05-18 09:07:31,518 - build - sfincs - INFO - Write staticgeom files
+2021-05-18 09:07:31,538 - build - sfincs - INFO - Write forcing files
 
 </pre></div></div>
 </div>
