@@ -111,7 +111,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/api_index.html">API reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">What’s new</a></li>
 </ul>
 
             
@@ -212,7 +212,7 @@ We are working on a release from conda-forge.</p>
 <p>If you haven’t installed the <a class="reference external" href="https://github.com/Deltares/hydromt">hydroMT core package</a>
 we recommend installing it from conda-forge to get all dependencies and then install the plugin.</p>
 <p>To install hydromt and the toml package using conda-forge do:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda install hydromt toml -c conda-forge</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda install hydromt -c conda-forge</span>
 </pre></div>
 </div>
 <p>To install hydromt_sfincs using pip do:
@@ -221,9 +221,11 @@ Note: make sure this is installed in the same environment as hydromt.</p>
 </pre></div>
 </div>
 <p>The hydroMT core and sfincs plugin can be easily installed together in a single hydromt-sfincs environment
-using the environment.yml file in the repository root. This environment includes some packages that are
+using the environment.yml file in the repository binder folder. This environment includes some packages that are
 required to run the example notebooks.</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda env create -f environment.yml</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda env create -f binder/environment.yml</span>
+<span class="go">conda activate hydromt-sfincs</span>
+<span class="go">pip install hydromt_sfincs</span>
 </pre></div>
 </div>
 </div>
@@ -244,12 +246,7 @@ file contained in the repository:</p>
 <span class="gp">$ </span>conda activate hydromt-sfincs
 </pre></div>
 </div>
-<p>Finally, build and install hydromt_sfincs using pip.</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pip install .
-</pre></div>
-</div>
-<p>If you wish to make changes in hydromt_sfincs, you should make an editable install of hydromt.
-This is possible using the <a class="reference external" href="https://flit.readthedocs.io/en/latest/">flit</a> package and install command.</p>
+<p>Finally, build and install an editable version of hydromt_sfincs using <a class="reference external" href="https://flit.readthedocs.io/en/latest/">flit</a>.</p>
 <p>For Windows:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>flit install --pth-file
 </pre></div>
