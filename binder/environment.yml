@@ -35,5 +35,5 @@ dependencies:
   - xarray
   - zarr
   - pip:
-    - hydromt
+    - hydromt>=0.4.1
 

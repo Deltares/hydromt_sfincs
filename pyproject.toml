@@ -9,7 +9,7 @@ authors = [
     {name = "Hélène Boisgontier", email = "helene.boisgontier@deltares.nl"},
 ]
 dependencies = [
-    "hydromt",
+    "hydromt>=0.4.1",
 ]
 requires-python = ">=3.8" # fix tests to support older versions
 readme = "README.rst"
