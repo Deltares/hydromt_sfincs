@@ -233,7 +233,17 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.sfincs.SfincsModel.set_staticmaps">
 <span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">set_staticmaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hydromt_sfincs.sfincs.SfincsModel.set_staticmaps" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add data to staticmaps</p>
+<dd><p>Add data to staticmaps.</p>
+<p>All layers of staticmaps must have identical spatial coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>xarray.DataArray</em><em> or </em><em>xarray.Dataset</em>) – new map layer to add to staticmaps</p></li>
+<li><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of new map layer, this is used to overwrite the name of a DataArray
+or to select a variable from a Dataset.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </div>

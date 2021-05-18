@@ -222,9 +222,37 @@
 <h1>hydromt_sfincs.sfincs.SfincsModel.build<a class="headerlink" href="#hydromt-sfincs-sfincs-sfincsmodel-build" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.sfincs.SfincsModel.build">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hydromt_sfincs.sfincs.SfincsModel.build" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hydromt_sfincs.sfincs.SfincsModel.build" title="Permalink to this definition">¶</a></dt>
 <dd><p>Single method to setup and write a full model schematization and
 configuration from scratch</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>region</strong> (<em>dict</em>) – Description of model region. See <code class="xref py py-meth docutils literal notranslate"><span class="pre">parse_region()</span></code>
+for all options.</p></li>
+<li><p><strong>res</strong> (<em>float</em><em>, </em><em>optional</em>) – Model restolution. Use only if applicable to your model. By default None.</p></li>
+<li><p><strong>write</strong> (<em>bool</em><em>, </em><em>optional</em>) – Write the complete model schematization after setting up all model components.
+By default True.</p></li>
+<li><p><strong>opt</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>Model setup configuration. This is a nested dictionary where the first-level
+keys are the names of model spedific setup methods and the second-level
+keys the arguments of the method:</p>
+<dl>
+<dt><a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a>{</dt><dd><dl class="simple">
+<dt>&lt;name of method1&gt;: {</dt><dd><p>&lt;argument1&gt;: &lt;value1&gt;, &lt;argument2&gt;: &lt;value2&gt;
+}</p>
+</dd>
+<dt>&lt;name of method2&gt;: {</dt><dd><p>…
+}</p>
+</dd>
+</dl>
+<p>}</p>
+</dd>
+</dl>
+<p>}```</p>
+</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
