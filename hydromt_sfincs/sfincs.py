@@ -96,9 +96,9 @@ class SfincsModel(Model):
         mode="w",
         config_fn="sfincs.inp",
         write_gis=True,
-        opt={},
         data_libs=None,
         deltares_data=None,
+        artifact_data=None,
         logger=logger,
     ):
         """
@@ -131,6 +131,7 @@ class SfincsModel(Model):
             config_fn=config_fn,
             data_libs=data_libs,
             deltares_data=deltares_data,
+            artifact_data=artifact_data,
             logger=logger,
         )
 
