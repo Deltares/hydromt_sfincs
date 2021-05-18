@@ -47,3 +47,7 @@ sfincs = "hydromt_sfincs.sfincs:SfincsModel"
 [tool.black]
 line-length = 88
 target-version = ['py38']
+
+[tool.flit.sdist]
+include = ["hydromt_sfincs"]
+exclude = ["docs", "examples", "envs", "tests", "binder", ".github"]
