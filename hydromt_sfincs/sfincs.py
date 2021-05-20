@@ -2,7 +2,6 @@
 import os
 from os.path import join, isfile, abspath, dirname, basename
 import glob
-from hydromt import vector
 import numpy as np
 import logging
 from configparser import ConfigParser
