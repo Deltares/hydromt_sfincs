@@ -10,7 +10,7 @@ authors = [
 ]
 dependencies = [
     "hydromt>=0.4.1",
-    "dask >=2021.1,<2021.5",
+    "dask",
     "geopandas >=0.8",
     "netcdf4",
     "numpy",
