@@ -91,3 +91,7 @@ def test_model_build(tmpdir, case):
     if mod0._config:
         # flatten
         assert mod0._config == mod1._config, f"config mismatch"
+    # check forcing
+    if mod0._forcing:
+        for name in mod0.forcing:
+            assert np.allclose(mod0.forcing[name], mod1.forcing[name])

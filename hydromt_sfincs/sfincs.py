@@ -2,6 +2,7 @@
 import os
 from os.path import join, isfile, abspath, dirname, basename
 import glob
+from hydromt import gis_utils
 import numpy as np
 import logging
 from configparser import ConfigParser
@@ -65,6 +66,7 @@ class SfincsModel(Model):
     _1DFORCING = {
         "waterlevel": "bzs",
         "discharge": "dis",
+        "precip": "precip",
     }
     _2DFORCING = {
         "precip": "netampr",
@@ -87,6 +89,7 @@ class SfincsModel(Model):
         "bzs": {"standard_name": "waterlevel", "unit": "m+EGM96"},
         "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
         "netampr": {"standard_name": "precipitation", "unit": "mm.hr-1"},
+        "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
     }
 
     def __init__(
@@ -364,7 +367,7 @@ class SfincsModel(Model):
         self.set_staticmaps(data=da_elv, name=self._MAPS["elevtn"])
         da_mask.attrs.update(**self._ATTRS.get(self._MAPS["mask"], {}))
         self.set_staticmaps(data=da_mask, name=self._MAPS["mask"])
-        self._config_update()  # update geospatial header in config
+        self.update_spatial_attrs()  # update geospatial header in config
 
         # update mask staticgeom
         da_mask = (da_mask != 0).astype(np.int16)
@@ -888,28 +891,36 @@ class SfincsModel(Model):
                 self.logger.debug(f"{name} forcing: add dummy data to preset gauges.")
         self._update_forcing_1d(da.fillna(0.0), name)
 
-    def setup_p_forcing_gridded(self, precip_fn=None, dst_res=None, **kwargs):
-        """Setup gridded precipitation forcing.
+    def setup_p_forcing_from_grid(
+        self, precip_fn=None, dst_res=None, aggregate=False, **kwargs
+    ):
+        """Setup precipitation forcing from a gridded spatially varying data source.
 
-        The input precipitation grids are reprojected to the model CRS.
+        If aggregate is True, the distributed  precipitation is aggregated for the model
+        domain and a spatially uniform ascii `precipfile` is added to the model.
+        If aggregate is False, the distributed precipitation are reprojected to the model
+        CRS and written to the netcdf `netamprfile`.
 
-        Adds model layers:
+        Adds one of these model layer:
 
-        * **netamprfile**: gridded precipitation [mm/hr]
+        * **netamprfile**: distributed precipitation [mm/hr]
+        * **precipfile**: uniform precipitation [mm/hr]
 
         Parameters
         ----------
-        gauges_fn, str, Path
+        precip_fn, str, Path
             Path to precipitation rasterdataset netcdf file.
 
             * Required variables: ['precip' (mm)]
         dst_res: float
             output resolution (m), by default None and computed from source data.
-
+            Only used in combination with aggregate=False
+        aggregate: bool, {'mean', 'median'}, optional
+            Method to aggregate distributed input precipitation data. If True, mean
+            aggregation is used, if False (default) the data is not aggregated and
+            spatially distributed precipitation is returned.
         """
         variable = "precip"
-        if precip_fn is None:
-            return
         # get data for model domain and config time range
         tstart = datetime.strptime(self.config["tstart"], self._dtfmt)
         tstop = datetime.strptime(self.config["tstop"], self._dtfmt)
@@ -921,28 +932,74 @@ class SfincsModel(Model):
             variables=[variable],
         )
 
-        # reproject to utm zone:
-        # NOTE: currently SFINCS errors (stack overflow) on large files,
-        # downscaling to model grid is not recommended
-        kwargs0 = dict(
-            align=dst_res is not None,
-            method="nearest_index",
+        # aggregate or reproject in space
+        if aggregate:
+            stat = aggregate if isinstance(aggregate, str) else "mean"
+            self.logger.debug(f"Aggregate {variable} using {stat}.")
+            precip_out = precip.raster.zonal_stats(self.region, stats=stat)[
+                f"precip_{stat}"
+            ]
+            precip_out = precip_out.where(precip_out >= 0, 0).fillna(0)
+        else:
+            # reproject to model utm crs
+            # NOTE: currently SFINCS errors (stack overflow) on large files,
+            # downscaling to model grid is not recommended
+            kwargs0 = dict(align=dst_res is not None, method="nearest_index")
+            kwargs0.update(kwargs)
+            meth = kwargs0["method"]
+            self.logger.debug(f"Resample {variable} using {meth}.")
+            precip_out = precip.raster.reproject(
+                dst_crs=self.crs, dst_res=dst_res, **kwargs
+            ).fillna(0)
+
+        # resample in time
+        precip_out = hydromt.workflows.resample_time(
+            precip_out,
             freq=pd.to_timedelta("1H"),
+            conserve_mass=True,
+            upsampling="bfill",
+            downsampling="sum",
+            logger=self.logger,
         )
-        kwargs0.update(kwargs)
-        precip_out = precip.raster.reproject(
-            dst_crs=self.crs, dst_res=dst_res, **kwargs
-        ).fillna(0)
+        precip_out.name = "Precipitation"  # capital is important for netamprfile
 
         # set correct names and attrs and add forcing
-        sfincs_name = self._2DFORCING[variable]
+        if aggregate:
+            # precipfile = sfincs.precip
+            sfincs_name = self._1DFORCING[variable]
+            fn_out = f"sfincs.{sfincs_name}"
+        else:
+            # netamprfile = precip.nc
+            sfincs_name = self._2DFORCING[variable]
+            fn_out = f"{variable}.nc"
         precip_out.attrs.update(**self._ATTRS.get(sfincs_name, {}))
-        self.set_config(f"{sfincs_name}file", f"{variable}.nc")
-        precip_out.name = "Precipitation"  # capital is important
+        self.set_config(f"{sfincs_name}file", fn_out)
+        self.set_forcing(precip_out, name=sfincs_name)
+
+    def setup_p_forcing(self, precip_fn=None, **kwargs):
+        """Setup spatially uniform precipitation forcing.
+
+        Adds model layers:
+
+        * **precipfile**: uniform precipitation [mm/hr]
+
+        Parameters
+        ----------
+        precip_fn, str, Path
+            Path to precipitation csv or sfincs.prcp file
+        """
+        variable = "precip"
+        precip_out = hydromt.open_timeseries_from_table(precip_fn, **kwargs)
+        if precip_out[precip_out.vector.index_dim].size > 1:
+            raise ValueError(f"Uniform {variable} should have index size of one.")
+        # precipfile = sfincs.precip
+        sfincs_name = self._1DFORCING[variable]
+        self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name}")
         self.set_forcing(precip_out, name=sfincs_name)
 
     def plot_forcing(self, fn_out="forcing.png", **kwargs):
         import matplotlib.pyplot as plt
+        import matplotlib.dates as mdates
 
         if self.forcing:
             n = len(self.forcing.keys())
@@ -951,14 +1008,44 @@ class SfincsModel(Model):
             fig, axes = plt.subplots(n, 1, **kwargs0)
             axes = [axes] if n == 1 else axes
             for i, name in enumerate(self.forcing):
-                da = self.forcing[name].squeeze()
-                attrs = self._ATTRS.get(name, {})
-                longname = attrs.get("standard_name", "")
+                da = self.forcing[name]
+                prefix = ""
                 if da.ndim == 3:
                     da = da.mean(dim=[da.raster.x_dim, da.raster.y_dim])
-                da.attrs.update(attrs)
-                da.plot.line(ax=axes[i], x="time")
-                axes[i].set_title(f"SFINCS {longname} boundaries ({name})")
+                    prefix = "mean "
+                # convert to Single index dataframe (bar plots don't work with xarray)
+                df = da.squeeze().to_series()
+                if isinstance(df.index, pd.MultiIndex):
+                    df = df.unstack(0)
+                # convert dates a-priori as automatic conversion doesn't always work
+                df.index = mdates.date2num(df.index)
+                attrs = self._ATTRS.get(name, {})
+                longname = attrs.get("standard_name", "")
+                unit = attrs.get("unit", "")
+                if longname == "precipitation":
+                    axes[i].bar(df.index, df.values, facecolor="darkblue")
+                else:
+                    df.plot.line(ax=axes[i]).legend(
+                        title="index",
+                        bbox_to_anchor=(1.05, 1),
+                        loc="upper left",
+                        ncol=2,
+                    )
+                axes[i].set_ylabel(f"{prefix}{longname}\n[{unit}]")
+                axes[i].set_title(f"SFINCS {longname} forcing ({name})")
+
+            # set xlim to model tstart - tend
+            tstart = datetime.strptime(self.config["tstart"], self._dtfmt)
+            tstop = datetime.strptime(self.config["tstop"], self._dtfmt)
+            axes[i].set_xlim(mdates.date2num([tstart, tstop]))
+
+            # use a concise date formatter for format date axis ticks
+            locator = mdates.AutoDateLocator()
+            formatter = mdates.ConciseDateFormatter(locator)
+            axes[-1].xaxis.set_major_locator(locator)
+            axes[-1].xaxis.set_major_formatter(formatter)
+
+            # save figure
             if fn_out is not None:
                 if not os.path.isabs(fn_out):
                     fn_out = join(self.root, "figs", fn_out)
@@ -1121,7 +1208,7 @@ class SfincsModel(Model):
         self.write_staticgeoms()
         self.write_forcing()
 
-    def read_staticmaps(self, crs=None, nodata=-9999.0):
+    def read_staticmaps(self, nodata=-9999.0):
         """Read and SFNCS binary staticmaps
 
         Parameters
@@ -1131,31 +1218,8 @@ class SfincsModel(Model):
         nodata : float, optional
             assigned to missing values (mask = 0)
         """
-        # retrieve rows and cols
-        if crs is None and self.config.get("epsg", None) is not None:
-            crs = pyproj.CRS.from_epsg(int(self.config.get("epsg")))
-        cols = self.config["mmax"]
-        rows = self.config["nmax"]
-        dx = self.config["dx"]
-        dy = self.config["dy"]
-        west = self.config["x0"]
-        south = self.config["y0"]
-        rotdeg = self.config["rotation"]  # clockwise rotation in degrees
-        if rotdeg != 0:
-            raise NotImplementedError("Rotated grids cannot be parsed yet.")
-        # TODO: extend to use rotated grids with rotated affine
-        #     # code below generates a 2D coordinate grids.
-        #     xx = np.linspace(0, dx * (cols - 1), cols)
-        #     yy = np.linspace(0, dy * (rows - 1), rows)
-        #     xi, yi = np.meshgrid(xx, yy)
-        #     rot = rotdeg * np.pi / 180
-        #     # xgrid and ygrid not used for now
-        #     xgrid = x0 + np.cos(rot) * xi - np.sin(rot) * yi
-        #     ygrid = y0 + np.sin(rot) * xi + np.cos(rot) * yi
-        # ...
-        else:
-            north = south + dy * rows
-            transform = rasterio.transform.from_origin(west, north, dx, dy)
+        # read geospatial attributes from sfincs.inp
+        (rows, cols), transform, crs = self.get_spatial_attrs()
 
         # read raw numbers and reshape to 2D arrays
         fn_ind = abspath(join(self._root, self.config.get("indexfile")))
@@ -1163,20 +1227,15 @@ class SfincsModel(Model):
             raise IOError(f".ind path {fn_ind} does not exist")
         ind = np.fromfile(fn_ind, dtype="u4")[1:] - 1  # convert to zero based index
 
-        dtypes = {
-            "msk": "u1",
-        }
-        mvs = {
-            "msk": 0,
-            "scs": 0,
-        }
+        dtypes = {"msk": "u1"}
+        mvs = {"msk": 0, "scs": 0}
         data_vars = {}
         for name, sfincs_name in self._MAPS.items():
             fn = self.get_config(f"{sfincs_name}file", abs_path=True)
             if fn is None:
                 continue
             elif not isfile(fn):
-                raise IOError(f"{sfincs_name} path {fn} does not exist")
+                self.logger.warning(f"{sfincs_name}file not found at {fn}")
             dtype = dtypes.get(sfincs_name, "f4")
             mv = mvs.get(sfincs_name, nodata)
             data = np.full((cols, rows), mv, dtype=dtype)
@@ -1194,18 +1253,19 @@ class SfincsModel(Model):
             ds[name].attrs.update(self._ATTRS.get(name, {}))
         self.set_staticmaps(ds)
 
-    def write_staticmaps(self, write_figs=False):
-        """Write binary SFINCS staticmaps.
-        NOTE: This will only write the bathymetry, mask and indices data,
-        not the geographic information
-        If write_gis, write staticmaps to gis geotif as well.
-        """
+    def write_staticmaps(self):
+        """Write binary SFINCS staticmaps."""
         if not self._write:
             raise IOError("Model opened in read-only")
 
+        # make sure orientation is S -> N
+        ds = self.staticmaps
+        if ds.raster.res[1] < 0:
+            ds = ds.reindex({ds.raster.y_dim: list(reversed(ds.raster.ycoords))})
+
         self.logger.debug("Derive indices from mask.")
         # bin files index of sfincs is transposed compared to numpy 2D arrays
-        msk = np.flipud(self.staticmaps[self._MAPS["mask"]].values).transpose()
+        msk = ds[self._MAPS["mask"]].values.transpose()
         msk_ = np.array(msk[msk > 0], dtype="u1")
         # the index number file of sfincs starts with the length of the index numbers,
         # add that below
@@ -1217,7 +1277,7 @@ class SfincsModel(Model):
         msk_.tofile(fn_msk)
         indices_.tofile(fn_ind)
 
-        dtypes = {"dep": "f4"}
+        dtypes = {"dep": "f4"}  # default to f4
         for sfincs_name in self.staticmaps:
             if sfincs_name == self._MAPS["mask"]:
                 continue
@@ -1225,7 +1285,7 @@ class SfincsModel(Model):
             if fn_out is None:
                 fn_out = join(self.root, f"sfincs.{sfincs_name[:3]}")
                 self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name}")
-            data = np.flipud(self.staticmaps[sfincs_name].values).transpose()
+            data = ds[sfincs_name].values.transpose()
             data_ = np.array(data[msk > 0], dtype=dtypes.get(sfincs_name, "f4"))
             data_.tofile(fn_out)
 
@@ -1234,14 +1294,6 @@ class SfincsModel(Model):
             ds_out = self._staticmaps
             ds_out.raster.to_mapstack(join(self.root, "gis"))
 
-    @property
-    def staticgeoms(self):
-        """geopandas.GeoDataFrame representation of all model geometries"""
-        if self._staticgeoms:
-            if self._read:
-                self.read_staticgeoms()
-        return self._staticgeoms
-
     def read_staticgeoms(self):
         """Read bnd/src/obs SFINCS xy files
         If other geojson files are present gis folder, read those as well.
@@ -1249,21 +1301,24 @@ class SfincsModel(Model):
         if not self._write:
             self._staticgeoms = {}  # fresh start in read-only mode
         # read _GEOMS model files
-        for name, sfincs_name in self._GEOMS.items():
+        for sfincs_name in self._GEOMS.values():
             if f"{sfincs_name}file" in self.config:
                 fn = self.get_config(f"{sfincs_name}file", abs_path=True)
-                if not isfile(fn):
+                if fn is None:
+                    continue
+                elif not isfile(fn):
+                    self.logger.warning(f"{sfincs_name}file not found at {fn}")
                     continue
                 gdf = hydromt.open_vector(fn, crs=self.crs, driver="xy")
                 gdf.index = gdf.index.values + 1  # start index at one
                 self.set_staticgeoms(gdf, name=sfincs_name)
         # read additional geojson files from gis directory
         for fn in glob.glob(join(self.root, "gis", "*.geojson")):
-            sfincs_name = basename(fn).replace(".geojson", "")
-            if sfincs_name in self._GEOMS.values():
+            name = basename(fn).replace(".geojson", "")
+            if name in self._GEOMS.values():
                 continue
             gdf = hydromt.open_vector(fn, crs=self.crs)
-            self.set_staticgeoms(gdf, name=sfincs_name)
+            self.set_staticgeoms(gdf, name=name)
 
     def write_staticgeoms(self):
         """Write bnd/src/obs to SFINCS xy files
@@ -1284,34 +1339,32 @@ class SfincsModel(Model):
                     gdf.to_file(fn_gis, driver="GeoJSON")
 
     def read_forcing(self):
-        """Read bzs/dis forcing timeseries and netampr gridded forcing"""
+        """Read uniform and distributed forcing files if referenced in sfincs.inp."""
         if not self._write:
             # start fresh in read-only mode
             self._forcing = {}
-        if self.staticgeoms:
-            for name, sfincs_name in self._1DFORCING.items():
-                gdf = self.staticgeoms.get(self._GEOMS[name], None)
-                fn = self.get_config(f"{sfincs_name}file", abs_path=True)
-                if gdf is None or fn is None:
-                    continue
-                elif not isfile(fn):
-                    self.logger.warning(f"{sfincs_name} not found at {fn}")
-                    continue
-                # read timeseries
-                tref = datetime.strptime(self.config["tref"], self._dtfmt)
-                df = _read_timeseries(fn, tref)
-                dims = ("time", "index")
-                da = GeoDataArray.from_gdf(gdf, df, dims=dims, name=name)
-                self.set_forcing(da, name=sfincs_name)
-        for name, sfincs_name in self._2DFORCING.items():
+        forcing_dict = {**self._1DFORCING, **self._2DFORCING}  # merge dicts
+        tref = datetime.strptime(self.config["tref"], self._dtfmt)
+        for name, sfincs_name in forcing_dict.items():
             fn = self.get_config(f"{sfincs_name}file", abs_path=True)
             if fn is None:
                 continue
             elif not isfile(fn):
-                self.logger.warning(f"{sfincs_name} not found at {fn}")
+                self.logger.warning(f"{sfincs_name}file not found at {fn}")
                 continue
-            # NOTE: assume single variable per nc file
-            self.set_forcing(xr.open_dataarray(fn), name=sfincs_name)
+            # read timeseries
+            if sfincs_name in self._1DFORCING.values():
+                df = _read_timeseries(fn, tref)
+                # add locations
+                gdf = self.staticgeoms.get(self._GEOMS[name], None)
+                if gdf is not None:
+                    dims = ("time", "index")
+                    da = GeoDataArray.from_gdf(gdf, df, dims=dims, name=name)
+                else:
+                    da = xr.DataArray(df)  # TODO: TEST
+            else:
+                da = xr.open_dataarray(fn, chunks={"time": 24})  # lazy
+            self.set_forcing(da, name=sfincs_name)
 
     def write_forcing(self):
         """write bzs/dis 1D forcing and netampr 2D forcing files"""
@@ -1320,29 +1373,26 @@ class SfincsModel(Model):
         if self.forcing:
             self.logger.info("Write forcing files")
             tref = datetime.strptime(self.config["tref"], self._dtfmt)
-            for name, sfincs_name in self._1DFORCING.items():
-                if sfincs_name not in self._forcing:
+            # for nc files -> time in minutes since tref
+            tref_str = tref.strftime("%Y-%m-%d %H:%M:%S")
+            encoding = dict(
+                time={"units": f"minutes since {tref_str}", "dtype": "float64"}
+            )
+            fnames = list(self._1DFORCING.values()) + list(self._2DFORCING.values())
+            for sfincs_name in self._forcing:
+                if sfincs_name not in fnames:
+                    logger.warning(f"{sfincs_name} forcing unknown and skipped.")
                     continue
-                if self.get_config(f"{sfincs_name}file") is None:
+                if f"{sfincs_name}file" not in self.config:
                     self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name}")
                 fn = self.get_config(f"{sfincs_name}file", abs_path=True)
-                df = self._forcing[sfincs_name].to_series().unstack(0)
-                _write_timeseries(fn, df, tref)
-            for name, sfincs_name in self._2DFORCING.items():
-                if sfincs_name not in self._forcing:
-                    continue
-                if self.get_config(f"{sfincs_name}file") is None:
-                    self.set_config(f"{sfincs_name}file", f"{sfincs_name}.nc")
-                fn = self.get_config(f"{sfincs_name}file", abs_path=True)
-                # time in minutes
-                tref_str = tref.strftime("%Y-%m-%d %H:%M:%S")
-                encoding = dict(
-                    time={"units": f"minutes since {tref_str}", "dtype": "float64"}
-                )
-                # write to file and set config key
-                self._forcing[sfincs_name].to_netcdf(fn, encoding=encoding)
-            # TODO remove here with new ini files
-            # self.plot_forcing()
+                if sfincs_name in self._1DFORCING.values():
+                    # spatially uniform forcing
+                    df = self._forcing[sfincs_name].to_series().unstack(0)
+                    _write_timeseries(fn, df, tref)
+                else:
+                    # spatially distributed forcing
+                    self._forcing[sfincs_name].to_netcdf(fn, encoding=encoding)
 
     def read_states(self):
         """Read states at <root/?/> and parse to dict of xr.DataArray"""
@@ -1412,7 +1462,7 @@ class SfincsModel(Model):
 
     def set_crs(self, crs):
         super(SfincsModel, self).set_crs(crs)
-        self._config_update()
+        self.update_spatial_attrs()
 
     def _configread(self, fn):
         return hydromt.config.configread(
@@ -1424,8 +1474,8 @@ class SfincsModel(Model):
             fn, self.config, cf=ConfigParserSfincs, noheader=True
         )
 
-    def _config_update(self):
-        """Update geospatial head based on staticmaps"""
+    def update_spatial_attrs(self):
+        """Update geospatial sfincs.inp attributes based on staticmaps"""
         dx, dy = self.res
         west, south, _, _ = self.bounds
         if self.crs is not None:
@@ -1433,9 +1483,71 @@ class SfincsModel(Model):
         self.set_config("mmax", self.width)
         self.set_config("nmax", self.height)
         self.set_config("dx", dx)
-        self.set_config("dy", -dy)  # dy is always positive
+        self.set_config("dy", abs(dy))  # dy is always positive (orientation is S -> N)
         self.set_config("x0", west)
         self.set_config("y0", south)
+
+    def get_spatial_attrs(self):
+        """Get geospatial sfincs.inp attributes.
+
+        Returns
+        -------
+        shape: tuple of int
+            width, height
+        transform: Affine.transform
+            Geospatial transform
+        crs: pyproj.CRS
+            Coordinate reference system
+        """
+        # retrieve rows and cols
+        cols = self.get_config("mmax")
+        rows = self.get_config("nmax")
+        if cols is None or rows is None:
+            raise ValueError(f'"mmax" or "nmax" not defined in {self._config_fn}')
+
+        # retrieve CRS
+        crs = None
+        if "epsg" in self.config:
+            crs = pyproj.CRS.from_epsg(int(self.config.get("epsg")))
+        else:
+            self.logger.warning(
+                f'"epsg" code not defined in {self._config_fn}, unknown CRS.'
+            )
+
+        # retrieve spatial information
+        dx = self.get_config("dx")
+        dy = self.get_config("dy")
+        west = self.get_config("x0")
+        south = self.get_config("y0")
+        rotdeg = self.get_config("rotation", fallback=0)  # clockwise rotation [degrees]
+        if west is None or south is None:
+            self.logger.warning(
+                f'Either one of "x0" or "y0" not defined in {self._config_fn}, '
+                "falling back to origin at (0, 0)."
+            )
+            west, south = 0, 0
+        if dx is None or dy is None:
+            self.logger.warning(
+                f'Either one of "dx" or "dy" not defined in {self._config_fn}, '
+                "falling back unity resolution (1, 1)."
+            )
+            dx, dy = 1, 1
+        north = south + dy * rows
+        if rotdeg != 0:
+            raise NotImplementedError("Rotated grids cannot be parsed yet.")
+            # TODO: extend to use rotated grids with rotated affine
+            # # code below generates a 2D coordinate grids.
+            # xx = np.linspace(0, dx * (cols - 1), cols)
+            # yy = np.linspace(0, dy * (rows - 1), rows)
+            # xi, yi = np.meshgrid(xx, yy)
+            # rot = rotdeg * np.pi / 180
+            # # xgrid and ygrid not used for now
+            # xgrid = x0 + np.cos(rot) * xi - np.sin(rot) * yi
+            # ygrid = y0 + np.sin(rot) * xi + np.cos(rot) * yi
+            # ...
+        transform = rasterio.transform.from_origin(west, north, dx, dy)
+
+        return (rows, cols), transform, crs
 
     def _dummy_ts(self, gdf, name, fill_value=0):
         tstart = datetime.strptime(self.config["tstart"], self._dtfmt)
@@ -1458,7 +1570,9 @@ def _read_timeseries(fn, tref):
     # header columns start at 1
     df = pd.read_csv(fn, delim_whitespace=True, index_col=0, header=None)
     df.index = pd.to_datetime(df.index.values, unit="s", origin=tref)
-    df.columns = df.columns.values
+    df.columns = df.columns.values.astype(int)
+    df.index.name = "time"
+    df.columns.name = "index"
     return df
 
 

@@ -15,7 +15,7 @@ Initialize
 .. autosummary::
    :toctree: ../generated/
 
-   sfincs.SfincsModel
+   sfincsModel
 
 Build components
 ----------------
@@ -23,17 +23,18 @@ Build components
 .. autosummary::
    :toctree: ../generated/
 
-   sfincs.SfincsModel.setup_config
-   sfincs.SfincsModel.setup_basemaps
-   sfincs.SfincsModel.setup_river_inflow
-   sfincs.SfincsModel.setup_river_outflow
-   sfincs.SfincsModel.setup_gauges
-   sfincs.SfincsModel.setup_manning_roughness
-   sfincs.SfincsModel.setup_cn_infiltration
-   sfincs.SfincsModel.setup_h_forcing
-   sfincs.SfincsModel.setup_q_forcing
-   sfincs.SfincsModel.setup_q_forcing_from_grid
-   sfincs.SfincsModel.setup_p_forcing_gridded
+   sfincsModel.setup_config
+   sfincsModel.setup_basemaps
+   sfincsModel.setup_river_inflow
+   sfincsModel.setup_river_outflow
+   sfincsModel.setup_gauges
+   sfincsModel.setup_manning_roughness
+   sfincsModel.setup_cn_infiltration
+   sfincsModel.setup_h_forcing
+   sfincsModel.setup_q_forcing
+   sfincsModel.setup_q_forcing_from_grid
+   sfincsModel.setup_p_forcing
+   sfincsModel.setup_p_forcing_from_grid
 
 Plot methods
 ------------
@@ -41,8 +42,8 @@ Plot methods
 .. autosummary::
    :toctree: ../generated/
 
-   sfincs.SfincsModel.plot_basemap
-   sfincs.SfincsModel.plot_forcing
+   sfincsModel.plot_basemap
+   sfincsModel.plot_forcing
 
 Attributes
 ----------
@@ -50,14 +51,14 @@ Attributes
 .. autosummary::
    :toctree: ../generated/
 
-   sfincs.SfincsModel.region
-   sfincs.SfincsModel.crs
-   sfincs.SfincsModel.res
-   sfincs.SfincsModel.root
-   sfincs.SfincsModel.config
-   sfincs.SfincsModel.staticmaps
-   sfincs.SfincsModel.staticgeoms
-   sfincs.SfincsModel.forcing
+   sfincsModel.region
+   sfincsModel.crs
+   sfincsModel.res
+   sfincsModel.root
+   sfincsModel.config
+   sfincsModel.staticmaps
+   sfincsModel.staticgeoms
+   sfincsModel.forcing
 
 High level methods
 ------------------
@@ -65,10 +66,20 @@ High level methods
 .. autosummary::
    :toctree: ../generated/
 
-   sfincs.SfincsModel.read
-   sfincs.SfincsModel.write
-   sfincs.SfincsModel.build
-   sfincs.SfincsModel.set_root
+   sfincsModel.read
+   sfincsModel.write
+   sfincsModel.build
+   sfincsModel.update
+   sfincsModel.set_root
+
+Low level methods
+-----------------
+
+.. autosummary::
+   :toctree: ../generated/
+
+   sfincsModel.update_spatial_attrs
+   sfincsModel.get_spatial_attrs
 
 General methods
 ---------------
@@ -76,20 +87,20 @@ General methods
 .. autosummary::
    :toctree: ../generated/
 
-   sfincs.SfincsModel.setup_config
-   sfincs.SfincsModel.get_config
-   sfincs.SfincsModel.set_config
-   sfincs.SfincsModel.read_config
-   sfincs.SfincsModel.write_config
+   sfincsModel.setup_config
+   sfincsModel.get_config
+   sfincsModel.set_config
+   sfincsModel.read_config
+   sfincsModel.write_config
 
-   sfincs.SfincsModel.set_staticmaps
-   sfincs.SfincsModel.read_staticmaps
-   sfincs.SfincsModel.write_staticmaps
+   sfincsModel.set_staticmaps
+   sfincsModel.read_staticmaps
+   sfincsModel.write_staticmaps
 
-   sfincs.SfincsModel.set_staticgeoms
-   sfincs.SfincsModel.read_staticgeoms
-   sfincs.SfincsModel.write_staticgeoms
+   sfincsModel.set_staticgeoms
+   sfincsModel.read_staticgeoms
+   sfincsModel.write_staticgeoms
 
-   sfincs.SfincsModel.set_forcing
-   sfincs.SfincsModel.read_forcing
-   sfincs.SfincsModel.write_forcing
+   sfincsModel.set_forcing
+   sfincsModel.read_forcing
+   sfincsModel.write_forcing

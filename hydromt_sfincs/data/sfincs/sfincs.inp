@@ -1,10 +1,14 @@
 mmax           = 1000
 nmax           = 1000
-dx             = 1000
-dy             = 1000
+dx             = 1
+dy             = 1
 x0             = 0
 y0             = 0
 rotation       = 0
+epsg           =
+
+inputformat    = bin
+outputformat   = net
 
 tref           = 20000101 000000
 tstart         = 20000101 000000
@@ -29,5 +33,3 @@ rgh_lev_land   = 0
 depfile        = sfincs.dep
 mskfile        = sfincs.msk
 indexfile      = sfincs.ind
-inputformat    = bin
-outputformat   = net
