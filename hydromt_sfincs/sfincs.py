@@ -1436,11 +1436,10 @@ class SfincsModel(Model):
                 da.vector.set_crs(self.crs.to_epsg())
             elif da.vector.crs != self.crs:
                 da = da.vector.to_crs(self.crs.to_epsg())
-            # reset index dim as these get lost later anyway
-            index = xr.IndexVariable(
-                da.vector.index_dim, np.arange(da.vector.index.size)
-            )
-            da[da.vector.index_dim] = index
+            # fix order based on x_dim (for comparibility between OS)
+            da = da.sortby(da.vector.x_dim)
+            dim = da.vector.index_dim
+            da[dim] = xr.IndexVariable(dim, np.arange(1, da[dim].size + 1, dtype=int))
             self.set_forcing(da, sfincs_name)
             self.set_staticgeoms(da.vector.to_gdf(), name)
             # edit inp file

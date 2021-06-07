@@ -60,12 +60,6 @@ def test_model_build(tmpdir, case):
     non_compliant_list = mod1.test_model_api()
     assert len(non_compliant_list) == 0
 
-    # compare files of both models (ignore gis files)
-    for fn0 in glob.glob(join(root0, "*.*")):
-        bname = basename(fn0)
-        fn1 = join(root, bname)
-        assert filecmp.cmp(fn1, fn0, shallow=True), f"file diff: {bname}"
-
     # read and compare with model from examples folder
     mod0 = SfincsModel(root=root0, mode="r")
     mod0.read()
@@ -87,8 +81,14 @@ def test_model_build(tmpdir, case):
         for name in mod0.staticgeoms:
             geom0 = mod0.staticgeoms[name]
             geom1 = mod1.staticgeoms[name]
-            # relaxed comparison
-            assert geom0.index.size == geom1.index.size, f"geom index {name}"
+            assert geom0.index.size == geom1.index.size and np.all(
+                geom0.index == geom1.index
+            ), f"geom index {name}"
+            assert geom0.columns.size == geom1.columns.size and np.all(
+                geom0.columns == geom1.columns
+            ), f"geom columns {name}"
+            assert geom0.crs == geom1.crs, f"geom crs {name}"
+            assert np.all(geom0.geometry == geom1.geometry), f"geom {name}"
     # check config
     if mod0._config:
         # flatten
