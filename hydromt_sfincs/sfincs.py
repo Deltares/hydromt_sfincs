@@ -19,7 +19,7 @@ from datetime import datetime
 import hydromt
 from hydromt.models.model_api import Model
 from hydromt.vector import GeoDataArray
-from hydromt.raster import RasterDataset
+from hydromt.raster import RasterDataset, RasterDataArray
 
 from . import workflows, DATADIR
 
@@ -266,6 +266,12 @@ class SfincsModel(Model):
                 )
                 .raster.clip_geom(dst_geom, align=res)
                 .raster.mask_nodata()  # force nodata value to be np.nan
+                .round(3)  # mm precision
+            )
+        # make sure orientation is S -> N
+        if da_elv.raster.res[1] < 0:
+            da_elv = da_elv.reindex(
+                {da_elv.raster.y_dim: list(reversed(da_elv.raster.ycoords))}
             )
 
         # read and rasterize land geometry
@@ -550,8 +556,8 @@ class SfincsModel(Model):
         # force nodata value to be 100 (zero infiltration)
         da_scs = da_org.raster.reproject_like(da_msk, method="med")
         da_scs = da_scs.raster.mask_nodata().fillna(100)
-        # mask and set
-        da_scs = da_scs.where(da_msk, -9999)
+        # mask and set nodata, precision
+        da_scs = da_scs.where(da_msk, -9999).round(3)
         da_scs.raster.set_nodata(-9999)
         # set staticmaps
         sfincs_name = self._MAPS["curve_number"]
@@ -592,8 +598,8 @@ class SfincsModel(Model):
         da_man = workflows.landuse(
             da_org, da_msk, map_fn, logger=self.logger, params=["N"]
         )["N"]
-        # mask
-        da_man = da_man.where(da_msk, da_man.raster.nodata)
+        # mask and set precision
+        da_man = da_man.where(da_msk, da_man.raster.nodata).round(3)
         # set staticmaps
         sfincs_name = self._MAPS["manning"]
         da_man.attrs.update(**self._ATTRS.get(sfincs_name, {}))
@@ -1218,8 +1224,8 @@ class SfincsModel(Model):
         nodata : float, optional
             assigned to missing values (mask = 0)
         """
-        # read geospatial attributes from sfincs.inp
-        (rows, cols), transform, crs = self.get_spatial_attrs()
+        # read geospatial attributes from sfincs.inp, save with with S->N orientation
+        (rows, cols), transform, crs = self.get_spatial_attrs(top="S")
 
         # read raw numbers and reshape to 2D arrays
         fn_ind = abspath(join(self._root, self.config.get("indexfile")))
@@ -1240,7 +1246,7 @@ class SfincsModel(Model):
             mv = mvs.get(sfincs_name, nodata)
             data = np.full((cols, rows), mv, dtype=dtype)
             data.flat[ind] = np.fromfile(fn, dtype=dtype)
-            data = np.flipud(data.transpose())
+            data = data.transpose()  # data has S->N orientation
             data_vars.update({sfincs_name: (data, mv)})
 
         # create dataset and set as staticmaps
@@ -1257,21 +1263,25 @@ class SfincsModel(Model):
         """Write binary SFINCS staticmaps."""
         if not self._write:
             raise IOError("Model opened in read-only")
+        elif not self._staticmaps:
+            return
 
         # make sure orientation is S -> N
-        ds = self.staticmaps
-        if ds.raster.res[1] < 0:
-            ds = ds.reindex({ds.raster.y_dim: list(reversed(ds.raster.ycoords))})
+        ds_out = self.staticmaps
+        if ds_out.raster.res[1] < 0:
+            ds_out = ds_out.reindex(
+                {ds_out.raster.y_dim: list(reversed(ds_out.raster.ycoords))}
+            )
 
         self.logger.debug("Derive indices from mask.")
         # bin files index of sfincs is transposed compared to numpy 2D arrays
-        msk = ds[self._MAPS["mask"]].values.transpose()
+        msk = ds_out[self._MAPS["mask"]].values.transpose()
         msk_ = np.array(msk[msk > 0], dtype="u1")
         # the index number file of sfincs starts with the length of the index numbers,
         # add that below
         indices = np.where(msk.flatten() > 0)[0] + 1  # one-based index
         indices_ = np.array(np.hstack([np.array(len(indices)), indices]), dtype="u4")
-        # write to file
+        # write to binary files
         fn_msk = self.get_config("mskfile", abs_path=True)
         fn_ind = self.get_config("indexfile", abs_path=True)
         msk_.tofile(fn_msk)
@@ -1281,17 +1291,21 @@ class SfincsModel(Model):
         for sfincs_name in self.staticmaps:
             if sfincs_name == self._MAPS["mask"]:
                 continue
-            fn_out = self.get_config(f"{sfincs_name}file", abs_path=True)
-            if fn_out is None:
-                fn_out = join(self.root, f"sfincs.{sfincs_name[:3]}")
+            elif f"{sfincs_name}file" not in self.config:
                 self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name}")
-            data = ds[sfincs_name].values.transpose()
+            fn_out = self.get_config(f"{sfincs_name}file", abs_path=True)
+            # write data to binary files
+            data = ds_out[sfincs_name].values.transpose()
             data_ = np.array(data[msk > 0], dtype=dtypes.get(sfincs_name, "f4"))
             data_.tofile(fn_out)
 
         if self._write_gis:
             self.logger.info("Write GIS raster files to 'gis' subfolder")
-            ds_out = self._staticmaps
+            # make sure orientation is N->S
+            if ds_out.raster.res[1] > 0:
+                ds_out = ds_out.reindex(
+                    {ds_out.raster.y_dim: list(reversed(ds_out.raster.ycoords))}
+                )
             ds_out.raster.to_mapstack(join(self.root, "gis"))
 
     def read_staticgeoms(self):
@@ -1370,7 +1384,7 @@ class SfincsModel(Model):
         """write bzs/dis 1D forcing and netampr 2D forcing files"""
         if not self._write:
             raise IOError("Model opened in read-only mode")
-        if self.forcing:
+        if self._forcing:
             self.logger.info("Write forcing files")
             tref = datetime.strptime(self.config["tref"], self._dtfmt)
             # for nc files -> time in minutes since tref
@@ -1395,14 +1409,42 @@ class SfincsModel(Model):
                     self._forcing[sfincs_name].to_netcdf(fn, encoding=encoding)
 
     def read_states(self):
-        """Read states at <root/?/> and parse to dict of xr.DataArray"""
-        return self._states
-        # raise NotImplementedError()
+        """Read zs state from restart file and parse to dict of xr.DataArray."""
+        if not self._write:
+            # start fresh in read-only mode
+            self._states = {}
+        if "inifile" in self.config:
+            fn = self.get_config("inifile", abs_path=True)
+            if not isfile(fn):
+                self.logger.warning("inifile not found at {fn}")
+                return
+            shape, transform, crs = self.get_spatial_attrs(top="S")
+            zsini = RasterDataArray.from_numpy(
+                data=np.loadtxt(fn),  # orientation S-N
+                transform=transform,
+                crs=crs,
+                nodata=np.nan,
+            )
+            if zsini.shape != shape:
+                raise ValueError('The shape of "inifile" and maps does not match.')
+            if self._MAPS["mask"] in self._staticmaps:
+                zsini = zsini.where(self.staticmaps[self._MAPS["mask"]] != 0)
+            self.set_states(zsini, "zs")
 
-    def write_states(self):
-        """write states at <root/?/> in model ready format"""
-        pass
-        # raise NotImplementedError()
+    def write_states(self, fmt="%8.3f"):
+        """write zs state to inifile (ascii file)."""
+        if not self._write:
+            raise IOError("Model opened in read-only mode")
+        assert len(self._states) <= 1
+        for name in self._states:
+            if f"inifile" not in self.config:
+                self.set_config(f"inifile", "sfincs.restart")
+            fn = self.get_config("inifile", abs_path=True)
+            da = self._states[name].fillna(0)
+            if da.raster.res[1] < 0:  # orientation is S->N
+                da = da.reindex({da.raster.y_dim: list(reversed(da.raster.ycoords))})
+            with open(fn, "w") as f:
+                np.savetxt(f, da.values, fmt=fmt)
 
     def read_results(self):
         """Read results at <root/?/> and parse to dict of xr.DataArray"""
@@ -1486,8 +1528,13 @@ class SfincsModel(Model):
         self.set_config("x0", west)
         self.set_config("y0", south)
 
-    def get_spatial_attrs(self):
+    def get_spatial_attrs(self, top="s"):
         """Get geospatial sfincs.inp attributes.
+
+        Parameters
+        ----------
+        top: {'S', 'N'}
+            Return transform with origin in South-West ('s') or North-West ('n')
 
         Returns
         -------
@@ -1531,7 +1578,6 @@ class SfincsModel(Model):
                 "falling back unity resolution (1, 1)."
             )
             dx, dy = 1, 1
-        north = south + dy * rows
         if rotdeg != 0:
             raise NotImplementedError("Rotated grids cannot be parsed yet.")
             # TODO: extend to use rotated grids with rotated affine
@@ -1544,7 +1590,13 @@ class SfincsModel(Model):
             # xgrid = x0 + np.cos(rot) * xi - np.sin(rot) * yi
             # ygrid = y0 + np.sin(rot) * xi + np.cos(rot) * yi
             # ...
-        transform = rasterio.transform.from_origin(west, north, dx, dy)
+        if top.lower() == "n":
+            north = south + dy * rows
+            transform = rasterio.transform.from_origin(west, north, dx, dy)
+        elif top.lower() == "s":
+            transform = rasterio.transform.from_origin(west, south, dx, -dy)
+        else:
+            raise ValueError('Top must be one of ["s", "n"]')
 
         return (rows, cols), transform, crs
 

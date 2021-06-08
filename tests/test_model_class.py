@@ -2,10 +2,9 @@
 
 from posixpath import basename
 import pytest
-from os.path import join, dirname, abspath
-import glob
+from os.path import join, dirname, abspath, isfile
 import numpy as np
-import filecmp
+import xarray as xr
 import pdb
 
 import hydromt
@@ -20,7 +19,7 @@ _cases = {
         "ini": "sfincs_coastal.ini",
         "region": {"bbox": [12.00, 45.35, 12.80, 45.65]},
         "res": 100,
-        "example": "venice",
+        "example": "sfincs_coastal",
     },
     "riverine": {
         "ini": "sfincs_riverine.ini",
@@ -41,6 +40,24 @@ def test_model_class(case):
     non_compliant_list = mod.test_model_api()
     assert len(non_compliant_list) == 0
     # pass
+
+
+def test_states(tmpdir):
+    root = join(EXAMPLEDIR, _cases["riverine"]["example"])
+    fn = "sfincs.restart"
+    mod = SfincsModel(root=root, mode="r+")
+    mod.set_config("inifile", fn)
+    # read and check if DataArray
+    assert isinstance(mod.states["zs"], xr.DataArray)
+    tmp_root = str(tmpdir.join("restart_test"))
+    mod.set_root(tmp_root, mode="w")
+    # write and check if isfile
+    mod.write_states()
+    mod.write_config()
+    assert isfile(join(mod.root, fn))
+    # read and check if identical
+    mod1 = SfincsModel(root=tmp_root, mode="r")
+    assert np.allclose(mod1.states["zs"], mod.states["zs"])
 
 
 @pytest.mark.parametrize("case", list(_cases.keys()))
