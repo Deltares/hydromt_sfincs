@@ -871,7 +871,7 @@ class SfincsModel(Model):
                 geom=self.region,
                 fn_ts=timeseries_fn,
                 variables=[name],
-                time_tuple=slice(tstart, tstop),
+                time_tuple=(tstart, tstop),
                 **kwargs,
             )
         else:
