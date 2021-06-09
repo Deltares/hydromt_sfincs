@@ -60,6 +60,12 @@ def test_states(tmpdir):
     assert np.allclose(mod1.states["zs"], mod.states["zs"])
 
 
+def test_results():
+    root = join(EXAMPLEDIR, _cases["riverine"]["example"])
+    mod = SfincsModel(root=root, mode="r")
+    assert np.all([v in mod.results for v in ["zs", "zsmax", "hmax", "inp"]])
+
+
 @pytest.mark.parametrize("case", list(_cases.keys()))
 def test_model_build(tmpdir, case):
     # compare results with model from examples folder
