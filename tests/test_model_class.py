@@ -1,13 +1,10 @@
 """Test sfincs model class against hydromt.models.model_api"""
 
-from posixpath import basename
 import pytest
 from os.path import join, dirname, abspath, isfile
 import numpy as np
 import xarray as xr
-import pdb
 
-import hydromt
 from hydromt.cli.cli_utils import parse_config
 from hydromt_sfincs.sfincs import SfincsModel
 
@@ -58,6 +55,35 @@ def test_states(tmpdir):
     # read and check if identical
     mod1 = SfincsModel(root=tmp_root, mode="r")
     assert np.allclose(mod1.states["zs"], mod.states["zs"])
+
+
+def test_structs(tmpdir):
+    root = join(EXAMPLEDIR, _cases["riverine"]["example"])
+    mod = SfincsModel(root=root, mode="r+")
+    # read
+    mod.set_config("thdfile", "sfincs.thd")
+    mod.read_staticmaps()
+    mod.read_staticgeoms()
+    assert "thd" in mod.staticgeoms
+    # write thd file only
+    mod._staticgeoms = {"thd": mod.staticgeoms["thd"]}
+    tmp_root = str(tmpdir.join("struct_test"))
+    mod.set_root(tmp_root, mode="w")
+    mod.write_staticgeoms()
+    assert isfile(join(mod.root, "sfincs.thd"))
+    fn_thd_gis = join(mod.root, "gis", "thd.geojson")
+    assert isfile(fn_thd_gis)
+    # add second thd file
+    mod.setup_structures(fn_thd_gis, stype="thd")
+    assert len(mod.staticgeoms["thd"].index) == 2
+    # setup weir file from thd.geojson using dz option
+    with pytest.raises(ValueError, match="Weir structure requires z"):
+        mod.setup_structures(fn_thd_gis, stype="weir")
+    mod.setup_structures(fn_thd_gis, stype="weir", dz=2)
+    assert "weir" in mod.staticgeoms
+    assert "weirfile" in mod.config
+    mod.write_staticgeoms()
+    assert isfile(join(mod.root, "sfincs.weir"))
 
 
 def test_results():

@@ -20,8 +20,11 @@ import hydromt
 from hydromt.models.model_api import Model
 from hydromt.vector import GeoDataArray
 from hydromt.raster import RasterDataset, RasterDataArray
+from xarray.core.utils import V
 
+from . import sfincs_utils as utils
 from . import workflows, DATADIR
+
 
 __all__ = ["SfincsModel"]
 
@@ -62,6 +65,8 @@ class SfincsModel(Model):
         "waterlevel": "bnd",
         "discharge": "src",
         "gauges": "obs",
+        "weirs": "weir",
+        "thin_dams": "thd",
     }
     _1DFORCING = {
         "waterlevel": "bzs",
@@ -76,6 +81,7 @@ class SfincsModel(Model):
         "mask": "msk",
         "curve_number": "scs",
         "manning": "manning",
+        "infiltration": "qinf",
     }
     _FOLDERS = [""]  # to create root folder without subfolders
     _dtfmt = "%Y%m%d %H%M%S"
@@ -85,7 +91,8 @@ class SfincsModel(Model):
         "dep": {"standard_name": "elevation", "unit": "m"},
         "msk": {"standard_name": "mask", "unit": "-"},
         "scs": {"standard_name": "curve number", "unit": "-"},
-        "man": {"standard_name": "manning roughness", "unit": "-"},
+        "qinf": {"standard_name": "infiltration rate", "unit": "mm.hr-1"},
+        "manning": {"standard_name": "manning roughness", "unit": "s.m-1/3"},
         "bzs": {"standard_name": "waterlevel", "unit": "m+EGM96"},
         "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
         "netampr": {"standard_name": "precipitation", "unit": "mm.hr-1"},
@@ -609,7 +616,7 @@ class SfincsModel(Model):
             self.config.pop(v, None)
         self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name[:3]}")
 
-    def setup_gauges(self, gauges_fn=None, **kwargs):
+    def setup_gauges(self, gauges_fn, overwrite=False, **kwargs):
         """Setup model observation point locations.
 
         Adds model layers:
@@ -618,20 +625,84 @@ class SfincsModel(Model):
 
         Parameters
         ---------
-        gauges_fn: str, optional
+        gauges_fn: str
             Path to observation points geometry file.
             See :py:meth:`~hydromt.open_vector`, for accepted files.
+        overwrite: bool, optional
+            If True, overwrite existing gauges instead of appending the new gauges.
         """
-        if gauges_fn is not None:
-            name = self._GEOMS["gauges"]
-            # ensure the catalog is loaded before adding any new entries
-            self.data_catalog.sources
-            gdf = self.data_catalog.get_geodataframe(
-                str(gauges_fn), geom=self.region, assert_gtype="Point", **kwargs
-            ).to_crs(self.crs)
-            self.set_staticgeoms(gdf, name)
-            self.set_config(f"{name}file", f"sfincs.{name}")
-            self.logger.info(f"{name} set based on {gauges_fn}")
+        name = self._GEOMS["gauges"]
+        # ensure the catalog is loaded before adding any new entries
+        self.data_catalog.sources
+        gdf = self.data_catalog.get_geodataframe(
+            gauges_fn, geom=self.region, assert_gtype="Point", **kwargs
+        ).to_crs(self.crs)
+        if not overwrite and name in self.staticgeoms:
+            gdf0 = self._staticgeoms.pop(name)
+            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
+            self.logger.info(f"Adding new gauges to existing gauges.")
+        self.set_staticgeoms(gdf, name)
+        self.set_config(f"{name}file", f"sfincs.{name}")
+        self.logger.info(f"{name} set based on {gauges_fn}")
+
+    def setup_structures(
+        self, structures_fn, stype, dz=None, overwrite=False, **kwargs
+    ):
+        """Setup thin dam or weir structures.
+
+        Adds model layer (depending on `stype`):
+
+        * **thd** geom: thin dam
+        * **weir** geom: weir / levee
+
+        Parameters
+        ----------
+        structures_fn : str, Path
+            Path to structure line geometry file.
+            The "name" (for thd and weir), "z" and "par1" (for weir only) are optional.
+            For weirs: `dz` must be provided if gdf has no "z" column or Z LineString;
+            "par1" defaults to 0.6 if gdf has no "par1" column.
+        stype : {'thd', 'weir'}
+            Structure type.
+        overwrite: bool, optional
+            If True, overwrite existing 'stype' structures instead of appending the
+            new structures.
+        dz: float, optional
+            If provided, for weir structures the z value is calculated from
+            the model elevation (dep) plus dz.
+        """
+        cols = {
+            "thd": ["name", "geometry"],
+            "weir": ["name", "z", "par1", "geometry"],
+        }
+        assert stype in cols
+        # read, clip and reproject
+        gdf = self.data_catalog.get_geodataframe(
+            structures_fn, geom=self.region, **kwargs
+        ).to_crs(self.crs)
+        gdf = gdf[[c for c in cols[stype] if c in gdf.columns]]  # keep relevant cols
+        structs = utils.gdf2structures(gdf)  # check if it parsed correct
+        # sample zb values from dep file and set z = zb + dz
+        if stype == "weir" and dz is not None:
+            elv = self.staticmaps[self._MAPS["elevtn"]]
+            structs_out = []
+            for s in structs:
+                pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
+                zb = elv.raster.sample(gpd.GeoDataFrame(geometry=pnts, crs=self.crs))
+                s["z"] = zb.values + float(dz)
+                structs_out.append(s)
+            gdf = utils.structures2gdf(structs_out, crs=self.crs)
+        elif stype == "weir" and np.any(["z" not in s for s in structs]):
+            raise ValueError("Weir structure requires z values.")
+        # combine with exisiting structures if present
+        if not overwrite and stype in self.staticgeoms:
+            gdf0 = self._staticgeoms.pop(stype)
+            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
+            self.logger.info(f"Adding {stype} structures to existing structures.")
+        # set structures
+        self.set_staticgeoms(gdf, stype)
+        self.set_config(f"{stype}file", f"sfincs.{stype}")
+        self.logger.info(f"{stype} structure set based on {structures_fn}")
 
     ### FORCING
     def setup_h_forcing(
@@ -1323,8 +1394,12 @@ class SfincsModel(Model):
                 elif not isfile(fn):
                     self.logger.warning(f"{sfincs_name}file not found at {fn}")
                     continue
-                gdf = hydromt.open_vector(fn, crs=self.crs, driver="xy")
-                gdf.index = gdf.index.values + 1  # start index at one
+                if sfincs_name in ["thd", "weir"]:
+                    struct = utils.read_structures(fn)
+                    gdf = utils.structures2gdf(struct, crs=self.crs)
+                else:
+                    gdf = hydromt.open_vector(fn, crs=self.crs, driver="xy")
+                gdf.index = np.arange(1, gdf.index.size + 1, dtype=int)  # start at 1
                 self.set_staticgeoms(gdf, name=sfincs_name)
         # read additional geojson files from gis directory
         for fn in glob.glob(join(self.root, "gis", "*.geojson")):
@@ -1335,19 +1410,23 @@ class SfincsModel(Model):
             self.set_staticgeoms(gdf, name=name)
 
     def write_staticgeoms(self):
-        """Write bnd/src/obs to SFINCS xy files
+        """Write bnd/src/obs to SFINCS xy files and thd/weir to SFINCS pli files.
         If write_gis, write all staticgeoms to geojson files in gis subfolder
         """
         if not self._write:
             raise IOError("Model opened in read-only mode")
         if self._staticgeoms:
             self.logger.info("Write staticgeom files")
-            # NOTE: this only works for point vector file
-            for name, gdf in self.staticgeoms.items():
-                sfincs_name = self._GEOMS.get(name, name)
-                if f"{sfincs_name}file" in self.config:
+            for sfincs_name, gdf in self.staticgeoms.items():
+                if sfincs_name in self._GEOMS.values():
+                    if f"{sfincs_name}file" not in self.config:
+                        self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name}")
                     fn = self.get_config(f"{sfincs_name}file", abs_path=True)
-                    hydromt.write_xy(fn, gdf, fmt="%8.2f")
+                    if sfincs_name in ["thd", "weir"]:
+                        struct = utils.gdf2structures(gdf)
+                        utils.write_structures(fn, struct, stype=sfincs_name)
+                    else:
+                        hydromt.write_xy(fn, gdf, fmt="%8.2f")
                 if self._write_gis:
                     fn_gis = join(self.root, "gis", f"{sfincs_name}.geojson")
                     gdf.to_file(fn_gis, driver="GeoJSON")
@@ -1486,8 +1565,11 @@ class SfincsModel(Model):
                     )
                 # compute hmax
                 if "zsmax" in ds_face:
-                    self.logger.debug('Computing "hmax = max(zsmax) - zb"')
-                    ds_face["hmax"] = ds_face["zsmax"].max("timemax") - ds_face["zb"]
+                    self.logger.info('Computing "hmax = max(zsmax) - zb"')
+                    hmax = ds_face["zsmax"].max("timemax") - ds_face["zb"]
+                    hmax = hmax.where(hmax > 0, -9999)
+                    hmax.raster.set_nodata(-9999)
+                    ds_face["hmax"] = hmax
                 # set spatial attrs
                 crs = ds_map["crs"].item() if ds_map["crs"].item() != 0 else self.crs
                 ds_face.raster.set_spatial_dims(x_dim="x", y_dim="y")
@@ -1538,8 +1620,9 @@ class SfincsModel(Model):
 
     def _update_forcing_1d(self, da, name):
         """ "Set 1D forcing (and remove if da is None) and update config accordingly"""
-        sfincs_name = self._1DFORCING.get(name, None)
-        if sfincs_name is None:
+        fname = self._1DFORCING.get(name, None)
+        gname = self._GEOMS.get(name, name)
+        if fname is None:
             raise ValueError(f"unknown 1D forcing name {name}")
         n = da.vector.index.size if da is not None else 0
         self.logger.debug(f"{name} forcing: setting data at {n} points.")
@@ -1559,25 +1642,24 @@ class SfincsModel(Model):
             elif da.vector.crs != self.crs:
                 da = da.vector.to_crs(self.crs.to_epsg())
             # fix order based on x_dim (for comparibility between OS)
-            da = da.sortby(da.vector.x_dim)
+            da = da.sortby(da.vector.x_dim, ascending=True)
             dim = da.vector.index_dim
             da[dim] = xr.IndexVariable(dim, np.arange(1, da[dim].size + 1, dtype=int))
-            self.set_forcing(da, sfincs_name)
-            self.set_staticgeoms(da.vector.to_gdf(), name)
+            self.set_forcing(da, fname)
+            self.set_staticgeoms(da.vector.to_gdf(), gname)
             # edit inp file
             self.logger.debug(f"{name} forcing: updating sfincs.inp.")
-            for sname in [self._GEOMS[name], self._1DFORCING[name]]:
+            for sname in [fname, gname]:
                 self.set_config(f"{sname}file", f"sfincs.{sname}")
         else:  # remove forcing data and sfincs.inp entries
-            if name in self._forcing:
+            if fname in self._forcing:
                 self.logger.debug(f"{name} forcing: removing data.")
                 self._forcing.pop(name)
-            for sname in [self._GEOMS[name], self._1DFORCING[name]]:
-                if f"{sname}file" in self.config:
-                    self.logger.debug(
-                        f"{name} forcing: removing {sname}file from sfincs.inp."
-                    )
-                    self._config.pop(f"{sname}file")
+            if f"{fname}file" in self.config:
+                self.logger.debug(
+                    f"{name} forcing: removing {fname}file from sfincs.inp."
+                )
+                self._config.pop(f"{fname}file")
 
     ## model configuration
 
