@@ -92,6 +92,17 @@ def test_results():
     assert np.all([v in mod.results for v in ["zs", "zsmax", "hmax", "inp"]])
 
 
+def test_plots(tmpdir):
+    root = join(EXAMPLEDIR, _cases["riverine"]["example"])
+    mod = SfincsModel(root=root, mode="r")
+    mod.read()
+    mod.set_root(str(tmpdir.join("plots_test")))
+    mod.plot_forcing()
+    assert isfile(join(mod.root, "figs", "forcing.png"))
+    mod.plot_basemap()
+    assert isfile(join(mod.root, "figs", "basemap.png"))
+
+
 @pytest.mark.parametrize("case", list(_cases.keys()))
 def test_model_build(tmpdir, case):
     # compare results with model from examples folder
