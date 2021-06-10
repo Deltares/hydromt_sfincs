@@ -10,10 +10,10 @@ inputformat     = bin
 outputformat    = net
 tref            = 20210101 000000
 tstart          = 20210101 000000
-tstop           = 20210103 000000
+tstop           = 20210102 000000
 dtout           = 3600
 dthisout        = 600
-dtmaxout        = 172800
+dtmaxout        = 86400
 advection       = 0
 alpha           = 0.5
 huthresh        = 0.05
@@ -28,4 +28,3 @@ manningfile     = sfincs.man
 srcfile         = sfincs.src
 disfile         = sfincs.dis
 obsfile         = sfincs.obs
-

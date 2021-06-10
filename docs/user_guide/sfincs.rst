@@ -40,6 +40,7 @@ The following components are available to build or update SFINCS model schematiz
    SfincsModel.setup_manning_roughness
    SfincsModel.setup_cn_infiltration
    SfincsModel.setup_gauges
+   SfincsModel.setup_structures
    SfincsModel.setup_h_forcing
    SfincsModel.setup_q_forcing
    SfincsModel.setup_q_forcing_from_grid

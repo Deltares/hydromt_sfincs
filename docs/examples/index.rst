@@ -26,4 +26,5 @@ Examples
 .. toctree::
    :maxdepth: 1
 
-   Visualize model results from sfincs_map.nc <../_examples/plot_sfincs_map>
+   SFINCS results: maximum water depth <../_examples/sfincs_results_hmax>
+   SFINCS results: create animation <../_examples/sfincs_results_animation>
