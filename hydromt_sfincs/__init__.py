@@ -8,3 +8,4 @@ __version__ = "0.1.1.dev"
 DATADIR = join(dirname(abspath(__file__)), "data")
 
 from .sfincs import *
+from .utils import *
