@@ -883,13 +883,13 @@ class SfincsModel(Model):
 
         Parameters
         ----------
-        gauges_fn, str, Path, optional
+        gauges_fn: str, Path, optional
             Path to points geometry or geodataset netcdf file.
             See :py:meth:`~hydromt.open_vector`, for accecpted point geometry files.
             See :py:meth:`~hydromt.open_geodataset`, for accecpted geodataset netcdf files.
 
             * Required variables if netcdf: ['discharge']
-        timeseries_fn, str, Path, optional
+        timeseries_fn: str, Path, optional
             Path to timeseries file associated with gauges_fn. Set to None if gauges_fn
             is a geodataset netcdf file including timeseries data.
             See :py:meth:`~hydromt.open_geodataset`, for accecpted files.
@@ -918,7 +918,7 @@ class SfincsModel(Model):
                 geom=self.region,
                 fn_ts=timeseries_fn,
                 variables=[name],
-                time_tuple=slice(tstart, tstop),
+                time_tuple=(tstart, tstop),
                 **kwargs,
             )
         else:
