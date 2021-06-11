@@ -45,7 +45,7 @@ def test_states(tmpdir):
     mod = SfincsModel(root=root, mode="r+")
     mod.set_config("inifile", fn)
     # read and check if DataArray
-    assert isinstance(mod.states["zs"], xr.DataArray)
+    assert isinstance(mod.states["zsini"], xr.DataArray)
     tmp_root = str(tmpdir.join("restart_test"))
     mod.set_root(tmp_root, mode="w")
     # write and check if isfile
@@ -54,7 +54,7 @@ def test_states(tmpdir):
     assert isfile(join(mod.root, fn))
     # read and check if identical
     mod1 = SfincsModel(root=tmp_root, mode="r")
-    assert np.allclose(mod1.states["zs"], mod.states["zs"])
+    assert np.allclose(mod1.states["zsini"], mod.states["zsini"])
 
 
 def test_structs(tmpdir):

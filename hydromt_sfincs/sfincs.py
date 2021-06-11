@@ -4,6 +4,7 @@ from os.path import join, isfile, abspath, dirname, basename
 import glob
 import numpy as np
 import logging
+from numpy.core.fromnumeric import var
 import rasterio
 from rasterio.warp import transform_bounds
 from scipy import ndimage
@@ -18,6 +19,7 @@ import hydromt
 from hydromt.models.model_api import Model
 from hydromt.vector import GeoDataArray
 from hydromt.raster import RasterDataset, RasterDataArray
+from xarray.core import variable
 
 from . import workflows, utils, plots, DATADIR
 
@@ -97,7 +99,7 @@ class SfincsModel(Model):
             Library with references to data sources
         """
         # model paths
-        self.write_gis = write_gis
+        self._write_gis = write_gis
         if write_gis:
             self._FOLDERS.append("gis")
 
@@ -1164,6 +1166,8 @@ class SfincsModel(Model):
         self.read_staticmaps()
         self.read_staticgeoms()
         self.read_forcing()
+        self.read_states()
+        self.read_results()
         self.logger.info("Model read")
 
     def write(self):
@@ -1173,6 +1177,7 @@ class SfincsModel(Model):
         self.write_staticmaps()
         self.write_staticgeoms()
         self.write_forcing()
+        self.write_states()
 
     def read_staticmaps(self, crs=None):
         """Read SFNCS binary staticmaps and save to `staticmaps` attribute.
@@ -1229,12 +1234,10 @@ class SfincsModel(Model):
         elif not self._staticmaps:
             return
 
-        # make sure orientation is S -> N
         ds_out = self.staticmaps
-        if ds_out.raster.res[1] < 0:
-            ds_out = ds_out.reindex(
-                {ds_out.raster.y_dim: list(reversed(ds_out.raster.ycoords))}
-            )
+        if ds_out.raster.res[1] < 0:  # make sure orientation is S -> N
+            yrev = list(reversed(ds_out.raster.ycoords))
+            ds_out = ds_out.reindex({ds_out.raster.y_dim: yrev})
 
         self.logger.debug("Write binary map indices based on mask.")
         msk = ds_out[self._MAPS["mask"]].values
@@ -1255,14 +1258,45 @@ class SfincsModel(Model):
                 dtype=dtypes.get(sfincs_name, "f4"),
             )
 
-        if self.write_gis:
-            self.logger.info("Write GIS raster files to 'gis' subfolder")
-            # make sure orientation is N->S
-            if ds_out.raster.res[1] > 0:
-                ds_out = ds_out.reindex(
-                    {ds_out.raster.y_dim: list(reversed(ds_out.raster.ycoords))}
-                )
-            ds_out.raster.to_mapstack(join(self.root, "gis"))
+        if self._write_gis:
+            self.write_gis("staticmaps")
+
+    def write_gis(self, variables="all"):
+        """Write variables to GIS files in <root>/<gis>/.
+        Raster data is written to geotiff and vector data to geojson files.
+        NOTE: these files are not used by the model.
+        """
+        _all = ["staticmaps", "staticgeoms", "states", "results.hmax"]
+        if variables == "all":
+            variables = _all
+        elif isinstance(variables, str):
+            variables = [variables]
+        if not isinstance(variables, list):
+            raise ValueError(f'"variables" should be a list, not {type(list)}.')
+        for var in variables:
+            vsplit = var.split(".")
+            attr = vsplit[0]
+            if not (attr in _all or var in _all):
+                self.logger.info(f"Unknown variable {var}: select one of {_all}")
+                continue
+            obj = getattr(self, f"_{attr}")
+            if len(obj) == 0:
+                self.logger.info(f"Variable {var} empty, skip writing file.")
+                continue  # empty
+            self.logger.info(f"Write GIS files for {var} to 'gis' subfolder")
+            vars = vsplit[1:] if len(vsplit) >= 2 else list(obj.keys())
+            for name in vars:
+                if name not in obj:
+                    continue
+                if attr == "staticgeoms":
+                    fn_gis = join(self.root, "gis", f"{name}.geojson")
+                    obj[name].to_file(fn_gis, driver="GeoJSON")
+                else:
+                    da = obj[name]
+                    if da.raster.res[1] > 0:  # make sure orientation is N->S
+                        yrev = list(reversed(da.raster.ycoords))
+                        da = da.reindex({da.raster.y_dim: yrev})
+                    da.raster.to_raster(join(self.root, "gis", f"{name}.tif"))
 
     def read_staticgeoms(self):
         """Read geometry files if and save to `staticgeoms` attribute.
@@ -1318,9 +1352,8 @@ class SfincsModel(Model):
                         utils.write_structures(fn, struct, stype=sfincs_name)
                     else:
                         utils.write_xy(fn, gdf, fmt="%8.2f")
-                if self.write_gis:
-                    fn_gis = join(self.root, "gis", f"{sfincs_name}.geojson")
-                    gdf.to_file(fn_gis, driver="GeoJSON")
+            if self._write_gis:
+                self.write_gis("staticgeoms")
 
     def read_forcing(self):
         """Read forcing files and save to `forcing` attribute.
@@ -1384,7 +1417,7 @@ class SfincsModel(Model):
                     self._forcing[sfincs_name].to_netcdf(fn, encoding=encoding)
 
     def read_states(self, crs=None):
-        """Read waterlevel (zs) state from restart file and save to `states` attribute.
+        """Read waterlevel state (zsini) from ascii file and save to `states` attribute.
         The inifile if mentioned in the sfincs.inp configuration file is read.
 
         Parameters
@@ -1405,16 +1438,16 @@ class SfincsModel(Model):
                 data=utils.read_ascii_map(fn),  # orientation S-N
                 transform=transform,
                 crs=crs,
-                nodata=np.nan,
+                nodata=-9999,  # TODO: check what a good nodatavalue is
             )
             if zsini.shape != shape:
                 raise ValueError('The shape of "inifile" and maps does not match.')
             if self._MAPS["mask"] in self._staticmaps:
                 zsini = zsini.where(self.staticmaps[self._MAPS["mask"]] != 0)
-            self.set_states(zsini, "zs")
+            self.set_states(zsini, "zsini")
 
     def write_states(self, fmt="%8.3f"):
-        """Write waterlevel (zs) state to ascii map file.
+        """Write waterlevel state (zsini)  to ascii map file.
         The filenames is based on the `config` attribute.
         """
         if not self._write:
@@ -1422,12 +1455,14 @@ class SfincsModel(Model):
         assert len(self._states) <= 1
         for name in self._states:
             if f"inifile" not in self.config:
-                self.set_config(f"inifile", "sfincs.restart")
+                self.set_config(f"inifile", f"sfincs.{name}")
             fn = self.get_config("inifile", abs_path=True)
-            da = self._states[name].fillna(0)
+            da = self._states[name].fillna(0)  # TODO check proper nodata value
             if da.raster.res[1] < 0:  # orientation is S->N
                 da = da.reindex({da.raster.y_dim: list(reversed(da.raster.ycoords))})
             utils.write_ascii_map(fn, da.values, fmt=fmt)
+        if self._write_gis:
+            self.write_gis("states")
 
     def read_results(self, chunksize=100, drop=["crs", "sfincsgrid"]):
         """Read results from sfincs_map.nc and sfincs_his.nc and save to the `results` attribute.

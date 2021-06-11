@@ -273,7 +273,7 @@ def read_ascii_map(fn: Union[str, Path]) -> np.ndarray:
     data : np.ndarray
         2D array of sfincs map.
     """
-    data = np.loadtxt(fn)
+    data = np.loadtxt(fn).astype(np.float32)
     return data
 
 
