@@ -1,3 +1,4 @@
+import geopandas as gpd
 import pandas as pd
 import numpy as np
 import xarray as xr
@@ -7,7 +8,11 @@ __all__ = ["plot_forcing", "plot_basemap"]
 
 geom_style = {
     "rivers": dict(linestyle="--", linewidth=1.0, color="b"),
-    "rivers_out": dict(linestyle="--", linewidth=1.0, color="r"),
+    "rivers_out": dict(linestyle="--", linewidth=1.0, color="m"),
+    "msk2": dict(linestyle="-", linewidth=3, color="r"),
+    "msk3": dict(linestyle="--", linewidth=3, color="r"),
+    "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=True),
+    "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=True),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
     "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
     "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
@@ -80,7 +85,7 @@ def plot_basemap(
     bmap: str = "sat",
     zoomlevel: int = 11,
     figsize: Tuple[int] = None,
-    geoms: List[str] = ["rivers", "src", "bnd", "obs"],
+    geoms: List[str] = None,
     geom_kwargs: Dict = {},
     legend_kwargs: Dict = {},
     **kwargs,
@@ -104,9 +109,10 @@ def plot_basemap(
     figsize : Tuple[int], optional
         figure size, by default None
     geoms : List[str], optional
-        list of model geometries to plot, by default ["rivers", "src", "bnd", "obs"]
-    geom_kwargs : Dict, optional
-        Model geometry styling, passed to geopands.GeoDataFrame.plot method
+        list of model geometries to plot, by default all model geometries
+    geom_kwargs : Dict of Dict, optional
+        Model geometry styling per geometry, passed to geopands.GeoDataFrame.plot method.
+        For instance: {'src': {'markersize': 30}}.
     legend_kwargs : Dict, optional
         Legend kwargs, passed to ax.legend method.
 
@@ -143,8 +149,8 @@ def plot_basemap(
     # make nice cmap
     if "cmap" not in kwargs or "norm" not in kwargs:
         if variable == "dep":
-            vmin, vmax = da = (
-                staticmaps[variable].raster.mask_nodata().quantile([0.0, 0.98])
+            vmin, vmax = (
+                staticmaps["dep"].raster.mask_nodata().quantile([0.0, 0.98]).values
             )
             vmin, vmax = kwargs.pop("vmin", vmin), kwargs.pop("vmax", vmax)
             c_bat = plt.cm.terrain(np.linspace(0, 0.17, 256))
@@ -160,7 +166,10 @@ def plot_basemap(
             kwargs.update(norm=norm, cmap=cmap)
     if variable in staticmaps:
         da = staticmaps[variable].raster.mask_nodata()
-        da.plot(transform=utm, ax=ax, zorder=1, **kwargs)
+        # by default colorbar on lower right & legend upper right
+        kwargs0 = {"cbar_kwargs": {"shrink": 0.6, "anchor": (0, 0)}}
+        kwargs0.update(kwargs)
+        da.plot(transform=utm, ax=ax, zorder=1, **kwargs0)
         if shaded and variable == "dep":
             ls = colors.LightSource(azdeg=315, altdeg=45)
             dx, dy = da.raster.res
@@ -179,10 +188,9 @@ def plot_basemap(
             rgb = xr.where(np.isnan(da), np.nan, rgb)
             rgb.plot.imshow(transform=utm, ax=ax, zorder=1)
 
-    # TODO add vectorized boundary (points) from msk==2 and msk==3.
-
-    # add geoms
-    geom_style.update(geom_kwargs)
+    # geometry plotting and annotate kwargs
+    for k, d in geom_kwargs.items():
+        geom_style[k].update(**d)
     ann_kwargs = dict(
         xytext=(3, 3),
         textcoords="offset points",
@@ -192,21 +200,40 @@ def plot_basemap(
             patheffects.Normal(),
         ],
     )
-    if staticgeoms:
-        for name in geoms:
-            gdf = staticgeoms.get(name, None)
-            if gdf is None:
-                continue
-            annotate = geom_style[name].pop("annotate", False)
-            gdf.plot(ax=ax, zorder=3, **geom_style[name], label=name)
-            if annotate:
-                for label, row in gdf.iterrows():
-                    x, y = row.geometry.x, row.geometry.y
-                    ax.annotate(label, xy=(x, y), **ann_kwargs)
-        if "region" in staticgeoms:
-            staticgeoms["region"].boundary.plot(
-                ax=ax, ls="-", lw=0.5, color="k", zorder=2
-            )
+    # plot mask boundaries
+    gdf_msk = staticmaps["msk"].raster.vectorize()
+    region = (
+        (staticmaps["msk"] >= 1)
+        .astype("int16")
+        .raster.vectorize()
+        .drop(columns="value")
+    )
+    gdf_msk = gdf_msk[gdf_msk["value"] != 1]
+    gdf_msk["geometry"] = gdf_msk.boundary
+    region["geometry"] = region.boundary
+    gdf_msk = gpd.overlay(gdf_msk, region, "intersection", keep_geom_type=False)
+    gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
+    gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
+    if gdf_msk2.index.size > 0:
+        gdf_msk2.plot(ax=ax, zorder=3, label="waterlevel bnd", **geom_style["msk2"])
+    if gdf_msk3.index.size > 0:
+        gdf_msk3.plot(ax=ax, zorder=3, label="outflow bnd", **geom_style["msk3"])
+    # plot static geoms
+    geoms = geoms if isinstance(geoms, list) else list(staticgeoms.keys())
+    for name in geoms:
+        gdf = staticgeoms.get(name, None)
+        if gdf is None or name == "region":
+            continue
+        # copy is important to keep annotate working if repeated
+        kwargs = geom_style[name].copy()
+        annotate = kwargs.pop("annotate", False)
+        gdf.plot(ax=ax, zorder=3, label=name, **kwargs)
+        if annotate:
+            for label, row in gdf.iterrows():
+                x, y = row.geometry.x, row.geometry.y
+                ax.annotate(label, xy=(x, y), **ann_kwargs)
+    if "region" in staticgeoms:
+        staticgeoms["region"].boundary.plot(ax=ax, ls="-", lw=0.5, color="k", zorder=2)
 
     # title, legend and labels
     ax.xaxis.set_visible(True)
@@ -216,11 +243,12 @@ def plot_basemap(
     variable = "base" if variable is None else variable
     ax.set_title(f"SFINCS {variable} map")
     # NOTE without defined loc it takes forever to find a 'best' location
+    # by default outside plot
     legend_kwargs0 = dict(
+        bbox_to_anchor=(1.05, 1),
         title="Legend",
-        loc="lower right",
+        loc="upper left",
         frameon=True,
-        framealpha=0.7,
     )
     legend_kwargs0.update(**legend_kwargs)
     ax.legend(**legend_kwargs0)
