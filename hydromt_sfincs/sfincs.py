@@ -414,10 +414,8 @@ class SfincsModel(Model):
             ).to_crs(dst_crs)
             gdf_src["uparea"] = ds["uparea"].values.flat[idxs_source]
             self.logger.debug(f"{len(idxs_source)} river inflow point locations set.")
-            self.set_staticgeoms(gdf_src, name=self._GEOMS["discharge"])
-            # set dummy timeseries to keep valid sfincs model
-            da = self._dummy_ts(gdf_src, name="discharge", fill_value=0)
-            self._update_forcing_1d(da, name="discharge")
+            # set forcing with dummy timeseries to keep valid sfincs model
+            self.set_forcing_1d(xy=gdf_src, name="discharge")
 
         # vectorize river
         self.logger.debug(f"Vectorize river.")
@@ -676,25 +674,29 @@ class SfincsModel(Model):
     ### FORCING
     def setup_h_forcing(
         self,
-        gauges_fn=None,
+        dataset_fn=None,
         timeseries_fn=None,
         mdt_fn=None,
         buffer=0,
         **kwargs,
     ):
-        """Setup waterlevel boundary point locations and time series.
+        """Setup waterlevel boundary point locations (bnd) and time series (bzs).
 
-        Waterlevel gauge locations are selected from gauges_fn based on location and time.
-        The selection on location is based on an area `buffer` m around the model region.
-        The selection of time is based on the model config time settings.
+        Use dataset_fn to set the waterlevel boundary from a dataset of point location
+        timeseries. The dataset is clipped to the model region plus `buffer` [m], and
+        model time based on the model config tstart and tstop entries.
+
+        Use timeseries_fn to set a spatially uniform waterlevel boundary representative
+        for all waterlevel boundary cells (msk==2), The timeseries is clipped based on
+        the model config tstart and tstop entries. The boundary point location is infered
+        from the model mask.
+
+        If timeseries_fn and dataset_fn are both not provided a dummy (h=0) waterlevel
+        boundary is set.
+
         The vertical reference level of the waterlevel data can be corrected to match
-        the dep vertical reference level with based on the `mdt_fn` mean dynamical topography.
-
-        If no timeseries files is provided or the model time period is ouside the data range,
-        dummy timeseries with zero values are set. If only a timeseries file is provided
-        it is used to update the boundary condition at waterlevel point locations in staticgeoms
-        with matching IDs.
-
+        the vertical reference level of the model elevation (dep) layer by adding the
+        local `mdt_fn` mean dynamical topography value to the waterlevels.
 
         Adds model layers:
 
@@ -703,18 +705,22 @@ class SfincsModel(Model):
 
         Parameters
         ----------
-        gauges_fn: str, Path
-            Path to points geometry or geodataset netcdf file.
-            See :py:meth:`~hydromt.open_vector`, for accepted point geometry files.
-            See :py:meth:`~hydromt.open_geodataset`, for accepted geodataset netcdf files.
+        dataset_fn: str, Path
+            Path or data source name for geospatial point timeseries file.
+            This can either be a netcdf file with geospatial coordinates
+            or a combined point location file with a timeseries data csv file
+            which can be setup through the data_catalog.yml file.
+            See :py:meth:`~hydromt.open_geodataset`, for accepted files.
 
             * Required variables if netcdf: ['waterlevel']
+            * Required coordinates if netcdf: ['time', 'index', 'y', 'x']
         timeseries_fn: str, Path
-            Path to timeseries file associated with gauges_fn. Set to None if gauges_fn
-            is a geodataset netcdf file including timeseries data.
-            See :py:meth:`~hydromt.open_geodataset`, for accepted files.
+            Path to tabulated timeseries csv file with time index in first column
+            and location IDs in the first row,
+            see :py:meth:`~hydromt.open_timeseries_from_table`, for details.
+            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
         mdt_fn: str, optional
-            Path or data source name for mean dynamic topography data, by default 'dtu10mdt_egm96'.
+            Path or data source name for mean dynamic topography gridded data.
             Difference between vertical reference of elevation and waterlevel data,
             Adds to the waterlevel data before merging.
 
@@ -724,50 +730,44 @@ class SfincsModel(Model):
 
         """
         name = "waterlevel"
-        bnd = self.staticmaps[self._MAPS["mask"]] == 2
-        if not np.any(bnd).item():
+        msk2 = self.staticmaps[self._MAPS["mask"]] == 2
+        if not np.any(msk2).item():
             # No waterlevel boundary remove bnd/bzs from sfincs.inp
-            self.logger.info(f"{name} forcing: no waterlevel boundary cells in model.")
-            self._update_forcing_1d(None, name)
+            self.logger.warning(
+                "No waterlevel boundary cells (msk==2) in model mask. "
+                "Update the mask layer first before setting waterlevel timeseries."
+            )
             return
 
-        # slice time
-        tstart = utils.parse_datetime(self.config["tstart"])
-        tstop = utils.parse_datetime(self.config["tstop"])
-        if gauges_fn is not None:
-            # read amd clip data
-            fext = str(gauges_fn).split(".")[-1].lower()
-            if fext in self._GEOMS and fext not in kwargs:
-                kwargs.update(driver="xy")
+        # model time
+        tstart, tstop = self.get_model_time()
+        if dataset_fn is not None:
+            # read and clip data in time & space
             da = self.data_catalog.get_geodataset(
-                gauges_fn,
+                dataset_fn,
                 geom=self.region,
                 buffer=buffer,
-                fn_ts=timeseries_fn,
                 variables=[name],
                 time_tuple=(tstart, tstop),
                 **kwargs,
             )
         else:
-            if self._GEOMS[name] in self.staticgeoms:
-                # add timeseries data to existing gdf
-                gdf = self.staticgeoms[self._GEOMS[name]]
-            else:
-                # create bnd point on single waterlevel boundary cell
-                x, y = self.staticmaps.raster.xy(*np.where(bnd))
-                gdf = gpd.GeoDataFrame(
-                    index=[1], geometry=gpd.points_from_xy(x[[0]], y[[0]]), crs=self.crs
-                )
+            # create bnd point on single waterlevel boundary cell
+            x, y = self.staticmaps.raster.xy(*np.where(msk2))
+            gdf = gpd.GeoDataFrame(
+                index=[1], geometry=gpd.points_from_xy(x[[0]], y[[0]]), crs=self.crs
+            )
             if timeseries_fn is not None:
                 da_ts = hydromt.open_timeseries(timeseries_fn, name=name).sel(
                     time=slice(tstart, tstop)
                 )
+                assert (
+                    da_ts["index"].size == 1
+                ), "Uniform waterlevel should contain single time series."
                 da = GeoDataArray.from_gdf(gdf, da_ts, index_dim="index")
-                self.logger.debug(f"{name} forcing: add time series to gauges.")
             else:
-                da = self._dummy_ts(gdf, name, fill_value=0)  # dummy
-                mdt_fn = None  # do not correct dummy values
-                self.logger.debug(f"{name} forcing: add dummy data to gauges.")
+                self.set_forcing_1d(xy=gdf, name=name)  # dummy timeseries
+                return
         # correct for MDT
         if mdt_fn is not None and isfile(mdt_fn):
             da_mdt = self.data_catalog.get_rasterdataset(
@@ -777,16 +777,84 @@ class SfincsModel(Model):
             da = da + mdt_pnts
             mdt_avg = mdt_pnts.mean().values
             self.logger.debug(f"{name} forcing: applied MDT (avg: {mdt_avg:+.2f})")
-        self._update_forcing_1d(da, name)
+        self.set_forcing_1d(ts=da, name=name)
+
+    def setup_q_forcing(self, dataset_fn=None, timeseries_fn=None, **kwargs):
+        """Setup discharge boundary point locations (src) and time series (dis).
+
+        Use dataset_fn to set the discharge boundary from a dataset of point location
+        timeseries. Only locations within the model domain are selected.
+
+        Use timeseries_fn to set discharge boundary conditions to pre-set (src) locations,
+        e.g. after the `setup_river_inflow` method.
+
+        The dataset/timeseries are clipped to the model time based on the model config
+        tstart and tstop entries.
+
+        Adds model layers:
+
+        * **src** geom: discharge gauge point locations
+        * **dis** forcing: discharge time series [m3/s]
+
+        Parameters
+        ----------
+        dataset_fn: str, Path
+            Path or data source name for geospatial point timeseries file.
+            This can either be a netcdf file with geospatial coordinates
+            or a combined point location file with a timeseries data csv file
+            which can be setup through the data_catalog yml file.
+            See :py:meth:`~hydromt.open_geodataset`, for accepted files.
+
+            * Required variables if netcdf: ['discharge']
+            * Required coordinates if netcdf: ['time', 'index', 'y', 'x']
+        timeseries_fn: str, Path
+            Path to tabulated timeseries csv file with time index in first column
+            and location IDs in the first row,
+            see :py:meth:`~hydromt.open_timeseries_from_table`, for details.
+            NOTE: tabulated timeseries files cannot yet be set through the data_catalog yml file.
+
+        """
+        name = "discharge"
+        has_src = self._GEOMS[name] in self.staticgeoms
+        # time slice
+        tstart, tstop = self.get_model_time()
+        if dataset_fn is None and not has_src:
+            self.logger.warning(
+                "No discharge inflow points in staticgeoms. "
+                "Run ``setup_river_inflow()`` method first to determine inflow locations."
+            )
+            return
+        elif dataset_fn is not None:
+            # read and clip data
+            da = self.data_catalog.get_geodataset(
+                dataset_fn,
+                geom=self.region,
+                variables=[name],
+                time_tuple=(tstart, tstop),
+                **kwargs,
+            )
+            self.set_forcing_1d(ts=da.fillna(0.0), name=name)
+        elif timeseries_fn is not None:
+            # read timeseries data and match with existing gdf
+            gdf = self.staticgeoms[self._GEOMS[name]]
+            da_ts = hydromt.open_timeseries_from_table(timeseries_fn, name=name).sel(
+                time=slice(tstart, tstop)
+            )
+            self.set_forcing_1d(ts=da_ts.fillna(0.0), xy=gdf, name=name)
+        else:
+            raise ValueError('Either "dataset_fn" or "timeseries_fn" must be provided.')
 
     def setup_q_forcing_from_grid(
-        self, discharge_fn=None, uparea_fn=None, wdw=1, max_error=0.1
+        self, discharge_fn, locs_fn=None, uparea_fn=None, wdw=1, max_error=0.1
     ):
-        """Setup discharge boundary based on gridded discharge data and pre-set
-        river inflow locations, for instance by using the ``set_rivers()`` method.
+        """Setup discharge boundary location (src) and timeseries (dis) based on a
+        gridded discharge dataset.
+
+        If `locs_fn` is not provided, the discharge source locations are expected to be
+        pre-set, e.g. using the `setup_river_inflow` method.
 
         If an upstream area grid is provided the discharge boundary condition is
-        snapped to the best fitting grid cell within a ``wdw`` neighboring cells.
+        snapped to the best fitting grid cell within a `wdw` neighboring cells.
         The best fit is dermined based on the minimal relative upstream area error if
         an upstream area value is available for the discharge boundary locations;
         otherwise it is based on maximum upstream area.
@@ -799,9 +867,14 @@ class SfincsModel(Model):
         Parameters
         ----------
         discharge_fn: str, Path, optional
-            Path to gridded discharge netcdf file.
+            Path or data source name for gridded discharge timeseries dataset.
 
             * Required variables: ['discharge' (m3/s)]
+            * Required coordinates: ['time', 'y', 'x']
+        locs_fn: str, Path, optional
+            Path or data source name for point location dataset.
+            See :py:meth:`~hydromt.open_vector`, for accepted files.
+
         uparea_fn: str, Path, optional
             Path to upstream area grid in gdal (e.g. geotiff) or netcdf format.
 
@@ -815,23 +888,24 @@ class SfincsModel(Model):
             staticgeoms has a "uparea" column. By default 0.1.
         """
         name = "discharge"
-        # parse time slice time
-        if discharge_fn is None:
-            return
+        if locs_fn is not None:
+            gdf = self.data_catalog.get_geodataframe(
+                locs_fn, geom=self.region, assert_gtype="Point"
+            ).to_crs(self.crs)
         elif self._GEOMS[name] not in self.staticgeoms:
+            gdf = self.staticgeoms[self._GEOMS[name]]
+        else:
             self.logger.warning(
-                "No discharge inflow points in staticgeoms. "
-                "Run ``setup_river_inflow()`` method first to determine inflow locations."
+                'No discharge inflow points in staticgeoms. Provide locations using "locs_fn" or '
+                'run "setup_river_inflow()" method first to determine inflow locations.'
             )
             return
-        gdf = self.staticgeoms[self._GEOMS[name]]
-        tstart = utils.parse_datetime(self.config["tstart"])
-        tstop = utils.parse_datetime(self.config["tstop"])
+        # model time
         da_q = self.data_catalog.get_rasterdataset(
             discharge_fn,
             geom=self.region,
             buffer=1,
-            time_tuple=(tstart, tstop),
+            time_tuple=self.get_model_time(),
             variables=[name],
         )
         if uparea_fn is not None:
@@ -867,90 +941,22 @@ class SfincsModel(Model):
             da_pnt = da_q.raster.sample(gdf).reset_coords()[name]
         # set original locations; parse and update forcing
         da_out = GeoDataArray.from_gdf(gdf.iloc[valid, :], da_pnt, index_dim="index")
-        self._update_forcing_1d(da_out, name)
-
-    def setup_q_forcing(self, gauges_fn=None, timeseries_fn=None, **kwargs):
-        """Setup discharge boundary based on point location time series.
-
-        If no timeseries file is provided or dummy timeseries with zero values are set.
-
-        If the timeseries file is provided, but no gauges file, the timeseries are
-        matched with existing discharge lacations in staticgeoms, if available.
-        These can be set for river inflow locations using the ``set_rivers()`` method.
-
-        Adds model layers:
-
-        * **src** geom: discharge gauge point locations
-        * **dis** forcing: discharge time series [m3/s]
-
-        Parameters
-        ----------
-        gauges_fn: str, Path, optional
-            Path to points geometry or geodataset netcdf file.
-            See :py:meth:`~hydromt.open_vector`, for accecpted point geometry files.
-            See :py:meth:`~hydromt.open_geodataset`, for accecpted geodataset netcdf files.
-
-            * Required variables if netcdf: ['discharge']
-        timeseries_fn: str, Path, optional
-            Path to timeseries file associated with gauges_fn. Set to None if gauges_fn
-            is a geodataset netcdf file including timeseries data.
-            See :py:meth:`~hydromt.open_geodataset`, for accecpted files.
-
-        """
-        name = "discharge"
-        has_src = self._GEOMS[name] in self.staticgeoms
-        # time slice
-        tstart = utils.parse_datetime(self.config["tstart"])
-        tstop = utils.parse_datetime(self.config["tstop"])
-        if gauges_fn is None and not has_src:
-            if timeseries_fn is not None:
-                self.logger.warning(
-                    "No discharge inflow points in staticgeoms. "
-                    "Run ``setup_river_inflow()`` method first to determine inflow locations."
-                )
-            self._update_forcing_1d(None, name)  # remove dis/src from config
-            return
-        elif gauges_fn is not None:
-            # read amd clip data
-            fext = str(gauges_fn).split(".")[-1].lower()
-            if fext in self._GEOMS and fext not in kwargs:
-                kwargs.update(driver="xy")
-            da = self.data_catalog.get_geodataset(
-                gauges_fn,
-                geom=self.region,
-                fn_ts=timeseries_fn,
-                variables=[name],
-                time_tuple=(tstart, tstop),
-                **kwargs,
-            )
-        else:
-            # read timeseries data and match with existing gdf
-            gdf = self.staticgeoms[self._GEOMS[name]]
-            if timeseries_fn is not None:
-                da_ts = hydromt.open_timeseries_from_table(
-                    timeseries_fn, name=name
-                ).sel(time=slice(tstart, tstop))
-                da = GeoDataArray.from_gdf(gdf, da_ts, index_dim="index")
-                self.logger.debug(f"{name} forcing: add time series to preset gauges.")
-            else:
-                da = self._dummy_ts(gdf, name, fill_value=0)  # dummy timeseries
-                self.logger.debug(f"{name} forcing: add dummy data to preset gauges.")
-        self._update_forcing_1d(da.fillna(0.0), name)
+        self.set_forcing_1d(name=name, da=da_out)
 
     def setup_p_forcing_from_grid(
         self, precip_fn=None, dst_res=None, aggregate=False, **kwargs
     ):
         """Setup precipitation forcing from a gridded spatially varying data source.
 
-        If aggregate is True, the distributed  precipitation is aggregated for the model
-        domain and a spatially uniform ascii `precipfile` is added to the model.
-        If aggregate is False, the distributed precipitation are reprojected to the model
-        CRS and written to the netcdf `netamprfile`.
+        If aggregate is True, spatially uniform precipitation forcing is added to
+        the model based on the mean precipitation over the model domain.
+        If aggregate is False, distributed precipitation is added to the model as netcdf file.
+        The data is reprojected to the model CRS (and destination resolution `dst_res` if provided).
 
         Adds one of these model layer:
 
-        * **netamprfile**: distributed precipitation [mm/hr]
-        * **precipfile**: uniform precipitation [mm/hr]
+        * **netamprfile** forcing: distributed precipitation [mm/hr]
+        * **precipfile** forcing: uniform precipitation [mm/hr]
 
         Parameters
         ----------
@@ -958,6 +964,8 @@ class SfincsModel(Model):
             Path to precipitation rasterdataset netcdf file.
 
             * Required variables: ['precip' (mm)]
+            * Required coordinates: ['time', 'y', 'x']
+
         dst_res: float
             output resolution (m), by default None and computed from source data.
             Only used in combination with aggregate=False
@@ -968,13 +976,11 @@ class SfincsModel(Model):
         """
         variable = "precip"
         # get data for model domain and config time range
-        tstart = utils.parse_datetime(self.config["tstart"])
-        tstop = utils.parse_datetime(self.config["tstop"])
         precip = self.data_catalog.get_rasterdataset(
             precip_fn,
             geom=self.region,
             buffer=2,
-            time_tuple=(tstart, tstop),
+            time_tuple=self.get_model_time(),
             variables=[variable],
         )
 
@@ -1023,25 +1029,22 @@ class SfincsModel(Model):
         self.set_forcing(precip_out, name=sfincs_name)
 
     def setup_p_forcing(self, precip_fn=None, **kwargs):
-        """Setup spatially uniform precipitation forcing.
+        """Setup spatially uniform precipitation forcing (precip).
 
         Adds model layers:
 
-        * **precipfile**: uniform precipitation [mm/hr]
+        * **precipfile** forcing: uniform precipitation [mm/hr]
 
         Parameters
         ----------
         precip_fn, str, Path
-            Path to precipitation csv or sfincs.prcp file
+            Path to tabulated timeseries csv file with time index in first column
+            and location IDs in the first row,
+            see :py:meth:`~hydromt.open_timeseries_from_table`, for details.
+            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
         """
-        variable = "precip"
-        precip_out = hydromt.open_timeseries_from_table(precip_fn, **kwargs)
-        if precip_out[precip_out.vector.index_dim].size > 1:
-            raise ValueError(f"Uniform {variable} should have index size of one.")
-        # precipfile = sfincs.precip
-        sfincs_name = self._1DFORCING[variable]
-        self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name}")
-        self.set_forcing(precip_out, name=sfincs_name)
+        ts = hydromt.open_timeseries_from_table(precip_fn, **kwargs)
+        self.set_forcing_1d(name="precip", ts=ts)
 
     def plot_forcing(self, fn_out="forcing.png", **kwargs):
         """Plot model timeseries forcing.
@@ -1074,8 +1077,7 @@ class SfincsModel(Model):
             fig, axes = plots.plot_forcing(self.forcing, **kwargs)
 
             # set xlim to model tstart - tend
-            tstart = utils.parse_datetime(self.config["tstart"])
-            tstop = utils.parse_datetime(self.config["tstop"])
+            tstart, tstop = self.get_model_time()
             axes[-1].set_xlim(mdates.date2num([tstart, tstop]))
 
             # save figure
@@ -1095,7 +1097,7 @@ class SfincsModel(Model):
         bmap: str = "sat",
         zoomlevel: int = 11,
         figsize: Tuple[int] = None,
-        geoms: List[str] = ["rivers", "src", "bnd", "obs"],
+        geoms: List[str] = None,
         geom_kwargs: Dict = {},
         legend_kwargs: Dict = {},
         **kwargs,
@@ -1123,9 +1125,10 @@ class SfincsModel(Model):
         figsize : Tuple[int], optional
             figure size, by default None
         geoms : List[str], optional
-            list of model geometries to plot, by default ["rivers", "src", "bnd", "obs"]
-        geom_kwargs : Dict, optional
-            Model geometry styling, passed to geopands.GeoDataFrame.plot method
+            list of model geometries to plot, by default all model geometries.
+        geom_kwargs : Dict of Dict, optional
+            Model geometry styling per geometry, passed to geopands.GeoDataFrame.plot method.
+            For instance: {'src': {'markersize': 30}}.
         legend_kwargs : Dict, optional
             Legend kwargs, passed to ax.legend method.
 
@@ -1259,44 +1262,7 @@ class SfincsModel(Model):
             )
 
         if self._write_gis:
-            self.write_gis("staticmaps")
-
-    def write_gis(self, variables="all"):
-        """Write variables to GIS files in <root>/<gis>/.
-        Raster data is written to geotiff and vector data to geojson files.
-        NOTE: these files are not used by the model.
-        """
-        _all = ["staticmaps", "staticgeoms", "states", "results.hmax"]
-        if variables == "all":
-            variables = _all
-        elif isinstance(variables, str):
-            variables = [variables]
-        if not isinstance(variables, list):
-            raise ValueError(f'"variables" should be a list, not {type(list)}.')
-        for var in variables:
-            vsplit = var.split(".")
-            attr = vsplit[0]
-            if not (attr in _all or var in _all):
-                self.logger.info(f"Unknown variable {var}: select one of {_all}")
-                continue
-            obj = getattr(self, f"_{attr}")
-            if len(obj) == 0:
-                self.logger.info(f"Variable {var} empty, skip writing file.")
-                continue  # empty
-            self.logger.info(f"Write GIS files for {var} to 'gis' subfolder")
-            vars = vsplit[1:] if len(vsplit) >= 2 else list(obj.keys())
-            for name in vars:
-                if name not in obj:
-                    continue
-                if attr == "staticgeoms":
-                    fn_gis = join(self.root, "gis", f"{name}.geojson")
-                    obj[name].to_file(fn_gis, driver="GeoJSON")
-                else:
-                    da = obj[name]
-                    if da.raster.res[1] > 0:  # make sure orientation is N->S
-                        yrev = list(reversed(da.raster.ycoords))
-                        da = da.reindex({da.raster.y_dim: yrev})
-                    da.raster.to_raster(join(self.root, "gis", f"{name}.tif"))
+            self.write_raster("staticmaps")
 
     def read_staticgeoms(self):
         """Read geometry files if and save to `staticgeoms` attribute.
@@ -1353,7 +1319,7 @@ class SfincsModel(Model):
                     else:
                         utils.write_xy(fn, gdf, fmt="%8.2f")
             if self._write_gis:
-                self.write_gis("staticgeoms")
+                self.write_vector()
 
     def read_forcing(self):
         """Read forcing files and save to `forcing` attribute.
@@ -1462,7 +1428,7 @@ class SfincsModel(Model):
                 da = da.reindex({da.raster.y_dim: list(reversed(da.raster.ycoords))})
             utils.write_ascii_map(fn, da.values, fmt=fmt)
         if self._write_gis:
-            self.write_gis("states")
+            self.write_raster("states")
 
     def read_results(self, chunksize=100, drop=["crs", "sfincsgrid"]):
         """Read results from sfincs_map.nc and sfincs_his.nc and save to the `results` attribute.
@@ -1497,48 +1463,185 @@ class SfincsModel(Model):
     def write_results(self):
         pass  # TODO remove from model API
 
-    def _update_forcing_1d(self, da, name):
-        """Set 1D forcing (and remove if da is None) and update config accordingly."""
+    def write_raster(
+        self, variables=["staticmaps", "states", "results.hmax"], root=None, **kwargs
+    ):
+        """Write model 2D raster variables to geotiff files.
+
+        NOTE: these files are not used by the model by just saved for visualization/
+        analysis purposes.
+
+        Parameters
+        ----------
+        variables: str, list, optional
+            Model variables are a combination of attribute and layer (optional) using <attribute>.<layer> syntax.
+            Known ratster attributes are ["staticmaps", "states", "results"].
+            Different variables can be combined in a list.
+            By default, variables is ["staticmaps", "states", "results.hmax"]
+        root: Path, str, optional
+            The output folder path. If None it defautls to the <model_root>/gis folder (Default)
+        kwargs:
+            Key-word arguments passed to hydromt.RasterDataset.to_raster(driver='GTiff').
+        """
+        kwargs.update(driver="GTiff")
+        # check variables
+        if isinstance(variables, str):
+            variables = [variables]
+        if not isinstance(variables, list):
+            raise ValueError(f'"variables" should be a list, not {type(list)}.')
+        # check root
+        if root is None:
+            root = join(self.root, "gis")
+        if not os.path.isdir(root):
+            os.makedirs(root)
+        # save to file
+        for var in variables:
+            vsplit = var.split(".")
+            attr = vsplit[0]
+            obj = getattr(self, f"_{attr}")
+            if obj is None or len(obj) == 0:
+                continue  # empty
+            self.logger.debug(f"Write GIS files for {var} to 'gis' subfolder")
+            layers = vsplit[1:] if len(vsplit) >= 2 else list(obj.keys())
+            for layer in layers:
+                if layer not in obj:
+                    self.logger.warning(f"Variable {attr}.{layer} not found: skipping.")
+                    continue
+                da = obj[layer]
+                if len(da.dims) != 2 or "time" in da.dims:
+                    continue
+                if da.raster.res[1] > 0:  # make sure orientation is N->S
+                    yrev = list(reversed(da.raster.ycoords))
+                    da = da.reindex({da.raster.y_dim: yrev})
+                da.raster.to_raster(join(root, f"{layer}.tif"), **kwargs)
+
+    def write_vector(self, variables=None, root=None, **kwargs):
+        """Write model vector (staticgeoms) variables to geojson files.
+
+        NOTE: these files are not used by the model by just saved for visualization/
+        analysis purposes.
+
+        Parameters
+        ----------
+        variables: str, list, optional
+            Staticgeoms variables. By bedault all staticgeoms are saved.
+        root: Path, str, optional
+            The output folder path. If None it defautls to the <model_root>/gis folder (Default)
+        kwargs:
+            Key-word arguments passed to geopandas.GeoDataFrame.to_file(driver='GeoJSON').
+        """
+        kwargs.update(driver="GeoJSON")  # fixed
+        # check variables
+        if variables is None or variables == "staticgeoms":
+            variables = list(self._staticgeoms.keys())
+        elif isinstance(variables, str):
+            variables = [variables]
+        if not isinstance(variables, list):
+            raise ValueError(f'"variables" should be a list, not {type(list)}.')
+        # check root
+        if root is None:
+            root = join(self.root, "gis")
+        if not os.path.isdir(root):
+            os.makedirs(root)
+        # save to file
+        for var in variables:
+            if var not in self._staticgeoms:
+                self.logger.warning(f'Var "{var}" not found in staticgeoms: skipping.')
+                continue
+            self._staticgeoms[var].to_file(join(root, f"{var}.geojson"), **kwargs)
+
+    def set_staticmaps(self, data, name=None):
+        """Add data to staticmaps.
+
+        All layers of staticmaps must have identical spatial coordinates.
+
+        Parameters
+        ----------
+        data: xarray.DataArray or xarray.Dataset
+            new map layer to add to staticmaps
+        name: str, optional
+            Name of new map layer, this is used to overwrite the name of a DataArray
+            or to select a variable from a Dataset.
+        """
+        # make sure data is in S -> N orientation
+        if isinstance(data, (xr.Dataset, xr.DataArray)):
+            if data.raster.res[1] < 0:
+                data = data.reindex(
+                    {data.raster.y_dim: list(reversed(data.raster.ycoords))}
+                )
+        super().set_staticmaps(data, name)
+
+    def set_forcing_1d(self, name, ts=None, xy=None):
+        """Set 1D forcing and update staticgoms and config accordingly.
+
+        For waterlevel and discharge forcing point locations are required to set the
+        combined src/dis and bnd/bzs files. If only point locations (and no timeseries)
+        are given a dummy timeseries with zero values is set.
+
+        If ts and xy are both None, the
+
+        Parameters
+        ----------
+        name: {'waterlevel', 'discharge', 'precip'}
+            Name of forcing type.
+        ts: pandas.DataFrame, xarray.DataArray
+            Timeseries data. If DataArray it should contain time and index dims; if
+            DataFrame the index should be a datetime index and the columns the location
+            index.
+        xy: geopandas.GeoDataFrame
+            Forcing point locations
+        """
         fname = self._1DFORCING.get(name, None)
         gname = self._GEOMS.get(name, name)
         if fname is None:
-            raise ValueError(f"unknown 1D forcing name {name}")
-        n = da.vector.index.size if da is not None else 0
-        self.logger.debug(f"{name} forcing: setting data at {n} points.")
-        if n > 0:  # save to forcing dict and set in config
-            if not isinstance(da, xr.DataArray):
-                raise ValueError(f"{name} forcing: object should be xarray.DataArray.")
+            names = list(self._1DFORCING.keys())
+            raise ValueError(f'Unknown forcing "{name}", select from {names}')
+        # sort out ts and xy types
+        if isinstance(ts, pd.DataFrame):
+            assert np.dtype(ts.index).type == np.datetime64
+            ts.columns.name = "index"
+            ts.index.name = "time"
+            ts = xr.DataArray(ts, dims=("time", "index"), name=fname)
+        if isinstance(xy, gpd.GeoDataFrame):
+            if ts is not None:
+                ts = GeoDataArray.from_gdf(xy, ts, index_dim="index")
+            else:
+                ts = self._dummy_ts(xy, name, fill_value=0)  # dummy timeseries
+        if not isinstance(ts, xr.DataArray):
+            raise ValueError(
+                f"{name} forcing: Unkwonw type for ts {type(ts)} should be xarray.DataArray."
+            )
+        # set locs (for waterlevel and discharge)
+        if name in ["waterlevel", "discharge"]:
+            assert len(ts.dims) == 2
             # make sure time is on last dim
-            da = da.transpose(da.vector.index_dim, da.vector.time_dim)
-            if da.time.size == 0:  # set dummy values if time dim has zero
-                self.logger.warning(
-                    f"{name} forcing: no timeseries data in object, setting dummy values."
+            ts = ts.transpose(ts.vector.index_dim, ts.vector.time_dim)
+            # set crs
+            if ts.vector.crs is None:
+                ts.vector.set_crs(self.crs.to_epsg())
+            elif ts.vector.crs != self.crs:
+                ts = ts.vector.to_crs(self.crs.to_epsg())
+            # fix order based on x_dim after setting crs (for comparibility between OS)
+            ts = ts.sortby(ts.vector.x_dim, ascending=True)
+            # reset index
+            dim = ts.vector.index_dim
+            ts[dim] = xr.IndexVariable(dim, np.arange(1, ts[dim].size + 1, dtype=int))
+            n = ts.vector.index.size
+            self.logger.debug(f"{name} forcing: setting {gname} data for {n} points.")
+            self.set_staticgeoms(ts.vector.to_gdf(), gname)
+            self.set_config(f"{gname}file", f"sfincs.{gname}")
+        else:
+            if not (len(ts.dims) == 1 and "time" in ts.dims):
+                raise ValueError(
+                    f"{name} forcing: uniform forcing should have single 'time' dimension."
                 )
-                da = self._dummy_ts(da.vector.to_gdf(), name, fill_value=0)
-            # and crs is set (should always be model crs at this stage)
-            if da.vector.crs is None:
-                da.vector.set_crs(self.crs.to_epsg())
-            elif da.vector.crs != self.crs:
-                da = da.vector.to_crs(self.crs.to_epsg())
-            # fix order based on x_dim (for comparibility between OS)
-            da = da.sortby(da.vector.x_dim, ascending=True)
-            dim = da.vector.index_dim
-            da[dim] = xr.IndexVariable(dim, np.arange(1, da[dim].size + 1, dtype=int))
-            self.set_forcing(da, fname)
-            self.set_staticgeoms(da.vector.to_gdf(), gname)
-            # edit inp file
-            self.logger.debug(f"{name} forcing: updating sfincs.inp.")
-            for sname in [fname, gname]:
-                self.set_config(f"{sname}file", f"sfincs.{sname}")
-        else:  # remove forcing data and sfincs.inp entries
-            if fname in self._forcing:
-                self.logger.debug(f"{name} forcing: removing data.")
-                self._forcing.pop(name)
-            if f"{fname}file" in self.config:
-                self.logger.debug(
-                    f"{name} forcing: removing {fname}file from sfincs.inp."
-                )
-                self._config.pop(f"{fname}file")
+
+        # set forcing
+        self.logger.debug(f"{name} forcing: setting {fname} data.")
+        self.set_forcing(ts, fname)
+        # edit inp file
+        self.logger.debug(f"{name} forcing: updating sfincs.inp.")
+        self.set_config(f"{fname}file", f"sfincs.{fname}")
 
     ## model configuration
 
@@ -1584,13 +1687,19 @@ class SfincsModel(Model):
         """
         return utils.get_spatial_attrs(self.config, crs=crs, logger=self.logger)
 
-    def _dummy_ts(self, gdf, name, fill_value=0):
+    def get_model_time(self):
+        """Return (tstart, tstop) tuple with parsed model start and end time"""
         tstart = utils.parse_datetime(self.config["tstart"])
         tstop = utils.parse_datetime(self.config["tstop"])
+        return tstart, tstop
+
+    ## helper method
+
+    def _dummy_ts(self, gdf, name, fill_value=0):
         df = pd.DataFrame(
-            index=pd.DatetimeIndex([tstart, tstop]),
+            index=pd.DatetimeIndex(list(self.get_model_time())),
             columns=gdf.index.values,
             data=np.full((2, gdf.index.size), fill_value, dtype=np.float32),
         )
-        da = GeoDataArray.from_gdf(gdf, df, dims=("time", "index"), name=name)
-        return da
+        ts = GeoDataArray.from_gdf(gdf, df, dims=("time", "index"), name=name)
+        return ts
