@@ -1662,7 +1662,6 @@ class SfincsModel(Model):
             ts[dim] = xr.IndexVariable(dim, np.arange(1, ts[dim].size + 1, dtype=int))
             n = ts.vector.index.size
             self.logger.debug(f"{name} forcing: setting {gname} data for {n} points.")
-            self.set_config(f"{gname}file", f"sfincs.{gname}")
         else:
             if not (len(ts.dims) == 1 and "time" in ts.dims):
                 raise ValueError(
