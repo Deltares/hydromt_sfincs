@@ -5,7 +5,6 @@ import glob
 import numpy as np
 import logging
 from numpy.core.fromnumeric import var
-import rasterio
 from rasterio.warp import transform_bounds
 from scipy import ndimage
 import geopandas as gpd
@@ -32,28 +31,24 @@ logger = logging.getLogger(__name__)
 class SfincsModel(Model):
     _NAME = "sfincs"
     _GEOMS = {
-        "waterlevel": "bnd",
-        "discharge": "src",
         "gauges": "obs",
         "weirs": "weir",
         "thin_dams": "thd",
-    }
-    _1DFORCING = {
-        "waterlevel": "bzs",
-        "discharge": "dis",
-        "precip": "precip",
-    }
-    _2DFORCING = {
-        "precip": "netampr",
-    }
+    }  # parsed to dict of geopandas.GeoDataFrame
+    _FORCING = {
+        "waterlevel": ("bzs", "bnd"),  #  timeseries, locations tuple
+        "discharge": ("dis", "src"),
+        "precip": ("precip", None),
+        "precip2D": ("netampr", None),
+    }  # parsed to dict of hydromt.GeoDataArray if locations else xarray.DataArray
     _MAPS = {
         "elevtn": "dep",
         "mask": "msk",
         "curve_number": "scs",
         "manning": "manning",
         "infiltration": "qinf",
-    }
-    _FOLDERS = [""]  # to create root folder without subfolders
+    }  # parsed to hydromt.RasterDataset
+    _FOLDERS = [""]
     _CONF = "sfincs.inp"
     _DATADIR = DATADIR
     _ATTRS = {
@@ -534,12 +529,12 @@ class SfincsModel(Model):
         da_scs = da_scs.where(da_msk, -9999).round(3)
         da_scs.raster.set_nodata(-9999)
         # set staticmaps
-        sfincs_name = self._MAPS["curve_number"]
-        da_scs.attrs.update(**self._ATTRS.get(sfincs_name, {}))
-        self.set_staticmaps(da_scs, name=sfincs_name)
+        mname = self._MAPS["curve_number"]
+        da_scs.attrs.update(**self._ATTRS.get(mname, {}))
+        self.set_staticmaps(da_scs, name=mname)
         # update config: remove default infiltration values and set cn map
         self.config.pop("qinf", None)
-        self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name}")
+        self.set_config(f"{mname}file", f"sfincs.{mname}")
 
     def setup_manning_roughness(self, lulc_fn="vito", map_fn=None):
         """Setup model curve number map from gridded curve number map.
@@ -575,13 +570,13 @@ class SfincsModel(Model):
         # mask and set precision
         da_man = da_man.where(da_msk, da_man.raster.nodata).round(3)
         # set staticmaps
-        sfincs_name = self._MAPS["manning"]
-        da_man.attrs.update(**self._ATTRS.get(sfincs_name, {}))
-        self.set_staticmaps(da_man, name=sfincs_name)
+        mname = self._MAPS["manning"]
+        da_man.attrs.update(**self._ATTRS.get(mname, {}))
+        self.set_staticmaps(da_man, name=mname)
         # update config: remove default manning values and set maning map
         for v in ["manning_land", "manning_sea", "rgh_lev_land"]:
             self.config.pop(v, None)
-        self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name[:3]}")
+        self.set_config(f"{mname}file", f"sfincs.{mname[:3]}")
 
     def setup_gauges(self, gauges_fn, overwrite=False, **kwargs):
         """Setup model observation point locations.
@@ -710,14 +705,14 @@ class SfincsModel(Model):
             This can either be a netcdf file with geospatial coordinates
             or a combined point location file with a timeseries data csv file
             which can be setup through the data_catalog.yml file.
-            See :py:meth:`~hydromt.open_geodataset`, for accepted files.
+            See :py:meth:`hydromt.open_geodataset`, for accepted files.
 
             * Required variables if netcdf: ['waterlevel']
             * Required coordinates if netcdf: ['time', 'index', 'y', 'x']
         timeseries_fn: str, Path
             Path to tabulated timeseries csv file with time index in first column
             and location IDs in the first row,
-            see :py:meth:`~hydromt.open_timeseries_from_table`, for details.
+            see :py:meth:`hydromt.open_timeseries_from_table`, for details.
             Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
         mdt_fn: str, optional
             Path or data source name for mean dynamic topography gridded data.
@@ -739,8 +734,7 @@ class SfincsModel(Model):
             )
             return
 
-        # model time
-        tstart, tstop = self.get_model_time()
+        tstart, tstop = self.get_model_time()  # model time
         if dataset_fn is not None:
             # read and clip data in time & space
             da = self.data_catalog.get_geodataset(
@@ -815,32 +809,33 @@ class SfincsModel(Model):
 
         """
         name = "discharge"
-        has_src = self._GEOMS[name] in self.staticgeoms
-        # time slice
-        tstart, tstop = self.get_model_time()
-        if dataset_fn is None and not has_src:
+        fname = self._FORCING[name][0]
+        tstart, tstop = self.get_model_time()  # time slice
+        if dataset_fn is None and fname not in self.forcing:
             self.logger.warning(
-                "No discharge inflow points in staticgeoms. "
-                "Run ``setup_river_inflow()`` method first to determine inflow locations."
+                "No discharge inflow (src) points set: Run ``setup_river_inflow()`` method first or provide locations."
             )
             return
         elif dataset_fn is not None:
             # read and clip data
-            da = self.data_catalog.get_geodataset(
-                dataset_fn,
-                geom=self.region,
-                variables=[name],
-                time_tuple=(tstart, tstop),
-                **kwargs,
+            da = (
+                self.data_catalog.get_geodataset(
+                    dataset_fn,
+                    geom=self.region,
+                    variables=[name],
+                    time_tuple=(tstart, tstop),
+                    **kwargs,
+                )
+                .fillna(0.0)
+                .rename(fname)
             )
-            self.set_forcing_1d(ts=da.fillna(0.0), name=name)
+            self.set_forcing_1d(ts=da, name=name)
         elif timeseries_fn is not None:
             # read timeseries data and match with existing gdf
-            gdf = self.staticgeoms[self._GEOMS[name]]
-            da_ts = hydromt.open_timeseries_from_table(timeseries_fn, name=name).sel(
-                time=slice(tstart, tstop)
-            )
-            self.set_forcing_1d(ts=da_ts.fillna(0.0), xy=gdf, name=name)
+            gdf = self.forcing[fname].vector.to_gdf()
+            da_ts = hydromt.open_timeseries_from_table(timeseries_fn, name=name)
+            da_ts = da_ts.sel(time=slice(tstart, tstop)).fillna(0.0)
+            self.set_forcing_1d(ts=da_ts, xy=gdf, name=name)
         else:
             raise ValueError('Either "dataset_fn" or "timeseries_fn" must be provided.')
 
@@ -991,7 +986,7 @@ class SfincsModel(Model):
             precip_out = precip.raster.zonal_stats(self.region, stats=stat)[
                 f"precip_{stat}"
             ]
-            precip_out = precip_out.where(precip_out >= 0, 0).fillna(0)
+            precip_out = precip_out.where(precip_out >= 0, 0).fillna(0).squeeze()
         else:
             # reproject to model utm crs
             # NOTE: currently SFINCS errors (stack overflow) on large files,
@@ -1016,17 +1011,24 @@ class SfincsModel(Model):
         precip_out.name = "Precipitation"  # capital is important for netamprfile
 
         # set correct names and attrs and add forcing
+        fname = self._FORCING[variable][0]
+        fname2 = self._FORCING[f"{variable}2D"][0]
         if aggregate:
+            # remove netamprfile
+            self._forcing.pop(fname2, None)
+            self._config.pop(f"{fname2}file", None)
             # precipfile = sfincs.precip
-            sfincs_name = self._1DFORCING[variable]
-            fn_out = f"sfincs.{sfincs_name}"
+            fn_out = f"sfincs.{fname}"
         else:
+            # remove precipfile
+            self._forcing.pop(fname, None)
+            self._config.pop(f"{fname}file", None)
             # netamprfile = precip.nc
-            sfincs_name = self._2DFORCING[variable]
             fn_out = f"{variable}.nc"
-        precip_out.attrs.update(**self._ATTRS.get(sfincs_name, {}))
-        self.set_config(f"{sfincs_name}file", fn_out)
-        self.set_forcing(precip_out, name=sfincs_name)
+            fname = fname2
+        precip_out.attrs.update(**self._ATTRS.get(fname, {}))
+        self.set_config(f"{fname}file", fn_out)
+        self.set_forcing(precip_out, name=fname)
 
     def setup_p_forcing(self, precip_fn=None, **kwargs):
         """Setup spatially uniform precipitation forcing (precip).
@@ -1045,6 +1047,10 @@ class SfincsModel(Model):
         """
         ts = hydromt.open_timeseries_from_table(precip_fn, **kwargs)
         self.set_forcing_1d(name="precip", ts=ts)
+        # remove netamprfile
+        fname2 = self._FORCING["precip2D"][0]
+        self._forcing.pop(fname2, None)
+        self._config.pop(f"{fname2}file", None)
 
     def plot_forcing(self, fn_out="forcing.png", **kwargs):
         """Plot model timeseries forcing.
@@ -1142,9 +1148,15 @@ class SfincsModel(Model):
         """
         import matplotlib.pyplot as plt
 
+        # combine staticgeoms and forcing locations
+        sg = self.staticgeoms.copy()
+        for fname, gname in self._FORCING.values():
+            if fname in self._forcing and gname is not None:
+                sg.update({gname: self._forcing[fname].vector.to_gdf()})
+
         fig, ax = plots.plot_basemap(
             self.staticmaps,
-            self.staticgeoms,
+            staticgeoms=sg,
             variable=variable,
             shaded=shaded,
             plot_bounds=plot_bounds,
@@ -1208,16 +1220,16 @@ class SfincsModel(Model):
         dtypes = {"msk": "u1"}
         mvs = {"msk": 0, "scs": 0}
         data_vars = {}
-        for name, sfincs_name in self._MAPS.items():
-            if f"{sfincs_name}file" in self.config:
-                fn = self.get_config(f"{sfincs_name}file", abs_path=True)
+        for name, mname in self._MAPS.items():
+            if f"{mname}file" in self.config:
+                fn = self.get_config(f"{mname}file", abs_path=True)
                 if not isfile(fn):
-                    self.logger.warning(f"{sfincs_name}file not found at {fn}")
+                    self.logger.warning(f"{mname}file not found at {fn}")
                     continue
-                dtype = dtypes.get(sfincs_name, "f4")
-                mv = mvs.get(sfincs_name, -9999.0)
+                dtype = dtypes.get(mname, "f4")
+                mv = mvs.get(mname, -9999.0)
                 data = utils.read_binary_map(fn, ind, shape, mv, dtype)
-                data_vars.update({sfincs_name: (data, mv)})
+                data_vars.update({mname: (data, mv)})
 
         # create dataset and set as staticmaps
         ds = RasterDataset.from_numpy(
@@ -1254,15 +1266,15 @@ class SfincsModel(Model):
         dvars = self.staticmaps.raster.vars
         self.logger.debug(f"Write binary map files: {dvars}.")
         dtypes = {"msk": "u1"}  # default to f4
-        for sfincs_name in dvars:
-            if f"{sfincs_name}file" not in self.config:
-                self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name}")
-            fn_out = self.get_config(f"{sfincs_name}file", abs_path=True)
+        for mname in dvars:
+            if f"{mname}file" not in self.config:
+                self.set_config(f"{mname}file", f"sfincs.{mname}")
+            fn_out = self.get_config(f"{mname}file", abs_path=True)
             utils.write_binary_map(
                 fn_out,
-                ds_out[sfincs_name].values,
+                ds_out[mname].values,
                 msk=msk,
-                dtype=dtypes.get(sfincs_name, "f4"),
+                dtype=dtypes.get(mname, "f4"),
             )
 
         if self._write_gis:
@@ -1278,21 +1290,20 @@ class SfincsModel(Model):
         if not self._write:
             self._staticgeoms = {}  # fresh start in read-only mode
         # read _GEOMS model files
-        for sfincs_name in self._GEOMS.values():
-            if f"{sfincs_name}file" in self.config:
-                fn = self.get_config(f"{sfincs_name}file", abs_path=True)
+        for gname in self._GEOMS.values():
+            if f"{gname}file" in self.config:
+                fn = self.get_config(f"{gname}file", abs_path=True)
                 if fn is None:
                     continue
                 elif not isfile(fn):
-                    self.logger.warning(f"{sfincs_name}file not found at {fn}")
+                    self.logger.warning(f"{gname}file not found at {fn}")
                     continue
-                if sfincs_name in ["thd", "weir"]:
+                if gname in ["thd", "weir"]:
                     struct = utils.read_structures(fn)
                     gdf = utils.structures2gdf(struct, crs=self.crs)
                 else:
                     gdf = utils.read_xy(fn, crs=self.crs)
-                gdf.index = np.arange(1, gdf.index.size + 1, dtype=int)  # start at 1
-                self.set_staticgeoms(gdf, name=sfincs_name)
+                self.set_staticgeoms(gdf, name=gname)
         # read additional geojson files from gis directory
         for fn in glob.glob(join(self.root, "gis", "*.geojson")):
             name = basename(fn).replace(".geojson", "")
@@ -1312,14 +1323,14 @@ class SfincsModel(Model):
             raise IOError("Model opened in read-only mode")
         if self._staticgeoms:
             self.logger.info("Write staticgeom files")
-            for sfincs_name, gdf in self.staticgeoms.items():
-                if sfincs_name in self._GEOMS.values():
-                    if f"{sfincs_name}file" not in self.config:
-                        self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name}")
-                    fn = self.get_config(f"{sfincs_name}file", abs_path=True)
-                    if sfincs_name in ["thd", "weir"]:
+            for gname, gdf in self.staticgeoms.items():
+                if gname in self._GEOMS.values():
+                    if f"{gname}file" not in self.config:
+                        self.set_config(f"{gname}file", f"sfincs.{gname}")
+                    fn = self.get_config(f"{gname}file", abs_path=True)
+                    if gname in ["thd", "weir"]:
                         struct = utils.gdf2structures(gdf)
-                        utils.write_structures(fn, struct, stype=sfincs_name)
+                        utils.write_structures(fn, struct, stype=gname)
                     else:
                         utils.write_xy(fn, gdf, fmt="%8.2f")
             if self._write_gis:
@@ -1333,28 +1344,30 @@ class SfincsModel(Model):
         if not self._write:
             # start fresh in read-only mode
             self._forcing = {}
-        forcing_dict = {**self._1DFORCING, **self._2DFORCING}  # merge dicts
         tref = utils.parse_datetime(self.config["tref"])
-        for name, sfincs_name in forcing_dict.items():
-            fn = self.get_config(f"{sfincs_name}file", abs_path=True)
+        for name, (fname, gname) in self._FORCING.items():
+            fn = self.get_config(f"{fname}file", abs_path=True)
             if fn is None:
                 continue
             elif not isfile(fn):
-                self.logger.warning(f"{sfincs_name}file not found at {fn}")
+                self.logger.warning(f"{fname}file not found at {fn}")
                 continue
-            # read timeseries
-            if sfincs_name in self._1DFORCING.values():
-                df = utils.read_timeseries(fn, tref)
-                # add locations
-                gdf = self.staticgeoms.get(self._GEOMS[name], None)
-                if gdf is not None:
-                    dims = ("time", "index")
-                    da = GeoDataArray.from_gdf(gdf, df, dims=dims, name=name)
-                else:
-                    da = xr.DataArray(df)  # TODO: TEST
-            else:
+            # read forcing
+            if "net" in fname:
                 da = xr.open_dataarray(fn, chunks={"time": 24})  # lazy
-            self.set_forcing(da, name=sfincs_name)
+                self.set_forcing(da, name=fname)
+            else:
+                df = utils.read_timeseries(fn, tref)
+                if gname is not None:  # read bzd/src locations
+                    fn_geom = self.get_config(f"{gname}file", abs_path=True)
+                    if not isfile(fn):
+                        self.logger.warning(f"{gname}file not found at {fn_geom}")
+                        continue
+                    gdf = utils.read_xy(fn_geom, crs=self.crs)
+                else:
+                    df = df[df.columns[0]]  # to series for spatially uniform forcing
+                    gdf = None
+                self.set_forcing_1d(ts=df, xy=gdf, name=name)
 
     def write_forcing(self):
         """Write forcing to ascii (bzd/dis/precip) and netcdf (netampr) files.
@@ -1370,21 +1383,31 @@ class SfincsModel(Model):
             encoding = dict(
                 time={"units": f"minutes since {tref_str}", "dtype": "float64"}
             )
-            fnames = list(self._1DFORCING.values()) + list(self._2DFORCING.values())
-            for sfincs_name in self._forcing:
-                if sfincs_name not in fnames:
-                    logger.warning(f"{sfincs_name} forcing unknown and skipped.")
+            names = {f[0]: f[1] for f in self._FORCING.values()}
+            for fname in self._forcing:
+                if fname not in names:
+                    logger.warning(f"{fname} forcing unknown and skipped.")
                     continue
-                if f"{sfincs_name}file" not in self.config:
-                    self.set_config(f"{sfincs_name}file", f"sfincs.{sfincs_name}")
-                fn = self.get_config(f"{sfincs_name}file", abs_path=True)
-                if sfincs_name in self._1DFORCING.values():
-                    # spatially uniform forcing
-                    df = self._forcing[sfincs_name].to_series().unstack(0)
-                    utils.write_timeseries(fn, df, tref)
+                if f"{fname}file" not in self.config:
+                    self.set_config(f"{fname}file", f"sfincs.{fname}")
+                fn = self.get_config(f"{fname}file", abs_path=True)
+                da = self._forcing[fname]
+                if "net" in fname:  # spatially distributed forcing
+                    da.to_netcdf(fn, encoding=encoding)
                 else:
-                    # spatially distributed forcing
-                    self._forcing[sfincs_name].to_netcdf(fn, encoding=encoding)
+                    if len(da.dims) == 2:  # forcing at point locations
+                        df = da.to_series().unstack(0)
+                        gname = names[fname]
+                        if gname is None:
+                            raise ValueError(f"Locations missing for {fname}")
+                        gdf = self._forcing[fname].vector.to_gdf()
+                        if f"{gname}file" not in self.config:
+                            self.set_config(f"{gname}file", f"sfincs.{gname}")
+                        fn_xy = self.get_config(f"{gname}file", abs_path=True)
+                        utils.write_xy(fn_xy, gdf, fmt="%8.2f")
+                    else:  # spatially uniform forcing
+                        df = da.to_series().to_frame()
+                    utils.write_timeseries(fn, df, tref)
 
     def read_states(self, crs=None):
         """Read waterlevel state (zsini) from ascii file and save to `states` attribute.
@@ -1600,17 +1623,19 @@ class SfincsModel(Model):
         xy: geopandas.GeoDataFrame
             Forcing point locations
         """
-        fname = self._1DFORCING.get(name, None)
-        gname = self._GEOMS.get(name, name)
+        fname, gname = self._FORCING.get(name, (None, None))
         if fname is None:
-            names = list(self._1DFORCING.keys())
+            names = [f[0] for f in self._FORCING.values() if "net" not in f[0]]
             raise ValueError(f'Unknown forcing "{name}", select from {names}')
         # sort out ts and xy types
-        if isinstance(ts, pd.DataFrame):
+        if isinstance(ts, (pd.DataFrame, pd.Series)):
             assert np.dtype(ts.index).type == np.datetime64
-            ts.columns.name = "index"
             ts.index.name = "time"
-            ts = xr.DataArray(ts, dims=("time", "index"), name=fname)
+            if isinstance(ts, pd.DataFrame):
+                ts.columns.name = "index"
+                ts = xr.DataArray(ts, dims=("time", "index"), name=fname)
+            else:  # spatially uniform forcing
+                ts = xr.DataArray(ts, dims=("time"), name=fname)
         if isinstance(xy, gpd.GeoDataFrame):
             if ts is not None:
                 ts = GeoDataArray.from_gdf(xy, ts, index_dim="index")
@@ -1618,10 +1643,10 @@ class SfincsModel(Model):
                 ts = self._dummy_ts(xy, name, fill_value=0)  # dummy timeseries
         if not isinstance(ts, xr.DataArray):
             raise ValueError(
-                f"{name} forcing: Unkwonw type for ts {type(ts)} should be xarray.DataArray."
+                f"{name} forcing: Unknown type for ts {type(ts)} should be xarray.DataArray."
             )
-        # set locs (for waterlevel and discharge)
-        if name in ["waterlevel", "discharge"]:
+        # check if locations (bzs / dis)
+        if gname is not None:
             assert len(ts.dims) == 2
             # make sure time is on last dim
             ts = ts.transpose(ts.vector.index_dim, ts.vector.time_dim)
@@ -1637,7 +1662,6 @@ class SfincsModel(Model):
             ts[dim] = xr.IndexVariable(dim, np.arange(1, ts[dim].size + 1, dtype=int))
             n = ts.vector.index.size
             self.logger.debug(f"{name} forcing: setting {gname} data for {n} points.")
-            self.set_staticgeoms(ts.vector.to_gdf(), gname)
             self.set_config(f"{gname}file", f"sfincs.{gname}")
         else:
             if not (len(ts.dims) == 1 and "time" in ts.dims):
@@ -1649,8 +1673,11 @@ class SfincsModel(Model):
         self.logger.debug(f"{name} forcing: setting {fname} data.")
         self.set_forcing(ts, fname)
         # edit inp file
-        self.logger.debug(f"{name} forcing: updating sfincs.inp.")
-        self.set_config(f"{fname}file", f"sfincs.{fname}")
+        if self._write:
+            self.logger.debug(f"{name} forcing: updating sfincs.inp.")
+            self.set_config(f"{fname}file", f"sfincs.{fname}")
+            if gname is not None:
+                self.set_config(f"{gname}file", f"sfincs.{gname}")
 
     ## model configuration
 

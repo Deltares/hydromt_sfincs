@@ -314,7 +314,9 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
     gdf: gpd.GeoDataFrame
         GeoDataFrame with point geomtries
     """
-    return hydromt.open_vector(fn, crs=crs, driver="xy")
+    gdf = hydromt.open_vector(fn, crs=crs, driver="xy")
+    gdf.index = np.arange(1, gdf.index.size + 1, dtype=int)  # index starts at 1
+    return gdf
 
 
 ## ASCII TIMESERIES: bzs / dis / precip ##
