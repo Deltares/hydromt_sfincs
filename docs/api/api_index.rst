@@ -83,6 +83,8 @@ Low level methods
 
    sfincsModel.update_spatial_attrs
    sfincsModel.get_spatial_attrs
+   sfincsModel.set_forcing_1d
+   sfincsModel.get_model_time
 
 General methods
 ---------------
@@ -152,3 +154,12 @@ Utilities
 
    utils.get_spatial_attrs
    utils.parse_datetime
+
+Visualization
+-------------
+
+.. autosummary::
+   :toctree: ../generated/
+
+   plots.plot_basemap
+   plots.plot_forcing

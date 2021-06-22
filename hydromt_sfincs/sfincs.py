@@ -1094,6 +1094,7 @@ class SfincsModel(Model):
         fn_out: str = "basemap.png",
         variable: str = "dep",
         shaded: bool = True,
+        plot_bounds: bool = True,
         bmap: str = "sat",
         zoomlevel: int = 11,
         figsize: Tuple[int] = None,
@@ -1117,7 +1118,9 @@ class SfincsModel(Model):
         variable : str, optional
             Map name to plot, by default 'dep'
         shaded : bool, optional
-            Add shaded (only if variable is True), by default True
+            Add shade to variable (only for variable = 'dep'), by default True
+        plot_bounds : bool, optional
+            Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
         bmap : {'sat', ''}
             background map, by default "sat"
         zoomlevel : int, optional
@@ -1144,6 +1147,7 @@ class SfincsModel(Model):
             self.staticgeoms,
             variable=variable,
             shaded=shaded,
+            plot_bounds=plot_bounds,
             bmap=bmap,
             zoomlevel=zoomlevel,
             figsize=figsize,
@@ -1430,7 +1434,7 @@ class SfincsModel(Model):
         if self._write_gis:
             self.write_raster("states")
 
-    def read_results(self, chunksize=100, drop=["crs", "sfincsgrid"]):
+    def read_results(self, chunksize=100, drop=["crs", "sfincsgrid"], **kwargs):
         """Read results from sfincs_map.nc and sfincs_his.nc and save to the `results` attribute.
         The staggered nc file format is translated into hydromt.RasterDataArray formats.
         Additionally, hmax is computed from zsmax and zb if present.
@@ -1444,7 +1448,12 @@ class SfincsModel(Model):
         fn_map = join(self.root, "sfincs_map.nc")
         if isfile(fn_map):
             ds_face, ds_edge = utils.read_sfincs_map_results(
-                fn_map, crs=self.crs, chunksize=chunksize, drop=drop, logger=self.logger
+                fn_map,
+                crs=self.crs,
+                chunksize=chunksize,
+                drop=drop,
+                logger=self.logger,
+                **kwargs,
             )
             # save as dict of DataArray
             self.set_results(ds_face)

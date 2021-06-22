@@ -555,6 +555,7 @@ def read_sfincs_map_results(
     chunksize: int = 100,
     drop: List[str] = ["crs", "sfincsgrid"],
     logger=logger,
+    **kwargs,
 ) -> Tuple[xr.Dataset]:
     """Read sfincs_map.nc staggered grid netcdf files and parse to two
     hydromt.RasterDataset objects: one with face and one with edge variables.
@@ -578,7 +579,7 @@ def read_sfincs_map_results(
         Parsed SFINCS output map file
     """
 
-    ds_map = xr.open_dataset(fn_map, chunks={"time": chunksize})
+    ds_map = xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs)
     ds_map = ds_map.set_coords(("x", "y", "edge_x", "edge_y"))
     crs = ds_map["crs"].item() if ds_map["crs"].item() != 0 else crs
 
@@ -642,6 +643,7 @@ def read_sfincs_his_results(
     fn_his: Union[str, Path],
     crs: Union[int, CRS] = None,
     chunksize: int = 100,
+    **kwargs,
 ) -> xr.Dataset:
     """Read sfincs_his.nc point timeseries netcdf file and parse to hydromt.GeoDataset object.
 
@@ -660,7 +662,7 @@ def read_sfincs_his_results(
         Parsed SFINCS output his file.
     """
 
-    ds_his = xr.open_dataset(fn_his, chunks={"time": chunksize})
+    ds_his = xr.open_dataset(fn_his, chunks={"time": chunksize}, **kwargs)
     crs = ds_his["crs"].item() if ds_his["crs"].item() != 0 else crs
     dvars = list(ds_his.data_vars.keys())
     # set coordinates & spatial dims

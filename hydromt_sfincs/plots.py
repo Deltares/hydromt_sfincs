@@ -82,6 +82,7 @@ def plot_basemap(
     staticgeoms: Dict,
     variable: str = "dep",
     shaded: bool = True,
+    plot_bounds: bool = True,
     bmap: str = "sat",
     zoomlevel: int = 11,
     figsize: Tuple[int] = None,
@@ -101,7 +102,9 @@ def plot_basemap(
     variable : str, optional
         Map name to plot, by default 'dep'
     shaded : bool, optional
-        Add shaded (only if variable is True), by default True
+        Add shade to variable (only for variable = 'dep'), by default True
+    plot_bounds : bool, optional
+        Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
     bmap : {'sat', ''}
         background map, by default "sat"
     zoomlevel : int, optional
@@ -180,7 +183,7 @@ def plot_basemap(
                 blend_mode="soft",
                 dx=dx,
                 dy=dy,
-                vert_exag=50,
+                vert_exag=2,
             )
             rgb = xr.DataArray(
                 dims=("y", "x", "rgb"), data=_rgb, coords=da.raster.coords
@@ -201,23 +204,24 @@ def plot_basemap(
         ],
     )
     # plot mask boundaries
-    gdf_msk = staticmaps["msk"].raster.vectorize()
-    region = (
-        (staticmaps["msk"] >= 1)
-        .astype("int16")
-        .raster.vectorize()
-        .drop(columns="value")
-    )
-    gdf_msk = gdf_msk[gdf_msk["value"] != 1]
-    gdf_msk["geometry"] = gdf_msk.boundary
-    region["geometry"] = region.boundary
-    gdf_msk = gpd.overlay(gdf_msk, region, "intersection", keep_geom_type=False)
-    gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
-    gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
-    if gdf_msk2.index.size > 0:
-        gdf_msk2.plot(ax=ax, zorder=3, label="waterlevel bnd", **geom_style["msk2"])
-    if gdf_msk3.index.size > 0:
-        gdf_msk3.plot(ax=ax, zorder=3, label="outflow bnd", **geom_style["msk3"])
+    if plot_bounds:
+        gdf_msk = staticmaps["msk"].raster.vectorize()
+        region = (
+            (staticmaps["msk"] >= 1)
+            .astype("int16")
+            .raster.vectorize()
+            .drop(columns="value")
+        )
+        gdf_msk = gdf_msk[gdf_msk["value"] != 1]
+        gdf_msk["geometry"] = gdf_msk.boundary
+        region["geometry"] = region.boundary
+        gdf_msk = gpd.overlay(gdf_msk, region, "intersection", keep_geom_type=False)
+        gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
+        gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
+        if gdf_msk2.index.size > 0:
+            gdf_msk2.plot(ax=ax, zorder=3, label="waterlevel bnd", **geom_style["msk2"])
+        if gdf_msk3.index.size > 0:
+            gdf_msk3.plot(ax=ax, zorder=3, label="outflow bnd", **geom_style["msk3"])
     # plot static geoms
     geoms = geoms if isinstance(geoms, list) else list(staticgeoms.keys())
     for name in geoms:
@@ -225,7 +229,7 @@ def plot_basemap(
         if gdf is None or name == "region":
             continue
         # copy is important to keep annotate working if repeated
-        kwargs = geom_style[name].copy()
+        kwargs = geom_style.get(name, {}).copy()
         annotate = kwargs.pop("annotate", False)
         gdf.plot(ax=ax, zorder=3, label=name, **kwargs)
         if annotate:
