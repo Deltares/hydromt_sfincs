@@ -9,8 +9,8 @@ __all__ = ["plot_forcing", "plot_basemap"]
 geom_style = {
     "rivers": dict(linestyle="--", linewidth=1.0, color="b"),
     "rivers_out": dict(linestyle="--", linewidth=1.0, color="m"),
-    "msk2": dict(linestyle="-", linewidth=3, color="r"),
-    "msk3": dict(linestyle="--", linewidth=3, color="r"),
+    "msk2": dict(linestyle="-", linewidth=2, color="c"),
+    "msk3": dict(linestyle="--", linewidth=2, color="m"),
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=True),
     "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=True),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
@@ -226,7 +226,7 @@ def plot_basemap(
     geoms = geoms if isinstance(geoms, list) else list(staticgeoms.keys())
     for name in geoms:
         gdf = staticgeoms.get(name, None)
-        if gdf is None or name == "region":
+        if gdf is None or name in ["region", "bbox"]:
             continue
         # copy is important to keep annotate working if repeated
         kwargs = geom_style.get(name, {}).copy()
@@ -248,13 +248,14 @@ def plot_basemap(
     ax.set_title(f"SFINCS {variable} map")
     # NOTE without defined loc it takes forever to find a 'best' location
     # by default outside plot
-    legend_kwargs0 = dict(
-        bbox_to_anchor=(1.05, 1),
-        title="Legend",
-        loc="upper left",
-        frameon=True,
-    )
-    legend_kwargs0.update(**legend_kwargs)
-    ax.legend(**legend_kwargs0)
+    if geoms or plot_bounds:
+        legend_kwargs0 = dict(
+            bbox_to_anchor=(1.05, 1),
+            title="Legend",
+            loc="upper left",
+            frameon=True,
+        )
+        legend_kwargs0.update(**legend_kwargs)
+        ax.legend(**legend_kwargs0)
 
     return fig, ax
