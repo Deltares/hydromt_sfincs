@@ -48,7 +48,7 @@ class SfincsModel(Model):
         "manning": "manning",
         "infiltration": "qinf",
     }  # parsed to hydromt.RasterDataset
-    _FOLDERS = [""]
+    _FOLDERS = []
     _CONF = "sfincs.inp"
     _DATADIR = DATADIR
     _ATTRS = {
@@ -95,7 +95,7 @@ class SfincsModel(Model):
         """
         # model paths
         self._write_gis = write_gis
-        if write_gis:
+        if write_gis and "gis" not in self._FOLDERS:
             self._FOLDERS.append("gis")
 
         super().__init__(
@@ -495,11 +495,11 @@ class SfincsModel(Model):
         self.set_staticgeoms(gdf_riv, name="rivers_out")
 
     def setup_cn_infiltration(self, cn_fn="gcn250", antecedent_runoff_conditions="avg"):
-        """Setup model curve number map from gridded curve number map.
+        """Setup model potential maximum soil moisture retention map from gridded curve number map.
 
         Adds model layers:
 
-        * **scs** map: curve number for infiltration
+        * **scs** map: potential maximum soil moisture retention [inch]
 
         Parameters
         ---------
@@ -522,26 +522,26 @@ class SfincsModel(Model):
         )
         da_msk = self.staticmaps[self._MAPS["mask"]] > 0
         # reproject using median
-        # force nodata value to be 100 (zero infiltration)
-        da_scs = da_org.raster.reproject_like(da_msk, method="med")
-        da_scs = da_scs.raster.mask_nodata().fillna(100)
-        # mask and set nodata, precision
-        da_scs = da_scs.where(da_msk, -9999).round(3)
-        da_scs.raster.set_nodata(-9999)
+        da_cn = da_org.raster.reproject_like(da_msk, method="med")
+        # TODO set CN=100 based on water mask
+        # convert to potential maximum soil moisture retention S (1000/CN - 10) [inch]
+        da_mask = self.staticmaps[self._MAPS["mask"]] > 0
+        da_scs = workflows.cn_to_s(da_cn, da_mask)
         # set staticmaps
         mname = self._MAPS["curve_number"]
         da_scs.attrs.update(**self._ATTRS.get(mname, {}))
         self.set_staticmaps(da_scs, name=mname)
-        # update config: remove default infiltration values and set cn map
+        # update config: remove default infiltration values and set scs map
         self.config.pop("qinf", None)
         self.set_config(f"{mname}file", f"sfincs.{mname}")
 
     def setup_manning_roughness(self, lulc_fn="vito", map_fn=None):
-        """Setup model curve number map from gridded curve number map.
+        """Setup model manning rouchness map from gridded land-use/land-cover map
+        and mapping table.
 
         Adds model layers:
 
-        * **man** map: manning roughness coefficient
+        * **man** map: manning roughness coefficient [s.m-1/3]
 
         Parameters
         ---------
