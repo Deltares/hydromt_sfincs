@@ -895,48 +895,39 @@ class SfincsModel(Model):
                 'run "setup_river_inflow()" method first to determine inflow locations.'
             )
             return
-        # model time
-        da_q = self.data_catalog.get_rasterdataset(
+        # read data
+        ds = self.data_catalog.get_rasterdataset(
             discharge_fn,
             geom=self.region,
             buffer=1,
-            time_tuple=self.get_model_time(),
+            time_tuple=self.get_model_time(),  # model time
             variables=[name],
+            single_var_as_array=False,
         )
         if uparea_fn is not None:
             da_upa = self.data_catalog.get_rasterdataset(
                 uparea_fn, geom=self.region, buffer=1, variables=["uparea"]
             )
-            da_upa = da_upa.rename(
-                {
-                    da_upa.raster.x_dim: da_q.raster.x_dim,
-                    da_upa.raster.y_dim: da_q.raster.y_dim,
-                }
-            )
-            ds_wdw = xr.merge([da_q, da_upa]).raster.sample(gdf, wdw=wdw)
-            if "uparea" in gdf.columns:
-                self.logger.info(f"{name} forcing: snap boundary to best uparea cell.")
-                upa0 = xr.DataArray(gdf["uparea"], dims=("index"))
-                upa_dff = np.abs(ds_wdw["uparea"].load() - upa0) / upa0
-                idx = upa_dff.argmin("wdw")
-                valid = np.where(upa_dff.isel(wdw=idx) <= max_error)[0]
-                if valid.size < gdf.index.size:
-                    self.logger.warning(
-                        f"{valid.size}/{gdf.index.size} inflow boundary points with a "
-                        f"rel. upstream area error smaller or equal to {max_error:.2f}."
-                        " Removing boundary point(s) with larger error."
-                    )
-                idx = idx.isel(index=valid)
-            else:
-                self.logger.info(f"{name} forcing: snap boundary to max uparea cell.")
-                idx = ds_wdw["uparea"].argmax("wdw")
-                valid = np.arange(idx.index.size, dtype=np.int)
-            da_pnt = ds_wdw.isel(wdw=idx.load(), index=valid).reset_coords()[name]
-        else:
-            da_pnt = da_q.raster.sample(gdf).reset_coords()[name]
-        # set original locations; parse and update forcing
-        da_out = GeoDataArray.from_gdf(gdf.iloc[valid, :], da_pnt, index_dim="index")
-        self.set_forcing_1d(name=name, da=da_out)
+            rm = {
+                da_upa.raster.x_dim: ds.raster.x_dim,
+                da_upa.raster.y_dim: ds.raster.y_dim,
+            }
+            ds = xr.merge([ds, da_upa.rename(rm)])
+
+        da_q = workflows.snap_discharge(
+            ds=ds,
+            gdf=gdf,
+            wdw=wdw,
+            max_error=max_error,
+            uparea_name="uparea",
+            discharge_name=name,
+            logger=self.logger,
+        )
+
+        # merge location data data
+        da_q = GeoDataArray.from_gdf(gdf.loc[da_q.index, :], da_q, index_dim="index")
+        # update forcing
+        self.set_forcing_1d(name=name, da=da_q)
 
     def setup_p_forcing_from_grid(
         self, precip_fn=None, dst_res=None, aggregate=False, **kwargs
