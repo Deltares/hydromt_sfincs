@@ -7,10 +7,10 @@ from typing import Dict, Tuple, List
 __all__ = ["plot_forcing", "plot_basemap"]
 
 geom_style = {
-    "rivers": dict(linestyle="--", linewidth=1.0, color="b"),
-    "rivers_out": dict(linestyle="--", linewidth=1.0, color="m"),
-    "msk2": dict(linestyle="-", linewidth=2, color="c"),
-    "msk3": dict(linestyle="--", linewidth=2, color="m"),
+    "rivers": dict(linestyle="-", linewidth=1.0, color="darkblue"),
+    "rivers_out": dict(linestyle="-", linewidth=1.0, color="darkgreen"),
+    "msk2": dict(linestyle="--", linewidth=2, color="m"),
+    "msk3": dict(linestyle="-", linewidth=2, color="m"),
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=True),
     "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=True),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
@@ -44,6 +44,8 @@ def plot_forcing(forcing: Dict, **kwargs):
     axes = [axes] if n == 1 else axes
     for i, name in enumerate(forcing):
         da = forcing[name]
+        longname = da.attrs.get("standard_name", "")
+        unit = da.attrs.get("unit", "")
         prefix = ""
         if da.ndim == 3:
             da = da.mean(dim=[da.raster.x_dim, da.raster.y_dim])
@@ -54,8 +56,6 @@ def plot_forcing(forcing: Dict, **kwargs):
             df = df.unstack(0)
         # convert dates a-priori as automatic conversion doesn't always work
         df.index = mdates.date2num(df.index)
-        longname = da.attrs.get("standard_name", "")
-        unit = da.attrs.get("unit", "")
         if longname == "precipitation":
             axes[i].bar(df.index, df.values, facecolor="darkblue")
         else:

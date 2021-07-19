@@ -15,6 +15,7 @@ import copy
 import logging
 import hydromt
 from hydromt.io import write_xy
+from scipy import ndimage
 
 __all__ = [
     "read_inp",
@@ -33,6 +34,7 @@ __all__ = [
     "write_structures",
     "read_sfincs_map_results",
     "read_sfincs_his_results",
+    "mask_bounds",
 ]
 
 logger = logging.getLogger(__name__)
@@ -388,6 +390,42 @@ def write_timeseries(
     fmt_out = " ".join(fmt_lst)
     with open(fn, "w") as f:
         np.savetxt(f, data, fmt=fmt_out)
+
+
+## MASK
+
+
+def mask_bounds(
+    da_mask: xr.DataArray,
+    gdf_include: gpd.GeoDataFrame = None,
+    gdf_exclude: gpd.GeoDataFrame = None,
+    structure: np.ndarray = np.ones((3, 3)),
+) -> xr.DataArray:
+    """Returns the boundary cells based of values greater than zero in da_mask.
+    If provided the bounds are limited to cells within gdf_include and outside gdf_exclude.
+
+    Parameters
+    ----------
+    da_mask: xr.DataArray
+        Model mask.
+    gdf_include, gdf_exclude: geopandas.GeoDataFrame
+        Geometries with areas to include/exclude from the model boundary.
+
+    Returns
+    -------
+    bounds: xr.DataArray
+        Boolean mask of model boundary cells.
+    """
+    bounds = np.logical_xor(
+        da_mask != 0, ndimage.binary_erosion(da_mask, structure=structure)
+    )
+    if gdf_include is not None:
+        da_include = da_mask.raster.geometry_mask(gdf_include)
+        bounds = bounds.where(da_include, False)
+    if gdf_exclude is not None:
+        da_exclude = da_mask.raster.geometry_mask(gdf_exclude)
+        bounds = bounds.where(~da_exclude, False)
+    return bounds
 
 
 ## STRUCTURES: thd / weir ##
