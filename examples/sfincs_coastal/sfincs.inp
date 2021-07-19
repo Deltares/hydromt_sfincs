@@ -1,9 +1,9 @@
-mmax            = 637
-nmax            = 355
-dx              = 100.0
-dy              = 100.0
-x0              = 264900.0
-y0              = 5024100.0
+mmax            = 425
+nmax            = 272
+dx              = 150.0
+dy              = 150.0
+x0              = 268650.0
+y0              = 5018550.0
 rotation        = 0
 epsg            = 32633
 inputformat     = bin
@@ -25,7 +25,7 @@ mskfile         = sfincs.msk
 indexfile       = sfincs.ind
 scsfile         = sfincs.scs
 manningfile     = sfincs.man
-bndfile         = sfincs.bnd
 bzsfile         = sfincs.bzs
+bndfile         = sfincs.bnd
 precipfile      = sfincs.precip
 

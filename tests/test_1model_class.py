@@ -14,13 +14,13 @@ EXAMPLEDIR = join(dirname(abspath(__file__)), "..", "examples")
 _cases = {
     "coastal": {
         "ini": "sfincs_coastal.ini",
-        "region": {"bbox": [12.00, 45.35, 12.80, 45.65]},
-        "res": 100,
+        "region": {"bbox": [12.05, 45.30, 12.85, 45.65]},
+        "res": 150,
         "example": "sfincs_coastal",
     },
     "riverine": {
         "ini": "sfincs_riverine.ini",
-        "region": {"bbox": [11.975098, 45.786918, 12.271385, 45.938019]},
+        "region": {"bbox": [11.97, 45.78, 12.28, 45.94]},
         "res": 50,
         "example": "sfincs_riverine",
     },
