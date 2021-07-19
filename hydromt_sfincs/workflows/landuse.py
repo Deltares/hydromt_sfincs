@@ -25,15 +25,15 @@ def landuse(da, ds_like, fn_map, logger=logger, params=None):
     The parameter maps are prepared based on landuse map and
     mapping table as provided in the generic data folder of hydromt.
 
-    The following topography maps are calculated:\
-    - TODO
-    
+
     Parameters
     ----------
     da : xarray.DataArray
         DataArray containing LULC classes.
     ds_like : xarray.DataArray
         Dataset at model resolution.
+    fn_map : str, Path
+        path to mapping file
 
     Returns
     -------
