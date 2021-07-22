@@ -9,7 +9,7 @@ dependencies:
   - black
   - bottleneck
   - cartopy # to run examples
-  - dask=2021.4  #  Attribute "collection_annotations" in v2021.5 related to https://github.com/dask/dask/pull/7309
+  - dask
   - descartes # to run examples
   - entrypoints
   - ffmpeg  # to run examples (animation)
@@ -40,5 +40,5 @@ dependencies:
   - xarray
   - zarr
   - pip:
-    - hydromt>=0.4.1
+    - git+https://github.com/Deltares/hydromt.git
 

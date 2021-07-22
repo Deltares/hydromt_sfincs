@@ -10,7 +10,9 @@ within a bounding box, see example below. The interbasin region delineates the a
 interest within the bouding box such that the same river does not enter the model domain
 more than one time, where only the most downstream contiguous area is kept. The delineation
 is based on gridded flow direction data and provides a good setup to set upstream
-dischage boundary points.
+dischage boundary points. At the upstream end of each river an discharge source point
+can be defined with the `setup_river_inflow` method and at the downstream end an 
+outflow  boundary is defined with the `setup_river_outflow` method.
 
 A typical workflow to setup a riverine model schematization is privided in the
 :download:`sfincs_riverine.ini <../_examples/sfincs_riverine.ini>` and shown below. 

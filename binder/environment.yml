@@ -9,7 +9,7 @@ dependencies:
   - black
   - bottleneck
   - cartopy # to run examples
-  - dask=2021.4
+  - dask
   - descartes # to run examples
   - entrypoints
   - ffmpeg  # to run examples (animation)
@@ -35,5 +35,5 @@ dependencies:
   - xarray
   - zarr
   - pip:
-    - hydromt>=0.4.1
+    - git+https://github.com/Deltares/hydromt.git
 

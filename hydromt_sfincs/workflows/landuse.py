@@ -1,23 +1,32 @@
 # -*- coding: utf-8 -*-
 
-import os
 from os.path import join
-import glob
 import numpy as np
 import pandas as pd
 import xarray as xr
-import warnings
 import logging
 
 
 logger = logging.getLogger(__name__)
 
 
-__all__ = ["landuse"]
+__all__ = ["landuse", "cn_to_s"]
 
 
 RESAMPLING = {"landuse": "nearest", "lai": "average"}
 DTYPES = {"landuse": np.int16}
+
+
+def cn_to_s(da_cn, da_mask=None, nodata=-9999):
+    """Convert Curve Numbers to potential maximum soil moisture retention S [inch]."""
+    # set nodata values to CN 100 (zero infiltration)
+    # avoid CN = 0 values; minumum expected value is ~30
+    da_cn = np.maximum(1, da_cn.raster.mask_nodata().fillna(100))
+    da_s = np.maximum(1000 / da_cn - 10, 0).round(3)
+    if da_mask is not None:
+        da_s = da_s.where(da_mask, nodata)
+    da_s.raster.set_nodata(nodata)
+    return da_s
 
 
 def landuse(da, ds_like, fn_map, logger=logger, params=None):
@@ -25,15 +34,15 @@ def landuse(da, ds_like, fn_map, logger=logger, params=None):
     The parameter maps are prepared based on landuse map and
     mapping table as provided in the generic data folder of hydromt.
 
-    The following topography maps are calculated:\
-    - TODO
-    
+
     Parameters
     ----------
     da : xarray.DataArray
         DataArray containing LULC classes.
     ds_like : xarray.DataArray
         Dataset at model resolution.
+    fn_map : str, Path
+        path to mapping file
 
     Returns
     -------
