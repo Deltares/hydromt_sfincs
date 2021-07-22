@@ -1,0 +1,949 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>hydromt_sfincs.utils &mdash; hydromt_sfincs  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> hydromt_sfincs
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.1.dev
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/sfincs.html">SFINCS model: General</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/sfincs_coastal.html">Setting up a coastal model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/sfincs_riverine.html">Setting up a riverine model</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References &amp; Help</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api_index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">What’s new</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hydromt_sfincs</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>hydromt_sfincs.utils</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for hydromt_sfincs.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pyproj</span>
+<span class="kn">from</span> <span class="nn">pyproj.crs.crs</span> <span class="kn">import</span> <span class="n">CRS</span>
+<span class="kn">import</span> <span class="nn">rasterio</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">configparser</span> <span class="kn">import</span> <span class="n">ConfigParser</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">LineString</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">hydromt</span>
+<span class="kn">from</span> <span class="nn">hydromt.io</span> <span class="kn">import</span> <span class="n">write_xy</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;read_inp&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;write_inp&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;read_binary_map&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;write_binary_map&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;read_binary_map_index&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;write_binary_map_index&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;read_ascii_map&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;write_ascii_map&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;read_timeseries&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;write_timeseries&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;read_xy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;write_xy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;read_structures&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;write_structures&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;read_sfincs_map_results&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;read_sfincs_his_results&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mask_bounds&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1">## CONFIG: sfincs.inp ##</span>
+
+
+<span class="k">class</span> <span class="nc">ConfigParserSfincs</span><span class="p">(</span><span class="n">ConfigParser</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">defaults</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">comment_prefixes</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;#&quot;</span><span class="p">),</span>
+            <span class="n">inline_comment_prefixes</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">),</span>
+            <span class="n">allow_no_value</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">delimiters</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ConfigParserSfincs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">defaults</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">read_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">add_header</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">header_name</span><span class="o">=</span><span class="s2">&quot;dummy&quot;</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;add header&quot;&quot;&quot;</span>
+            <span class="k">yield</span> <span class="s2">&quot;[</span><span class="si">{}</span><span class="s2">]</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">header_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">line</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">ConfigParserSfincs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">add_header</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_write_section</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">section_name</span><span class="p">,</span> <span class="n">section_items</span><span class="p">,</span> <span class="n">delimiter</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write a single section to the specified `fp&#39;.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">section_items</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interpolation</span><span class="o">.</span><span class="n">before_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section_name</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:&lt;15}</span><span class="s2"> </span><span class="si">{:&lt;1}</span><span class="s2"> </span><span class="si">{:&lt;}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delimiters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value</span><span class="p">))</span>
+        <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="read_inp"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_inp.html#hydromt_sfincs.read_inp">[docs]</a><span class="k">def</span> <span class="nf">read_inp</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Read sfincs.inp file and parse to dictionary.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">configread</span><span class="p">(</span>
+        <span class="n">fn</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cf</span><span class="o">=</span><span class="n">ConfigParserSfincs</span><span class="p">,</span> <span class="n">noheader</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="write_inp"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_inp.html#hydromt_sfincs.write_inp">[docs]</a><span class="k">def</span> <span class="nf">write_inp</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">conf</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Write sfincs.inp file from dictionary.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">configwrite</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">cf</span><span class="o">=</span><span class="n">ConfigParserSfincs</span><span class="p">,</span> <span class="n">noheader</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_spatial_attrs"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.get_spatial_attrs.html#hydromt_sfincs.get_spatial_attrs">[docs]</a><span class="k">def</span> <span class="nf">get_spatial_attrs</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns geospatial attributes shape, crs and transform from config dict.</span>
+
+<span class="sd">    The config dict should contain the following keys:</span>
+
+<span class="sd">    * for shape: mmax, nmax</span>
+<span class="sd">    * for crs: epsg</span>
+<span class="sd">    * for transform: dx, dy, x0, y0, (rotation)</span>
+
+<span class="sd">    NOTE: Rotation != 0 is not yet supported.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config: Dict</span>
+<span class="sd">        sfincs.inp configuration</span>
+<span class="sd">    crs: int, CRS</span>
+<span class="sd">        Coordinate reference system</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    shape: tuple of int</span>
+<span class="sd">        width, height</span>
+<span class="sd">    transform: Affine.transform</span>
+<span class="sd">        Geospatial transform</span>
+<span class="sd">    crs: pyproj.CRS, None</span>
+<span class="sd">        Coordinate reference system</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># retrieve rows and cols</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mmax&quot;</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nmax&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cols</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">rows</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;mmax&quot; or &quot;nmax&quot; not defined in sfincs.inp&#39;</span><span class="p">)</span>
+
+    <span class="c1"># retrieve CRS</span>
+    <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;epsg&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;epsg&quot;</span><span class="p">)))</span>
+    <span class="k">elif</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;&quot;epsg&quot; code not defined in sfincs.inp, unknown CRS.&#39;</span><span class="p">)</span>
+
+    <span class="c1"># retrieve spatial transform</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dx&quot;</span><span class="p">)</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dy&quot;</span><span class="p">)</span>
+    <span class="n">west</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x0&quot;</span><span class="p">)</span>
+    <span class="n">south</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;y0&quot;</span><span class="p">)</span>
+    <span class="n">rotdeg</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rotation&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># clockwise rotation [degrees]</span>
+    <span class="k">if</span> <span class="n">west</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">south</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s1">&#39;Either one of &quot;x0&quot; or &quot;y0&quot; not defined in sfincs.inp, &#39;</span>
+            <span class="s2">&quot;falling back to origin at (0, 0).&quot;</span>
+        <span class="p">)</span>
+        <span class="n">west</span><span class="p">,</span> <span class="n">south</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">dx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s1">&#39;Either one of &quot;dx&quot; or &quot;dy&quot; not defined in sfincs.inp, &#39;</span>
+            <span class="s2">&quot;falling back unity resolution (1, 1).&quot;</span>
+        <span class="p">)</span>
+        <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">rotdeg</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Rotated grids cannot be parsed yet.&quot;</span><span class="p">)</span>
+        <span class="c1"># TODO: extend to use rotated grids with rotated affine</span>
+        <span class="c1"># # code below generates a 2D coordinate grids.</span>
+        <span class="c1"># xx = np.linspace(0, dx * (cols - 1), cols)</span>
+        <span class="c1"># yy = np.linspace(0, dy * (rows - 1), rows)</span>
+        <span class="c1"># xi, yi = np.meshgrid(xx, yy)</span>
+        <span class="c1"># rot = rotdeg * np.pi / 180</span>
+        <span class="c1"># # xgrid and ygrid not used for now</span>
+        <span class="c1"># xgrid = x0 + np.cos(rot) * xi - np.sin(rot) * yi</span>
+        <span class="c1"># ygrid = y0 + np.sin(rot) * xi + np.cos(rot) * yi</span>
+        <span class="c1"># ...</span>
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">from_origin</span><span class="p">(</span><span class="n">west</span><span class="p">,</span> <span class="n">south</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="o">-</span><span class="n">dy</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">transform</span><span class="p">,</span> <span class="n">crs</span></div>
+
+
+<span class="c1">## BINARY MAPS: sfincs.ind, sfincs.msk, sfincs.dep etc. ##</span>
+
+
+<div class="viewcode-block" id="write_binary_map_index"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_binary_map_index.html#hydromt_sfincs.write_binary_map_index">[docs]</a><span class="k">def</span> <span class="nf">write_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">msk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Write flat index of binary map file.</span>
+
+<span class="sd">    NOTE: The array should be in S-&gt;N and W-&gt;E orientation, with origin in the SW corner.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn_ind: str, Path</span>
+<span class="sd">        Path to output map index file.</span>
+<span class="sd">    msk: np.ndarray</span>
+<span class="sd">        2D array of sfincs mask map, where invalid cells have value 0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># the index number file of sfincs starts with the length of the index numbers</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">msk</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># convert to 1-based index</span>
+    <span class="n">indices_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)),</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;u4&quot;</span><span class="p">)</span>
+    <span class="n">indices_</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="read_binary_map_index"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_binary_map_index.html#hydromt_sfincs.read_binary_map_index">[docs]</a><span class="k">def</span> <span class="nf">read_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Read binary map index file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn_ind: str, Path</span>
+<span class="sd">        Path to map index file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ind: np.ndarray</span>
+<span class="sd">        1D array of flat index of binary maps.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;u4&quot;</span><span class="p">)</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">_ind</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># convert to zero based index</span>
+    <span class="k">assert</span> <span class="n">_ind</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">ind</span><span class="o">.</span><span class="n">size</span>
+    <span class="k">return</span> <span class="n">ind</span></div>
+
+
+<div class="viewcode-block" id="write_binary_map"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_binary_map.html#hydromt_sfincs.write_binary_map">[docs]</a><span class="k">def</span> <span class="nf">write_binary_map</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">msk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">dtype</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;f4&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Write binary map file.</span>
+
+<span class="sd">    NOTE: The array should be in S-&gt;N and W-&gt;E orientation, with origin in the SW corner.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn str, Path</span>
+<span class="sd">        Path to output map index file.</span>
+<span class="sd">    data: np.ndarray</span>
+<span class="sd">        2D array of sfincs map.</span>
+<span class="sd">    msk: np.ndarray</span>
+<span class="sd">        2D array of sfincs mask map, where invalid cells have value 0.</span>
+<span class="sd">    dtype: str, np.dtype, optional</span>
+<span class="sd">        Data type, by default &quot;f4&quot;. For sfincs.msk file use dtype=&quot;u1&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">transpose</span><span class="p">()[</span><span class="n">msk</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">data_out</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="read_binary_map"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_binary_map.html#hydromt_sfincs.read_binary_map">[docs]</a><span class="k">def</span> <span class="nf">read_binary_map</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">ind</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">mv</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">,</span>
+    <span class="n">dtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;f4&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Read binary map.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn: str, Path</span>
+<span class="sd">        Path to map file.</span>
+<span class="sd">    ind: np.ndarray</span>
+<span class="sd">        1D array of flat index of binary maps.</span>
+<span class="sd">    shape: tuple of int</span>
+<span class="sd">        (nrow, ncol) shape of output map.</span>
+<span class="sd">    mv: int or float</span>
+<span class="sd">        missing value, by default -9999.0.</span>
+<span class="sd">    dtype: str, np.dtype, optional</span>
+<span class="sd">        Data type, by default &quot;f4&quot;. For sfincs.msk file use dtype=&quot;u1&quot;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ind: np.ndarray</span>
+<span class="sd">        1D array of flat index of binary maps.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">ind</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="o">*</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">nrow</span><span class="p">,</span> <span class="n">ncol</span> <span class="o">=</span> <span class="n">shape</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">ncol</span><span class="p">,</span> <span class="n">nrow</span><span class="p">),</span> <span class="n">mv</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<span class="c1">## ASCII maps: sfincs.restart ##</span>
+
+
+<div class="viewcode-block" id="read_ascii_map"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_ascii_map.html#hydromt_sfincs.read_ascii_map">[docs]</a><span class="k">def</span> <span class="nf">read_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Read ascii map</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn : str, Path</span>
+<span class="sd">        Path to ascii map file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    data : np.ndarray</span>
+<span class="sd">        2D array of sfincs map.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="write_ascii_map"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_ascii_map.html#hydromt_sfincs.write_ascii_map">[docs]</a><span class="k">def</span> <span class="nf">write_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%8.3f</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Write ascii map</span>
+
+<span class="sd">    NOTE: The array should be in S-&gt;N and W-&gt;E orientation, with origin in the SW corner.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn : str, Path</span>
+<span class="sd">        Path to ascii map file.</span>
+<span class="sd">    data : np.ndarray</span>
+<span class="sd">        2D array of sfincs map.</span>
+<span class="sd">    fmt : str, optional</span>
+<span class="sd">        Value format, by default &quot;%8.3f&quot;. See numpy.savetxt for more options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span></div>
+
+
+<span class="c1">## XY files: bnd / src ##</span>
+<span class="c1"># write_xy defined in hydromt.io</span>
+
+
+<div class="viewcode-block" id="read_xy"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_xy.html#hydromt_sfincs.read_xy">[docs]</a><span class="k">def</span> <span class="nf">read_xy</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Read sfincs xy files and parse to GeoDataFrame.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn : str, Path</span>
+<span class="sd">        Path to ascii xy file.</span>
+<span class="sd">    crs: int, CRS</span>
+<span class="sd">        Coordinate reference system</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gdf: gpd.GeoDataFrame</span>
+<span class="sd">        GeoDataFrame with point geomtries</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">open_vector</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;xy&quot;</span><span class="p">)</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">gdf</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>  <span class="c1"># index starts at 1</span>
+    <span class="k">return</span> <span class="n">gdf</span></div>
+
+
+<span class="c1">## ASCII TIMESERIES: bzs / dis / precip ##</span>
+
+
+<div class="viewcode-block" id="parse_datetime"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.parse_datetime.html#hydromt_sfincs.parse_datetime">[docs]</a><span class="k">def</span> <span class="nf">parse_datetime</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Checks and/or parses datetime from a string, default sfincs datetime string format&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="nb">format</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown type for datetime: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dt</span></div>
+
+
+<div class="viewcode-block" id="read_timeseries"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_timeseries.html#hydromt_sfincs.read_timeseries">[docs]</a><span class="k">def</span> <span class="nf">read_timeseries</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">tref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Read ascii timeseries files such as sfincs.bzs, sfincs.dis and sfincs.precip.</span>
+<span class="sd">    The first column (time index) is parsed to datetime format assumming it represents</span>
+<span class="sd">    seconds from `tref`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn: str, Path</span>
+<span class="sd">        Path to output timeseries file.</span>
+<span class="sd">    tref: datetime.datetime, str</span>
+<span class="sd">        Datetime of tref, string in &quot;%Y%m%d %H%M%S&quot; format.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df: pd.DataFrame</span>
+<span class="sd">        Dataframe of timeseries with parsed time index.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tref</span> <span class="o">=</span> <span class="n">parse_datetime</span><span class="p">(</span><span class="n">tref</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">tref</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;index&quot;</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="write_timeseries"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_timeseries.html#hydromt_sfincs.write_timeseries">[docs]</a><span class="k">def</span> <span class="nf">write_timeseries</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">tref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">],</span>
+    <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%7.2f</span><span class="s2">&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Write pandas.DataFrame to fixed width ascii timeseries files</span>
+<span class="sd">    such as sfincs.bzs, sfincs.dis and sfincs.precip. The output time index is given in</span>
+<span class="sd">    seconds from tref.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn: str, Path</span>
+<span class="sd">        Path to output timeseries file.</span>
+<span class="sd">    df: pd.DataFrame</span>
+<span class="sd">        Dataframe of timeseries.</span>
+<span class="sd">    tref: datetime.datetime, str</span>
+<span class="sd">        Datetime of tref, string in &quot;%Y%m%d %H%M%S&quot; format.</span>
+<span class="sd">    fmt: str, optional</span>
+<span class="sd">        Output value format, by default &quot;%7.2f&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tref</span> <span class="o">=</span> <span class="n">parse_datetime</span><span class="p">(</span><span class="n">tref</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;df does not contain data.&quot;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">-</span> <span class="n">tref</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+    <span class="c1"># calculate required width for time column; hard coded single decimal precision</span>
+    <span class="c1"># format for other columns is based on fmt`argument</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])))</span> <span class="o">+</span> <span class="mi">3</span>
+    <span class="n">fmt_lst</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;%</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">.1f&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">fmt</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">size</span><span class="p">)]</span>
+    <span class="n">fmt_out</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmt_lst</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt_out</span><span class="p">)</span></div>
+
+
+<span class="c1">## MASK</span>
+
+
+<div class="viewcode-block" id="mask_bounds"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.mask_bounds.html#hydromt_sfincs.mask_bounds">[docs]</a><span class="k">def</span> <span class="nf">mask_bounds</span><span class="p">(</span>
+    <span class="n">da_mask</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">gdf_include</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gdf_exclude</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">structure</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns the boundary cells based of values greater than zero in da_mask.</span>
+<span class="sd">    If provided the bounds are limited to cells within gdf_include and outside gdf_exclude.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    da_mask: xr.DataArray</span>
+<span class="sd">        Model mask.</span>
+<span class="sd">    gdf_include, gdf_exclude: geopandas.GeoDataFrame</span>
+<span class="sd">        Geometries with areas to include/exclude from the model boundary.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bounds: xr.DataArray</span>
+<span class="sd">        Boolean mask of model boundary cells.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span>
+        <span class="n">da_mask</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_erosion</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">gdf_include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">da_include</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_include</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_include</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">gdf_exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">da_exclude</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_exclude</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">da_exclude</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">bounds</span></div>
+
+
+<span class="c1">## STRUCTURES: thd / weir ##</span>
+
+
+<div class="viewcode-block" id="gdf2structures"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.gdf2structures.html#hydromt_sfincs.gdf2structures">[docs]</a><span class="k">def</span> <span class="nf">gdf2structures</span><span class="p">(</span><span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Convert GeoDataFrame[LineString] to list of structure dictionaries</span>
+
+<span class="sd">    The x,y are taken from the geometry.</span>
+<span class="sd">    For weir structures to additional paramters are required, a &quot;z&quot; (elevation) and</span>
+<span class="sd">    &quot;par1&quot; (Cd coefficient in weir formula) are required which should be supplied</span>
+<span class="sd">    as columns (or z-coordinate) of the GeoDataFrame. These columns should either</span>
+<span class="sd">    contain a float or 1D-array of floats with same length as the LineString.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gdf: geopandas.GeoDataFrame with LineStrings geometries</span>
+<span class="sd">        GeoDataFrame structures.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    feats: list of dict</span>
+<span class="sd">        List of dictionaries describing structures.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">feats</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">feat</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="c1"># check geom</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">geometry</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;MultiLineString&quot;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="s2">&quot;LineString&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid geometry type, only LineString is accepted.&quot;</span><span class="p">)</span>
+        <span class="n">xyz</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">line</span><span class="o">.</span><span class="n">coords</span><span class="p">[:]))</span>
+        <span class="n">feat</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">feat</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">xyz</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">list</span><span class="p">(</span><span class="n">xyz</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xyz</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">feat</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">xyz</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">feats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">feats</span></div>
+
+
+<div class="viewcode-block" id="structures2gdf"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.structures2gdf.html#hydromt_sfincs.structures2gdf">[docs]</a><span class="k">def</span> <span class="nf">structures2gdf</span><span class="p">(</span><span class="n">feats</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Convert list of structure dictionaries to GeoDataFrame[LineString]</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    feats: list of dict</span>
+<span class="sd">        List of dictionaries describing structures.</span>
+<span class="sd">    crs: int, CRS</span>
+<span class="sd">        Coordinate reference system</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gdf: geopandas.GeoDataFrame</span>
+<span class="sd">        GeoDataFrame structures</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">feats</span><span class="p">:</span>
+        <span class="n">feat</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">xyz</span> <span class="o">=</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">feat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="s2">&quot;z&quot;</span> <span class="ow">in</span> <span class="n">feat</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">xyz</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">xyz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">))</span>
+        <span class="n">feat</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;geometry&quot;</span><span class="p">:</span> <span class="n">LineString</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xyz</span><span class="p">)))})</span>
+        <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">gdf</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gdf</span></div>
+
+
+<div class="viewcode-block" id="write_structures"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_structures.html#hydromt_sfincs.write_structures">[docs]</a><span class="k">def</span> <span class="nf">write_structures</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">feats</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">stype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;thd&quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Write list of structure dictionaries to file</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn: str, Path</span>
+<span class="sd">        Path to output structure file.</span>
+<span class="sd">    feats: list of dict</span>
+<span class="sd">        List of dictionaries describing structures.</span>
+<span class="sd">        For thd files &quot;x&quot; and &quot;y&quot; are required, &quot;name&quot; is optional.</span>
+<span class="sd">        For weir files &quot;x&quot;, &quot;y&quot; and &quot;z&quot; are required, &quot;name&quot; and &quot;par1&quot; are optional.</span>
+<span class="sd">    stype: {&#39;thd&#39;, &#39;weir&#39;}</span>
+<span class="sd">        Structure type thin dams (thd) or weirs (weir).</span>
+<span class="sd">    fmt: str</span>
+<span class="sd">        format for &quot;z&quot; and &quot;par1&quot; fields.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; feats = [</span>
+<span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &#39;WEIR01&#39;,</span>
+<span class="sd">                &quot;x&quot;: [0, 10, 20],</span>
+<span class="sd">                &quot;y&quot;: [100, 100, 100],</span>
+<span class="sd">                &quot;z&quot;: 5.0,</span>
+<span class="sd">                &quot;par1&quot;: 0.6,</span>
+<span class="sd">            },</span>
+<span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &#39;WEIR02&#39;,</span>
+<span class="sd">                &quot;x&quot;: [100, 110, 120],</span>
+<span class="sd">                &quot;y&quot;: [100, 100, 100],</span>
+<span class="sd">                &quot;z&quot;: [5.0, 5.1, 5.0],</span>
+<span class="sd">                &quot;par1&quot;: 0.6,</span>
+<span class="sd">            },</span>
+<span class="sd">        ]</span>
+<span class="sd">    &gt;&gt;&gt; write_structures(&#39;sfincs.weir&#39;, feats, stype=&#39;weir&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;thd&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;weir&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}[</span><span class="n">stype</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+    <span class="n">fmt</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">%.0f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%.0f</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">fmt</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cols</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">stype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;weir&quot;</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="s2">&quot;z&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">feats</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;z&quot; value missing for weir files.&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">feats</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stype</span><span class="si">:</span><span class="s2">s</span><span class="si">}{</span><span class="n">name</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">a</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">a</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">stype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;weir&quot;</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span>
+                <span class="n">a</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;par1&quot;</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rows</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">cols</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="read_structures"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_structures.html#hydromt_sfincs.read_structures">[docs]</a><span class="k">def</span> <span class="nf">read_structures</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Read structure files to list of dictionaries.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn : str, Path</span>
+<span class="sd">        Path to structure file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    feats: list of dict</span>
+<span class="sd">        List of dictionaries describing structures.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">feats</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;par1&quot;</span><span class="p">]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>  <span class="c1"># EOF</span>
+                <span class="k">break</span>
+            <span class="n">feat</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">}</span>
+            <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">maxsplit</span><span class="o">=</span><span class="mi">2</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cols</span><span class="p">):</span>
+                <span class="n">feat</span><span class="p">[</span><span class="n">col_names</span><span class="p">[</span><span class="n">c</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rows</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">maxsplit</span><span class="o">=</span><span class="n">cols</span><span class="p">)):</span>
+                    <span class="n">feat</span><span class="p">[</span><span class="n">col_names</span><span class="p">[</span><span class="n">c</span><span class="p">]][</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cols</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">col_names</span><span class="p">[</span><span class="mi">2</span><span class="p">:]:</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="n">c</span><span class="p">])</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">feat</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="p">[</span><span class="n">c</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">feats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">feats</span></div>
+
+
+<span class="c1">## OUTPUT: sfincs_map.nc, sfincs_his.nc ##</span>
+
+
+<div class="viewcode-block" id="read_sfincs_map_results"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_sfincs_map_results.html#hydromt_sfincs.read_sfincs_map_results">[docs]</a><span class="k">def</span> <span class="nf">read_sfincs_map_results</span><span class="p">(</span>
+    <span class="n">fn_map</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">drop</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincsgrid&quot;</span><span class="p">],</span>
+    <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Read sfincs_map.nc staggered grid netcdf files and parse to two</span>
+<span class="sd">    hydromt.RasterDataset objects: one with face and one with edge variables.</span>
+
+<span class="sd">    Additionally, hmax is computed from zsmax and zb if present.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn_map : str, Path</span>
+<span class="sd">        Path to sfincs_map.nc file</span>
+<span class="sd">    hmin: float, optional</span>
+<span class="sd">        Minimum water depth to consider in hmax map, i.e. cells with lower depth</span>
+<span class="sd">        get a nodata values assigned. By deafult 0.0</span>
+<span class="sd">    crs: int, CRS</span>
+<span class="sd">        Coordinate reference system</span>
+<span class="sd">    chunksize: int, optional</span>
+<span class="sd">        chunk size along time dimension, by default 100</span>
+<span class="sd">    drop : List[str], optional</span>
+<span class="sd">        Variables to drop from reading, by default [&quot;crs&quot;, &quot;sfincsgrid&quot;]</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ds_face, ds_edge: hydromt.RasterDataset</span>
+<span class="sd">        Parsed SFINCS output map file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ds_map</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">fn_map</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">chunksize</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">ds_map</span> <span class="o">=</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">set_coords</span><span class="p">((</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;edge_x&quot;</span><span class="p">,</span> <span class="s2">&quot;edge_y&quot;</span><span class="p">))</span>
+    <span class="n">crs</span> <span class="o">=</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">crs</span>
+
+    <span class="k">if</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;inp&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rotation&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Cannot parse rotated maps. Skip reading sfincs.map.nc&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(),</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
+
+    <span class="c1"># split general+face and edge vars</span>
+    <span class="n">dvars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ds_map</span><span class="o">.</span><span class="n">data_vars</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">face_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dvars</span> <span class="k">if</span> <span class="s2">&quot;edge_m&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">drop</span><span class="p">]</span>
+    <span class="n">edge_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dvars</span> <span class="k">if</span> <span class="s2">&quot;edge_m&quot;</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">drop</span><span class="p">]</span>
+
+    <span class="c1"># read face vars</span>
+    <span class="n">face_coords</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">IndexVariable</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">IndexVariable</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="n">ds_face</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ds_map</span><span class="p">[</span><span class="n">face_vars</span><span class="p">]</span>
+        <span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">])</span>
+        <span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">})</span>
+        <span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">face_coords</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># compute hmax</span>
+    <span class="k">if</span> <span class="s2">&quot;zsmax&quot;</span> <span class="ow">in</span> <span class="n">ds_face</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing &quot;hmax = max(zsmax) - zb&quot;&#39;</span><span class="p">)</span>
+        <span class="n">hmax</span> <span class="o">=</span> <span class="n">ds_face</span><span class="p">[</span><span class="s2">&quot;zsmax&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s2">&quot;timemax&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">ds_face</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">]</span>
+        <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hmax</span> <span class="o">&gt;</span> <span class="n">hmin</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">)</span>
+        <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="o">-</span><span class="mi">9999</span><span class="p">)</span>
+        <span class="n">ds_face</span><span class="p">[</span><span class="s2">&quot;hmax&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hmax</span>
+    <span class="c1"># set spatial attrs</span>
+    <span class="n">ds_face</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_spatial_dims</span><span class="p">(</span><span class="n">x_dim</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">y_dim</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+    <span class="n">ds_face</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
+
+    <span class="c1"># get edge vars</span>
+    <span class="n">ds_edge</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge_vars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">edge_coords</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;edge_x&quot;</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">IndexVariable</span><span class="p">(</span>
+                <span class="s2">&quot;edge_x&quot;</span><span class="p">,</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;edge_x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">edge_n</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;edge_y&quot;</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">IndexVariable</span><span class="p">(</span>
+                <span class="s2">&quot;edge_y&quot;</span><span class="p">,</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;edge_y&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">edge_m</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+        <span class="n">ds_edge</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ds_map</span><span class="p">[</span><span class="n">edge_vars</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">drop_vars</span><span class="p">([</span><span class="s2">&quot;edge_x&quot;</span><span class="p">,</span> <span class="s2">&quot;edge_y&quot;</span><span class="p">])</span>
+            <span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;edge_n&quot;</span><span class="p">:</span> <span class="s2">&quot;edge_y&quot;</span><span class="p">,</span> <span class="s2">&quot;edge_m&quot;</span><span class="p">:</span> <span class="s2">&quot;edge_x&quot;</span><span class="p">})</span>
+            <span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">edge_coords</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;edge_y&quot;</span><span class="p">,</span> <span class="s2">&quot;edge_x&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">ds_edge</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_spatial_dims</span><span class="p">(</span><span class="n">x_dim</span><span class="o">=</span><span class="s2">&quot;edge_x&quot;</span><span class="p">,</span> <span class="n">y_dim</span><span class="o">=</span><span class="s2">&quot;edge_y&quot;</span><span class="p">)</span>
+        <span class="n">ds_edge</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ds_face</span><span class="p">,</span> <span class="n">ds_edge</span></div>
+
+
+<div class="viewcode-block" id="read_sfincs_his_results"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_sfincs_his_results.html#hydromt_sfincs.read_sfincs_his_results">[docs]</a><span class="k">def</span> <span class="nf">read_sfincs_his_results</span><span class="p">(</span>
+    <span class="n">fn_his</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Read sfincs_his.nc point timeseries netcdf file and parse to hydromt.GeoDataset object.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn_his : str, Path</span>
+<span class="sd">        Path to sfincs_his.nc file</span>
+<span class="sd">    crs: int, CRS</span>
+<span class="sd">        Coordinate reference system</span>
+<span class="sd">    chunksize: int, optional</span>
+<span class="sd">        chunk size along time dimension, by default 100</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ds_his: xr.Dataset</span>
+<span class="sd">        Parsed SFINCS output his file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ds_his</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">fn_his</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">chunksize</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">crs</span> <span class="o">=</span> <span class="n">ds_his</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="n">ds_his</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">crs</span>
+    <span class="n">dvars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ds_his</span><span class="o">.</span><span class="n">data_vars</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="c1"># set coordinates &amp; spatial dims</span>
+    <span class="n">cvars</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]</span>
+    <span class="n">ds_his</span> <span class="o">=</span> <span class="n">ds_his</span><span class="o">.</span><span class="n">set_coords</span><span class="p">([</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dvars</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">cvars</span><span class="p">])</span>
+    <span class="n">ds_his</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">set_spatial_dims</span><span class="p">(</span>
+        <span class="n">x_dim</span><span class="o">=</span><span class="s2">&quot;station_x&quot;</span><span class="p">,</span> <span class="n">y_dim</span><span class="o">=</span><span class="s2">&quot;station_y&quot;</span><span class="p">,</span> <span class="n">index_dim</span><span class="o">=</span><span class="s2">&quot;stations&quot;</span>
+    <span class="p">)</span>
+    <span class="c1"># set crs</span>
+    <span class="n">ds_his</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ds_his</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Deltares.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
