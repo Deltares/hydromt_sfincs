@@ -17,7 +17,9 @@ Initialize
 
    SfincsModel
 
-Build components
+.. _components:
+
+Setup components
 ----------------
 
 .. autosummary::
@@ -25,12 +27,15 @@ Build components
 
    SfincsModel.setup_config
    SfincsModel.setup_basemaps
+   SfincsModel.setup_merge_topobathy
+   SfincsModel.setup_mask
+   SfincsModel.setup_bounds
    SfincsModel.setup_river_inflow
    SfincsModel.setup_river_outflow
-   SfincsModel.setup_gauges
-   SfincsModel.setup_structures
    SfincsModel.setup_manning_roughness
    SfincsModel.setup_cn_infiltration
+   SfincsModel.setup_gauges
+   SfincsModel.setup_structures
    SfincsModel.setup_h_forcing
    SfincsModel.setup_q_forcing
    SfincsModel.setup_q_forcing_from_grid
@@ -117,6 +122,22 @@ General methods
    SfincsModel.set_results
    SfincsModel.read_results
 
+.. _workflows:
+
+SFINCS workflows
+================
+
+.. autosummary::
+   :toctree: ../generated/
+
+   workflows.parse_region
+   workflows.get_basin_geometry
+   workflows.mask_topobathy
+   workflows.merge_topobathy
+   workflows.cn_to_s
+   workflows.landuse
+   workflows.snap_discharge
+   workflows.resample_time
 
 .. _methods:
 
@@ -152,8 +173,11 @@ Utilities
 .. autosummary::
    :toctree: ../generated/
 
+   utils.mask_bounds
    utils.get_spatial_attrs
    utils.parse_datetime
+   utils.gdf2structures
+   utils.structures2gdf
 
 Visualization
 -------------

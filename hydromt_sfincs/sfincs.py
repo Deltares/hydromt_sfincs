@@ -409,8 +409,8 @@ class SfincsModel(Model):
     def setup_river_inflow(self, basemaps_fn="merit_hydro", river_upa=25.0):
         """Setup river inflow (source) points where a river enters the model domain.
 
-        NOTE: to ensure a river only enters the model domain once, use the 'basin',
-        subbasin, or outlet region options.
+        NOTE: to ensure a river only enters the model domain once, use the 'interbasin',
+        region option in `setup_basemaps`.
 
         Adds model layers:
 

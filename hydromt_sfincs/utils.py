@@ -385,6 +385,8 @@ def write_timeseries(
         raise ValueError("df does not contain data.")
     data = df.reset_index().values
     data[:, 0] = (df.index - tref).total_seconds()
+    # calculate required width for time column; hard coded single decimal precision
+    # format for other columns is based on fmt`argument
     w = int(np.floor(np.log10(data[-1, 0]))) + 3
     fmt_lst = [f"%{w}.1f"] + [fmt for _ in range(df.columns.size)]
     fmt_out = " ".join(fmt_lst)
@@ -434,10 +436,16 @@ def mask_bounds(
 def gdf2structures(gdf: gpd.GeoDataFrame) -> List[Dict]:
     """Convert GeoDataFrame[LineString] to list of structure dictionaries
 
+    The x,y are taken from the geometry.
+    For weir structures to additional paramters are required, a "z" (elevation) and
+    "par1" (Cd coefficient in weir formula) are required which should be supplied
+    as columns (or z-coordinate) of the GeoDataFrame. These columns should either
+    contain a float or 1D-array of floats with same length as the LineString.
+
     Parameters
     ----------
-    gdf: geopandas.GeoDataFrame
-        GeoDataFrame structures
+    gdf: geopandas.GeoDataFrame with LineStrings geometries
+        GeoDataFrame structures.
 
     Returns
     -------
@@ -591,6 +599,7 @@ def read_structures(fn: Union[str, Path]) -> List[Dict]:
 
 def read_sfincs_map_results(
     fn_map: Union[str, Path],
+    hmin: float = 0.0,
     crs: Union[int, CRS] = None,
     chunksize: int = 100,
     drop: List[str] = ["crs", "sfincsgrid"],
@@ -606,6 +615,9 @@ def read_sfincs_map_results(
     ----------
     fn_map : str, Path
         Path to sfincs_map.nc file
+    hmin: float, optional
+        Minimum water depth to consider in hmax map, i.e. cells with lower depth
+        get a nodata values assigned. By deafult 0.0
     crs: int, CRS
         Coordinate reference system
     chunksize: int, optional
@@ -648,7 +660,7 @@ def read_sfincs_map_results(
     if "zsmax" in ds_face:
         logger.info('Computing "hmax = max(zsmax) - zb"')
         hmax = ds_face["zsmax"].max("timemax") - ds_face["zb"]
-        hmax = hmax.where(hmax > 0, -9999)
+        hmax = hmax.where(hmax > hmin, -9999)
         hmax.raster.set_nodata(-9999)
         ds_face["hmax"] = hmax
     # set spatial attrs
