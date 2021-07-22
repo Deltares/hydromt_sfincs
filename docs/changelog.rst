@@ -8,14 +8,18 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 [Unreleased]
 ------------
 
+Bugfix
+^^^^^^
+- scsfile variable changed to maximum soil moisture retention [inch]; was curve number [-]
+
 Changed
 ^^^^^^^
-- separated many low-level methods into utils.py and plots.py
 - splitted ``setup_basemaps`` into multiple smaller methods: ``setup_merge_topobathy``, ``setup_mask`` and ``setup_bounds``
+- separated many low-level methods into utils.py and plots.py
 - save bzs/bzd & dis/src only as GeoDataArray at forcing and do not copy the locations at staticgeoms.
 - sort src/bnd files on x_dim for comparibility between OS
 - staticmaps are by default saved (and read) in S->N orientation as this matches the SFINCS better.
-- sfincs.inp leading when reading forcing
+
 
 Added
 ^^^^^

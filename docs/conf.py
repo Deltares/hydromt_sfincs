@@ -19,7 +19,7 @@
 import os
 import sys
 
-# import hydromt  ## to avoid ciruclar dependency
+import hydromt  ## to avoid ciruclar dependency
 import hydromt_sfincs
 
 here = os.path.dirname(__file__)
