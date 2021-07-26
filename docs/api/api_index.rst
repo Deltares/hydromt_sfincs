@@ -130,14 +130,11 @@ SFINCS workflows
 .. autosummary::
    :toctree: ../generated/
 
-   workflows.parse_region
-   workflows.get_basin_geometry
    workflows.mask_topobathy
    workflows.merge_topobathy
    workflows.cn_to_s
    workflows.landuse
    workflows.snap_discharge
-   workflows.resample_time
 
 .. _methods:
 

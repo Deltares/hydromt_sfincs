@@ -137,7 +137,7 @@ class SfincsModel(Model):
         ----------
         region : dict
             Dictionary describing region of interest, e.g. {'bbox': [xmin, ymin, xmax, ymax]}
-            See :py:meth:`~hydromt.cli.parse_region()` for all options
+            See :py:func:`~hydromt.workflows.parse_region()` for all options
         res : float
             Model resolution [m], by default 100 m.
         crs : str, int, optional
@@ -542,7 +542,8 @@ class SfincsModel(Model):
         self.set_staticgeoms(gdf_riv, name="rivers_out")
 
     def setup_cn_infiltration(self, cn_fn="gcn250", antecedent_runoff_conditions="avg"):
-        """Setup model potential maximum soil moisture retention map from gridded curve number map.
+        """Setup model potential maximum soil moisture retention map (scsfile)
+        from gridded curve number map.
 
         Adds model layers:
 
@@ -581,8 +582,8 @@ class SfincsModel(Model):
         self.set_config(f"{mname}file", f"sfincs.{mname}")
 
     def setup_manning_roughness(self, lulc_fn="vito", map_fn=None):
-        """Setup model manning rouchness map from gridded land-use/land-cover map
-        and mapping table.
+        """Setup model manning rouchness map (manningfile) from gridded
+        land-use/land-cover map and manning roughness mapping table.
 
         Adds model layers:
 
@@ -634,7 +635,7 @@ class SfincsModel(Model):
         ---------
         gauges_fn: str
             Path to observation points geometry file.
-            See :py:meth:`~hydromt.open_vector`, for accepted files.
+            See :py:func:`~hydromt.open_vector`, for accepted files.
         overwrite: bool, optional
             If True, overwrite existing gauges instead of appending the new gauges.
         """
@@ -714,15 +715,15 @@ class SfincsModel(Model):
     ### FORCING
     def setup_h_forcing(
         self,
-        dataset_fn=None,
+        geodataset_fn=None,
         timeseries_fn=None,
-        mdt_fn=None,
+        offset_fn=None,
         buffer=0,
         **kwargs,
     ):
         """Setup waterlevel boundary point locations (bnd) and time series (bzs).
 
-        Use dataset_fn to set the waterlevel boundary from a dataset of point location
+        Use geodataset_fn to set the waterlevel boundary from a dataset of point location
         timeseries. The dataset is clipped to the model region plus `buffer` [m], and
         model time based on the model config tstart and tstop entries.
 
@@ -731,12 +732,13 @@ class SfincsModel(Model):
         the model config tstart and tstop entries. The boundary point location is infered
         from the model mask.
 
-        If timeseries_fn and dataset_fn are both not provided a dummy (h=0) waterlevel
+        If timeseries_fn and geodataset_fn are both not provided a dummy (h=0) waterlevel
         boundary is set.
 
-        The vertical reference level of the waterlevel data can be corrected to match
-        the vertical reference level of the model elevation (dep) layer by adding the
-        local `mdt_fn` mean dynamical topography value to the waterlevels.
+        The vertical reference of the waterlevel data can be corrected to match
+        the vertical reference of the model elevation (dep) layer by adding
+        a local offset value derived from the `offset_fn` map to the waterlevels,
+        e.g. mean dynamic topography for difference between EGM and MSL levels.
 
         Adds model layers:
 
@@ -745,23 +747,21 @@ class SfincsModel(Model):
 
         Parameters
         ----------
-        dataset_fn: str, Path
+        geodataset_fn: str, Path
             Path or data source name for geospatial point timeseries file.
             This can either be a netcdf file with geospatial coordinates
             or a combined point location file with a timeseries data csv file
             which can be setup through the data_catalog.yml file.
-            See :py:meth:`hydromt.open_geodataset`, for accepted files.
 
             * Required variables if netcdf: ['waterlevel']
             * Required coordinates if netcdf: ['time', 'index', 'y', 'x']
         timeseries_fn: str, Path
-            Path to tabulated timeseries csv file with time index in first column
-            and location IDs in the first row,
-            see :py:meth:`hydromt.open_timeseries_from_table`, for details.
+            Path to spatially uniform timeseries csv file with time index in first column
+            and waterlevels in the second column. The first row is interpreted as header,
+            see :py:func:`hydromt.open_timeseries_from_table`, for details.
             Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
-        mdt_fn: str, optional
-            Path or data source name for mean dynamic topography gridded data.
-            Difference between vertical reference of elevation and waterlevel data,
+        offset_fn: str, optional
+            Path or data source name for gridded offset between vertical reference of elevation and waterlevel data,
             Adds to the waterlevel data before merging.
 
             * Required variables: ['mdt']
@@ -771,7 +771,7 @@ class SfincsModel(Model):
         """
         name = "waterlevel"
         msk2 = self.mask == 2
-        if not np.any(msk2).item():
+        if not np.any(msk2):
             # No waterlevel boundary remove bnd/bzs from sfincs.inp
             self.logger.warning(
                 "No waterlevel boundary cells (msk==2) in model mask. "
@@ -780,10 +780,10 @@ class SfincsModel(Model):
             return
 
         tstart, tstop = self.get_model_time()  # model time
-        if dataset_fn is not None:
+        if geodataset_fn is not None:
             # read and clip data in time & space
             da = self.data_catalog.get_geodataset(
-                dataset_fn,
+                geodataset_fn,
                 geom=self.region,
                 buffer=buffer,
                 variables=[name],
@@ -808,9 +808,9 @@ class SfincsModel(Model):
                 self.set_forcing_1d(xy=gdf, name=name)  # dummy timeseries
                 return
         # correct for MDT
-        if mdt_fn is not None and isfile(mdt_fn):
+        if offset_fn is not None and isfile(offset_fn):
             da_mdt = self.data_catalog.get_rasterdataset(
-                mdt_fn, geom=self.region, buffer=buffer, variables=["mdt"]
+                offset_fn, geom=self.region, buffer=buffer, variables=["mdt"]
             )
             mdt_pnts = da_mdt.raster.sample(da.vector.to_gdf()).fillna(0)
             da = da + mdt_pnts
@@ -818,10 +818,10 @@ class SfincsModel(Model):
             self.logger.debug(f"{name} forcing: applied MDT (avg: {mdt_avg:+.2f})")
         self.set_forcing_1d(ts=da, name=name)
 
-    def setup_q_forcing(self, dataset_fn=None, timeseries_fn=None, **kwargs):
+    def setup_q_forcing(self, geodataset_fn=None, timeseries_fn=None, **kwargs):
         """Setup discharge boundary point locations (src) and time series (dis).
 
-        Use dataset_fn to set the discharge boundary from a dataset of point location
+        Use geodataset_fn to set the discharge boundary from a dataset of point location
         timeseries. Only locations within the model domain are selected.
 
         Use timeseries_fn to set discharge boundary conditions to pre-set (src) locations,
@@ -837,35 +837,35 @@ class SfincsModel(Model):
 
         Parameters
         ----------
-        dataset_fn: str, Path
+        geodataset_fn: str, Path
             Path or data source name for geospatial point timeseries file.
             This can either be a netcdf file with geospatial coordinates
             or a combined point location file with a timeseries data csv file
             which can be setup through the data_catalog yml file.
-            See :py:meth:`~hydromt.open_geodataset`, for accepted files.
 
             * Required variables if netcdf: ['discharge']
             * Required coordinates if netcdf: ['time', 'index', 'y', 'x']
         timeseries_fn: str, Path
             Path to tabulated timeseries csv file with time index in first column
             and location IDs in the first row,
-            see :py:meth:`~hydromt.open_timeseries_from_table`, for details.
+            see :py:func:`~hydromt.open_timeseries_from_table`, for details.
             NOTE: tabulated timeseries files cannot yet be set through the data_catalog yml file.
 
         """
         name = "discharge"
         fname = self._FORCING[name][0]
         tstart, tstop = self.get_model_time()  # time slice
-        if dataset_fn is None and fname not in self.forcing:
+        if geodataset_fn is None and fname not in self.forcing:
             self.logger.warning(
-                "No discharge inflow (src) points set: Run ``setup_river_inflow()`` method first or provide locations."
+                "No discharge inflow (src) points set: "
+                "Run ``setup_river_inflow()`` method first or provide locations."
             )
             return
-        elif dataset_fn is not None:
+        elif geodataset_fn is not None:
             # read and clip data
             da = (
                 self.data_catalog.get_geodataset(
-                    dataset_fn,
+                    geodataset_fn,
                     geom=self.region,
                     variables=[name],
                     time_tuple=(tstart, tstop),
@@ -882,7 +882,9 @@ class SfincsModel(Model):
             da_ts = da_ts.sel(time=slice(tstart, tstop)).fillna(0.0)
             self.set_forcing_1d(ts=da_ts, xy=gdf, name=name)
         else:
-            raise ValueError('Either "dataset_fn" or "timeseries_fn" must be provided.')
+            raise ValueError(
+                'Either "geodataset_fn" or "timeseries_fn" must be provided.'
+            )
 
     def setup_q_forcing_from_grid(
         self, discharge_fn, locs_fn=None, uparea_fn=None, wdw=1, max_error=0.1
@@ -913,7 +915,7 @@ class SfincsModel(Model):
             * Required coordinates: ['time', 'y', 'x']
         locs_fn: str, Path, optional
             Path or data source name for point location dataset.
-            See :py:meth:`~hydromt.open_vector`, for accepted files.
+            See :py:func:`~hydromt.open_vector`, for accepted files.
 
         uparea_fn: str, Path, optional
             Path to upstream area grid in gdal (e.g. geotiff) or netcdf format.
@@ -1078,7 +1080,7 @@ class SfincsModel(Model):
         precip_fn, str, Path
             Path to tabulated timeseries csv file with time index in first column
             and location IDs in the first row,
-            see :py:meth:`~hydromt.open_timeseries_from_table`, for details.
+            see :py:func:`~hydromt.open_timeseries_from_table`, for details.
             Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
         """
         ts = hydromt.open_timeseries_from_table(precip_fn, **kwargs)
