@@ -1525,8 +1525,8 @@ class SfincsModel(Model):
                 **kwargs,
             )
             # save as dict of DataArray
-            self.set_results(ds_face)
-            self.set_results(ds_edge)
+            self.set_results(ds_face, split_dataset=True)
+            self.set_results(ds_edge, split_dataset=True)
 
         fn_his = join(self.root, "sfincs_his.nc")
         if isfile(fn_his):
@@ -1536,7 +1536,7 @@ class SfincsModel(Model):
             # drop double vars (map files has priority)
             drop_vars = [v for v in ds_his.data_vars if v in self._results or v in drop]
             ds_his = ds_his.drop_vars(drop_vars)
-            self.set_results(ds_his)
+            self.set_results(ds_his, split_dataset=True)
 
     def write_results(self):
         pass  # TODO remove from model API
