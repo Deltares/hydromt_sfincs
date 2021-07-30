@@ -475,7 +475,10 @@ class SfincsModel(Model):
             the most downstream point where a river enters the model domain.
         """
         if "region" not in self.staticgeoms:
-            raise ValueError("Use setup_mask() first to define the ative model region")
+            self.logger.warning(
+                "Run setup_mask() first to define the active model region. The model region "
+                "is now infered from the bounding box and may lead to inaccurate inflow points."
+            )
 
         ds = self.data_catalog.get_rasterdataset(
             basemaps_fn, geom=self.region, buffer=buffer
@@ -524,7 +527,10 @@ class SfincsModel(Model):
             Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.
         """
         if "region" not in self.staticgeoms:
-            raise ValueError("Use setup_mask() first to define the ative model region")
+            self.logger.warning(
+                "Run setup_mask() first to define the active model region. The model region "
+                "is now infered from the bounding box and may lead to inaccurate outflow points."
+            )
 
         ds = self.data_catalog.get_rasterdataset(
             basemaps_fn, geom=self.region, buffer=2
