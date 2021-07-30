@@ -8,10 +8,13 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 [Unreleased]
 ------------
 
+v0.2.0 (30 June 2021)
+---------------------
 
 Bugfix
 ^^^^^^
 - scsfile variable changed to maximum soil moisture retention [inch]; was curve number [-]
+- fix setting geodatasets for h and q forcing.
 
 Changed
 ^^^^^^^
@@ -42,6 +45,12 @@ new methods:
 - ``read_results`` 
 - ``update_spatial_attrs`` and ``get_spatial_attrs`` (previously part of read_staticmaps)
 
+new workflows: 
+
+- ``merge_topobathy``
+- ``mask_topobathy``
+- ``snap_discharge``
+- ``river_inflow_points`` & ``river_outflow_points`` 
 
 Documentation
 ^^^^^^^^^^^^^
@@ -52,7 +61,7 @@ Deprecated
 ^^^^^^^^^^^
 - ``setup_p_gridded``
 
-v0.0.1 (18 May 2021)
+v0.1.0 (18 May 2021)
 --------------------
 Noticeable changes are a new ``setup_river_inflow`` and ``setup_river_outflow`` methods
 

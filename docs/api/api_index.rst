@@ -135,6 +135,9 @@ SFINCS workflows
    workflows.cn_to_s
    workflows.landuse
    workflows.snap_discharge
+   workflows.river_inflow_points
+   workflows.river_outflow_points
+
 
 .. _methods:
 
