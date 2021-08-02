@@ -8,13 +8,13 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 [Unreleased]
 ------------
 
-v0.2.0 (30 June 2021)
+v0.2.0 (2 August 2021)
 ---------------------
 
 Bugfix
 ^^^^^^
 - scsfile variable changed to maximum soil moisture retention [inch]; was curve number [-]
-- fix setting geodatasets for h and q forcing.
+- fix setting delimited text based geodatasets for h and q forcing.
 
 Changed
 ^^^^^^^
@@ -28,7 +28,7 @@ Changed
 
 Added
 ^^^^^
-support for:
+support for SFINCS files:
 
 - structures: sfincs.thd & sfincs.weir
 - results: sfincs_map.nc & sfincs_his.nc
