@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -237,10 +237,10 @@
 <h1>hydromt_sfincs.SfincsModel.setup_river_inflow<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-river-inflow" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_river_inflow">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_river_inflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basemaps_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'merit_hydro'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_upa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_river_inflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_river_inflow" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_river_inflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basemaps_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'merit_hydro'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_upa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_river_inflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_river_inflow" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setup river inflow (source) points where a river enters the model domain.</p>
-<p>NOTE: to ensure a river only enters the model domain once, use the ‘interbasin’,
-region option in <cite>setup_basemaps</cite>.</p>
+<p>NOTE: only the most downstream point where a river enters the model domain
+is kept.</p>
 <p>Adds model layers:</p>
 <ul class="simple">
 <li><p><strong>src</strong> geoms: discharge boundary point locations</p></li>
@@ -250,12 +250,15 @@ region option in <cite>setup_basemaps</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>basemaps_f</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Path</em>) – <p>Path or data source name for hydrography raster data, by default ‘merit_hydro’.</p>
+<li><p><strong>basemaps_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Path</em>) – <p>Path or data source name for hydrography raster data, by default ‘merit_hydro’.</p>
 <ul>
 <li><p>Required layers: [‘uparea’, ‘flwdir’].</p></li>
 </ul>
 </p></li>
 <li><p><strong>river_upa</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>, </em><em>optional</em>) – Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.</p></li>
+<li><p><strong>river_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>, </em><em>optional</em>) – Mimimum river length [m] within the model domain to define river cells, by default 0 m.</p></li>
+<li><p><strong>buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em>, </em><em>optional</em>) – Buffer [no. of cells of basemaps_fn] around model domain. A buffer is requied to identify
+the most downstream point where a river enters the model domain.</p></li>
 </ul>
 </dd>
 </dl>

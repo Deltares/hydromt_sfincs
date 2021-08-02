@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -215,6 +215,8 @@ An example is provided in <a class="reference internal" href="../examples/index.
 <div class="highlight-Ini notranslate"><div class="highlight"><pre><span></span><span class="k">[global]</span>
 <span class="na">write_gis</span> <span class="o">=</span> <span class="s">True                # write addtional geotif and geojson files to gis subfolder</span>
 <span class="na">config_fn</span> <span class="o">=</span> <span class="s">sfincs.inp          # name of sfincs config (inp) file</span>
+<span class="na">artifact_data</span> <span class="o">=</span> <span class="s">True            # load artifact data (snapshot of Deltares data)</span>
+<span class="c1"># data_libs = data_catalog.yml    # local data catalog file, can also be set with the -d option from command line </span>
 
 <span class="k">[setup_config]</span>
 <span class="na">tref</span> <span class="o">=</span> <span class="s">20100201 000000</span>
@@ -249,9 +251,7 @@ An example is provided in <a class="reference internal" href="../examples/index.
 <span class="na">include_mask_fn</span> <span class="o">=</span> <span class="s">osm_coastlines  # sea polygon</span>
 
 <span class="k">[setup_h_forcing]</span>
-<span class="na">dataset_fn</span> <span class="o">=</span> <span class="s">gtsmv3_eu_era5     # waterlevel timeseries dataset</span>
-<span class="na">timeseries_fn</span> <span class="o">=</span> <span class="s">None            # timeseries data at waterlevel gauges</span>
-<span class="na">mdt_fn</span> <span class="o">=</span> <span class="s">dtu10mdt_egm96         # mean dynamic topography [&#39;mdt&#39;]</span>
+<span class="na">geodataset_fn</span> <span class="o">=</span> <span class="s">gtsm_venice     # waterlevel timeseries dataset. see local data_sources.yml file</span>
 <span class="na">buffer</span> <span class="o">=</span> <span class="s">1e4                    # buffer around model region to select gauges</span>
 
 <span class="k">[setup_p_forcing_from_grid]</span>

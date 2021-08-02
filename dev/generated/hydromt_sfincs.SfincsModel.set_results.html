@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -240,15 +240,19 @@
 <h1>hydromt_sfincs.SfincsModel.set_results<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-set-results" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.set_results">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">set_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hydromt_sfincs.SfincsModel.set_results" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add data to results attribute which is a dictionary of xarray.DataArray.
-The dictionary key is taken from the variable name. In case of a DataArray
-without name, the name can be passed using the optional name argument.</p>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">set_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hydromt_sfincs.SfincsModel.set_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add data to results attribute which is a dictionary of xarray.DataArray and/or xarray.Dataset.</p>
+<p>The dictionary key is taken from the variable name. In case of a DataArray
+without name, the name can be passed using the optional name argument. In case of
+a Dataset, the dictionnary key is passed using the name argument.</p>
+<p>Dataset can either be added as is to the dictionnary (default) or split into several
+DataArrays using the split_dataset argument.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<a class="reference external" href="http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v0.18.3.dev1)"><em>xarray.Dataset</em></a><em> or </em><a class="reference external" href="http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v0.18.3.dev1)"><em>xarray.DataArray</em></a>) – New forcing data to add</p></li>
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>optional</em>) – Variable name, only in case data is of type DataArray</p></li>
+<li><p><strong>data</strong> (<a class="reference external" href="http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v0.19.1.dev6)"><em>xarray.Dataset</em></a><em> or </em><a class="reference external" href="http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v0.19.1.dev6)"><em>xarray.DataArray</em></a>) – New forcing data to add</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>optional</em>) – Variable name, only in case data is of type DataArray or if a Dataset is added as is (split_dataset=False).</p></li>
+<li><p><strong>split_dataset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a><em>, </em><em>optional</em>) – If data is a xarray.Dataset, either add it as is to results or split it into several xarray.DataArrays.</p></li>
 </ul>
 </dd>
 </dl>

@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -237,20 +237,21 @@
 <h1>hydromt_sfincs.SfincsModel.setup_h_forcing<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-h-forcing" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_h_forcing">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_h_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeseries_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdt_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_h_forcing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_h_forcing" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_h_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geodataset_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeseries_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_h_forcing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_h_forcing" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setup waterlevel boundary point locations (bnd) and time series (bzs).</p>
-<p>Use dataset_fn to set the waterlevel boundary from a dataset of point location
+<p>Use geodataset_fn to set the waterlevel boundary from a dataset of point location
 timeseries. The dataset is clipped to the model region plus <cite>buffer</cite> [m], and
 model time based on the model config tstart and tstop entries.</p>
 <p>Use timeseries_fn to set a spatially uniform waterlevel boundary representative
 for all waterlevel boundary cells (msk==2), The timeseries is clipped based on
 the model config tstart and tstop entries. The boundary point location is infered
 from the model mask.</p>
-<p>If timeseries_fn and dataset_fn are both not provided a dummy (h=0) waterlevel
+<p>If timeseries_fn and geodataset_fn are both not provided a dummy (h=0) waterlevel
 boundary is set.</p>
-<p>The vertical reference level of the waterlevel data can be corrected to match
-the vertical reference level of the model elevation (dep) layer by adding the
-local <cite>mdt_fn</cite> mean dynamical topography value to the waterlevels.</p>
+<p>The vertical reference of the waterlevel data can be corrected to match
+the vertical reference of the model elevation (dep) layer by adding
+a local offset value derived from the <cite>offset_fn</cite> map to the waterlevels,
+e.g. mean dynamic topography for difference between EGM and MSL levels.</p>
 <p>Adds model layers:</p>
 <ul class="simple">
 <li><p><strong>bnd</strong> geom: waterlevel gauge point locations</p></li>
@@ -259,22 +260,20 @@ local <cite>mdt_fn</cite> mean dynamical topography value to the waterlevels.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Path</em>) – <p>Path or data source name for geospatial point timeseries file.
+<li><p><strong>geodataset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Path</em>) – <p>Path or data source name for geospatial point timeseries file.
 This can either be a netcdf file with geospatial coordinates
 or a combined point location file with a timeseries data csv file
-which can be setup through the data_catalog.yml file.
-See <code class="xref py py-meth docutils literal notranslate"><span class="pre">hydromt.open_geodataset()</span></code>, for accepted files.</p>
+which can be setup through the data_catalog.yml file.</p>
 <ul>
 <li><p>Required variables if netcdf: [‘waterlevel’]</p></li>
 <li><p>Required coordinates if netcdf: [‘time’, ‘index’, ‘y’, ‘x’]</p></li>
 </ul>
 </p></li>
-<li><p><strong>timeseries_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Path</em>) – Path to tabulated timeseries csv file with time index in first column
-and location IDs in the first row,
-see <code class="xref py py-meth docutils literal notranslate"><span class="pre">hydromt.open_timeseries_from_table()</span></code>, for details.
+<li><p><strong>timeseries_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Path</em>) – Path to spatially uniform timeseries csv file with time index in first column
+and waterlevels in the second column. The first row is interpreted as header,
+see <code class="xref py py-func docutils literal notranslate"><span class="pre">hydromt.open_timeseries_from_table()</span></code>, for details.
 Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.</p></li>
-<li><p><strong>mdt_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>optional</em>) – <p>Path or data source name for mean dynamic topography gridded data.
-Difference between vertical reference of elevation and waterlevel data,
+<li><p><strong>offset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>optional</em>) – <p>Path or data source name for gridded offset between vertical reference of elevation and waterlevel data,
 Adds to the waterlevel data before merging.</p>
 <ul>
 <li><p>Required variables: [‘mdt’]</p></li>

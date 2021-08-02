@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -237,9 +237,9 @@
 <h1>hydromt_sfincs.SfincsModel.setup_q_forcing<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-q-forcing" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_q_forcing">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_q_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeseries_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_q_forcing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_q_forcing" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_q_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geodataset_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeseries_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_q_forcing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_q_forcing" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setup discharge boundary point locations (src) and time series (dis).</p>
-<p>Use dataset_fn to set the discharge boundary from a dataset of point location
+<p>Use geodataset_fn to set the discharge boundary from a dataset of point location
 timeseries. Only locations within the model domain are selected.</p>
 <p>Use timeseries_fn to set discharge boundary conditions to pre-set (src) locations,
 e.g. after the <cite>setup_river_inflow</cite> method.</p>
@@ -253,11 +253,10 @@ tstart and tstop entries.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Path</em>) – <p>Path or data source name for geospatial point timeseries file.
+<li><p><strong>geodataset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Path</em>) – <p>Path or data source name for geospatial point timeseries file.
 This can either be a netcdf file with geospatial coordinates
 or a combined point location file with a timeseries data csv file
-which can be setup through the data_catalog yml file.
-See <code class="xref py py-meth docutils literal notranslate"><span class="pre">open_geodataset()</span></code>, for accepted files.</p>
+which can be setup through the data_catalog yml file.</p>
 <ul>
 <li><p>Required variables if netcdf: [‘discharge’]</p></li>
 <li><p>Required coordinates if netcdf: [‘time’, ‘index’, ‘y’, ‘x’]</p></li>
@@ -265,7 +264,7 @@ See <code class="xref py py-meth docutils literal notranslate"><span class="pre"
 </p></li>
 <li><p><strong>timeseries_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Path</em>) – Path to tabulated timeseries csv file with time index in first column
 and location IDs in the first row,
-see <code class="xref py py-meth docutils literal notranslate"><span class="pre">open_timeseries_from_table()</span></code>, for details.
+see <code class="xref py py-func docutils literal notranslate"><span class="pre">open_timeseries_from_table()</span></code>, for details.
 NOTE: tabulated timeseries files cannot yet be set through the data_catalog yml file.</p></li>
 </ul>
 </dd>

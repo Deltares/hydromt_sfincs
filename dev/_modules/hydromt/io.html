@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -428,14 +428,13 @@
 
 <span class="k">def</span> <span class="nf">open_geodataset</span><span class="p">(</span>
     <span class="n">fn_locs</span><span class="p">,</span>
-    <span class="n">fn_ts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">fn_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">var_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">index_dim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">ts_reader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">chunks</span><span class="o">=</span><span class="p">{},</span>
     <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">geom</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
@@ -443,23 +442,23 @@
 
 <span class="sd">    Arguments</span>
 <span class="sd">    ---------</span>
-<span class="sd">    fn: path, str</span>
+<span class="sd">    fn_locs: path, str</span>
 <span class="sd">        Path to point location file, see :py:meth:`geopandas.read_file` for options.</span>
-<span class="sd">    fn_ts: path, str</span>
+<span class="sd">    fn_data: path, str</span>
 <span class="sd">        Path to data file of which the index dimension which should match the geospatial</span>
 <span class="sd">        coordinates index.</span>
 <span class="sd">        This can either be a csv with datetime in the first column and the location</span>
-<span class="sd">        index in the header, or a 2 dimesional netcdf with a datetime and index column.</span>
+<span class="sd">        index in the header row, or a netcdf with a time and index dimensions.</span>
 <span class="sd">    var_name: str, optional</span>
-<span class="sd">        Name of the variable in case of a csv fn_ts file. By default, None and</span>
+<span class="sd">        Name of the variable in case of a csv fn_data file. By default, None and</span>
 <span class="sd">        infered from basename.</span>
 <span class="sd">    crs: str, `pyproj.CRS`, or dict</span>
 <span class="sd">        Source coordinate reference system, ignored for files with a native crs.</span>
 <span class="sd">    bbox : array of float, default None</span>
 <span class="sd">        Filter features by given bounding box described by [xmin, ymin, xmax, ymax]</span>
-<span class="sd">        Cannot be used with mask.</span>
-<span class="sd">    mask : GeoDataFrame or GeoSeries | shapely Geometry, default None</span>
-<span class="sd">        Filter for features that intersect with the mask.</span>
+<span class="sd">        Cannot be used with geom.</span>
+<span class="sd">    geom : GeoDataFrame or GeoSeries | shapely Geometry, default None</span>
+<span class="sd">        Filter for features that intersect with the geom.</span>
 <span class="sd">        CRS mis-matches are resolved if given a GeoSeries or GeoDataFrame.</span>
 <span class="sd">        Cannot be used with bbox.</span>
 <span class="sd">    **kwargs</span>
@@ -474,15 +473,17 @@
         <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GeoDataset point location file not found: </span><span class="si">{</span><span class="n">fn_locs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="c1"># read geometry file</span>
     <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">assert_gtype</span><span class="o">=</span><span class="s2">&quot;Point&quot;</span><span class="p">)</span>
-    <span class="n">gdf</span> <span class="o">=</span> <span class="n">open_vector</span><span class="p">(</span><span class="n">fn_locs</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">open_vector</span><span class="p">(</span><span class="n">fn_locs</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">geom</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">index_dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">index_dim</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">gdf</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;index&quot;</span>
     <span class="c1"># read timeseries file</span>
-    <span class="k">if</span> <span class="n">fn_ts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn_ts</span><span class="p">):</span>
-        <span class="n">da_ts</span> <span class="o">=</span> <span class="n">open_timeseries_from_table</span><span class="p">(</span><span class="n">fn_ts</span><span class="p">,</span> <span class="n">index_dim</span><span class="o">=</span><span class="n">index_dim</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fn_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn_data</span><span class="p">):</span>
+        <span class="n">da_ts</span> <span class="o">=</span> <span class="n">open_timeseries_from_table</span><span class="p">(</span>
+            <span class="n">fn_data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">var_name</span><span class="p">,</span> <span class="n">index_dim</span><span class="o">=</span><span class="n">index_dim</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span>
+        <span class="p">)</span>
         <span class="n">ds</span> <span class="o">=</span> <span class="n">vector</span><span class="o">.</span><span class="n">GeoDataset</span><span class="o">.</span><span class="n">from_gdf</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">da_ts</span><span class="p">,</span> <span class="n">index_dim</span><span class="o">=</span><span class="n">index_dim</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">fn_ts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GeoDataset timeseries csv file not found: </span><span class="si">{</span><span class="n">fn_ts</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fn_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GeoDataset data file not found: </span><span class="si">{</span><span class="n">fn_data</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">ds</span> <span class="o">=</span> <span class="n">vector</span><span class="o">.</span><span class="n">GeoDataset</span><span class="o">.</span><span class="n">from_gdf</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">index_dim</span><span class="o">=</span><span class="n">index_dim</span><span class="p">)</span>  <span class="c1"># coordinates only</span>
     <span class="k">return</span> <span class="n">ds</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span>
@@ -589,7 +590,7 @@
 <span class="sd">        Parsed geometry file</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">filtered</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">driver</span> <span class="o">=</span> <span class="n">driver</span> <span class="k">if</span> <span class="n">driver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">fn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">driver</span> <span class="k">if</span> <span class="n">driver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">driver</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;csv&quot;</span><span class="p">,</span> <span class="s2">&quot;xls&quot;</span><span class="p">,</span> <span class="s2">&quot;xlsx&quot;</span><span class="p">,</span> <span class="s2">&quot;xy&quot;</span><span class="p">]:</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="n">open_vector_from_table</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="n">driver</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -650,7 +651,7 @@
 <span class="sd">    gdf: geopandas.GeoDataFrame</span>
 <span class="sd">        Parsed and filtered point geometries</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">driver</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">driver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">fn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">driver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="s2">&quot;index_col&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">driver</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;csv&quot;</span><span class="p">]:</span>

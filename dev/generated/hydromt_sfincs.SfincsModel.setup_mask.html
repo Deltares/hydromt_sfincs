@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -239,12 +239,13 @@
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_mask">
 <span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">active_mask_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_mask" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates mask of active model cells.</p>
-<p>Active model cells are based on with valid elevation; within the
-active mask polygon and between minimum and maximum elevation contour lines.
+<p>Active model cells are based on cells with valid elevation; within the
+active mask polygon or between minimum and maximum elevation contour lines.
 Note that local sinks (isolated regions with elv &lt; elv_min) are kept as active cells.</p>
 <p>The model mask defines 0) Inactive, 1) active, and 2) waterlevel boundary cells
 and 3) outflow boundary cells. Note that this method does not set the boundary
 cells, use <cite>setup_bounds</cite> istead.</p>
+<p>Inactive cells in all staticmap layers are set to its nodata value.</p>
 <p>Sets model layers:</p>
 <ul class="simple">
 <li><p><strong>msk</strong> map: model mask [-]</p></li>
@@ -254,8 +255,10 @@ cells, use <cite>setup_bounds</cite> istead.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>active_mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name for mask polygon. Models cells outside the polygon are set as
 inactive (mask == 0) and within the polygon as active (mask == 1) cells.</p></li>
-<li><p><strong>elv_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for active model cells.</p></li>
-<li><p><strong>elv_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for active model cells.</p></li>
+<li><p><strong>elv_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for active model cells.
+Note: only applied if active_mask_fn not provided.</p></li>
+<li><p><strong>elv_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for active model cells.
+Note: only applied if active_mask_fn not provided.</p></li>
 </ul>
 </dd>
 </dl>

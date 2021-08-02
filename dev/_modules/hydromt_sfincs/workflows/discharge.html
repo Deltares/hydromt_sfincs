@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -176,8 +176,12 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">hydromt</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;snap_discharge&quot;</span><span class="p">,</span> <span class="s2">&quot;river_inflow_points&quot;</span><span class="p">,</span> <span class="s2">&quot;river_outflow_points&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="snap_discharge"><a class="viewcode-back" href="../../../generated/hydromt_sfincs.workflows.snap_discharge.html#hydromt_sfincs.workflows.snap_discharge">[docs]</a><span class="k">def</span> <span class="nf">snap_discharge</span><span class="p">(</span>
@@ -238,6 +242,148 @@
         <span class="n">da_q</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">gdf</span><span class="p">)</span><span class="o">.</span><span class="n">reset_coords</span><span class="p">()[</span><span class="n">discharge_name</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">da_q</span></div>
+
+
+<div class="viewcode-block" id="river_inflow_points"><a class="viewcode-back" href="../../../generated/hydromt_sfincs.workflows.river_inflow_points.html#hydromt_sfincs.workflows.river_inflow_points">[docs]</a><span class="k">def</span> <span class="nf">river_inflow_points</span><span class="p">(</span>
+    <span class="n">ds</span><span class="p">,</span>
+    <span class="n">region</span><span class="p">,</span>
+    <span class="n">river_upa</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+    <span class="n">river_len</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">dst_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">return_river</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">flwdir_name</span><span class="o">=</span><span class="s2">&quot;flwdir&quot;</span><span class="p">,</span>
+    <span class="n">uparea_name</span><span class="o">=</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span>
+    <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the most downstream point locations where a river enters the region.</span>
+<span class="sd">    Rivers are based on the flow direction data in the dataset and a minumum upstream</span>
+<span class="sd">    area threshold.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ds: xarray.Dataset</span>
+<span class="sd">        Hydrography raster data, should contain flwdir_name, uparea_name variables.</span>
+<span class="sd">    region: geopandas.GeoDataFrame</span>
+<span class="sd">        Polygon of region of interest.</span>
+<span class="sd">    river_upa: float, optional</span>
+<span class="sd">        Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.</span>
+<span class="sd">    river_len: float, optional</span>
+<span class="sd">        Mimimum river length [m] within the model domain to define river cells, by default 0 m.</span>
+<span class="sd">    return_river: bool, optional</span>
+<span class="sd">        If True, return a vectorized river GeoDataFrame</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gdf_src, gdf_riv: geopandas.GeoDataFrame</span>
+<span class="sd">        Inflow point and river line vector data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dst_crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dst_crs</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span>
+    <span class="n">da_mask</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+    <span class="c1"># initialize flwdir with river cells only (including outside basin)</span>
+    <span class="n">rivmsk</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">uparea_name</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">river_upa</span>
+    <span class="n">flwdir</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">flw</span><span class="o">.</span><span class="n">flwdir_from_da</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="n">flwdir_name</span><span class="p">],</span> <span class="n">mask</span><span class="o">=</span><span class="n">rivmsk</span><span class="p">)</span>
+
+    <span class="c1"># set source points at headwater indices on river</span>
+    <span class="c1"># find river cells outside model domain</span>
+    <span class="n">idxs0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">rivmsk</span><span class="p">,</span> <span class="o">~</span><span class="n">da_mask</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">ravel</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="c1"># snap to first downsteam cell in model domain</span>
+    <span class="n">idxs_source</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">snap</span><span class="p">(</span><span class="n">idxs</span><span class="o">=</span><span class="n">idxs0</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">da_mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">idxs_source</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">idxs_source</span><span class="p">[</span><span class="n">da_mask</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="n">idxs_source</span><span class="p">]])</span>
+
+    <span class="n">gdf_src</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idxs_source</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># keep only most downstream source point on each stream</span>
+        <span class="c1"># check if downstream path from any source points intersects with another point</span>
+        <span class="n">source_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">flwdir</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="n">source_mask</span><span class="p">[</span><span class="n">idxs_source</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">path</span><span class="p">(</span>
+            <span class="n">idxs</span><span class="o">=</span><span class="n">idxs_source</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="n">mask</span><span class="o">=~</span><span class="n">da_mask</span>
+        <span class="p">)</span>  <span class="c1"># returns paths and lengths</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">l</span> <span class="o">&gt;</span> <span class="n">river_len</span> <span class="ow">and</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">source_mask</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">paths</span><span class="p">)]</span>
+        <span class="p">)</span>
+        <span class="n">idxs_source</span> <span class="o">=</span> <span class="n">idxs_source</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span>
+        <span class="c1"># get coordinates</span>
+        <span class="n">source_xy</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">idxs_source</span><span class="p">)</span>
+        <span class="n">gdf_src</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span>
+            <span class="n">geometry</span><span class="o">=</span><span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="o">*</span><span class="n">source_xy</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">dst_crs</span><span class="p">)</span>
+        <span class="n">gdf_src</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">uparea_name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="n">idxs_source</span><span class="p">]</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">idxs_source</span><span class="p">)</span><span class="si">}</span><span class="s2"> river inflow point locations found.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">return_river</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Vectorize river.&quot;</span><span class="p">)</span>
+        <span class="n">feats</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">mask</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">rivmsk</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="o">.</span><span class="n">from_features</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span>
+            <span class="n">dst_crs</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">gdf_src</span><span class="p">,</span> <span class="n">gdf_riv</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">gdf_src</span></div>
+
+
+<div class="viewcode-block" id="river_outflow_points"><a class="viewcode-back" href="../../../generated/hydromt_sfincs.workflows.river_outflow_points.html#hydromt_sfincs.workflows.river_outflow_points">[docs]</a><span class="k">def</span> <span class="nf">river_outflow_points</span><span class="p">(</span>
+    <span class="n">ds</span><span class="p">,</span>
+    <span class="n">region</span><span class="p">,</span>
+    <span class="n">river_upa</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+    <span class="n">return_river</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">dst_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">flwdir_name</span><span class="o">=</span><span class="s2">&quot;flwdir&quot;</span><span class="p">,</span>
+    <span class="n">uparea_name</span><span class="o">=</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span>
+    <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns point locations where rivers leave the region.</span>
+<span class="sd">    Rivers are based on the flow direction data in the dataset and a minumum upstream</span>
+<span class="sd">    area threshold.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ds: xarray.Dataset</span>
+<span class="sd">        Hydrography raster data, should contain flwdir_name, uparea_name variables.</span>
+<span class="sd">    region: geopandas.GeoDataFrame</span>
+<span class="sd">        Polygon of region of interest.</span>
+<span class="sd">    river_upa: float, optional</span>
+<span class="sd">        Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.</span>
+<span class="sd">    return_river: bool, optional</span>
+<span class="sd">        If True, return a vectorized river GeoDataFrame</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gdf_src, gdf_riv: geopandas.GeoDataFrame</span>
+<span class="sd">        Inflow point and river line vector data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dst_crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dst_crs</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span>
+    <span class="n">da_mask</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+    <span class="c1"># initialize flwdir with river cells only (including outside basin)</span>
+    <span class="n">rivmsk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">ds</span><span class="p">[</span><span class="n">uparea_name</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">river_upa</span><span class="p">)</span>
+    <span class="n">flwdir</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">flw</span><span class="o">.</span><span class="n">flwdir_from_da</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="n">flwdir_name</span><span class="p">],</span> <span class="n">mask</span><span class="o">=</span><span class="n">rivmsk</span><span class="p">)</span>
+
+    <span class="c1"># git pits at domain edge on flwdir grid</span>
+    <span class="n">idxs0</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">idxs_pit</span>
+    <span class="n">da_mask_eroded</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_erosion</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)))</span>
+    <span class="n">da_mask_edge</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span><span class="n">da_mask_eroded</span><span class="p">,</span> <span class="n">da_mask</span><span class="p">)</span>
+    <span class="n">idxs_outflw</span> <span class="o">=</span> <span class="n">idxs0</span><span class="p">[</span><span class="n">da_mask_edge</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="n">idxs0</span><span class="p">]]</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">idxs_outflw</span><span class="p">)</span><span class="si">}</span><span class="s2"> river outflow point locations found.&quot;</span><span class="p">)</span>
+
+    <span class="n">gdf_out</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idxs_outflw</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">gdf_out</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span>
+            <span class="n">geometry</span><span class="o">=</span><span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="o">*</span><span class="n">flwdir</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">idxs_outflw</span><span class="p">)),</span> <span class="n">crs</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">dst_crs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">return_river</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Vectorize river for outflow points.&quot;</span><span class="p">)</span>
+        <span class="n">feats</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
+        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="o">.</span><span class="n">from_features</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span>
+            <span class="n">dst_crs</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">gdf_out</span><span class="p">,</span> <span class="n">gdf_riv</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">gdf_out</span></div>
 </pre></div>
 
            </div>

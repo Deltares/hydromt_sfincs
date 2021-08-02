@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -188,14 +188,13 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#sfincs-workflows">SFINCS workflows</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../generated/hydromt_sfincs.workflows.parse_region.html">hydromt_sfincs.workflows.parse_region</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../generated/hydromt_sfincs.workflows.get_basin_geometry.html">hydromt_sfincs.workflows.get_basin_geometry</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../generated/hydromt_sfincs.workflows.mask_topobathy.html">hydromt_sfincs.workflows.mask_topobathy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../generated/hydromt_sfincs.workflows.merge_topobathy.html">hydromt_sfincs.workflows.merge_topobathy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../generated/hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../generated/hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../generated/hydromt_sfincs.workflows.snap_discharge.html">hydromt_sfincs.workflows.snap_discharge</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../generated/hydromt_sfincs.workflows.resample_time.html">hydromt_sfincs.workflows.resample_time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/hydromt_sfincs.workflows.river_inflow_points.html">hydromt_sfincs.workflows.river_inflow_points</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/hydromt_sfincs.workflows.river_outflow_points.html">hydromt_sfincs.workflows.river_outflow_points</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#sfincs-low-level-methods">SFINCS low-level methods</a><ul>
@@ -361,7 +360,7 @@
 <td><p>Define model region and setup topobathy (depfile) model layer.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_merge_topobathy.html#hydromt_sfincs.SfincsModel.setup_merge_topobathy" title="hydromt_sfincs.SfincsModel.setup_merge_topobathy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_merge_topobathy</span></code></a>(topobathy_fn)</p></td>
-<td><p>Updates the model topobathy data (depfile) with a new topobathy source.</p></td>
+<td><p>Updates the existing model topobathy data (depfile) with a new topobathy source.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_mask.html#hydromt_sfincs.SfincsModel.setup_mask" title="hydromt_sfincs.SfincsModel.setup_mask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_mask</span></code></a>([active_mask_fn, …])</p></td>
 <td><p>Creates mask of active model cells.</p></td>
@@ -372,14 +371,14 @@
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.SfincsModel.setup_river_inflow" title="hydromt_sfincs.SfincsModel.setup_river_inflow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_river_inflow</span></code></a>([…])</p></td>
 <td><p>Setup river inflow (source) points where a river enters the model domain.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_river_outflow.html#hydromt_sfincs.SfincsModel.setup_river_outflow" title="hydromt_sfincs.SfincsModel.setup_river_outflow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_river_outflow</span></code></a>([river_upa, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_river_outflow.html#hydromt_sfincs.SfincsModel.setup_river_outflow" title="hydromt_sfincs.SfincsModel.setup_river_outflow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_river_outflow</span></code></a>([…])</p></td>
 <td><p>Setup river outflow boundary (msk=3) where a river flows out of the model domain.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_manning_roughness.html#hydromt_sfincs.SfincsModel.setup_manning_roughness" title="hydromt_sfincs.SfincsModel.setup_manning_roughness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_manning_roughness</span></code></a>([…])</p></td>
-<td><p>Setup model manning rouchness map from gridded land-use/land-cover map and mapping table.</p></td>
+<td><p>Setup model manning rouchness map (manningfile) from gridded land-use/land-cover map and manning roughness mapping table.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration" title="hydromt_sfincs.SfincsModel.setup_cn_infiltration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_cn_infiltration</span></code></a>([cn_fn, …])</p></td>
-<td><p>Setup model potential maximum soil moisture retention map from gridded curve number map.</p></td>
+<td><p>Setup model potential maximum soil moisture retention map (scsfile) from gridded curve number map.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_gauges.html#hydromt_sfincs.SfincsModel.setup_gauges" title="hydromt_sfincs.SfincsModel.setup_gauges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_gauges</span></code></a>(gauges_fn[, overwrite])</p></td>
 <td><p>Setup model observation point locations.</p></td>
@@ -387,10 +386,10 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures" title="hydromt_sfincs.SfincsModel.setup_structures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_structures</span></code></a>(structures_fn, …)</p></td>
 <td><p>Setup thin dam or weir structures.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_h_forcing.html#hydromt_sfincs.SfincsModel.setup_h_forcing" title="hydromt_sfincs.SfincsModel.setup_h_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_h_forcing</span></code></a>([dataset_fn, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_h_forcing.html#hydromt_sfincs.SfincsModel.setup_h_forcing" title="hydromt_sfincs.SfincsModel.setup_h_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_h_forcing</span></code></a>([geodataset_fn, …])</p></td>
 <td><p>Setup waterlevel boundary point locations (bnd) and time series (bzs).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_q_forcing.html#hydromt_sfincs.SfincsModel.setup_q_forcing" title="hydromt_sfincs.SfincsModel.setup_q_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_q_forcing</span></code></a>([dataset_fn, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_q_forcing.html#hydromt_sfincs.SfincsModel.setup_q_forcing" title="hydromt_sfincs.SfincsModel.setup_q_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_q_forcing</span></code></a>([geodataset_fn, …])</p></td>
 <td><p>Setup discharge boundary point locations (src) and time series (dis).</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_q_forcing_from_grid</span></code></a>(…[, …])</p></td>
@@ -571,8 +570,8 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.write_states.html#hydromt_sfincs.SfincsModel.write_states" title="hydromt_sfincs.SfincsModel.write_states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.write_states</span></code></a>([fmt])</p></td>
 <td><p>Write waterlevel state (zsini)  to ascii map file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.set_results.html#hydromt_sfincs.SfincsModel.set_results" title="hydromt_sfincs.SfincsModel.set_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.set_results</span></code></a>(data[, name])</p></td>
-<td><p>Add data to results attribute which is a dictionary of xarray.DataArray.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.set_results.html#hydromt_sfincs.SfincsModel.set_results" title="hydromt_sfincs.SfincsModel.set_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.set_results</span></code></a>(data[, name, …])</p></td>
+<td><p>Add data to results attribute which is a dictionary of xarray.DataArray and/or xarray.Dataset.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.SfincsModel.read_results.html#hydromt_sfincs.SfincsModel.read_results" title="hydromt_sfincs.SfincsModel.read_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.read_results</span></code></a>([chunksize, drop])</p></td>
 <td><p>Read results from sfincs_map.nc and sfincs_his.nc and save to the <cite>results</cite> attribute.</p></td>
@@ -589,12 +588,6 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.workflows.parse_region.html#hydromt_sfincs.workflows.parse_region" title="hydromt_sfincs.workflows.parse_region"><code class="xref py py-obj docutils literal notranslate"><span class="pre">workflows.parse_region</span></code></a>(region[, logger])</p></td>
-<td><p>Checks and returns parsed region arguments.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.workflows.get_basin_geometry.html#hydromt_sfincs.workflows.get_basin_geometry" title="hydromt_sfincs.workflows.get_basin_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">workflows.get_basin_geometry</span></code></a>(ds[, …])</p></td>
-<td><p>Returns a geometry of the (sub)(inter)basin(s).</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.workflows.mask_topobathy.html#hydromt_sfincs.workflows.mask_topobathy" title="hydromt_sfincs.workflows.mask_topobathy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">workflows.mask_topobathy</span></code></a>(da_elv, elv_min[, …])</p></td>
 <td><p>Return mask of valid elevation cells within [elv_min, elv_max] range.</p></td>
 </tr>
@@ -610,8 +603,11 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.workflows.snap_discharge.html#hydromt_sfincs.workflows.snap_discharge" title="hydromt_sfincs.workflows.snap_discharge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">workflows.snap_discharge</span></code></a>(ds, gdf[, wdw, …])</p></td>
 <td><p>Snaps point locations to grid cell with smallest absolute difference in upstream area within <cite>wdw</cite> around the original location. Both <cite>ds</cite> and <cite>gdf</cite> should have a upstream area variable called <a href="#id1"><span class="problematic" id="id2">`</span></a>uparea_name’ with same unit.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.workflows.resample_time.html#hydromt_sfincs.workflows.resample_time" title="hydromt_sfincs.workflows.resample_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">workflows.resample_time</span></code></a>(da, freq[, label, …])</p></td>
-<td><p>Resample data to destination frequency.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.workflows.river_inflow_points.html#hydromt_sfincs.workflows.river_inflow_points" title="hydromt_sfincs.workflows.river_inflow_points"><code class="xref py py-obj docutils literal notranslate"><span class="pre">workflows.river_inflow_points</span></code></a>(ds, region[, …])</p></td>
+<td><p>Returns the most downstream point locations where a river enters the region.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/hydromt_sfincs.workflows.river_outflow_points.html#hydromt_sfincs.workflows.river_outflow_points" title="hydromt_sfincs.workflows.river_outflow_points"><code class="xref py py-obj docutils literal notranslate"><span class="pre">workflows.river_outflow_points</span></code></a>(ds, region[, …])</p></td>
+<td><p>Returns point locations where rivers leave the region.</p></td>
 </tr>
 </tbody>
 </table>

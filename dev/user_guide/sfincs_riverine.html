@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -220,6 +220,7 @@ aditional arguments to the <code class="xref py py-class docutils literal notran
 <div class="highlight-Ini notranslate"><div class="highlight"><pre><span></span><span class="k">[global]</span>
 <span class="na">write_gis</span> <span class="o">=</span> <span class="s">True                # write addtional geotif and geojson files to gis subfolder</span>
 <span class="na">config_fn</span> <span class="o">=</span> <span class="s">sfincs.inp          # name of sfincs config (inp) file</span>
+<span class="na">artifact_data</span> <span class="o">=</span> <span class="s">True            # load artifact data (snapshot of Deltares data) </span>
 
 <span class="k">[setup_config]</span>
 <span class="na">tref</span> <span class="o">=</span> <span class="s">20210101 000000</span>
@@ -232,6 +233,8 @@ aditional arguments to the <code class="xref py py-class docutils literal notran
 <span class="k">[setup_basemaps]</span>
 <span class="na">basemaps_fn</span> <span class="o">=</span> <span class="s">merit_hydro       # hydrography basemaps [&#39;elevtn&#39;, &#39;flwdir&#39;, &#39;uparea&#39;, &#39;basins&#39;]</span>
 <span class="na">crs</span> <span class="o">=</span> <span class="s">utm                       # model CRS (must be UTM zone)</span>
+
+<span class="na">[setup_mask]                    # sets the active cells based on valid dep cells without arguments. required before running setup_river_in/outflow</span>
 
 <span class="k">[setup_cn_infiltration]</span>
 <span class="na">cn_fn</span> <span class="o">=</span> <span class="s">gcn250                  # curve number source</span>
@@ -247,7 +250,7 @@ aditional arguments to the <code class="xref py py-class docutils literal notran
 <span class="na">outflow_width</span> <span class="o">=</span> <span class="s">2500             # The width [m] of the outflow boundary</span>
 
 <span class="k">[setup_gauges]</span>
-<span class="na">gauges_fn</span> <span class="o">=</span> <span class="s">riverine_gauges.csv   # gauges point locations</span>
+<span class="na">gauges_fn</span> <span class="o">=</span> <span class="s">data/riverine_gauges.csv   # gauges point locations</span>
 <span class="na">crs</span> <span class="o">=</span> <span class="s">4326                      # epsg-code for gauges (only used if not in gauges_fn metadata, e.g. when csv file)</span>
 
 <span class="k">[setup_river_inflow]</span>
@@ -255,8 +258,8 @@ aditional arguments to the <code class="xref py py-class docutils literal notran
 <span class="na">river_upa</span> <span class="o">=</span> <span class="s">25                  # Mimimum upstream area threshold (km2) of river cells</span>
 
 <span class="k">[setup_q_forcing]</span>
-<span class="na">dataset_fn</span> <span class="o">=</span> <span class="s">None                #  discharge point timeseries dataset</span>
-<span class="na">timeseries_fn</span> <span class="o">=</span> <span class="s">discharge_input_sfincs.csv   # timeseries data at discharge gauges (e.g.: from setup_river_inflow)</span>
+<span class="na">geodataset_fn</span> <span class="o">=</span> <span class="s">None                #  discharge point timeseries dataset</span>
+<span class="na">timeseries_fn</span> <span class="o">=</span> <span class="s">data/discharge_input_sfincs.csv   # timeseries data at discharge gauges (e.g.: from setup_river_inflow)</span>
 </pre></div>
 </div>
 </div>

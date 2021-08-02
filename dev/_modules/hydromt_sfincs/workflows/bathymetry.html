@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -186,7 +186,8 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;merge_topobathy&quot;</span><span class="p">,</span>
     <span class="s2">&quot;mask_topobathy&quot;</span><span class="p">,</span>
-    <span class="c1"># &quot;get_rivbank_dz&quot;</span>
+    <span class="c1"># &quot;get_rivbank_dz&quot;,</span>
+    <span class="c1"># &quot;get_rivwth&quot;,</span>
 <span class="p">]</span>
 
 
@@ -212,8 +213,8 @@
     <span class="n">da1</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">da2</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">da_offset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">da_mask</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">merge_buffer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">merge_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;first&quot;</span><span class="p">,</span>
     <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;bilinear&quot;</span><span class="p">,</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
@@ -234,8 +235,13 @@
 <span class="sd">        Datasets with topobathy data to be merged.</span>
 <span class="sd">    da_offset: xr.DataArray, float, optional</span>
 <span class="sd">        Dataset with spatially varying offset or float with uniform offset</span>
-<span class="sd">    da_mask: xr.DataArray, optional</span>
-<span class="sd">        Boolean mask of same shape as da1, with True values where to merge da2 values.</span>
+<span class="sd">    merge_method: str {&#39;first&#39;,&#39;last&#39;,&#39;min&#39;,&#39;max&#39;}</span>
+<span class="sd">        merge method, by default &#39;first&#39;:</span>
+
+<span class="sd">        * first: use valid new where existing invalid</span>
+<span class="sd">        * last: use valid new</span>
+<span class="sd">        * min: pixel-wise min of existing and new</span>
+<span class="sd">        * max: pixel-wise max of existing and new</span>
 <span class="sd">    merge_buffer: int</span>
 <span class="sd">        Buffer (number of cells) within the da_mask==True region where topobathy</span>
 <span class="sd">        values are based on linear interpolation for a smooth transition, by default 0.</span>
@@ -253,11 +259,7 @@
     <span class="n">nodata</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
     <span class="k">if</span> <span class="n">nodata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">nodata</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;da1 nodata value should be a finite value.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">da_mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da1</span> <span class="o">!=</span> <span class="n">nodata</span>
-    <span class="k">elif</span> <span class="ow">not</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">identical_grid</span><span class="p">(</span><span class="n">da_mask</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;da_mask and da1 grids don&#39;t match&quot;</span><span class="p">)</span>
-    <span class="c1">## reproject da2</span>
+    <span class="c1">## reproject da2 and reset nodata value to match da1 nodata</span>
     <span class="n">da2</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">da2</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">da1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
         <span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
@@ -271,31 +273,36 @@
                 <span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
                 <span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="p">)</span>
-        <span class="n">da2</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da2</span> <span class="o">!=</span> <span class="n">nodata</span><span class="p">,</span> <span class="n">da2</span> <span class="o">+</span> <span class="n">da_offset</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>
-    <span class="c1"># merge based on da_mask or if not provided da1 nodata values</span>
-    <span class="n">da_out</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">da2</span><span class="p">)</span>
+        <span class="n">da2</span> <span class="o">=</span> <span class="n">da2</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da2</span> <span class="o">==</span> <span class="n">nodata</span><span class="p">,</span> <span class="n">da2</span> <span class="o">+</span> <span class="n">da_offset</span><span class="p">)</span>
+    <span class="c1"># merge based merge_method</span>
+    <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;first&quot;</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">da1</span> <span class="o">!=</span> <span class="n">nodata</span>
+    <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;last&quot;</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">da2</span> <span class="o">==</span> <span class="n">nodata</span>
+    <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">da1</span> <span class="o">&lt;</span> <span class="n">da2</span>
+    <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">da1</span> <span class="o">&gt;</span> <span class="n">da2</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown merge_method: </span><span class="si">{</span><span class="n">merge_method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">da_out</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">da2</span><span class="p">)</span>
+    <span class="n">da_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">nodata</span><span class="p">)</span>
     <span class="c1"># identify holes in merged elevation</span>
     <span class="n">struct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">da_out</span> <span class="o">!=</span> <span class="n">nodata</span><span class="p">):</span>
-        <span class="n">mask_holes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span>
-            <span class="n">da_out</span> <span class="o">!=</span> <span class="n">nodata</span><span class="p">,</span>
-            <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_fill_holes</span><span class="p">(</span><span class="n">da_out</span> <span class="o">!=</span> <span class="n">nodata</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">struct</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="n">da_out</span> <span class="o">=</span> <span class="n">da_out</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">mask_holes</span><span class="p">)</span>
-    <span class="c1"># identify buffer cells</span>
+    <span class="n">na_mask</span> <span class="o">=</span> <span class="n">da_out</span> <span class="o">!=</span> <span class="n">nodata</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="o">~</span><span class="n">na_mask</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+        <span class="n">na_mask</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_fill_holes</span><span class="p">(</span><span class="n">na_mask</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">struct</span><span class="p">)</span>
+    <span class="c1"># identify buffer cells and set to nodata</span>
     <span class="k">if</span> <span class="n">merge_buffer</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">mask_buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
-            <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_dilation</span><span class="p">(</span><span class="o">~</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">struct</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="n">merge_buffer</span><span class="p">),</span>
-            <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_erosion</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">struct</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="n">merge_buffer</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="n">da_out</span> <span class="o">=</span> <span class="n">da_out</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">mask_buffer</span><span class="p">)</span>
-    <span class="c1"># interpolate buffer and holes</span>
-    <span class="n">nempty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_out</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+        <span class="n">mask_dilated</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_dilation</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">struct</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="n">merge_buffer</span><span class="p">)</span>
+        <span class="n">mask_buf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">mask_dilated</span><span class="p">)</span>
+        <span class="n">da_out</span> <span class="o">=</span> <span class="n">da_out</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">mask_buf</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>
+    <span class="c1"># interpolate buffer and holes ( nodata values )</span>
+    <span class="n">nempty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">da_out</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">na_mask</span><span class="p">]</span> <span class="o">==</span> <span class="n">nodata</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">nempty</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Interpolate topobathy at </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">nempty</span><span class="p">)</span><span class="si">}</span><span class="s2"> cells&quot;</span><span class="p">)</span>
-        <span class="n">da_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
         <span class="n">da_out</span> <span class="o">=</span> <span class="n">da_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">interpolate_na</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
-    <span class="n">da_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">nodata</span><span class="p">)</span>
+        <span class="n">da_out</span> <span class="o">=</span> <span class="n">da_out</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">na_mask</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>  <span class="c1"># reset extrapolated area</span>
     <span class="k">return</span> <span class="n">da_out</span></div>
 
 
@@ -316,23 +323,58 @@
 <span class="c1">#     # rasterize streams</span>
 <span class="c1">#     gdf_stream[&quot;segid&quot;] = np.arange(1, gdf_stream.index.size + 1, dtype=np.int32)</span>
 <span class="c1">#     segid = da_hand.raster.rasterize(gdf_stream, &quot;segid&quot;).values.astype(np.int32)</span>
+<span class="c1">#     # NOTE: the assumption is that da_rivmask is at higher resolution compared to da_hand!</span>
+<span class="c1">#     da_rivmask_max = da_rivmask.raster.reproject_like(da_hand, method=&quot;max&quot;)</span>
+<span class="c1">#     mask = ndimage.binary_fill_holes(da_rivmask_max)  # remove islands</span>
+<span class="c1">#     # find nearest stream segment for all river bank cells</span>
+<span class="c1">#     segid_spread = spread2d(segid, mask)[0]</span>
 <span class="c1">#     # get edge of riv mask -&gt; riv banks</span>
-<span class="c1">#     mask = ndimage.binary_fill_holes(da_rivmask.values)  # remove islands</span>
 <span class="c1">#     mask_ = ndimage.binary_erosion(mask, np.ones((3, 3)))</span>
-<span class="c1">#     banks = np.logical_and(da_hand.values &gt; 0, np.logical_xor(mask, mask_))</span>
-<span class="c1">#     # find nearest stream for each riv bank cell</span>
-<span class="c1">#     bank_segid = np.where(banks, spread2d(segid, mask)[0], np.int32(0))</span>
+<span class="c1">#     bnk_mask = np.logical_and(da_hand &gt; 0, np.logical_xor(mask, mask_))</span>
+<span class="c1">#     riv_mask = np.logical_and(</span>
+<span class="c1">#         np.logical_and(da_hand &gt;= 0, da_rivmask_max), np.logical_xor(bnk_mask, mask)</span>
+<span class="c1">#     )</span>
 <span class="c1">#     # get median HAND for each stream -&gt; riv bank dz</span>
-<span class="c1">#     fmed = lambda x: 0 if x.size &lt; nmin else np.median(x)</span>
-<span class="c1">#     dz_bank = ndimage.labeled_comprehension(</span>
+<span class="c1">#     seg_dzbank = ndimage.labeled_comprehension(</span>
 <span class="c1">#         da_hand.values,</span>
-<span class="c1">#         labels=bank_segid,</span>
+<span class="c1">#         labels=np.where(bnk_mask, segid_spread, np.int32(0)),</span>
 <span class="c1">#         index=gdf_stream[&quot;segid&quot;].values,</span>
-<span class="c1">#         func=fmed,</span>
+<span class="c1">#         func=lambda x: 0 if x.size &lt; nmin else np.median(x),</span>
 <span class="c1">#         out_dtype=da_hand.dtype,</span>
 <span class="c1">#         default=0,</span>
 <span class="c1">#     )</span>
-<span class="c1">#     return np.maximum(0, dz_bank)</span>
+<span class="c1">#     # get rivmask</span>
+<span class="c1">#     return seg_dzbank, riv_mask, bnk_mask</span>
+
+
+<span class="c1"># def get_rivwth(</span>
+<span class="c1">#     gdf_stream: gpd.GeoDataFrame,</span>
+<span class="c1">#     da_rivmask: xr.DataArray,</span>
+<span class="c1">#     rivlen_name=None,</span>
+<span class="c1">#     nmin=5,</span>
+<span class="c1"># ) -&gt; np.ndarray:</span>
+<span class="c1">#     &quot;&quot;&quot;Return mean river width along segments in gdf_stream.&quot;&quot;&quot;</span>
+<span class="c1">#     assert da_rivmask.raster.crs.is_projected</span>
+<span class="c1">#     # get/check river length</span>
+<span class="c1">#     if rivlen_name is None:</span>
+<span class="c1">#         rivlen_name = &quot;rivlen&quot;</span>
+<span class="c1">#         gdf_stream[rivlen_name] = gdf_stream.to_crs(32736).length</span>
+<span class="c1">#     elif rivlen_name not in gdf_stream.columns:</span>
+<span class="c1">#         raise ValueError(f&quot;{rivlen_name} column not found in gdf_stream&quot;)</span>
+<span class="c1">#     # rasterize streams</span>
+<span class="c1">#     gdf_stream[&quot;segid&quot;] = np.arange(1, gdf_stream.index.size + 1, dtype=np.int32)</span>
+<span class="c1">#     segid = da_rivmask.raster.rasterize(gdf_stream, &quot;segid&quot;).values.astype(np.int32)</span>
+<span class="c1">#     # remove islands</span>
+<span class="c1">#     mask = ndimage.binary_fill_holes(da_rivmask)</span>
+<span class="c1">#     # find nearest stream segment for all river cells</span>
+<span class="c1">#     segid_spread = spread2d(segid, mask)[0]</span>
+<span class="c1">#     # get average width</span>
+<span class="c1">#     cellarea = abs(np.multiply(*da_rivmask.raster.res))</span>
+<span class="c1">#     seg_count = ndimage.sum(da_rivmask, segid_spread, gdf_stream[&quot;segid&quot;].values)</span>
+<span class="c1">#     seg_width = np.where(</span>
+<span class="c1">#         seg_count &gt; nmin, seg_count * cellarea / gdf_stream[rivlen_name], -9999</span>
+<span class="c1">#     )</span>
+<span class="c1">#     return seg_width</span>
 </pre></div>
 
            </div>

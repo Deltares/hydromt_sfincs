@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.1.1.dev
+                0.2.1.dev
               </div>
             
           
@@ -108,14 +108,13 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../api/api_index.html">API reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../api/api_index.html#sfincs-model-class">SFINCS model class</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../api/api_index.html#sfincs-workflows">SFINCS workflows</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.parse_region.html">hydromt_sfincs.workflows.parse_region</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.get_basin_geometry.html">hydromt_sfincs.workflows.get_basin_geometry</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.mask_topobathy.html">hydromt_sfincs.workflows.mask_topobathy</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">hydromt_sfincs.workflows.merge_topobathy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.snap_discharge.html">hydromt_sfincs.workflows.snap_discharge</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.resample_time.html">hydromt_sfincs.workflows.resample_time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.river_inflow_points.html">hydromt_sfincs.workflows.river_inflow_points</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.river_outflow_points.html">hydromt_sfincs.workflows.river_outflow_points</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../api/api_index.html#sfincs-low-level-methods">SFINCS low-level methods</a></li>
@@ -220,7 +219,7 @@
 <h1>hydromt_sfincs.workflows.merge_topobathy<a class="headerlink" href="#hydromt-sfincs-workflows-merge-topobathy" title="Permalink to this headline">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="hydromt_sfincs.workflows.merge_topobathy">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">merge_topobathy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">da1:</span> <span class="pre">xarray.core.dataarray.DataArray</span></em>, <em class="sig-param"><span class="pre">da2:</span> <span class="pre">xarray.core.dataarray.DataArray</span></em>, <em class="sig-param"><span class="pre">da_offset:</span> <span class="pre">Optional[Union[xarray.core.dataarray.DataArray</span></em>, <em class="sig-param"><span class="pre">float]]</span> <span class="pre">=</span> <span class="pre">None</span></em>, <em class="sig-param"><span class="pre">da_mask:</span> <span class="pre">Optional[xarray.core.dataarray.DataArray]</span> <span class="pre">=</span> <span class="pre">None</span></em>, <em class="sig-param"><span class="pre">merge_buffer:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></em>, <em class="sig-param"><span class="pre">reproj_method='bilinear'</span></em>, <em class="sig-param"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.bathymetry</span> <span class="pre">(WARNING)&gt;</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">xarray.core.dataarray.DataArray</span></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/bathymetry.html#merge_topobathy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.merge_topobathy" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">merge_topobathy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">da1:</span> <span class="pre">xarray.core.dataarray.DataArray</span></em>, <em class="sig-param"><span class="pre">da2:</span> <span class="pre">xarray.core.dataarray.DataArray</span></em>, <em class="sig-param"><span class="pre">da_offset:</span> <span class="pre">Optional[Union[xarray.core.dataarray.DataArray</span></em>, <em class="sig-param"><span class="pre">float]]</span> <span class="pre">=</span> <span class="pre">None</span></em>, <em class="sig-param"><span class="pre">merge_buffer:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></em>, <em class="sig-param"><span class="pre">merge_method:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'first'</span></em>, <em class="sig-param"><span class="pre">reproj_method='bilinear'</span></em>, <em class="sig-param"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.bathymetry</span> <span class="pre">(WARNING)&gt;</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">xarray.core.dataarray.DataArray</span></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/bathymetry.html#merge_topobathy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.merge_topobathy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return merged topobathy data from two datasets.</p>
 <p>Values from the second dataset are used where <cite>da_mask</cite> equals True or,
 if not provided, where the first dataset has missing values.</p>
@@ -234,7 +233,14 @@ second dataset to convert the vertical datum before merging.</p>
 <li><p><strong>da1</strong> (<em>xr.DataArray</em>) – Datasets with topobathy data to be merged.</p></li>
 <li><p><strong>da2</strong> (<em>xr.DataArray</em>) – Datasets with topobathy data to be merged.</p></li>
 <li><p><strong>da_offset</strong> (<em>xr.DataArray</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>, </em><em>optional</em>) – Dataset with spatially varying offset or float with uniform offset</p></li>
-<li><p><strong>da_mask</strong> (<em>xr.DataArray</em><em>, </em><em>optional</em>) – Boolean mask of same shape as da1, with True values where to merge da2 values.</p></li>
+<li><p><strong>merge_method</strong> (<em>str {'first'</em><em>,</em><em>'last'</em><em>,</em><em>'min'</em><em>,</em><em>'max'}</em>) – <p>merge method, by default ‘first’:</p>
+<ul>
+<li><p>first: use valid new where existing invalid</p></li>
+<li><p>last: use valid new</p></li>
+<li><p>min: pixel-wise min of existing and new</p></li>
+<li><p>max: pixel-wise max of existing and new</p></li>
+</ul>
+</p></li>
 <li><p><strong>merge_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Buffer (number of cells) within the da_mask==True region where topobathy
 values are based on linear interpolation for a smooth transition, by default 0.</p></li>
 <li><p><strong>reproj_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Method used to reproject the offset and second dataset to the grid of the
