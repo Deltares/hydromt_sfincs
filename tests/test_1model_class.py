@@ -17,7 +17,6 @@ _cases = {
         "region": {"bbox": [12.05, 45.30, 12.85, 45.65]},
         "res": 150,
         "example": "sfincs_coastal",
-        "data": "data_catalog.yml",
     },
     "riverine": {
         "ini": "sfincs_riverine.ini",
@@ -115,8 +114,6 @@ def test_model_build(tmpdir, case):
     region = _cases[case]["region"]
     res = _cases[case]["res"]
     opt = parse_config(ini_fn)
-    if "data" in _cases[case]:
-        opt["global"].update(data_libs=join(EXAMPLEDIR, _cases[case]["data"]))
     mod1 = SfincsModel(root=root, mode="w", **opt.pop("global", {}))
     mod1.build(region=region, res=res, opt=opt)
     # Check if model is api compliant
