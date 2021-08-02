@@ -8,12 +8,17 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 [Unreleased]
 ------------
 
+v0.2.0 (2 August 2021)
+---------------------
+
 Bugfix
 ^^^^^^
 - scsfile variable changed to maximum soil moisture retention [inch]; was curve number [-]
+- fix setting delimited text based geodatasets for h and q forcing.
 
 Changed
 ^^^^^^^
+- Bumped minimal hydromt vesion to 0.4.2
 - splitted ``setup_basemaps`` into multiple smaller methods: ``setup_merge_topobathy``, ``setup_mask`` and ``setup_bounds``
 - separated many low-level methods into utils.py and plots.py
 - save bzs/bzd & dis/src only as GeoDataArray at forcing and do not copy the locations at staticgeoms.
@@ -23,7 +28,7 @@ Changed
 
 Added
 ^^^^^
-support for:
+support for SFINCS files:
 
 - structures: sfincs.thd & sfincs.weir
 - results: sfincs_map.nc & sfincs_his.nc
@@ -40,6 +45,12 @@ new methods:
 - ``read_results`` 
 - ``update_spatial_attrs`` and ``get_spatial_attrs`` (previously part of read_staticmaps)
 
+new workflows: 
+
+- ``merge_topobathy``
+- ``mask_topobathy``
+- ``snap_discharge``
+- ``river_inflow_points`` & ``river_outflow_points`` 
 
 Documentation
 ^^^^^^^^^^^^^
@@ -50,7 +61,7 @@ Deprecated
 ^^^^^^^^^^^
 - ``setup_p_gridded``
 
-v0.0.1 (18 May 2021)
+v0.1.0 (18 May 2021)
 --------------------
 Noticeable changes are a new ``setup_river_inflow`` and ``setup_river_outflow`` methods
 

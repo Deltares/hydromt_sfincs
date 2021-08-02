@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "merge_topobathy",
     "mask_topobathy",
-    # "get_rivbank_dz"
+    # "get_rivbank_dz",
+    # "get_rivwth",
 ]
 
 
@@ -38,8 +39,8 @@ def merge_topobathy(
     da1: xr.DataArray,
     da2: xr.DataArray,
     da_offset: Union[xr.DataArray, float] = None,
-    da_mask: xr.DataArray = None,
     merge_buffer: int = 0,
+    merge_method: str = "first",
     reproj_method="bilinear",
     logger=logger,
 ) -> xr.DataArray:
@@ -60,8 +61,13 @@ def merge_topobathy(
         Datasets with topobathy data to be merged.
     da_offset: xr.DataArray, float, optional
         Dataset with spatially varying offset or float with uniform offset
-    da_mask: xr.DataArray, optional
-        Boolean mask of same shape as da1, with True values where to merge da2 values.
+    merge_method: str {'first','last','min','max'}
+        merge method, by default 'first':
+
+        * first: use valid new where existing invalid
+        * last: use valid new
+        * min: pixel-wise min of existing and new
+        * max: pixel-wise max of existing and new
     merge_buffer: int
         Buffer (number of cells) within the da_mask==True region where topobathy
         values are based on linear interpolation for a smooth transition, by default 0.
@@ -79,11 +85,7 @@ def merge_topobathy(
     nodata = da1.raster.nodata
     if nodata is None or np.isnan(nodata):
         raise ValueError("da1 nodata value should be a finite value.")
-    if da_mask is None:
-        da_mask = da1 != nodata
-    elif not da1.raster.identical_grid(da_mask):
-        raise ValueError("da_mask and da1 grids don't match")
-    ## reproject da2
+    ## reproject da2 and reset nodata value to match da1 nodata
     da2 = (
         da2.raster.reproject_like(da1, method=reproj_method)
         .raster.mask_nodata()
@@ -97,31 +99,36 @@ def merge_topobathy(
                 .raster.mask_nodata()
                 .fillna(0)
             )
-        da2 = xr.where(da2 != nodata, da2 + da_offset, nodata)
-    # merge based on da_mask or if not provided da1 nodata values
-    da_out = da1.where(~da_mask, da2)
+        da2 = da2.where(da2 == nodata, da2 + da_offset)
+    # merge based merge_method
+    if merge_method == "first":
+        mask = da1 != nodata
+    elif merge_method == "last":
+        mask = da2 == nodata
+    elif merge_method == "min":
+        mask = da1 < da2
+    elif merge_method == "max":
+        mask = da1 > da2
+    else:
+        raise ValueError(f"Unknown merge_method: {merge_method}")
+    da_out = da1.where(mask, da2)
+    da_out.raster.set_nodata(nodata)
     # identify holes in merged elevation
     struct = np.ones((3, 3))
-    if np.any(da_out != nodata):
-        mask_holes = np.logical_xor(
-            da_out != nodata,
-            ndimage.binary_fill_holes(da_out != nodata, structure=struct),
-        )
-        da_out = da_out.where(~mask_holes)
-    # identify buffer cells
+    na_mask = da_out != nodata
+    if np.any(~na_mask.values):
+        na_mask = ndimage.binary_fill_holes(na_mask, structure=struct)
+    # identify buffer cells and set to nodata
     if merge_buffer > 0:
-        mask_buffer = np.logical_and(
-            ndimage.binary_dilation(~da_mask, struct, iterations=merge_buffer),
-            ndimage.binary_erosion(da_mask, struct, iterations=merge_buffer),
-        )
-        da_out = da_out.where(~mask_buffer)
-    # interpolate buffer and holes
-    nempty = np.sum(np.isnan(da_out.values))
+        mask_dilated = ndimage.binary_dilation(mask, struct, iterations=merge_buffer)
+        mask_buf = np.logical_xor(mask, mask_dilated)
+        da_out = da_out.where(~mask_buf, nodata)
+    # interpolate buffer and holes ( nodata values )
+    nempty = np.sum(da_out.values[na_mask] == nodata)
     if nempty > 0:
         logger.debug(f"Interpolate topobathy at {int(nempty)} cells")
-        da_out.raster.set_nodata(np.nan)
         da_out = da_out.raster.interpolate_na(method="linear")
-    da_out.raster.set_nodata(nodata)
+        da_out = da_out.where(na_mask, nodata)  # reset extrapolated area
     return da_out
 
 
@@ -142,20 +149,55 @@ def merge_topobathy(
 #     # rasterize streams
 #     gdf_stream["segid"] = np.arange(1, gdf_stream.index.size + 1, dtype=np.int32)
 #     segid = da_hand.raster.rasterize(gdf_stream, "segid").values.astype(np.int32)
+#     # NOTE: the assumption is that da_rivmask is at higher resolution compared to da_hand!
+#     da_rivmask_max = da_rivmask.raster.reproject_like(da_hand, method="max")
+#     mask = ndimage.binary_fill_holes(da_rivmask_max)  # remove islands
+#     # find nearest stream segment for all river bank cells
+#     segid_spread = spread2d(segid, mask)[0]
 #     # get edge of riv mask -> riv banks
-#     mask = ndimage.binary_fill_holes(da_rivmask.values)  # remove islands
 #     mask_ = ndimage.binary_erosion(mask, np.ones((3, 3)))
-#     banks = np.logical_and(da_hand.values > 0, np.logical_xor(mask, mask_))
-#     # find nearest stream for each riv bank cell
-#     bank_segid = np.where(banks, spread2d(segid, mask)[0], np.int32(0))
+#     bnk_mask = np.logical_and(da_hand > 0, np.logical_xor(mask, mask_))
+#     riv_mask = np.logical_and(
+#         np.logical_and(da_hand >= 0, da_rivmask_max), np.logical_xor(bnk_mask, mask)
+#     )
 #     # get median HAND for each stream -> riv bank dz
-#     fmed = lambda x: 0 if x.size < nmin else np.median(x)
-#     dz_bank = ndimage.labeled_comprehension(
+#     seg_dzbank = ndimage.labeled_comprehension(
 #         da_hand.values,
-#         labels=bank_segid,
+#         labels=np.where(bnk_mask, segid_spread, np.int32(0)),
 #         index=gdf_stream["segid"].values,
-#         func=fmed,
+#         func=lambda x: 0 if x.size < nmin else np.median(x),
 #         out_dtype=da_hand.dtype,
 #         default=0,
 #     )
-#     return np.maximum(0, dz_bank)
+#     # get rivmask
+#     return seg_dzbank, riv_mask, bnk_mask
+
+
+# def get_rivwth(
+#     gdf_stream: gpd.GeoDataFrame,
+#     da_rivmask: xr.DataArray,
+#     rivlen_name=None,
+#     nmin=5,
+# ) -> np.ndarray:
+#     """Return mean river width along segments in gdf_stream."""
+#     assert da_rivmask.raster.crs.is_projected
+#     # get/check river length
+#     if rivlen_name is None:
+#         rivlen_name = "rivlen"
+#         gdf_stream[rivlen_name] = gdf_stream.to_crs(32736).length
+#     elif rivlen_name not in gdf_stream.columns:
+#         raise ValueError(f"{rivlen_name} column not found in gdf_stream")
+#     # rasterize streams
+#     gdf_stream["segid"] = np.arange(1, gdf_stream.index.size + 1, dtype=np.int32)
+#     segid = da_rivmask.raster.rasterize(gdf_stream, "segid").values.astype(np.int32)
+#     # remove islands
+#     mask = ndimage.binary_fill_holes(da_rivmask)
+#     # find nearest stream segment for all river cells
+#     segid_spread = spread2d(segid, mask)[0]
+#     # get average width
+#     cellarea = abs(np.multiply(*da_rivmask.raster.res))
+#     seg_count = ndimage.sum(da_rivmask, segid_spread, gdf_stream["segid"].values)
+#     seg_width = np.where(
+#         seg_count > nmin, seg_count * cellarea / gdf_stream[rivlen_name], -9999
+#     )
+#     return seg_width

@@ -2,8 +2,12 @@ import geopandas as gpd
 import numpy as np
 import xarray as xr
 import logging
+import hydromt
+from scipy import ndimage
 
 logger = logging.getLogger(__name__)
+
+__all__ = ["snap_discharge", "river_inflow_points", "river_outflow_points"]
 
 
 def snap_discharge(
@@ -64,3 +68,145 @@ def snap_discharge(
         da_q = ds.raster.sample(gdf).reset_coords()[discharge_name]
 
     return da_q
+
+
+def river_inflow_points(
+    ds,
+    region,
+    river_upa=25,
+    river_len=0,
+    dst_crs=None,
+    return_river=True,
+    flwdir_name="flwdir",
+    uparea_name="uparea",
+    logger=logger,
+):
+    """
+    Returns the most downstream point locations where a river enters the region.
+    Rivers are based on the flow direction data in the dataset and a minumum upstream
+    area threshold.
+
+    Parameters
+    ----------
+    ds: xarray.Dataset
+        Hydrography raster data, should contain flwdir_name, uparea_name variables.
+    region: geopandas.GeoDataFrame
+        Polygon of region of interest.
+    river_upa: float, optional
+        Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.
+    river_len: float, optional
+        Mimimum river length [m] within the model domain to define river cells, by default 0 m.
+    return_river: bool, optional
+        If True, return a vectorized river GeoDataFrame
+
+    Returns
+    -------
+    gdf_src, gdf_riv: geopandas.GeoDataFrame
+        Inflow point and river line vector data.
+    """
+    if dst_crs is None:
+        dst_crs = ds.raster.crs
+    da_mask = ds.raster.geometry_mask(region)
+    # initialize flwdir with river cells only (including outside basin)
+    rivmsk = ds[uparea_name] >= river_upa
+    flwdir = hydromt.flw.flwdir_from_da(ds[flwdir_name], mask=rivmsk)
+
+    # set source points at headwater indices on river
+    # find river cells outside model domain
+    idxs0 = np.where(np.logical_and(rivmsk, ~da_mask).values.ravel())[0]
+    # snap to first downsteam cell in model domain
+    idxs_source = flwdir.snap(idxs=idxs0, mask=da_mask)[0]
+    idxs_source = np.unique(idxs_source[da_mask.values.flat[idxs_source]])
+
+    gdf_src = gpd.GeoDataFrame()
+    if len(idxs_source) > 0:
+        # keep only most downstream source point on each stream
+        # check if downstream path from any source points intersects with another point
+        source_mask = np.full(flwdir.size, False, bool)
+        source_mask[idxs_source] = True
+        paths = flwdir.path(
+            idxs=idxs_source, unit="m", mask=~da_mask
+        )  # returns paths and lengths
+        valid = np.array(
+            [l > river_len and ~np.any(source_mask[p[1:]]) for p, l in zip(*paths)]
+        )
+        idxs_source = idxs_source[valid]
+        # get coordinates
+        source_xy = flwdir.xy(idxs_source)
+        gdf_src = gpd.GeoDataFrame(
+            geometry=gpd.points_from_xy(*source_xy), crs=ds.raster.crs
+        ).to_crs(dst_crs)
+        gdf_src["uparea"] = ds[uparea_name].values.flat[idxs_source]
+    logger.debug(f"{len(idxs_source)} river inflow point locations found.")
+
+    if return_river:
+        logger.debug(f"Vectorize river.")
+        feats = flwdir.vectorize(mask=np.logical_and(da_mask, rivmsk).values)
+        gdf_riv = gpd.GeoDataFrame.from_features(feats, crs=ds.raster.crs).to_crs(
+            dst_crs
+        )
+        return gdf_src, gdf_riv
+    else:
+        return gdf_src
+
+
+def river_outflow_points(
+    ds,
+    region,
+    river_upa=25,
+    return_river=True,
+    dst_crs=None,
+    flwdir_name="flwdir",
+    uparea_name="uparea",
+    logger=logger,
+):
+    """
+    Returns point locations where rivers leave the region.
+    Rivers are based on the flow direction data in the dataset and a minumum upstream
+    area threshold.
+
+    Parameters
+    ----------
+    ds: xarray.Dataset
+        Hydrography raster data, should contain flwdir_name, uparea_name variables.
+    region: geopandas.GeoDataFrame
+        Polygon of region of interest.
+    river_upa: float, optional
+        Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.
+    return_river: bool, optional
+        If True, return a vectorized river GeoDataFrame
+
+    Returns
+    -------
+    gdf_src, gdf_riv: geopandas.GeoDataFrame
+        Inflow point and river line vector data.
+    """
+    if dst_crs is None:
+        dst_crs = ds.raster.crs
+    da_mask = ds.raster.geometry_mask(region)
+    # initialize flwdir with river cells only (including outside basin)
+    rivmsk = np.logical_and(da_mask, ds[uparea_name] >= river_upa)
+    flwdir = hydromt.flw.flwdir_from_da(ds[flwdir_name], mask=rivmsk)
+
+    # git pits at domain edge on flwdir grid
+    idxs0 = flwdir.idxs_pit
+    da_mask_eroded = ndimage.binary_erosion(da_mask, structure=np.ones((3, 3)))
+    da_mask_edge = np.logical_xor(da_mask_eroded, da_mask)
+    idxs_outflw = idxs0[da_mask_edge.values.flat[idxs0]]
+    logger.debug(f"{len(idxs_outflw)} river outflow point locations found.")
+
+    gdf_out = gpd.GeoDataFrame()
+    if len(idxs_outflw) > 0:
+        gdf_out = gpd.GeoDataFrame(
+            geometry=gpd.points_from_xy(*flwdir.xy(idxs_outflw)), crs=ds.raster.crs
+        ).to_crs(dst_crs)
+
+    if return_river:
+        logger.debug(f"Vectorize river for outflow points.")
+        feats = flwdir.vectorize()
+        gdf_riv = gpd.GeoDataFrame.from_features(feats, crs=ds.raster.crs).to_crs(
+            dst_crs
+        )
+        return gdf_out, gdf_riv
+    else:
+        return gdf_out

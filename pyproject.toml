@@ -6,10 +6,10 @@ build-backend = "flit_core.buildapi"
 name = "hydromt_sfincs"
 authors = [
     {name = "Dirk Eilander", email = "dirk.eilander@deltares.nl"},
-    {name = "Hélène Boisgontier", email = "helene.boisgontier@deltares.nl"},
+    {name = "Tim Leijnse", email = "tim.leijnse@deltares.nl"},
 ]
 dependencies = [
-    "hydromt>=0.4.1",
+    "hydromt>=0.4.2",
     "dask",
     "geopandas >=0.8",
     "netcdf4",

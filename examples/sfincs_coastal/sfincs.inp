@@ -25,7 +25,7 @@ mskfile         = sfincs.msk
 indexfile       = sfincs.ind
 scsfile         = sfincs.scs
 manningfile     = sfincs.man
+precipfile      = sfincs.precip
 bzsfile         = sfincs.bzs
 bndfile         = sfincs.bnd
-precipfile      = sfincs.precip
 

@@ -1,4 +1,3 @@
-.. _model_components:
 .. currentmodule:: hydromt_sfincs.sfincs
 
 =====================
@@ -27,6 +26,8 @@ Note that the order in which the components are listed in the ini file is import
 
 For python users all SFINCS attributes and methods are available, see :ref:`api_model`
 
+.. _model_components:
+
 SfincsModel setup components
 ============================
 
@@ -35,7 +36,9 @@ is provided in the table below. When using hydromt from the command line only th
 setup components are exposed. Click on header to get a full overview or directly on
 a specific method see its documenation.  
 
-.. list-table:: SfincsModel setup components
+.. _general_table:
+
+.. list-table:: General setup components
    :widths: 20 25 25 30
    :header-rows: 1
 
@@ -44,52 +47,63 @@ a specific method see its documenation.
      - :ref:`workflows <workflows>`
      - :ref:`low-level methods <methods>`
    * - sfincs.inp
-     - :py:meth:`~hydromt_sfincs.SfincsModel.setup_config`
-     - :py:meth:`~hydromt_sfincs.workflows.parse_region`:sup:`1` :py:meth:`~hydromt_sfincs.workflows.get_basin_geometry`:sup:`1`
-     - :py:meth:`~hydromt_sfincs.read_inp` :py:meth:`~hydromt_sfincs.write_inp` :py:meth:`~hydromt_sfincs.get_spatial_attrs`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_config`
+     - :py:func:`~hydromt.workflows.parse_region`:sup:`1` :py:func:`~hydromt.workflows.get_basin_geometry`:sup:`1`
+     - :py:func:`~hydromt_sfincs.read_inp` :py:func:`~hydromt_sfincs.write_inp` :py:func:`~hydromt_sfincs.get_spatial_attrs`
    * - depfile
-     - :py:meth:`~hydromt_sfincs.SfincsModel.setup_basemaps` :py:meth:`~hydromt_sfincs.SfincsModel.setup_merge_topobathy`
-     - :py:meth:`~hydromt_sfincs.workflows.merge_topobathy`
-     - :py:meth:`~hydromt_sfincs.read_binary_map` :py:meth:`~hydromt_sfincs.write_binary_map`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_basemaps` :py:func:`~hydromt_sfincs.SfincsModel.setup_merge_topobathy`
+     - :py:func:`~hydromt_sfincs.workflows.merge_topobathy`
+     - :py:func:`~hydromt_sfincs.read_binary_map` :py:func:`~hydromt_sfincs.write_binary_map`
    * - mskfile
-     - :py:meth:`~hydromt_sfincs.SfincsModel.setup_mask` :py:meth:`~hydromt_sfincs.SfincsModel.setup_bounds` :py:meth:`~hydromt_sfincs.SfincsModel.setup_river_outflow`
-     - :py:meth:`~hydromt_sfincs.workflows.mask_topobathy`
-     - :py:meth:`~hydromt_sfincs.read_binary_map` :py:meth:`~hydromt_sfincs.write_binary_map` :py:meth:`~hydromt_sfincs.utils.mask_bounds`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_mask` :py:func:`~hydromt_sfincs.SfincsModel.setup_bounds` :py:func:`~hydromt_sfincs.SfincsModel.setup_river_outflow`
+     - :py:func:`~hydromt_sfincs.workflows.mask_topobathy`
+     - :py:func:`~hydromt_sfincs.read_binary_map` :py:func:`~hydromt_sfincs.write_binary_map` :py:func:`~hydromt_sfincs.utils.mask_bounds`
    * - indfile
      - 
      - 
-     - :py:meth:`~hydromt_sfincs.read_binary_map_index` :py:meth:`~hydromt_sfincs.write_binary_map_index`
+     - :py:func:`~hydromt_sfincs.read_binary_map_index` :py:func:`~hydromt_sfincs.write_binary_map_index`
    * - manningfile
-     - :py:meth:`~hydromt_sfincs.SfincsModel.setup_manning_roughness`
-     - :py:meth:`~hydromt_sfincs.workflows.landuse`
-     - :py:meth:`~hydromt_sfincs.read_binary_map` :py:meth:`~hydromt_sfincs.write_binary_map`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_manning_roughness`
+     - :py:func:`~hydromt_sfincs.workflows.landuse`
+     - :py:func:`~hydromt_sfincs.read_binary_map` :py:func:`~hydromt_sfincs.write_binary_map`
    * - scsfile
-     - :py:meth:`~hydromt_sfincs.SfincsModel.setup_cn_infiltration`
-     - :py:meth:`~hydromt_sfincs.workflows.cn_to_s`
-     - :py:meth:`~hydromt_sfincs.read_binary_map` :py:meth:`~hydromt_sfincs.write_binary_map`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_cn_infiltration`
+     - :py:func:`~hydromt_sfincs.workflows.cn_to_s`
+     - :py:func:`~hydromt_sfincs.read_binary_map` :py:func:`~hydromt_sfincs.write_binary_map`
    * - obsfile
-     - :py:meth:`~hydromt_sfincs.SfincsModel.setup_gauges`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_gauges`
      -
-     - :py:meth:`~hydromt_sfincs.read_xy` :py:meth:`~hydromt_sfincs.write_xy`
+     - :py:func:`~hydromt_sfincs.read_xy` :py:func:`~hydromt_sfincs.write_xy`
    * - thd- & weirfile
-     - :py:meth:`~hydromt_sfincs.SfincsModel.setup_structures`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_structures`
      -
-     - :py:meth:`~hydromt_sfincs.read_structures` :py:meth:`~hydromt_sfincs.write_structures` :py:meth:`~hydromt_sfincs.utils.gdf2structures` :py:meth:`~hydromt_sfincs.utils.structures2gdf`
+     - :py:func:`~hydromt_sfincs.read_structures` :py:func:`~hydromt_sfincs.write_structures` :py:func:`~hydromt_sfincs.utils.gdf2structures` :py:func:`~hydromt_sfincs.utils.structures2gdf`
+
+.. _focing_table:
+
+.. list-table:: Forcing setup components
+   :widths: 20 25 25 30
+   :header-rows: 1
+
+   * - SFINCS file
+     - :ref:`setup components <components>`
+     - :ref:`workflows <workflows>`
+     - :ref:`low-level methods <methods>`
    * - bnd- & bzsfile
-     - :py:meth:`~hydromt_sfincs.SfincsModel.setup_h_forcing`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_h_forcing`
      -
-     - :py:meth:`~hydromt_sfincs.read_timeseries` :py:meth:`~hydromt_sfincs.write_timeseries` :py:meth:`~hydromt_sfincs.read_xy` :py:meth:`~hydromt_sfincs.write_xy`
+     - :py:func:`~hydromt_sfincs.read_timeseries` :py:func:`~hydromt_sfincs.write_timeseries` :py:func:`~hydromt_sfincs.read_xy` :py:func:`~hydromt_sfincs.write_xy`
    * - src- & disfile
-     - :py:meth:`~hydromt_sfincs.SfincsModel.setup_river_inflow` :py:meth:`~hydromt_sfincs.SfincsModel.setup_q_forcing` :py:meth:`~hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid`
-     - :py:meth:`~hydromt_sfincs.workflows.snap_discharge`
-     - :py:meth:`~hydromt_sfincs.read_timeseries` :py:meth:`~hydromt_sfincs.write_timeseries` :py:meth:`~hydromt_sfincs.read_xy` :py:meth:`~hydromt_sfincs.write_xy`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_river_inflow` :py:func:`~hydromt_sfincs.SfincsModel.setup_q_forcing` :py:func:`~hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid`
+     - :py:func:`~hydromt_sfincs.workflows.snap_discharge`
+     - :py:func:`~hydromt_sfincs.read_timeseries` :py:func:`~hydromt_sfincs.write_timeseries` :py:func:`~hydromt_sfincs.read_xy` :py:func:`~hydromt_sfincs.write_xy`
    * - precipfile
-     - :py:meth:`~hydromt_sfincs.SfincsModel.setup_p_forcing` :py:meth:`~hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid`
-     - :py:meth:`~hydromt_sfincs.workflows.resample_time`:sup:`1`
-     - :py:meth:`~hydromt_sfincs.read_timeseries` :py:meth:`~hydromt_sfincs.write_timeseries`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_p_forcing` :py:func:`~hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid`
+     - :py:func:`~hydromt.workflows.resample_time`:sup:`1`
+     - :py:func:`~hydromt_sfincs.read_timeseries` :py:func:`~hydromt_sfincs.write_timeseries`
    * - netamprfile
-     - :py:meth:`~hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid`
-     - :py:meth:`~hydromt_sfincs.workflows.resample_time`:sup:`1`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid`
+     - :py:func:`~hydromt.workflows.resample_time`:sup:`1`
      -
 
 :sup:`1`) Imported from hydromt core package
@@ -97,9 +111,11 @@ a specific method see its documenation.
 SFINCS datamodel
 ================
 
-The following table provides an overview of which ``SfincsModel`` attribute contains 
-which SFINCS in- and output files. The files are read and written with the associated 
-read- and write- methods, i.e. ``read_config`` and ``write_config`` for the ``config`` attribute. 
+The following table provides an overview of which :py:class:`~hydromt_sfincs.SfincsModel` 
+attribute contains which SFINCS in- and output files. The files are read and written with the associated 
+read- and write- methods, i.e. :py:func:`~hydomt_sfincs.sfincs.SfincsModel.read_config` 
+and :py:func:`~hydomt_sfincs.sfincs.SfincsModel.write_config` for the 
+:py:attr:`~hydomt_sfincs.sfincs.SfincsModel.config`  attribute. 
 
 Note that the indfile is not part of the staticmaps dataset but created based on 
 the mskfile upon writing and used for reading staticmaps.
@@ -109,7 +125,7 @@ the mskfile upon writing and used for reading staticmaps.
    :widths: 30 70
    :header-rows: 1
 
-   * - ``SfincsModel`` attribute
+   * - :py:class:`~hydromt_sfincs.SfincsModel` attribute
      - SFINCS files
    * - :py:attr:`~hydromt_sfincs.SfincsModel.config`
      - sfincs.inp
