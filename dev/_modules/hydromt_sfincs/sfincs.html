@@ -535,7 +535,21 @@
         <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span>
         <span class="n">da_elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]]</span>
 
-        <span class="k">if</span> <span class="n">active_mask_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">active_mask_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Special case of basing mask on elevation first and then force include polygon as active afterwards!&quot;</span><span class="p">)</span>
+
+            <span class="n">dep_mask</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">mask_topobathy</span><span class="p">(</span><span class="n">da_elv</span><span class="p">,</span> <span class="n">elv_min</span><span class="p">,</span> <span class="n">elv_max</span><span class="p">)</span>
+            <span class="c1">#da_mask = da_mask.where(dep_mask, np.uint8(0))</span>
+            <span class="n">gdf_active_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
+                <span class="n">active_mask_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span>
+            <span class="p">)</span>
+            <span class="n">da_valid</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_active_mask</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">da_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">dep_mask</span><span class="p">,</span> <span class="n">da_valid</span><span class="p">)</span>
+
+            <span class="c1">#da_temp = dep_mask &amp; da_valid</span>
+            <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_true</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
+        <span class="k">elif</span> <span class="n">active_mask_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf_active_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
                 <span class="n">active_mask_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span>
             <span class="p">)</span>
@@ -545,6 +559,7 @@
         <span class="k">elif</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">dep_mask</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">mask_topobathy</span><span class="p">(</span><span class="n">da_elv</span><span class="p">,</span> <span class="n">elv_min</span><span class="p">,</span> <span class="n">elv_max</span><span class="p">)</span>
             <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dep_mask</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;Either active_mask_fn or elv_min/elv_max must be provided.&quot;</span>
