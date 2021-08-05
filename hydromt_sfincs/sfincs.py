@@ -361,7 +361,21 @@ class SfincsModel(Model):
         da_mask = self.mask
         da_elv = self.staticmaps[self._MAPS["elevtn"]]
 
-        if active_mask_fn is not None:
+        if elv_min is not None and elv_max is not None and active_mask_fn is not None:
+            self.logger.debug(f"Special case of basing mask on elevation first and then force include polygon as active afterwards!")
+
+            dep_mask = workflows.mask_topobathy(da_elv, elv_min, elv_max)
+            #da_mask = da_mask.where(dep_mask, np.uint8(0))
+            gdf_active_mask = self.data_catalog.get_geodataframe(
+                active_mask_fn, geom=self.region
+            )
+            da_valid = da_mask.raster.geometry_mask(gdf_active_mask, all_touched=True)
+            da_true = np.logical_or(dep_mask, da_valid)
+
+            #da_temp = dep_mask & da_valid
+            da_mask = da_mask.where(da_true, np.uint8(0))
+
+        elif active_mask_fn is not None:
             gdf_active_mask = self.data_catalog.get_geodataframe(
                 active_mask_fn, geom=self.region
             )
@@ -371,6 +385,7 @@ class SfincsModel(Model):
         elif elv_min is not None or elv_max is not None:
             dep_mask = workflows.mask_topobathy(da_elv, elv_min, elv_max)
             da_mask = da_mask.where(dep_mask, np.uint8(0))
+
         else:
             raise ValueError(
                 "Either active_mask_fn or elv_min/elv_max must be provided."
