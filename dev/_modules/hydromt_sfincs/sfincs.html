@@ -506,11 +506,17 @@
             <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">da_mask</span>
 
-<div class="viewcode-block" id="SfincsModel.setup_mask"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_mask.html#hydromt_sfincs.SfincsModel.setup_mask">[docs]</a>    <span class="k">def</span> <span class="nf">setup_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">active_mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">elv_min</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">elv_max</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.setup_mask"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_mask.html#hydromt_sfincs.SfincsModel.setup_mask">[docs]</a>    <span class="k">def</span> <span class="nf">setup_mask</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">active_mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">elv_min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">elv_max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Creates mask of active model cells.</span>
 
 <span class="sd">        Active model cells are based on cells with valid elevation; within the</span>
-<span class="sd">        active mask polygon or between minimum and maximum elevation contour lines.</span>
+<span class="sd">        polygon mask and/or between minimum and maximum elevation contour lines.</span>
+<span class="sd">        In case both active_mask_fn and elv_min and/or elv_max are provided,</span>
+<span class="sd">        all cells within the polygon mask and between the elevation thresholds</span>
+<span class="sd">        outside the polygon mask are set as active cells.</span>
+
 <span class="sd">        Note that local sinks (isolated regions with elv &lt; elv_min) are kept as active cells.</span>
 
 <span class="sd">        The model mask defines 0) Inactive, 1) active, and 2) waterlevel boundary cells</span>
@@ -530,49 +536,45 @@
 <span class="sd">            inactive (mask == 0) and within the polygon as active (mask == 1) cells.</span>
 <span class="sd">        elv_min, elv_max : float, optional</span>
 <span class="sd">            Minimum and maximum elevation thresholds for active model cells.</span>
-<span class="sd">            Note: only applied if active_mask_fn not provided.</span>
+<span class="sd">        all_touched: bool, optional</span>
+<span class="sd">            if True (default) include a pixel in the mask if it touches any of the shapes.</span>
+<span class="sd">            If False, include a pixel only if its center is within one of the</span>
+<span class="sd">            shapes, or if it is selected by Bresenham’s line algorithm.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span>
+        <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span>  <span class="c1"># at first call contains all valid dep cells</span>
         <span class="n">da_elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]]</span>
 
-        <span class="k">if</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">active_mask_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Special case of basing mask on elevation first and then force include polygon as active afterwards!&quot;</span><span class="p">)</span>
-
+        <span class="c1"># get masks</span>
+        <span class="k">if</span> <span class="n">active_mask_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">active_mask_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)</span>
+            <span class="n">gdf_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">dep_mask</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">mask_topobathy</span><span class="p">(</span><span class="n">da_elv</span><span class="p">,</span> <span class="n">elv_min</span><span class="p">,</span> <span class="n">elv_max</span><span class="p">)</span>
-            <span class="c1">#da_mask = da_mask.where(dep_mask, np.uint8(0))</span>
-            <span class="n">gdf_active_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                <span class="n">active_mask_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span>
+
+        <span class="c1"># update mask: set False cells in da_valid to 0 (inactive) in mask</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="n">active_mask_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">dep_mask</span><span class="p">,</span> <span class="n">gdf_mask</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Active cells based on all valid cells within the polygon mask &quot;</span>
+                <span class="s2">&quot;and between elevation contours outside this mask.&quot;</span>
             <span class="p">)</span>
-            <span class="n">da_valid</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_active_mask</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="n">da_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">dep_mask</span><span class="p">,</span> <span class="n">da_valid</span><span class="p">)</span>
-
-            <span class="c1">#da_temp = dep_mask &amp; da_valid</span>
-            <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_true</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
-
         <span class="k">elif</span> <span class="n">active_mask_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">gdf_active_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                <span class="n">active_mask_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span>
+            <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">gdf_mask</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Active cells based on all valid cells within the polygon mask.&quot;</span>
             <span class="p">)</span>
-            <span class="n">da_valid</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_active_mask</span><span class="p">)</span>
-            <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_valid</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
-
         <span class="k">elif</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">dep_mask</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">mask_topobathy</span><span class="p">(</span><span class="n">da_elv</span><span class="p">,</span> <span class="n">elv_min</span><span class="p">,</span> <span class="n">elv_max</span><span class="p">)</span>
             <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dep_mask</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Active cells based on elevation contours.&quot;</span><span class="p">)</span>
 
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Either active_mask_fn or elv_min/elv_max must be provided.&quot;</span>
-            <span class="p">)</span>
-
-        <span class="c1"># update staticmaps</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">da_mask</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mask with </span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> active cells set; updating staticmaps ...&quot;</span><span class="p">)</span>
+        <span class="c1"># set mask &amp; update all staticmaps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_staticmaps</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">])</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_staticmaps</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vars</span><span class="p">:</span>
             <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_staticmaps</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_staticmaps</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_mask</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_staticmaps</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">])</span>
-        <span class="n">ncells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">da_mask</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mask with </span><span class="si">{</span><span class="n">ncells</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> active cells set.&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Derive region based on active cells.&quot;</span><span class="p">)</span>
         <span class="n">region</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_mask</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
