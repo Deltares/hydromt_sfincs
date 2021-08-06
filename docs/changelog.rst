@@ -8,6 +8,10 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 [Unreleased]
 ------------
 
+Changed
+^^^^^^^
+- ``setup_mask``: removed default values and new option to combine a polygon and elevation based criteria.
+
 v0.2.0 (2 August 2021)
 ---------------------
 

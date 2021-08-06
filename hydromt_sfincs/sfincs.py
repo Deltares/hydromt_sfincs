@@ -332,11 +332,17 @@ class SfincsModel(Model):
             da_mask = self.staticmaps[name]
         return da_mask
 
-    def setup_mask(self, active_mask_fn=None, elv_min=-1, elv_max=None):
+    def setup_mask(
+        self, active_mask_fn=None, elv_min=None, elv_max=None, all_touched=True
+    ):
         """Creates mask of active model cells.
 
         Active model cells are based on cells with valid elevation; within the
-        active mask polygon or between minimum and maximum elevation contour lines.
+        polygon mask and/or between minimum and maximum elevation contour lines.
+        In case both active_mask_fn and elv_min and/or elv_max are provided,
+        all cells within the polygon mask and between the elevation thresholds
+        outside the polygon mask are set as active cells.
+
         Note that local sinks (isolated regions with elv < elv_min) are kept as active cells.
 
         The model mask defines 0) Inactive, 1) active, and 2) waterlevel boundary cells
@@ -356,49 +362,45 @@ class SfincsModel(Model):
             inactive (mask == 0) and within the polygon as active (mask == 1) cells.
         elv_min, elv_max : float, optional
             Minimum and maximum elevation thresholds for active model cells.
-            Note: only applied if active_mask_fn not provided.
+        all_touched: bool, optional
+            if True (default) include a pixel in the mask if it touches any of the shapes.
+            If False, include a pixel only if its center is within one of the
+            shapes, or if it is selected by Bresenham’s line algorithm.
+
         """
-        da_mask = self.mask
+        da_mask = self.mask  # at first call contains all valid dep cells
         da_elv = self.staticmaps[self._MAPS["elevtn"]]
 
-        if elv_min is not None and elv_max is not None and active_mask_fn is not None:
-            self.logger.debug(f"Special case of basing mask on elevation first and then force include polygon as active afterwards!")
-
+        # get masks
+        if active_mask_fn is not None:
+            gdf = self.data_catalog.get_geodataframe(active_mask_fn, geom=self.region)
+            gdf_mask = da_mask.raster.geometry_mask(gdf, all_touched=all_touched)
+        if elv_min is not None or elv_max is not None:
             dep_mask = workflows.mask_topobathy(da_elv, elv_min, elv_max)
-            #da_mask = da_mask.where(dep_mask, np.uint8(0))
-            gdf_active_mask = self.data_catalog.get_geodataframe(
-                active_mask_fn, geom=self.region
+
+        # update mask: set False cells in da_valid to 0 (inactive) in mask
+        if (elv_min is not None or elv_max is not None) and active_mask_fn is not None:
+            da_mask = da_mask.where(np.logical_or(dep_mask, gdf_mask), np.uint8(0))
+            self.logger.debug(
+                "Active cells based on all valid cells within the polygon mask "
+                "and between elevation contours outside this mask."
             )
-            da_valid = da_mask.raster.geometry_mask(gdf_active_mask, all_touched=True)
-            da_true = np.logical_or(dep_mask, da_valid)
-
-            #da_temp = dep_mask & da_valid
-            da_mask = da_mask.where(da_true, np.uint8(0))
-
         elif active_mask_fn is not None:
-            gdf_active_mask = self.data_catalog.get_geodataframe(
-                active_mask_fn, geom=self.region
+            da_mask = da_mask.where(gdf_mask, np.uint8(0))
+            self.logger.debug(
+                "Active cells based on all valid cells within the polygon mask."
             )
-            da_valid = da_mask.raster.geometry_mask(gdf_active_mask)
-            da_mask = da_mask.where(da_valid, np.uint8(0))
-
         elif elv_min is not None or elv_max is not None:
-            dep_mask = workflows.mask_topobathy(da_elv, elv_min, elv_max)
             da_mask = da_mask.where(dep_mask, np.uint8(0))
+            self.logger.debug("Active cells based on elevation contours.")
 
-        else:
-            raise ValueError(
-                "Either active_mask_fn or elv_min/elv_max must be provided."
-            )
-
-        # update staticmaps
+        n = np.count_nonzero(da_mask.values)
+        self.logger.debug(f"Mask with {n:d} active cells set; updating staticmaps ...")
+        # set mask & update all staticmaps
+        self.set_staticmaps(da_mask, self._MAPS["mask"])
         for name in self._staticmaps.raster.vars:
             da = self._staticmaps[name]
             self._staticmaps[name] = da.where(da_mask > 0, da.raster.nodata)
-
-        self.set_staticmaps(da_mask, self._MAPS["mask"])
-        ncells = np.count_nonzero(da_mask.values)
-        self.logger.debug(f"Mask with {ncells:d} active cells set.")
 
         self.logger.debug(f"Derive region based on active cells.")
         region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
