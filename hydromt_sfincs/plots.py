@@ -89,6 +89,7 @@ def plot_basemap(
     geoms: List[str] = None,
     geom_kwargs: Dict = {},
     legend_kwargs: Dict = {},
+    bmap_kwargs: Dict = {},
     **kwargs,
 ):
     """Create basemap plot.
@@ -105,7 +106,7 @@ def plot_basemap(
         Add shade to variable (only for variable = 'dep'), by default True
     plot_bounds : bool, optional
         Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
-    bmap : {'sat', ''}
+    bmap : {'sat', 'osm'}
         background map, by default "sat"
     zoomlevel : int, optional
         zoomlevel, by default 11
@@ -145,9 +146,11 @@ def plot_basemap(
     ax = plt.subplot(projection=utm)
     ax.set_extent(extent, crs=utm)
     if bmap == "sat":
-        ax.add_image(cimgt.QuadtreeTiles(), zoomlevel)
+        ax.add_image(cimgt.QuadtreeTiles(**bmap_kwargs), zoomlevel)
     elif bmap == "osm":
-        ax.add_image(cimgt.OSM(), zoomlevel)
+        ax.add_image(cimgt.OSM(**bmap_kwargs), zoomlevel)
+    elif hasattr(cimgt, bmap):
+        ax.add_image(getattr(cimgt, bmap)(**bmap_kwargs), zoomlevel)
 
     # make nice cmap
     if "cmap" not in kwargs or "norm" not in kwargs:
