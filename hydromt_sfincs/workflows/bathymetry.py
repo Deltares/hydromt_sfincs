@@ -228,9 +228,13 @@ def get_rivwth(
 
 def detect_estuary(gdf_stream, da_rivmask, min_convergence=1e-2, smooth_n=1, max_elv=2):
     # NOTE: works best with 2-5km river segments.
+    assert da_rivmask.raster.crs.is_projected
     assert np.all(np.isin(["idx", "idx_ds", "uparea", "elevtn"], gdf_stream.columns))
     # set flwdir
     gdf_est = gdf_stream.copy()
+    # get/check river length
+    if "rivlen" not in gdf_stream.columns:
+        gdf_est["rivlen"] = gdf_stream.to_crs(da_rivmask.raster.crs).length
     flw = pyflwdir.from_dataframe(gdf_est.set_index("idx"))
     flw.main_upstream(gdf_est["uparea"].values)
     # get rivwth from mask based on main stream only and smooth
