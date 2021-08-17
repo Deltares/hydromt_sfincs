@@ -236,6 +236,7 @@ class SfincsModel(Model):
         self.update_spatial_attrs()
 
         if save_hydrography and "uparea" in ds_org:
+            ds_out = ds_org
             if warp or "flwdir" not in ds_org:
                 self.logger.info("Reprojecting hydrography data to destination grid.")
                 ds_out = workflows.reproject_hydrography(
@@ -1488,7 +1489,9 @@ class SfincsModel(Model):
         fns = glob.glob(join(self.root, "gis", "*.tif"))
         fns = [fn for fn in fns if basename(fn).split(".")[0] in keep_maps]
         if fns:
-            self.set_staticmaps(hydromt.open_mfraster(fns))
+            ds = hydromt.open_mfraster(fns).load()
+            self.set_staticmaps(ds)
+            ds.close()
 
     def write_staticmaps(self):
         """Write SFINCS staticmaps to binary files including map index file.
