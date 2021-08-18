@@ -22,7 +22,7 @@ def flipud(ds):
 
 def nearest(gdf1: gpd.GeoDataFrame, gdf2: gpd.GeoDataFrame):
     """Return the index of and distance [m] to the nearest geometry
-    in `gdf` for each (centroid) point of `gdf1`."""
+    in `gdf2` for each (centroid) point of `gdf1`."""
     if np.all(gdf1.type == "Point"):
         pnts = gdf1.geometry.copy()
     elif np.all(np.isin(gdf1.type, ["LineString", "MultiLineString"])):

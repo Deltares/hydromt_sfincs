@@ -492,9 +492,8 @@ class SfincsModel(Model):
         """
         name = self._MAPS["elevtn"]
         assert name in self.staticmaps
-        da_elv = flipud(
-            self.staticmaps[name]
-        )  # N -> S orientation for hydrography data
+        # N -> S orientation for hydrography data
+        da_elv = flipud(self.staticmaps[name])
         if hydrography_fn is not None:
             ds_hydro = self.data_catalog.get_rasterdataset(
                 hydrography_fn, geom=self.region, buffer=20, single_var_as_array=False
