@@ -132,14 +132,18 @@ class SfincsModel(Model):
         crs="utm",
         basemaps_fn="merit_hydro",
         reproj_method="bilinear",
-        save_hydrography=True,
     ):
         """Define model region and setup topobathy (depfile) model layer.
 
-        To merge elevation and bathymetry data, elevation data is taken for land and
-        bathymetry for sea cells, see ``landmask_fn``. An optional ``merge_buffer``
-        can be set to define a buffer aourd the land cells where the bathymetry is
-        estimated from a linear interpolation of elevation and bathymetry data.
+        The model region is defined by a bounding box )'bbox') or geometry ('geom')
+        with the following syntax:
+
+        * {'bbox': [xmin, ymin, xmax, ymax]}
+        * {'geom': '/path/to/geometry_file'}
+
+        If `crs` or `res` are different from the basemap crs and/or res the
+        topobathy data is reprojected to the destination model grid using
+        `reproj_method` interpolation.
 
         Adds model layers:
 
@@ -149,33 +153,27 @@ class SfincsModel(Model):
         ----------
         region : dict
             Dictionary describing region of interest using a bounding box or geometry,
-            i.e.: {'bbox': [xmin, ymin, xmax, ymax]} or {'geom': geopandas.GeoDataFrame}
+
         res : float
             Model resolution [m], by default 100 m.
+            If None, the basemaps res is used.
         crs : str, int, optional
-            Model Coordinate Reference System as epsg code, by default 'utm' in which
-            case the region centroid UTM zone is used. If None, the basemaps crs is used
-            and must be a projected CRS.
+            Model Coordinate Reference System (CRS) as epsg code.
+            By default 'utm' in which case the region centroid UTM zone is used.
+            If None, the basemaps CRS is used. This must be a projected CRS.
         basemaps_fn : str
-            Path or data source name for hydrography raster data, by default 'merit_hydro'.
+            Path or data source name for topobathy raster data, by default 'merit_hydro'.
 
             * Minimal required variables: ['elevtn'].
             * Required variables to delineate rivers and inflow points in subsequent steps: ['flwdir', 'uparea']
         reproj_method: str, optional
             Method used to reproject topobathy data, by default 'bilinear'
-        save_hydrography: bool, optional
-            If True (default) save hydrography data (['flwdir', 'uparea']) to staticmaps
         """
         name = self._MAPS["elevtn"]
         # read data (lazy!) and return dataset
         ds_org = self.data_catalog.get_rasterdataset(
-            basemaps_fn, single_var_as_array=False
+            basemaps_fn, single_var_as_array=False, variables=["elevtn"]
         )
-        vars = ["elevtn", "uparea", "flwdir"]
-        vars = [v for v in vars if v in ds_org.raster.vars]
-        if not "elevtn" in vars:
-            raise ValueError('Basemaps should contain "elevtn" variable.')
-        ds_org = ds_org[vars]
         # get region and clip data
         kind, region = hydromt.workflows.parse_region(region, logger=self.logger)
         geom = region.get("geom", None)
@@ -206,19 +204,14 @@ class SfincsModel(Model):
             dst_geom = gpd.GeoDataFrame(geometry=[box(*dst_bbox)], crs=dst_crs)
 
         # reproject to destination CRS and clip to actual extent
-        # make N -> S orientation for hydrography data
-        if ds_org.raster.res[1] > 0:
-            ds_org = flipud(ds_org)
         da_elv = ds_org["elevtn"]
-        warp = False
-        if ds_org.raster.crs != dst_crs or abs(ds_org.raster.res[0]) != res:
-            warp = True
-            reproj_kwargs = dict(
+        if ds_org.raster.crs != dst_crs or (
+            res is not None and abs(ds_org.raster.res[0]) != res
+        ):
+            da_elv = da_elv.raster.clip_geom(geom=dst_geom, buffer=20)
+            da_elv = da_elv.raster.reproject(
                 dst_res=res, dst_crs=dst_crs, align=True, method=reproj_method
             )
-            da_elv = da_elv.raster.clip_geom(geom=dst_geom, buffer=20)
-            da_elv = da_elv.raster.reproject(**reproj_kwargs)
-
         # clip and mask
         da_elv = (
             da_elv.raster.clip_geom(dst_geom, mask=True)
@@ -234,23 +227,6 @@ class SfincsModel(Model):
         self.set_staticmaps(data=da_elv, name=name)
         # update config
         self.update_spatial_attrs()
-
-        if save_hydrography and "uparea" in ds_org:
-            ds_out = ds_org
-            if warp or "flwdir" not in ds_org:
-                self.logger.info("Reprojecting hydrography data to destination grid.")
-                ds_out = workflows.reproject_hydrography(
-                    ds_org, da_elv, method=reproj_method
-                )
-            ds_out = ds_out.raster.mask(da_elv["mask"])
-            self.logger.info("Saving hydrography data to staticmaps.")
-            self.set_staticmaps(data=ds_out["uparea"])
-            self.set_staticmaps(data=ds_out["flwdir"])
-            self.set_staticmaps(data=ds_out["elvsyn"])
-        elif save_hydrography:
-            self.logger.warning(
-                'No upstream area ("uparea") variable found in basemaps.'
-            )
 
     def setup_merge_topobathy(
         self,
@@ -483,6 +459,74 @@ class SfincsModel(Model):
                 f"{ncells:d} {btype} (mask={bvalue:d}) boundary cells set."
             )
 
+    def setup_river_hydrography(
+        self, hydrography_fn=None, reproj_method="bilinear", **kwargs
+    ):
+        """Setup hydrography layers for flow directions ("flwdir") and upstream area
+        ("uparea") which are required to setup the setup_river* model components.
+
+        If no hydrography data is provided (`hydrography_fn=None`) flow directions are
+        derived from the model elevation data.
+        Note that in that case the upstream area map will miss the contribution from area
+        upstream of the model domain and incoming rivers in the `setup_river_inflow` cannot be detected.
+
+        If the model crs or resolution is different from the input hydrography data,
+        it is reprojected to the model grid. Note that this works best if the destination
+        resolution is roughly the same or higher (i.e. smaller cells).
+
+        Adds model layers:
+
+        * **uparea** map: upstream area [km2]
+        * **flwdir** map: local D8 flow directions [-]
+
+        Parameters
+        ----------
+        hydrography_fn : str
+            Path or data source name for hydrography raster data, by default None
+            and derived from model elevation data.
+
+            * Required variable: ['uparea']
+            * Optional variable: ['flwdir']
+        reproj_method: str, optional
+            Method used to reproject hydrography data, by default 'bilinear'
+        """
+        name = self._MAPS["elevtn"]
+        assert name in self.staticmaps
+        da_elv = flipud(
+            self.staticmaps[name]
+        )  # N -> S orientation for hydrography data
+        if hydrography_fn is not None:
+            ds_hydro = self.data_catalog.get_rasterdataset(
+                hydrography_fn, geom=self.region, buffer=20, single_var_as_array=False
+            )
+            assert "uparea" in ds_hydro
+            warp = ~da_elv.raster.aligned_grid(ds_hydro)
+            if warp or "flwdir" not in ds_hydro:
+                self.logger.info("Reprojecting hydrography data to destination grid.")
+                ds_out = workflows.reproject_hydrography(
+                    ds_hydro, da_elv, method=reproj_method, **kwargs
+                )
+            else:
+                ds_out = ds_hydro[["uparea", "flwdir"]].raster.clip_bbox(
+                    da_elv.raster.bounds
+                )
+            ds_out = ds_out.raster.mask(da_elv != da_elv.raster.nodata)
+        else:
+            da_flw = workflows.d8_from_dem(da_elv, **kwargs)
+            flwdir = hydromt.flw.flwdir_from_da(da_flw, ftype="d8")
+            da_upa = xr.Variable(
+                dims=da_elv.raster.dims,
+                coords=da_elv.raster.coords,
+                data=flwdir.upstream_area(unit="km2"),
+                name="uparea",
+            )
+            da_upa.raster.set_nodata(-9999)
+            ds_out = xr.merge([da_upa, da_flw])
+
+        self.logger.info("Saving hydrography data to staticmaps.")
+        self.set_staticmaps(data=ds_out["uparea"])
+        self.set_staticmaps(data=ds_out["flwdir"])
+
     def setup_river_bathymetry(
         self,
         river_geom_fn,
@@ -499,6 +543,12 @@ class SfincsModel(Model):
         hmin=1.0,
         wmin=30.0,
     ):
+        """TODO: write docstring
+
+        NOTE: in most cases this method requires upstream area ("uparea") and flow direction ("flwdir")
+        hydrography maps to be set in the setup_river_hydrography method.
+
+        """
         name = self._MAPS["elevtn"]
         assert name in self.staticmaps
         da_elv = flipud(self.staticmaps[name])
@@ -529,8 +579,8 @@ class SfincsModel(Model):
         if use_basemap_river:
             if "uparea" not in self.staticmaps or "flwdir" not in self.staticmaps:
                 raise ValueError(
-                    '"uparea" and/or "flwdir" staticmap variables missing. Either provide these '
-                    ' variables in setup_basemaps method or set "use_basemap_river" argument to False.'
+                    '"uparea" and/or "flwdir" staticmap layers missing.'
+                    " Run setup_river_hydrography first."
                 )
             da_upa = flipud(self.staticmaps["uparea"])
             da_flw = flipud(self.staticmaps["flwdir"])
@@ -551,6 +601,7 @@ class SfincsModel(Model):
 
         # estimate stream segment average width from river mask
         if rivwth_from_mask and da_rivmask is not None:
+            self.logger.info("Deriving river segment average width.")
             gdf_stream["rivwth"] = workflows.get_rivwth(
                 gdf_stream, da_rivmask=da_rivmask
             )
@@ -561,6 +612,7 @@ class SfincsModel(Model):
         gdf_stream = workflows.estimate_bathymetry(gdf_stream, gdf_riv, **kwargs)
 
         if correct_rivbank and da_rivmask is not None:
+            self.logger.info("Deriving river bank elevation.")
             hand = hydromt.flw.flwdir_from_da(da_flw).hand(da_elv, rivd8)
             da_hand = xr.DataArray(
                 hand, coords=da_elv.raster.coords, dims=da_elv.raster.dims, name="hand"
@@ -574,6 +626,7 @@ class SfincsModel(Model):
             # set riverdepth constant in estuaries based on theory of Gisen et al. 2015
             # estuaries based on convergence of width from river mask
             # TODO expose arguments
+            self.logger.info("Detecting estuaries.")
             gdf_stream = workflows.detect_estuary(gdf_stream, da_rivmask=da_rivmask)
             nseg = np.sum(gdf_stream["estuary"].values)
             self.logger.info(f"{nseg} segments classified as estuary.")
@@ -604,7 +657,7 @@ class SfincsModel(Model):
         """Setup river inflow (source) points where a river enters the model domain.
 
         NOTE: this method requires upstream area ("uparea") and flow direction ("flwdir")
-        hydrography maps to be set in the setup_basemaps method.
+        hydrography maps to be set in the setup_river_hydrography method.
 
         Adds model layers:
 
@@ -623,8 +676,7 @@ class SfincsModel(Model):
         """
         if "uparea" not in self.staticmaps or "flwdir" not in self.staticmaps:
             raise ValueError(
-                '"uparea" and/or "flwdir" staticmap variables missing. '
-                "Provide these variables in setup_basemaps method."
+                '"uparea" and/or "flwdir" staticmap layers missing. Run setup_river_hydrography first.'
             )
         if "region" not in self.staticgeoms:
             self.logger.warning(
@@ -660,6 +712,8 @@ class SfincsModel(Model):
     ):
         """Setup river outflow boundary (msk=3) where a river flows out of the model domain.
 
+        NOTE: this method requires flow direction ("flwdir") to be set in the setup_river_hydrography method.
+
         Adds / edits model layers:
 
         * **msk** map: edited by adding outflow points (msk=3)
@@ -685,10 +739,9 @@ class SfincsModel(Model):
                 "is now infered from the bounding box and may lead to inaccurate outflow points."
             )
         if "flwdir" not in self.staticmaps:
-            da_elv = flipud(self.staticmaps[self._MAPS["elevtn"]])
-            self.logger.info("Creating flow direction from elevation data ..")
-            da_flwdir = workflows.d8_from_dem(da_elv)
-            self.set_staticmaps(da_flwdir, "flwdir")
+            raise ValueError(
+                '"flwdir" staticmap layer missing. Run setup_river_hydrography first.'
+            )
         else:
             da_flwdir = flipud(self.staticmaps["flwdir"])
 
