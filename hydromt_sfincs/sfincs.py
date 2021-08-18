@@ -1480,19 +1480,15 @@ class SfincsModel(Model):
         self.read_staticmaps()
         self.read_staticgeoms()
         self.read_forcing()
-        self.read_states()
-        self.read_results()
         self.logger.info("Model read")
 
     def write(self):
         """Write the complete model schematization and configuration to file."""
-        self.logger.info(f"Write model data to {self.root}")
+        self.logger.info(f"Writing model data to {self.root}")
         self.write_staticmaps()
         self.write_staticgeoms()
         self.write_forcing()
-        self.write_states()
-        # config last; might be updated when writing maps, states or forcing
-        self.write_config()
+        self.write_config()  # config last; might be updated by other write_* methods
 
     def read_staticmaps(self, crs=None):
         """Read SFNCS binary staticmaps and save to `staticmaps` attribute.
