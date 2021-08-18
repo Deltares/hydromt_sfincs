@@ -53,22 +53,74 @@ __all__ = [
 
 def d8_from_dem(
     da_elv,
+    gdf_stream=None,
     max_depth=-1.0,
 ):
-    """Wrapper around pyflwdir.from_dem to derive flow direcition from an elevation grid."""
+    """Derive D8 flow directions from an elevation grid.
+
+    Outlets occur at the edge of the data or at the interface with nodata values.
+    A local depressions is filled based on its lowest pour point level if the pour point
+    depth is smaller than the maximum pour point depth `max_depth`, otherwise the lowest
+    elevation in the depression becomes a pit.
+
+    Based on: Wang, L., & Liu, H. (2006). https://doi.org/10.1080/13658810500433453
+
+    Parameters
+    ----------
+    da_elv: 2D xarray.DataArray
+        elevation raster
+    gdf_stream: geopandas.GeoDataArray, optional
+        stream vector layer. IF available the 'uparea' [km2] column is used to burn
+        the river in the elevation data for improved precision.
+    max_depth: float, optional
+        Maximum pour point depth. Depressions with a larger pour point
+        depth are set as pit. A negative value (default) equals an infitely
+        large pour point depth causing all depressions to be filled.
+
+    Returns
+    -------
+    da_flw: 2D xarray.DataArray
+        D8 flow direction data
+    """
+    nodata = da_elv.raster.nodata
+    crs = da_elv.raster.crs
     assert da_elv.raster.res[1] < 0
+    assert nodata is not None and ~np.isnan(nodata)
+    # burn in river if
+    if gdf_stream is not None:
+        if "uparea" in gdf_stream:
+            gdf_stream = gdf_stream.sort_values(by="uparea")
+            dst_rivupa = da_elv.raster.rasterize(
+                gdf_stream, col_name="uparea", nodata=0
+            )
+            # river elevation = min(elv) - log10(uparea[m2]) from rasterized river uparea.
+            elvmin = da_elv.where(da_elv != nodata).min()
+            elvriv = elvmin - np.log10(np.maximum(1.1, dst_rivupa * 1e3))
+        else:
+            # river elevation = elv - 100.
+            dst_rivupa = da_elv.raster.geometry_mask(gdf_stream).astype(np.float32)
+            elvriv = da_elv - dst_rivupa * 100
+        # synthetic elevation with river burned in
+        da_elv = elvriv.where(dst_rivupa > 0, da_elv)
+        da_elv = da_elv.where(da_elv != nodata, nodata)
+        da_elv.raster.set_nodata(nodata)
+        da_elv.raster.set_crs(crs)
+    # derive new flow directions from (synthetic) elevation
+    d8 = pyflwdir.dem.fill_depressions(
+        da_elv.values.astype(np.float32),
+        max_depth=max_depth,
+        nodata=da_elv.raster.nodata,
+    )[1]
     # return xarray data array
-    da_out = xr.DataArray(
+    da_flw = xr.DataArray(
         dims=da_elv.raster.dims,
         coords=da_elv.raster.coords,
-        data=pyflwdir.dem.fill_depressions(
-            da_elv.values, nodata=da_elv.raster.nodata, max_depth=max_depth
-        )[1],
+        data=d8,
         name="flwdir",
     )
-    da_out.raster.set_nodata(247)
-    da_out.raster.set_crs(da_elv.raster.crs)
-    return da_out
+    da_flw.raster.set_nodata(247)
+    da_flw.raster.set_crs(crs)
+    return da_flw
 
 
 def reproject_hydrography(
@@ -105,44 +157,32 @@ def reproject_hydrography(
     )
     dst_upa = ds[uparea_name].raster.reproject(**kwargs, method=method)
     dst_elv = ds[elevtn_name].raster.reproject(**kwargs, method=method)
+    nodata = ds[elevtn_name].raster.nodata
+    # synthetic elevation -> reprojected elevation - log10(reprojected uparea[m2])
+    elvsyn = dst_elv - np.log10(np.maximum(1.1, dst_upa * 1e3))
+    elvsyn.raster.set_nodata(nodata)
     # vectorize and reproject river uparea
-    nodata = dst_elv.raster.nodata
     mask = ds[uparea_name] > river_upa
     flwdir_src = hydromt.flw.flwdir_from_da(ds[flwdir_name], mask=mask)
     feats = flwdir_src.vectorize(uparea=ds[uparea_name].values)
     gdf_stream = gpd.GeoDataFrame.from_features(feats, crs=ds.raster.crs)
     gdf_stream = gdf_stream.sort_values(by="uparea")
-    dst_rivupa = dst_elv.raster.rasterize(gdf_stream, col_name="uparea", nodata=0)
-    dst_rivupa.name = uparea_name
-    # synthetic elevation with
-    # river -> min(elv) - log10(uparea[m2]) from rasterized river uparea.
-    # other -> reprojected elevation - log10(uparea[m2]) from reprojected uparea
-    elvmin = ds[elevtn_name].where(ds[elevtn_name] != nodata).min()
-    elvsyn = xr.where(
-        dst_rivupa > 0,
-        elvmin - np.log10(np.maximum(1.1, dst_rivupa * 1e3)),
-        dst_elv - np.log10(np.maximum(1.1, dst_upa * 1e3)),
-    )
-    elvsyn = elvsyn.where(dst_elv != nodata, nodata).astype(np.float32)
-    elvsyn.raster.set_nodata(nodata)
-    elvsyn.raster.set_crs(dst_elv.raster.crs)
-    # derive new flow directions from synthetic elevation
-    da_flw = d8_from_dem(elvsyn)
+    dst_rivupa = ds_like.raster.rasterize(gdf_stream, col_name="uparea", nodata=0)
+    # get flow directions
+    da_flw = d8_from_dem(elvsyn, gdf_stream)
     flwdir = hydromt.flw.flwdir_from_da(da_flw)
     # get upstream area
     area = flwdir.area / 1e6  # cellarea [km2]
-    if river_upa > 0:
+    if gdf_stream is not None and "uparea" in gdf_stream:
         ds_temp = xr.merge([da_flw, dst_rivupa])
         ds_temp.raster.set_crs(ds_like.raster.crs)
         gdf0 = river_inflow_points(
             ds_temp,
             region=ds_like.raster.box,
-            river_upa=river_upa,
+            river_upa=1e-6,  # anything larger than zero
             river_len=0,
             dst_crs=ds_like.raster.crs,
             return_river=False,
-            flwdir_name=flwdir_name,
-            uparea_name=uparea_name,
         )[0]
         if gdf0.index.size > 0:  # set incoming river uparea at boundary cells
             upa0 = ds[uparea_name].raster.sample(gdf0)
@@ -152,7 +192,7 @@ def reproject_hydrography(
             area.flat[idxs0] = upa0.sel(index=idx).values
     uparea = flwdir.accuflux(area, nodata=nodata)
     uparea = np.where(dst_elv.values != nodata, uparea, nodata)
-    # return dataset with flwdir and uparea
+    # return dataset with flwdir in original ftype and uparea
     ds_out = xr.Dataset(coords=dst_elv.raster.coords)
     ds_out.raster.set_crs(dst_elv.raster.crs)
     dims = dst_elv.raster.dims
@@ -161,7 +201,6 @@ def reproject_hydrography(
     ds_out[flwdir_name].raster.set_nodata(flwdir_src._core._mv)
     ds_out[uparea_name] = xr.Variable(dims=dims, data=uparea)
     ds_out[uparea_name].raster.set_nodata(nodata)
-    ds_out["elvsyn"] = elvsyn
     # return ds_like extent
     ds_out = ds_out.raster.clip_bbox(ds_like.raster.bounds)
     return ds_out
