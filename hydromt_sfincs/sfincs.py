@@ -503,7 +503,7 @@ class SfincsModel(Model):
             if warp or "flwdir" not in ds_hydro:
                 self.logger.info("Reprojecting hydrography data to destination grid.")
                 ds_out = workflows.reproject_hydrography(
-                    ds_hydro, da_elv, method=reproj_method, **kwargs
+                    ds_hydro, da_elv, method=reproj_method, logger=self.logger, **kwargs
                 )
             else:
                 ds_out = ds_hydro[["uparea", "flwdir"]].raster.clip_bbox(
@@ -511,9 +511,10 @@ class SfincsModel(Model):
                 )
             ds_out = ds_out.raster.mask(da_elv != da_elv.raster.nodata)
         else:
+            self.logger.info("Getting hydrography data from model grid.")
             da_flw = workflows.d8_from_dem(da_elv, **kwargs)
             flwdir = hydromt.flw.flwdir_from_da(da_flw, ftype="d8")
-            da_upa = xr.Variable(
+            da_upa = xr.DataArray(
                 dims=da_elv.raster.dims,
                 coords=da_elv.raster.coords,
                 data=flwdir.upstream_area(unit="km2"),
