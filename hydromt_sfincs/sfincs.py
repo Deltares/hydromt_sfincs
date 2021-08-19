@@ -248,7 +248,7 @@ class SfincsModel(Model):
         If `offset_fn` is provided, a (spatially varying) offset is applied to the
         new dataset to convert the vertical datum before merging.
 
-        Updates model layers:
+        Updates model layer:
 
         * **dep** map: combined elevation/bathymetry [m+ref]
 
@@ -355,6 +355,9 @@ class SfincsModel(Model):
             shapes, or if it is selected by Bresenham’s line algorithm.
 
         """
+        name = self._MAPS["mask"]
+        if name in self.staticmaps:  # reset
+            self._staticmaps = self._staticmaps.drop_vars(name)
         da_mask = self.mask  # at first call contains all valid dep cells
         da_elv = self.staticmaps[self._MAPS["elevtn"]]
 
@@ -384,7 +387,7 @@ class SfincsModel(Model):
         n = np.count_nonzero(da_mask.values)
         self.logger.debug(f"Mask with {n:d} active cells set; updating staticmaps ...")
         # set mask & update all staticmaps
-        self.set_staticmaps(da_mask, self._MAPS["mask"])
+        self.set_staticmaps(da_mask, name)
         for name in self._staticmaps.raster.vars:
             da = self._staticmaps[name]
             self._staticmaps[name] = da.where(da_mask > 0, da.raster.nodata)
@@ -399,6 +402,7 @@ class SfincsModel(Model):
         include_mask_fn=None,
         exclude_mask_fn=None,
         append_bounds=False,
+        include_buffer=0,
     ):
         """Set boundary cells in the model mask.
 
@@ -436,11 +440,13 @@ class SfincsModel(Model):
         if include_mask_fn:
             gdf_include = self.data_catalog.get_geodataframe(
                 include_mask_fn, geom=self.region
-            )
+            ).to_crs(self.crs)
+            if include_buffer > 0:
+                gdf_include["geometry"] = gdf_include.buffer(include_buffer)
         if exclude_mask_fn:
             gdf_exclude = self.data_catalog.get_geodataframe(
                 include_mask_fn, geom=self.region
-            )
+            ).to_crs(self.crs)
         # mask values
         da_mask = self.mask
         bounds = utils.mask_bounds(da_mask, gdf_include, gdf_exclude)
@@ -460,7 +466,7 @@ class SfincsModel(Model):
             )
 
     def setup_river_hydrography(
-        self, hydrography_fn=None, reproj_method="bilinear", **kwargs
+        self, hydrography_fn=None, adjust_dem=True, reproj_method="bilinear", **kwargs
     ):
         """Setup hydrography layers for flow directions ("flwdir") and upstream area
         ("uparea") which are required to setup the setup_river* model components.
@@ -474,10 +480,14 @@ class SfincsModel(Model):
         it is reprojected to the model grid. Note that this works best if the destination
         resolution is roughly the same or higher (i.e. smaller cells).
 
-        Adds model layers:
+        Adds model layers (both not used by SFINCS!):
 
         * **uparea** map: upstream area [km2]
         * **flwdir** map: local D8 flow directions [-]
+
+        Updates model layer (if `adjust_dem=True`):
+
+        * **dep** map: combined elevation/bathymetry [m+ref]
 
         Parameters
         ----------
@@ -487,6 +497,9 @@ class SfincsModel(Model):
 
             * Required variable: ['uparea']
             * Optional variable: ['flwdir']
+        adjust_dem: bool, optional
+            Adjust the model elevation such that each downstream cell is at the
+            same or lower elevation. By default True.
         reproj_method: str, optional
             Method used to reproject hydrography data, by default 'bilinear'
         """
@@ -524,8 +537,14 @@ class SfincsModel(Model):
             ds_out = xr.merge([da_upa, da_flw])
 
         self.logger.info("Saving hydrography data to staticmaps.")
-        self.set_staticmaps(data=ds_out["uparea"])
-        self.set_staticmaps(data=ds_out["flwdir"])
+        self.set_staticmaps(ds_out["uparea"])
+        self.set_staticmaps(ds_out["flwdir"])
+
+        if adjust_dem:
+            self.logger.info(f"Hydrologically adjusting {name} map.")
+            flwdir = hydromt.flw.flwdir_from_da(ds_out["flwdir"], ftype="d8")
+            da_elv.data = flwdir.dem_adjust(da_elv.values)
+            self.set_staticmaps(da_elv, name)
 
     def setup_river_bathymetry(
         self,
@@ -640,7 +659,9 @@ class SfincsModel(Model):
 
         # correct dem d4
         if correct_4d:
-            da_elv_riv.data = flwdir.dem_adjust_d4(da_elv_riv.values)
+            da_elv_riv.data = flwdir.dem_adjust_d4(
+                da_elv_riv.values, nodata=da_elv_riv.raster.nodata
+            )
 
         riv_mask = (da_elv_riv != da_elv).astype(np.uint8)
         riv_mask.raster.set_nodata(0)
@@ -816,9 +837,14 @@ class SfincsModel(Model):
         )
         # reproject using median
         da_cn = da_org.raster.reproject_like(self.staticmaps, method="med")
-        # TODO set CN=100 based on water mask
+        # CN=100 based on water mask
+        if "rivmsk" in self.staticmaps:
+            self.logger.info(
+                'Updating CN map based on "rivmsk" from setup_river_bathymetry method.'
+            )
+            da_cn = da_cn.where(self.staticmaps["rivmsk"] == 0, 100)
         # convert to potential maximum soil moisture retention S (1000/CN - 10) [inch]
-        da_scs = workflows.cn_to_s(da_cn, self.mask > 0)
+        da_scs = workflows.cn_to_s(da_cn, self.mask > 0).round(3)
         # set staticmaps
         mname = self._MAPS["curve_number"]
         da_scs.attrs.update(**self._ATTRS.get(mname, {}))
@@ -827,7 +853,9 @@ class SfincsModel(Model):
         self.config.pop("qinf", None)
         self.set_config(f"{mname}file", f"sfincs.{mname}")
 
-    def setup_manning_roughness(self, lulc_fn="vito", map_fn=None):
+    def setup_manning_roughness(
+        self, lulc_fn="vito", map_fn=None, riv_man=0.03, lnd_man=0.1
+    ):
         """Setup model manning rouchness map (manningfile) from gridded
         land-use/land-cover map and manning roughness mapping table.
 
@@ -844,21 +872,42 @@ class SfincsModel(Model):
         map_fn: path-like, optional
             CSV mapping file with lulc classes in the index column and manning values
             in another column with 'N' as header.
+        lnd_man, riv_man: float, optional
+            Constant manning rougness values for land (by default lnd_man = 0.1 s.m-1/3)
+            and river cells (by default riv_man = 0.03 s.m-1/3).
+            These values are set based on the river mask ('rivmsk') staticmaps layer
+            from the `setup_river_bathymetry` component.
+            Manning roughness for land cells are superseeded by the landuse-landcover
+            map based values if `lulc_fn` is not None.
         """
-        if map_fn is None:
-            map_fn = join(DATADIR, "lulc", f"{lulc_fn}_mapping.csv")
-        if not os.path.isfile(map_fn):
-            raise IOError(f"Mannng roughness mapping file not found: {map_fn}")
-        da_org = self.data_catalog.get_rasterdataset(
-            lulc_fn, geom=self.region, buffer=10, variables=["lulc"]
-        )
-        # reproject and reclassify
-        # TODO use generic names for parameters
-        # FIXME use hydromt general version!!
         da_msk = self.mask > 0
-        da_man = workflows.landuse(
-            da_org, da_msk, map_fn, logger=self.logger, params=["N"]
-        )["N"]
+        da_man = xr.full_like(da_msk, lnd_man, dtype=np.float32)
+        da_man.raster.set_nodata(-9999.0)
+        if lulc_fn is not None:
+            if map_fn is None:
+                map_fn = join(DATADIR, "lulc", f"{lulc_fn}_mapping.csv")
+            if not os.path.isfile(map_fn):
+                raise IOError(f"Mannng roughness mapping file not found: {map_fn}")
+            da_org = self.data_catalog.get_rasterdataset(
+                lulc_fn, geom=self.region, buffer=10, variables=["lulc"]
+            )
+            # reproject and reclassify
+            # TODO use generic names for parameters
+            # FIXME use hydromt general version!!
+            da_man = workflows.landuse(
+                da_org, da_msk, map_fn, logger=self.logger, params=["N"]
+            )["N"]
+        if "rivmsk" in self.staticmaps:
+            msg = "Setting constant manning roughness for river cells."
+            self.logger.info(msg)
+            da_man = da_man.where(self.staticmaps["rivmsk"] != 1, riv_man)
+        elif lulc_fn is None:
+            self.logger.warning(
+                'Skipping spatial variable manning roughness map as no river mask ("rivmsk" staticmaps layer)'
+                ' or landuse-landcover map ("lulc_fn" argument) was provided. Set constant manning roughness'
+                ' using the "manning", "manning_land" and/or "manning_sea" parameters in the sfincs.inp file.'
+            )
+            return
         # mask and set precision
         da_man = da_man.where(da_msk, da_man.raster.nodata).round(3)
         # set staticmaps
@@ -1814,7 +1863,7 @@ class SfincsModel(Model):
         variables=["staticmaps", "states", "results.hmax"],
         root=None,
         driver="GTiff",
-        compress="lzw",
+        compress="deflate",
         **kwargs,
     ):
         """Write model 2D raster variables to geotiff files.

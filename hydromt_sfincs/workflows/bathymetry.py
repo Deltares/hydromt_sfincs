@@ -262,16 +262,16 @@ def detect_estuary(gdf_stream, da_rivmask, min_convergence=1e-2, smooth_n=1, max
     gdf_est["estuary"] = estuary
     #  set constant depth within estuary based on most upstream estimate
     if "rivdph" in gdf_est.columns:
-        rivwth = gdf_est["rivdph"].values
+        rivdph = gdf_est["rivdph"].values
         for idx in idxs_est:
-            rivwth0 = rivwth[idx]
+            rivdph0 = rivdph[idx]
             while True:
                 idx_ds = flw.idxs_ds[idx]
                 if idx_ds == idx:
                     break
-                rivwth[idx_ds] = rivwth0
+                rivdph[idx_ds] = rivdph0
                 idx = idx_ds
-        gdf_est["rivdph"] = rivwth
+        gdf_est["rivdph"] = rivdph
     return gdf_est
 
 
