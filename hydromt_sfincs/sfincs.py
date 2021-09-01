@@ -623,12 +623,12 @@ class SfincsModel(Model):
             self.logger.info("Deriving river segment average width.")
             gdf_stream["rivwth"] = workflows.get_rivwth(
                 gdf_stream, da_rivmask=da_rivmask
-            )
+            )[0]
 
         # make sure gdf_stream has complete rivdph and rivwth data
         # if use_basemap_river: combine rivwth and qbankfull from gdf_riv and compute rivdph
         kwargs = dict(hc=hc, hp=hp, hmin=hmin, wmin=wmin, max_dist=100)
-        gdf_stream = workflows.estimate_bathymetry(gdf_stream, gdf_riv, **kwargs)
+        gdf_stream = workflows.get_river_bathymetry(gdf_stream, gdf_riv, **kwargs)
 
         if correct_rivbank and da_rivmask is not None:
             self.logger.info("Deriving river bank elevation.")
@@ -642,13 +642,18 @@ class SfincsModel(Model):
             # TODO: smooth riverbank values ?
 
         if correct_estuary and da_rivmask is not None:
-            # set riverdepth constant in estuaries based on theory of Gisen et al. 2015
+            # set width from mask and depth constant in estuaries based on theory of Gisen et al. 2015
             # estuaries based on convergence of width from river mask
             # TODO expose arguments
-            self.logger.info("Detecting estuaries.")
-            gdf_stream = workflows.detect_estuary(gdf_stream, da_rivmask=da_rivmask)
+            self.logger.info("deriving estuaries.")
+            gdf_stream, da_estmask = workflows.get_estuary_bathymetry(
+                gdf_stream, da_rivmask=da_rivmask
+            )
             nseg = np.sum(gdf_stream["estuary"].values)
             self.logger.info(f"{nseg} segments classified as estuary.")
+            if not rivwth_from_mask:
+                rivwth_from_mask = True
+                da_rivmask = da_estmask
 
         # burn river depth
         da_rivmask = da_rivmask if rivwth_from_mask else None
@@ -840,7 +845,7 @@ class SfincsModel(Model):
         # CN=100 based on water mask
         if "rivmsk" in self.staticmaps:
             self.logger.info(
-                'Updating CN map based on "rivmsk" from setup_river_bathymetry method.'
+                'Updating CN map based on "rivmsk" from setup_river_hydrography method.'
             )
             da_cn = da_cn.where(self.staticmaps["rivmsk"] == 0, 100)
         # convert to potential maximum soil moisture retention S (1000/CN - 10) [inch]
@@ -876,7 +881,7 @@ class SfincsModel(Model):
             Constant manning rougness values for land (by default lnd_man = 0.1 s.m-1/3)
             and river cells (by default riv_man = 0.03 s.m-1/3).
             These values are set based on the river mask ('rivmsk') staticmaps layer
-            from the `setup_river_bathymetry` component.
+            from the `setup_river_hydrography` component.
             Manning roughness for land cells are superseeded by the landuse-landcover
             map based values if `lulc_fn` is not None.
         """

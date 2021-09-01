@@ -7,8 +7,6 @@ from scipy import ndimage
 from typing import Union
 import logging
 
-from xarray.core.utils import V
-
 from ..gis_utils import nearest, spread2d
 
 logger = logging.getLogger(__name__)
@@ -18,9 +16,9 @@ __all__ = [
     "mask_topobathy",
     "get_rivbank_dz",
     "get_rivwth",
-    "estimate_bathymetry",
+    "get_river_bathymetry",
+    "get_estuary_bathymetry",
     "burn_bathymetry",
-    "detect_estuary",
 ]
 
 
@@ -203,6 +201,7 @@ def get_rivwth(
     """Return mean river width along segments in gdf_stream derived by
     the stream area of each segment divided by the segment length."""
     assert da_rivmask.raster.crs.is_projected
+    gdf_stream = gdf_stream.copy()
     # get/check river length
     if "rivlen" not in gdf_stream.columns:
         gdf_stream["rivlen"] = gdf_stream.to_crs(da_rivmask.raster.crs).length
@@ -223,10 +222,12 @@ def get_rivwth(
     )
     rivwth = seg_count * cellarea / gdf_stream["rivlen"]
     rivwth = np.where(seg_count > nmin, rivwth, -9999)
-    return rivwth
+    return rivwth, segid_spread["segid"].where(da_rivmask, 0)
 
 
-def detect_estuary(gdf_stream, da_rivmask, min_convergence=1e-2, smooth_n=1, max_elv=2):
+def get_estuary_bathymetry(
+    gdf_stream, da_rivmask, min_convergence=1e-2, smooth_n=1, max_elv=2
+):
     # NOTE: works best with 2-5km river segments.
     assert da_rivmask.raster.crs.is_projected
     assert np.all(np.isin(["idx", "idx_ds", "uparea", "elevtn"], gdf_stream.columns))
@@ -240,42 +241,45 @@ def detect_estuary(gdf_stream, da_rivmask, min_convergence=1e-2, smooth_n=1, max
     # get rivwth from mask based on main stream only and smooth
     main_stem = np.hstack([flw.idxs_us_main[flw.idxs_us_main >= 0], flw.idxs_pit])
     rivwth = np.full(gdf_est.index.size, -9999.0, np.float32)
-    rivwth[main_stem] = get_rivwth(gdf_est.iloc[main_stem], da_rivmask)
-    rivwth = flw.moving_average(rivwth, smooth_n, restrict_strord=True, nodata=-9999)
-    gdf_est["rivwth_estuary"] = rivwth
+    rivwth[main_stem], segids = get_rivwth(gdf_est.iloc[main_stem], da_rivmask)
+    rivwth = flw.moving_average(rivwth, smooth_n, restrict_strord=True, nodata=-9999.0)
     # estuaries defined as area from pit moving upstream until point where
     # width convergence falls below "min_convergence" threshold
     rivlen = gdf_est["rivlen"].values
     estuary = np.full(rivwth.size, False, bool)
     elv_check = gdf_est["elevtn"].values[flw.idxs_pit] < max_elv
-    estuary[flw.idxs_pit[elv_check]] = True
-    idxs_est = []  # indices of most upstream point of estuaries
+    wth_check = rivwth[flw.idxs_pit] != -9999.0
+    estuary[flw.idxs_pit[np.logical_and(elv_check, wth_check)]] = True
     for idx in flw.idxs_seq:  # down- to upstream
         if not estuary[idx]:
             continue
         idx1 = flw.idxs_us_main[idx]
-        dwdl = (rivwth[idx] - rivwth[idx1]) / np.maximum(rivlen[idx], 1)
-        if dwdl > min_convergence:
+        if (
+            rivlen[idx] > 0
+            and ((rivwth[idx] - rivwth[idx1]) / rivlen[idx]) > min_convergence
+        ):
             estuary[idx1] = True
-        else:
-            idxs_est.append(idx)
     gdf_est["estuary"] = estuary
+    # estuary mask
+    da_estmask = segids.isin(np.where(estuary[main_stem])[0] + 1).astype(np.int8)
+    da_estmask.raster.set_nodata(0)
+    da_estmask.raster.set_crs(da_rivmask.raster.crs)
+    # set riverwidth from mask
+    if "rivwth" not in gdf_est.columns:
+        gdf_est["rivwth"] = np.nan
+    gdf_est.loc[estuary, "rivwth"] = rivwth[estuary]
     #  set constant depth within estuary based on most upstream estimate
     if "rivdph" in gdf_est.columns:
-        rivdph = gdf_est["rivdph"].values
-        for idx in idxs_est:
-            rivdph0 = rivdph[idx]
-            while True:
-                idx_ds = flw.idxs_ds[idx]
-                if idx_ds == idx:
-                    break
-                rivdph[idx_ds] = rivdph0
-                idx = idx_ds
-        gdf_est["rivdph"] = rivdph
-    return gdf_est
+        gdf_est0 = gdf_est[gdf_est["estuary"]]
+        flw0 = pyflwdir.from_dataframe(gdf_est0.set_index("idx"))
+        rivdph = gdf_est0["rivdph"]
+        rivdph[flw0.n_upstream > 0] = -1
+        rivdph = flw0.fillnodata(rivdph, -1, "down")
+        gdf_est.loc[gdf_est0.index, "rivdph"] = rivdph
+    return gdf_est, da_estmask
 
 
-def estimate_bathymetry(
+def get_river_bathymetry(
     gdf_stream,
     gdf_data=None,
     max_dist=None,
@@ -359,33 +363,50 @@ def burn_bathymetry(gdf_stream, da_elevtn, da_rivmask=None, add_rivbnk_dz=False)
     if not np.all(check_cols):
         miss_cols = '", "'.join(np.array(cols)[~check_cols])
         raise ValueError(f'Missing gdf columns: "{miss_cols}"')
-    # get river mask from buffered river centerline geometry if not provided
-    if da_rivmask is None:
-        gdf_stream_buf = gdf_stream.copy()
-        gdf_stream_buf["geometry"] = gdf_stream.buffer(gdf_stream["rivwth"] / 2.0)
-        da_rivmask = da_elevtn.raster.geometry_mask(gdf_stream_buf)
+    gdf_stream_buf = gdf_stream.copy()
+    gdf_stream_buf["geometry"] = gdf_stream_buf.buffer(gdf_stream_buf["rivwth"] / 2.0)
+    if da_rivmask is not None:
+        # mask model cells which are completely inside rivmask using 'min' interpolation
+        da_rivmask = da_rivmask.raster.reproject_like(da_elevtn, "min") != 0
+        # remove segments which are in mask from buffered stream lines
+        index, crs = gdf_stream.index, gdf_stream.crs
+        p0, p1 = zip(
+            *[(Point(g.coords[0]), Point(g.coords[-1])) for g in gdf_stream.geometry]
+        )
+        in_mask = np.logical_and(
+            da_rivmask.raster.sample(gpd.GeoSeries(p0, index=index, crs=crs)),
+            da_rivmask.raster.sample(gpd.GeoSeries(p1, index=index, crs=crs)),
+        )
+        gdf_stream_buf.loc[in_mask.values, "rivwth"] = 1
     else:
-        da_rivmask = da_rivmask.raster.reproject_like(da_elevtn)
-    # get river centerline z plus optional riverbank dz and spread within river mask
+        da_rivmask = xr.full_like(da_elevtn, False, bool)
+    # buffer and rasterize streams
+    da_rivbuffer = da_rivmask.raster.geometry_mask(gdf_stream_buf)
+    # combine stream buffer
+    da_rivmask = np.logical_or(da_rivmask, da_rivbuffer)
+
+    # get river centerline z plus optional riverbank dz
     nodata = da_elevtn.raster.nodata
     mask = da_elevtn != nodata
     riv_center_mask = da_elevtn.raster.geometry_mask(gdf_stream)
     riv_center_z0 = da_elevtn.where(riv_center_mask, nodata)
     if add_rivbnk_dz:
         riv_center_z0 = riv_center_z0 + da_elevtn.raster.rasterize(
-            gdf_stream_buf.sort_values(by="uparea"),
+            gdf_stream.sort_values(by="uparea"),
             col_name="rivbnk_dz",
             nodata=0,
         )
-    riv_center_z0.raster.set_nodata(nodata)
-    riv_center_z0.name = "elevtn"
-    z0_riv = spread2d(riv_center_z0, da_rivmask)
     # river bedlevel based on z0 - rivdph
-    zb_riv = z0_riv["elevtn"] - da_elevtn.raster.rasterize(
-        gdf_stream_buf.sort_values(by="uparea"),
+    riv_center_zb = riv_center_z0 - da_elevtn.raster.rasterize(
+        gdf_stream.sort_values(by="uparea"),
         col_name="rivdph",
         nodata=0,
     )
+    # spread in river mask
+    riv_center_zb.raster.set_nodata(nodata)
+    riv_center_zb.name = "elevtn"
+    zb_riv = spread2d(riv_center_zb, da_rivmask)["elevtn"]
+    # combine bathymetry with elevtn
     riv_mask = np.logical_or(da_rivmask, riv_center_mask)
     zb = zb_riv.where(riv_mask, da_elevtn).where(mask, nodata)
     zb.raster.set_nodata(-9999)
