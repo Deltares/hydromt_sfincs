@@ -445,7 +445,7 @@ class SfincsModel(Model):
             )
         if exclude_mask_fn:
             gdf_exclude = self.data_catalog.get_geodataframe(
-                include_mask_fn, geom=self.region
+                exclude_mask_fn, geom=self.region
             )
         # mask values
         da_mask = self.mask
