@@ -5,7 +5,8 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>hydromt_sfincs.SfincsModel.setup_q_forcing &mdash; hydromt_sfincs  documentation</title>
-      <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -101,7 +102,7 @@
       </nav>
 
       <div class="wy-nav-content">
-        <div class="rst-content">
+        <div class="rst-content style-external-links">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
@@ -146,10 +147,10 @@
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_q_forcing">
 <span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_q_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geodataset_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeseries_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_q_forcing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_q_forcing" title="Permalink to this definition"></a></dt>
 <dd><p>Setup discharge boundary point locations (src) and time series (dis).</p>
-<p>Use geodataset_fn to set the discharge boundary from a dataset of point location
+<p>Use <cite>geodataset_fn</cite> to set the discharge boundary from a dataset of point location
 timeseries. Only locations within the model domain are selected.</p>
-<p>Use timeseries_fn to set discharge boundary conditions to pre-set (src) locations,
-e.g. after the <cite>setup_river_inflow</cite> method.</p>
+<p>Use <cite>timeseries_fn</cite> to set discharge boundary conditions to pre-set (src) locations,
+e.g. after the <code class="xref py py-meth docutils literal notranslate"><span class="pre">setup_river_inflow()</span></code> method.</p>
 <p>The dataset/timeseries are clipped to the model time based on the model config
 tstart and tstop entries.</p>
 <p>Adds model layers:</p>
@@ -171,7 +172,7 @@ which can be setup through the data_catalog yml file.</p>
 </p></li>
 <li><p><strong>timeseries_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Path</em>) – Path to tabulated timeseries csv file with time index in first column
 and location IDs in the first row,
-see <code class="xref py py-func docutils literal notranslate"><span class="pre">open_timeseries_from_table()</span></code>, for details.
+see <code class="xref py py-meth docutils literal notranslate"><span class="pre">hydromt.open_timeseries_from_table()</span></code>, for details.
 NOTE: tabulated timeseries files cannot yet be set through the data_catalog yml file.</p></li>
 </ul>
 </dd>

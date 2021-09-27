@@ -4,7 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>hydromt_sfincs.sfincs &mdash; hydromt_sfincs  documentation</title>
-      <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -66,7 +67,7 @@
       </nav>
 
       <div class="wy-nav-content">
-        <div class="rst-content">
+        <div class="rst-content style-external-links">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
@@ -205,12 +206,8 @@
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Define model region and setup topobathy (depfile) model layer.</span>
 
-<span class="sd">        To merge elevation and bathymetry data, elevation data is taken for land and</span>
-<span class="sd">        bathymetry for sea cells, see ``landmask_fn``. An optional ``merge_buffer``</span>
-<span class="sd">        can be set to define a buffer aourd the land cells where the bathymetry is</span>
-<span class="sd">        estimated from a linear interpolation of elevation and bathymetry data.</span>
-
-
+<span class="sd">        The input topobathy dataset is reprojected to the model projected `crs` and</span>
+<span class="sd">        resolution `res` using `reproj_method` interpolation.</span>
 
 <span class="sd">        Adds model layers:</span>
 
@@ -220,7 +217,7 @@
 <span class="sd">        ----------</span>
 <span class="sd">        region : dict</span>
 <span class="sd">            Dictionary describing region of interest, e.g. {&#39;bbox&#39;: [xmin, ymin, xmax, ymax]}</span>
-<span class="sd">            See :py:func:`~hydromt.workflows.parse_region()` for all options</span>
+<span class="sd">            See :py:meth:`hydromt.workflows.parse_region()` for all options</span>
 <span class="sd">        res : float</span>
 <span class="sd">            Model resolution [m], by default 100 m.</span>
 <span class="sd">        crs : str, int, optional</span>
@@ -768,7 +765,7 @@
 <span class="sd">        ---------</span>
 <span class="sd">        gauges_fn: str</span>
 <span class="sd">            Path to observation points geometry file.</span>
-<span class="sd">            See :py:func:`~hydromt.open_vector`, for accepted files.</span>
+<span class="sd">            See :py:meth:`hydromt.open_vector`, for accepted files.</span>
 <span class="sd">        overwrite: bool, optional</span>
 <span class="sd">            If True, overwrite existing gauges instead of appending the new gauges.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -856,16 +853,16 @@
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup waterlevel boundary point locations (bnd) and time series (bzs).</span>
 
-<span class="sd">        Use geodataset_fn to set the waterlevel boundary from a dataset of point location</span>
+<span class="sd">        Use `geodataset_fn` to set the waterlevel boundary from a dataset of point location</span>
 <span class="sd">        timeseries. The dataset is clipped to the model region plus `buffer` [m], and</span>
 <span class="sd">        model time based on the model config tstart and tstop entries.</span>
 
-<span class="sd">        Use timeseries_fn to set a spatially uniform waterlevel boundary representative</span>
+<span class="sd">        Use `timeseries_fn` to set a spatially uniform waterlevel boundary representative</span>
 <span class="sd">        for all waterlevel boundary cells (msk==2), The timeseries is clipped based on</span>
 <span class="sd">        the model config tstart and tstop entries. The boundary point location is infered</span>
 <span class="sd">        from the model mask.</span>
 
-<span class="sd">        If timeseries_fn and geodataset_fn are both not provided a dummy (h=0) waterlevel</span>
+<span class="sd">        If `timeseries_fn` and `geodataset_fn` are both not provided a dummy (h=0) waterlevel</span>
 <span class="sd">        boundary is set.</span>
 
 <span class="sd">        The vertical reference of the waterlevel data can be corrected to match</span>
@@ -891,7 +888,7 @@
 <span class="sd">        timeseries_fn: str, Path</span>
 <span class="sd">            Path to spatially uniform timeseries csv file with time index in first column</span>
 <span class="sd">            and waterlevels in the second column. The first row is interpreted as header,</span>
-<span class="sd">            see :py:func:`hydromt.open_timeseries_from_table`, for details.</span>
+<span class="sd">            see :py:meth:`hydromt.open_timeseries_from_table`, for details.</span>
 <span class="sd">            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.</span>
 <span class="sd">        offset_fn: str, optional</span>
 <span class="sd">            Path or data source name for gridded offset between vertical reference of elevation and waterlevel data,</span>
@@ -954,11 +951,11 @@
 <div class="viewcode-block" id="SfincsModel.setup_q_forcing"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_q_forcing.html#hydromt_sfincs.SfincsModel.setup_q_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_q_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">geodataset_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeseries_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup discharge boundary point locations (src) and time series (dis).</span>
 
-<span class="sd">        Use geodataset_fn to set the discharge boundary from a dataset of point location</span>
+<span class="sd">        Use `geodataset_fn` to set the discharge boundary from a dataset of point location</span>
 <span class="sd">        timeseries. Only locations within the model domain are selected.</span>
 
-<span class="sd">        Use timeseries_fn to set discharge boundary conditions to pre-set (src) locations,</span>
-<span class="sd">        e.g. after the `setup_river_inflow` method.</span>
+<span class="sd">        Use `timeseries_fn` to set discharge boundary conditions to pre-set (src) locations,</span>
+<span class="sd">        e.g. after the :py:meth:`~hydromt_sfins.SfincsModel.setup_river_inflow` method.</span>
 
 <span class="sd">        The dataset/timeseries are clipped to the model time based on the model config</span>
 <span class="sd">        tstart and tstop entries.</span>
@@ -981,7 +978,7 @@
 <span class="sd">        timeseries_fn: str, Path</span>
 <span class="sd">            Path to tabulated timeseries csv file with time index in first column</span>
 <span class="sd">            and location IDs in the first row,</span>
-<span class="sd">            see :py:func:`~hydromt.open_timeseries_from_table`, for details.</span>
+<span class="sd">            see :py:meth:`hydromt.open_timeseries_from_table`, for details.</span>
 <span class="sd">            NOTE: tabulated timeseries files cannot yet be set through the data_catalog yml file.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1026,7 +1023,7 @@
 <span class="sd">        gridded discharge dataset.</span>
 
 <span class="sd">        If `locs_fn` is not provided, the discharge source locations are expected to be</span>
-<span class="sd">        pre-set, e.g. using the :py:func:`~hydromt_sfincs.SfincsModel.setup_river_inflow` method.</span>
+<span class="sd">        pre-set, e.g. using the :py:meth:`~hydromt_sfincs.SfincsModel.setup_river_inflow` method.</span>
 
 <span class="sd">        If an upstream area grid is provided the discharge boundary condition is</span>
 <span class="sd">        snapped to the best fitting grid cell within a `wdw` neighboring cells.</span>
@@ -1048,7 +1045,7 @@
 <span class="sd">            * Required coordinates: [&#39;time&#39;, &#39;y&#39;, &#39;x&#39;]</span>
 <span class="sd">        locs_fn: str, Path, optional</span>
 <span class="sd">            Path or data source name for point location dataset.</span>
-<span class="sd">            See :py:func:`~hydromt.open_vector`, for accepted files.</span>
+<span class="sd">            See :py:meth:`hydromt.open_vector`, for accepted files.</span>
 
 <span class="sd">        uparea_fn: str, Path, optional</span>
 <span class="sd">            Path to upstream area grid in gdal (e.g. geotiff) or netcdf format.</span>
@@ -1217,7 +1214,7 @@
 <span class="sd">        precip_fn, str, Path</span>
 <span class="sd">            Path to tabulated timeseries csv file with time index in first column</span>
 <span class="sd">            and location IDs in the first row,</span>
-<span class="sd">            see :py:func:`~hydromt.open_timeseries_from_table`, for details.</span>
+<span class="sd">            see :py:meth:`hydromt.open_timeseries_from_table`, for details.</span>
 <span class="sd">            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ts</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">open_timeseries_from_table</span><span class="p">(</span><span class="n">precip_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
