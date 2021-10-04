@@ -8,6 +8,14 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 [Unreleased]
 ------------
 
+Bugfix
+^^^^^^
+- bugfix setup_p_forcing
+
+Changed
+^^^^^^^
+- use mamba to setup CI environments
+
 Changed
 ^^^^^^^
 - ``setup_mask``: removed default values and new option to combine a polygon and elevation based criteria.

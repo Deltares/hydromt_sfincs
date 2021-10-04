@@ -1134,7 +1134,7 @@ class SfincsModel(Model):
             Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
         """
         ts = hydromt.open_timeseries_from_table(precip_fn, **kwargs)
-        self.set_forcing_1d(name="precip", ts=ts)
+        self.set_forcing_1d(name="precip", ts=ts.squeeze())
         # remove netamprfile
         fname2 = self._FORCING["precip2D"][0]
         self._forcing.pop(fname2, None)
@@ -1289,6 +1289,8 @@ class SfincsModel(Model):
         self.write_states()
         # config last; might be udpated when writing maps, states or forcing
         self.write_config()
+        # uncomment after bugfix https://github.com/Deltares/hydromt/issues/71
+        # self.write_data_catalog()  # new in hydromt v0.4.4
 
     def read_staticmaps(self, crs=None):
         """Read SFNCS binary staticmaps and save to `staticmaps` attribute.
