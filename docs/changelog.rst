@@ -14,6 +14,10 @@ Bugfix
 
 Changed
 ^^^^^^^
+- use mamba to setup CI environments
+
+Changed
+^^^^^^^
 - ``setup_mask``: removed default values and new option to combine a polygon and elevation based criteria.
 
 v0.2.0 (2 August 2021)
