@@ -406,8 +406,8 @@ hydroMT model plugins: sfincs (v0.2.1.dev0)
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s1">&#39;sfincs_update_precip.ini&#39;</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn_ini</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s2">&quot;sfincs_update_precip.ini&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn_ini</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
 </pre></div>
@@ -504,22 +504,22 @@ Options:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2021-09-27 06:31:01,936 - update - log - INFO - HydroMT version: 0.4.3.dev
-2021-09-27 06:31:01,936 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
-2021-09-27 06:31:01,936 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
-2021-09-27 06:31:01,936 - update - main - INFO - User settings:
-2021-09-27 06:31:01,941 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.1.dev0).
-2021-09-27 06:31:02,035 - update - sfincs - INFO - Model read
-2021-09-27 06:31:02,046 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
-2021-09-27 06:31:02,046 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
-2021-09-27 06:31:02,046 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
-2021-09-27 06:31:02,056 - update - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.4/data_catalog.yml
-2021-09-27 06:31:02,139 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.4/era5_hourly.nc
-2021-09-27 06:31:02,386 - update - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
-2021-09-27 06:31:02,390 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
-2021-09-27 06:31:02,564 - update - sfincs - INFO - Write forcing files
-2021-09-27 06:31:02,631 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
-2021-09-27 06:31:02,686 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip/sfincs.inp
+2021-10-04 15:15:27,782 - update - log - INFO - HydroMT version: 0.4.4.dev
+2021-10-04 15:15:27,782 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
+2021-10-04 15:15:27,782 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
+2021-10-04 15:15:27,782 - update - main - INFO - User settings:
+2021-10-04 15:15:27,786 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.1.dev0).
+2021-10-04 15:15:27,842 - update - sfincs - INFO - Model read
+2021-10-04 15:15:27,846 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
+2021-10-04 15:15:27,846 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
+2021-10-04 15:15:27,846 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
+2021-10-04 15:15:27,850 - update - data_adapter - INFO - Adding sample data v0.0.5 from artifacts
+2021-10-04 15:15:27,936 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.5/era5_hourly.nc
+2021-10-04 15:15:28,017 - update - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
+2021-10-04 15:15:28,022 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
+2021-10-04 15:15:28,234 - update - sfincs - INFO - Write forcing files
+2021-10-04 15:15:28,282 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2021-10-04 15:15:28,297 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip/sfincs.inp
 
 </pre></div></div>
 </div>
@@ -573,7 +573,7 @@ sfincs.bzs  sfincs.ind  sfincs.man  sfincs.precip
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="n">mod</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s2">&quot;sfincs_coastal_precip&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>
-<span class="n">mod</span><span class="o">.</span><span class="n">forcing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;bzs&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># let&#39;s focus on precip for now</span>
+<span class="n">mod</span><span class="o">.</span><span class="n">forcing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;bzs&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># let&#39;s focus on precip for now</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">plot_forcing</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -593,8 +593,8 @@ sfincs.bzs  sfincs.ind  sfincs.man  sfincs.precip
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># precipitation forcing is in the key &quot;netampr&quot;</span>
 <span class="n">precip_sum</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">forcing</span><span class="p">[</span><span class="s2">&quot;netampr&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
-<span class="n">precip_sum</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;mm&#39;</span><span class="p">)</span>
-<span class="n">_</span>  <span class="o">=</span> <span class="n">precip_sum</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="n">precip_sum</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s2">&quot;mm&quot;</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">precip_sum</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -611,8 +611,8 @@ sfincs.bzs  sfincs.ind  sfincs.man  sfincs.precip
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s1">&#39;sfincs_update_forcing.ini&#39;</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn_ini</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s2">&quot;sfincs_update_forcing.ini&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn_ini</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
 </pre></div>
@@ -652,7 +652,8 @@ aggregate = False               # if True return the aggregated mean as spatiall
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># content of gauges</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="n">fn_gauges</span> <span class="o">=</span> <span class="s1">&#39;data/venice_gauges.csv&#39;</span>
+
+<span class="n">fn_gauges</span> <span class="o">=</span> <span class="s2">&quot;data/venice_gauges.csv&quot;</span>
 <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn_gauges</span><span class="p">)</span>
 <span class="n">df</span>
 </pre></div>
@@ -736,36 +737,36 @@ aggregate = False               # if True return the aggregated mean as spatiall
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2021-09-27 06:31:08,339 - update - log - INFO - HydroMT version: 0.4.3.dev
-2021-09-27 06:31:08,339 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
-2021-09-27 06:31:08,339 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
-2021-09-27 06:31:08,339 - update - main - INFO - User settings:
-2021-09-27 06:31:08,344 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.1.dev0).
-2021-09-27 06:31:08,435 - update - sfincs - INFO - Model read
-2021-09-27 06:31:08,446 - update - model_api - INFO - setup_gauges.gauges_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
-2021-09-27 06:31:08,446 - update - model_api - INFO - setup_gauges.overwrite: False
-2021-09-27 06:31:08,446 - update - data_adapter - INFO - Updating data sources from yml file /home/runner/.hydromt_data/data/v0.0.4/data_catalog.yml
-2021-09-27 06:31:08,543 - update - data_adapter - INFO - DataCatalog: Getting venice_gauges GeoDataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
-2021-09-27 06:31:08,550 - update - data_adapter - INFO - GeoDataFrame: Read csv data and clip to geom (epsg:32633) [268650.000, 5018550.000, 332400.000, 5059350.000].
-2021-09-27 06:31:08,691 - update - sfincs - INFO - obs set based on /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
-2021-09-27 06:31:08,692 - update - model_api - INFO - setup_h_forcing.geodataset_fn: gtsmv3_eu_era5
-2021-09-27 06:31:08,692 - update - model_api - INFO - setup_h_forcing.timeseries_fn: None
-2021-09-27 06:31:08,692 - update - model_api - INFO - setup_h_forcing.offset_fn: None
-2021-09-27 06:31:08,692 - update - model_api - INFO - setup_h_forcing.buffer: 0
-2021-09-27 06:31:08,703 - update - data_adapter - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.4/gtsmv3_eu_era5.nc
-2021-09-27 06:31:08,711 - update - data_adapter - INFO - GeoDataset: Read netcdf data and clip to geom (epsg:32633) [268650.000, 5018550.000, 332400.000, 5059350.000].
-2021-09-27 06:31:08,947 - update - model_api - WARNING - Replacing forcing: bzs
-2021-09-27 06:31:08,948 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
-2021-09-27 06:31:08,948 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
-2021-09-27 06:31:08,948 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
-2021-09-27 06:31:08,958 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.4/era5_hourly.nc
-2021-09-27 06:31:09,197 - update - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
-2021-09-27 06:31:09,201 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
-2021-09-27 06:31:09,371 - update - sfincs - INFO - Write staticgeom files
-2021-09-27 06:31:09,373 - update - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
-2021-09-27 06:31:09,407 - update - sfincs - INFO - Write forcing files
-2021-09-27 06:31:09,488 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
-2021-09-27 06:31:09,543 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing/sfincs.inp
+2021-10-04 15:15:34,525 - update - log - INFO - HydroMT version: 0.4.4.dev
+2021-10-04 15:15:34,525 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
+2021-10-04 15:15:34,525 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
+2021-10-04 15:15:34,525 - update - main - INFO - User settings:
+2021-10-04 15:15:34,530 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.1.dev0).
+2021-10-04 15:15:34,586 - update - sfincs - INFO - Model read
+2021-10-04 15:15:34,591 - update - model_api - INFO - setup_gauges.gauges_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
+2021-10-04 15:15:34,591 - update - model_api - INFO - setup_gauges.overwrite: False
+2021-10-04 15:15:34,592 - update - data_adapter - INFO - Adding sample data v0.0.5 from artifacts
+2021-10-04 15:15:34,683 - update - data_adapter - INFO - DataCatalog: Getting venice_gauges GeoDataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
+2021-10-04 15:15:34,684 - update - data_adapter - INFO - GeoDataFrame: Read csv data and clip to geom (epsg:32633) [268650.000, 5018550.000, 332400.000, 5059350.000].
+2021-10-04 15:15:34,699 - update - sfincs - INFO - obs set based on /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
+2021-10-04 15:15:34,700 - update - model_api - INFO - setup_h_forcing.geodataset_fn: gtsmv3_eu_era5
+2021-10-04 15:15:34,700 - update - model_api - INFO - setup_h_forcing.timeseries_fn: None
+2021-10-04 15:15:34,700 - update - model_api - INFO - setup_h_forcing.offset_fn: None
+2021-10-04 15:15:34,700 - update - model_api - INFO - setup_h_forcing.buffer: 0
+2021-10-04 15:15:34,704 - update - data_adapter - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.5/gtsmv3_eu_era5.nc
+2021-10-04 15:15:34,705 - update - data_adapter - INFO - GeoDataset: Read netcdf data and clip to geom (epsg:32633) [268650.000, 5018550.000, 332400.000, 5059350.000].
+2021-10-04 15:15:34,760 - update - model_api - WARNING - Replacing forcing: bzs
+2021-10-04 15:15:34,760 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
+2021-10-04 15:15:34,760 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
+2021-10-04 15:15:34,760 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
+2021-10-04 15:15:34,764 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.5/era5_hourly.nc
+2021-10-04 15:15:34,842 - update - sfincs - INFO - Write model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
+2021-10-04 15:15:34,847 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
+2021-10-04 15:15:35,062 - update - sfincs - INFO - Write staticgeom files
+2021-10-04 15:15:35,063 - update - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
+2021-10-04 15:15:35,073 - update - sfincs - INFO - Write forcing files
+2021-10-04 15:15:35,136 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2021-10-04 15:15:35,152 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing/sfincs.inp
 
 </pre></div></div>
 </div>
@@ -776,7 +777,7 @@ aggregate = False               # if True return the aggregated mean as spatiall
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># define the model&#39;s configuration file</span>
-<span class="n">root</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;./sfincs_coastal_forcing&#39;</span>
+<span class="n">root</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;./sfincs_coastal_forcing&quot;</span>
 
 <span class="c1"># read the model with hydromt sfincs methods</span>
 <span class="n">mod</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>

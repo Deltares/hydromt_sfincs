@@ -379,7 +379,7 @@ div.rendered_html tbody tr:hover {
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># import dependencies</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span>  <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">hydromt</span>
@@ -395,8 +395,8 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">sfincs_root</span> <span class="o">=</span> <span class="s1">&#39;sfincs_riverine&#39;</span> <span class="c1"># (relative) path to sfincs root</span>
-<span class="n">mod</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+<span></span><span class="n">sfincs_root</span> <span class="o">=</span> <span class="s2">&quot;sfincs_riverine&quot;</span>  <span class="c1"># (relative) path to sfincs root</span>
+<span class="n">mod</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -442,7 +442,7 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s1">&#39;sat&#39;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span><span class="mi">7</span><span class="p">))</span>
+<span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -462,7 +462,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># write hmax to &lt;mod.root&gt;/gis/hmax.tif</span>
-<span class="n">mod</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span><span class="s1">&#39;results.hmax&#39;</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span> <span class="s2">&quot;LZW&quot;</span><span class="p">)</span>
+<span class="n">mod</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span><span class="s2">&quot;results.hmax&quot;</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;LZW&quot;</span><span class="p">)</span>
 
 <span class="c1"># this is identical to the following:</span>
 <span class="c1"># hmax = mod.results[&#39;hmax&#39;]</span>
@@ -483,10 +483,10 @@ div.rendered_html tbody tr:hover {
 <span></span><span class="c1"># read global surface water occurance (GSWO) data to mask permanent water</span>
 <span class="c1"># NOTE to read data for a different region than Northen Italy add this data to the data catalog:</span>
 <span class="c1"># mod.data_catalog.from_yml(&#39;/path/to/data_catalog.yml&#39;)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">data_catalog</span><span class="p">[</span><span class="s1">&#39;gswo&#39;</span><span class="p">])</span>
-<span class="n">gswo</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="s1">&#39;gswo&#39;</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">data_catalog</span><span class="p">[</span><span class="s2">&quot;gswo&quot;</span><span class="p">])</span>
+<span class="n">gswo</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="s2">&quot;gswo&quot;</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="c1"># permanent water where water occurence &gt; 5%</span>
-<span class="n">gswo_mask</span> <span class="o">=</span> <span class="n">gswo</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">5</span>
+<span class="n">gswo_mask</span> <span class="o">=</span> <span class="n">gswo</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;max&quot;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">5</span>
 </pre></div>
 </div>
 </div>
@@ -500,7 +500,7 @@ div.rendered_html tbody tr:hover {
  &#39;driver&#39;: &#39;raster&#39;,
  &#39;paper_doi&#39;: &#39;10.1038/nature20584&#39;,
  &#39;paper_ref&#39;: &#39;Pekel et al. (2016)&#39;,
- &#39;path&#39;: &#39;/home/runner/.hydromt_data/data/v0.0.4/gswo.tif&#39;,
+ &#39;path&#39;: &#39;/home/runner/.hydromt_data/data/v0.0.5/gswo.tif&#39;,
  &#39;source_url&#39;: &#39;https://global-surface-water.appspot.com/download&#39;,
  &#39;source_version&#39;: &#39;v1_1_2019&#39;}
 </pre></div></div>
@@ -510,12 +510,12 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">hmin</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="c1"># minimum flood depth [m] to plot</span>
-<span class="n">da_hmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;hmax&#39;</span><span class="p">]</span> <span class="c1"># hmax is computed from zsmax - zb</span>
+<span></span><span class="n">hmin</span> <span class="o">=</span> <span class="mf">0.2</span>  <span class="c1"># minimum flood depth [m] to plot</span>
+<span class="n">da_hmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;hmax&quot;</span><span class="p">]</span>  <span class="c1"># hmax is computed from zsmax - zb</span>
 <span class="c1"># get overland flood depth with GSWO and set minimum flood depth</span>
-<span class="n">da_hmax_fld</span> <span class="o">=</span> <span class="n">da_hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">gswo_mask</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_hmax</span><span class="o">&gt;</span><span class="n">hmin</span><span class="p">)</span>
+<span class="n">da_hmax_fld</span> <span class="o">=</span> <span class="n">da_hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">gswo_mask</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_hmax</span> <span class="o">&gt;</span> <span class="n">hmin</span><span class="p">)</span>
 <span class="c1"># update attributes for colorbar label later</span>
-<span class="n">da_hmax</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">long_name</span><span class="o">=</span><span class="s1">&#39;flood depth&#39;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+<span class="n">da_hmax</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">long_name</span><span class="o">=</span><span class="s2">&quot;flood depth&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -526,12 +526,21 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># create hmax plot and save to mod.root/figs/hmax.png</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s1">&#39;sat&#39;</span><span class="p">,</span> <span class="n">geoms</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">,</span> <span class="s1">&#39;obs&#39;</span><span class="p">],</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span><span class="mi">7</span><span class="p">))</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
+    <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">variable</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span>
+    <span class="n">geoms</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;obs&quot;</span><span class="p">],</span>
+    <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+<span class="p">)</span>
 <span class="c1"># plot overland flooding based on gswo mask and mimum flood depth</span>
 <span class="n">cbar_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
-<span class="n">cax_fld</span> <span class="o">=</span> <span class="n">da_hmax_fld</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">,</span> <span class="n">cbar_kwargs</span><span class="o">=</span><span class="n">cbar_kwargs</span><span class="p">)</span>
+<span class="n">cax_fld</span> <span class="o">=</span> <span class="n">da_hmax_fld</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">,</span> <span class="n">cbar_kwargs</span><span class="o">=</span><span class="n">cbar_kwargs</span>
+<span class="p">)</span>
 
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;SFINCS maximum water depth&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SFINCS maximum water depth&quot;</span><span class="p">)</span>
 <span class="c1"># plt.savefig(join(mod.root, &#39;figs&#39;, &#39;hmax.png&#39;), dpi=225, bbox_inches=&quot;tight&quot;)</span>
 </pre></div>
 </div>

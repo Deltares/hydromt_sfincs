@@ -1218,7 +1218,7 @@
 <span class="sd">            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ts</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">open_timeseries_from_table</span><span class="p">(</span><span class="n">precip_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;precip&quot;</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;precip&quot;</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
         <span class="c1"># remove netamprfile</span>
         <span class="n">fname2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_FORCING</span><span class="p">[</span><span class="s2">&quot;precip2D&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_forcing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">fname2</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -1373,6 +1373,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">write_states</span><span class="p">()</span>
         <span class="c1"># config last; might be udpated when writing maps, states or forcing</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_config</span><span class="p">()</span></div>
+        <span class="c1"># uncomment after bugfix https://github.com/Deltares/hydromt/issues/71</span>
+        <span class="c1"># self.write_data_catalog()  # new in hydromt v0.4.4</span>
 
 <div class="viewcode-block" id="SfincsModel.read_staticmaps"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.read_staticmaps.html#hydromt_sfincs.SfincsModel.read_staticmaps">[docs]</a>    <span class="k">def</span> <span class="nf">read_staticmaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Read SFNCS binary staticmaps and save to `staticmaps` attribute.</span>
