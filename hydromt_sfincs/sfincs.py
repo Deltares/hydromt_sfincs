@@ -1289,6 +1289,8 @@ class SfincsModel(Model):
         self.write_states()
         # config last; might be udpated when writing maps, states or forcing
         self.write_config()
+        # uncomment after bugfix https://github.com/Deltares/hydromt/issues/71
+        # self.write_data_catalog()  # new in hydromt v0.4.4
 
     def read_staticmaps(self, crs=None):
         """Read SFNCS binary staticmaps and save to `staticmaps` attribute.
