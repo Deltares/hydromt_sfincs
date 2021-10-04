@@ -1134,7 +1134,7 @@ class SfincsModel(Model):
             Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
         """
         ts = hydromt.open_timeseries_from_table(precip_fn, **kwargs)
-        self.set_forcing_1d(name="precip", ts=ts)
+        self.set_forcing_1d(name="precip", ts=ts.squeeze())
         # remove netamprfile
         fname2 = self._FORCING["precip2D"][0]
         self._forcing.pop(fname2, None)
