@@ -140,7 +140,7 @@ second dataset to convert the vertical datum before merging.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>da1</strong> (<em>xr.DataArray</em>) – Datasets with topobathy data to be merged.</p></li>
 <li><p><strong>da2</strong> (<em>xr.DataArray</em>) – Datasets with topobathy data to be merged.</p></li>
-<li><p><strong>da_offset</strong> (<em>xr.DataArray</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>, </em><em>optional</em>) – Dataset with spatially varying offset or float with uniform offset</p></li>
+<li><p><strong>da_offset</strong> (<em>xr.DataArray</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Dataset with spatially varying offset or float with uniform offset</p></li>
 <li><p><strong>merge_method</strong> (<em>str {'first'</em><em>,</em><em>'last'</em><em>,</em><em>'min'</em><em>,</em><em>'max'}</em>) – <p>merge method, by default ‘first’:</p>
 <ul>
 <li><p>first: use valid new where existing invalid</p></li>
@@ -149,9 +149,9 @@ second dataset to convert the vertical datum before merging.</p>
 <li><p>max: pixel-wise max of existing and new</p></li>
 </ul>
 </p></li>
-<li><p><strong>merge_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Buffer (number of cells) within the da_mask==True region where topobathy
+<li><p><strong>merge_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Buffer (number of cells) within the da_mask==True region where topobathy
 values are based on linear interpolation for a smooth transition, by default 0.</p></li>
-<li><p><strong>reproj_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Method used to reproject the offset and second dataset to the grid of the
+<li><p><strong>reproj_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Method used to reproject the offset and second dataset to the grid of the
 first dataset, by default ‘bilinear’</p></li>
 </ul>
 </dd>

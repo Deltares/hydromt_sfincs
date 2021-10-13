@@ -155,14 +155,14 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>structures_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Path</em>) – Path to structure line geometry file.
+<li><p><strong>structures_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Path</em>) – Path to structure line geometry file.
 The “name” (for thd and weir), “z” and “par1” (for weir only) are optional.
 For weirs: <cite>dz</cite> must be provided if gdf has no “z” column or Z LineString;
 “par1” defaults to 0.6 if gdf has no “par1” column.</p></li>
 <li><p><strong>stype</strong> (<em>{'thd'</em><em>, </em><em>'weir'}</em>) – Structure type.</p></li>
-<li><p><strong>overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, overwrite existing ‘stype’ structures instead of appending the
+<li><p><strong>overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, overwrite existing ‘stype’ structures instead of appending the
 new structures.</p></li>
-<li><p><strong>dz</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>, </em><em>optional</em>) – If provided, for weir structures the z value is calculated from
+<li><p><strong>dz</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – If provided, for weir structures the z value is calculated from
 the model elevation (dep) plus dz.</p></li>
 </ul>
 </dd>

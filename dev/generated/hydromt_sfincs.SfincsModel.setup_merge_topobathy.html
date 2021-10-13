@@ -158,19 +158,19 @@ new dataset to convert the vertical datum before merging.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>topobathy_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>optional</em>) – <p>Path or data source name for topobathy raster data.</p>
+<li><p><strong>topobathy_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – <p>Path or data source name for topobathy raster data.</p>
 <ul>
 <li><p>Required variables: [‘elevtn’]</p></li>
 </ul>
 </p></li>
-<li><p><strong>mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name of polygon with valid new topobathy cells.</p></li>
-<li><p><strong>elv_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for valid new topobathy cells.
+<li><p><strong>mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name of polygon with valid new topobathy cells.</p></li>
+<li><p><strong>elv_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for valid new topobathy cells.
 Note: applied before vertical offset.</p></li>
-<li><p><strong>elv_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for valid new topobathy cells.
+<li><p><strong>elv_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for valid new topobathy cells.
 Note: applied before vertical offset.</p></li>
-<li><p><strong>offset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>optional</em>) – Difference between vertical reference of the current model topobathy and the new
+<li><p><strong>offset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Difference between vertical reference of the current model topobathy and the new
 datasourcs. The offset is added to the new source before merging.</p></li>
-<li><p><strong>merge_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em>, </em><em>optional</em>) – Buffer (number of cells) around cells where the original (merge_method = ‘first’)
+<li><p><strong>merge_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Buffer (number of cells) around cells where the original (merge_method = ‘first’)
 or new (merge_method = ‘last’) dataset where values are linearly interpolated.
 Not recommended to use in combination with merge_methods ‘min’ or ‘max’</p></li>
 <li><p><strong>merge_method</strong> (<em>str {'first'</em><em>,</em><em>'last'</em><em>,</em><em>'min'</em><em>,</em><em>'max'}</em>) – <p>merge method, by default ‘first’:</p>
@@ -181,7 +181,7 @@ Not recommended to use in combination with merge_methods ‘min’ or ‘max’<
 <li><p>max: pixel-wise max of existing and new</p></li>
 </ul>
 </p></li>
-<li><p><strong>reproj_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Method used to reproject the new source and offset data to the model grid,
+<li><p><strong>reproj_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Method used to reproject the new source and offset data to the model grid,
 by default ‘bilinear’</p></li>
 </ul>
 </dd>
