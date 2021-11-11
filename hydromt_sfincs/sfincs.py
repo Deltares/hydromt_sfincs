@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
-from os.path import join, isfile, abspath, dirname, basename
+from os.path import join, isfile, abspath, dirname, basename, isabs
 import glob
 import numpy as np
 import logging
-from numpy.core.fromnumeric import var
 from rasterio.warp import transform_bounds
-from scipy import ndimage
 import geopandas as gpd
 from shapely.geometry import box
 import pandas as pd
@@ -18,11 +16,8 @@ import hydromt
 from hydromt.models.model_api import Model
 from hydromt.vector import GeoDataArray
 from hydromt.raster import RasterDataset, RasterDataArray
-from xarray.core import variable
 
 from . import workflows, utils, plots, DATADIR
-from .gis_utils import flipud
-
 
 __all__ = ["SfincsModel"]
 
@@ -506,7 +501,7 @@ class SfincsModel(Model):
         name = self._MAPS["elevtn"]
         assert name in self.staticmaps
         # N -> S orientation for hydrography data
-        da_elv = flipud(self.staticmaps[name])
+        da_elv = self.staticmaps[name].raster.flipud()
         if hydrography_fn is not None:
             ds_hydro = self.data_catalog.get_rasterdataset(
                 hydrography_fn, geom=self.region, buffer=20, single_var_as_array=False
@@ -548,136 +543,134 @@ class SfincsModel(Model):
 
     def setup_river_bathymetry(
         self,
-        river_geom_fn,
+        river_geom_fn=None,
         river_mask_fn=None,
-        use_basemap_river=True,
-        rivwth_from_mask=False,
-        correct_rivbank=False,
-        correct_estuary=True,
-        correct_4d=True,
-        river_upa=25.0,
+        qbankfull_fn=None,
+        method="gvf",
+        river_upa=100.0,
         segment_length=5e3,
-        hc=0.27,
-        hp=0.30,
-        hmin=1.0,
-        wmin=30.0,
+        smooth_length=10e3,
+        adjust_dem=True,
+        adjust_rivwth=True,
+        adjust_estuary=True,
+        **kwargs,  # to get_river_bathymetry method
     ):
-        """TODO: write docstring
+        """Burn rivers into the model elevation (dep) file.
 
-        NOTE: in most cases this method requires upstream area ("uparea") and flow direction ("flwdir")
-        hydrography maps to be set in the setup_river_hydrography method.
+        If a river geometry `river_geom_fn` with bedlevel column (bz) is provided,
+        this is used to set the river cell elevation based on the river mask raster
+        `river_mask_fn`.
 
+        Otherwise a bed level is estimated based on bankfull discharge (qbankfull)
+        and the bankfull water surface elevation profile estimated from the river bank
+        levels. This option requires the flow direction ("flwdir") and upstream area
+        ("uparea") maps to be set using the "setup_river_hydrography" method.
+
+        Updates model layer:
+
+        * **dep** map: combined elevation/bathymetry [m+ref]
+
+        Adds model layers
+
+        * **rivmsk** map: map of river cells (not used by SFINCS)
+        * **rivers** geom: geometry of rivers (not used by SFINCS)
+
+        Parameters
+        ----------
+        river_geom_fn : str, optional
+            Line geometry with river attribute data.
+
+            * Required variable for direct bed level burning: ['zb']
+            * Variables used for bed level estimates: ['qbankfull', 'rivwth']
+        river_mask_fn : str, optional
+            River mask raster used to define river cells
+        qbankfull_fn: str, optional
+            Point geometry with bankfull discharge estimates
+
+            * Required variable: ['qbankfull']
+        method : {'gvf', 'manning', 'powlaw'}
+            River bed estimate method, by default 'gvf'
+        river_upa : float, optional
+            Minumum upstream area threshold for rivers [km2], by default 100.0
+        segment_length : float, optional
+            Approximate river segment length [m], by default 5e3
+        smooth_length : float, optional
+            Approximate smooting length [m], by default 10e3
+        adjust_estuary : bool, optional
+            If True (default) fix the river depth in estuaries based on the upstream river depth.
+        adjust_rivwth : bool, optional
+            If True (default) calculate the river width based on the segment average width
+            at the model resolution.
+        adjust_dem : bool, optional
+            If True (default) correct the river bed level to be hydrologically correct
+            and D4 connected.
         """
-        name = self._MAPS["elevtn"]
-        assert name in self.staticmaps
-        da_elv = flipud(self.staticmaps[name])
+        if river_geom_fn is None and river_mask_fn is None:
+            raise ValueError('"river_geom_fn" or "river_mask_fn" should be provided.')
+        # get basemap river flwdir
+        ds = self.staticmaps.raster.flipud()
+        flwdir = None
+        if "flwdir" in ds:
+            flwdir = hydromt.flw.flwdir_from_da(ds["flwdir"])
 
-        # read river geometry data
-        gdf_riv = self.data_catalog.get_geodataframe(river_geom_fn, geom=self.region)
-        require_flw = not use_basemap_river and (
-            correct_rivbank or correct_estuary or correct_4d
-        )
-        if require_flw and not np.all(
-            [v in gdf_riv.columns for v in ["idx", "idx_ds"]]
-        ):
-            use_basemap_river = True
-            self.logger.warning(
-                "Using river from basemap hydrography data as river geometry misses"
-                ' "idx" and/or "idx_ds" columns to define up- downstream links.'
-            )
-
+        # read river line geometry data
+        gdf_riv = None
+        if river_geom_fn is not None:
+            gdf_riv = self.data_catalog.get_geodataframe(
+                river_geom_fn, geom=self.region
+            ).to_crs(self.crs)
+        # read river bankfull point data
+        gdf_qbf = None
+        if qbankfull_fn is not None:
+            gdf_qbf = self.data_catalog.get_geodataframe(
+                qbankfull_fn,
+                geom=self.region,
+            ).to_crs(self.crs)
         # read river mask raster data
         da_rivmask = None
         if river_mask_fn is not None:
             da_rivmask = self.data_catalog.get_rasterdataset(
                 river_mask_fn, geom=self.region
+            ).raster.reproject_like(ds, "min")
+            ds["rivmsk"] = da_rivmask.where(ds[self._MAPS["mask"]] != 0, 0) != 0
+
+        # estimate elevation bed level based on qbankfull (and other parameters)
+        if not (gdf_riv is not None and "zb" not in gdf_riv):
+            if flwdir is None:
+                msg = '"flwdir" staticmap layer missing, run "setup_river_hydrography".'
+                raise ValueError(msg)
+            gdf_riv, ds["rivmsk"] = workflows.get_river_zb(
+                ds,
+                flwdir=flwdir,
+                gdf_riv=gdf_riv,
+                gdf_qbf=gdf_qbf,
+                method=method,
+                river_upa=river_upa,
+                segment_length=segment_length,
+                smooth_length=smooth_length,
+                elevtn_name=self._MAPS["elevtn"],
+                adjust_dem=adjust_dem,
+                adjust_estuary=adjust_estuary,
+                adjust_rivwth=adjust_rivwth,
+                logger=self.logger,
+                **kwargs,
             )
-            _mask_dst = da_elv.raster.reproject_like(da_rivmask) != da_elv.raster.nodata
-            da_rivmask = da_rivmask.where(_mask_dst, 0) > 0
 
-        if use_basemap_river:
-            if "uparea" not in self.staticmaps or "flwdir" not in self.staticmaps:
-                raise ValueError(
-                    '"uparea" and/or "flwdir" staticmap layers missing.'
-                    " Run setup_river_hydrography first."
-                )
-            da_upa = flipud(self.staticmaps["uparea"])
-            da_flw = flipud(self.staticmaps["flwdir"])
-            rivd8 = da_upa > river_upa
-            # get vector of stream segments
-            flwdir = hydromt.flw.flwdir_from_da(da_flw, mask=rivd8)
-            feats = flwdir.streams(
-                max_len=int(round(segment_length / da_elv.raster.res[0])),
-                uparea=da_upa.values,
-                elevtn=da_elv.values,
-            )
-            gdf_stream = gpd.GeoDataFrame.from_features(feats, crs=self.crs)
-            gdf_stream.index = np.arange(1, gdf_stream.index.size + 1)
-
-        else:
-            gdf_stream = gdf_riv
-            gdf_riv = None
-
-        # estimate stream segment average width from river mask
-        if rivwth_from_mask and da_rivmask is not None:
-            self.logger.info("Deriving river segment average width.")
-            gdf_stream["rivwth"] = workflows.get_rivwth(
-                gdf_stream, da_rivmask=da_rivmask
-            )[0]
-
-        # make sure gdf_stream has complete rivdph and rivwth data
-        # if use_basemap_river: combine rivwth and qbankfull from gdf_riv and compute rivdph
-        kwargs = dict(hc=hc, hp=hp, hmin=hmin, wmin=wmin, max_dist=100)
-        gdf_stream = workflows.get_river_bathymetry(gdf_stream, gdf_riv, **kwargs)
-
-        if correct_rivbank and da_rivmask is not None:
-            self.logger.info("Deriving river bank elevation.")
-            hand = hydromt.flw.flwdir_from_da(da_flw).hand(da_elv, rivd8)
-            da_hand = xr.DataArray(
-                hand, coords=da_elv.raster.coords, dims=da_elv.raster.dims, name="hand"
-            )
-            gdf_stream["rivbnk_dz"] = workflows.get_rivbank_dz(
-                gdf_stream, da_rivmask=da_rivmask, da_hand=da_hand
-            )[0]
-            # TODO: smooth riverbank values ?
-
-        if correct_estuary and da_rivmask is not None:
-            # set width from mask and depth constant in estuaries based on theory of Gisen et al. 2015
-            # estuaries based on convergence of width from river mask
-            # TODO expose arguments
-            self.logger.info("deriving estuaries.")
-            gdf_stream, da_estmask = workflows.get_estuary_bathymetry(
-                gdf_stream, da_rivmask=da_rivmask
-            )
-            nseg = np.sum(gdf_stream["estuary"].values)
-            self.logger.info(f"{nseg} segments classified as estuary.")
-            if not rivwth_from_mask:
-                rivwth_from_mask = True
-                da_rivmask = da_estmask
-
-        # burn river depth
-        da_rivmask = da_rivmask if rivwth_from_mask else None
-        da_elv_riv, _ = workflows.burn_bathymetry(
-            gdf_stream, da_elv, da_rivmask=da_rivmask, add_rivbnk_dz=correct_rivbank
+        # set elevation bed level
+        da_elv1 = workflows.burn_river_zb(
+            gdf_riv=gdf_riv,
+            da_elv=ds["dep"],
+            da_msk=ds["rivmsk"],
+            flwdir=flwdir,
+            adjust_dem=adjust_dem,
+            logger=self.logger,
         )
-        da_elv_riv.raster.set_nodata(da_elv.raster.nodata)
-
-        # correct dem d4
-        if correct_4d:
-            da_elv_riv.data = flwdir.dem_adjust_d4(
-                da_elv_riv.values, nodata=da_elv_riv.raster.nodata
-            )
-
-        riv_mask = (da_elv_riv != da_elv).astype(np.uint8)
-        riv_mask.raster.set_nodata(0)
-        ncells = np.sum(riv_mask.values)
-        self.logger.info(f"River depth values burned in {ncells} cells.")
 
         # update dep
-        self.set_staticmaps(da_elv_riv.round(3), name=name)
+        self.set_staticmaps(da_elv1.round(3), name=self._MAPS["elevtn"])
         # keep river geom and rivmsk for postprocessing
-        self.set_staticgeoms(gdf_stream, name="rivers")
-        self.set_staticmaps(riv_mask, name="rivmsk")
+        self.set_staticgeoms(gdf_riv, name="rivers")
+        self.set_staticmaps(ds["rivmsk"], name="rivmsk")
 
     def setup_river_inflow(self, river_upa=25.0, river_len=1e3, keep_rivers_geom=False):
         """Setup river inflow (source) points where a river enters the model domain.
@@ -711,7 +704,7 @@ class SfincsModel(Model):
             )
 
         gdf_src, gdf_riv = workflows.river_inflow_points(
-            ds=flipud(self.staticmaps[["uparea", "flwdir"]]),
+            ds=self.staticmaps[["uparea", "flwdir"]].raster.flipud(),
             region=self.region,
             dst_crs=self.crs.to_epsg(),
             river_len=river_len,
@@ -769,7 +762,7 @@ class SfincsModel(Model):
                 '"flwdir" staticmap layer missing. Run setup_river_hydrography first.'
             )
         else:
-            da_flwdir = flipud(self.staticmaps["flwdir"])
+            da_flwdir = self.staticmaps["flwdir"].raster.flipud()
 
         gdf_out, gdf_riv = workflows.river_outflow_points(
             da_flwdir,
@@ -1610,7 +1603,7 @@ class SfincsModel(Model):
 
         ds_out = self.staticmaps
         if ds_out.raster.res[1] < 0:  # make sure orientation is S -> N
-            ds_out = flipud(ds_out)
+            ds_out = ds_out.raster.flipud()
 
         # make sure a mask if present
         da_mask = self.mask
@@ -1823,12 +1816,19 @@ class SfincsModel(Model):
             fn = self.get_config("inifile", abs_path=True)
             da = self._states[name].fillna(0)  # TODO check proper nodata value
             if da.raster.res[1] < 0:  # orientation is S->N
-                da = flipud(da)
+                da = da.raster.flipud()
             utils.write_ascii_map(fn, da.values, fmt=fmt)
         if self._write_gis:
             self.write_raster("states")
 
-    def read_results(self, chunksize=100, drop=["crs", "sfincsgrid"], **kwargs):
+    def read_results(
+        self,
+        chunksize=100,
+        drop=["crs", "sfincsgrid"],
+        fn_map="sfincs_map.nc",
+        fn_his="sfincs_his.nc",
+        **kwargs,
+    ):
         """Read results from sfincs_map.nc and sfincs_his.nc and save to the `results` attribute.
         The staggered nc file format is translated into hydromt.RasterDataArray formats.
         Additionally, hmax is computed from zsmax and zb if present.
@@ -1838,8 +1838,8 @@ class SfincsModel(Model):
         chunksize: int, optional
             chunk size along time dimension, by default 100
         """
-
-        fn_map = join(self.root, "sfincs_map.nc")
+        if not isabs(fn_map):
+            fn_map = join(self.root, fn_map)
         if isfile(fn_map):
             ds_face, ds_edge = utils.read_sfincs_map_results(
                 fn_map,
@@ -1853,7 +1853,8 @@ class SfincsModel(Model):
             self.set_results(ds_face, split_dataset=True)
             self.set_results(ds_edge, split_dataset=True)
 
-        fn_his = join(self.root, "sfincs_his.nc")
+        if not isabs(fn_his):
+            fn_his = join(self.root, fn_his)
         if isfile(fn_his):
             ds_his = utils.read_sfincs_his_results(
                 fn_his, crs=self.crs, chunksize=chunksize
@@ -1915,7 +1916,7 @@ class SfincsModel(Model):
                 if len(da.dims) != 2 or "time" in da.dims:
                     continue
                 if da.raster.res[1] > 0:  # make sure orientation is N->S
-                    da = flipud(da)
+                    da = da.raster.flipud()
                 da.raster.to_raster(
                     join(root, f"{layer}.tif"),
                     driver=driver,
@@ -1997,7 +1998,7 @@ class SfincsModel(Model):
         # make sure data is in S -> N orientation
         if isinstance(data, (xr.Dataset, xr.DataArray)):
             if data.raster.res[1] < 0:
-                data = flipud(data)
+                data = data.raster.flipud()
         super().set_staticmaps(data, name)
 
     def set_forcing_1d(self, name, ts=None, xy=None):
