@@ -12,7 +12,7 @@ hydroMT-sfincs: SFINCS plugin for hydroMT
     :target: https://deltares.github.io/hydromt_sfincs/stable
     :alt: Stable docs last release
 
-.. image:: https://pypip.in/v/hydromt_sfincs/badge.png
+.. image:: https://badge.fury.io/py/hydromt_sfincs.svg
     :target: https://pypi.org/project/hydromt_sfincs/
     :alt: Latest PyPI version
 
