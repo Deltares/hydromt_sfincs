@@ -243,7 +243,7 @@ def get_river_zb(
     gdf_riv : gpd.GeoDataFrame, optional
         River attribute data with "qbankfull" and "rivwth" data, by default None
     gdf_qbf : gpd.GeoDataFrame, optional
-        Bankfull river discharge data with "qbankfull column", by default None
+        Bankfull river discharge data with "qbankfull" column, by default None
     method : {'gvf', 'manning', 'powlaw'}
         River bed estimate method, by default 'gvf'
     river_upa : float, optional
@@ -299,10 +299,13 @@ def get_river_zb(
     else:
         gdf_riv = gdf_stream
     # merge gdf_qbf (qbankfull) with gdf_riv
-    if gdf_qbf is not None and "qbankfull" in gdf_qbf.colmns:
+    if gdf_qbf is not None and "qbankfull" in gdf_qbf.columns:
         if "qbankfull" in gdf_riv:
             gdf_riv = gdf_riv.drop(colums="qbankfull")
-        gdf_riv = nearest_merge(gdf_riv, gdf_qbf, columns=cols, max_dist=max_dist)
+        idx_nn, dists = nearest(gdf_qbf, gdf_riv)
+        valid = dists < max_dist
+        gdf_riv.loc[idx_nn[valid], "qbankfull"] = gdf_qbf["qbankfull"].values[valid]
+        logger.info(f"{sum(valid)}/{len(idx_nn)} qbankfull boundary points set.")
     assert "qbankfull" in gdf_riv.columns, 'gdf_riv has no "qbankfull" data'
     check_rivwth = method == "powlaw" or adjust_rivwth or "rivwth" in gdf_riv.columns
     assert check_rivwth, 'gdf_riv has no "rivwth" data'
@@ -325,7 +328,7 @@ def get_river_zb(
         )
     elif rivmsk_name in ds:  #  merge river mask with river line
         da_msk = ds.raster.geometry_mask(gdf_riv, all_touched=True)
-        da_msk = np.logical_or(da_msk, ds[rivmsk_name])
+        da_msk = np.logical_or(da_msk, ds[rivmsk_name] > 0)
     else:
         raise ValueError("No river width or river mask provided.")
 
@@ -421,7 +424,7 @@ def burn_river_zb(
         dst0 = da_elv.raster.rasterize(gdf_riv1, col_name="rivdst", nodata=0)
         dst0 = np.where(dst0 > 0, flwdir.distnc - dst0, 0)
         zb = zb + dst0 * slp
-    zb.raster.set_nodata(nodata)
+    zb.raster.set_nodata(0)
     zb.name = "elevtn"
     # spread values inside river mask and replace da_elv values
     da_elv1 = spread2d(zb, da_msk)["elevtn"].where(da_msk, da_elv)
@@ -430,12 +433,10 @@ def burn_river_zb(
 
     if adjust_dem and flwdir is not None:
         logger.debug("Correct for D4 connectivity bed level")
-        elevtn = flwdir.dem_adjust(da_elv1.values)  # NOTE: can we skip this?
-        elevtn = flwdir.dem_dig_d4(elevtn, da_msk.values, nodata=nodata)
+        # elevtn = flwdir.dem_adjust(da_elv1.values)  # NOTE: can we skip this?
+        elevtn = flwdir.dem_dig_d4(da_elv1.values, da_msk.values, nodata=nodata)
         da_elv1 = xr.DataArray(
-            data=elevtn,
-            coords=da_elv.raster.coords,
-            dims=da_elv.raster.dims,
+            data=elevtn, coords=da_elv.raster.coords, dims=da_elv.raster.dims,
         ).where(da_msk, da_elv)
 
     # set attrs and return

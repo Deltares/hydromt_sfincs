@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
+from genericpath import isdir
 import os
 from os.path import join, isfile, abspath, dirname, basename, isabs
 import glob
 import numpy as np
 import logging
+import pyflwdir
 from rasterio.warp import transform_bounds
 import geopandas as gpd
 from shapely.geometry import box
 import pandas as pd
 import xarray as xr
 import pyproj
-from typing import Dict, Tuple, List
+from typing import Dict, Sequence, Tuple, List
 
 import hydromt
 from hydromt.models.model_api import Model
@@ -503,7 +505,7 @@ class SfincsModel(Model):
             warp = ~da_elv.raster.aligned_grid(ds_hydro)
             if warp or "flwdir" not in ds_hydro:
                 self.logger.info("Reprojecting hydrography data to destination grid.")
-                ds_out = workflows.reproject_hydrography(
+                ds_out = hydromt.flw.reproject_hydrography_like(
                     ds_hydro, da_elv, method=reproj_method, logger=self.logger, **kwargs
                 )
             else:
@@ -513,7 +515,7 @@ class SfincsModel(Model):
             ds_out = ds_out.raster.mask(da_elv != da_elv.raster.nodata)
         else:
             self.logger.info("Getting hydrography data from model grid.")
-            da_flw = workflows.d8_from_dem(da_elv, **kwargs)
+            da_flw = hydromt.flw.d8_from_dem(da_elv, **kwargs)
             flwdir = hydromt.flw.flwdir_from_da(da_flw, ftype="d8")
             da_upa = xr.DataArray(
                 dims=da_elv.raster.dims,
@@ -546,6 +548,7 @@ class SfincsModel(Model):
         adjust_dem=True,
         adjust_rivwth=True,
         adjust_estuary=True,
+        plot_riv_profiles=0,
         **kwargs,  # to get_river_bathymetry method
     ):
         """Burn rivers into the model elevation (dep) file.
@@ -616,15 +619,14 @@ class SfincsModel(Model):
         gdf_qbf = None
         if qbankfull_fn is not None:
             gdf_qbf = self.data_catalog.get_geodataframe(
-                qbankfull_fn,
-                geom=self.region,
+                qbankfull_fn, geom=self.region,
             ).to_crs(self.crs)
         # read river mask raster data
         da_rivmask = None
         if river_mask_fn is not None:
             da_rivmask = self.data_catalog.get_rasterdataset(
                 river_mask_fn, geom=self.region
-            ).raster.reproject_like(ds, "min")
+            ).raster.reproject_like(ds, "max")
             ds["rivmsk"] = da_rivmask.where(ds[self._MAPS["mask"]] != 0, 0) != 0
 
         # estimate elevation bed level based on qbankfull (and other parameters)
@@ -652,18 +654,49 @@ class SfincsModel(Model):
         # set elevation bed level
         da_elv1 = workflows.burn_river_zb(
             gdf_riv=gdf_riv,
-            da_elv=ds["dep"],
+            da_elv=ds[self._MAPS["elevtn"]],
             da_msk=ds["rivmsk"],
             flwdir=flwdir,
             adjust_dem=adjust_dem,
             logger=self.logger,
         )
 
+        if plot_riv_profiles > 0:
+            # TODO move to plots
+            import matplotlib.pyplot as plt
+
+            flw = pyflwdir.from_dataframe(gdf_riv.set_index("idx"))
+            upa_pit = gdf_riv.loc[flw.idxs_pit, "uparea"]
+            n = int(plot_riv_profiles)
+            idxs = flw.idxs_pit[np.argsort(upa_pit).values[::-1]][:n]
+            paths, _ = flw.path(idxs=idxs, direction="up")
+            _, axes = plt.subplots(n, 1, figsize=(7, n * 4))
+            for path, ax in zip(paths, axes):
+                g0 = gdf_riv.loc[path, :]
+                x = g0["rivdst"].values
+                ax.plot(x, g0["zs0"], ".k", label="bankfull")
+                ax.plot(x, g0["zs"], "--k", label="bankfull (smoothed)")
+                ax.plot(x, g0["elevtn"], ":k", label="original river bed")
+                ax.plot(x, g0["zs"] - g0["rivdph0"], ".:g", label=f"{method} river bed")
+                ax.plot(x, g0["zb"], "--g", label=f"{method} river bed (smoothed)")
+                mask = da_elv1.raster.geometry_mask(g0).values
+                x1 = flwdir.distnc[mask]
+                y1 = da_elv1.data[mask]
+                s1 = np.argsort(x1)
+                ax.plot(x1[s1], y1[s1], ".b", ms=2, label="river bed (burned)")
+            ax.legend()
+            if not os.path.isdir(join(self.root, "figs")):
+                os.makedirs(join(self.root, "figs"))
+            plt.savefig(join(self.root, "figs", "river_bathymetry.png"))
+
         # update dep
         self.set_staticmaps(da_elv1.round(3), name=self._MAPS["elevtn"])
         # keep river geom and rivmsk for postprocessing
         self.set_staticgeoms(gdf_riv, name="rivers")
-        self.set_staticmaps(ds["rivmsk"], name="rivmsk")
+        # save rivmask as int8 map (geotif does not support bool maps)
+        da_rivmask = ds["rivmsk"].astype(np.int8).where(ds[self._MAPS["mask"]] > 0, 255)
+        da_rivmask.raster.set_nodata(255)
+        self.set_staticmaps(da_rivmask, name="rivmsk")
 
     def setup_river_inflow(self, river_upa=25.0, river_len=1e3, keep_rivers_geom=False):
         """Setup river inflow (source) points where a river enters the model domain.
@@ -1217,7 +1250,7 @@ class SfincsModel(Model):
             Window size in number of cells around discharge boundary locations
             to snap to, only used if ``uparea_fn`` is provided. By default 1.
         rel_error, abs_error: float, optional
-            Maximum relative error (defualt 0.05) and absolute error (default 50 km2)
+            Maximum relative error (default 0.05) and absolute error (default 50 km2)
             between the discharge boundary location upstream area and the upstream area of
             the best fit grid cell, only used if "discharge" staticgeoms has a "uparea" column.
         """
@@ -1569,9 +1602,7 @@ class SfincsModel(Model):
 
         # create dataset and set as staticmaps
         ds = RasterDataset.from_numpy(
-            data_vars=data_vars,
-            transform=transform,
-            crs=crs,
+            data_vars=data_vars, transform=transform, crs=crs,
         )
         for name in ds.data_vars:
             ds[name].attrs.update(**self._ATTRS.get(name, {}))
@@ -1619,10 +1650,7 @@ class SfincsModel(Model):
                 self.set_config(f"{mname}file", f"sfincs.{mname}")
             fn_out = self.get_config(f"{mname}file", abs_path=True)
             utils.write_binary_map(
-                fn_out,
-                ds_out[mname].values,
-                msk=msk,
-                dtype=dtypes.get(mname, "f4"),
+                fn_out, ds_out[mname].values, msk=msk, dtype=dtypes.get(mname, "f4"),
             )
 
         if self._write_gis:
