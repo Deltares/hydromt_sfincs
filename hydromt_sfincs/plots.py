@@ -60,7 +60,10 @@ def plot_forcing(forcing: Dict, **kwargs):
             axes[i].bar(df.index, df.values, facecolor="darkblue")
         else:
             df.plot.line(ax=axes[i]).legend(
-                title="index", bbox_to_anchor=(1.05, 1), loc="upper left", ncol=2,
+                title="index",
+                bbox_to_anchor=(1.05, 1),
+                loc="upper left",
+                ncol=2,
             )
         axes[i].set_ylabel(f"{prefix}{longname}\n[{unit}]")
         axes[i].set_title(f"SFINCS {longname} forcing ({name})")
@@ -250,7 +253,10 @@ def plot_basemap(
     # by default outside plot
     if geoms or plot_bounds:
         legend_kwargs0 = dict(
-            bbox_to_anchor=(1.05, 1), title="Legend", loc="upper left", frameon=True,
+            bbox_to_anchor=(1.05, 1),
+            title="Legend",
+            loc="upper left",
+            frameon=True,
         )
         legend_kwargs0.update(**legend_kwargs)
         ax.legend(**legend_kwargs0)

@@ -619,7 +619,8 @@ class SfincsModel(Model):
         gdf_qbf = None
         if qbankfull_fn is not None:
             gdf_qbf = self.data_catalog.get_geodataframe(
-                qbankfull_fn, geom=self.region,
+                qbankfull_fn,
+                geom=self.region,
             ).to_crs(self.crs)
         # read river mask raster data
         da_rivmask = None
@@ -652,7 +653,7 @@ class SfincsModel(Model):
             )
 
         # set elevation bed level
-        da_elv1 = workflows.burn_river_zb(
+        da_elv1, ds["rivmsk"] = workflows.burn_river_zb(
             gdf_riv=gdf_riv,
             da_elv=ds[self._MAPS["elevtn"]],
             da_msk=ds["rivmsk"],
@@ -1602,7 +1603,9 @@ class SfincsModel(Model):
 
         # create dataset and set as staticmaps
         ds = RasterDataset.from_numpy(
-            data_vars=data_vars, transform=transform, crs=crs,
+            data_vars=data_vars,
+            transform=transform,
+            crs=crs,
         )
         for name in ds.data_vars:
             ds[name].attrs.update(**self._ATTRS.get(name, {}))
@@ -1650,7 +1653,10 @@ class SfincsModel(Model):
                 self.set_config(f"{mname}file", f"sfincs.{mname}")
             fn_out = self.get_config(f"{mname}file", abs_path=True)
             utils.write_binary_map(
-                fn_out, ds_out[mname].values, msk=msk, dtype=dtypes.get(mname, "f4"),
+                fn_out,
+                ds_out[mname].values,
+                msk=msk,
+                dtype=dtypes.get(mname, "f4"),
             )
 
         if self._write_gis:
