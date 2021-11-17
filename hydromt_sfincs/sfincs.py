@@ -1071,9 +1071,8 @@ class SfincsModel(Model):
         if aggregate:
             stat = aggregate if isinstance(aggregate, str) else "mean"
             self.logger.debug(f"Aggregate {variable} using {stat}.")
-            precip_out = precip.raster.zonal_stats(self.region, stats=stat)[
-                f"precip_{stat}"
-            ]
+            zone = self.region.dissolve()  # make sure we have a single (multi)polygon
+            precip_out = precip.raster.zonal_stats(zone, stats=stat)[f"precip_{stat}"]
             precip_out = precip_out.where(precip_out >= 0, 0).fillna(0).squeeze()
         else:
             # reproject to model utm crs
