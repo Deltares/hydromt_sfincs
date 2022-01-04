@@ -198,8 +198,7 @@ class SfincsModel(Model):
         if ds_org.raster.crs != dst_crs or (
             res is not None and abs(ds_org.raster.res[0]) != res
         ):
-            da_elv = da_elv.raster.clip_geom(geom=dst_geom, buffer=20)
-            da_elv = da_elv.raster.reproject(
+            da_elv = da_elv.raster.clip_geom(geom=dst_geom, buffer=20).raster.reproject(
                 dst_res=res, dst_crs=dst_crs, align=True, method=reproj_method
             )
         # clip and mask
@@ -211,7 +210,7 @@ class SfincsModel(Model):
         )
         da_elv.raster.set_nodata(-9999)
 
-        # set staticmaps  make sure orientation is S -> N
+        # set staticmaps
         self.logger.info("Saving elevation data to staticmaps.")
         da_elv.attrs.update(**self._ATTRS.get(name, {}))
         self.set_staticmaps(data=da_elv, name=name)
@@ -307,7 +306,6 @@ class SfincsModel(Model):
             **kwargs,
         )
         self.set_staticmaps(data=da_dep_merged, name=name)
-        return
 
     def setup_mask(
         self, active_mask_fn=None, elv_min=None, elv_max=None, all_touched=True
@@ -495,8 +493,7 @@ class SfincsModel(Model):
         """
         name = self._MAPS["elevtn"]
         assert name in self.staticmaps
-        # N -> S orientation for hydrography data
-        da_elv = self.staticmaps[name].raster.flipud()
+        da_elv = self.staticmaps[name]
         if hydrography_fn is not None:
             ds_hydro = self.data_catalog.get_rasterdataset(
                 hydrography_fn, geom=self.region, buffer=20, single_var_as_array=False
@@ -604,7 +601,7 @@ class SfincsModel(Model):
         if river_geom_fn is None and river_mask_fn is None:
             raise ValueError('"river_geom_fn" or "river_mask_fn" should be provided.')
         # get basemap river flwdir
-        ds = self.staticmaps.raster.flipud()
+        ds = self.staticmaps
         flwdir = None
         if "flwdir" in ds:
             flwdir = hydromt.flw.flwdir_from_da(ds["flwdir"])
@@ -731,7 +728,7 @@ class SfincsModel(Model):
             )
 
         gdf_src, gdf_riv = workflows.river_inflow_points(
-            ds=self.staticmaps[["uparea", "flwdir"]].raster.flipud(),
+            ds=self.staticmaps[["uparea", "flwdir"]],
             region=self.region,
             dst_crs=self.crs.to_epsg(),
             river_len=river_len,
@@ -789,7 +786,7 @@ class SfincsModel(Model):
                 '"flwdir" staticmap layer missing. Run setup_river_hydrography first.'
             )
         else:
-            da_flwdir = self.staticmaps["flwdir"].raster.flipud()
+            da_flwdir = self.staticmaps["flwdir"]
 
         gdf_out, gdf_riv = workflows.river_outflow_points(
             da_flwdir,
@@ -1632,16 +1629,17 @@ class SfincsModel(Model):
         elif not self._staticmaps:
             return
 
+        # make sure a mask is set
+        if self._MAPS["mask"] not in self.staticmaps:
+            self.set_staticmaps(self.mask, self._MAPS["mask"])
+
+        # make sure orientation is S->N
         ds_out = self.staticmaps
-        if ds_out.raster.res[1] < 0:  # make sure orientation is S -> N
+        if ds_out.raster.res[1] < 0:
             ds_out = ds_out.raster.flipud()
 
-        # make sure a mask if present
-        da_mask = self.mask
-        if self._MAPS["mask"] not in self.staticmaps:
-            self.set_staticmaps(da_mask, self._MAPS["mask"])
         self.logger.debug("Write binary map indices based on mask.")
-        msk = da_mask.values
+        msk = ds_out[self._MAPS["mask"]].values
         fn_ind = self.get_config("indexfile", abs_path=True)
         utils.write_binary_map_index(fn_ind, msk=msk)
 
@@ -2026,10 +2024,9 @@ class SfincsModel(Model):
             Name of new map layer, this is used to overwrite the name of a DataArray
             or to select a variable from a Dataset.
         """
-        # make sure data is in S -> N orientation
-        if isinstance(data, (xr.Dataset, xr.DataArray)):
-            if data.raster.res[1] < 0:
-                data = data.raster.flipud()
+        # make sure data has N->S orientation to easily work with hydrography data
+        if isinstance(data, (xr.Dataset, xr.DataArray)) and data.raster.res[1] > 0:
+            data = data.raster.flipud()
         super().set_staticmaps(data, name)
 
     def set_forcing_1d(self, name, ts=None, xy=None):
