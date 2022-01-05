@@ -15,13 +15,13 @@ __all__ = [
     "merge_topobathy",
     "mask_topobathy",
     "get_rivbank_dz",
-    "get_river_zb",
+    "get_river_bathymetry",
     "burn_river_zb",
 ]
 
 
 def mask_topobathy(
-    da_elv: xr.DataArray, elv_min: float, elv_max: float = None
+    da_elv: xr.DataArray, elv_min: float, elv_max: float = None, min_cells: int = 0
 ) -> xr.DataArray:
     """Return mask of valid elevation cells within [elv_min, elv_max] range.
     Note that local sinks (isolated regions with elv < elv_min) are kept.
@@ -31,10 +31,14 @@ def mask_topobathy(
         # active cells: contiguous area above depth threshold
         _msk = ndimage.binary_fill_holes(da_elv >= elv_min)
         dep_mask = dep_mask.where(_msk, False)
-
     if elv_max is not None:
         dep_mask = dep_mask.where(da_elv <= elv_max, False)
-
+    if min_cells > 0:
+        regions = ndimage.measurements.label(dep_mask.values, np.ones((3, 3)))[0]
+        lbls, count = np.unique(regions, return_counts=True)
+        _msk = np.isin(regions, lbls[count > min_cells])
+        assert np.any(_msk), f"No regions found with min no of cells > {min_cells}"
+        dep_mask = dep_mask.where(_msk, False)
     return dep_mask
 
 
@@ -208,7 +212,7 @@ def get_rivbank_dz(
     return rivbank_dz, da_riv_mask, da_bnk_mask
 
 
-def get_river_zb(
+def get_river_bathymetry(
     ds: xr.Dataset,
     flwdir: pyflwdir.FlwdirRaster,
     gdf_riv: gpd.GeoDataFrame = None,
@@ -262,7 +266,7 @@ def get_river_zb(
         If True (default) fix the river depth in estuaries based on the upstream river depth.
     adjust_rivwth : bool, optional
         If True (default) calculate the river width based on the segment average width
-        at the model resolution.
+        from the river mask at the model resolution.
     adjust_dem : bool, optional
         If True (default) correct the river bed level to be hydrologically correct
 
@@ -352,7 +356,7 @@ def get_river_zb(
 
     # estimate river depth, smooth and correct
     gdf_riv["rivdph0"] = rivers.river_depth(
-        data=gdf_riv, flwdir=flw, method=method, **kwargs
+        data=gdf_riv, flwdir=flw, method=method, rivzs_name="zs", **kwargs
     )
     gdf_riv["rivdph"] = flw.moving_average(gdf_riv["rivdph0"], n=smooth_n)
 
@@ -415,7 +419,8 @@ def burn_river_zb(
     assert da_elv.raster.identical_grid(da_msk)
     logger.debug("Burn bedlevel values into DEM.")
     nodata = da_elv.raster.nodata
-    zb = da_elv.raster.rasterize(gdf_riv, col_name="zb", nodata=0)
+    gdf_riv = gdf_riv[np.isfinite(gdf_riv["zb"])]  # drop invalid segments, e.g. at pits
+    zb = da_elv.raster.rasterize(gdf_riv, col_name="zb", nodata=-9999)
     # interpolate values if rivslp and rivdst is given
     if np.all(np.isin(["rivslp", "rivdst"], gdf_riv.columns)) and flwdir is not None:
         logger.debug("Interpolate bedlevel values")
@@ -423,12 +428,13 @@ def burn_river_zb(
         slp = da_elv.raster.rasterize(gdf_riv1, col_name="rivslp", nodata=0)
         dst0 = da_elv.raster.rasterize(gdf_riv1, col_name="rivdst", nodata=0)
         dst0 = np.where(dst0 > 0, flwdir.distnc - dst0, 0)
-        zb = zb + dst0 * slp
-    zb.raster.set_nodata(0)
+        zb = (zb + dst0 * slp).where(zb != -9999, -9999)
+    zb.raster.set_nodata(-9999)
     zb.name = "elevtn"
     # spread values inside river mask and replace da_elv values
-    da_elv1 = spread2d(zb, da_msk)["elevtn"].where(da_msk, da_elv)
-    da_elv1 = np.minimum(da_elv, da_elv1)
+    da_elv1 = spread2d(zb, da_msk)["elevtn"]
+    da_msk = np.logical_and(da_msk, da_elv1 != -9999)
+    da_elv1 = np.minimum(da_elv, da_elv1.where(da_msk, da_elv))
     da_elv1 = da_elv1.where(da_elv != nodata, nodata)
 
     if adjust_dem and flwdir is not None:

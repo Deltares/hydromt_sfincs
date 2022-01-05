@@ -308,7 +308,12 @@ class SfincsModel(Model):
         self.set_staticmaps(data=da_dep_merged, name=name)
 
     def setup_mask(
-        self, active_mask_fn=None, elv_min=None, elv_max=None, all_touched=True
+        self,
+        active_mask_fn=None,
+        elv_min=None,
+        elv_max=None,
+        min_cells=0,
+        all_touched=True,
     ):
         """Creates mask of active model cells.
 
@@ -337,10 +342,12 @@ class SfincsModel(Model):
             inactive (mask == 0) and within the polygon as active (mask == 1) cells.
         elv_min, elv_max : float, optional
             Minimum and maximum elevation thresholds for active model cells.
+        min_cells : int, optional
+            Minimum number of contigous cells.
         all_touched: bool, optional
             if True (default) include a pixel in the mask if it touches any of the shapes.
             If False, include a pixel only if its center is within one of the
-            shapes, or if it is selected by Bresenham’s line algorithm.
+            shapes, or if it is selected by Bresenham's line algorithm.
 
         """
         name = self._MAPS["mask"]
@@ -354,7 +361,7 @@ class SfincsModel(Model):
             gdf = self.data_catalog.get_geodataframe(active_mask_fn, geom=self.region)
             gdf_mask = da_mask.raster.geometry_mask(gdf, all_touched=all_touched)
         if elv_min is not None or elv_max is not None:
-            dep_mask = workflows.mask_topobathy(da_elv, elv_min, elv_max)
+            dep_mask = workflows.mask_topobathy(da_elv, elv_min, elv_max, min_cells)
 
         # update mask: set False cells in da_valid to 0 (inactive) in mask
         if (elv_min is not None or elv_max is not None) and active_mask_fn is not None:
@@ -453,9 +460,7 @@ class SfincsModel(Model):
                 f"{ncells:d} {btype} (mask={bvalue:d}) boundary cells set."
             )
 
-    def setup_river_hydrography(
-        self, hydrography_fn=None, adjust_dem=True, reproj_method="bilinear", **kwargs
-    ):
+    def setup_river_hydrography(self, hydrography_fn=None, adjust_dem=True, **kwargs):
         """Setup hydrography layers for flow directions ("flwdir") and upstream area
         ("uparea") which are required to setup the setup_river* model components.
 
@@ -488,8 +493,6 @@ class SfincsModel(Model):
         adjust_dem: bool, optional
             Adjust the model elevation such that each downstream cell is at the
             same or lower elevation. By default True.
-        reproj_method: str, optional
-            Method used to reproject hydrography data, by default 'bilinear'
         """
         name = self._MAPS["elevtn"]
         assert name in self.staticmaps
@@ -503,7 +506,7 @@ class SfincsModel(Model):
             if warp or "flwdir" not in ds_hydro:
                 self.logger.info("Reprojecting hydrography data to destination grid.")
                 ds_out = hydromt.flw.reproject_hydrography_like(
-                    ds_hydro, da_elv, method=reproj_method, logger=self.logger, **kwargs
+                    ds_hydro, da_elv, logger=self.logger, **kwargs
                 )
             else:
                 ds_out = ds_hydro[["uparea", "flwdir"]].raster.clip_bbox(
@@ -575,12 +578,14 @@ class SfincsModel(Model):
 
             * Required variable for direct bed level burning: ['zb']
             * Variables used for bed level estimates: ['qbankfull', 'rivwth']
+
         river_mask_fn : str, optional
             River mask raster used to define river cells
         qbankfull_fn: str, optional
             Point geometry with bankfull discharge estimates
 
             * Required variable: ['qbankfull']
+
         method : {'gvf', 'manning', 'powlaw'}
             River bed estimate method, by default 'gvf'
         river_upa : float, optional
@@ -625,14 +630,14 @@ class SfincsModel(Model):
             da_rivmask = self.data_catalog.get_rasterdataset(
                 river_mask_fn, geom=self.region
             ).raster.reproject_like(ds, "max")
-            ds["rivmsk"] = da_rivmask.where(ds[self._MAPS["mask"]] != 0, 0) != 0
+            ds["rivmsk"] = da_rivmask.where(self.mask != 0, 0) != 0
 
         # estimate elevation bed level based on qbankfull (and other parameters)
-        if not (gdf_riv is not None and "zb" not in gdf_riv):
+        if not (gdf_riv is not None and "zb" in gdf_riv):
             if flwdir is None:
                 msg = '"flwdir" staticmap layer missing, run "setup_river_hydrography".'
                 raise ValueError(msg)
-            gdf_riv, ds["rivmsk"] = workflows.get_river_zb(
+            gdf_riv, ds["rivmsk"] = workflows.get_river_bathymetry(
                 ds,
                 flwdir=flwdir,
                 gdf_riv=gdf_riv,
@@ -648,6 +653,10 @@ class SfincsModel(Model):
                 logger=self.logger,
                 **kwargs,
             )
+        elif "rivmsk" not in ds:
+            buffer = gdf_riv["rivwth"].values if "rivwth" in gdf_riv else 0
+            gdf_riv_buf = gdf_riv.buffer(buffer)
+            ds["rivmsk"] = ds.raster.geometry_mask(gdf_riv_buf, all_touched=True)
 
         # set elevation bed level
         da_elv1, ds["rivmsk"] = workflows.burn_river_zb(
@@ -796,10 +805,13 @@ class SfincsModel(Model):
             return_river=keep_rivers_geom,
             logger=self.logger,
         )
-        if len(gdf_out.index) == 0:
-            return
-
+        # remove points near waterlevel boundary cells
         da_mask = self.mask
+        msk_wdw = da_mask.raster.sample(gdf_out, wdw=1)
+        gdf_out = gdf_out[~(msk_wdw == 2).any("wdw").values]
+        if len(gdf_out.index) == 0:
+            self.logger.debug(f"0 outflow (mask=3) boundary cells set.")
+            return
         # apply buffer
         gdf_out_buf = gpd.GeoDataFrame(
             geometry=gdf_out.buffer(outflow_width / 2.0), crs=gdf_out.crs
@@ -813,8 +825,7 @@ class SfincsModel(Model):
                 self.logger.info(
                     f"Dropping {idx_drop.size} outflow points near source points."
                 )
-            gdf_out_buf = gdf_out_buf.drop(idx_drop)
-
+                gdf_out_buf = gdf_out_buf.drop(idx_drop)
         # find intersect of buffer and model grid
         bounds = utils.mask_bounds(da_mask, gdf_include=gdf_out_buf)
         # update model mask
@@ -825,7 +836,6 @@ class SfincsModel(Model):
             da_mask = da_mask.where(~bounds, np.uint8(3))
             self.set_staticmaps(da_mask, self._MAPS["mask"])
             self.logger.debug(f"{n:d} outflow (mask=3) boundary cells set.")
-
         if keep_rivers_geom:
             gdf_riv.index = gdf_riv.index.values + 1  # one based index
             self.set_staticgeoms(gdf_riv, name="rivers_out")
