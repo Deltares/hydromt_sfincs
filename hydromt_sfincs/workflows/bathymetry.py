@@ -228,16 +228,16 @@ def get_river_bathymetry(
     flwdir: pyflwdir.FlwdirRaster,
     gdf_riv: gpd.GeoDataFrame = None,
     gdf_qbf: gpd.GeoDataFrame = None,
-    method: str = "gvf",
+    rivdph_method: str = "gvf",
+    rivwth_method: str = "mask",
     river_upa: float = 100.0,
     segment_length: float = 5e3,
     smooth_length: float = 10e3,
     min_convergence: float = 0.01,
     max_dist: float = 100.0,
     bankq: float = 25,
-    adjust_estuary: bool = True,
-    adjust_rivwth: bool = True,
-    adjust_dem: bool = True,
+    constrain_estuary: bool = True,
+    constrain_rivbed: bool = True,
     elevtn_name: str = "elevtn",
     uparea_name: str = "uparea",
     rivmsk_name: str = "rivmsk",
@@ -245,7 +245,7 @@ def get_river_bathymetry(
     **kwargs,
 ) -> Tuple[gpd.GeoDataFrame, xr.DataArray]:
     """Estimate river bedlevel zb using gradually varying flow (gvf), manning's equation
-    (manning) or a power-law relation (powlaw) method. The river is based on flow
+    (manning) or a power-law relation (powlaw) rivdph_method. The river is based on flow
     directions with and minimum upstream area threshold.
 
     Parameters
@@ -259,8 +259,8 @@ def get_river_bathymetry(
         River attribute data with "qbankfull" and "rivwth" data, by default None
     gdf_qbf : gpd.GeoDataFrame, optional
         Bankfull river discharge data with "qbankfull" column, by default None
-    method : {'gvf', 'manning', 'powlaw'}
-        River bed estimate method, by default 'gvf'
+    rivdph_method : {'gvf', 'manning', 'powlaw'}
+        River depth estimate method, by default 'gvf'
     river_upa : float, optional
         Minumum upstream area threshold for rivers [km2], by default 100.0
     segment_length : float, optional
@@ -273,12 +273,9 @@ def get_river_bathymetry(
         Maximum distance threshold to spatially merge `gdf_riv` and `gdf_qbf`, by default 100.0
     bankq : float, optional
         Quantile [1-100] for river bank estimation, by default 25.0
-    adjust_estuary : bool, optional
+    constrain_estuary : bool, optional
         If True (default) fix the river depth in estuaries based on the upstream river depth.
-    adjust_rivwth : bool, optional
-        If True (default) calculate the river width based on the segment average width
-        from the river mask at the model resolution.
-    adjust_dem : bool, optional
+    constrain_rivbed : bool, optional
         If True (default) correct the river bed level to be hydrologically correct
 
     Returns
@@ -322,8 +319,8 @@ def get_river_bathymetry(
         gdf_riv.loc[idx_nn[valid], "qbankfull"] = gdf_qbf["qbankfull"].values[valid]
         logger.info(f"{sum(valid)}/{len(idx_nn)} qbankfull boundary points set.")
     assert "qbankfull" in gdf_riv.columns, 'gdf_riv has no "qbankfull" data'
-    check_rivwth = method == "powlaw" or adjust_rivwth or "rivwth" in gdf_riv.columns
-    assert check_rivwth, 'gdf_riv has no "rivwth" data'
+    check_rivwth = rivdph_method != "powlaw" or rivwth_method != "mask"
+    assert check_rivwth or "rivwth" in gdf_riv.columns, 'gdf_riv has no "rivwth" data'
     # propagate qbankfull and rivwth values
     for col in ["qbankfull", "rivwth"]:
         if col not in gdf_riv.columns:
@@ -359,7 +356,7 @@ def get_river_bathymetry(
     gdf_riv["rivbank_dz"] = gdf_riv["zs"] - gdf_riv["elevtn"]
 
     # estimate stream segment average width from river mask
-    if adjust_rivwth:
+    if rivwth_method == "mask":
         logger.info("Deriving river segment average width.")
         rivwth = rivers.river_width(gdf_riv, da_rivmask=da_msk)
         gdf_riv["rivwth"] = flw.fillnodata(rivwth, -9999, direction="down", how="max")
@@ -367,11 +364,11 @@ def get_river_bathymetry(
 
     # estimate river depth, smooth and correct
     gdf_riv["rivdph0"] = rivers.river_depth(
-        data=gdf_riv, flwdir=flw, method=method, rivzs_name="zs", **kwargs
+        data=gdf_riv, flwdir=flw, method=rivdph_method, rivzs_name="zs", **kwargs
     )
     gdf_riv["rivdph"] = flw.moving_average(gdf_riv["rivdph0"], n=smooth_n)
 
-    if adjust_estuary:
+    if constrain_estuary:
         # set width from mask and depth constant in estuaries
         # estuaries based on convergence of width from river mask
         gdf_riv["estuary"] = flw.classify_estuaries(
@@ -385,7 +382,7 @@ def get_river_bathymetry(
 
     # calculate bed level from river depth
     gdf_riv["zb"] = gdf_riv["zs"] - gdf_riv["rivdph"]
-    if adjust_dem:
+    if constrain_rivbed:
         gdf_riv["zb"] = flw.dem_adjust(gdf_riv["zb"])
     gdf_riv["zb"] = np.minimum(gdf_riv["zb"], gdf_riv["elevtn"])
     gdf_riv["rivdph"] = gdf_riv["zs"] - gdf_riv["zb"]
@@ -403,7 +400,7 @@ def burn_river_zb(
     da_elv: xr.DataArray,
     da_msk: xr.DataArray,
     flwdir: pyflwdir.FlwdirRaster = None,
-    adjust_dem: bool = True,
+    river_d4: bool = True,
     logger=logger,
 ):
     """Burn bedlevels from `gdf_riv` (column zb) into the DEM `da_elv` at river cells
@@ -419,7 +416,7 @@ def burn_river_zb(
         River mask
     flwdir : pyflwdir.FlwdirRaster, optional
         Flow direction object
-    adjust_dem : bool, optional
+    river_d4 : bool, optional
         If True (default) ensure river cells have D4 connectivity
 
     Returns
@@ -448,7 +445,7 @@ def burn_river_zb(
     da_elv1 = np.minimum(da_elv, da_elv1.where(da_msk, da_elv))
     da_elv1 = da_elv1.where(da_elv != nodata, nodata)
 
-    if adjust_dem and flwdir is not None:
+    if river_d4 and flwdir is not None:
         logger.debug("Correct for D4 connectivity bed level")
         elevtn = flwdir.dem_dig_d4(da_elv1.values, da_msk.values, nodata=nodata)
         da_elv1 = xr.DataArray(

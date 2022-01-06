@@ -535,25 +535,29 @@ class SfincsModel(Model):
         river_geom_fn=None,
         river_mask_fn=None,
         qbankfull_fn=None,
-        method="gvf",
+        rivdph_method="gvf",
+        rivwth_method="mask",
         river_upa=100.0,
         segment_length=5e3,
         smooth_length=10e3,
-        adjust_dem=True,
-        adjust_rivwth=True,
-        adjust_estuary=True,
+        constrain_rivbed=True,
+        constrain_estuary=True,
         plot_riv_profiles=0,
-        **kwargs,  # to get_river_bathymetry method
+        **kwargs,  # for workflows.get_river_bathymetry method
     ):
         """Burn rivers into the model elevation (dep) file.
 
-        If a river geometry `river_geom_fn` with bedlevel column (bz) is provided,
-        this is used to set the river cell elevation based on the river mask raster
-        `river_mask_fn`.
+        If a river segment geometry file `river_geom_fn` with bedlevel column ("zb") is
+        provided, this is used directly to set the river cell elevation. River cells are
+        based on the `river_mask_fn` raster file, or the rasterized segments, optionally
+        buffered with half a river width ("rivwth") if that attribute column is in `river_geom_fn`.
 
-        Otherwise a bed level is estimated based on bankfull discharge (qbankfull)
-        and the bankfull water surface elevation profile estimated from the river bank
-        levels. This option requires the flow direction ("flwdir") and upstream area
+        Otherwise a river depth is estimated based on bankfull discharge ("qbankfull").
+        The bankfull discharge is set from the nearest river segment of `river_geom_fn`
+        or `qbankfull_fn` upstream river boundary  points.
+        The river depth is relative to the bankfull water surface elevation profile,
+        which is estimated from the river bank levels per river segment.
+        This option requires the flow direction ("flwdir") and upstream area
         ("uparea") maps to be set using the "setup_river_hydrography" method.
 
         Updates model layer:
@@ -580,20 +584,20 @@ class SfincsModel(Model):
 
             * Required variable: ['qbankfull']
 
-        method : {'gvf', 'manning', 'powlaw'}
-            River bed estimate method, by default 'gvf'
+        rivdph_method : {'gvf', 'manning', 'powlaw'}
+            River depth estimate method, by default 'gvf'
+        rivwth_method : {'geom', 'mask'}
+            Derive the river with from either the `river_geom_fn` (geom) or
+            `river_mask_fn` (mask; default) data.
         river_upa : float, optional
             Minumum upstream area threshold for rivers [km2], by default 100.0
         segment_length : float, optional
             Approximate river segment length [m], by default 5e3
         smooth_length : float, optional
             Approximate smooting length [m], by default 10e3
-        adjust_estuary : bool, optional
+        constrain_estuary : bool, optional
             If True (default) fix the river depth in estuaries based on the upstream river depth.
-        adjust_rivwth : bool, optional
-            If True (default) calculate the river width based on the segment average width
-            at the model resolution.
-        adjust_dem : bool, optional
+        constrain_rivbed : bool, optional
             If True (default) correct the river bed level to be hydrologically correct
             and D4 connected.
         """
@@ -636,14 +640,14 @@ class SfincsModel(Model):
                 flwdir=flwdir,
                 gdf_riv=gdf_riv,
                 gdf_qbf=gdf_qbf,
-                method=method,
+                rivdph_method=rivdph_method,
+                rivwth_method=rivwth_method,
                 river_upa=river_upa,
                 segment_length=segment_length,
                 smooth_length=smooth_length,
                 elevtn_name=self._MAPS["elevtn"],
-                adjust_dem=adjust_dem,
-                adjust_estuary=adjust_estuary,
-                adjust_rivwth=adjust_rivwth,
+                constrain_estuary=constrain_estuary,
+                constrain_rivbed=constrain_rivbed,
                 logger=self.logger,
                 **kwargs,
             )
@@ -658,7 +662,7 @@ class SfincsModel(Model):
             da_elv=ds[self._MAPS["elevtn"]],
             da_msk=ds["rivmsk"],
             flwdir=flwdir,
-            adjust_dem=adjust_dem,
+            river_d4=True,
             logger=self.logger,
         )
 
@@ -677,14 +681,14 @@ class SfincsModel(Model):
                 x = g0["rivdst"].values
                 ax.plot(x, g0["zs0"], ".k", label="bankfull")
                 ax.plot(x, g0["zs"], "--k", label="bankfull (smoothed)")
-                ax.plot(x, g0["elevtn"], ":k", label="original river bed")
-                ax.plot(x, g0["zs"] - g0["rivdph0"], ".:g", label=f"{method} river bed")
-                ax.plot(x, g0["zb"], "--g", label=f"{method} river bed (smoothed)")
+                ax.plot(x, g0["elevtn"], ":k", label="original zb")
+                ax.plot(x, g0["zs"] - g0["rivdph0"], ".:g", label=f"{rivdph_method} zb")
+                ax.plot(x, g0["zb"], "--g", label=f"{rivdph_method} zb (smoothed)")
                 mask = da_elv1.raster.geometry_mask(g0).values
                 x1 = flwdir.distnc[mask]
                 y1 = da_elv1.data[mask]
                 s1 = np.argsort(x1)
-                ax.plot(x1[s1], y1[s1], ".b", ms=2, label="river bed (burned)")
+                ax.plot(x1[s1], y1[s1], ".b", ms=2, label="zb (burned)")
             ax.legend()
             if not os.path.isdir(join(self.root, "figs")):
                 os.makedirs(join(self.root, "figs"))
@@ -1761,6 +1765,25 @@ class SfincsModel(Model):
                         utils.write_xy(fn, gdf, fmt="%8.2f")
             if self._write_gis:
                 self.write_vector(variables=["staticgeoms"])
+
+    def write_config(self, rel_path=""):
+        """Write config to <root/config_fn>
+
+        Parameters
+        ----------
+        rel_path: str, Path, optional
+            Relative path which is prepended to sfincs filenames which are not found in
+            the model root, but are found at this relative path from the root.
+        """
+        for key, value in self.config.items():
+            if key.endswith("file"):
+                if not isfile(join(self.root, value)):
+                    value = basename(value)
+                    if isfile(join(self.root, rel_path, value)):
+                        self.config.update({key: f"{rel_path}/{value}"})
+                    else:
+                        self.logger.error(f"{key} = {value} not found")
+        super().write_config()
 
     def read_forcing(self):
         """Read forcing files and save to `forcing` attribute.
