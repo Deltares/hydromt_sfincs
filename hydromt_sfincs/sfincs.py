@@ -705,11 +705,13 @@ class SfincsModel(Model):
         da_rivmask.raster.set_nodata(255)
         self.set_staticmaps(da_rivmask, name="rivmsk")
 
-    def setup_river_inflow(self, river_upa=25.0, river_len=1e3, keep_rivers_geom=False):
+    def setup_river_inflow(
+        self, hydrography_fn=None, river_upa=25.0, river_len=1e3, keep_rivers_geom=False
+    ):
         """Setup river inflow (source) points where a river enters the model domain.
 
-        NOTE: this method requires upstream area ("uparea") and flow direction ("flwdir")
-        hydrography maps to be set in the setup_river_hydrography method.
+        NOTE: this method requires the either `hydrography_fn` or `setup_river_hydrography` to be run first.
+        NOTE: best to run after `setup_mask`
 
         Adds model layers:
 
@@ -719,6 +721,10 @@ class SfincsModel(Model):
 
         Parameters
         ----------
+        hydrography_fn: str, Path, optional
+            Path or data source name for hydrography raster data, by default 'merit_hydro'.
+
+            * Required layers: ['uparea', 'flwdir'].
         river_upa: float, optional
             Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.
         river_len: float, optional
@@ -726,10 +732,20 @@ class SfincsModel(Model):
         keep_rivers_geom: bool, optional
             If True, keep a geometry of the rivers "rivers_in" in staticgeoms. By default False.
         """
-        if "uparea" not in self.staticmaps or "flwdir" not in self.staticmaps:
-            raise ValueError(
-                '"uparea" and/or "flwdir" staticmap layers missing. Run setup_river_hydrography first.'
+        if hydrography_fn is not None:
+            ds = self.data_catalog.get_rasterdataset(
+                hydrography_fn,
+                geom=self.region,
+                variables=["uparea", "flwdir"],
+                buffer=10,
             )
+        else:
+            ds = self.staticmaps
+            if "uparea" not in ds or "flwdir" not in ds:
+                raise ValueError(
+                    '"uparea" and/or "flwdir" layers missing. '
+                    "Run setup_river_hydrography first or provide hydrography_fn dataset."
+                )
         if "region" not in self.staticgeoms:
             self.logger.warning(
                 "Run setup_mask() first to define the active model region. The model region "
@@ -737,9 +753,9 @@ class SfincsModel(Model):
             )
 
         gdf_src, gdf_riv = workflows.river_inflow_points(
-            ds=self.staticmaps[["uparea", "flwdir"]],
+            da_flwdir=ds["flwdir"],
+            da_uparea=ds["uparea"],
             region=self.region,
-            dst_crs=self.crs.to_epsg(),
             river_len=river_len,
             river_upa=river_upa,
             return_river=keep_rivers_geom,
@@ -749,14 +765,17 @@ class SfincsModel(Model):
             return
 
         # set forcing with dummy timeseries to keep valid sfincs model
+        gdf_src = gdf_src.to_crs(self.crs.to_epsg())
         self.set_forcing_1d(xy=gdf_src, name="discharge")
         # set river
-        if keep_rivers_geom:
+        if keep_rivers_geom and gdf_riv is not None:
+            gdf_riv = gdf_riv.to_crs(self.crs.to_epsg())
             gdf_riv.index = gdf_riv.index.values + 1  # one based index
             self.set_staticgeoms(gdf_riv, name="rivers_in")
 
     def setup_river_outflow(
         self,
+        hydrography_fn=None,
         river_upa=5.0,
         outflow_width=2000,
         append_bounds=False,
@@ -764,7 +783,12 @@ class SfincsModel(Model):
     ):
         """Setup river outflow boundary (msk=3) where a river flows out of the model domain.
 
-        NOTE: this method requires flow direction ("flwdir") to be set in the setup_river_hydrography method.
+        Outflow points are based on a minimal upstream area threshold. Points within
+        half `outflow_width` of a discharge source piont or neighboring a waterlevel
+        boundary cell are omitted.
+
+        NOTE: this method requires the either `hydrography_fn` or `setup_river_hydrography` to be run first.
+        NOTE: best to run after `setup_mask`, `setup_bounds` and `setup_river_inflow`
 
         Adds / edits model layers:
 
@@ -773,6 +797,10 @@ class SfincsModel(Model):
 
         Parameters
         ----------
+        hydrography_fn: str, Path, optional
+            Path or data source name for hydrography raster data, by default 'merit_hydro'.
+
+            * Required layers: ['uparea', 'flwdir'].
         outflow_width: int, optional
             The width [m] of the outflow boundary in the SFINCS msk file.
             By default 2km, i.e.: 1km to each side of the outflow point.
@@ -780,38 +808,51 @@ class SfincsModel(Model):
             Mimimum upstream area threshold [km2] to define river cells, by default 5 km2.
             Note: based on area within model domain only!
         append_bounds: bool, optional
-            If True, write new boundary cells on top of existing. If False (default),
-            first reset existing boundary cells to normal active cells.
+            If True, write new outflow boundary cells on top of existing. If False (default),
+            first reset existing outflow boundary cells to normal active cells.
         keep_rivers_geom: bool, optional
             If True, keep a geometry of the rivers "rivers_out" in staticgeoms. By default False.
         """
+        if hydrography_fn is not None:
+            ds = self.data_catalog.get_rasterdataset(
+                hydrography_fn,
+                geom=self.region,
+                variables=["uparea", "flwdir"],
+                buffer=10,
+            )
+        else:
+            ds = self.staticmaps
+            if "uparea" not in ds or "flwdir" not in ds:
+                raise ValueError(
+                    '"uparea" and/or "flwdir" layers missing. '
+                    "Run setup_river_hydrography first or provide hydrography_fn dataset."
+                )
         if "region" not in self.staticgeoms:
             self.logger.warning(
                 "Run setup_mask() first to define the active model region. The model region "
                 "is now infered from the bounding box and may lead to inaccurate outflow points."
             )
-        if "flwdir" not in self.staticmaps:
-            raise ValueError(
-                '"flwdir" staticmap layer missing. Run setup_river_hydrography first.'
-            )
-        else:
-            da_flwdir = self.staticmaps["flwdir"]
 
         gdf_out, gdf_riv = workflows.river_outflow_points(
-            da_flwdir,
+            da_flwdir=ds["flwdir"],
+            da_rivmsk=ds["uparea"] > river_upa,
             region=self.region,
-            dst_crs=self.crs.to_epsg(),
-            river_upa=river_upa,
             return_river=keep_rivers_geom,
             logger=self.logger,
         )
+        if len(gdf_out.index) == 0:
+            self.logger.debug(f"0 outflow (mask=3) boundary cells set.")
+            return
+
         # remove points near waterlevel boundary cells
+        gdf_out = gdf_out.to_crs(self.crs.to_epsg())  # assumes projected CRS
         da_mask = self.mask
         msk_wdw = da_mask.raster.sample(gdf_out, wdw=1)
         gdf_out = gdf_out[~(msk_wdw == 2).any("wdw").values]
         if len(gdf_out.index) == 0:
             self.logger.debug(f"0 outflow (mask=3) boundary cells set.")
             return
+
         # apply buffer
         gdf_out_buf = gpd.GeoDataFrame(
             geometry=gdf_out.buffer(outflow_width / 2.0), crs=gdf_out.crs
@@ -822,21 +863,20 @@ class SfincsModel(Model):
             gdf_src = self.forcing[fname].vector.to_gdf()
             idx_drop = gpd.sjoin(gdf_out_buf, gdf_src, how="inner").index.values
             if idx_drop.size > 0:
-                self.logger.info(
-                    f"Dropping {idx_drop.size} outflow points near source points."
-                )
                 gdf_out_buf = gdf_out_buf.drop(idx_drop)
         # find intersect of buffer and model grid
         bounds = utils.mask_bounds(da_mask, gdf_include=gdf_out_buf)
         # update model mask
         if not append_bounds:  # reset existing outflow boundary cells
             da_mask = da_mask.where(da_mask != 3, np.uint8(1))
+        bounds = np.logical_and(bounds, da_mask == 1)  # make sure not to overwrite
         n = np.count_nonzero(bounds.values)
         if n > 0:
             da_mask = da_mask.where(~bounds, np.uint8(3))
             self.set_staticmaps(da_mask, self._MAPS["mask"])
             self.logger.debug(f"{n:d} outflow (mask=3) boundary cells set.")
-        if keep_rivers_geom:
+        if keep_rivers_geom and gdf_riv is not None:
+            gdf_riv = gdf_riv.to_crs(self.crs.to_epsg())
             gdf_riv.index = gdf_riv.index.values + 1  # one based index
             self.set_staticgeoms(gdf_riv, name="rivers_out")
 
