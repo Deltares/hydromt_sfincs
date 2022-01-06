@@ -21,7 +21,11 @@ __all__ = [
 
 
 def mask_topobathy(
-    da_elv: xr.DataArray, elv_min: float, elv_max: float = None, min_cells: int = 0
+    da_elv: xr.DataArray,
+    elv_min: float,
+    elv_max: float = None,
+    min_cells: int = 0,
+    logger=logger,
 ) -> xr.DataArray:
     """Return mask of valid elevation cells within [elv_min, elv_max] range.
     Note that local sinks (isolated regions with elv < elv_min) are kept.
@@ -35,9 +39,10 @@ def mask_topobathy(
         dep_mask = dep_mask.where(da_elv <= elv_max, False)
     if min_cells > 0:
         regions = ndimage.measurements.label(dep_mask.values, np.ones((3, 3)))[0]
-        lbls, count = np.unique(regions, return_counts=True)
+        lbls, count = np.unique(regions[regions > 0], return_counts=True)
+        n = int(sum(count > min_cells))
         _msk = np.isin(regions, lbls[count > min_cells])
-        assert np.any(_msk), f"No regions found with min no of cells > {min_cells}"
+        logger.debug(f"{n} regions with minimal {min_cells} cells in domain")
         dep_mask = dep_mask.where(_msk, False)
     return dep_mask
 
@@ -51,6 +56,7 @@ def merge_topobathy(
     elv_min: float = None,
     elv_max: float = None,
     reproj_method: str = "bilinear",
+    max_width: int = 0,
     logger=logger,
 ) -> xr.DataArray:
     """Return merged topobathy data from two datasets.
@@ -70,7 +76,7 @@ def merge_topobathy(
         Datasets with topobathy data to be merged.
     da_offset: xr.DataArray, float, optional
         Dataset with spatially varying offset or float with uniform offset
-    merge_method: str {'first','last','min','max'}
+    merge_method: {'first','last','min','max'}, optional
         merge method, by default 'first':
 
         * first: use valid new where existing invalid
@@ -80,12 +86,14 @@ def merge_topobathy(
     elv_min, elv_max : float, optional
         Minimum and maximum elevation caps for new topobathy cells, cells outside
         this range are linearly interpolated. Note: applied after offset!
-    merge_buffer: int
+    merge_buffer: int, optional
         Buffer (number of cells) within the da_mask==True region where topobathy
         values are based on linear interpolation for a smooth transition, by default 0.
-    reproj_method: str
+    reproj_method: str, optional
         Method used to reproject the offset and second dataset to the grid of the
         first dataset, by default 'bilinear'
+    max_width: int, optional
+        Maximum width (number of cells) to append to valid da1 cells. By default 0.
 
     Returns
     -------
@@ -145,6 +153,9 @@ def merge_topobathy(
         logger.debug(f"Interpolate topobathy at {int(nempty)} cells")
         da_out = da_out.raster.interpolate_na(method="linear")
         da_out = da_out.where(na_mask, nodata)  # reset extrapolated area
+    if max_width > 0:
+        mask_dilated = ndimage.binary_dilation(mask, struct, iterations=max_width)
+        da_out = da_out.where(mask_dilated, nodata)
     return da_out
 
 

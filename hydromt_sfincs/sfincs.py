@@ -226,6 +226,7 @@ class SfincsModel(Model):
         mask_fn=None,
         offset_constant=0,
         merge_buffer=0,
+        max_width=0,
         merge_method="first",
         reproj_method="bilinear",
     ):
@@ -259,16 +260,18 @@ class SfincsModel(Model):
             Buffer (number of cells) around cells where the original (merge_method = 'first')
             or new (merge_method = 'last') dataset where values are linearly interpolated.
             Not recommended to use in combination with merge_methods 'min' or 'max'
-        merge_method: str {'first','last','min','max'}
+        merge_method: {'first','last','min','max'}, optional
             merge method, by default 'first':
 
             * first: use valid new where existing invalid
             * last: use valid new
             * min: pixel-wise min of existing and new
             * max: pixel-wise max of existing and new
-        reproj_method: str
+        reproj_method: str, optional
             Method used to reproject the new source and offset data to the model grid,
             by default 'bilinear'
+        max_width: int, optional
+            Maximum width (number of cells) to append to valid da1 cells. By default 0.
         """
         name = self._MAPS["elevtn"]
         assert name in self.staticmaps
@@ -280,6 +283,7 @@ class SfincsModel(Model):
             reproj_method=reproj_method,
             merge_buffer=merge_buffer,
             merge_method=merge_method,
+            max_width=max_width,
         )
         # mask
         if mask_fn is not None:
@@ -315,21 +319,16 @@ class SfincsModel(Model):
         min_cells=0,
         all_touched=True,
     ):
-        """Creates mask of active model cells.
+        """Creates mask of active (mask = 1) model cells. A previoulsy set mask is reset.
 
         Active model cells are based on cells with valid elevation; within the
         polygon mask and/or between minimum and maximum elevation contour lines.
+        Isolated regions with elv < elv_min are interpolated and kept as active cells.
         In case both active_mask_fn and elv_min and/or elv_max are provided,
         all cells within the polygon mask and between the elevation thresholds
         outside the polygon mask are set as active cells.
 
-        Note that local sinks (isolated regions with elv < elv_min) are kept as active cells.
-
-        The model mask defines 0) Inactive, 1) active, and 2) waterlevel boundary cells
-        and 3) outflow boundary cells. Note that this method does not set the boundary
-        cells, use `setup_bounds` istead.
-
-        Inactive cells in all staticmap layers are set to its nodata value.
+        NOTE: Inactive cells in all staticmap layers are set to its nodata value.
 
         Sets model layers:
 
@@ -357,27 +356,22 @@ class SfincsModel(Model):
         da_elv = self.staticmaps[self._MAPS["elevtn"]]
 
         # get masks
+        dep_mask, gdf_mask = None, None
         if active_mask_fn is not None:
             gdf = self.data_catalog.get_geodataframe(active_mask_fn, geom=self.region)
             gdf_mask = da_mask.raster.geometry_mask(gdf, all_touched=all_touched)
-        if elv_min is not None or elv_max is not None:
-            dep_mask = workflows.mask_topobathy(da_elv, elv_min, elv_max, min_cells)
+        if elv_min is not None or elv_max is not None or min_cells > 0:
+            dep_mask = workflows.mask_topobathy(
+                da_elv, elv_min, elv_max, min_cells, logger=self.logger
+            )
 
         # update mask: set False cells in da_valid to 0 (inactive) in mask
-        if (elv_min is not None or elv_max is not None) and active_mask_fn is not None:
+        if dep_mask is not None and gdf_mask is not None:
             da_mask = da_mask.where(np.logical_or(dep_mask, gdf_mask), np.uint8(0))
-            self.logger.debug(
-                "Active cells based on all valid cells within the polygon mask "
-                "and between elevation contours outside this mask."
-            )
-        elif active_mask_fn is not None:
+        elif gdf_mask is not None:
             da_mask = da_mask.where(gdf_mask, np.uint8(0))
-            self.logger.debug(
-                "Active cells based on all valid cells within the polygon mask."
-            )
-        elif elv_min is not None or elv_max is not None:
+        elif dep_mask is not None:
             da_mask = da_mask.where(dep_mask, np.uint8(0))
-            self.logger.debug("Active cells based on elevation contours.")
 
         n = np.count_nonzero(da_mask.values)
         self.logger.debug(f"Mask with {n:d} active cells set; updating staticmaps ...")
