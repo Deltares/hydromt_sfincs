@@ -13,38 +13,10 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "merge_topobathy",
-    "mask_topobathy",
     "get_rivbank_dz",
     "get_river_bathymetry",
     "burn_river_zb",
 ]
-
-
-def mask_topobathy(
-    da_elv: xr.DataArray,
-    elv_min: float,
-    elv_max: float = None,
-    min_cells: int = 0,
-    logger=logger,
-) -> xr.DataArray:
-    """Return mask of valid elevation cells within [elv_min, elv_max] range.
-    Note that local sinks (isolated regions with elv < elv_min) are kept.
-    """
-    dep_mask = da_elv != da_elv.raster.nodata
-    if elv_min is not None:
-        # active cells: contiguous area above depth threshold
-        _msk = ndimage.binary_fill_holes(da_elv >= elv_min)
-        dep_mask = dep_mask.where(_msk, False)
-    if elv_max is not None:
-        dep_mask = dep_mask.where(da_elv <= elv_max, False)
-    if min_cells > 0:
-        regions = ndimage.measurements.label(dep_mask.values, np.ones((3, 3)))[0]
-        lbls, count = np.unique(regions[regions > 0], return_counts=True)
-        n = int(sum(count > min_cells))
-        _msk = np.isin(regions, lbls[count > min_cells])
-        logger.debug(f"{n} regions with minimal {min_cells} cells in domain")
-        dep_mask = dep_mask.where(_msk, False)
-    return dep_mask
 
 
 def merge_topobathy(

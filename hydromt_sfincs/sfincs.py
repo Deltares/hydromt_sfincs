@@ -313,22 +313,27 @@ class SfincsModel(Model):
 
     def setup_mask(
         self,
-        active_mask_fn=None,
+        include_mask_fn=None,
+        exclude_mask_fn=None,
         elv_min=None,
         elv_max=None,
         min_cells=0,
+        fill_holes=True,
         all_touched=True,
     ):
-        """Creates mask of active (mask = 1) model cells. A previoulsy set mask is reset.
+        """Creates mask of active model cells.
 
-        Active model cells are based on cells with valid elevation; within the
-        polygon mask and/or between minimum and maximum elevation contour lines.
-        Isolated regions with elv < elv_min are interpolated and kept as active cells.
-        In case both active_mask_fn and elv_min and/or elv_max are provided,
-        all cells within the polygon mask and between the elevation thresholds
-        outside the polygon mask are set as active cells.
+        The SFINCS model mask defines 0) Inactive, 1) active, and 2) waterlevel boundary
+        and 3) outflow boundary cells. This method sets the active cells set using,
+        while boundary cells are set in the `setup_bounds` method.
 
-        NOTE: Inactive cells in all staticmap layers are set to its nodata value.
+        Active model cells are based on cells with valid elevation (i.e. not nodata),
+        optionally bounded by areas inside the include geomtries, outside the exclude geomtries,
+        larger or equal than a minimum elevation threshhold and smaller or equal than a
+        maximum elevation threshhold.
+        All conditions are combined using a logical AND operation.
+
+        NOTE: Inactive cells are set to nodata values in all staticmaps!
 
         Sets model layers:
 
@@ -336,52 +341,55 @@ class SfincsModel(Model):
 
         Parameters
         ----------
-        active_mask_fn : str, optional
-            Path or data source name for mask polygon. Models cells outside the polygon are set as
-            inactive (mask == 0) and within the polygon as active (mask == 1) cells.
+        include_mask_fn, exclude_mask_fn: str, optional
+            Path or data source name for geometries with polygons to include/exclude
+            from the model domain.
         elv_min, elv_max : float, optional
             Minimum and maximum elevation thresholds for active model cells.
         min_cells : int, optional
-            Minimum number of contigous cells.
+            Minimum number of contigous cells in any contiguous areas.
+        fill_holes : bool, optional
+            If True (Default) cells below the minimum elevation `elv_min` but surrounded
+            by cells with higher elevation are kept as active cells.
         all_touched: bool, optional
-            if True (default) include a pixel in the mask if it touches any of the shapes.
-            If False, include a pixel only if its center is within one of the
-            shapes, or if it is selected by Bresenham's line algorithm.
-
+            if True (default) include (or exclude) a cell in the mask if it touches any of the
+            include (or exclude) geometries. If False, include a cell only if its center is
+            within one of the shapes, or if it is selected by Bresenham's line algorithm.
         """
         name = self._MAPS["mask"]
         if name in self.staticmaps:  # reset
             self._staticmaps = self._staticmaps.drop_vars(name)
-        da_mask = self.mask  # at first call contains all valid dep cells
-        da_elv = self.staticmaps[self._MAPS["elevtn"]]
 
-        # get masks
-        dep_mask, gdf_mask = None, None
-        if active_mask_fn is not None:
-            gdf = self.data_catalog.get_geodataframe(active_mask_fn, geom=self.region)
-            gdf_mask = da_mask.raster.geometry_mask(gdf, all_touched=all_touched)
-        if elv_min is not None or elv_max is not None or min_cells > 0:
-            dep_mask = workflows.mask_topobathy(
-                da_elv, elv_min, elv_max, min_cells, logger=self.logger
-            )
+        # read geometries
+        if include_mask_fn is not None:
+            gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, geom=self.region)
+        if exclude_mask_fn is not None:
+            gdf2 = self.data_catalog.get_geodataframe(exclude_mask_fn, geom=self.region)
 
-        # update mask: set False cells in da_valid to 0 (inactive) in mask
-        if dep_mask is not None and gdf_mask is not None:
-            da_mask = da_mask.where(np.logical_or(dep_mask, gdf_mask), np.uint8(0))
-        elif gdf_mask is not None:
-            da_mask = da_mask.where(gdf_mask, np.uint8(0))
-        elif dep_mask is not None:
-            da_mask = da_mask.where(dep_mask, np.uint8(0))
+        # get mask
+        da_mask = workflows.mask_topobathy(
+            da_elv=self.staticmaps[self._MAPS["elevtn"]],
+            gdf_include=gdf1,
+            gdf_exclude=gdf2,
+            elv_min=elv_min,
+            elv_max=elv_max,
+            min_cells=min_cells,
+            fill_holes=fill_holes,
+            all_touched=all_touched,
+            logger=self.logger,
+        )
 
         n = np.count_nonzero(da_mask.values)
         self.logger.debug(f"Mask with {n:d} active cells set; updating staticmaps ...")
-        # set mask & update all staticmaps
-        self.set_staticmaps(da_mask, name)
+        # update all staticmaps
         for name in self._staticmaps.raster.vars:
             da = self._staticmaps[name]
-            self._staticmaps[name] = da.where(da_mask > 0, da.raster.nodata)
+            self._staticmaps[name] = da.where(da_mask, da.raster.nodata)
+        # update sfincs mask with boolean mask to conserve mask values
+        da_mask = self.mask.where(da_mask, np.uint8(0))  # unint8 dtype!
+        self.set_staticmaps(da_mask, name)
 
-        self.logger.debug(f"Derive region based on active cells.")
+        self.logger.debug(f"Derive region geometry based on active cells.")
         region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
         self.set_staticgeoms(region, "region")
 
@@ -390,19 +398,22 @@ class SfincsModel(Model):
         btype="waterlevel",
         include_mask_fn=None,
         exclude_mask_fn=None,
-        append_bounds=False,
+        elv_min=None,
+        elv_max=None,
         include_buffer=0,
+        reset_bounds=False,
     ):
         """Set boundary cells in the model mask.
 
-        Boundary cells are cells at the edge of the active model domain, optionally bounded
-        by areas to include or exclude. If no geometries to in- or exclude are provided,
-        boundary cells are limited to cells with elevation smaller or equal to zero.
-        Currently dynamic water level and outflow boundaries are supported, see `btype` argument.
+        The SFINCS model mask defines 0) Inactive, 1) active, and 2) waterlevel boundary
+        and 3) outflow boundary cells. Active cells set using the `setup_mask` method,
+        while this method sets both types of boundary cells, see `btype` argument.
 
-        The model mask defines 0) Inactive, 1) active, and 2) waterlevel boundary cells
-        and 3) outflow boundary cells. Active cells are inferred from valid elevation cells
-        if not previously set using the `set_mask` method.
+        Boundary cells at the edge of the active model domain,
+        optionally bounded by areas inside the include geomtries, outside the exclude geomtries,
+        larger or equal than a minimum elevation threshhold and smaller or equal than a
+        maximum elevation threshhold.
+        All conditions are combined using a logical AND operation.
 
         Updates model layers:
 
@@ -413,38 +424,49 @@ class SfincsModel(Model):
         btype: {'waterlevel', 'outflow'}
             Boundary type
         include_mask_fn, exclude_mask_fn: str, optional
-            Path or data source name for mask polygon with areas to include/exclude
+            Path or data source name for geometries with areas to include/exclude
             from the model boundary.
-        append_bounds: bool, optional
-            If True, write new boundary cells on top of existing. If False (default),
-            first reset existing boundary cells to normal active cells.
+        elv_min, elv_max : float, optional
+            Minimum and maximum elevation thresholds for boundary cells.
+        include_buffer: float, optional
+            If larger than zero, extend the include geometry with a buffer [m],
+            by default 0.
+        reset_bounds: bool, optional
+            If True, reset existing boundary cells of the selected boundary
+            type (`btype`) before setting new boundary cells, by default False.
         """
         btype = btype.lower()
         bvalues = {"waterlevel": 2, "outflow": 3}
         if btype not in bvalues:
             raise ValueError('btype must be one of "waterlevel", "outflow"')
         bvalue = bvalues[btype]
-        # read geometries
+
+        # get include / exclude geometries
         gdf_include, gdf_exclude = None, None
         if include_mask_fn:
             gdf_include = self.data_catalog.get_geodataframe(
                 include_mask_fn, geom=self.region
             ).to_crs(self.crs)
-            if include_buffer > 0:
+            if include_buffer > 0:  # NOTE assumes model in projected CRS!
                 gdf_include["geometry"] = gdf_include.buffer(include_buffer)
         if exclude_mask_fn:
             gdf_exclude = self.data_catalog.get_geodataframe(
                 exclude_mask_fn, geom=self.region
             ).to_crs(self.crs)
+
         # mask values
-        da_mask = self.mask
-        bounds = utils.mask_bounds(da_mask, gdf_include, gdf_exclude)
-        # limit to cells with elevation <= 0
-        if gdf_include is None and gdf_exclude is None:
-            da_elv = self.staticmaps[self._MAPS["elevtn"]]
-            bounds = bounds.where(da_elv <= 0, False)
+        bounds = utils.mask_bounds(
+            da_dep=self.staticmaps[self._MAPS["elevtn"]],
+            gdf_include=gdf_include,
+            gdf_exclude=gdf_exclude,
+            elv_min=elv_min,
+            elv_max=elv_max,
+        )
+
         # update model mask
-        if not append_bounds:  # reset existing boundary cells
+        da_mask = self.mask
+        if reset_bounds:  # reset existing boundary cells
+            self.logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
             da_mask = da_mask.where(da_mask != np.uint8(bvalue), np.uint8(1))
         ncells = np.count_nonzero(bounds.values)
         if ncells > 0:
@@ -1610,8 +1632,8 @@ class SfincsModel(Model):
         self.write_states()
         # config last; might be udpated when writing maps, states or forcing
         self.write_config()
-        # uncomment after bugfix https://github.com/Deltares/hydromt/issues/71
-        # self.write_data_catalog()  # new in hydromt v0.4.4
+        # write data catalog with used data sources
+        self.write_data_catalog()  # new in hydromt v0.4.4
 
     def read_staticmaps(self, crs=None):
         """Read SFNCS binary staticmaps and save to `staticmaps` attribute.
