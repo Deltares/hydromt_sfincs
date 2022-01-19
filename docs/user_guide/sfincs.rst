@@ -51,7 +51,7 @@ a specific method see its documenation.
      - :py:func:`~hydromt.workflows.parse_region`:sup:`1` :py:func:`~hydromt.workflows.get_basin_geometry`:sup:`1`
      - :py:func:`~hydromt_sfincs.read_inp` :py:func:`~hydromt_sfincs.write_inp` :py:func:`~hydromt_sfincs.get_spatial_attrs`
    * - depfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_basemaps` :py:func:`~hydromt_sfincs.SfincsModel.setup_merge_topobathy`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_basemaps` :py:func:`~hydromt_sfincs.SfincsModel.setup_merge_topobathy` :py:func:`~hydromt_sfincs.SfincsModel.setup_river_bathymetry`
      - :py:func:`~hydromt_sfincs.workflows.merge_topobathy`
      - :py:func:`~hydromt_sfincs.read_binary_map` :py:func:`~hydromt_sfincs.write_binary_map`
    * - mskfile
