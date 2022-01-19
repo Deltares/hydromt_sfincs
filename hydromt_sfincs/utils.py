@@ -529,8 +529,8 @@ def gdf2structures(gdf: gpd.GeoDataFrame) -> List[Dict]:
         feat = item.drop("geometry").dropna().to_dict()
         # check geom
         line = item.geometry
-        if line.type == "MultiLineString" and len(line) == 1:
-            line = line[0]
+        if line.type == "MultiLineString" and len(line.geoms) == 1:
+            line = line.geoms[0]
         if line.type != "LineString":
             raise ValueError("Invalid geometry type, only LineString is accepted.")
         xyz = tuple(zip(*line.coords[:]))
@@ -723,7 +723,7 @@ def read_sfincs_map_results(
     }
     ds_face = (
         ds_map[face_vars]
-        .drop(["x", "y"])
+        .drop_vars(["x", "y"])
         .rename({"n": "y", "m": "x"})
         .assign_coords(face_coords)
         .transpose(..., "y", "x")
