@@ -755,7 +755,12 @@ class SfincsModel(Model):
         self.set_staticmaps(da_rivmask, name="rivmsk")
 
     def setup_river_inflow(
-        self, hydrography_fn=None, river_upa=25.0, river_len=1e3, keep_rivers_geom=False
+        self,
+        hydrography_fn=None,
+        river_upa=25.0,
+        river_len=1e3,
+        keep_rivers_geom=False,
+        buffer=10,
     ):
         """Setup river inflow (source) points where a river enters the model domain.
 
@@ -780,13 +785,15 @@ class SfincsModel(Model):
             Mimimum river length within the model domain thresohld [m], by default 1000 m.
         keep_rivers_geom: bool, optional
             If True, keep a geometry of the rivers "rivers_in" in staticgeoms. By default False.
+        buffer: int, optional
+            Buffer [no. of cells] around model domain, by default 10.
         """
         if hydrography_fn is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography_fn,
                 geom=self.region,
                 variables=["uparea", "flwdir"],
-                buffer=10,
+                buffer=buffer,
             )
         else:
             ds = self.staticmaps
@@ -1341,7 +1348,8 @@ class SfincsModel(Model):
             * Required variables: ['discharge' (m3/s)]
             * Required coordinates: ['time', 'y', 'x']
         locs_fn: str, Path, optional
-            Path or data source name for point location dataset.
+            Path or data source name for point location dataset. Not required if
+            point location have previously been set with :py:meth:`~hydromt_sfincs.SfincsModel.setup_river_inflow`
             See :py:meth:`hydromt.open_vector`, for accepted files.
 
         uparea_fn: str, Path, optional

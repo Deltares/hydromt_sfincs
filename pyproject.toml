@@ -60,7 +60,7 @@ target-version = ['py38']
 
 [tool.flit.sdist]
 include = ["hydromt_sfincs"]
-exclude = ["docs", "examples", "envs", "tests", "binder", ".github"]
+exclude = ["docs", "examples", "envs", "tests", "binder", ".github", "sandbox"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
