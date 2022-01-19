@@ -28,6 +28,7 @@ def merge_topobathy(
     elv_min: float = None,
     elv_max: float = None,
     reproj_method: str = "bilinear",
+    interp_method: str = "linear",
     max_width: int = 0,
     logger=logger,
 ) -> xr.DataArray:
@@ -61,11 +62,13 @@ def merge_topobathy(
     merge_buffer: int, optional
         Buffer (number of cells) within the da_mask==True region where topobathy
         values are based on linear interpolation for a smooth transition, by default 0.
-    reproj_method: str, optional
-        Method used to reproject the offset and second dataset to the grid of the
-        first dataset, by default 'bilinear'
     max_width: int, optional
         Maximum width (number of cells) to append to valid da1 cells. By default 0.
+    reproj_method: {'bilinear', 'cubic', 'nearest'}
+        Method used to reproject the offset and second dataset to the grid of the
+        first dataset, by default 'bilinear'
+    interp_method, {'linear', 'nearest', 'rio_idw'}
+        Method used to interpolate holes of nodata in the merged dataset, by default 'linear'.
 
     Returns
     -------
@@ -121,9 +124,9 @@ def merge_topobathy(
         da_out = da_out.where(~mask_buf, nodata)
     # interpolate invalid elevtn, buffer and holes ( nodata values )
     nempty = np.sum(da_out.values[na_mask] == nodata)
-    if nempty > 0:
+    if nempty > 0 and interp_method:
         logger.debug(f"Interpolate topobathy at {int(nempty)} cells")
-        da_out = da_out.raster.interpolate_na(method="linear")
+        da_out = da_out.raster.interpolate_na(method=interp_method)
         da_out = da_out.where(na_mask, nodata)  # reset extrapolated area
     if max_width > 0:
         mask_dilated = ndimage.binary_dilation(mask, struct, iterations=max_width)
@@ -203,6 +206,9 @@ def get_river_bathymetry(
     rivdph_method: str = "gvf",
     rivwth_method: str = "mask",
     river_upa: float = 100.0,
+    river_len: float = 1e3,
+    min_rivdph: float = 1.0,
+    min_rivwth: float = 50.0,
     segment_length: float = 5e3,
     smooth_length: float = 10e3,
     min_convergence: float = 0.01,
@@ -235,6 +241,10 @@ def get_river_bathymetry(
         River depth estimate method, by default 'gvf'
     river_upa : float, optional
         Minumum upstream area threshold for rivers [km2], by default 100.0
+    river_len: float, optional
+        Mimimum river length [m] within the model domain to define river cells, by default 1000.
+    min_rivwth, min_rivdph: float, optional
+        Minimum river width [m] (by defeault 50.0 m) and depth [m] (by default 1.0 m)
     segment_length : float, optional
         Approximate river segment length [m], by default 5e3
     smooth_length : float, optional
@@ -263,6 +273,10 @@ def get_river_bathymetry(
     # get vector of stream segments
     da_upa = ds[uparea_name]
     rivd8 = da_upa > river_upa
+    if river_len > 0:
+        dx_headwater = np.where(flwdir.upstream_sum(rivd8) == 0, flwdir.distnc, 0)
+        rivlen = flwdir.fillnodata(dx_headwater, nodata=0, direction="down", how="max")
+        rivd8 = np.logical_and(rivd8, rivlen >= river_len)
     feats = flwdir.streams(
         max_len=int(round(segment_length / ds.raster.res[0])),
         uparea=da_upa.values,
@@ -332,11 +346,16 @@ def get_river_bathymetry(
         logger.info("Deriving river segment average width.")
         rivwth = rivers.river_width(gdf_riv, da_rivmask=da_msk)
         gdf_riv["rivwth"] = flw.fillnodata(rivwth, -9999, direction="down", how="max")
-        gdf_riv["rivwth"] = np.maximum(gdf_riv["rivwth"], 0)
 
     # estimate river depth, smooth and correct
+    gdf_riv["rivwth"] = np.maximum(gdf_riv["rivwth"], min_rivwth)
     gdf_riv["rivdph0"] = rivers.river_depth(
-        data=gdf_riv, flwdir=flw, method=rivdph_method, rivzs_name="zs", **kwargs
+        data=gdf_riv,
+        flwdir=flw,
+        method=rivdph_method,
+        rivzs_name="zs",
+        min_rivdph=min_rivdph,
+        **kwargs,
     )
     gdf_riv["rivdph"] = flw.moving_average(gdf_riv["rivdph0"], n=smooth_n)
 
@@ -362,7 +381,8 @@ def get_river_bathymetry(
     # calculate rivslp
     dz = gdf_riv["zb"] - flw.downstream(gdf_riv["zb"])
     dx = gdf_riv["rivdst"] - flw.downstream(gdf_riv["rivdst"])
-    gdf_riv["rivslp"] = (dz / dx).fillna(0)
+    # fill nodata with upstream neighbors and set lower bound of zero
+    gdf_riv["rivslp"] = np.maximum(0, flw.fillnodata(np.where(dx > 0, dz / dx, -1), -1))
 
     return gdf_riv, da_msk
 

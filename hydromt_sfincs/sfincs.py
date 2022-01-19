@@ -222,21 +222,26 @@ class SfincsModel(Model):
         topobathy_fn,
         elv_min=None,
         elv_max=None,
-        offset_fn=None,
         mask_fn=None,
+        max_width=0,
+        offset_fn=None,
         offset_constant=0,
         merge_buffer=0,
-        max_width=0,
         merge_method="first",
         reproj_method="bilinear",
+        interp_method="linear",
     ):
-        """Updates the existing model topobathy data (depfile) with a new topobathy source.
+        """Updates the existing model topobathy data (dep file) with a new topobathy source.
 
-        The existing toptobathy data is overwritten with valid values from the new dataset
-        based on the merge method.
+        By default (`merge_method="first"`) invalid (nodata) cells in the current topobathy
+        data are replaced with values from the new topobathy source.
 
-        If `offset_fn` is provided, a (spatially varying) offset is applied to the
-        new dataset to convert the vertical datum before merging.
+        Use `offset_fn` for a spatially varying, or `offset_constant` for a spatially uniform
+        offset to convert the vertical datum of the new soruce before merging.
+
+        Gaps in the data (i.e. areas with nodata cells surrounded areas with valid elevation)
+        are interpolated based on `interp_method`, by deafult 'linear'. Gaps are not
+        interpolated if `interp_method = None`
 
         Updates model layer:
 
@@ -250,15 +255,22 @@ class SfincsModel(Model):
             * Required variables: ['elevtn']
         mask_fn : str, optional
             Path or data source name of polygon with valid new topobathy cells.
+        max_width: int, optional
+            Maximum width (number of cells) to append to valid dep cells if larger than
+            zero. By default 0.
         elv_min, elv_max : float, optional
             Minimum and maximum elevation caps for new topobathy cells, cells outside
             this range are linearly interpolated. Note: applied after offset!
         offset_fn : str, optional
-            Difference between vertical reference of the current model topobathy and the new
-            datasourcs. The offset is added to the new source before merging.
+            Path or data source name for Spatially varying map with difference between
+            the vertical reference of the current model topobathy and the new data source [m].
+            The offset is added to the new source before merging.
+        offset_fn : float, optional
+            Same as `offset_fn` but spatially uniform value [m].
         merge_buffer : int, optional
-            Buffer (number of cells) around cells where the original (merge_method = 'first')
-            or new (merge_method = 'last') dataset where values are linearly interpolated.
+            Buffer (number of cells) around the original (`merge_method = 'first'`)
+            or new (`merge_method = 'last'`) data source where values are interpolated
+            using `interp_method`.
             Not recommended to use in combination with merge_methods 'min' or 'max'
         merge_method: {'first','last','min','max'}, optional
             merge method, by default 'first':
@@ -267,11 +279,12 @@ class SfincsModel(Model):
             * last: use valid new
             * min: pixel-wise min of existing and new
             * max: pixel-wise max of existing and new
-        reproj_method: str, optional
-            Method used to reproject the new source and offset data to the model grid,
-            by default 'bilinear'
-        max_width: int, optional
-            Maximum width (number of cells) to append to valid da1 cells. By default 0.
+        reproj_method: {'bilinear', 'cubic', 'nearest'}
+            Method used to reproject the offset and second dataset to the grid of the
+            new topobathy dataset, by default 'bilinear'
+        interp_method, {'linear', 'nearest', 'rio_idw'}, optional
+            Method used to interpolate holes of nodata in the merged dataset,
+            by default 'linear'. If None holes are not interpolated.
         """
         name = self._MAPS["elevtn"]
         assert name in self.staticmaps
@@ -281,6 +294,7 @@ class SfincsModel(Model):
         )
         kwargs = dict(
             reproj_method=reproj_method,
+            interp_method=interp_method,
             merge_buffer=merge_buffer,
             merge_method=merge_method,
             max_width=max_width,
@@ -288,8 +302,7 @@ class SfincsModel(Model):
         # mask
         if mask_fn is not None:
             gdf_mask = self.data_catalog.get_geodataframe(mask_fn, geom=self.region)
-            mask = da_elv2.raster.geometry_mask(gdf_mask)
-            da_elv2 = da_elv2.where(mask, da_elv2.raster.nodata)
+            da_elv2 = da_elv2.raster.clip_geom(gdf_mask, mask=True)
         # offset
         if offset_fn is not None:
             # variable name not important, but must be single variable
@@ -356,18 +369,18 @@ class SfincsModel(Model):
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
         """
-        name = self._MAPS["mask"]
-        if name in self.staticmaps:  # reset
-            self._staticmaps = self._staticmaps.drop_vars(name)
+        if self._MAPS["mask"] in self.staticmaps:  # reset
+            self._staticmaps = self._staticmaps.drop_vars(self._MAPS["mask"])
 
         # read geometries
+        gdf1, gdf2 = None, None
         if include_mask_fn is not None:
             gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, geom=self.region)
         if exclude_mask_fn is not None:
             gdf2 = self.data_catalog.get_geodataframe(exclude_mask_fn, geom=self.region)
 
         # get mask
-        da_mask = workflows.mask_topobathy(
+        da_mask = utils.mask_topobathy(
             da_elv=self.staticmaps[self._MAPS["elevtn"]],
             gdf_include=gdf1,
             gdf_exclude=gdf2,
@@ -387,7 +400,7 @@ class SfincsModel(Model):
             self._staticmaps[name] = da.where(da_mask, da.raster.nodata)
         # update sfincs mask with boolean mask to conserve mask values
         da_mask = self.mask.where(da_mask, np.uint8(0))  # unint8 dtype!
-        self.set_staticmaps(da_mask, name)
+        self.set_staticmaps(da_mask, self._MAPS["mask"])
 
         self.logger.debug(f"Derive region geometry based on active cells.")
         region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
@@ -456,7 +469,7 @@ class SfincsModel(Model):
 
         # mask values
         bounds = utils.mask_bounds(
-            da_dep=self.staticmaps[self._MAPS["elevtn"]],
+            da_elv=self.staticmaps[self._MAPS["elevtn"]],
             gdf_include=gdf_include,
             gdf_exclude=gdf_exclude,
             elv_min=elv_min,
@@ -483,7 +496,8 @@ class SfincsModel(Model):
         If no hydrography data is provided (`hydrography_fn=None`) flow directions are
         derived from the model elevation data.
         Note that in that case the upstream area map will miss the contribution from area
-        upstream of the model domain and incoming rivers in the `setup_river_inflow` cannot be detected.
+        upstream of the model domain and incoming rivers in the `setup_river_inflow`
+        cannot be detected.
 
         If the model crs or resolution is different from the input hydrography data,
         it is reprojected to the model grid. Note that this works best if the destination
@@ -558,8 +572,11 @@ class SfincsModel(Model):
         river_mask_fn=None,
         qbankfull_fn=None,
         rivdph_method="gvf",
-        rivwth_method="mask",
-        river_upa=100.0,
+        rivwth_method="geom",
+        river_upa=25.0,
+        river_len=1000,
+        min_rivwth=50.0,
+        min_rivdph=1.0,
         segment_length=5e3,
         smooth_length=10e3,
         constrain_rivbed=True,
@@ -568,6 +585,8 @@ class SfincsModel(Model):
         **kwargs,  # for workflows.get_river_bathymetry method
     ):
         """Burn rivers into the model elevation (dep) file.
+
+        NOTE: this method is experimental and may change in the near future.
 
         If a river segment geometry file `river_geom_fn` with bedlevel column ("zb") is
         provided, this is used directly to set the river cell elevation. River cells are
@@ -612,7 +631,11 @@ class SfincsModel(Model):
             Derive the river with from either the `river_geom_fn` (geom) or
             `river_mask_fn` (mask; default) data.
         river_upa : float, optional
-            Minumum upstream area threshold for rivers [km2], by default 100.0
+            Minumum upstream area threshold for rivers [km2], by default 25.0
+        river_len: float, optional
+            Mimimum river length within the model domain thresohld [m], by default 1000 m.
+        min_rivwth, min_rivdph: float, optional
+            Minimum river width [m] (by default 50.0) and depth [m] (by default 1.0)
         segment_length : float, optional
             Approximate river segment length [m], by default 5e3
         smooth_length : float, optional
@@ -665,6 +688,9 @@ class SfincsModel(Model):
                 rivdph_method=rivdph_method,
                 rivwth_method=rivwth_method,
                 river_upa=river_upa,
+                river_len=river_len,
+                min_rivdph=min_rivdph,
+                min_rivwth=min_rivwth,
                 segment_length=segment_length,
                 smooth_length=smooth_length,
                 elevtn_name=self._MAPS["elevtn"],
@@ -745,10 +771,10 @@ class SfincsModel(Model):
             Path or data source name for hydrography raster data, by default 'merit_hydro'.
 
             * Required layers: ['uparea', 'flwdir'].
-        river_upa: float, optional
-            Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.
+        river_upa : float, optional
+            Minumum upstream area threshold for rivers [km2], by default 25.0
         river_len: float, optional
-            Mimimum river length [m] within the model domain to define river cells, by default 1000 m.
+            Mimimum river length within the model domain thresohld [m], by default 1000 m.
         keep_rivers_geom: bool, optional
             If True, keep a geometry of the rivers "rivers_in" in staticgeoms. By default False.
         """
@@ -772,12 +798,13 @@ class SfincsModel(Model):
                 "is now infered from the bounding box and may lead to inaccurate inflow points."
             )
 
-        gdf_src, gdf_riv = workflows.river_inflow_points(
+        gdf_src, gdf_riv = workflows.river_boundary_points(
             da_flwdir=ds["flwdir"],
             da_uparea=ds["uparea"],
-            region=self.region,
+            region=self.region,  # TODO reset region based on mask
             river_len=river_len,
             river_upa=river_upa,
+            btype="inflow",
             return_river=keep_rivers_geom,
             logger=self.logger,
         )
@@ -796,7 +823,8 @@ class SfincsModel(Model):
     def setup_river_outflow(
         self,
         hydrography_fn=None,
-        river_upa=5.0,
+        river_upa=25.0,
+        river_len=1000,
         outflow_width=2000,
         append_bounds=False,
         keep_rivers_geom=False,
@@ -807,7 +835,7 @@ class SfincsModel(Model):
         half `outflow_width` of a discharge source piont or neighboring a waterlevel
         boundary cell are omitted.
 
-        NOTE: this method requires the either `hydrography_fn` or `setup_river_hydrography` to be run first.
+        NOTE: this method requires the either `hydrography_fn` input or `setup_river_hydrography` to be run first.
         NOTE: best to run after `setup_mask`, `setup_bounds` and `setup_river_inflow`
 
         Adds / edits model layers:
@@ -824,9 +852,10 @@ class SfincsModel(Model):
         outflow_width: int, optional
             The width [m] of the outflow boundary in the SFINCS msk file.
             By default 2km, i.e.: 1km to each side of the outflow point.
-        river_upa: float, optional
-            Mimimum upstream area threshold [km2] to define river cells, by default 5 km2.
-            Note: based on area within model domain only!
+        river_upa : float, optional
+            Minumum upstream area threshold for rivers [km2], by default 25.0
+        river_len: float, optional
+            Mimimum river length within the model domain thresohld [m], by default 1000 m.
         append_bounds: bool, optional
             If True, write new outflow boundary cells on top of existing. If False (default),
             first reset existing outflow boundary cells to normal active cells.
@@ -853,15 +882,17 @@ class SfincsModel(Model):
                 "is now infered from the bounding box and may lead to inaccurate outflow points."
             )
 
-        gdf_out, gdf_riv = workflows.river_outflow_points(
+        gdf_out, gdf_riv = workflows.river_boundary_points(
             da_flwdir=ds["flwdir"],
-            da_rivmsk=ds["uparea"] > river_upa,
-            region=self.region,
+            da_uparea=ds["uparea"],
+            region=self.region,  # TODO reset region based on mask
+            river_len=river_len,
+            river_upa=river_upa,
+            btype="outflow",
             return_river=keep_rivers_geom,
             logger=self.logger,
         )
         if len(gdf_out.index) == 0:
-            self.logger.debug(f"0 outflow (mask=3) boundary cells set.")
             return
 
         # remove points near waterlevel boundary cells

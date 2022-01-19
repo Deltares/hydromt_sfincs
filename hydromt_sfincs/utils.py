@@ -447,17 +447,17 @@ def mask_topobathy(
         if fill_holes:
             logger.debug(f"Fill holes below minimum elevation in domain")
             _msk = ndimage.binary_fill_holes(_msk)
-        dep_mask = da_mask.where(_msk, False)
+        da_mask = da_mask.where(_msk, False)
     if elv_max is not None:
-        dep_mask = dep_mask.where(da_elv <= elv_max, False)
+        da_mask = da_mask.where(da_elv <= elv_max, False)
     if min_cells > 0:
-        regions = ndimage.measurements.label(dep_mask.values, np.ones((3, 3)))[0]
+        regions = ndimage.measurements.label(da_mask.values, np.ones((3, 3)))[0]
         lbls, count = np.unique(regions[regions > 0], return_counts=True)
         n = int(sum(count > min_cells))
         _msk = np.isin(regions, lbls[count > min_cells])
         logger.debug(f"{n} regions with minimal {min_cells} cells found in domain")
-        dep_mask = dep_mask.where(_msk, False)
-    return dep_mask
+        da_mask = da_mask.where(_msk, False)
+    return da_mask
 
 
 def mask_bounds(
