@@ -10,7 +10,8 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 
 Bugfix
 ^^^^^^
-- Bugfix setup_p_forcing with `aggregate = True`
+- bugfix setup_p_forcing to ensure the data is 1D when passed to set_forcing_1d method
+- bugfix setup_p_forcing_from_grid when aggregating with a multi polygon region.
 
 New
 ^^^
