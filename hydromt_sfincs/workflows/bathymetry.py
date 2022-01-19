@@ -396,7 +396,7 @@ def burn_river_zb(
     logger=logger,
 ):
     """Burn bedlevels from `gdf_riv` (column zb) into the DEM `da_elv` at river cells
-    indicated in `da_msk`. The resulting river cells have D4 connectivity if `adjust_dem`.
+    indicated in `da_msk`.
 
     Parameters
     ----------
@@ -439,7 +439,7 @@ def burn_river_zb(
 
     if river_d4 and flwdir is not None:
         logger.debug("Correct for D4 connectivity bed level")
-        elevtn = flwdir.dem_dig_d4(da_elv1.values, da_msk.values, nodata=nodata)
+        elevtn = flwdir.dem_dig_d4(da_elv1.values, rivmsk=da_msk.values, nodata=nodata)
         da_elv1 = xr.DataArray(
             data=elevtn,
             coords=da_elv.raster.coords,

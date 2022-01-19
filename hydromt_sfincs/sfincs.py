@@ -206,7 +206,7 @@ class SfincsModel(Model):
             da_elv.raster.clip_geom(dst_geom, mask=True)
             .raster.mask_nodata()
             .fillna(-9999)  # force nodata value to be -9999
-            .round(3)  # mm precision
+            .round(2)  # cm precision
         )
         da_elv.raster.set_nodata(-9999)
 
@@ -322,7 +322,7 @@ class SfincsModel(Model):
             logger=self.logger,
             **kwargs,
         )
-        self.set_staticmaps(data=da_dep_merged, name=name)
+        self.set_staticmaps(data=da_dep_merged.round(2), name=name)
 
     def setup_mask(
         self,
@@ -489,7 +489,7 @@ class SfincsModel(Model):
                 f"{ncells:d} {btype} (mask={bvalue:d}) boundary cells set."
             )
 
-    def setup_river_hydrography(self, hydrography_fn=None, adjust_dem=True, **kwargs):
+    def setup_river_hydrography(self, hydrography_fn=None, adjust_dem=False, **kwargs):
         """Setup hydrography layers for flow directions ("flwdir") and upstream area
         ("uparea") which are required to setup the setup_river* model components.
 
@@ -564,7 +564,7 @@ class SfincsModel(Model):
             self.logger.info(f"Hydrologically adjusting {name} map.")
             flwdir = hydromt.flw.flwdir_from_da(ds_out["flwdir"], ftype="d8")
             da_elv.data = flwdir.dem_adjust(da_elv.values)
-            self.set_staticmaps(da_elv, name)
+            self.set_staticmaps(da_elv.round(2), name)
 
     def setup_river_bathymetry(
         self,
@@ -581,6 +581,7 @@ class SfincsModel(Model):
         smooth_length=10e3,
         constrain_rivbed=True,
         constrain_estuary=True,
+        dig_river_d4=True,
         plot_riv_profiles=0,
         **kwargs,  # for workflows.get_river_bathymetry method
     ):
@@ -643,8 +644,10 @@ class SfincsModel(Model):
         constrain_estuary : bool, optional
             If True (default) fix the river depth in estuaries based on the upstream river depth.
         constrain_rivbed : bool, optional
-            If True (default) correct the river bed level to be hydrologically correct
-            and D4 connected.
+            If True (default) correct the river bed level to be hydrologically correct,
+            i.e. sloping downward in downstream direction.
+        dig_river_d4: bool, optional
+            If True (defalt), dig the river out to be hydrologically connected in D4.
         """
         if river_geom_fn is None and river_mask_fn is None:
             raise ValueError('"river_geom_fn" or "river_mask_fn" should be provided.')
@@ -652,7 +655,7 @@ class SfincsModel(Model):
         ds = self.staticmaps
         flwdir = None
         if "flwdir" in ds:
-            flwdir = hydromt.flw.flwdir_from_da(ds["flwdir"])
+            flwdir = hydromt.flw.flwdir_from_da(ds["flwdir"], mask=False)
 
         # read river line geometry data
         gdf_riv = None
@@ -710,7 +713,7 @@ class SfincsModel(Model):
             da_elv=ds[self._MAPS["elevtn"]],
             da_msk=ds["rivmsk"],
             flwdir=flwdir,
-            river_d4=True,
+            river_d4=dig_river_d4,
             logger=self.logger,
         )
 
@@ -743,7 +746,7 @@ class SfincsModel(Model):
             plt.savefig(join(self.root, "figs", "river_bathymetry.png"))
 
         # update dep
-        self.set_staticmaps(da_elv1.round(3), name=self._MAPS["elevtn"])
+        self.set_staticmaps(da_elv1.round(2), name=self._MAPS["elevtn"])
         # keep river geom and rivmsk for postprocessing
         self.set_staticgeoms(gdf_riv, name="rivers")
         # save rivmask as int8 map (geotif does not support bool maps)
