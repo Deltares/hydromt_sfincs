@@ -15,6 +15,7 @@ dependencies = [
     "netcdf4",
     "numpy",
     "pandas",
+    "pyflwdir>=0.5.4",
     "pygeos",
     "rasterio",
     "scipy",

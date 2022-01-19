@@ -26,7 +26,6 @@ dependencies:
   - openpyxl
   - pandas
   - pip
-  - pyflwdir>=0.4.7
   - pygeos>=0.8
   - pytest # tests
   - pytest-cov # tests
@@ -41,4 +40,5 @@ dependencies:
   - zarr
   - pip:
     - git+https://github.com/Deltares/hydromt.git
+    - pyflwdir>=0.5.4
 
