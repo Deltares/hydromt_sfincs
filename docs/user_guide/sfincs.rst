@@ -21,8 +21,8 @@ and options to use for coastal or riverine applications.
 
 Note that the order in which the components are listed in the ini file is important: 
 
-- setup_basemaps should always be run first to determine the model domain
-- if discharge location are infered from hydrography, `setup_river_inflow` should be run before `setup_q_forcing` or `setup_q_forcing_from_grid`.
+- setup_topobathy should always be run first to determine the model grid
+- if discharge location are inferred from hydrography, `setup_river_inflow` should be run before `setup_q_forcing` or `setup_q_forcing_from_grid`.
 
 For python users all SFINCS attributes and methods are available, see :ref:`api_model`
 
@@ -34,7 +34,7 @@ SfincsModel setup components
 An overview of the available SfincsModel setup components, workflows and low-level methods
 is provided in the table below. When using hydromt from the command line only the
 setup components are exposed. Click on header to get a full overview or directly on
-a specific method see its documenation.  
+a specific method see its documentation.  
 
 .. _general_table:
 
@@ -46,18 +46,22 @@ a specific method see its documenation.
      - :ref:`setup components <components>`
      - :ref:`workflows <workflows>`
      - :ref:`low-level methods <methods>`
+   * - model region
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_region`
+     - :py:func:`~hydromt.workflows.parse_region` :py:func:`~hydromt.workflows.get_basin_geometry`
+     - 
    * - sfincs.inp
      - :py:func:`~hydromt_sfincs.SfincsModel.setup_config`
      - :py:func:`~hydromt.workflows.parse_region`:sup:`1` :py:func:`~hydromt.workflows.get_basin_geometry`:sup:`1`
      - :py:func:`~hydromt_sfincs.read_inp` :py:func:`~hydromt_sfincs.write_inp` :py:func:`~hydromt_sfincs.get_spatial_attrs`
    * - depfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_basemaps` :py:func:`~hydromt_sfincs.SfincsModel.setup_merge_topobathy` :py:func:`~hydromt_sfincs.SfincsModel.setup_river_bathymetry`
+     - :py:func:`~hydromt_sfincs.SfincsModel.setup_topobathy` :py:func:`~hydromt_sfincs.SfincsModel.setup_merge_topobathy` :py:func:`~hydromt_sfincs.SfincsModel.setup_river_bathymetry`
      - :py:func:`~hydromt_sfincs.workflows.merge_topobathy`
      - :py:func:`~hydromt_sfincs.read_binary_map` :py:func:`~hydromt_sfincs.write_binary_map`
    * - mskfile
      - :py:func:`~hydromt_sfincs.SfincsModel.setup_mask` :py:func:`~hydromt_sfincs.SfincsModel.setup_bounds` :py:func:`~hydromt_sfincs.SfincsModel.setup_river_outflow`
-     - :py:func:`~hydromt_sfincs.workflows.mask_topobathy`
-     - :py:func:`~hydromt_sfincs.read_binary_map` :py:func:`~hydromt_sfincs.write_binary_map` :py:func:`~hydromt_sfincs.utils.mask_bounds`
+     - :py:func:`~hydromt_sfincs.utils.mask_topobathy` :py:func:`~hydromt_sfincs.utils.mask_bounds`
+     - :py:func:`~hydromt_sfincs.read_binary_map` :py:func:`~hydromt_sfincs.write_binary_map` 
    * - indfile
      - 
      - 
@@ -79,7 +83,7 @@ a specific method see its documenation.
      -
      - :py:func:`~hydromt_sfincs.read_structures` :py:func:`~hydromt_sfincs.write_structures` :py:func:`~hydromt_sfincs.utils.gdf2structures` :py:func:`~hydromt_sfincs.utils.structures2gdf`
 
-.. _focing_table:
+.. _forcing_table:
 
 .. list-table:: Forcing setup components
    :widths: 20 25 25 30
@@ -113,9 +117,9 @@ SFINCS datamodel
 
 The following table provides an overview of which :py:class:`~hydromt_sfincs.SfincsModel` 
 attribute contains which SFINCS in- and output files. The files are read and written with the associated 
-read- and write- methods, i.e. :py:func:`~hydomt_sfincs.sfincs.SfincsModel.read_config` 
-and :py:func:`~hydomt_sfincs.sfincs.SfincsModel.write_config` for the 
-:py:attr:`~hydomt_sfincs.sfincs.SfincsModel.config`  attribute. 
+read- and write- methods, i.e. :py:func:`~hydromt_sfincs.sfincs.SfincsModel.read_config` 
+and :py:func:`~hydromt_sfincs.sfincs.SfincsModel.write_config` for the 
+:py:attr:`~hydromt_sfincs.sfincs.SfincsModel.config`  attribute. 
 
 Note that the indfile is not part of the staticmaps dataset but created based on 
 the mskfile upon writing and used for reading staticmaps.
