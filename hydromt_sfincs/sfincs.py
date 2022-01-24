@@ -117,6 +117,7 @@ class SfincsModel(Model):
             da_elv = self.staticmaps[self._MAPS["elevtn"]]
             da_mask = (da_elv != da_elv.raster.nodata).astype(np.uint8)
             da_mask.raster.set_nodata(0)
+            self.set_staticmaps(da_mask, name)
         elif name in self._staticmaps:
             da_mask = self.staticmaps[name]
         return da_mask
@@ -634,6 +635,7 @@ class SfincsModel(Model):
         if river_geom_fn is None and river_mask_fn is None:
             raise ValueError('"river_geom_fn" or "river_mask_fn" should be provided.')
         # get basemap river flwdir
+        self.mask  # make sure msk is staticmaps
         ds = self.staticmaps
         flwdir = None
         if "flwdir" in ds:
@@ -784,16 +786,13 @@ class SfincsModel(Model):
                     '"uparea" and/or "flwdir" layers missing. '
                     "Run setup_river_hydrography first or provide hydrography_fn dataset."
                 )
-        if "region" not in self.staticgeoms:
-            self.logger.warning(
-                "Run setup_mask() first to define the active model region. The model region "
-                "is now infered from the bounding box and may lead to inaccurate inflow points."
-            )
 
+        # (re)calculate region to make sure it's accurate
+        region = self.mask.where(self.mask <= 1, 1).raster.vectorize()
         gdf_src, gdf_riv = workflows.river_boundary_points(
             da_flwdir=ds["flwdir"],
             da_uparea=ds["uparea"],
-            region=self.region,  # TODO reset region based on mask
+            region=region,
             river_len=river_len,
             river_upa=river_upa,
             btype="inflow",
@@ -868,16 +867,13 @@ class SfincsModel(Model):
                     '"uparea" and/or "flwdir" layers missing. '
                     "Run setup_river_hydrography first or provide hydrography_fn dataset."
                 )
-        if "region" not in self.staticgeoms:
-            self.logger.warning(
-                "Run setup_mask() first to define the active model region. The model region "
-                "is now inferred from the bounding box and may lead to inaccurate outflow points."
-            )
 
+        # (re)calculate region to make sure it's accurate
+        region = self.mask.where(self.mask <= 1, 1).raster.vectorize()
         gdf_out, gdf_riv = workflows.river_boundary_points(
             da_flwdir=ds["flwdir"],
             da_uparea=ds["uparea"],
-            region=self.region,  # TODO reset region based on mask
+            region=region,
             river_len=river_len,
             river_upa=river_upa,
             btype="outflow",
@@ -1112,7 +1108,7 @@ class SfincsModel(Model):
             gdf = utils.structures2gdf(structs_out, crs=self.crs)
         elif stype == "weir" and np.any(["z" not in s for s in structs]):
             raise ValueError("Weir structure requires z values.")
-        # combine with exisiting structures if present
+        # combine with existing structures if present
         if not overwrite and stype in self.staticgeoms:
             gdf0 = self._staticgeoms.pop(stype)
             gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
@@ -1128,7 +1124,7 @@ class SfincsModel(Model):
         geodataset_fn=None,
         timeseries_fn=None,
         offset_fn=None,
-        buffer=0,
+        buffer=5e3,
         **kwargs,
     ):
         """Setup waterlevel boundary point locations (bnd) and time series (bzs).
@@ -1166,13 +1162,16 @@ class SfincsModel(Model):
             Path to spatially uniform timeseries csv file with time index in first column
             and waterlevels in the second column. The first row is interpreted as header,
             see :py:meth:`hydromt.open_timeseries_from_table`, for details.
+            NOTE: tabulated timeseries files can only in combination with point location
+            coordinates be set as a geodataset in the data_catalog yml file.
         offset_fn: str, optional
             Path or data source name for gridded offset between vertical reference of elevation and waterlevel data,
             Adds to the waterlevel data before merging.
 
             * Required variables: ['mdt']
-        buffer: float
-            Buffer around model region from which to select waterlevel gauges
+        buffer: float, optional
+            Buffer [m] around model water level boundary cells to select waterlevel gauges,
+            by default 5 km.
 
         """
         name = "waterlevel"
@@ -1187,12 +1186,14 @@ class SfincsModel(Model):
 
         tstart, tstop = self.get_model_time()  # model time
         if geodataset_fn is not None:
-            # read and clip data in time & space
             if timeseries_fn is not None:
                 kwargs.update(fn_data=str(timeseries_fn))
+            # read and clip data in time & space
+            # buffer around msk==2 values
+            region = self.mask.where(self.mask == 2, 0).raster.vectorize()
             da = self.data_catalog.get_geodataset(
                 geodataset_fn,
-                geom=self.region,
+                geom=region,
                 buffer=buffer,
                 variables=[name],
                 time_tuple=(tstart, tstop),
@@ -1258,7 +1259,8 @@ class SfincsModel(Model):
             Path to tabulated timeseries csv file with time index in first column
             and location IDs in the first row,
             see :py:meth:`hydromt.open_timeseries_from_table`, for details.
-            NOTE: tabulated timeseries files cannot yet be set through the data_catalog yml file.
+            NOTE: tabulated timeseries files can only in combination with point location
+            coordinates be set as a geodataset in the data_catalog yml file.
 
         """
         name = "discharge"
@@ -1271,6 +1273,8 @@ class SfincsModel(Model):
             )
             return
         elif geodataset_fn is not None:
+            if timeseries_fn is not None:
+                kwargs.update(fn_data=str(timeseries_fn))
             # read and clip data
             da = (
                 self.data_catalog.get_geodataset(
@@ -1278,6 +1282,7 @@ class SfincsModel(Model):
                     geom=self.region,
                     variables=[name],
                     time_tuple=(tstart, tstop),
+                    crs=self.crs.to_epsg(),  # assume model crs if none defined
                     **kwargs,
                 )
                 .fillna(0.0)
