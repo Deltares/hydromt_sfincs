@@ -129,7 +129,9 @@ class SfincsModel(Model):
         crs="utm",
         reproj_method="bilinear",
     ):
-        """Setup model topobathy (dep) data.
+        """Setup model grid and interpolate topobathy (dep) data to this grid.
+
+        NOTE: This method should be called after `setup_region` but before any other model component.
 
         The input topobathy dataset is reprojected to the model projected `crs` and
         resolution `res` using `reproj_method` interpolation.
@@ -661,6 +663,11 @@ class SfincsModel(Model):
                 river_mask_fn, geom=self.region
             ).raster.reproject_like(ds, "max")
             ds["rivmsk"] = da_rivmask.where(self.mask != 0, 0) != 0
+        elif "rivmsk" in ds:
+            self.logger.info(
+                'River mask based on internal "rivmsk" layer. If this is unwanted '
+                "delete the gis/rivmsk.tif file or drop the rivmsk staticmaps variable."
+            )
 
         # estimate elevation bed level based on qbankfull (and other parameters)
         if not (gdf_riv is not None and "zb" in gdf_riv):

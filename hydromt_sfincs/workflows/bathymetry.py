@@ -322,7 +322,7 @@ def get_river_bathymetry(
         buf = np.maximum(gdf_riv_buf["rivwth"] / 2, 1)
         gdf_riv_buf["geometry"] = gdf_riv_buf.buffer(buf)
         da_msk = np.logical_and(
-            ds.raster.geometry_mask(gdf_riv), da_elv != da_elv.raster.nodata
+            ds.raster.geometry_mask(gdf_riv_buf), da_elv != da_elv.raster.nodata
         )
     elif rivmsk_name in ds:  #  merge river mask with river line
         da_msk = ds.raster.geometry_mask(gdf_riv, all_touched=True)
