@@ -421,7 +421,7 @@ def mask_topobathy(
     elv_min, elv_max : float, optional
         Minimum and maximum elevation thresholds for boundary cells.
     min_cells : int, optional
-        Minimum number of contigous cells in any contiguous areas, by default 0.
+        Minimum number of contiguous cells in any contiguous areas, by default 0.
     fill_holes : bool, optional
         If True (default) fill holes below the minimum elevation in the domain.
     all_touched: bool, optional
@@ -445,13 +445,12 @@ def mask_topobathy(
         # active cells: contiguous area above depth threshold
         _msk = da_elv >= elv_min
         if fill_holes:
-            logger.debug(f"Fill holes below minimum elevation in domain")
             _msk = ndimage.binary_fill_holes(_msk)
         da_mask = da_mask.where(_msk, False)
     if elv_max is not None:
         da_mask = da_mask.where(da_elv <= elv_max, False)
     if min_cells > 0:
-        regions = ndimage.measurements.label(da_mask.values, np.ones((3, 3)))[0]
+        regions = ndimage.measurements.label(da_mask.values)[0]
         lbls, count = np.unique(regions[regions > 0], return_counts=True)
         n = int(sum(count > min_cells))
         _msk = np.isin(regions, lbls[count > min_cells])
