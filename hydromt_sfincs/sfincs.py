@@ -318,6 +318,7 @@ class SfincsModel(Model):
         min_cells=0,
         fill_holes=True,
         all_touched=True,
+        reset_mask=False,
     ):
         """Creates mask of active model cells.
 
@@ -347,14 +348,17 @@ class SfincsModel(Model):
         min_cells : int, optional
             Minimum number of contiguous cells in any contiguous areas.
         fill_holes : bool, optional
-            If True (Default) cells below the minimum elevation `elv_min` but surrounded
-            by cells with higher elevation are kept as active cells.
+            If True (Default) cells below `elv_min` or above `elv_max` but surrounded
+            by cells within the valid elevation range are kept as active cells.
         all_touched: bool, optional
             if True (default) include (or exclude) a cell in the mask if it touches any of the
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
+        reset_mask: bool, optional
+            If True, reset existing mask layer setting all valid elevation values to
+            active cells, by default False.
         """
-        if self._MAPS["mask"] in self.staticmaps:  # reset
+        if reset_mask and self._MAPS["mask"] in self.staticmaps:  # reset
             self._staticmaps = self._staticmaps.drop_vars(self._MAPS["mask"])
 
         # read geometries
@@ -399,6 +403,7 @@ class SfincsModel(Model):
         elv_min=None,
         elv_max=None,
         include_buffer=0,
+        connectivity=8,
         reset_bounds=False,
     ):
         """Set boundary cells in the model mask.
@@ -432,6 +437,9 @@ class SfincsModel(Model):
         reset_bounds: bool, optional
             If True, reset existing boundary cells of the selected boundary
             type (`btype`) before setting new boundary cells, by default False.
+        connectivity, {4, 8}:
+            The connectivity used to detect the model edge, if 4 only horizontal and vertical
+            connections are used, if 8 (default) also diagonal connections.
         """
         btype = btype.lower()
         bvalues = {"waterlevel": 2, "outflow": 3}
@@ -459,6 +467,7 @@ class SfincsModel(Model):
             gdf_exclude=gdf_exclude,
             elv_min=elv_min,
             elv_max=elv_max,
+            structure=np.ones((3, 3), int) if connectivity == 8 else None,
         )
 
         # update model mask

@@ -31,8 +31,11 @@ Changed (**Breaking**)
 
 Changed
 ^^^^^^^
-- `setup_mask` and `setup_bounds` both have include- and exclude polygon and min- and max elevation arguments. 
-- `setup_mask` additionally takes a `min_cells` argument to filter a region based on the number of contiguous cells, usefull to remove (spurious) small islands.
+- `setup_mask` and `setup_bounds` both have include- and exclude polygon and min- and max elevation arguments to determine valid / boundary cells. 
+- `setup_mask` and `setup_bounds` have a reset_mask and reset_bounds option respectively to start with a clean mask or remove previously set boundary cells.
+- `setup_mask` additionally takes a `min_cells` argument to filter a region based on the number of contiguous cells, useful to remove (spurious) small islands.
+- In `setup_mask` exposed `fill_holes` argument to determine whether to keep isolated areas below the `min_elv` or above `max_elv` threshold.
+- In `setup_bounds` exposed `connectivity` argument to determine whether base edge cells on D4 (horizontal and vertical) or D8 (also diagonal) connections.
 - `setup_merge_topobathy` has a new `max_width` argument to use bathymetry data from new source within a fixed width around the topography data. 
 - `setup_river_inflow` and `setup_river_outflow` are now based on the same `workflows.river_boundary_points` method. 
    Both have a `river_upa` and `river_len` argument and the hydrography data is not required if `setup_river_hydrography` is ran beforehand.
@@ -40,7 +43,6 @@ Changed
 - `write_config` has a new `rel_path` argument that allows you to write sfincs.inp with references to model files in the root and rel_path directory.
 - Write dep file with cm accuracy. This should be sufficient but also hides differences between linux and window builds.
 - Exposed `interp_method` argument in `setup_merge_topobathy` to select interpolation method for fill NaNs.
-- In `setup_mask` exposed `fill_holes` argument to determine whether to keep isolated areas below the `min_elv` threshold.
 - `setup_cn_infiltration` and `setup_manning_roughness` use deafult values for river cells as defined in `setup_river_bathymetry`
 - Use mamba to setup CI environments
 - Bumped minimal pyflwdir version to 0.5.4

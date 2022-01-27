@@ -423,7 +423,8 @@ def mask_topobathy(
     min_cells : int, optional
         Minimum number of contiguous cells in any contiguous areas, by default 0.
     fill_holes : bool, optional
-        If True (default) fill holes below the minimum elevation in the domain.
+        If True (Default) cells below `elv_min` or above `elv_max` but surrounded
+        by cells within the valid elevation range are kept as active cells.
     all_touched: bool, optional
         if True (default) include (or exclude) a cell in the mask if it touches any of the
         include (or exclude) geometries. If False, include a cell only if its center is
@@ -441,14 +442,15 @@ def mask_topobathy(
     if gdf_exclude is not None:
         da_exclude = da_mask.raster.geometry_mask(gdf_exclude, all_touched=all_touched)
         da_mask = da_mask.where(~da_exclude, False)
-    if elv_min is not None:
-        # active cells: contiguous area above depth threshold
-        _msk = da_elv >= elv_min
+    if elv_min is not None or elv_max is not None:
+        _msk = da_elv != da_elv.raster.nodata
+        if elv_min is not None:
+            _msk = np.logical_and(_msk, da_elv >= elv_min)
+        if elv_max is not None:
+            _msk = np.logical_and(_msk, da_elv <= elv_max)
         if fill_holes:
             _msk = ndimage.binary_fill_holes(_msk)
         da_mask = da_mask.where(_msk, False)
-    if elv_max is not None:
-        da_mask = da_mask.where(da_elv <= elv_max, False)
     if min_cells > 0:
         regions = ndimage.measurements.label(da_mask.values)[0]
         lbls, count = np.unique(regions[regions > 0], return_counts=True)
