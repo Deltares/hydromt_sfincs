@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hydromt_sfincs.workflows.mask_topobathy &mdash; hydromt_sfincs  documentation</title>
+  <title>hydromt_sfincs.workflows.burn_river_zb &mdash; hydromt_sfincs  documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.workflows.merge_topobathy" href="hydromt_sfincs.workflows.merge_topobathy.html" />
-    <link rel="prev" title="hydromt_sfincs.SfincsModel.read_results" href="hydromt_sfincs.SfincsModel.read_results.html" /> 
+    <link rel="next" title="hydromt_sfincs.workflows.snap_discharge" href="hydromt_sfincs.workflows.snap_discharge.html" />
+    <link rel="prev" title="hydromt_sfincs.workflows.get_river_bathymetry" href="hydromt_sfincs.workflows.get_river_bathymetry.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -58,13 +58,14 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../api/api_index.html">API reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../api/api_index.html#sfincs-model-class">SFINCS model class</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../api/api_index.html#sfincs-workflows">SFINCS workflows</a><ul class="current">
-<li class="toctree-l3 current"><a class="current reference internal" href="#">hydromt_sfincs.workflows.mask_topobathy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.merge_topobathy.html">hydromt_sfincs.workflows.merge_topobathy</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.get_rivbank_dz.html">hydromt_sfincs.workflows.get_rivbank_dz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.get_river_bathymetry.html">hydromt_sfincs.workflows.get_river_bathymetry</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">hydromt_sfincs.workflows.burn_river_zb</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.snap_discharge.html">hydromt_sfincs.workflows.snap_discharge</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.river_inflow_points.html">hydromt_sfincs.workflows.river_inflow_points</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.river_outflow_points.html">hydromt_sfincs.workflows.river_outflow_points</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.river_boundary_points.html">hydromt_sfincs.workflows.river_boundary_points</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../api/api_index.html#sfincs-low-level-methods">SFINCS low-level methods</a></li>
@@ -89,9 +90,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="../api/api_index.html">API reference</a> &raquo;</li>
-      <li>hydromt_sfincs.workflows.mask_topobathy</li>
+      <li>hydromt_sfincs.workflows.burn_river_zb</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/generated/hydromt_sfincs.workflows.mask_topobathy.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/generated/hydromt_sfincs.workflows.burn_river_zb.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -123,13 +124,30 @@
     text-align: unset;
 }
 </style>
-<section id="hydromt-sfincs-workflows-mask-topobathy">
-<h1>hydromt_sfincs.workflows.mask_topobathy<a class="headerlink" href="#hydromt-sfincs-workflows-mask-topobathy" title="Permalink to this headline"></a></h1>
+<section id="hydromt-sfincs-workflows-burn-river-zb">
+<h1>hydromt_sfincs.workflows.burn_river_zb<a class="headerlink" href="#hydromt-sfincs-workflows-burn-river-zb" title="Permalink to this headline"></a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="hydromt_sfincs.workflows.mask_topobathy">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">mask_topobathy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da_elv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">xarray.core.dataarray.DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">xarray.core.dataarray.DataArray</span></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/bathymetry.html#mask_topobathy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.mask_topobathy" title="Permalink to this definition"></a></dt>
-<dd><p>Return mask of valid elevation cells within [elv_min, elv_max] range.
-Note that local sinks (isolated regions with elv &lt; elv_min) are kept.</p>
+<dt class="sig sig-object py" id="hydromt_sfincs.workflows.burn_river_zb">
+<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">burn_river_zb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gdf_riv:</span> <span class="pre">geopandas.geodataframe.GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_elv:</span> <span class="pre">xarray.core.dataarray.DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_msk:</span> <span class="pre">xarray.core.dataarray.DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flwdir:</span> <span class="pre">typing.Optional[pyflwdir.pyflwdir.FlwdirRaster]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_d4:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.bathymetry</span> <span class="pre">(WARNING)&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/bathymetry.html#burn_river_zb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.burn_river_zb" title="Permalink to this definition"></a></dt>
+<dd><p>Burn bedlevels from <cite>gdf_riv</cite> (column zb) into the DEM <cite>da_elv</cite> at river cells
+indicated in <cite>da_msk</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gdf_riv</strong> (<em>gpd.GeoDataFrame</em>) – River segments with bed level (bz) estimates</p></li>
+<li><p><strong>da_elv</strong> (<em>xr.DataArray of float</em>) – Elevation raster</p></li>
+<li><p><strong>da_msk</strong> (<em>xr.DataArray of bool:</em>) – River mask</p></li>
+<li><p><strong>flwdir</strong> (<em>pyflwdir.FlwdirRaster</em><em>, </em><em>optional</em>) – Flow direction object</p></li>
+<li><p><strong>river_d4</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True (default) ensure river cells have D4 connectivity</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>da_elv1</strong> – DEM with bedlevels burned in.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xr.DataArray</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -138,8 +156,8 @@ Note that local sinks (isolated regions with elv &lt; elv_min) are kept.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="hydromt_sfincs.SfincsModel.read_results.html" class="btn btn-neutral float-left" title="hydromt_sfincs.SfincsModel.read_results" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="hydromt_sfincs.workflows.merge_topobathy.html" class="btn btn-neutral float-right" title="hydromt_sfincs.workflows.merge_topobathy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="hydromt_sfincs.workflows.get_river_bathymetry.html" class="btn btn-neutral float-left" title="hydromt_sfincs.workflows.get_river_bathymetry" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="hydromt_sfincs.workflows.snap_discharge.html" class="btn btn-neutral float-right" title="hydromt_sfincs.workflows.snap_discharge" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -64,6 +64,8 @@
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_merge_topobathy.html">hydromt_sfincs.SfincsModel.setup_merge_topobathy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask.html">hydromt_sfincs.SfincsModel.setup_mask</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_bounds.html">hydromt_sfincs.SfincsModel.setup_bounds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_hydrography.html">hydromt_sfincs.SfincsModel.setup_river_hydrography</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_bathymetry.html">hydromt_sfincs.SfincsModel.setup_river_bathymetry</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">hydromt_sfincs.SfincsModel.setup_river_inflow</a></li>
 <li class="toctree-l4 current"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_river_outflow</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html">hydromt_sfincs.SfincsModel.setup_manning_roughness</a></li>
@@ -145,24 +147,33 @@
 <h1>hydromt_sfincs.SfincsModel.setup_river_outflow<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-river-outflow" title="Permalink to this headline"></a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_river_outflow">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_river_outflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basemaps_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'merit_hydro'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_upa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outflow_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_river_outflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_river_outflow" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_river_outflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hydrography_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_upa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outflow_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_rivers_geom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_river_outflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_river_outflow" title="Permalink to this definition"></a></dt>
 <dd><p>Setup river outflow boundary (msk=3) where a river flows out of the model domain.</p>
+<p>Outflow points are based on a minimal upstream area threshold. Points within
+half <cite>outflow_width</cite> of a discharge source piont or neighboring a waterlevel
+boundary cell are omitted.</p>
+<p>NOTE: this method requires the either <cite>hydrography_fn</cite> input or <cite>setup_river_hydrography</cite> to be run first.
+NOTE: best to run after <cite>setup_mask</cite>, <cite>setup_bounds</cite> and <cite>setup_river_inflow</cite></p>
 <p>Adds / edits model layers:</p>
 <ul class="simple">
 <li><p><strong>msk</strong> map: edited by adding outflow points (msk=3)</p></li>
-<li><p><strong>river_out</strong> geoms: river centerline (not used by SFINCS; for plotting only)</p></li>
+<li><p><strong>river_out</strong> geoms: river centerline (if <cite>keep_rivers_geom</cite>; not used by SFINCS)</p></li>
 </ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>basemaps_f</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Path</em>) – <p>Path or data source name for hydrography raster data, by default ‘merit_hydro’.</p>
+<li><p><strong>hydrography_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>optional</em>) – <p>Path or data source name for hydrography raster data, by default ‘merit_hydro’.</p>
 <ul>
 <li><p>Required layers: [‘uparea’, ‘flwdir’].</p></li>
 </ul>
 </p></li>
 <li><p><strong>outflow_width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – The width [m] of the outflow boundary in the SFINCS msk file.
 By default 2km, i.e.: 1km to each side of the outflow point.</p></li>
-<li><p><strong>river_upa</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.</p></li>
+<li><p><strong>river_upa</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minumum upstream area threshold for rivers [km2], by default 25.0</p></li>
+<li><p><strong>river_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Mimimum river length within the model domain thresohld [m], by default 1000 m.</p></li>
+<li><p><strong>append_bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, write new outflow boundary cells on top of existing. If False (default),
+first reset existing outflow boundary cells to normal active cells.</p></li>
+<li><p><strong>keep_rivers_geom</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, keep a geometry of the rivers “rivers_out” in staticgeoms. By default False.</p></li>
 </ul>
 </dd>
 </dl>

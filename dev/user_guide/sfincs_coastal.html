@@ -121,52 +121,52 @@ An example is provided in <a class="reference internal" href="../examples/index.
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">hydromt build sfincs /path/to/model_root &quot;{&#39;bbox&#39;: [xmin, ymin, xmax, ymax]}&quot; -i sfincs_coastal.ini -vv</span>
 </pre></div>
 </div>
-<div class="highlight-Ini notranslate"><div class="highlight"><pre><span></span><span class="k">[global]</span>
-<span class="na">write_gis</span> <span class="o">=</span> <span class="s">True                # write addtional geotif and geojson files to gis subfolder</span>
-<span class="na">config_fn</span> <span class="o">=</span> <span class="s">sfincs.inp          # name of sfincs config (inp) file</span>
-<span class="na">artifact_data</span> <span class="o">=</span> <span class="s">True            # load artifact data (snapshot of Deltares data)</span>
-<span class="na">data_libs</span> <span class="o">=</span> <span class="s">[&#39;data_catalog.yml&#39;]    # local data catalog file, can also be set with the -d option from command line </span>
+<div class="highlight-Ini notranslate"><div class="highlight"><pre><span></span><span class="k">[global]</span><span class="w"></span>
+<span class="na">write_gis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">True                # write addtional geotif and geojson files to gis subfolder</span><span class="w"></span>
+<span class="na">config_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">sfincs.inp          # name of sfincs config (inp) file</span><span class="w"></span>
+<span class="na">artifact_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">True            # load artifact data (snapshot of Deltares data)</span><span class="w"></span>
+<span class="na">data_libs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;data_catalog.yml&#39;]    # local data catalog file, can also be set with the -d option from command line </span><span class="w"></span>
 
-<span class="k">[setup_config]</span>
-<span class="na">tref</span> <span class="o">=</span> <span class="s">20100201 000000</span>
-<span class="na">tstart</span> <span class="o">=</span> <span class="s">20100201 000000</span>
-<span class="na">tstop</span> <span class="o">=</span> <span class="s">20100210 000000</span>
-<span class="na">alpha</span> <span class="o">=</span> <span class="s">0.5</span>
-<span class="na">zsini</span> <span class="o">=</span> <span class="s">0.5</span>
+<span class="k">[setup_config]</span><span class="w"></span>
+<span class="na">tref</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">20100201 000000</span><span class="w"></span>
+<span class="na">tstart</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">20100201 000000</span><span class="w"></span>
+<span class="na">tstop</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">20100210 000000</span><span class="w"></span>
+<span class="na">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.5</span><span class="w"></span>
+<span class="na">zsini</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.5</span><span class="w"></span>
 
-<span class="k">[setup_basemaps]</span>
-<span class="na">basemaps_fn</span> <span class="o">=</span> <span class="s">merit_hydro       # hydrography basemaps [&#39;elevtn&#39;, &#39;flwdir&#39;, &#39;uparea&#39;, &#39;basins&#39;]</span>
-<span class="na">crs</span> <span class="o">=</span> <span class="s">utm                       # model CRS (must be UTM zone)</span>
+<span class="k">[setup_basemaps]</span><span class="w"></span>
+<span class="na">basemaps_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro       # topobathy basemaps [&#39;elevtn&#39;]</span><span class="w"></span>
+<span class="na">crs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">utm                       # model CRS (must be UTM zone)</span><span class="w"></span>
 
-<span class="k">[setup_merge_topobathy]</span>
-<span class="na">topobathy_fn</span> <span class="o">=</span> <span class="s">gebco            # bathymetry [&#39;elevtn&#39;]</span>
-<span class="na">mask_fn</span> <span class="o">=</span> <span class="s">osm_coastlines        # sea polygon</span>
-<span class="na">offset_fn</span> <span class="o">=</span> <span class="s">dtu10mdt_egm96      # mean dynamic topography</span>
-<span class="na">merge_buffer</span> <span class="o">=</span> <span class="s">2                # buffer (cells) between elevation and bathymetry data filled with &#39;linear&#39; interpolation</span>
+<span class="k">[setup_merge_topobathy]</span><span class="w"></span>
+<span class="na">topobathy_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">gebco            # bathymetry [&#39;elevtn&#39;]</span><span class="w"></span>
+<span class="na">mask_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">osm_coastlines        # sea polygon</span><span class="w"></span>
+<span class="na">offset_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">dtu10mdt_egm96      # mean dynamic topography</span><span class="w"></span>
+<span class="na">merge_buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">2                # buffer (cells) between elevation and bathymetry data filled with &#39;linear&#39; interpolation</span><span class="w"></span>
 
-<span class="k">[setup_mask]</span>
-<span class="na">elv_min</span> <span class="o">=</span> <span class="s">-5                    # minimum elevation for valid cells</span>
+<span class="k">[setup_mask]</span><span class="w"></span>
+<span class="na">elv_min</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-5                    # minimum elevation for valid cells</span><span class="w"></span>
 
-<span class="k">[setup_cn_infiltration]</span>
-<span class="na">cn_fn</span> <span class="o">=</span> <span class="s">gcn250                  # curve number source</span>
-<span class="na">antecedent_runoff_conditions</span> <span class="o">=</span> <span class="s">avg # for gcn250: {&#39;dry&#39;, &#39;avg&#39;, &#39;wet&#39;}</span>
+<span class="k">[setup_cn_infiltration]</span><span class="w"></span>
+<span class="na">cn_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">gcn250                  # curve number source</span><span class="w"></span>
+<span class="na">antecedent_runoff_conditions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">avg # for gcn250: {&#39;dry&#39;, &#39;avg&#39;, &#39;wet&#39;}</span><span class="w"></span>
 
-<span class="k">[setup_manning_roughness]</span>
-<span class="na">lulc_fn</span> <span class="o">=</span> <span class="s">vito                  # land-use land-cover source</span>
-<span class="na">map_fn</span> <span class="o">=</span> <span class="s">None                   # mapping file. read from hydromt/data/lulc/{lulc_fn}_mapping.csv if None</span>
+<span class="k">[setup_manning_roughness]</span><span class="w"></span>
+<span class="na">lulc_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">vito                  # land-use land-cover source</span><span class="w"></span>
+<span class="na">map_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">None                   # mapping file. read from hydromt/data/lulc/{lulc_fn}_mapping.csv if None</span><span class="w"></span>
 
-<span class="k">[setup_bounds]</span>
-<span class="na">btype</span> <span class="o">=</span> <span class="s">waterlevel              # boundary type [&#39;waterlevel&#39;, &#39;outflow&#39;]</span>
-<span class="na">include_mask_fn</span> <span class="o">=</span> <span class="s">osm_coastlines  # sea polygon</span>
+<span class="k">[setup_bounds]</span><span class="w"></span>
+<span class="na">btype</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">waterlevel              # boundary type [&#39;waterlevel&#39;, &#39;outflow&#39;]</span><span class="w"></span>
+<span class="na">include_mask_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">osm_coastlines  # sea polygon</span><span class="w"></span>
 
-<span class="k">[setup_h_forcing]</span>
-<span class="na">geodataset_fn</span> <span class="o">=</span> <span class="s">gtsm_venice     # waterlevel timeseries dataset. see local data_sources.yml file</span>
-<span class="na">buffer</span> <span class="o">=</span> <span class="s">1e4                    # buffer around model region to select gauges</span>
+<span class="k">[setup_h_forcing]</span><span class="w"></span>
+<span class="na">geodataset_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">gtsm_venice     # waterlevel timeseries dataset. see local data_sources.yml file</span><span class="w"></span>
+<span class="na">buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1e4                    # buffer around model region to select gauges</span><span class="w"></span>
 
-<span class="k">[setup_p_forcing_from_grid]</span>
-<span class="na">precip_fn</span> <span class="o">=</span> <span class="s">era5_hourly         # gridded precipitation data [&#39;precip&#39;]</span>
-<span class="na">dst_res</span> <span class="o">=</span> <span class="s">None                  # output resolution (m)</span>
-<span class="na">aggregate</span> <span class="o">=</span> <span class="s">True                # if True return the aggregated mean as spatially uniform precip</span>
+<span class="k">[setup_p_forcing_from_grid]</span><span class="w"></span>
+<span class="na">precip_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">era5_hourly         # gridded precipitation data [&#39;precip&#39;]</span><span class="w"></span>
+<span class="na">dst_res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">None                  # output resolution (m)</span><span class="w"></span>
+<span class="na">aggregate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">True                # if True return the aggregated mean as spatially uniform precip</span><span class="w"></span>
 </pre></div>
 </div>
 </section>

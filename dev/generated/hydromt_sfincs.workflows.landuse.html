@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.workflows.snap_discharge" href="hydromt_sfincs.workflows.snap_discharge.html" />
-    <link rel="prev" title="hydromt_sfincs.workflows.cn_to_s" href="hydromt_sfincs.workflows.cn_to_s.html" /> 
+    <link rel="next" title="hydromt_sfincs.workflows.cn_to_s" href="hydromt_sfincs.workflows.cn_to_s.html" />
+    <link rel="prev" title="hydromt_sfincs.workflows.river_boundary_points" href="hydromt_sfincs.workflows.river_boundary_points.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -58,13 +58,14 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../api/api_index.html">API reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../api/api_index.html#sfincs-model-class">SFINCS model class</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../api/api_index.html#sfincs-workflows">SFINCS workflows</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.mask_topobathy.html">hydromt_sfincs.workflows.mask_topobathy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.merge_topobathy.html">hydromt_sfincs.workflows.merge_topobathy</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">hydromt_sfincs.workflows.landuse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.get_rivbank_dz.html">hydromt_sfincs.workflows.get_rivbank_dz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.get_river_bathymetry.html">hydromt_sfincs.workflows.get_river_bathymetry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.burn_river_zb.html">hydromt_sfincs.workflows.burn_river_zb</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.snap_discharge.html">hydromt_sfincs.workflows.snap_discharge</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.river_inflow_points.html">hydromt_sfincs.workflows.river_inflow_points</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.river_outflow_points.html">hydromt_sfincs.workflows.river_outflow_points</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.river_boundary_points.html">hydromt_sfincs.workflows.river_boundary_points</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">hydromt_sfincs.workflows.landuse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../api/api_index.html#sfincs-low-level-methods">SFINCS low-level methods</a></li>
@@ -134,8 +135,8 @@ mapping table as provided in the generic data folder of hydromt.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>da</strong> (<a class="reference external" href="http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v0.20.2.dev0)"><em>xarray.DataArray</em></a>) – DataArray containing LULC classes.</p></li>
-<li><p><strong>ds_like</strong> (<a class="reference external" href="http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v0.20.2.dev0)"><em>xarray.DataArray</em></a>) – Dataset at model resolution.</p></li>
+<li><p><strong>da</strong> (<a class="reference external" href="https://xarray.pydata.org/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v0.20.2.dev0)"><em>xarray.DataArray</em></a>) – DataArray containing LULC classes.</p></li>
+<li><p><strong>ds_like</strong> (<a class="reference external" href="https://xarray.pydata.org/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v0.20.2.dev0)"><em>xarray.DataArray</em></a>) – Dataset at model resolution.</p></li>
 <li><p><strong>fn_map</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Path</em>) – path to mapping file</p></li>
 </ul>
 </dd>
@@ -143,7 +144,7 @@ mapping table as provided in the generic data folder of hydromt.</p>
 <dd class="field-even"><p><strong>ds_out</strong> – Dataset containing gridded landuse based maps</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v0.20.2.dev0)">xarray.Dataset</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://xarray.pydata.org/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v0.20.2.dev0)">xarray.Dataset</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -154,8 +155,8 @@ mapping table as provided in the generic data folder of hydromt.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="hydromt_sfincs.workflows.cn_to_s.html" class="btn btn-neutral float-left" title="hydromt_sfincs.workflows.cn_to_s" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="hydromt_sfincs.workflows.snap_discharge.html" class="btn btn-neutral float-right" title="hydromt_sfincs.workflows.snap_discharge" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="hydromt_sfincs.workflows.river_boundary_points.html" class="btn btn-neutral float-left" title="hydromt_sfincs.workflows.river_boundary_points" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="hydromt_sfincs.workflows.cn_to_s.html" class="btn btn-neutral float-right" title="hydromt_sfincs.workflows.cn_to_s" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

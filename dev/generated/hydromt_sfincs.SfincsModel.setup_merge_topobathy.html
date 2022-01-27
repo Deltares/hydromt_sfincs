@@ -64,6 +64,8 @@
 <li class="toctree-l4 current"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_merge_topobathy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask.html">hydromt_sfincs.SfincsModel.setup_mask</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_bounds.html">hydromt_sfincs.SfincsModel.setup_bounds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_hydrography.html">hydromt_sfincs.SfincsModel.setup_river_hydrography</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_bathymetry.html">hydromt_sfincs.SfincsModel.setup_river_bathymetry</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">hydromt_sfincs.SfincsModel.setup_river_inflow</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_outflow.html">hydromt_sfincs.SfincsModel.setup_river_outflow</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html">hydromt_sfincs.SfincsModel.setup_manning_roughness</a></li>
@@ -145,13 +147,16 @@
 <h1>hydromt_sfincs.SfincsModel.setup_merge_topobathy<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-merge-topobathy" title="Permalink to this headline"></a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_merge_topobathy">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_merge_topobathy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topobathy_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_constant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_buffer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'first'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reproj_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_merge_topobathy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_merge_topobathy" title="Permalink to this definition"></a></dt>
-<dd><p>Updates the existing model topobathy data (depfile) with a new topobathy source.</p>
-<p>The existing toptobathy data is overwritten with valid values from the new dataset
-based on the merge method.</p>
-<p>If <cite>offset_fn</cite> is provided, a (spatially varying) offset is applied to the
-new dataset to convert the vertical datum before merging.</p>
-<p>Updates model layers:</p>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_merge_topobathy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topobathy_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_constant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_buffer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'first'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reproj_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interp_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_merge_topobathy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_merge_topobathy" title="Permalink to this definition"></a></dt>
+<dd><p>Updates the existing model topobathy data (dep file) with a new topobathy source.</p>
+<p>By default (<cite>merge_method=”first”</cite>) invalid (nodata) cells in the current topobathy
+data are replaced with values from the new topobathy source.</p>
+<p>Use <cite>offset_fn</cite> for a spatially varying, or <cite>offset_constant</cite> for a spatially uniform
+offset to convert the vertical datum of the new soruce before merging.</p>
+<p>Gaps in the data (i.e. areas with nodata cells surrounded areas with valid elevation)
+are interpolated based on <cite>interp_method</cite>, by deafult ‘linear’. Gaps are not
+interpolated if <cite>interp_method = None</cite></p>
+<p>Updates model layer:</p>
 <ul class="simple">
 <li><p><strong>dep</strong> map: combined elevation/bathymetry [m+ref]</p></li>
 </ul>
@@ -164,16 +169,21 @@ new dataset to convert the vertical datum before merging.</p>
 </ul>
 </p></li>
 <li><p><strong>mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name of polygon with valid new topobathy cells.</p></li>
-<li><p><strong>elv_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for valid new topobathy cells.
-Note: applied before vertical offset.</p></li>
-<li><p><strong>elv_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for valid new topobathy cells.
-Note: applied before vertical offset.</p></li>
-<li><p><strong>offset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Difference between vertical reference of the current model topobathy and the new
-datasourcs. The offset is added to the new source before merging.</p></li>
-<li><p><strong>merge_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Buffer (number of cells) around cells where the original (merge_method = ‘first’)
-or new (merge_method = ‘last’) dataset where values are linearly interpolated.
+<li><p><strong>max_width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Maximum width (number of cells) to append to valid dep cells if larger than
+zero. By default 0.</p></li>
+<li><p><strong>elv_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for new topobathy cells, cells outside
+this range are linearly interpolated. Note: applied after offset!</p></li>
+<li><p><strong>elv_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for new topobathy cells, cells outside
+this range are linearly interpolated. Note: applied after offset!</p></li>
+<li><p><strong>offset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Path or data source name for Spatially varying map with difference between
+the vertical reference of the current model topobathy and the new data source [m].
+The offset is added to the new source before merging.</p></li>
+<li><p><strong>offset_fn</strong> – Same as <cite>offset_fn</cite> but spatially uniform value [m].</p></li>
+<li><p><strong>merge_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Buffer (number of cells) around the original (<cite>merge_method = ‘first’</cite>)
+or new (<cite>merge_method = ‘last’</cite>) data source where values are interpolated
+using <cite>interp_method</cite>.
 Not recommended to use in combination with merge_methods ‘min’ or ‘max’</p></li>
-<li><p><strong>merge_method</strong> (<em>str {'first'</em><em>,</em><em>'last'</em><em>,</em><em>'min'</em><em>,</em><em>'max'}</em>) – <p>merge method, by default ‘first’:</p>
+<li><p><strong>merge_method</strong> (<em>{'first'</em><em>,</em><em>'last'</em><em>,</em><em>'min'</em><em>,</em><em>'max'}</em><em>, </em><em>optional</em>) – <p>merge method, by default ‘first’:</p>
 <ul>
 <li><p>first: use valid new where existing invalid</p></li>
 <li><p>last: use valid new</p></li>
@@ -181,8 +191,18 @@ Not recommended to use in combination with merge_methods ‘min’ or ‘max’<
 <li><p>max: pixel-wise max of existing and new</p></li>
 </ul>
 </p></li>
-<li><p><strong>reproj_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Method used to reproject the new source and offset data to the model grid,
-by default ‘bilinear’</p></li>
+<li><p><strong>reproj_method</strong> (<em>{'bilinear'</em><em>, </em><em>'cubic'</em><em>, </em><em>'nearest'}</em>) – Method used to reproject the offset and second dataset to the grid of the
+new topobathy dataset, by default ‘bilinear’</p></li>
+<li><p><strong>interp_method</strong> – Method used to interpolate holes of nodata in the merged dataset,
+by default ‘linear’. If None holes are not interpolated.</p></li>
+<li><p><strong>{'linear'</strong> – Method used to interpolate holes of nodata in the merged dataset,
+by default ‘linear’. If None holes are not interpolated.</p></li>
+<li><p><strong>'nearest'</strong> – Method used to interpolate holes of nodata in the merged dataset,
+by default ‘linear’. If None holes are not interpolated.</p></li>
+<li><p><strong>'rio_idw'}</strong> – Method used to interpolate holes of nodata in the merged dataset,
+by default ‘linear’. If None holes are not interpolated.</p></li>
+<li><p><strong>optional</strong> – Method used to interpolate holes of nodata in the merged dataset,
+by default ‘linear’. If None holes are not interpolated.</p></li>
 </ul>
 </dd>
 </dl>

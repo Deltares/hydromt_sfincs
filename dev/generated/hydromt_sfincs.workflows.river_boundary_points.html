@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hydromt_sfincs.workflows.river_inflow_points &mdash; hydromt_sfincs  documentation</title>
+  <title>hydromt_sfincs.workflows.river_boundary_points &mdash; hydromt_sfincs  documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,7 +19,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.workflows.river_outflow_points" href="hydromt_sfincs.workflows.river_outflow_points.html" />
+    <link rel="next" title="hydromt_sfincs.workflows.landuse" href="hydromt_sfincs.workflows.landuse.html" />
     <link rel="prev" title="hydromt_sfincs.workflows.snap_discharge" href="hydromt_sfincs.workflows.snap_discharge.html" /> 
 </head>
 
@@ -58,13 +58,14 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../api/api_index.html">API reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../api/api_index.html#sfincs-model-class">SFINCS model class</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../api/api_index.html#sfincs-workflows">SFINCS workflows</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.mask_topobathy.html">hydromt_sfincs.workflows.mask_topobathy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.merge_topobathy.html">hydromt_sfincs.workflows.merge_topobathy</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.get_rivbank_dz.html">hydromt_sfincs.workflows.get_rivbank_dz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.get_river_bathymetry.html">hydromt_sfincs.workflows.get_river_bathymetry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.burn_river_zb.html">hydromt_sfincs.workflows.burn_river_zb</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.snap_discharge.html">hydromt_sfincs.workflows.snap_discharge</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">hydromt_sfincs.workflows.river_inflow_points</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.river_outflow_points.html">hydromt_sfincs.workflows.river_outflow_points</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">hydromt_sfincs.workflows.river_boundary_points</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../api/api_index.html#sfincs-low-level-methods">SFINCS low-level methods</a></li>
@@ -89,9 +90,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="../api/api_index.html">API reference</a> &raquo;</li>
-      <li>hydromt_sfincs.workflows.river_inflow_points</li>
+      <li>hydromt_sfincs.workflows.river_boundary_points</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/generated/hydromt_sfincs.workflows.river_inflow_points.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/generated/hydromt_sfincs.workflows.river_boundary_points.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -123,21 +124,23 @@
     text-align: unset;
 }
 </style>
-<section id="hydromt-sfincs-workflows-river-inflow-points">
-<h1>hydromt_sfincs.workflows.river_inflow_points<a class="headerlink" href="#hydromt-sfincs-workflows-river-inflow-points" title="Permalink to this headline"></a></h1>
+<section id="hydromt-sfincs-workflows-river-boundary-points">
+<h1>hydromt_sfincs.workflows.river_boundary_points<a class="headerlink" href="#hydromt-sfincs-workflows-river-boundary-points" title="Permalink to this headline"></a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="hydromt_sfincs.workflows.river_inflow_points">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">river_inflow_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_upa=25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_len=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst_crs=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_river=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flwdir_name='flwdir'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uparea_name='uparea'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.discharge</span> <span class="pre">(WARNING)&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/discharge.html#river_inflow_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.river_inflow_points" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the most downstream point locations where a river enters the region.
-Rivers are based on the flow direction data in the dataset and a minumum upstream
-area threshold.</p>
+<dt class="sig sig-object py" id="hydromt_sfincs.workflows.river_boundary_points">
+<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">river_boundary_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da_flwdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_uparea</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_upa=25.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_len=1000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">btype='inflow'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_river=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.flwdir</span> <span class="pre">(WARNING)&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/flwdir.html#river_boundary_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.river_boundary_points" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the locations where a river flows in (<cite>btype=’inflow’</cite>) or out (<cite>btype=’outflow’</cite>) of the region.
+Rivers are based on a minimum upstream area and minimum length within the model domain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<a class="reference external" href="http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v0.20.2.dev0)"><em>xarray.Dataset</em></a>) – Hydrography raster data, should contain flwdir_name, uparea_name variables.</p></li>
-<li><p><strong>region</strong> (<a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.10.2+0.g04d377f.dirty)"><em>geopandas.GeoDataFrame</em></a>) – Polygon of region of interest.</p></li>
+<li><p><strong>da_flwdir</strong> (<a class="reference external" href="https://xarray.pydata.org/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v0.20.2.dev0)"><em>xarray.DataArray</em></a>) – D8 flow direction raster data.</p></li>
+<li><p><strong>da_uparea</strong> (<a class="reference external" href="https://xarray.pydata.org/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v0.20.2.dev0)"><em>xarray.DataArray</em></a>) – Upstream area raster data [km2].</p></li>
+<li><p><strong>region</strong> (<a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.10.2+0.g04d377f.dirty)"><em>geopandas.GeoDataFrame</em></a><em>, </em><em>optional</em>) – Polygon of region of interest. By default all valid cells in ds are used to
+determine the region of interest.</p></li>
 <li><p><strong>river_upa</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.</p></li>
-<li><p><strong>river_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Mimimum river length [m] within the model domain to define river cells, by default 0 m.</p></li>
+<li><p><strong>river_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Mimimum river length [m] within the model domain to define river cells, by default 1000 m.</p></li>
+<li><p><strong>btype</strong> (<em>{'inflow'</em><em>, </em><em>'outflow'}</em>) – Return inflow  (default) or outflow boundary points.</p></li>
 <li><p><strong>return_river</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, return a vectorized river GeoDataFrame</p></li>
 </ul>
 </dd>
@@ -157,7 +160,7 @@ area threshold.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="hydromt_sfincs.workflows.snap_discharge.html" class="btn btn-neutral float-left" title="hydromt_sfincs.workflows.snap_discharge" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="hydromt_sfincs.workflows.river_outflow_points.html" class="btn btn-neutral float-right" title="hydromt_sfincs.workflows.river_outflow_points" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="hydromt_sfincs.workflows.landuse.html" class="btn btn-neutral float-right" title="hydromt_sfincs.workflows.landuse" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

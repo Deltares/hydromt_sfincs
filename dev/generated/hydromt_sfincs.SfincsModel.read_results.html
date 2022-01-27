@@ -19,7 +19,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.workflows.mask_topobathy" href="hydromt_sfincs.workflows.mask_topobathy.html" />
+    <link rel="next" title="hydromt_sfincs.workflows.merge_topobathy" href="hydromt_sfincs.workflows.merge_topobathy.html" />
     <link rel="prev" title="hydromt_sfincs.SfincsModel.set_results" href="hydromt_sfincs.SfincsModel.set_results.html" /> 
 </head>
 
@@ -148,7 +148,7 @@
 <h1>hydromt_sfincs.SfincsModel.read_results<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-read-results" title="Permalink to this headline"></a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.read_results">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">read_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chunksize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['crs',</span> <span class="pre">'sfincsgrid']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.read_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.read_results" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">read_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chunksize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['crs',</span> <span class="pre">'sfincsgrid']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sfincs_map.nc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn_his</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sfincs_his.nc'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.read_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.read_results" title="Permalink to this definition"></a></dt>
 <dd><p>Read results from sfincs_map.nc and sfincs_his.nc and save to the <cite>results</cite> attribute.
 The staggered nc file format is translated into hydromt.RasterDataArray formats.
 Additionally, hmax is computed from zsmax and zb if present.</p>
@@ -166,7 +166,7 @@ Additionally, hmax is computed from zsmax and zb if present.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="hydromt_sfincs.SfincsModel.set_results.html" class="btn btn-neutral float-left" title="hydromt_sfincs.SfincsModel.set_results" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="hydromt_sfincs.workflows.mask_topobathy.html" class="btn btn-neutral float-right" title="hydromt_sfincs.workflows.mask_topobathy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="hydromt_sfincs.workflows.merge_topobathy.html" class="btn btn-neutral float-right" title="hydromt_sfincs.workflows.merge_topobathy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

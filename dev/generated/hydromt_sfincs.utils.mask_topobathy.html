@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hydromt_sfincs.utils.mask_bounds &mdash; hydromt_sfincs  documentation</title>
+  <title>hydromt_sfincs.utils.mask_topobathy &mdash; hydromt_sfincs  documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.utils.get_spatial_attrs" href="hydromt_sfincs.utils.get_spatial_attrs.html" />
-    <link rel="prev" title="hydromt_sfincs.utils.mask_topobathy" href="hydromt_sfincs.utils.mask_topobathy.html" /> 
+    <link rel="next" title="hydromt_sfincs.utils.mask_bounds" href="hydromt_sfincs.utils.mask_bounds.html" />
+    <link rel="prev" title="hydromt_sfincs.read_sfincs_his_results" href="hydromt_sfincs.read_sfincs_his_results.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -61,8 +61,8 @@
 <li class="toctree-l2 current"><a class="reference internal" href="../api/api_index.html#sfincs-low-level-methods">SFINCS low-level methods</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="../api/api_index.html#input-output-methods">Input/Output methods</a></li>
 <li class="toctree-l3 current"><a class="reference internal" href="../api/api_index.html#utilities">Utilities</a><ul class="current">
-<li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.utils.mask_topobathy.html">hydromt_sfincs.utils.mask_topobathy</a></li>
-<li class="toctree-l4 current"><a class="current reference internal" href="#">hydromt_sfincs.utils.mask_bounds</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">hydromt_sfincs.utils.mask_topobathy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.utils.mask_bounds.html">hydromt_sfincs.utils.mask_bounds</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.utils.get_spatial_attrs.html">hydromt_sfincs.utils.get_spatial_attrs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.utils.parse_datetime.html">hydromt_sfincs.utils.parse_datetime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.utils.gdf2structures.html">hydromt_sfincs.utils.gdf2structures</a></li>
@@ -93,9 +93,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="../api/api_index.html">API reference</a> &raquo;</li>
-      <li>hydromt_sfincs.utils.mask_bounds</li>
+      <li>hydromt_sfincs.utils.mask_topobathy</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/generated/hydromt_sfincs.utils.mask_bounds.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/generated/hydromt_sfincs.utils.mask_topobathy.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -127,13 +127,13 @@
     text-align: unset;
 }
 </style>
-<section id="hydromt-sfincs-utils-mask-bounds">
-<h1>hydromt_sfincs.utils.mask_bounds<a class="headerlink" href="#hydromt-sfincs-utils-mask-bounds" title="Permalink to this headline"></a></h1>
+<section id="hydromt-sfincs-utils-mask-topobathy">
+<h1>hydromt_sfincs.utils.mask_topobathy<a class="headerlink" href="#hydromt-sfincs-utils-mask-topobathy" title="Permalink to this headline"></a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="hydromt_sfincs.utils.mask_bounds">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.utils.</span></span><span class="sig-name descname"><span class="pre">mask_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da_elv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">xarray.core.dataarray.DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf_include</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.10.2+0.g04d377f.dirty)"><span class="pre">geopandas.geodataframe.GeoDataFrame</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf_exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.10.2+0.g04d377f.dirty)"><span class="pre">geopandas.geodataframe.GeoDataFrame</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">structure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([[1.,</span> <span class="pre">1.,</span> <span class="pre">1.],</span> <span class="pre">[1.,</span> <span class="pre">1.,</span> <span class="pre">1.],</span> <span class="pre">[1.,</span> <span class="pre">1.,</span> <span class="pre">1.]])</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">xarray.core.dataarray.DataArray</span></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/utils.html#mask_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.utils.mask_bounds" title="Permalink to this definition"></a></dt>
-<dd><p>Returns a boolean mask model boundary cells, optionally bounded by several
-criteria. Boundary cells are defined by cells at the edge of active model domain.</p>
+<dt class="sig sig-object py" id="hydromt_sfincs.utils.mask_topobathy">
+<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.utils.</span></span><span class="sig-name descname"><span class="pre">mask_topobathy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da_elv:</span> <span class="pre">xarray.core.dataarray.DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf_include:</span> <span class="pre">typing.Optional[geopandas.geodataframe.GeoDataFrame]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf_exclude:</span> <span class="pre">typing.Optional[geopandas.geodataframe.GeoDataFrame]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_min:</span> <span class="pre">typing.Optional[float]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elv_max:</span> <span class="pre">typing.Optional[float]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_cells:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_holes:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_touched=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.utils</span> <span class="pre">(WARNING)&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">xarray.core.dataarray.DataArray</span></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/utils.html#mask_topobathy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.utils.mask_topobathy" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a boolean mask of valid (non nondata) elevation cells, optionally bounded
+by several criteria.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -142,10 +142,15 @@ criteria. Boundary cells are defined by cells at the edge of active model domain
 <li><p><strong>gdf_exclude</strong> (<a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.10.2+0.g04d377f.dirty)"><em>geopandas.GeoDataFrame</em></a>) – Geometries with areas to include/exclude from the model boundary.</p></li>
 <li><p><strong>elv_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for boundary cells.</p></li>
 <li><p><strong>elv_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for boundary cells.</p></li>
+<li><p><strong>min_cells</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Minimum number of contigous cells in any contiguous areas, by default 0.</p></li>
+<li><p><strong>fill_holes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True (default) fill holes below the minimum elevation in the domain.</p></li>
+<li><p><strong>all_touched</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – if True (default) include (or exclude) a cell in the mask if it touches any of the
+include (or exclude) geometries. If False, include a cell only if its center is
+within one of the shapes, or if it is selected by Bresenham’s line algorithm.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>bounds</strong> – Boolean mask of model boundary cells.</p>
+<dd class="field-even"><p>model elevation mask</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>xr.DataArray</p>
@@ -159,8 +164,8 @@ criteria. Boundary cells are defined by cells at the edge of active model domain
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="hydromt_sfincs.utils.mask_topobathy.html" class="btn btn-neutral float-left" title="hydromt_sfincs.utils.mask_topobathy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="hydromt_sfincs.utils.get_spatial_attrs.html" class="btn btn-neutral float-right" title="hydromt_sfincs.utils.get_spatial_attrs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="hydromt_sfincs.read_sfincs_his_results.html" class="btn btn-neutral float-left" title="hydromt_sfincs.read_sfincs_his_results" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="hydromt_sfincs.utils.mask_bounds.html" class="btn btn-neutral float-right" title="hydromt_sfincs.utils.mask_bounds" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
