@@ -9,4 +9,3 @@ DATADIR = join(dirname(abspath(__file__)), "data")
 
 from .sfincs import *
 from .utils import *
-from . import gis_utils

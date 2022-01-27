@@ -9,8 +9,8 @@ __all__ = ["plot_forcing", "plot_basemap"]
 geom_style = {
     "rivers": dict(linestyle="-", linewidth=1.0, color="darkblue"),
     "rivers_out": dict(linestyle="-", linewidth=1.0, color="darkgreen"),
-    "msk2": dict(linestyle="--", linewidth=2, color="m"),
-    "msk3": dict(linestyle="-", linewidth=2, color="m"),
+    "msk2": dict(linestyle="-", linewidth=1.5, color="r"),
+    "msk3": dict(linestyle="-", linewidth=1.5, color="m"),
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=True),
     "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=True),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
@@ -83,12 +83,14 @@ def plot_basemap(
     variable: str = "dep",
     shaded: bool = True,
     plot_bounds: bool = True,
+    plot_region: bool = False,
     bmap: str = "sat",
     zoomlevel: int = 11,
     figsize: Tuple[int] = None,
     geoms: List[str] = None,
     geom_kwargs: Dict = {},
     legend_kwargs: Dict = {},
+    bmap_kwargs: Dict = {},
     **kwargs,
 ):
     """Create basemap plot.
@@ -105,7 +107,9 @@ def plot_basemap(
         Add shade to variable (only for variable = 'dep'), by default True
     plot_bounds : bool, optional
         Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
-    bmap : {'sat', ''}
+    plot_region : bool, optional
+        If True, plot region outline.
+    bmap : {'sat', 'osm'}
         background map, by default "sat"
     zoomlevel : int, optional
         zoomlevel, by default 11
@@ -145,9 +149,11 @@ def plot_basemap(
     ax = plt.subplot(projection=utm)
     ax.set_extent(extent, crs=utm)
     if bmap == "sat":
-        ax.add_image(cimgt.QuadtreeTiles(), zoomlevel)
+        ax.add_image(cimgt.QuadtreeTiles(**bmap_kwargs), zoomlevel)
     elif bmap == "osm":
-        ax.add_image(cimgt.OSM(), zoomlevel)
+        ax.add_image(cimgt.OSM(**bmap_kwargs), zoomlevel)
+    elif hasattr(cimgt, bmap):
+        ax.add_image(getattr(cimgt, bmap)(**bmap_kwargs), zoomlevel)
 
     # make nice cmap
     if "cmap" not in kwargs or "norm" not in kwargs:
@@ -236,7 +242,7 @@ def plot_basemap(
             for label, row in gdf.iterrows():
                 x, y = row.geometry.x, row.geometry.y
                 ax.annotate(label, xy=(x, y), **ann_kwargs)
-    if "region" in staticgeoms:
+    if "region" in staticgeoms and plot_region:
         staticgeoms["region"].boundary.plot(ax=ax, ls="-", lw=0.5, color="k", zorder=2)
 
     # title, legend and labels

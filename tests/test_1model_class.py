@@ -149,6 +149,12 @@ def test_model_build(tmpdir, case):
             ), f"geom columns {name}"
             assert geom0.crs == geom1.crs, f"geom crs {name}"
             assert np.all(geom0.geometry == geom1.geometry), f"geom {name}"
+    # check forcing
+    if mod0._forcing:
+        for name in mod0.forcing:
+            assert np.allclose(
+                mod0.forcing[name], mod1.forcing[name]
+            ), f"forcing {name}"
     # check config
     if mod0._config:
         # flatten

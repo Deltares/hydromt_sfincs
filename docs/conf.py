@@ -150,7 +150,7 @@ latex_documents = [
     (
         master_doc,
         "hydromt_sfincs.tex",
-        "HydroMT sfincs plugin Documentation",
+        "HydroMT SFINCS plugin Documentation",
         [author],
         "manual",
     ),
@@ -162,7 +162,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, "hydromt_sfincs", "HydroMT sfincs Documentation", [author], 1)
+    (master_doc, "hydromt_sfincs", "HydroMT SFINCS Documentation", [author], 1)
 ]
 
 
@@ -175,10 +175,10 @@ texinfo_documents = [
     (
         master_doc,
         "hydromt_sfincs",
-        "HydroMT sfincs Documentation",
+        "HydroMT SFINCS Documentation",
         author,
-        "HydroMT sfincs",
-        "Build and analyze sfincs models like a data-wizard.",
+        "HydroMT SFINCS",
+        "Build and analyze SFINCS models like a data-wizard.",
         "Miscellaneous",
     ),
 ]
@@ -194,7 +194,7 @@ intersphinx_mapping = {
     # "matplotlib": ("https://matplotlib.org/stable/", None),
     # "dask": ("https://docs.dask.org/en/latest", None),
     # "rasterio": ("https://rasterio.readthedocs.io/en/latest", None),
-    "geopandas": ("https://geopandas.org", None),
-    "xarray": ("http://xarray.pydata.org/en/stable", None),
+    "geopandas": ("https://geopandas.org/en/stable", None),
+    "xarray": ("https://xarray.pydata.org/en/stable", None),
     "hydromt": ("https://deltares.github.io/hydromt/dev", None),
 }

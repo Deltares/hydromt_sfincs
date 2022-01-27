@@ -8,7 +8,7 @@ import geopandas as gpd
 from datetime import datetime
 from configparser import ConfigParser
 from shapely.geometry import LineString
-from typing import List, Dict, Union, Tuple
+from typing import List, Dict, Union, Tuple, Optional
 from pathlib import Path
 import io
 import copy
@@ -35,6 +35,7 @@ __all__ = [
     "read_sfincs_map_results",
     "read_sfincs_his_results",
     "mask_bounds",
+    "mask_topobathy",
 ]
 
 logger = logging.getLogger(__name__)
@@ -397,29 +398,96 @@ def write_timeseries(
 ## MASK
 
 
-def mask_bounds(
-    da_mask: xr.DataArray,
-    gdf_include: gpd.GeoDataFrame = None,
-    gdf_exclude: gpd.GeoDataFrame = None,
-    structure: np.ndarray = np.ones((3, 3)),
+def mask_topobathy(
+    da_elv: xr.DataArray,
+    gdf_include: Optional[gpd.GeoDataFrame] = None,
+    gdf_exclude: Optional[gpd.GeoDataFrame] = None,
+    elv_min: Optional[float] = None,
+    elv_max: Optional[float] = None,
+    min_cells: int = 0,
+    fill_holes: bool = True,
+    all_touched=True,
+    logger=logger,
 ) -> xr.DataArray:
-    """Returns the boundary cells based of values greater than zero in da_mask.
-    If provided the bounds are limited to cells within gdf_include and outside gdf_exclude.
+    """Returns a boolean mask of valid (non nondata) elevation cells, optionally bounded
+    by several criteria.
 
     Parameters
     ----------
-    da_mask: xr.DataArray
-        Model mask.
+    da_elv: xr.DataArray
+        Model elevation
     gdf_include, gdf_exclude: geopandas.GeoDataFrame
         Geometries with areas to include/exclude from the model boundary.
+    elv_min, elv_max : float, optional
+        Minimum and maximum elevation thresholds for boundary cells.
+    min_cells : int, optional
+        Minimum number of contigous cells in any contiguous areas, by default 0.
+    fill_holes : bool, optional
+        If True (default) fill holes below the minimum elevation in the domain.
+    all_touched: bool, optional
+        if True (default) include (or exclude) a cell in the mask if it touches any of the
+        include (or exclude) geometries. If False, include a cell only if its center is
+        within one of the shapes, or if it is selected by Bresenham's line algorithm.
+
+    Returns
+    -------
+    xr.DataArray
+        model elevation mask
+    """
+    da_mask = da_elv != da_elv.raster.nodata
+    if gdf_include is not None:
+        da_include = da_mask.raster.geometry_mask(gdf_include, all_touched=all_touched)
+        da_mask = da_mask.where(da_include, False)
+    if gdf_exclude is not None:
+        da_exclude = da_mask.raster.geometry_mask(gdf_exclude, all_touched=all_touched)
+        da_mask = da_mask.where(~da_exclude, False)
+    if elv_min is not None:
+        # active cells: contiguous area above depth threshold
+        _msk = da_elv >= elv_min
+        if fill_holes:
+            logger.debug(f"Fill holes below minimum elevation in domain")
+            _msk = ndimage.binary_fill_holes(_msk)
+        da_mask = da_mask.where(_msk, False)
+    if elv_max is not None:
+        da_mask = da_mask.where(da_elv <= elv_max, False)
+    if min_cells > 0:
+        regions = ndimage.measurements.label(da_mask.values, np.ones((3, 3)))[0]
+        lbls, count = np.unique(regions[regions > 0], return_counts=True)
+        n = int(sum(count > min_cells))
+        _msk = np.isin(regions, lbls[count > min_cells])
+        logger.debug(f"{n} regions with minimal {min_cells} cells found in domain")
+        da_mask = da_mask.where(_msk, False)
+    return da_mask
+
+
+def mask_bounds(
+    da_elv: xr.DataArray,
+    gdf_include: Optional[gpd.GeoDataFrame] = None,
+    gdf_exclude: Optional[gpd.GeoDataFrame] = None,
+    elv_min: Optional[float] = None,
+    elv_max: Optional[float] = None,
+    structure: np.ndarray = np.ones((3, 3)),
+) -> xr.DataArray:
+    """Returns a boolean mask model boundary cells, optionally bounded by several
+    criteria. Boundary cells are defined by cells at the edge of active model domain.
+
+    Parameters
+    ----------
+    da_elv: xr.DataArray
+        Model elevation
+    gdf_include, gdf_exclude: geopandas.GeoDataFrame
+        Geometries with areas to include/exclude from the model boundary.
+    elv_min, elv_max : float, optional
+        Minimum and maximum elevation thresholds for boundary cells.
 
     Returns
     -------
     bounds: xr.DataArray
         Boolean mask of model boundary cells.
     """
+    da_mask = da_elv != da_elv.raster.nodata
     bounds = np.logical_xor(
-        da_mask != 0, ndimage.binary_erosion(da_mask, structure=structure)
+        da_mask, ndimage.binary_erosion(da_mask, structure=structure)
     )
     if gdf_include is not None:
         da_include = da_mask.raster.geometry_mask(gdf_include)
@@ -427,6 +495,10 @@ def mask_bounds(
     if gdf_exclude is not None:
         da_exclude = da_mask.raster.geometry_mask(gdf_exclude)
         bounds = bounds.where(~da_exclude, False)
+    if elv_min is not None:
+        bounds = bounds.where(da_elv >= elv_min, False)
+    if elv_max is not None:
+        bounds = bounds.where(da_elv <= elv_max, False)
     return bounds
 
 
@@ -457,8 +529,8 @@ def gdf2structures(gdf: gpd.GeoDataFrame) -> List[Dict]:
         feat = item.drop("geometry").dropna().to_dict()
         # check geom
         line = item.geometry
-        if line.type == "MultiLineString" and len(line) == 1:
-            line = line[0]
+        if line.type == "MultiLineString" and len(line.geoms) == 1:
+            line = line.geoms[0]
         if line.type != "LineString":
             raise ValueError("Invalid geometry type, only LineString is accepted.")
         xyz = tuple(zip(*line.coords[:]))
@@ -651,7 +723,7 @@ def read_sfincs_map_results(
     }
     ds_face = (
         ds_map[face_vars]
-        .drop(["x", "y"])
+        .drop_vars(["x", "y"])
         .rename({"n": "y", "m": "x"})
         .assign_coords(face_coords)
         .transpose(..., "y", "x")

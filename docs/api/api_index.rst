@@ -30,6 +30,8 @@ Setup components
    SfincsModel.setup_merge_topobathy
    SfincsModel.setup_mask
    SfincsModel.setup_bounds
+   SfincsModel.setup_river_hydrography
+   SfincsModel.setup_river_bathymetry
    SfincsModel.setup_river_inflow
    SfincsModel.setup_river_outflow
    SfincsModel.setup_manning_roughness
@@ -58,6 +60,7 @@ Attributes
    :toctree: ../generated/
 
    SfincsModel.region
+   SfincsModel.mask
    SfincsModel.crs
    SfincsModel.res
    SfincsModel.root
@@ -130,14 +133,14 @@ SFINCS workflows
 .. autosummary::
    :toctree: ../generated/
 
-   workflows.mask_topobathy
    workflows.merge_topobathy
-   workflows.cn_to_s
-   workflows.landuse
+   workflows.get_rivbank_dz
+   workflows.get_river_bathymetry
+   workflows.burn_river_zb
    workflows.snap_discharge
-   workflows.river_inflow_points
-   workflows.river_outflow_points
-
+   workflows.river_boundary_points
+   workflows.landuse
+   workflows.cn_to_s
 
 .. _methods:
 
@@ -173,6 +176,7 @@ Utilities
 .. autosummary::
    :toctree: ../generated/
 
+   utils.mask_topobathy
    utils.mask_bounds
    utils.get_spatial_attrs
    utils.parse_datetime

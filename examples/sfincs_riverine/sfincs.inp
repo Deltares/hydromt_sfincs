@@ -28,3 +28,4 @@ manningfile     = sfincs.man
 obsfile         = sfincs.obs
 disfile         = sfincs.dis
 srcfile         = sfincs.src
+
