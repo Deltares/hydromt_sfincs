@@ -240,7 +240,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model region not found, run `setup_region` first.&quot;</span><span class="p">)</span>
-        <span class="n">geom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="o">.</span><span class="n">dissolve</span><span class="p">()</span>
 
         <span class="c1"># parse crs. if &#39;utm&#39; the utm zone is calculated based the region</span>
         <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1715,7 +1715,7 @@
         <span class="c1"># combine staticgeoms and forcing locations</span>
         <span class="n">sg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticgeoms</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">fname</span><span class="p">,</span> <span class="n">gname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_FORCING</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">fname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forcing</span> <span class="ow">and</span> <span class="n">gname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span> <span class="ow">and</span> <span class="n">gname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">sg</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">gname</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forcing</span><span class="p">[</span><span class="n">fname</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">()})</span>
 
         <span class="c1"># make sure staticmaps are set</span>
