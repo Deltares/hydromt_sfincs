@@ -163,11 +163,9 @@ def plot_basemap(
             )
             vmin, vmax = int(kwargs.pop("vmin", vmin)), int(kwargs.pop("vmax", vmax))
             c_dem = plt.cm.terrain(np.linspace(0.25, 1, vmax))
-            ticks = np.arange(0, vmax, (vmax / 6) // 10 * 10).tolist()
             if vmin < 0:
-                c_bat = plt.cm.terrain(np.linspace(0, 0.17, abs(vmin) - 1))
+                c_bat = plt.cm.terrain(np.linspace(0, 0.17, max(1, abs(vmin))))
                 c_dem = np.vstack((c_bat, c_dem))
-                ticks = [vmin] + ticks
             cmap = colors.LinearSegmentedColormap.from_list("dem", c_dem)
             norm = colors.Normalize(vmin=vmin, vmax=vmax)
             cmap, norm = kwargs.pop("cmap", cmap), kwargs.pop("norm", norm)
@@ -175,7 +173,7 @@ def plot_basemap(
     if variable in staticmaps:
         da = staticmaps[variable].raster.mask_nodata()
         # by default colorbar on lower right & legend upper right
-        kwargs0 = {"cbar_kwargs": {"shrink": 0.6, "anchor": (0, 0), "ticks": ticks}}
+        kwargs0 = {"cbar_kwargs": {"shrink": 0.6, "anchor": (0, 0)}}
         kwargs0.update(kwargs)
         da.plot(transform=utm, ax=ax, zorder=1, **kwargs0)
         if shaded and variable == "dep":
