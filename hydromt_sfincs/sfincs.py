@@ -156,7 +156,7 @@ class SfincsModel(Model):
         """
         if self.region is None:
             raise ValueError("Model region not found, run `setup_region` first.")
-        geom = self.region
+        geom = self.region.dissolve()
 
         # parse crs. if 'utm' the utm zone is calculated based the region
         if crs is not None:
