@@ -16,6 +16,7 @@ import logging
 import hydromt
 from hydromt.io import write_xy
 from scipy import ndimage
+from pyflwdir.regions import region_area
 
 __all__ = [
     "read_inp",
@@ -404,8 +405,9 @@ def mask_topobathy(
     gdf_exclude: Optional[gpd.GeoDataFrame] = None,
     elv_min: Optional[float] = None,
     elv_max: Optional[float] = None,
-    min_cells: int = 0,
-    fill_holes: bool = True,
+    fill_area: float = 10,
+    drop_area: float = 0,
+    connectivity: int = 8,
     all_touched=True,
     logger=logger,
 ) -> xr.DataArray:
@@ -420,11 +422,14 @@ def mask_topobathy(
         Geometries with areas to include/exclude from the model boundary.
     elv_min, elv_max : float, optional
         Minimum and maximum elevation thresholds for boundary cells.
-    min_cells : int, optional
-        Minimum number of contiguous cells in any contiguous areas, by default 0.
-    fill_holes : bool, optional
-        If True (Default) cells below `elv_min` or above `elv_max` but surrounded
-        by cells within the valid elevation range are kept as active cells.
+    fill_area : float, optional
+        Maximum area [km2] of contiguous cells below `elv_min` or above `elv_max` but surrounded
+        by cells within the valid elevation range to be kept as active cells, by default 10 km2.
+    drop_area : float, optional
+        Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.
+    connectivity, {4, 8}:
+        The connectivity used to define contiguous cells, if 4 only horizontal and vertical
+        connections are used, if 8 (default) also diagonal connections.
     all_touched: bool, optional
         if True (default) include (or exclude) a cell in the mask if it touches any of the
         include (or exclude) geometries. If False, include a cell only if its center is
@@ -436,27 +441,34 @@ def mask_topobathy(
         model elevation mask
     """
     da_mask = da_elv != da_elv.raster.nodata
-    if gdf_include is not None:
-        da_include = da_mask.raster.geometry_mask(gdf_include, all_touched=all_touched)
-        da_mask = da_mask.where(da_include, False)
-    if gdf_exclude is not None:
-        da_exclude = da_mask.raster.geometry_mask(gdf_exclude, all_touched=all_touched)
-        da_mask = da_mask.where(~da_exclude, False)
+    transform, latlon = da_elv.raster.transform, da_elv.raster.crs.is_geographic
+    s = None if connectivity == 4 else np.ones((3, 3), int)
     if elv_min is not None or elv_max is not None:
         _msk = da_elv != da_elv.raster.nodata
         if elv_min is not None:
             _msk = np.logical_and(_msk, da_elv >= elv_min)
         if elv_max is not None:
             _msk = np.logical_and(_msk, da_elv <= elv_max)
-        if fill_holes:
-            _msk = ndimage.binary_fill_holes(_msk)
+        if fill_area > 0:
+            _msk1 = np.logical_xor(_msk, ndimage.binary_fill_holes(_msk, structure=s))
+            regions = ndimage.measurements.label(_msk1, structure=s)[0]
+            lbls, areas = region_area(regions, transform, latlon)
+            _msk = np.logical_or(_msk, np.isin(regions, lbls[areas / 1e6 < fill_area]))
+            n = int(sum(areas / 1e6 < fill_area))
+            logger.debug(f"{n} gaps outside valid elevation range < {fill_area} km2.")
         da_mask = da_mask.where(_msk, False)
-    if min_cells > 0:
-        regions = ndimage.measurements.label(da_mask.values)[0]
-        lbls, count = np.unique(regions[regions > 0], return_counts=True)
-        n = int(sum(count > min_cells))
-        _msk = np.isin(regions, lbls[count > min_cells])
-        logger.debug(f"{n} regions with minimal {min_cells} cells found in domain")
+    if gdf_include is not None:
+        da_include = da_mask.raster.geometry_mask(gdf_include, all_touched=all_touched)
+        da_mask = da_mask.where(da_include, False)
+    if gdf_exclude is not None:
+        da_exclude = da_mask.raster.geometry_mask(gdf_exclude, all_touched=all_touched)
+        da_mask = da_mask.where(~da_exclude, False)
+    if drop_area > 0:
+        regions = ndimage.measurements.label(da_mask.values, structure=s)[0]
+        lbls, areas = region_area(regions, transform, latlon)
+        _msk = np.isin(regions, lbls[areas / 1e6 >= drop_area])
+        n = int(sum(areas / 1e6 < drop_area))
+        logger.debug(f"{n} regions < {drop_area} km2 dropped.")
         da_mask = da_mask.where(_msk, False)
     return da_mask
 
@@ -467,7 +479,7 @@ def mask_bounds(
     gdf_exclude: Optional[gpd.GeoDataFrame] = None,
     elv_min: Optional[float] = None,
     elv_max: Optional[float] = None,
-    structure: np.ndarray = np.ones((3, 3)),
+    connectivity: int = 8,
 ) -> xr.DataArray:
     """Returns a boolean mask model boundary cells, optionally bounded by several
     criteria. Boundary cells are defined by cells at the edge of active model domain.
@@ -480,16 +492,18 @@ def mask_bounds(
         Geometries with areas to include/exclude from the model boundary.
     elv_min, elv_max : float, optional
         Minimum and maximum elevation thresholds for boundary cells.
+    connectivity, {4, 8}:
+        The connectivity used to detect the model edge, if 4 only horizontal and vertical
+        connections are used, if 8 (default) also diagonal connections.
 
     Returns
     -------
     bounds: xr.DataArray
         Boolean mask of model boundary cells.
     """
+    s = None if connectivity == 4 else np.ones((3, 3), int)
     da_mask = da_elv != da_elv.raster.nodata
-    bounds = np.logical_xor(
-        da_mask, ndimage.binary_erosion(da_mask, structure=structure)
-    )
+    bounds = np.logical_xor(da_mask, ndimage.binary_erosion(da_mask, structure=s))
     if gdf_include is not None:
         da_include = da_mask.raster.geometry_mask(gdf_include)
         bounds = bounds.where(da_include, False)

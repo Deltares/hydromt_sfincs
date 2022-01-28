@@ -33,9 +33,9 @@ Changed
 ^^^^^^^
 - `setup_mask` and `setup_bounds` both have include- and exclude polygon and min- and max elevation arguments to determine valid / boundary cells. 
 - `setup_mask` and `setup_bounds` have a reset_mask and reset_bounds option respectively to start with a clean mask or remove previously set boundary cells.
-- `setup_mask` additionally takes a `min_cells` argument to filter a region based on the number of contiguous cells, useful to remove (spurious) small islands.
-- In `setup_mask` exposed `fill_holes` argument to determine whether to keep isolated areas below the `min_elv` or above `max_elv` threshold.
-- In `setup_bounds` exposed `connectivity` argument to determine whether base edge cells on D4 (horizontal and vertical) or D8 (also diagonal) connections.
+- `setup_mask` takes a new `drop_area` argument to drop regions of contiguous cells smaller than this maximum area threshold, useful to remove (spurious) small islands.
+- `setup_mask` takes a new `fill_area` argument to fill regions of contiguous cells below the `min_elv` or above `max_elv` threshold surrounded by cells within the valid elevation range.
+- In `setup_bounds` and `setup_mask` a `connectivity` argument is exposed to determine whether edge cells or regions of contiguous cells should be based on D4 (horizontal and vertical) or D8 (also diagonal) connections.
 - `setup_merge_topobathy` has a new `max_width` argument to use bathymetry data from new source within a fixed width around the topography data. 
 - `setup_river_inflow` and `setup_river_outflow` are now based on the same `workflows.river_boundary_points` method. 
    Both have a `river_upa` and `river_len` argument and the hydrography data is not required if `setup_river_hydrography` is ran beforehand.

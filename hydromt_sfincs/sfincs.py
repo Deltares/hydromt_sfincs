@@ -315,8 +315,9 @@ class SfincsModel(Model):
         exclude_mask_fn=None,
         elv_min=None,
         elv_max=None,
-        min_cells=0,
-        fill_holes=True,
+        fill_area=10,
+        drop_area=0,
+        connectivity=8,
         all_touched=True,
         reset_mask=False,
     ):
@@ -345,11 +346,14 @@ class SfincsModel(Model):
             from the model domain.
         elv_min, elv_max : float, optional
             Minimum and maximum elevation thresholds for active model cells.
-        min_cells : int, optional
-            Minimum number of contiguous cells in any contiguous areas.
-        fill_holes : bool, optional
-            If True (Default) cells below `elv_min` or above `elv_max` but surrounded
-            by cells within the valid elevation range are kept as active cells.
+        fill_area : float, optional
+            Maximum area [km2] of contiguous cells below `elv_min` or above `elv_max` but surrounded
+            by cells within the valid elevation range to be kept as active cells, by default 10 km2.
+        drop_area : float, optional
+            Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.
+        connectivity, {4, 8}:
+            The connectivity used to define contiguous cells, if 4 only horizontal and vertical
+            connections are used, if 8 (default) also diagonal connections.
         all_touched: bool, optional
             if True (default) include (or exclude) a cell in the mask if it touches any of the
             include (or exclude) geometries. If False, include a cell only if its center is
@@ -375,8 +379,9 @@ class SfincsModel(Model):
             gdf_exclude=gdf2,
             elv_min=elv_min,
             elv_max=elv_max,
-            min_cells=min_cells,
-            fill_holes=fill_holes,
+            fill_area=fill_area,
+            drop_area=drop_area,
+            connectivity=connectivity,
             all_touched=all_touched,
             logger=self.logger,
         )
@@ -467,7 +472,7 @@ class SfincsModel(Model):
             gdf_exclude=gdf_exclude,
             elv_min=elv_min,
             elv_max=elv_max,
-            structure=np.ones((3, 3), int) if connectivity == 8 else None,
+            connectivity=connectivity,
         )
 
         # update model mask
