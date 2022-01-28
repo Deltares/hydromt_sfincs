@@ -178,6 +178,11 @@
                 <span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="p">)</span>
         <span class="n">da2</span> <span class="o">=</span> <span class="n">da2</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da2</span> <span class="o">==</span> <span class="n">nodata</span><span class="p">,</span> <span class="n">da2</span> <span class="o">+</span> <span class="n">da_offset</span><span class="p">)</span>
+    <span class="c1"># mask invalid elevation before merging</span>
+    <span class="k">if</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">da2</span> <span class="o">=</span> <span class="n">da2</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da2</span> <span class="o">&gt;=</span> <span class="n">elv_min</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">da2</span> <span class="o">=</span> <span class="n">da2</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da2</span> <span class="o">&lt;=</span> <span class="n">elv_max</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>
     <span class="c1"># merge based merge_method</span>
     <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;first&quot;</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">da1</span> <span class="o">!=</span> <span class="n">nodata</span>
@@ -196,11 +201,6 @@
     <span class="n">na_mask</span> <span class="o">=</span> <span class="n">da_out</span> <span class="o">!=</span> <span class="n">nodata</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="o">~</span><span class="n">na_mask</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
         <span class="n">na_mask</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_fill_holes</span><span class="p">(</span><span class="n">na_mask</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">struct</span><span class="p">)</span>
-    <span class="c1"># mask invalid elevation values</span>
-    <span class="k">if</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">da_out</span> <span class="o">=</span> <span class="n">da_out</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="o">~</span><span class="n">mask</span><span class="p">,</span> <span class="n">da2</span> <span class="o">&lt;</span> <span class="n">elv_min</span><span class="p">),</span> <span class="n">nodata</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">da_out</span> <span class="o">=</span> <span class="n">da_out</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="o">~</span><span class="n">mask</span><span class="p">,</span> <span class="n">da2</span> <span class="o">&gt;</span> <span class="n">elv_max</span><span class="p">),</span> <span class="n">nodata</span><span class="p">)</span>
     <span class="c1"># identify buffer cells and set to nodata</span>
     <span class="k">if</span> <span class="n">merge_buffer</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">mask_dilated</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_dilation</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">struct</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="n">merge_buffer</span><span class="p">)</span>
@@ -324,21 +324,21 @@
 <span class="sd">    rivdph_method : {&#39;gvf&#39;, &#39;manning&#39;, &#39;powlaw&#39;}</span>
 <span class="sd">        River depth estimate method, by default &#39;gvf&#39;</span>
 <span class="sd">    river_upa : float, optional</span>
-<span class="sd">        Minumum upstream area threshold for rivers [km2], by default 100.0</span>
+<span class="sd">        Minimum upstream area threshold for rivers [km2], by default 100.0</span>
 <span class="sd">    river_len: float, optional</span>
 <span class="sd">        Mimimum river length [m] within the model domain to define river cells, by default 1000.</span>
 <span class="sd">    min_rivwth, min_rivdph: float, optional</span>
-<span class="sd">        Minimum river width [m] (by defeault 50.0 m) and depth [m] (by default 1.0 m)</span>
+<span class="sd">        Minimum river width [m] (by default 50.0 m) and depth [m] (by default 1.0 m)</span>
 <span class="sd">    segment_length : float, optional</span>
 <span class="sd">        Approximate river segment length [m], by default 5e3</span>
 <span class="sd">    smooth_length : float, optional</span>
-<span class="sd">        Approximate smooting length [m], by default 10e3</span>
+<span class="sd">        Approximate smoothing length [m], by default 10e3</span>
 <span class="sd">    min_convergence : float, optional</span>
 <span class="sd">        Minimum width convergence threshold to define estuaries [m/m], by default 0.01</span>
 <span class="sd">    max_dist : float, optional</span>
 <span class="sd">        Maximum distance threshold to spatially merge `gdf_riv` and `gdf_qbf`, by default 100.0</span>
 <span class="sd">    bankq : float, optional</span>
-<span class="sd">        Quantile [1-100] for river bank estimation, by default 25.0</span>
+<span class="sd">        quantile [1-100] for river bank estimation, by default 25.0</span>
 <span class="sd">    constrain_estuary : bool, optional</span>
 <span class="sd">        If True (default) fix the river depth in estuaries based on the upstream river depth.</span>
 <span class="sd">    constrain_rivbed : bool, optional</span>
@@ -406,7 +406,7 @@
         <span class="n">buf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">gdf_riv_buf</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">gdf_riv_buf</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv_buf</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
         <span class="n">da_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
-            <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">),</span> <span class="n">da_elv</span> <span class="o">!=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_riv_buf</span><span class="p">),</span> <span class="n">da_elv</span> <span class="o">!=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">rivmsk_name</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>  <span class="c1">#  merge river mask with river line</span>
         <span class="n">da_msk</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

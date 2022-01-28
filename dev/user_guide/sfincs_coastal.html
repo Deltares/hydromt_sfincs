@@ -113,35 +113,30 @@
 <p>To build a <strong>coastal flood model</strong> with h (waterlevel) and p (precipitation) but no q
 (discharge) boundary conditions, the model <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/cli.html#region-options">region</a> is typically defined by a bounding box,
 see example below, or a geometry file.</p>
-<p>A typical workflow to setup a coastal model schematization is privided in the
+<p>A typical workflow to setup a coastal model schematization is provided in the
 <a class="reference download internal" download="" href="../_downloads/b733e198033df34218817f2758b4e45f/sfincs_coastal.ini"><code class="xref download docutils literal notranslate"><span class="pre">sfincs_coastal.ini</span></code></a> and shown below.
 Each section corresponds to one of the model <a class="reference internal" href="../api/api_index.html#components"><span class="std std-ref">Setup components</span></a> and the <cite>[global]</cite> section can be used to pass
-aditional arguments to the <code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code>. initialization.
+additional arguments to the <code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code>. initialization.
 An example is provided in <a class="reference internal" href="../examples/index.html#examples"><span class="std std-ref">Examples</span></a> section.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">hydromt build sfincs /path/to/model_root &quot;{&#39;bbox&#39;: [xmin, ymin, xmax, ymax]}&quot; -i sfincs_coastal.ini -vv</span>
 </pre></div>
 </div>
-<div class="highlight-Ini notranslate"><div class="highlight"><pre><span></span><span class="k">[global]</span><span class="w"></span>
-<span class="na">write_gis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">True                # write addtional geotif and geojson files to gis subfolder</span><span class="w"></span>
-<span class="na">config_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">sfincs.inp          # name of sfincs config (inp) file</span><span class="w"></span>
-<span class="na">artifact_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">True            # load artifact data (snapshot of Deltares data)</span><span class="w"></span>
-<span class="na">data_libs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;data_catalog.yml&#39;]    # local data catalog file, can also be set with the -d option from command line </span><span class="w"></span>
-
-<span class="k">[setup_config]</span><span class="w"></span>
+<div class="highlight-Ini notranslate"><div class="highlight"><pre><span></span><span class="k">[setup_config]</span><span class="w"></span>
 <span class="na">tref</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">20100201 000000</span><span class="w"></span>
 <span class="na">tstart</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">20100201 000000</span><span class="w"></span>
 <span class="na">tstop</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">20100210 000000</span><span class="w"></span>
 <span class="na">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.5</span><span class="w"></span>
 <span class="na">zsini</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.5</span><span class="w"></span>
 
-<span class="k">[setup_basemaps]</span><span class="w"></span>
-<span class="na">basemaps_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro       # topobathy basemaps [&#39;elevtn&#39;]</span><span class="w"></span>
+<span class="k">[setup_topobathy]</span><span class="w"></span>
+<span class="na">topobathy_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro       # topobathy basemaps [&#39;elevtn&#39;]</span><span class="w"></span>
 <span class="na">crs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">utm                       # model CRS (must be UTM zone)</span><span class="w"></span>
 
 <span class="k">[setup_merge_topobathy]</span><span class="w"></span>
 <span class="na">topobathy_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">gebco            # bathymetry [&#39;elevtn&#39;]</span><span class="w"></span>
-<span class="na">mask_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">osm_coastlines        # sea polygon</span><span class="w"></span>
-<span class="na">offset_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">dtu10mdt_egm96      # mean dynamic topography</span><span class="w"></span>
+<span class="na">mask_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">osm_coastlines        # sea polygon describing where we want to use the new data</span><span class="w"></span>
+<span class="na">offset_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">dtu10mdt_egm96      # mean dynamic topography to account for the difference in vertical datum between the current and new data</span><span class="w"></span>
+<span class="na">merge_method</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">first            # use valid new data where the current data has invalid (nodata) values</span><span class="w"></span>
 <span class="na">merge_buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">2                # buffer (cells) between elevation and bathymetry data filled with &#39;linear&#39; interpolation</span><span class="w"></span>
 
 <span class="k">[setup_mask]</span><span class="w"></span>
@@ -160,7 +155,8 @@ An example is provided in <a class="reference internal" href="../examples/index.
 <span class="na">include_mask_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">osm_coastlines  # sea polygon</span><span class="w"></span>
 
 <span class="k">[setup_h_forcing]</span><span class="w"></span>
-<span class="na">geodataset_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">gtsm_venice     # waterlevel timeseries dataset. see local data_sources.yml file</span><span class="w"></span>
+<span class="na">geodataset_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">data/gtsm_locations.csv  # waterlevel gauge locations</span><span class="w"></span>
+<span class="na">timeseries_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">data/gtsm_timeseries.csv  # waterlevel time series </span><span class="w"></span>
 <span class="na">buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1e4                    # buffer around model region to select gauges</span><span class="w"></span>
 
 <span class="k">[setup_p_forcing_from_grid]</span><span class="w"></span>

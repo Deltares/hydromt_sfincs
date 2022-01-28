@@ -111,19 +111,25 @@
 <section id="setting-up-a-riverine-model">
 <span id="sfincs-riverine"></span><h1>Setting up a riverine model<a class="headerlink" href="#setting-up-a-riverine-model" title="Permalink to this headline"></a></h1>
 <p>To build a <strong>riverine flood model</strong> with q (discharge) and p (precipitation), but no h
-(waterlevel) boundary conditions, the model <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/cli.html#region-options">region</a> is typically defined by the interbasin
-within a bounding box, see example below. The interbasin region delineates the area of
-interest within the bouding box such that the same river does not enter the model domain
-more than one time, where only the most downstream contiguous area is kept. The delineation
-is based on gridded flow direction data and provides a good setup to set upstream
-dischage boundary points. At the upstream end of each river an discharge source point
-can be defined with the <cite>setup_river_inflow</cite> method and at the downstream end an
-outflow  boundary is defined with the <cite>setup_river_outflow</cite> method.</p>
-<p>A typical workflow to setup a riverine model schematization is privided in the
+(waterlevel) boundary conditions, the model <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/cli.html#region-options">region</a> can either be defined by a
+bounding or the interbasin within a bounding box.</p>
+<p>In the second example below the region is based on the interbasin is based on all cells
+within the bounding box draining into a stream with a minimal upstream area of 20 km2.
+The delineation is based on gridded flow direction data set in the setup_region method.</p>
+<p>At the upstream end of each river a discharge source point can be defined with the
+<cite>setup_river_inflow</cite> method and at the downstream end an  outflow boundary with the
+<cite>setup_river_outflow</cite> method.</p>
+<p>As DEMs typically to not have an accurate representation of the river underwater
+bathymetry, this can be ‘burned’ into the DEM using the <cite>setup_river_bathymetry</cite> method.
+Note that this method requires <cite>setup_river_hydrography</cite> to be executed first.</p>
+<p>A typical workflow to setup a riverine model schematization is provided in the
 <a class="reference download internal" download="" href="../_downloads/51689978eab93efb62c12d4cc98256c2/sfincs_riverine.ini"><code class="xref download docutils literal notranslate"><span class="pre">sfincs_riverine.ini</span></code></a> and shown below.
 Each section corresponds to one of the model <a class="reference internal" href="../api/api_index.html#components"><span class="std std-ref">Setup components</span></a> and the <cite>[global]</cite> section can be used to pass
-aditional arguments to the <code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code>. initialization.</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">hydromt build sfincs /path/to/model_root &quot;{&#39;interbasin&#39;: [xmin, ymin, xmax, ymax], buffer: &#39;20&#39;}&quot; -i sfincs_coastal.ini -vv</span>
+additional arguments to the <code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code>. initialization.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">hydromt build sfincs /path/to/model_root &quot;{&#39;bbox&#39;: [xmin, ymin, xmax, ymax]}&quot; -i sfincs_riverine.ini -vv</span>
+</pre></div>
+</div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">hydromt build sfincs /path/to/model_root &quot;{&#39;interbasin&#39;: [xmin, ymin, xmax, ymax], &#39;uparea&#39;: 20}&quot; -i sfincs_riverine.ini -vv</span>
 </pre></div>
 </div>
 <div class="highlight-Ini notranslate"><div class="highlight"><pre><span></span><span class="k">[setup_config]</span><span class="w"></span>
@@ -134,17 +140,18 @@ aditional arguments to the <code class="xref py py-class docutils literal notran
 <span class="na">zsini</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.0</span><span class="w"></span>
 <span class="na">dtmaxout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">86400</span><span class="w"></span>
 
-<span class="k">[setup_basemaps]</span><span class="w"></span>
-<span class="na">basemaps_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro       # topobathy basemaps [&#39;elevtn&#39;]</span><span class="w"></span>
-<span class="na">crs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">utm                       # model CRS (must be UTM zone)</span><span class="w"></span>
+<span class="na">[setup_region]                  # method to determine (hydrological) model region</span><span class="w"></span>
+<span class="na">hydrography_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro</span><span class="w"></span>
+<span class="na">basin_index_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro_index</span><span class="w"></span>
 
-<span class="na">[setup_mask]                    # sets the active cells. Based on valid dep cells if no arguments are given.</span><span class="w"></span>
+<span class="k">[setup_topobathy]</span><span class="w"></span>
+<span class="na">topobathy_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro       # topobathy basemaps [&#39;elevtn&#39;]</span><span class="w"></span>
 
 <span class="na">[setup_river_hydrography]       # required for setup_river_bathymetry &amp; used by setup_river_inflow &amp; setup_river_outflow if no hydrography_fn passed to those methods</span><span class="w"></span>
 <span class="na">hydrography_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro    # hydrography maps [&#39;flwdir&#39;, &#39;uparea&#39;]</span><span class="w"></span>
 
 <span class="k">[setup_river_bathymetry]</span><span class="w"></span>
-<span class="na">river_geom_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">data/rivwth_lin2019.geojson  # river geometry with columns [&#39;qbankfull&#39;, &#39;rivwth&#39;]</span><span class="w"></span>
+<span class="na">river_geom_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">data/rivers_lin2019_v1.geojson  # river geometry with columns [&#39;qbankfull&#39;, &#39;rivwth&#39;]</span><span class="w"></span>
 <span class="na">river_upa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">25                   # Mimimum upstream area threshold of rivers [km2]</span><span class="w"></span>
 <span class="na">river_len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1000                 # minimum length inside river domain [m] </span><span class="w"></span>
 <span class="na">rivdph_method</span><span class="o">=</span><span class="s">gvf                # gradual varying flow method</span><span class="w"></span>

@@ -83,20 +83,18 @@
              
   <h1>Source code for hydromt_sfincs.sfincs</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="kn">from</span> <span class="nn">genericpath</span> <span class="kn">import</span> <span class="n">isdir</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span><span class="p">,</span> <span class="n">isfile</span><span class="p">,</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">isabs</span>
 <span class="kn">import</span> <span class="nn">glob</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">pyflwdir</span>
-<span class="kn">from</span> <span class="nn">rasterio.warp</span> <span class="kn">import</span> <span class="n">transform_bounds</span>
 <span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span class="kn">from</span> <span class="nn">rasterio.warp</span> <span class="kn">import</span> <span class="n">transform_bounds</span>
 <span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">box</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
-<span class="kn">import</span> <span class="nn">pyproj</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
 
 <span class="kn">import</span> <span class="nn">hydromt</span>
 <span class="kn">from</span> <span class="nn">hydromt.models.model_api</span> <span class="kn">import</span> <span class="n">Model</span>
@@ -131,6 +129,7 @@
         <span class="s2">&quot;infiltration&quot;</span><span class="p">:</span> <span class="s2">&quot;qinf&quot;</span><span class="p">,</span>
     <span class="p">}</span>  <span class="c1"># parsed to hydromt.RasterDataset</span>
     <span class="n">_FOLDERS</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">_CLI_ARGS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;setup_region&quot;</span><span class="p">,</span> <span class="s2">&quot;res&quot;</span><span class="p">:</span> <span class="s2">&quot;setup_topobathy&quot;</span><span class="p">}</span>
     <span class="n">_CONF</span> <span class="o">=</span> <span class="s2">&quot;sfincs.inp&quot;</span>
     <span class="n">_DATADIR</span> <span class="o">=</span> <span class="n">DATADIR</span>
     <span class="n">_ATTRS</span> <span class="o">=</span> <span class="p">{</span>
@@ -202,19 +201,21 @@
             <span class="n">da_elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]]</span>
             <span class="n">da_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">da_elv</span> <span class="o">!=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
             <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_staticmaps</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_staticmaps</span><span class="p">:</span>
             <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">da_mask</span>
 
-<div class="viewcode-block" id="SfincsModel.setup_basemaps"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_basemaps.html#hydromt_sfincs.SfincsModel.setup_basemaps">[docs]</a>    <span class="k">def</span> <span class="nf">setup_basemaps</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_topobathy"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_topobathy.html#hydromt_sfincs.SfincsModel.setup_topobathy">[docs]</a>    <span class="k">def</span> <span class="nf">setup_topobathy</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">region</span><span class="p">,</span>
+        <span class="n">topobathy_fn</span><span class="p">,</span>
         <span class="n">res</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
         <span class="n">crs</span><span class="o">=</span><span class="s2">&quot;utm&quot;</span><span class="p">,</span>
-        <span class="n">basemaps_fn</span><span class="o">=</span><span class="s2">&quot;merit_hydro&quot;</span><span class="p">,</span>
         <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;bilinear&quot;</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Define model region and setup topobathy (depfile) model layer.</span>
+        <span class="sd">&quot;&quot;&quot;Setup model grid and interpolate topobathy (dep) data to this grid.</span>
+
+<span class="sd">        NOTE: This method should be called after `setup_region` but before any other model component.</span>
 
 <span class="sd">        The input topobathy dataset is reprojected to the model projected `crs` and</span>
 <span class="sd">        resolution `res` using `reproj_method` interpolation.</span>
@@ -225,9 +226,8 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        region : dict</span>
-<span class="sd">            Dictionary describing region of interest, e.g. {&#39;bbox&#39;: [xmin, ymin, xmax, ymax]}</span>
-<span class="sd">            See :py:meth:`hydromt.workflows.parse_region()` for all options</span>
+<span class="sd">        topobathy_fn : str</span>
+<span class="sd">            Path or data source name for topobathy raster data.</span>
 <span class="sd">        res : float</span>
 <span class="sd">            Model resolution [m], by default 100 m.</span>
 <span class="sd">            If None, the basemaps res is used.</span>
@@ -235,59 +235,42 @@
 <span class="sd">            Model Coordinate Reference System (CRS) as epsg code.</span>
 <span class="sd">            By default &#39;utm&#39; in which case the region centroid UTM zone is used.</span>
 <span class="sd">            If None, the basemaps CRS is used. This must be a projected CRS.</span>
-<span class="sd">        basemaps_fn : str</span>
-<span class="sd">            Path or data source name for topobathy raster data, by default &#39;merit_hydro&#39;.</span>
-
-<span class="sd">            * Minimal required variables: [&#39;elevtn&#39;].</span>
-<span class="sd">            * Required variables to delineate rivers and inflow points in subsequent steps: [&#39;flwdir&#39;, &#39;uparea&#39;]</span>
 <span class="sd">        reproj_method: str, optional</span>
 <span class="sd">            Method used to reproject topobathy data, by default &#39;bilinear&#39;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
-        <span class="c1"># read data (lazy!) and return dataset</span>
-        <span class="n">ds_org</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-            <span class="n">basemaps_fn</span><span class="p">,</span> <span class="n">single_var_as_array</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
-        <span class="p">)</span>
-        <span class="c1"># get region and clip data</span>
-        <span class="n">kind</span><span class="p">,</span> <span class="n">region</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">workflows</span><span class="o">.</span><span class="n">parse_region</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
-        <span class="n">geom</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;geom&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">bbox</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bbox&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;bbox&quot;</span><span class="p">,</span> <span class="s2">&quot;geom&quot;</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Unknown region type for SFINCS model: </span><span class="si">{kind}</span><span class="s2">, select from [&#39;bbox&#39;, &#39;geom&#39;]&quot;</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="n">geom</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">geom</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;SFINCS region &quot;geom&quot; has no CRS&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model region not found, run `setup_region` first.&quot;</span><span class="p">)</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span>
 
-        <span class="c1"># parse dst_crs. if &#39;utm&#39; the best utm zone is calculated based on bbox_epsg4326</span>
-        <span class="n">bbox_epsg4326</span> <span class="o">=</span> <span class="n">bbox</span> <span class="k">if</span> <span class="n">bbox</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">geom</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span><span class="o">.</span><span class="n">total_bounds</span>
-        <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">dst_crs</span> <span class="o">=</span> <span class="n">ds_org</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">dst_crs</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">gis_utils</span><span class="o">.</span><span class="n">parse_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">bbox_epsg4326</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">dst_crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
+        <span class="c1"># parse crs. if &#39;utm&#39; the utm zone is calculated based the region</span>
+        <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">crs</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">gis_utils</span><span class="o">.</span><span class="n">parse_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">geom</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span><span class="o">.</span><span class="n">total_bounds</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;A projected CRS is required.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">geom</span><span class="o">.</span><span class="n">crs</span> <span class="o">!=</span> <span class="n">crs</span><span class="p">:</span>
+            <span class="c1"># if geom is a rectangular bbox, transform it to a rect bbox in crs</span>
+            <span class="n">poly</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">geometry</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">minimum_rotated_rectangle</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="n">poly</span><span class="o">.</span><span class="n">area</span><span class="p">):</span>
+                <span class="n">dst_bbox</span> <span class="o">=</span> <span class="n">transform_bounds</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="o">*</span><span class="n">geom</span><span class="o">.</span><span class="n">total_bounds</span><span class="p">)</span>
+                <span class="n">geom</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="p">[</span><span class="n">box</span><span class="p">(</span><span class="o">*</span><span class="n">dst_bbox</span><span class="p">)],</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">geom</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">())</span>
 
-        <span class="c1"># transfrom bbox/geom to geom with destination CRS to deal with nonlinear</span>
-        <span class="c1"># transformations along domain edges when clipping</span>
-        <span class="k">if</span> <span class="n">geom</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># to epsg required to be understood when writing GEOJSON</span>
-            <span class="n">dst_geom</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">dst_crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">())</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">dst_bbox</span> <span class="o">=</span> <span class="n">transform_bounds</span><span class="p">(</span><span class="n">pyproj</span><span class="o">.</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span> <span class="n">dst_crs</span><span class="p">,</span> <span class="o">*</span><span class="n">bbox</span><span class="p">)</span>
-            <span class="n">dst_geom</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="p">[</span><span class="n">box</span><span class="p">(</span><span class="o">*</span><span class="n">dst_bbox</span><span class="p">)],</span> <span class="n">crs</span><span class="o">=</span><span class="n">dst_crs</span><span class="p">)</span>
+        <span class="c1"># read global data (lazy!)</span>
+        <span class="n">da_elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">topobathy_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">geom</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
 
-        <span class="c1"># reproject to destination CRS and clip to actual extent</span>
-        <span class="n">da_elv</span> <span class="o">=</span> <span class="n">ds_org</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">ds_org</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span> <span class="o">!=</span> <span class="n">dst_crs</span> <span class="ow">or</span> <span class="p">(</span>
-            <span class="n">res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ds_org</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="n">res</span>
-        <span class="p">):</span>
-            <span class="n">da_elv</span> <span class="o">=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_geom</span><span class="p">(</span><span class="n">geom</span><span class="o">=</span><span class="n">dst_geom</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
-                <span class="n">dst_res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">dst_crs</span><span class="o">=</span><span class="n">dst_crs</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span>
+        <span class="c1"># reproject to destination CRS</span>
+        <span class="n">check_crs</span> <span class="o">=</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span> <span class="o">!=</span> <span class="n">crs</span>
+        <span class="n">check_res</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="n">res</span>
+        <span class="k">if</span> <span class="n">check_crs</span> <span class="ow">or</span> <span class="n">check_res</span><span class="p">:</span>
+            <span class="n">da_elv</span> <span class="o">=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
+                <span class="n">dst_res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">dst_crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span>
             <span class="p">)</span>
-        <span class="c1"># clip and mask</span>
+        <span class="c1"># clip &amp; mask</span>
         <span class="n">da_elv</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_geom</span><span class="p">(</span><span class="n">dst_geom</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_geom</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
             <span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="o">-</span><span class="mi">9999</span><span class="p">)</span>  <span class="c1"># force nodata value to be -9999</span>
             <span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># cm precision</span>
@@ -295,7 +278,7 @@
         <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="o">-</span><span class="mi">9999</span><span class="p">)</span>
 
         <span class="c1"># set staticmaps</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Saving elevation data to staticmaps.&quot;</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
         <span class="n">da_elv</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{}))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_staticmaps</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">da_elv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
         <span class="c1"># update config</span>
@@ -315,13 +298,14 @@
         <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;bilinear&quot;</span><span class="p">,</span>
         <span class="n">interp_method</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Updates the existing model topobathy data (dep file) with a new topobathy source.</span>
+        <span class="sd">&quot;&quot;&quot;Updates the existing model topobathy data (dep file) with a new topobathy</span>
+<span class="sd">        source within the current model extent.</span>
 
 <span class="sd">        By default (`merge_method=&quot;first&quot;`) invalid (nodata) cells in the current topobathy</span>
 <span class="sd">        data are replaced with values from the new topobathy source.</span>
 
 <span class="sd">        Use `offset_fn` for a spatially varying, or `offset_constant` for a spatially uniform</span>
-<span class="sd">        offset to convert the vertical datum of the new soruce before merging.</span>
+<span class="sd">        offset to convert the vertical datum of the new source before merging.</span>
 
 <span class="sd">        Gaps in the data (i.e. areas with nodata cells surrounded areas with valid elevation)</span>
 <span class="sd">        are interpolated based on `interp_method`, by deafult &#39;linear&#39;. Gaps are not</span>
@@ -373,8 +357,9 @@
         <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
         <span class="k">assert</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span>
         <span class="n">da_elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span>
         <span class="n">da_elv2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-            <span class="n">topobathy_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
+            <span class="n">topobathy_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">geom</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
             <span class="n">reproj_method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">,</span>
@@ -385,13 +370,13 @@
         <span class="p">)</span>
         <span class="c1"># mask</span>
         <span class="k">if</span> <span class="n">mask_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">gdf_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">mask_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)</span>
+            <span class="n">gdf_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">mask_fn</span><span class="p">)</span>
             <span class="n">da_elv2</span> <span class="o">=</span> <span class="n">da_elv2</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_geom</span><span class="p">(</span><span class="n">gdf_mask</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># offset</span>
         <span class="k">if</span> <span class="n">offset_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># variable name not important, but must be single variable</span>
             <span class="n">da_offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-                <span class="n">offset_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span>
+                <span class="n">offset_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">geom</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span>
             <span class="p">)</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">da_offset</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span>
             <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">da_offset</span><span class="o">=</span><span class="n">da_offset</span><span class="p">)</span>
@@ -414,9 +399,11 @@
         <span class="n">exclude_mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">elv_min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">elv_max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">min_cells</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">fill_holes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">fill_area</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">drop_area</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">connectivity</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
         <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">reset_mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Creates mask of active model cells.</span>
 
@@ -443,17 +430,23 @@
 <span class="sd">            from the model domain.</span>
 <span class="sd">        elv_min, elv_max : float, optional</span>
 <span class="sd">            Minimum and maximum elevation thresholds for active model cells.</span>
-<span class="sd">        min_cells : int, optional</span>
-<span class="sd">            Minimum number of contigous cells in any contiguous areas.</span>
-<span class="sd">        fill_holes : bool, optional</span>
-<span class="sd">            If True (Default) cells below the minimum elevation `elv_min` but surrounded</span>
-<span class="sd">            by cells with higher elevation are kept as active cells.</span>
+<span class="sd">        fill_area : float, optional</span>
+<span class="sd">            Maximum area [km2] of contiguous cells below `elv_min` or above `elv_max` but surrounded</span>
+<span class="sd">            by cells within the valid elevation range to be kept as active cells, by default 10 km2.</span>
+<span class="sd">        drop_area : float, optional</span>
+<span class="sd">            Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.</span>
+<span class="sd">        connectivity, {4, 8}:</span>
+<span class="sd">            The connectivity used to define contiguous cells, if 4 only horizontal and vertical</span>
+<span class="sd">            connections are used, if 8 (default) also diagonal connections.</span>
 <span class="sd">        all_touched: bool, optional</span>
 <span class="sd">            if True (default) include (or exclude) a cell in the mask if it touches any of the</span>
 <span class="sd">            include (or exclude) geometries. If False, include a cell only if its center is</span>
 <span class="sd">            within one of the shapes, or if it is selected by Bresenham&#39;s line algorithm.</span>
+<span class="sd">        reset_mask: bool, optional</span>
+<span class="sd">            If True, reset existing mask layer setting all valid elevation values to</span>
+<span class="sd">            active cells, by default False.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">:</span>  <span class="c1"># reset</span>
+        <span class="k">if</span> <span class="n">reset_mask</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">:</span>  <span class="c1"># reset</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_staticmaps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_staticmaps</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">])</span>
 
         <span class="c1"># read geometries</span>
@@ -470,8 +463,9 @@
             <span class="n">gdf_exclude</span><span class="o">=</span><span class="n">gdf2</span><span class="p">,</span>
             <span class="n">elv_min</span><span class="o">=</span><span class="n">elv_min</span><span class="p">,</span>
             <span class="n">elv_max</span><span class="o">=</span><span class="n">elv_max</span><span class="p">,</span>
-            <span class="n">min_cells</span><span class="o">=</span><span class="n">min_cells</span><span class="p">,</span>
-            <span class="n">fill_holes</span><span class="o">=</span><span class="n">fill_holes</span><span class="p">,</span>
+            <span class="n">fill_area</span><span class="o">=</span><span class="n">fill_area</span><span class="p">,</span>
+            <span class="n">drop_area</span><span class="o">=</span><span class="n">drop_area</span><span class="p">,</span>
+            <span class="n">connectivity</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span>
             <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">,</span>
             <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
         <span class="p">)</span>
@@ -498,6 +492,7 @@
         <span class="n">elv_min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">elv_max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">include_buffer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">connectivity</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
         <span class="n">reset_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Set boundary cells in the model mask.</span>
@@ -531,6 +526,9 @@
 <span class="sd">        reset_bounds: bool, optional</span>
 <span class="sd">            If True, reset existing boundary cells of the selected boundary</span>
 <span class="sd">            type (`btype`) before setting new boundary cells, by default False.</span>
+<span class="sd">        connectivity, {4, 8}:</span>
+<span class="sd">            The connectivity used to detect the model edge, if 4 only horizontal and vertical</span>
+<span class="sd">            connections are used, if 8 (default) also diagonal connections.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">btype</span> <span class="o">=</span> <span class="n">btype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="n">bvalues</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;waterlevel&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;outflow&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
@@ -558,6 +556,7 @@
             <span class="n">gdf_exclude</span><span class="o">=</span><span class="n">gdf_exclude</span><span class="p">,</span>
             <span class="n">elv_min</span><span class="o">=</span><span class="n">elv_min</span><span class="p">,</span>
             <span class="n">elv_max</span><span class="o">=</span><span class="n">elv_max</span><span class="p">,</span>
+            <span class="n">connectivity</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># update model mask</span>
@@ -716,15 +715,15 @@
 <span class="sd">            Derive the river with from either the `river_geom_fn` (geom) or</span>
 <span class="sd">            `river_mask_fn` (mask; default) data.</span>
 <span class="sd">        river_upa : float, optional</span>
-<span class="sd">            Minumum upstream area threshold for rivers [km2], by default 25.0</span>
+<span class="sd">            Minimum upstream area threshold for rivers [km2], by default 25.0</span>
 <span class="sd">        river_len: float, optional</span>
-<span class="sd">            Mimimum river length within the model domain thresohld [m], by default 1000 m.</span>
+<span class="sd">            Mimimum river length within the model domain threshhold [m], by default 1000 m.</span>
 <span class="sd">        min_rivwth, min_rivdph: float, optional</span>
 <span class="sd">            Minimum river width [m] (by default 50.0) and depth [m] (by default 1.0)</span>
 <span class="sd">        segment_length : float, optional</span>
 <span class="sd">            Approximate river segment length [m], by default 5e3</span>
 <span class="sd">        smooth_length : float, optional</span>
-<span class="sd">            Approximate smooting length [m], by default 10e3</span>
+<span class="sd">            Approximate smoothing length [m], by default 10e3</span>
 <span class="sd">        constrain_estuary : bool, optional</span>
 <span class="sd">            If True (default) fix the river depth in estuaries based on the upstream river depth.</span>
 <span class="sd">        constrain_rivbed : bool, optional</span>
@@ -736,6 +735,7 @@
         <span class="k">if</span> <span class="n">river_geom_fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">river_mask_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;river_geom_fn&quot; or &quot;river_mask_fn&quot; should be provided.&#39;</span><span class="p">)</span>
         <span class="c1"># get basemap river flwdir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mask</span>  <span class="c1"># make sure msk is staticmaps</span>
         <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span>
         <span class="n">flwdir</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="s2">&quot;flwdir&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
@@ -761,6 +761,11 @@
                 <span class="n">river_mask_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span>
             <span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">)</span>
             <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;rivmsk&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_rivmask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="s2">&quot;rivmsk&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s1">&#39;River mask based on internal &quot;rivmsk&quot; layer. If this is unwanted &#39;</span>
+                <span class="s2">&quot;delete the gis/rivmsk.tif file or drop the rivmsk staticmaps variable.&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># estimate elevation bed level based on qbankfull (and other parameters)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">gdf_riv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;zb&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="p">):</span>
@@ -864,9 +869,9 @@
 
 <span class="sd">            * Required layers: [&#39;uparea&#39;, &#39;flwdir&#39;].</span>
 <span class="sd">        river_upa : float, optional</span>
-<span class="sd">            Minumum upstream area threshold for rivers [km2], by default 25.0</span>
+<span class="sd">            Minimum upstream area threshold for rivers [km2], by default 25.0</span>
 <span class="sd">        river_len: float, optional</span>
-<span class="sd">            Mimimum river length within the model domain thresohld [m], by default 1000 m.</span>
+<span class="sd">            Mimimum river length within the model domain threshhold [m], by default 1000 m.</span>
 <span class="sd">        keep_rivers_geom: bool, optional</span>
 <span class="sd">            If True, keep a geometry of the rivers &quot;rivers_in&quot; in staticgeoms. By default False.</span>
 <span class="sd">        buffer: int, optional</span>
@@ -886,16 +891,13 @@
                     <span class="s1">&#39;&quot;uparea&quot; and/or &quot;flwdir&quot; layers missing. &#39;</span>
                     <span class="s2">&quot;Run setup_river_hydrography first or provide hydrography_fn dataset.&quot;</span>
                 <span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;region&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticgeoms</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Run setup_mask() first to define the active model region. The model region &quot;</span>
-                <span class="s2">&quot;is now infered from the bounding box and may lead to inaccurate inflow points.&quot;</span>
-            <span class="p">)</span>
 
+        <span class="c1"># (re)calculate region to make sure it&#39;s accurate</span>
+        <span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
         <span class="n">gdf_src</span><span class="p">,</span> <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">river_boundary_points</span><span class="p">(</span>
             <span class="n">da_flwdir</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
             <span class="n">da_uparea</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">],</span>
-            <span class="n">region</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>  <span class="c1"># TODO reset region based on mask</span>
+            <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span>
             <span class="n">river_len</span><span class="o">=</span><span class="n">river_len</span><span class="p">,</span>
             <span class="n">river_upa</span><span class="o">=</span><span class="n">river_upa</span><span class="p">,</span>
             <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;inflow&quot;</span><span class="p">,</span>
@@ -926,7 +928,7 @@
         <span class="sd">&quot;&quot;&quot;Setup river outflow boundary (msk=3) where a river flows out of the model domain.</span>
 
 <span class="sd">        Outflow points are based on a minimal upstream area threshold. Points within</span>
-<span class="sd">        half `outflow_width` of a discharge source piont or neighboring a waterlevel</span>
+<span class="sd">        half `outflow_width` of a discharge source point or neighboring a waterlevel</span>
 <span class="sd">        boundary cell are omitted.</span>
 
 <span class="sd">        NOTE: this method requires the either `hydrography_fn` input or `setup_river_hydrography` to be run first.</span>
@@ -947,9 +949,9 @@
 <span class="sd">            The width [m] of the outflow boundary in the SFINCS msk file.</span>
 <span class="sd">            By default 2km, i.e.: 1km to each side of the outflow point.</span>
 <span class="sd">        river_upa : float, optional</span>
-<span class="sd">            Minumum upstream area threshold for rivers [km2], by default 25.0</span>
+<span class="sd">            Minimum upstream area threshold for rivers [km2], by default 25.0</span>
 <span class="sd">        river_len: float, optional</span>
-<span class="sd">            Mimimum river length within the model domain thresohld [m], by default 1000 m.</span>
+<span class="sd">            Mimimum river length within the model domain threshhold [m], by default 1000 m.</span>
 <span class="sd">        append_bounds: bool, optional</span>
 <span class="sd">            If True, write new outflow boundary cells on top of existing. If False (default),</span>
 <span class="sd">            first reset existing outflow boundary cells to normal active cells.</span>
@@ -970,16 +972,13 @@
                     <span class="s1">&#39;&quot;uparea&quot; and/or &quot;flwdir&quot; layers missing. &#39;</span>
                     <span class="s2">&quot;Run setup_river_hydrography first or provide hydrography_fn dataset.&quot;</span>
                 <span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;region&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticgeoms</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Run setup_mask() first to define the active model region. The model region &quot;</span>
-                <span class="s2">&quot;is now infered from the bounding box and may lead to inaccurate outflow points.&quot;</span>
-            <span class="p">)</span>
 
+        <span class="c1"># (re)calculate region to make sure it&#39;s accurate</span>
+        <span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
         <span class="n">gdf_out</span><span class="p">,</span> <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">river_boundary_points</span><span class="p">(</span>
             <span class="n">da_flwdir</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
             <span class="n">da_uparea</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">],</span>
-            <span class="n">region</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>  <span class="c1"># TODO reset region based on mask</span>
+            <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span>
             <span class="n">river_len</span><span class="o">=</span><span class="n">river_len</span><span class="p">,</span>
             <span class="n">river_upa</span><span class="o">=</span><span class="n">river_upa</span><span class="p">,</span>
             <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;outflow&quot;</span><span class="p">,</span>
@@ -1042,7 +1041,7 @@
 <span class="sd">            * Required layers with antecedent runoff conditions: [&#39;cn_dry&#39;, &#39;cn_avg&#39;, &#39;cn_wet&#39;]</span>
 <span class="sd">        antecedent_runoff_conditions: {&#39;dry&#39;, &#39;avg&#39;, &#39;wet&#39;}, optional</span>
 <span class="sd">            Antecedent runoff conditions.</span>
-<span class="sd">            None if data has no atecedent runoff conditions.</span>
+<span class="sd">            None if data has no antecedent runoff conditions.</span>
 <span class="sd">            By default `avg`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># get data</span>
@@ -1073,7 +1072,7 @@
 <div class="viewcode-block" id="SfincsModel.setup_manning_roughness"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_manning_roughness.html#hydromt_sfincs.SfincsModel.setup_manning_roughness">[docs]</a>    <span class="k">def</span> <span class="nf">setup_manning_roughness</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">lulc_fn</span><span class="o">=</span><span class="s2">&quot;vito&quot;</span><span class="p">,</span> <span class="n">map_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">riv_man</span><span class="o">=</span><span class="mf">0.03</span><span class="p">,</span> <span class="n">lnd_man</span><span class="o">=</span><span class="mf">0.1</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Setup model manning rouchness map (manningfile) from gridded</span>
+        <span class="sd">&quot;&quot;&quot;Setup model manning roughness map (manningfile) from gridded</span>
 <span class="sd">        land-use/land-cover map and manning roughness mapping table.</span>
 
 <span class="sd">        Adds model layers:</span>
@@ -1090,7 +1089,7 @@
 <span class="sd">            CSV mapping file with lulc classes in the index column and manning values</span>
 <span class="sd">            in another column with &#39;N&#39; as header.</span>
 <span class="sd">        lnd_man, riv_man: float, optional</span>
-<span class="sd">            Constant manning rougness values for land (by default lnd_man = 0.1 s.m-1/3)</span>
+<span class="sd">            Constant manning roughness values for land (by default lnd_man = 0.1 s.m-1/3)</span>
 <span class="sd">            and river cells (by default riv_man = 0.03 s.m-1/3).</span>
 <span class="sd">            These values are set based on the river mask (&#39;rivmsk&#39;) staticmaps layer</span>
 <span class="sd">            from the `setup_river_hydrography` component.</span>
@@ -1104,7 +1103,7 @@
             <span class="k">if</span> <span class="n">map_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">map_fn</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">DATADIR</span><span class="p">,</span> <span class="s2">&quot;lulc&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">lulc_fn</span><span class="si">}</span><span class="s2">_mapping.csv&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">map_fn</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mannng roughness mapping file not found: </span><span class="si">{</span><span class="n">map_fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Manning roughness mapping file not found: </span><span class="si">{</span><span class="n">map_fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">da_org</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                 <span class="n">lulc_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;lulc&quot;</span><span class="p">]</span>
             <span class="p">)</span>
@@ -1214,7 +1213,7 @@
             <span class="n">gdf</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">structures2gdf</span><span class="p">(</span><span class="n">structs_out</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">stype</span> <span class="o">==</span> <span class="s2">&quot;weir&quot;</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="s2">&quot;z&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">structs</span><span class="p">]):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Weir structure requires z values.&quot;</span><span class="p">)</span>
-        <span class="c1"># combine with exisiting structures if present</span>
+        <span class="c1"># combine with existing structures if present</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span> <span class="ow">and</span> <span class="n">stype</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticgeoms</span><span class="p">:</span>
             <span class="n">gdf0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_staticgeoms</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">stype</span><span class="p">)</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">gdf</span><span class="p">,</span> <span class="n">gdf0</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
@@ -1230,7 +1229,7 @@
         <span class="n">geodataset_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">timeseries_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">offset_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">buffer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">buffer</span><span class="o">=</span><span class="mf">5e3</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup waterlevel boundary point locations (bnd) and time series (bzs).</span>
@@ -1239,10 +1238,8 @@
 <span class="sd">        timeseries. The dataset is clipped to the model region plus `buffer` [m], and</span>
 <span class="sd">        model time based on the model config tstart and tstop entries.</span>
 
-<span class="sd">        Use `timeseries_fn` to set a spatially uniform waterlevel boundary representative</span>
-<span class="sd">        for all waterlevel boundary cells (msk==2), The timeseries is clipped based on</span>
-<span class="sd">        the model config tstart and tstop entries. The boundary point location is infered</span>
-<span class="sd">        from the model mask.</span>
+<span class="sd">        Use `timeseries_fn` in combination with `geodataset_fn=None` to set a spatially</span>
+<span class="sd">        uniform waterlevel for all waterlevel boundary cells (msk==2),</span>
 
 <span class="sd">        If `timeseries_fn` and `geodataset_fn` are both not provided a dummy (h=0) waterlevel</span>
 <span class="sd">        boundary is set.</span>
@@ -1262,8 +1259,7 @@
 <span class="sd">        geodataset_fn: str, Path</span>
 <span class="sd">            Path or data source name for geospatial point timeseries file.</span>
 <span class="sd">            This can either be a netcdf file with geospatial coordinates</span>
-<span class="sd">            or a combined point location file with a timeseries data csv file</span>
-<span class="sd">            which can be setup through the data_catalog.yml file.</span>
+<span class="sd">            or a combined point location file with a `timeseries_fn` data csv file.</span>
 
 <span class="sd">            * Required variables if netcdf: [&#39;waterlevel&#39;]</span>
 <span class="sd">            * Required coordinates if netcdf: [&#39;time&#39;, &#39;index&#39;, &#39;y&#39;, &#39;x&#39;]</span>
@@ -1271,14 +1267,16 @@
 <span class="sd">            Path to spatially uniform timeseries csv file with time index in first column</span>
 <span class="sd">            and waterlevels in the second column. The first row is interpreted as header,</span>
 <span class="sd">            see :py:meth:`hydromt.open_timeseries_from_table`, for details.</span>
-<span class="sd">            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.</span>
+<span class="sd">            NOTE: tabulated timeseries files can only in combination with point location</span>
+<span class="sd">            coordinates be set as a geodataset in the data_catalog yml file.</span>
 <span class="sd">        offset_fn: str, optional</span>
 <span class="sd">            Path or data source name for gridded offset between vertical reference of elevation and waterlevel data,</span>
 <span class="sd">            Adds to the waterlevel data before merging.</span>
 
 <span class="sd">            * Required variables: [&#39;mdt&#39;]</span>
-<span class="sd">        buffer: float</span>
-<span class="sd">            Buffer around model region from which to select waterlevel gauges</span>
+<span class="sd">        buffer: float, optional</span>
+<span class="sd">            Buffer [m] around model water level boundary cells to select waterlevel gauges,</span>
+<span class="sd">            by default 5 km.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;waterlevel&quot;</span>
@@ -1293,13 +1291,18 @@
 
         <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">()</span>  <span class="c1"># model time</span>
         <span class="k">if</span> <span class="n">geodataset_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">timeseries_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fn_data</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">timeseries_fn</span><span class="p">))</span>
             <span class="c1"># read and clip data in time &amp; space</span>
+            <span class="c1"># buffer around msk==2 values</span>
+            <span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
             <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataset</span><span class="p">(</span>
                 <span class="n">geodataset_fn</span><span class="p">,</span>
-                <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+                <span class="n">geom</span><span class="o">=</span><span class="n">region</span><span class="p">,</span>
                 <span class="n">buffer</span><span class="o">=</span><span class="n">buffer</span><span class="p">,</span>
                 <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
                 <span class="n">time_tuple</span><span class="o">=</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">),</span>
+                <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">(),</span>  <span class="c1"># assume model crs if no explicit crs defined</span>
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1337,7 +1340,7 @@
 <span class="sd">        timeseries. Only locations within the model domain are selected.</span>
 
 <span class="sd">        Use `timeseries_fn` to set discharge boundary conditions to pre-set (src) locations,</span>
-<span class="sd">        e.g. after the :py:meth:`~hydromt_sfins.SfincsModel.setup_river_inflow` method.</span>
+<span class="sd">        e.g. after the :py:meth:`~hydromt_sfincs.SfincsModel.setup_river_inflow` method.</span>
 
 <span class="sd">        The dataset/timeseries are clipped to the model time based on the model config</span>
 <span class="sd">        tstart and tstop entries.</span>
@@ -1361,7 +1364,8 @@
 <span class="sd">            Path to tabulated timeseries csv file with time index in first column</span>
 <span class="sd">            and location IDs in the first row,</span>
 <span class="sd">            see :py:meth:`hydromt.open_timeseries_from_table`, for details.</span>
-<span class="sd">            NOTE: tabulated timeseries files cannot yet be set through the data_catalog yml file.</span>
+<span class="sd">            NOTE: tabulated timeseries files can only in combination with point location</span>
+<span class="sd">            coordinates be set as a geodataset in the data_catalog yml file.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;discharge&quot;</span>
@@ -1374,6 +1378,8 @@
             <span class="p">)</span>
             <span class="k">return</span>
         <span class="k">elif</span> <span class="n">geodataset_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">timeseries_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fn_data</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">timeseries_fn</span><span class="p">))</span>
             <span class="c1"># read and clip data</span>
             <span class="n">da</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataset</span><span class="p">(</span>
@@ -1381,6 +1387,7 @@
                     <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
                     <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
                     <span class="n">time_tuple</span><span class="o">=</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">),</span>
+                    <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">(),</span>  <span class="c1"># assume model crs if none defined</span>
                     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
@@ -1693,7 +1700,7 @@
 <span class="sd">        geoms : List[str], optional</span>
 <span class="sd">            list of model geometries to plot, by default all model geometries.</span>
 <span class="sd">        geom_kwargs : Dict of Dict, optional</span>
-<span class="sd">            Model geometry styling per geometry, passed to geopands.GeoDataFrame.plot method.</span>
+<span class="sd">            Model geometry styling per geometry, passed to geopandas.GeoDataFrame.plot method.</span>
 <span class="sd">            For instance: {&#39;src&#39;: {&#39;markersize&#39;: 30}}.</span>
 <span class="sd">        legend_kwargs : Dict, optional</span>
 <span class="sd">            Legend kwargs, passed to ax.legend method.</span>
@@ -1761,7 +1768,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">write_data_catalog</span><span class="p">()</span>  <span class="c1"># new in hydromt v0.4.4</span></div>
 
 <div class="viewcode-block" id="SfincsModel.read_staticmaps"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.read_staticmaps.html#hydromt_sfincs.SfincsModel.read_staticmaps">[docs]</a>    <span class="k">def</span> <span class="nf">read_staticmaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Read SFNCS binary staticmaps and save to `staticmaps` attribute.</span>
+        <span class="sd">&quot;&quot;&quot;Read SFINCS binary staticmaps and save to `staticmaps` attribute.</span>
 <span class="sd">        Known binary files mentioned in the sfincs.inp configuration file are read,</span>
 <span class="sd">        including: msk/dep/scs/manning/qinf.</span>
 
@@ -1922,6 +1929,11 @@
 <span class="sd">            Relative path which is prepended to sfincs filenames which are not found in</span>
 <span class="sd">            the model root, but are found at this relative path from the root.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Empty model. Skip writing model configuration </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_config_fn</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;file&quot;</span><span class="p">):</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">value</span><span class="p">)):</span>
@@ -2128,7 +2140,7 @@
 <span class="sd">            Different variables can be combined in a list.</span>
 <span class="sd">            By default, variables is [&quot;staticmaps&quot;, &quot;states&quot;, &quot;results.hmax&quot;]</span>
 <span class="sd">        root: Path, str, optional</span>
-<span class="sd">            The output folder path. If None it defautls to the &lt;model_root&gt;/gis folder (Default)</span>
+<span class="sd">            The output folder path. If None it defaults to the &lt;model_root&gt;/gis folder (Default)</span>
 <span class="sd">        kwargs:</span>
 <span class="sd">            Key-word arguments passed to hydromt.RasterDataset.to_raster(driver=&#39;GTiff&#39;, compress=&#39;lzw&#39;).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -2181,9 +2193,9 @@
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        variables: str, list, optional</span>
-<span class="sd">            Staticgeoms variables. By bedault all staticgeoms are saved.</span>
+<span class="sd">            Staticgeoms variables. By default all staticgeoms are saved.</span>
 <span class="sd">        root: Path, str, optional</span>
-<span class="sd">            The output folder path. If None it defautls to the &lt;model_root&gt;/gis folder (Default)</span>
+<span class="sd">            The output folder path. If None it defaults to the &lt;model_root&gt;/gis folder (Default)</span>
 <span class="sd">        kwargs:</span>
 <span class="sd">            Key-word arguments passed to geopandas.GeoDataFrame.to_file(driver=&#39;GeoJSON&#39;).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -2299,7 +2311,7 @@
                 <span class="n">ts</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">())</span>
             <span class="k">elif</span> <span class="n">ts</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">crs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">:</span>
                 <span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">())</span>
-            <span class="c1"># fix order based on x_dim after setting crs (for comparibility between OS)</span>
+            <span class="c1"># fix order based on x_dim after setting crs (for comparability between OS)</span>
             <span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">sortby</span><span class="p">([</span><span class="n">ts</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">x_dim</span><span class="p">,</span> <span class="n">ts</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">y_dim</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="c1"># reset index</span>
             <span class="n">dim</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">index_dim</span>

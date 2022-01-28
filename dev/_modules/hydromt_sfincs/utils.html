@@ -100,6 +100,7 @@
 <span class="kn">import</span> <span class="nn">hydromt</span>
 <span class="kn">from</span> <span class="nn">hydromt.io</span> <span class="kn">import</span> <span class="n">write_xy</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span>
+<span class="kn">from</span> <span class="nn">pyflwdir.regions</span> <span class="kn">import</span> <span class="n">region_area</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;read_inp&quot;</span><span class="p">,</span>
@@ -488,8 +489,9 @@
     <span class="n">gdf_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">elv_min</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">elv_max</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">min_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">fill_holes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">fill_area</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">drop_area</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">connectivity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
     <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
@@ -504,10 +506,14 @@
 <span class="sd">        Geometries with areas to include/exclude from the model boundary.</span>
 <span class="sd">    elv_min, elv_max : float, optional</span>
 <span class="sd">        Minimum and maximum elevation thresholds for boundary cells.</span>
-<span class="sd">    min_cells : int, optional</span>
-<span class="sd">        Minimum number of contigous cells in any contiguous areas, by default 0.</span>
-<span class="sd">    fill_holes : bool, optional</span>
-<span class="sd">        If True (default) fill holes below the minimum elevation in the domain.</span>
+<span class="sd">    fill_area : float, optional</span>
+<span class="sd">        Maximum area [km2] of contiguous cells below `elv_min` or above `elv_max` but surrounded</span>
+<span class="sd">        by cells within the valid elevation range to be kept as active cells, by default 10 km2.</span>
+<span class="sd">    drop_area : float, optional</span>
+<span class="sd">        Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.</span>
+<span class="sd">    connectivity, {4, 8}:</span>
+<span class="sd">        The connectivity used to define contiguous cells, if 4 only horizontal and vertical</span>
+<span class="sd">        connections are used, if 8 (default) also diagonal connections.</span>
 <span class="sd">    all_touched: bool, optional</span>
 <span class="sd">        if True (default) include (or exclude) a cell in the mask if it touches any of the</span>
 <span class="sd">        include (or exclude) geometries. If False, include a cell only if its center is</span>
@@ -519,27 +525,34 @@
 <span class="sd">        model elevation mask</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_elv</span> <span class="o">!=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
+    <span class="n">transform</span><span class="p">,</span> <span class="n">latlon</span> <span class="o">=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">connectivity</span> <span class="o">==</span> <span class="mi">4</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_msk</span> <span class="o">=</span> <span class="n">da_elv</span> <span class="o">!=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
+        <span class="k">if</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">da_elv</span> <span class="o">&gt;=</span> <span class="n">elv_min</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">da_elv</span> <span class="o">&lt;=</span> <span class="n">elv_max</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fill_area</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">_msk1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_fill_holes</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">s</span><span class="p">))</span>
+            <span class="n">regions</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">_msk1</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">s</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">lbls</span><span class="p">,</span> <span class="n">areas</span> <span class="o">=</span> <span class="n">region_area</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">latlon</span><span class="p">)</span>
+            <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">lbls</span><span class="p">[</span><span class="n">areas</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">&lt;</span> <span class="n">fill_area</span><span class="p">]))</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">areas</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">&lt;</span> <span class="n">fill_area</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> gaps outside valid elevation range &lt; </span><span class="si">{</span><span class="n">fill_area</span><span class="si">}</span><span class="s2"> km2.&quot;</span><span class="p">)</span>
+        <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">gdf_include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">da_include</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_include</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">)</span>
         <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_include</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">gdf_exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">da_exclude</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_exclude</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">)</span>
         <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">da_exclude</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># active cells: contiguous area above depth threshold</span>
-        <span class="n">_msk</span> <span class="o">=</span> <span class="n">da_elv</span> <span class="o">&gt;=</span> <span class="n">elv_min</span>
-        <span class="k">if</span> <span class="n">fill_holes</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fill holes below minimum elevation in domain&quot;</span><span class="p">)</span>
-            <span class="n">_msk</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_fill_holes</span><span class="p">(</span><span class="n">_msk</span><span class="p">)</span>
-        <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_elv</span> <span class="o">&lt;=</span> <span class="n">elv_max</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">min_cells</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">regions</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">da_mask</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)))[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">lbls</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">regions</span><span class="p">[</span><span class="n">regions</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">],</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">count</span> <span class="o">&gt;</span> <span class="n">min_cells</span><span class="p">))</span>
-        <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">lbls</span><span class="p">[</span><span class="n">count</span> <span class="o">&gt;</span> <span class="n">min_cells</span><span class="p">])</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> regions with minimal </span><span class="si">{</span><span class="n">min_cells</span><span class="si">}</span><span class="s2"> cells found in domain&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">drop_area</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">regions</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">da_mask</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">s</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">lbls</span><span class="p">,</span> <span class="n">areas</span> <span class="o">=</span> <span class="n">region_area</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">latlon</span><span class="p">)</span>
+        <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">lbls</span><span class="p">[</span><span class="n">areas</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">&gt;=</span> <span class="n">drop_area</span><span class="p">])</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">areas</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">&lt;</span> <span class="n">drop_area</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> regions &lt; </span><span class="si">{</span><span class="n">drop_area</span><span class="si">}</span><span class="s2"> km2 dropped.&quot;</span><span class="p">)</span>
         <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">da_mask</span></div>
 
@@ -550,7 +563,7 @@
     <span class="n">gdf_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">elv_min</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">elv_max</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">structure</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span>
+    <span class="n">connectivity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Returns a boolean mask model boundary cells, optionally bounded by several</span>
 <span class="sd">    criteria. Boundary cells are defined by cells at the edge of active model domain.</span>
@@ -563,16 +576,18 @@
 <span class="sd">        Geometries with areas to include/exclude from the model boundary.</span>
 <span class="sd">    elv_min, elv_max : float, optional</span>
 <span class="sd">        Minimum and maximum elevation thresholds for boundary cells.</span>
+<span class="sd">    connectivity, {4, 8}:</span>
+<span class="sd">        The connectivity used to detect the model edge, if 4 only horizontal and vertical</span>
+<span class="sd">        connections are used, if 8 (default) also diagonal connections.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    bounds: xr.DataArray</span>
 <span class="sd">        Boolean mask of model boundary cells.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">connectivity</span> <span class="o">==</span> <span class="mi">4</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
     <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_elv</span> <span class="o">!=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
-    <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span>
-        <span class="n">da_mask</span><span class="p">,</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_erosion</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">)</span>
-    <span class="p">)</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_erosion</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">s</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">gdf_include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">da_include</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_include</span><span class="p">)</span>
         <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_include</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>

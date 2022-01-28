@@ -147,6 +147,7 @@
 <section id="new">
 <h3>New<a class="headerlink" href="#new" title="Permalink to this headline"></a></h3>
 <ul class="simple">
+<li><p><cite>setup_region</cite> method to set the (hydrological) model region of interest (before part of <cite>setup_basemaps</cite>).</p></li>
 <li><p><cite>setup_river_hydrography</cite> allows to derive hydrography data [‘flwdir’, ‘uparea’] from the model elevation or reproject it from a global dataset.
 Derived ‘uparea’ and ‘flwdir’ maps are saved in the GIS folder and can be reused later (if kept together with the model)</p></li>
 <li><p><cite>setup_river_bathymetry</cite> to estimate a river depth based on bankfull discharge and river width. A mask of river cells ‘rivmsk’ is kept in the GIS folder.</p></li>
@@ -155,6 +156,7 @@ Derived ‘uparea’ and ‘flwdir’ maps are saved in the GIS folder and can b
 <section id="changed-breaking">
 <h3>Changed (<strong>Breaking</strong>)<a class="headerlink" href="#changed-breaking" title="Permalink to this headline"></a></h3>
 <ul class="simple">
+<li><p><cite>setup_basemaps</cite> has been replaced by <cite>setup_topobathy</cite></p></li>
 <li><p>In <cite>setup_mask</cite>, the <cite>active_mask_fn</cite> argument has been renamed to <cite>include_mask_fn</cite> for consistency</p></li>
 <li><p>In <cite>setup_river_inflow</cite> and <cite>setup_river_outflow</cite> the <cite>basemaps_fn</cite> argument has been renamed to <cite>hydrography_fn</cite> for consistency</p></li>
 <li><p><cite>setup_river_bathymetry</cite> and <cite>workflows.snap_discharge</cite> have a <cite>rel_error</cite> and <cite>abs_error</cite> argument instead of a single <cite>max_error</cite> argument.</p></li>
@@ -164,18 +166,21 @@ Derived ‘uparea’ and ‘flwdir’ maps are saved in the GIS folder and can b
 <section id="changed">
 <h3>Changed<a class="headerlink" href="#changed" title="Permalink to this headline"></a></h3>
 <ul class="simple">
-<li><p><cite>setup_mask</cite> and <cite>setup_bounds</cite> both have include- and exclude polygon and min- and max elevation arguments.</p></li>
-<li><p><cite>setup_mask</cite> additionally takes a <cite>min_cells</cite> argument to filter a region based on the number of contigous cells, usefull to remove (spurious) small islands.</p></li>
+<li><p><cite>setup_mask</cite> and <cite>setup_bounds</cite> both have include- and exclude polygon and min- and max elevation arguments to determine valid / boundary cells.</p></li>
+<li><p><cite>setup_mask</cite> and <cite>setup_bounds</cite> have a reset_mask and reset_bounds option respectively to start with a clean mask or remove previously set boundary cells.</p></li>
+<li><p><cite>setup_mask</cite> takes a new <cite>drop_area</cite> argument to drop regions of contiguous cells smaller than this maximum area threshold, useful to remove (spurious) small islands.</p></li>
+<li><p><cite>setup_mask</cite> takes a new <cite>fill_area</cite> argument to fill regions of contiguous cells below the <cite>min_elv</cite> or above <cite>max_elv</cite> threshold surrounded by cells within the valid elevation range.</p></li>
+<li><p>In <cite>setup_bounds</cite> and <cite>setup_mask</cite> a <cite>connectivity</cite> argument is exposed to determine whether edge cells or regions of contiguous cells should be based on D4 (horizontal and vertical) or D8 (also diagonal) connections.</p></li>
 <li><p><cite>setup_merge_topobathy</cite> has a new <cite>max_width</cite> argument to use bathymetry data from new source within a fixed width around the topography data.</p></li>
 <li><dl class="simple">
-<dt><cite>setup_river_inflow</cite> and <cite>setup_river_outflow</cite> are now based on the same <cite>workflows.river_boundary_points</cite> method.</dt><dd><p>both have a <cite>river_upa</cite> and <cite>river_len</cite> argument and the hydrography data is not required if <cite>setup_river_hydrography</cite> is ran beforehand.</p>
+<dt><cite>setup_river_inflow</cite> and <cite>setup_river_outflow</cite> are now based on the same <cite>workflows.river_boundary_points</cite> method.</dt><dd><p>Both have a <cite>river_upa</cite> and <cite>river_len</cite> argument and the hydrography data is not required if <cite>setup_river_hydrography</cite> is ran beforehand.
+The model domain is also determined on-the-fly, thus it is not required to run setup_mask beforehand.</p>
 </dd>
 </dl>
 </li>
 <li><p><cite>write_config</cite> has a new <cite>rel_path</cite> argument that allows you to write sfincs.inp with references to model files in the root and rel_path directory.</p></li>
 <li><p>Write dep file with cm accuracy. This should be sufficient but also hides differences between linux and window builds.</p></li>
-<li><p>Exposed <cite>interp_method</cite> argument in <cite>setup_merge_topobathy</cite> to select interpolation method for fill nans.</p></li>
-<li><p>In <cite>setup_mask</cite> exposed <cite>fill_holes</cite> argument to determine whether to keep isolated areas below the <cite>min_elv</cite> threshold.</p></li>
+<li><p>Exposed <cite>interp_method</cite> argument in <cite>setup_merge_topobathy</cite> to select interpolation method for fill NaNs.</p></li>
 <li><p><cite>setup_cn_infiltration</cite> and <cite>setup_manning_roughness</cite> use deafult values for river cells as defined in <cite>setup_river_bathymetry</cite></p></li>
 <li><p>Use mamba to setup CI environments</p></li>
 <li><p>Bumped minimal pyflwdir version to 0.5.4</p></li>
@@ -195,10 +200,10 @@ Derived ‘uparea’ and ‘flwdir’ maps are saved in the GIS folder and can b
 <h3>Changed<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h3>
 <ul class="simple">
 <li><p>Bumped minimal hydromt version to 0.4.2</p></li>
-<li><p>splitted <code class="docutils literal notranslate"><span class="pre">setup_basemaps</span></code> into multiple smaller methods: <code class="docutils literal notranslate"><span class="pre">setup_merge_topobathy</span></code>, <code class="docutils literal notranslate"><span class="pre">setup_mask</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_bounds</span></code></p></li>
+<li><p>splitted <code class="docutils literal notranslate"><span class="pre">setup_topobathy</span></code> into multiple smaller methods: <code class="docutils literal notranslate"><span class="pre">setup_merge_topobathy</span></code>, <code class="docutils literal notranslate"><span class="pre">setup_mask</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_bounds</span></code></p></li>
 <li><p>separated many low-level methods into utils.py and plots.py</p></li>
 <li><p>save bzs/bzd &amp; dis/src only as GeoDataArray at forcing and do not copy the locations at staticgeoms.</p></li>
-<li><p>sort src/bnd files on x_dim for comparibility between OS</p></li>
+<li><p>sort src/bnd files on x_dim for comparability between OS</p></li>
 <li><p>staticmaps are by default saved (and read) in S-&gt;N orientation as this matches the SFINCS better.</p></li>
 </ul>
 </section>

@@ -60,7 +60,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../api/api_index.html#initialize">Initialize</a></li>
 <li class="toctree-l3 current"><a class="reference internal" href="../api/api_index.html#setup-components">Setup components</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_config.html">hydromt_sfincs.SfincsModel.setup_config</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_basemaps.html">hydromt_sfincs.SfincsModel.setup_basemaps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_topobathy.html">hydromt_sfincs.SfincsModel.setup_topobathy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_merge_topobathy.html">hydromt_sfincs.SfincsModel.setup_merge_topobathy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask.html">hydromt_sfincs.SfincsModel.setup_mask</a></li>
 <li class="toctree-l4"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_bounds.html">hydromt_sfincs.SfincsModel.setup_bounds</a></li>
@@ -152,7 +152,7 @@
 <p>Use <cite>geodataset_fn</cite> to set the discharge boundary from a dataset of point location
 timeseries. Only locations within the model domain are selected.</p>
 <p>Use <cite>timeseries_fn</cite> to set discharge boundary conditions to pre-set (src) locations,
-e.g. after the <code class="xref py py-meth docutils literal notranslate"><span class="pre">setup_river_inflow()</span></code> method.</p>
+e.g. after the <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.SfincsModel.setup_river_inflow" title="hydromt_sfincs.SfincsModel.setup_river_inflow"><code class="xref py py-meth docutils literal notranslate"><span class="pre">setup_river_inflow()</span></code></a> method.</p>
 <p>The dataset/timeseries are clipped to the model time based on the model config
 tstart and tstop entries.</p>
 <p>Adds model layers:</p>
@@ -175,7 +175,8 @@ which can be setup through the data_catalog yml file.</p>
 <li><p><strong>timeseries_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Path</em>) – Path to tabulated timeseries csv file with time index in first column
 and location IDs in the first row,
 see <code class="xref py py-meth docutils literal notranslate"><span class="pre">hydromt.open_timeseries_from_table()</span></code>, for details.
-NOTE: tabulated timeseries files cannot yet be set through the data_catalog yml file.</p></li>
+NOTE: tabulated timeseries files can only in combination with point location
+coordinates be set as a geodataset in the data_catalog yml file.</p></li>
 </ul>
 </dd>
 </dl>

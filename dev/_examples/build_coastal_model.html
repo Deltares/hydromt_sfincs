@@ -377,7 +377,7 @@ div.rendered_html tbody tr:hover {
 <h1>Make a coastal sfincs model from scratch using hydromt<a class="headerlink" href="#Make-a-coastal-sfincs-model-from-scratch-using-hydromt" title="Permalink to this headline"></a></h1>
 <p>This notebook demonstrates how to prepare and inspect a SFINCS model from scratch. The notebook does not contain the SFINCS code or executables to run the model with.</p>
 <p>We will make a schematization with the following features: * we only simulate coastal flooding, we do not consider any interactions with riverine flooding * we use the MERIT Hydro dataset as elevation * we include boundary conditions from the Global Tide and Surge Model by imposing a number of boundary points where forcing is expected</p>
-<p>All lines in this notebook which start with <code class="docutils literal notranslate"><span class="pre">!</span></code> are executed from the command line. Within the notebook environment the logging messages are shown after completion. You can also copy these lines and paste these in your shell to get more direct feedback.</p>
+<p>All lines in this notebook which start with <code class="docutils literal notranslate"><span class="pre">!</span></code> are executed from the command line. Within jupyter (except for jupyter lab) the logging messages are shown after completion. You can also copy these lines and paste these in your shell to get more direct feedback.</p>
 <section id="HydroMT-CLI-build-interface">
 <h2>HydroMT CLI build interface<a class="headerlink" href="#HydroMT-CLI-build-interface" title="Permalink to this headline"></a></h2>
 <p>First let us see what hydromt provides us with.</p>
@@ -410,7 +410,7 @@ Commands:
 
 </pre></div></div>
 </div>
-<p>Whith the <code class="docutils literal notranslate"><span class="pre">models</span></code> flag we can ask if hydromt recognizes the SFINCS plugin (sfincs should be mentioned):</p>
+<p>With the <code class="docutils literal notranslate"><span class="pre">models</span></code> flag we can ask if hydroMT recognizes the SFINCS plugin (SFINCS should be mentioned):</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -428,7 +428,7 @@ hydroMT model plugins: sfincs (v0.2.1.dev0)
 
 </pre></div></div>
 </div>
-<p>It looks like we have several commands that we can consider. We want to <code class="docutils literal notranslate"><span class="pre">build</span></code> a model. How does that work? We can also call <code class="docutils literal notranslate"><span class="pre">--help</span></code> on the available hydromt commands as follows.</p>
+<p>It looks like we have several commands that we can consider. We want to <code class="docutils literal notranslate"><span class="pre">build</span></code> a model. How does that work? We can also call <code class="docutils literal notranslate"><span class="pre">--help</span></code> on the available hydroMT commands as follows.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
@@ -480,7 +480,7 @@ Options:
 </section>
 <section id="Building-a-first-model-(and-getting-an-error-when-data-is-missing)">
 <h2>Building a first model (and getting an error when data is missing)<a class="headerlink" href="#Building-a-first-model-(and-getting-an-error-when-data-is-missing)" title="Permalink to this headline"></a></h2>
-<p>Let’s try to build an entire schematisation, just from the command line (Awesome!!!). In the <code class="docutils literal notranslate"><span class="pre">--help</span></code> section, there is an example for making a model from a bounding box, which is very intuitive. Let’s try exactly that. We store the model on the local path <code class="docutils literal notranslate"><span class="pre">./texel_sfincs</span></code></p>
+<p>Let’s try to build an entire schematization, just from the command line (Awesome!!!). In the <code class="docutils literal notranslate"><span class="pre">--help</span></code> section, there is an example for making a model from a bounding box, which is very intuitive. Let’s try exactly that. We store the model on the local path <code class="docutils literal notranslate"><span class="pre">./texel_sfincs</span></code></p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
@@ -494,94 +494,14 @@ Options:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2022-01-27 17:30:58,184 - build - main - ERROR - index 0 is out of bounds for axis 0 with size 0
-Traceback (most recent call last):
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/cli/main.py&#34;, line 196, in build
-    mod.build(region, res, opt=opt)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/models/model_api.py&#34;, line 156, in build
-    self._run_log_method(method, **opt[method])
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/models/model_api.py&#34;, line 98, in _run_log_method
-    return func(*args, **kwargs)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/sfincs.py&#34;, line 201, in setup_basemaps
-    da_elv = da_elv.raster.clip_geom(geom=dst_geom, buffer=20).raster.reproject(
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 863, in clip_geom
-    obj_clip.coords[&#34;mask&#34;] = obj_clip.raster.geometry_mask(geom)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 963, in geometry_mask
-    return self.rasterize(
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 927, in rasterize
-    transform=self.transform,
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 364, in transform
-    *self.internal_bounds, self.width, self.height
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 371, in internal_bounds
-    res_x, res_y = self.res
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 397, in res
-    left, right = float(self.xcoords[0]), float(self.xcoords[-1])
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/xarray/core/dataarray.py&#34;, line 745, in __getitem__
-    return self.isel(indexers=self._item_key_to_dict(key))
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/xarray/core/dataarray.py&#34;, line 1208, in isel
-    variable = self._variable.isel(indexers, missing_dims=missing_dims)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/xarray/core/variable.py&#34;, line 1193, in isel
-    return self[key]
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/xarray/core/variable.py&#34;, line 786, in __getitem__
-    data = as_indexable(self._data)[indexer]
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/xarray/core/indexing.py&#34;, line 1323, in __getitem__
-    result = self.array[key]
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/pandas/core/indexes/base.py&#34;, line 5039, in __getitem__
-    return getitem(key)
-IndexError: index 0 is out of bounds for axis 0 with size 0
-Traceback (most recent call last):
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/bin/hydromt&#34;, line 8, in &lt;module&gt;
-    sys.exit(main())
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/click/core.py&#34;, line 1128, in __call__
-    return self.main(*args, **kwargs)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/click/core.py&#34;, line 1053, in main
-    rv = self.invoke(ctx)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/click/core.py&#34;, line 1659, in invoke
-    return _process_result(sub_ctx.command.invoke(sub_ctx))
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/click/core.py&#34;, line 1395, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/click/core.py&#34;, line 754, in invoke
-    return __callback(*args, **kwargs)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/click/decorators.py&#34;, line 26, in new_func
-    return f(get_current_context(), *args, **kwargs)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/cli/main.py&#34;, line 196, in build
-    mod.build(region, res, opt=opt)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/models/model_api.py&#34;, line 156, in build
-    self._run_log_method(method, **opt[method])
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/models/model_api.py&#34;, line 98, in _run_log_method
-    return func(*args, **kwargs)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/sfincs.py&#34;, line 201, in setup_basemaps
-    da_elv = da_elv.raster.clip_geom(geom=dst_geom, buffer=20).raster.reproject(
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 863, in clip_geom
-    obj_clip.coords[&#34;mask&#34;] = obj_clip.raster.geometry_mask(geom)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 963, in geometry_mask
-    return self.rasterize(
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 927, in rasterize
-    transform=self.transform,
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 364, in transform
-    *self.internal_bounds, self.width, self.height
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 371, in internal_bounds
-    res_x, res_y = self.res
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt/raster.py&#34;, line 397, in res
-    left, right = float(self.xcoords[0]), float(self.xcoords[-1])
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/xarray/core/dataarray.py&#34;, line 745, in __getitem__
-    return self.isel(indexers=self._item_key_to_dict(key))
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/xarray/core/dataarray.py&#34;, line 1208, in isel
-    variable = self._variable.isel(indexers, missing_dims=missing_dims)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/xarray/core/variable.py&#34;, line 1193, in isel
-    return self[key]
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/xarray/core/variable.py&#34;, line 786, in __getitem__
-    data = as_indexable(self._data)[indexer]
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/xarray/core/indexing.py&#34;, line 1323, in __getitem__
-    result = self.array[key]
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/pandas/core/indexes/base.py&#34;, line 5039, in __getitem__
-    return getitem(key)
-IndexError: index 0 is out of bounds for axis 0 with size 0
+2022-01-28 11:17:23,927 - build - sfincs - ERROR - depfile = sfincs.dep not found
+2022-01-28 11:17:23,927 - build - sfincs - ERROR - mskfile = sfincs.msk not found
+2022-01-28 11:17:23,928 - build - sfincs - ERROR - indexfile = sfincs.ind not found
 
 </pre></div></div>
 </div>
 <p>The above might have taken a few seconds, but then should have miserably crashed! What happened: * HydroMT was looking for a data catalog to use. * It did not find any and therefore, it automatically downloaded a sample data catalog which you can now find on your home folder under .hydromt_data * It tried to build a model in the Texel bounding box, but…alas, the sample dataset does not cover Texel at all! To add datasets covering the area outside the sample data extent, setup your own
-datasets using data yml files <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/data.html">hydromt data</a> using <code class="docutils literal notranslate"><span class="pre">--data</span> <span class="pre">PATH</span></code> option, or if your are connected to the deltares network <code class="docutils literal notranslate"><span class="pre">--deltares-data</span></code> flag.</p>
+datasets using data yml files <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/data.html">hydroMT data</a> using <code class="docutils literal notranslate"><span class="pre">--data</span> <span class="pre">PATH</span></code> option, or if your are connected to the Deltares network <code class="docutils literal notranslate"><span class="pre">--deltares-data</span></code> flag.</p>
 </section>
 <section id="Building-a-first-model-(and-getting-it-right)">
 <h2>Building a first model (and getting it right)<a class="headerlink" href="#Building-a-first-model-(and-getting-it-right)" title="Permalink to this headline"></a></h2>
@@ -600,40 +520,38 @@ datasets using data yml files <a class="reference external" href="https://deltar
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2022-01-27 17:31:01,428 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs/hydromt.log.
-2022-01-27 17:31:01,428 - build - log - INFO - HydroMT version: 0.4.5.dev
-2022-01-27 17:31:01,428 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs.
-2022-01-27 17:31:01,428 - build - main - INFO - User settings:
-2022-01-27 17:31:01,431 - build - model_plugins - DEBUG - Loaded model plugin &#39;sfincs = hydromt_sfincs.sfincs.SfincsModel&#39; (0.2.1.dev0)
-2022-01-27 17:31:01,432 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.1.dev0).
-2022-01-27 17:31:01,432 - build - model_api - INFO - setup_basemaps.region: {&#39;bbox&#39;: [12.05, 45.3, 12.85, 45.65]}
-2022-01-27 17:31:01,432 - build - model_api - INFO - setup_basemaps.res: 100
-2022-01-27 17:31:01,432 - build - model_api - INFO - setup_basemaps.crs: utm
-2022-01-27 17:31:01,432 - build - model_api - INFO - setup_basemaps.basemaps_fn: merit_hydro
-2022-01-27 17:31:01,432 - build - model_api - INFO - setup_basemaps.reproj_method: bilinear
-2022-01-27 17:31:01,432 - build - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
-2022-01-27 17:31:01,511 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/merit_hydro/{variable}.tif
-2022-01-27 17:31:01,531 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [12.05, 45.3, 12.85, 45.65]}
-2022-01-27 17:31:01,685 - build - sfincs - INFO - Saving elevation data to staticmaps.
-2022-01-27 17:31:01,689 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
-2022-01-27 17:31:01,689 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs
-2022-01-27 17:31:01,747 - build - sfincs - DEBUG - Write binary map indices based on mask.
-2022-01-27 17:31:01,869 - build - sfincs - DEBUG - Write binary map files: [&#39;dep&#39;, &#39;msk&#39;].
-2022-01-27 17:31:02,022 - build - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
-2022-01-27 17:31:02,212 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs/sfincs.inp
+2022-01-28 11:17:28,848 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs/hydromt.log.
+2022-01-28 11:17:28,848 - build - log - INFO - HydroMT version: 0.4.5.dev
+2022-01-28 11:17:28,848 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs.
+2022-01-28 11:17:28,848 - build - main - INFO - User settings:
+2022-01-28 11:17:28,851 - build - model_plugins - DEBUG - Loaded model plugin &#39;sfincs = hydromt_sfincs.sfincs.SfincsModel&#39; (0.2.1.dev0)
+2022-01-28 11:17:28,851 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.1.dev0).
+2022-01-28 11:17:28,851 - build - model_api - INFO - setup_region.region: {&#39;bbox&#39;: [12.05, 45.3, 12.85, 45.65]}
+2022-01-28 11:17:28,851 - build - model_api - INFO - setup_region.hydrography_fn: merit_hydro
+2022-01-28 11:17:28,851 - build - model_api - INFO - setup_region.basin_index_fn: merit_hydro_index
+2022-01-28 11:17:28,851 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [12.05, 45.3, 12.85, 45.65]}
+2022-01-28 11:17:28,855 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs
+2022-01-28 11:17:28,855 - build - sfincs - INFO - Write staticgeom files
+2022-01-28 11:17:28,855 - build - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
+2022-01-28 11:17:28,873 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
+2022-01-28 11:17:28,873 - build - sfincs - ERROR - depfile = sfincs.dep not found
+2022-01-28 11:17:28,873 - build - sfincs - ERROR - mskfile = sfincs.msk not found
+2022-01-28 11:17:28,873 - build - sfincs - ERROR - indexfile = sfincs.ind not found
+2022-01-28 11:17:28,873 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs/sfincs.inp
+2022-01-28 11:17:28,874 - build - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
 
 </pre></div></div>
 </div>
 <p>This should work without any errors.</p>
 <p>The example above means the following: run <strong>hydromt build</strong> with:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">sfincs</span></code> : i.e. build a sfincs model</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sfincs</span></code> : i.e. build a SFINCS model</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">./venice_sfincs</span></code> : output model folder</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&quot;{'bbox':</span> <span class="pre">[12.05,45.30,12.85,45.65]}&quot;</span></code> : make a model that is active for the full given bounding box. All <em>REGION</em> options are described in the <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/cli.html#region-options">docs</a></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">-vv</span></code> : give some extra verbosity (2 * v) to display feedback on screen. Now debug messages are provided.</p></li>
 </ul>
-<p>NOTE: As we did not specify a model configuration, only the base maps (topography) have been setup using default parameters. To build a complete model we need the use a configuraton ini-file.</p>
-<p>We can now inspect the newly created folder <code class="docutils literal notranslate"><span class="pre">./venice_sfincs</span></code></p>
+<p>NOTE: As we did not specify a model configuration, only the model region has been setup. To build a complete model we need the use a configuration ini-file.</p>
+<p>When we inspect the newly created <code class="docutils literal notranslate"><span class="pre">./venice_sfincs</span></code> folder we only find a log file and the gis folder containing the region geometry saved as geojson file.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
@@ -647,18 +565,20 @@ datasets using data yml files <a class="reference external" href="https://deltar
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-gis          hydromt_data.yml  sfincs.ind  sfincs.msk
-hydromt.log  sfincs.dep        sfincs.inp
+gis  hydromt.log  hydromt_data.yml  sfincs.inp
 </pre></div></div>
 </div>
-<p>The .log file contains the same messages as shown in the verbose messages during the building of the model. The files are standard sfincs formats and contain the following * .inp file : holds the model’s configuration * .dep file : holds the bathymetry in the typical format of sfincs * .msk file : mask file (0, inactive cells, 1, active cells, 2, boundary cells)</p>
-<p>Let us have a closer look at the model’s configuration</p>
+</section>
+<section id="Building-a-complete-model-(ready-to-run)">
+<h2>Building a complete model (ready to run)<a class="headerlink" href="#Building-a-complete-model-(ready-to-run)" title="Permalink to this headline"></a></h2>
+<p>We can provide many more settings in an configuration (.ini) file instead of command line arguments. If you don’t provide an ini file (as done above), only the model region is determined. To complete your model you can add more <a class="reference external" href="https://deltares.github.io/hydromt_sfincs/latest/user_guide/sfincs.html">model components</a> to the model setup.</p>
+<p>Let’s have a look a typical ini file for setting up coastal SFINCS model, where each <code class="docutils literal notranslate"><span class="pre">[setup_&lt;&gt;]</span></code> refers to a model component. All options which end with <code class="docutils literal notranslate"><span class="pre">_fn</span></code> refers to a data source from the data catalog or a path to data on your machine, see <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/data.html">hydroMT data</a>. In this case some sample data which is downloaded to your machine at <code class="docutils literal notranslate"><span class="pre">$USER_ROOT/.hydromt_data</span></code></p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn_inp</span> <span class="o">=</span> <span class="s2">&quot;./venice_sfincs/sfincs.inp&quot;</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn_inp</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s2">&quot;sfincs_coastal.ini&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn_ini</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
 </pre></div>
@@ -669,45 +589,68 @@ hydromt.log  sfincs.dep        sfincs.inp
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-mmax            = 638
-nmax            = 409
-dx              = 100.0
-dy              = 100.0
-x0              = 268700.0
-y0              = 5018500.0
-rotation        = 0
-epsg            = 32633
-inputformat     = bin
-outputformat    = net
-tref            = 20000101 000000
-tstart          = 20000101 000000
-tstop           = 20000102 000000
-dtout           = 3600
-dthisout        = 600
-dtmaxout        = 86400
-advection       = 0
-alpha           = 0.75
-huthresh        = 0.05
-theta           = 0.9
-min_lev_hmax    = -1
-zsini           = 0
-qinf            = 0
-manning_land    = 0.04
-manning_sea     = 0.02
-rgh_lev_land    = 0
-depfile         = sfincs.dep
-mskfile         = sfincs.msk
-indexfile       = sfincs.ind
+[setup_config]
+tref = 20100201 000000
+tstart = 20100201 000000
+tstop = 20100210 000000
+alpha = 0.5
+zsini = 0.5
 
+[setup_topobathy]
+topobathy_fn = merit_hydro       # topobathy basemaps [&#39;elevtn&#39;]
+crs = utm                       # model CRS (must be UTM zone)
 
+[setup_merge_topobathy]
+topobathy_fn = gebco            # bathymetry [&#39;elevtn&#39;]
+mask_fn = osm_coastlines        # sea polygon describing where we want to use the new data
+offset_fn = dtu10mdt_egm96      # mean dynamic topography to account for the difference in vertical datum between the current and new data
+merge_method = first            # use valid new data where the current data has invalid (nodata) values
+merge_buffer = 2                # buffer (cells) between elevation and bathymetry data filled with &#39;linear&#39; interpolation
+
+[setup_mask]
+elv_min = -5                    # minimum elevation for valid cells
+
+[setup_cn_infiltration]
+cn_fn = gcn250                  # curve number source
+antecedent_runoff_conditions = avg # for gcn250: {&#39;dry&#39;, &#39;avg&#39;, &#39;wet&#39;}
+
+[setup_manning_roughness]
+lulc_fn = vito                  # land-use land-cover source
+map_fn = None                   # mapping file. read from hydromt/data/lulc/{lulc_fn}_mapping.csv if None
+
+[setup_bounds]
+btype = waterlevel              # boundary type [&#39;waterlevel&#39;, &#39;outflow&#39;]
+include_mask_fn = osm_coastlines  # sea polygon
+
+[setup_h_forcing]
+geodataset_fn = data/gtsm_locations.csv  # waterlevel gauge locations
+timeseries_fn = data/gtsm_timeseries.csv  # waterlevel time series
+buffer = 1e4                    # buffer around model region to select gauges
+
+[setup_p_forcing_from_grid]
+precip_fn = era5_hourly         # gridded precipitation data [&#39;precip&#39;]
+dst_res = None                  # output resolution (m)
+aggregate = True                # if True return the aggregated mean as spatially uniform precip
 </pre></div></div>
 </div>
-<p>We see that quite standard settings are used. The coordinate reference system (see <code class="docutils literal notranslate"><span class="pre">epsg</span></code>) is automatically chosen to the nearest UTM zone. We have not even considered the resolution. It is now 100 meters (see <code class="docutils literal notranslate"><span class="pre">dx</span></code> and <code class="docutils literal notranslate"><span class="pre">dy</span></code>). Let’s assume we want a 150 meter model and rebuild it. The <code class="docutils literal notranslate"><span class="pre">--help</span></code> section showed that the <code class="docutils literal notranslate"><span class="pre">-r</span></code> option has to be used to change this.</p>
+<p>You can see the following sections:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">[setup_config]</span></code>: arguments which are forwarded to the SFINCS model configuration file sfincs.inp</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[setup_topobathy]</span></code>: basic information required for the model domain grid and elevation. These are the minimal demanded static layers that any SFINCS model needs. Here you may for instance consider altering the elevation and bathymetry data for local data sources. These then have to be supplied in the <code class="docutils literal notranslate"><span class="pre">data_catalog.yml</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[setup_merge_topobathy]</span></code>: add additional data source for bathymetry data to merge with the basemap elevation data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[setup_mask]</span></code>: set valid model cells based on the topobathy data and a minimal depth boundary (more options available).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[setup_cn_infiltration]</span></code>: potential maximum soil retention maps to be used in the curve number method, see <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html?highlight=curve#spatially-varying-curve-number">SFINCS docs</a> for more information</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[setup_manning_roughness]</span></code>: configuration of the Manning roughness values, typically consisting of a land use or land cover map, and a lookup table that relates land use classes to manning roughness values in sec m<span class="math notranslate nohighlight">\(^{-1/3}\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[setup_bounds]</span></code>: set cells at the model domain edge and within the sea polygon to waterlevel boundary cells.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[setup_h_forcing]</span></code>: water level forcing data. This can be provided from a set of csv files, see data_sources.yml, but also netcdf files, see <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/data.html">hydroMT docs</a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[setup_p_forcing_from_grid]</span></code>: gridded precipitation data, that can be used to do compound flood simulations. The <code class="docutils literal notranslate"><span class="pre">[setup_cn_infiltration]</span></code> is then quite essential to include.</p></li>
+</ul>
+<p>To build a model from scratch add the ini file to the command line <code class="docutils literal notranslate"><span class="pre">hydromt</span> <span class="pre">build</span></code> method at a 150 m resolution.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>hydromt build sfincs ./venice_sfincs_150 <span class="s2">&quot;{&#39;bbox&#39;: [12.05,45.30,12.85,45.65]}&quot;</span> -r <span class="m">150</span> -vv
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>hydromt build sfincs ./venice_sfincs_150 <span class="s2">&quot;{&#39;bbox&#39;: [12.05,45.30,12.85,45.65]}&quot;</span> -r <span class="m">150</span> -i sfincs_coastal.ini -vv
 </pre></div>
 </div>
 </div>
@@ -716,32 +659,128 @@ indexfile       = sfincs.ind
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2022-01-27 17:31:05,541 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150/hydromt.log.
-2022-01-27 17:31:05,541 - build - log - INFO - HydroMT version: 0.4.5.dev
-2022-01-27 17:31:05,542 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150.
-2022-01-27 17:31:05,542 - build - main - INFO - User settings:
-2022-01-27 17:31:05,545 - build - model_plugins - DEBUG - Loaded model plugin &#39;sfincs = hydromt_sfincs.sfincs.SfincsModel&#39; (0.2.1.dev0)
-2022-01-27 17:31:05,545 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.1.dev0).
-2022-01-27 17:31:05,545 - build - model_api - INFO - setup_basemaps.region: {&#39;bbox&#39;: [12.05, 45.3, 12.85, 45.65]}
-2022-01-27 17:31:05,545 - build - model_api - INFO - setup_basemaps.res: 150.0
-2022-01-27 17:31:05,545 - build - model_api - INFO - setup_basemaps.crs: utm
-2022-01-27 17:31:05,545 - build - model_api - INFO - setup_basemaps.basemaps_fn: merit_hydro
-2022-01-27 17:31:05,545 - build - model_api - INFO - setup_basemaps.reproj_method: bilinear
-2022-01-27 17:31:05,546 - build - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
-2022-01-27 17:31:05,623 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/merit_hydro/{variable}.tif
-2022-01-27 17:31:05,642 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [12.05, 45.3, 12.85, 45.65]}
-2022-01-27 17:31:05,791 - build - sfincs - INFO - Saving elevation data to staticmaps.
-2022-01-27 17:31:05,795 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
-2022-01-27 17:31:05,795 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150
-2022-01-27 17:31:05,835 - build - sfincs - DEBUG - Write binary map indices based on mask.
-2022-01-27 17:31:05,935 - build - sfincs - DEBUG - Write binary map files: [&#39;dep&#39;, &#39;msk&#39;].
-2022-01-27 17:31:06,062 - build - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
-2022-01-27 17:31:06,197 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150/sfincs.inp
+2022-01-28 11:17:32,330 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150/hydromt.log.
+2022-01-28 11:17:32,330 - build - log - INFO - HydroMT version: 0.4.5.dev
+2022-01-28 11:17:32,330 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150.
+2022-01-28 11:17:32,330 - build - main - INFO - User settings:
+2022-01-28 11:17:32,336 - build - model_plugins - DEBUG - Loaded model plugin &#39;sfincs = hydromt_sfincs.sfincs.SfincsModel&#39; (0.2.1.dev0)
+2022-01-28 11:17:32,336 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.1.dev0).
+2022-01-28 11:17:32,336 - build - model_api - DEBUG - Setting model config options.
+2022-01-28 11:17:32,337 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
+2022-01-28 11:17:32,338 - build - model_api - INFO - setup_region.region: {&#39;bbox&#39;: [12.05, 45.3, 12.85, 45.65]}
+2022-01-28 11:17:32,338 - build - model_api - INFO - setup_region.hydrography_fn: merit_hydro
+2022-01-28 11:17:32,338 - build - model_api - INFO - setup_region.basin_index_fn: merit_hydro_index
+2022-01-28 11:17:32,338 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [12.05, 45.3, 12.85, 45.65]}
+2022-01-28 11:17:32,341 - build - model_api - INFO - setup_topobathy.topobathy_fn: merit_hydro
+2022-01-28 11:17:32,342 - build - model_api - INFO - setup_topobathy.res: 150.0
+2022-01-28 11:17:32,342 - build - model_api - INFO - setup_topobathy.crs: utm
+2022-01-28 11:17:32,342 - build - model_api - INFO - setup_topobathy.reproj_method: bilinear
+2022-01-28 11:17:32,429 - build - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
+2022-01-28 11:17:32,501 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/merit_hydro/{variable}.tif
+2022-01-28 11:17:32,523 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.032, 45.282, 12.863, 45.668]
+2022-01-28 11:17:32,585 - build - model_api - INFO - setup_merge_topobathy.topobathy_fn: gebco
+2022-01-28 11:17:32,585 - build - model_api - INFO - setup_merge_topobathy.elv_min: None
+2022-01-28 11:17:32,585 - build - model_api - INFO - setup_merge_topobathy.elv_max: None
+2022-01-28 11:17:32,585 - build - model_api - INFO - setup_merge_topobathy.mask_fn: osm_coastlines
+2022-01-28 11:17:32,585 - build - model_api - INFO - setup_merge_topobathy.max_width: 0
+2022-01-28 11:17:32,585 - build - model_api - INFO - setup_merge_topobathy.offset_fn: dtu10mdt_egm96
+2022-01-28 11:17:32,585 - build - model_api - INFO - setup_merge_topobathy.offset_constant: 0
+2022-01-28 11:17:32,585 - build - model_api - INFO - setup_merge_topobathy.merge_buffer: 2
+2022-01-28 11:17:32,585 - build - model_api - INFO - setup_merge_topobathy.merge_method: first
+2022-01-28 11:17:32,585 - build - model_api - INFO - setup_merge_topobathy.reproj_method: bilinear
+2022-01-28 11:17:32,585 - build - model_api - INFO - setup_merge_topobathy.interp_method: linear
+2022-01-28 11:17:32,589 - build - data_adapter - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/gebco.tif
+2022-01-28 11:17:32,601 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.031, 45.282, 12.862, 45.667]
+2022-01-28 11:17:32,620 - build - data_adapter - INFO - DataCatalog: Getting osm_coastlines GeoDataFrame vector data from /home/runner/.hydromt_data/data/v0.0.6/osm_coastlines.gpkg
+2022-01-28 11:17:32,620 - build - data_adapter - INFO - GeoDataFrame: Read vector data.
+2022-01-28 11:17:32,665 - build - data_adapter - INFO - DataCatalog: Getting dtu10mdt_egm96 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/dtu10mdt_egm96.tif
+2022-01-28 11:17:32,674 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.031, 45.282, 12.862, 45.667]
+2022-01-28 11:17:33,091 - build - bathymetry - DEBUG - Interpolate topobathy at 1075 cells
+2022-01-28 11:17:35,925 - build - model_api - INFO - setup_mask.include_mask_fn: None
+2022-01-28 11:17:35,926 - build - model_api - INFO - setup_mask.exclude_mask_fn: None
+2022-01-28 11:17:35,926 - build - model_api - INFO - setup_mask.elv_min: -5
+2022-01-28 11:17:35,926 - build - model_api - INFO - setup_mask.elv_max: None
+2022-01-28 11:17:35,926 - build - model_api - INFO - setup_mask.fill_area: 10
+2022-01-28 11:17:35,926 - build - model_api - INFO - setup_mask.drop_area: 0
+2022-01-28 11:17:35,926 - build - model_api - INFO - setup_mask.connectivity: 8
+2022-01-28 11:17:35,926 - build - model_api - INFO - setup_mask.all_touched: True
+2022-01-28 11:17:35,926 - build - model_api - INFO - setup_mask.reset_mask: False
+2022-01-28 11:17:35,937 - build - utils - DEBUG - 0 gaps outside valid elevation range &lt; 10 km2.
+2022-01-28 11:17:35,938 - build - sfincs - DEBUG - Mask with 79345 active cells set; updating staticmaps ...
+2022-01-28 11:17:35,946 - build - sfincs - DEBUG - Derive region geometry based on active cells.
+2022-01-28 11:17:35,965 - build - model_api - INFO - setup_cn_infiltration.cn_fn: gcn250
+2022-01-28 11:17:35,966 - build - model_api - INFO - setup_cn_infiltration.antecedent_runoff_conditions: avg
+2022-01-28 11:17:35,966 - build - data_adapter - INFO - DataCatalog: Getting gcn250 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/gcn250/{variable}.tif
+2022-01-28 11:17:35,976 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.031, 45.282, 12.852, 45.667]
+2022-01-28 11:17:36,033 - build - model_api - INFO - setup_manning_roughness.lulc_fn: vito
+2022-01-28 11:17:36,033 - build - model_api - INFO - setup_manning_roughness.map_fn: None
+2022-01-28 11:17:36,033 - build - model_api - INFO - setup_manning_roughness.riv_man: 0.03
+2022-01-28 11:17:36,033 - build - model_api - INFO - setup_manning_roughness.lnd_man: 0.1
+2022-01-28 11:17:36,035 - build - data_adapter - INFO - DataCatalog: Getting vito RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/vito.tif
+2022-01-28 11:17:36,045 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.031, 45.282, 12.852, 45.667]
+2022-01-28 11:17:36,075 - build - landuse - INFO - Deriving N using average resampling (nodata=-999.0).
+2022-01-28 11:17:36,193 - build - model_api - INFO - setup_bounds.btype: waterlevel
+2022-01-28 11:17:36,193 - build - model_api - INFO - setup_bounds.include_mask_fn: osm_coastlines
+2022-01-28 11:17:36,193 - build - model_api - INFO - setup_bounds.exclude_mask_fn: None
+2022-01-28 11:17:36,193 - build - model_api - INFO - setup_bounds.elv_min: None
+2022-01-28 11:17:36,193 - build - model_api - INFO - setup_bounds.elv_max: None
+2022-01-28 11:17:36,193 - build - model_api - INFO - setup_bounds.include_buffer: 0
+2022-01-28 11:17:36,193 - build - model_api - INFO - setup_bounds.connectivity: 8
+2022-01-28 11:17:36,193 - build - model_api - INFO - setup_bounds.reset_bounds: False
+2022-01-28 11:17:36,193 - build - data_adapter - INFO - DataCatalog: Getting osm_coastlines GeoDataFrame vector data from /home/runner/.hydromt_data/data/v0.0.6/osm_coastlines.gpkg
+2022-01-28 11:17:36,195 - build - data_adapter - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:32633) [268650.000, 5018550.000, 332400.000, 5059350.000].
+2022-01-28 11:17:36,232 - build - sfincs - DEBUG - 510 waterlevel (mask=2) boundary cells set.
+2022-01-28 11:17:36,233 - build - model_api - INFO - setup_h_forcing.geodataset_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/gtsm_locations.csv
+2022-01-28 11:17:36,233 - build - model_api - INFO - setup_h_forcing.timeseries_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/gtsm_timeseries.csv
+2022-01-28 11:17:36,233 - build - model_api - INFO - setup_h_forcing.offset_fn: None
+2022-01-28 11:17:36,233 - build - model_api - INFO - setup_h_forcing.buffer: 10000.0
+2022-01-28 11:17:36,245 - build - data_adapter - INFO - DataCatalog: Getting gtsm_locations GeoDataset vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/gtsm_locations.csv
+2022-01-28 11:17:36,610 - build - data_adapter - INFO - GeoDataset: Read vector data and clip to geom (epsg:32633) [278900.000, 5008550.000, 342400.000, 5059900.000].
+2022-01-28 11:17:36,627 - build - data_adapter - DEBUG - GeoDataset: Slicing time dim (datetime.datetime(2010, 2, 1, 0, 0), datetime.datetime(2010, 2, 10, 0, 0))
+2022-01-28 11:17:36,632 - build - sfincs - DEBUG - waterlevel forcing: setting bnd data for 6 points.
+2022-01-28 11:17:36,632 - build - sfincs - DEBUG - waterlevel forcing: setting bzs data.
+2022-01-28 11:17:36,632 - build - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
+2022-01-28 11:17:36,632 - build - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
+2022-01-28 11:17:36,632 - build - model_api - INFO - setup_p_forcing_from_grid.aggregate: True
+2022-01-28 11:17:36,632 - build - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.6/era5_hourly.nc
+2022-01-28 11:17:36,670 - build - data_adapter - DEBUG - RasterDataset: Slicing time dim (datetime.datetime(2010, 2, 1, 0, 0), datetime.datetime(2010, 2, 10, 0, 0))
+2022-01-28 11:17:36,676 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.031, 45.282, 12.852, 45.667]
+2022-01-28 11:17:36,693 - build - data_adapter - DEBUG - RasterDataset: Convert units for 1 variables.
+2022-01-28 11:17:36,700 - build - sfincs - DEBUG - Aggregate precip using mean.
+2022-01-28 11:17:36,732 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150
+2022-01-28 11:17:36,768 - build - sfincs - DEBUG - Write binary map indices based on mask.
+2022-01-28 11:17:36,769 - build - sfincs - DEBUG - Write binary map files: [&#39;dep&#39;, &#39;msk&#39;, &#39;scs&#39;, &#39;manning&#39;].
+2022-01-28 11:17:36,801 - build - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
+2022-01-28 11:17:36,889 - build - sfincs - INFO - Write staticgeom files
+2022-01-28 11:17:36,889 - build - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
+2022-01-28 11:17:36,899 - build - sfincs - INFO - Write forcing files
+2022-01-28 11:17:36,916 - build - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2022-01-28 11:17:36,926 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150/sfincs.inp
 
 </pre></div></div>
 </div>
+<p>Let’s inspect the output folder. Notice that several SFINCS files have been written.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>ls ./venice_sfincs_150
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+gis               sfincs.bnd  sfincs.ind  sfincs.msk
+hydromt.log       sfincs.bzs  sfincs.inp  sfincs.precip
+hydromt_data.yml  sfincs.dep  sfincs.man  sfincs.scs
+</pre></div></div>
+</div>
+<p>One of the files is the SFINCS input file which defines the model, lets have a look:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn_inp</span> <span class="o">=</span> <span class="s2">&quot;./venice_sfincs_150/sfincs.inp&quot;</span>
@@ -767,237 +806,28 @@ rotation        = 0
 epsg            = 32633
 inputformat     = bin
 outputformat    = net
-tref            = 20000101 000000
-tstart          = 20000101 000000
-tstop           = 20000102 000000
+tref            = 20100201 000000
+tstart          = 20100201 000000
+tstop           = 20100210 000000
 dtout           = 3600
 dthisout        = 600
 dtmaxout        = 86400
 advection       = 0
-alpha           = 0.75
+alpha           = 0.5
 huthresh        = 0.05
 theta           = 0.9
 min_lev_hmax    = -1
-zsini           = 0
-qinf            = 0
-manning_land    = 0.04
-manning_sea     = 0.02
-rgh_lev_land    = 0
+zsini           = 0.5
 depfile         = sfincs.dep
 mskfile         = sfincs.msk
 indexfile       = sfincs.ind
+scsfile         = sfincs.scs
+manningfile     = sfincs.man
+precipfile      = sfincs.precip
+bzsfile         = sfincs.bzs
+bndfile         = sfincs.bnd
 
 
-</pre></div></div>
-</div>
-<p>It is clear that the <code class="docutils literal notranslate"><span class="pre">dx</span></code> and <code class="docutils literal notranslate"><span class="pre">dy</span></code> settings are changed.</p>
-</section>
-<section id="Building-a-complete-model-(ready-to-run)">
-<h2>Building a complete model (ready to run)<a class="headerlink" href="#Building-a-complete-model-(ready-to-run)" title="Permalink to this headline"></a></h2>
-<p>We can provide many more settings in an confuration (.ini) file instead of command line arguments. If you don’t provide an ini file (as done above), only the basemaps component is build with default settings. To complete your model you can add more <a class="reference external" href="https://deltares.github.io/hydromt_sfincs/latest/user_guide/sfincs.html">model components</a> to the model setup.</p>
-<p>Let’s have a look a typical ini file for setting up coastal sfincs model, where each <code class="docutils literal notranslate"><span class="pre">[setup_&lt;&gt;]</span></code> refers to a model component. All options which end with <code class="docutils literal notranslate"><span class="pre">_fn</span></code> refers to a data source from the data catalog or a path to data on your machine, see <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/data.html">hydromt data</a>. In this case some sample data which is downloaded to your machine at <code class="docutils literal notranslate"><span class="pre">$USER_ROOT/.hydromt_data</span></code></p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s2">&quot;sfincs_coastal.ini&quot;</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn_ini</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-[global]
-write_gis = True                # write addtional geotif and geojson files to gis subfolder
-config_fn = sfincs.inp          # name of sfincs config (inp) file
-artifact_data = True            # load artifact data (snapshot of Deltares data)
-data_libs = [&#39;data_catalog.yml&#39;]    # local data catalog file, can also be set with the -d option from command line
-
-[setup_config]
-tref = 20100201 000000
-tstart = 20100201 000000
-tstop = 20100210 000000
-alpha = 0.5
-zsini = 0.5
-
-[setup_basemaps]
-basemaps_fn = merit_hydro       # topobathy basemaps [&#39;elevtn&#39;]
-crs = utm                       # model CRS (must be UTM zone)
-
-[setup_merge_topobathy]
-topobathy_fn = gebco            # bathymetry [&#39;elevtn&#39;]
-mask_fn = osm_coastlines        # sea polygon
-offset_fn = dtu10mdt_egm96      # mean dynamic topography
-merge_buffer = 2                # buffer (cells) between elevation and bathymetry data filled with &#39;linear&#39; interpolation
-
-[setup_mask]
-elv_min = -5                    # minimum elevation for valid cells
-
-[setup_cn_infiltration]
-cn_fn = gcn250                  # curve number source
-antecedent_runoff_conditions = avg # for gcn250: {&#39;dry&#39;, &#39;avg&#39;, &#39;wet&#39;}
-
-[setup_manning_roughness]
-lulc_fn = vito                  # land-use land-cover source
-map_fn = None                   # mapping file. read from hydromt/data/lulc/{lulc_fn}_mapping.csv if None
-
-[setup_bounds]
-btype = waterlevel              # boundary type [&#39;waterlevel&#39;, &#39;outflow&#39;]
-include_mask_fn = osm_coastlines  # sea polygon
-
-[setup_h_forcing]
-geodataset_fn = gtsm_venice     # waterlevel timeseries dataset. see local data_sources.yml file
-buffer = 1e4                    # buffer around model region to select gauges
-
-[setup_p_forcing_from_grid]
-precip_fn = era5_hourly         # gridded precipitation data [&#39;precip&#39;]
-dst_res = None                  # output resolution (m)
-aggregate = True                # if True return the aggregated mean as spatially uniform precip
-</pre></div></div>
-</div>
-<p>You can see the following sections:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">[global]</span></code>: arguments passed to SfincsModel initialization. With the <code class="docutils literal notranslate"><span class="pre">write_gis</span></code> flag a copy of the model schmatization in GIS compatible formats is saved in the gis subfolder.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[setup_config]</span></code>: arguments which are forwarded to the scinf model configuration file sfincs.inp</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[setup_basemaps]</span></code>: basic information required for the model domain grid and elevation. These are the minimal demanded static layers that any sfincs model needs. Here you may for instance consider altering the elevation and bathymetry data for local data sources. These then have to be supplied in the <code class="docutils literal notranslate"><span class="pre">data_catalog.yml</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[setup_merge_topobathy]</span></code>: add additional datasource for bathymetry data to merge with the basemap elevation data.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[setup_mask]</span></code>: set valid model cells based on the topobathy data and a minimal depth boundary (more options available).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[setup_cn_infiltration]</span></code>: potential maximum soil retention maps to be used in the curve number method, see <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html?highlight=curve#spatially-varying-curve-number">sfincs docs</a> for more information</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[setup_manning_roughness]</span></code>: configuration of the Manning roughness values, typically consisting of a land use or land cover map, and a lookup table that relates land use classes to manning roughness values in sec m<span class="math notranslate nohighlight">\(^{-1/3}\)</span></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[setup_bounds]</span></code>: set cells at the model domain edge and within the sea polygon to waterlevel boundary cells.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[setup_h_forcing]</span></code>: water level forcing data. This can be provided from a set of csv files, see data_sources.yml, but also netcdf files, see <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/data.html">hydromt docs</a>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[setup_p_forcing_from_grid]</span></code>: gridded precipitation data, that can be used to do compound flood simulations. The <code class="docutils literal notranslate"><span class="pre">[setup_cn_infiltration]</span></code> is then quite essential to include.</p></li>
-</ul>
-<p>To build a model from scratch add the ini file to the command line <code class="docutils literal notranslate"><span class="pre">hydromt</span> <span class="pre">build</span></code> method</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>hydromt build sfincs ./venice_sfincs_150_full <span class="s2">&quot;{&#39;bbox&#39;: [12.05,45.30,12.85,45.65]}&quot;</span> -r <span class="m">150</span> -i sfincs_coastal.ini -vv
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2022-01-27 17:31:09,410 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full/hydromt.log.
-2022-01-27 17:31:09,411 - build - log - INFO - HydroMT version: 0.4.5.dev
-2022-01-27 17:31:09,411 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full.
-2022-01-27 17:31:09,411 - build - main - INFO - User settings:
-2022-01-27 17:31:09,416 - build - model_plugins - DEBUG - Loaded model plugin &#39;sfincs = hydromt_sfincs.sfincs.SfincsModel&#39; (0.2.1.dev0)
-2022-01-27 17:31:09,416 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.1.dev0).
-2022-01-27 17:31:09,416 - build - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
-2022-01-27 17:31:09,497 - build - model_api - DEBUG - Setting model config options.
-2022-01-27 17:31:09,498 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
-2022-01-27 17:31:09,498 - build - model_api - INFO - setup_basemaps.region: {&#39;bbox&#39;: [12.05, 45.3, 12.85, 45.65]}
-2022-01-27 17:31:09,498 - build - model_api - INFO - setup_basemaps.res: 150.0
-2022-01-27 17:31:09,499 - build - model_api - INFO - setup_basemaps.crs: utm
-2022-01-27 17:31:09,499 - build - model_api - INFO - setup_basemaps.basemaps_fn: merit_hydro
-2022-01-27 17:31:09,499 - build - model_api - INFO - setup_basemaps.reproj_method: bilinear
-2022-01-27 17:31:09,499 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/merit_hydro/{variable}.tif
-2022-01-27 17:31:09,518 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [12.05, 45.3, 12.85, 45.65]}
-2022-01-27 17:31:09,671 - build - sfincs - INFO - Saving elevation data to staticmaps.
-2022-01-27 17:31:09,675 - build - model_api - INFO - setup_merge_topobathy.topobathy_fn: gebco
-2022-01-27 17:31:09,675 - build - model_api - INFO - setup_merge_topobathy.elv_min: None
-2022-01-27 17:31:09,675 - build - model_api - INFO - setup_merge_topobathy.elv_max: None
-2022-01-27 17:31:09,675 - build - model_api - INFO - setup_merge_topobathy.mask_fn: osm_coastlines
-2022-01-27 17:31:09,675 - build - model_api - INFO - setup_merge_topobathy.max_width: 0
-2022-01-27 17:31:09,675 - build - model_api - INFO - setup_merge_topobathy.offset_fn: dtu10mdt_egm96
-2022-01-27 17:31:09,675 - build - model_api - INFO - setup_merge_topobathy.offset_constant: 0
-2022-01-27 17:31:09,675 - build - model_api - INFO - setup_merge_topobathy.merge_buffer: 2
-2022-01-27 17:31:09,675 - build - model_api - INFO - setup_merge_topobathy.merge_method: first
-2022-01-27 17:31:09,675 - build - model_api - INFO - setup_merge_topobathy.reproj_method: bilinear
-2022-01-27 17:31:09,675 - build - model_api - INFO - setup_merge_topobathy.interp_method: linear
-2022-01-27 17:31:09,679 - build - data_adapter - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/gebco.tif
-2022-01-27 17:31:09,689 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.031, 45.282, 12.862, 45.667]
-2022-01-27 17:31:09,710 - build - data_adapter - INFO - DataCatalog: Getting osm_coastlines GeoDataFrame vector data from /home/runner/.hydromt_data/data/v0.0.6/osm_coastlines.gpkg
-2022-01-27 17:31:09,711 - build - data_adapter - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:32633) [268650.000, 5018550.000, 332400.000, 5059350.000].
-2022-01-27 17:31:09,744 - build - data_adapter - INFO - DataCatalog: Getting dtu10mdt_egm96 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/dtu10mdt_egm96.tif
-2022-01-27 17:31:09,753 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.031, 45.282, 12.862, 45.667]
-2022-01-27 17:31:10,165 - build - bathymetry - DEBUG - Interpolate topobathy at 1075 cells
-2022-01-27 17:31:12,985 - build - model_api - INFO - setup_mask.include_mask_fn: None
-2022-01-27 17:31:12,985 - build - model_api - INFO - setup_mask.exclude_mask_fn: None
-2022-01-27 17:31:12,985 - build - model_api - INFO - setup_mask.elv_min: -5
-2022-01-27 17:31:12,985 - build - model_api - INFO - setup_mask.elv_max: None
-2022-01-27 17:31:12,985 - build - model_api - INFO - setup_mask.min_cells: 0
-2022-01-27 17:31:12,985 - build - model_api - INFO - setup_mask.fill_holes: True
-2022-01-27 17:31:12,985 - build - model_api - INFO - setup_mask.all_touched: True
-2022-01-27 17:31:12,986 - build - utils - DEBUG - Fill holes below minimum elevation in domain
-2022-01-27 17:31:12,991 - build - sfincs - DEBUG - Mask with 79345 active cells set; updating staticmaps ...
-2022-01-27 17:31:12,997 - build - sfincs - DEBUG - Derive region geometry based on active cells.
-2022-01-27 17:31:13,015 - build - model_api - INFO - setup_cn_infiltration.cn_fn: gcn250
-2022-01-27 17:31:13,015 - build - model_api - INFO - setup_cn_infiltration.antecedent_runoff_conditions: avg
-2022-01-27 17:31:13,015 - build - data_adapter - INFO - DataCatalog: Getting gcn250 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/gcn250/{variable}.tif
-2022-01-27 17:31:13,026 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.031, 45.282, 12.852, 45.667]
-2022-01-27 17:31:13,082 - build - model_api - INFO - setup_manning_roughness.lulc_fn: vito
-2022-01-27 17:31:13,083 - build - model_api - INFO - setup_manning_roughness.map_fn: None
-2022-01-27 17:31:13,083 - build - model_api - INFO - setup_manning_roughness.riv_man: 0.03
-2022-01-27 17:31:13,083 - build - model_api - INFO - setup_manning_roughness.lnd_man: 0.1
-2022-01-27 17:31:13,085 - build - data_adapter - INFO - DataCatalog: Getting vito RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/vito.tif
-2022-01-27 17:31:13,096 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.031, 45.282, 12.852, 45.667]
-2022-01-27 17:31:13,124 - build - landuse - INFO - Deriving N using average resampling (nodata=-999.0).
-2022-01-27 17:31:13,246 - build - model_api - INFO - setup_bounds.btype: waterlevel
-2022-01-27 17:31:13,246 - build - model_api - INFO - setup_bounds.include_mask_fn: osm_coastlines
-2022-01-27 17:31:13,246 - build - model_api - INFO - setup_bounds.exclude_mask_fn: None
-2022-01-27 17:31:13,246 - build - model_api - INFO - setup_bounds.elv_min: None
-2022-01-27 17:31:13,246 - build - model_api - INFO - setup_bounds.elv_max: None
-2022-01-27 17:31:13,246 - build - model_api - INFO - setup_bounds.include_buffer: 0
-2022-01-27 17:31:13,246 - build - model_api - INFO - setup_bounds.reset_bounds: False
-2022-01-27 17:31:13,246 - build - data_adapter - INFO - DataCatalog: Getting osm_coastlines GeoDataFrame vector data from /home/runner/.hydromt_data/data/v0.0.6/osm_coastlines.gpkg
-2022-01-27 17:31:13,247 - build - data_adapter - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:32633) [268650.000, 5018550.000, 332400.000, 5059350.000].
-2022-01-27 17:31:13,285 - build - sfincs - DEBUG - 510 waterlevel (mask=2) boundary cells set.
-2022-01-27 17:31:13,285 - build - model_api - INFO - setup_h_forcing.geodataset_fn: gtsm_venice
-2022-01-27 17:31:13,285 - build - model_api - INFO - setup_h_forcing.timeseries_fn: None
-2022-01-27 17:31:13,286 - build - model_api - INFO - setup_h_forcing.offset_fn: None
-2022-01-27 17:31:13,286 - build - model_api - INFO - setup_h_forcing.buffer: 10000.0
-2022-01-27 17:31:13,287 - build - data_adapter - INFO - DataCatalog: Getting gtsm_venice GeoDataset vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/gtsm_locations.csv
-2022-01-27 17:31:13,460 - build - data_adapter - INFO - GeoDataset: Read vector data and clip to geom (epsg:32633) [258650.000, 5008550.000, 342400.000, 5069350.000].
-2022-01-27 17:31:13,476 - build - data_adapter - DEBUG - GeoDataset: Slicing time dim (datetime.datetime(2010, 2, 1, 0, 0), datetime.datetime(2010, 2, 10, 0, 0))
-2022-01-27 17:31:13,482 - build - sfincs - DEBUG - waterlevel forcing: setting bnd data for 6 points.
-2022-01-27 17:31:13,482 - build - sfincs - DEBUG - waterlevel forcing: setting bzs data.
-2022-01-27 17:31:13,482 - build - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
-2022-01-27 17:31:13,482 - build - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
-2022-01-27 17:31:13,482 - build - model_api - INFO - setup_p_forcing_from_grid.aggregate: True
-2022-01-27 17:31:13,482 - build - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.6/era5_hourly.nc
-2022-01-27 17:31:13,522 - build - data_adapter - DEBUG - RasterDataset: Slicing time dim (datetime.datetime(2010, 2, 1, 0, 0), datetime.datetime(2010, 2, 10, 0, 0))
-2022-01-27 17:31:13,529 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [12.031, 45.282, 12.852, 45.667]
-2022-01-27 17:31:13,546 - build - data_adapter - DEBUG - RasterDataset: Convert units for 1 variables.
-2022-01-27 17:31:13,553 - build - sfincs - DEBUG - Aggregate precip using mean.
-2022-01-27 17:31:13,584 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full
-2022-01-27 17:31:13,619 - build - sfincs - DEBUG - Write binary map indices based on mask.
-2022-01-27 17:31:13,620 - build - sfincs - DEBUG - Write binary map files: [&#39;dep&#39;, &#39;msk&#39;, &#39;scs&#39;, &#39;manning&#39;].
-2022-01-27 17:31:13,654 - build - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
-2022-01-27 17:31:13,742 - build - sfincs - INFO - Write staticgeom files
-2022-01-27 17:31:13,742 - build - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
-2022-01-27 17:31:13,752 - build - sfincs - INFO - Write forcing files
-2022-01-27 17:31:13,769 - build - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
-2022-01-27 17:31:13,779 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/venice_sfincs_150_full/sfincs.inp
-
-</pre></div></div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>ls ./venice_sfincs_150_full
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-gis               sfincs.bnd  sfincs.ind  sfincs.msk
-hydromt.log       sfincs.bzs  sfincs.inp  sfincs.precip
-hydromt_data.yml  sfincs.dep  sfincs.man  sfincs.scs
 </pre></div></div>
 </div>
 </section>
@@ -1005,7 +835,7 @@ hydromt_data.yml  sfincs.dep  sfincs.man  sfincs.scs
 <h2>Inspecting the model<a class="headerlink" href="#Inspecting-the-model" title="Permalink to this headline"></a></h2>
 <p>Let’s have a closer look at the model. To interact with a model within a notebook or python script, we need to load a number of modules.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
@@ -1014,15 +844,15 @@ hydromt_data.yml  sfincs.dep  sfincs.man  sfincs.scs
 </div>
 </div>
 <p>Now we can load the model in memory and inspect it.</p>
-<p>Note that based on the global datasets the lagoon bathymetry is not well represented. A better merge between MERIT hydro topography and GEBCO bathymetry can be achieved by providing an better coastline shapefile (by default OSM based) which determines which dataset is used where.</p>
+<p>Note that based on the global datasets the lagoon bathymetry is not well represented. A better merge between MERIT hydro topography and GEBCO bathymetry can be achieved by providing an better coastline shapefile (by default OSM based) which together with the merge_method argument determines which dataset is used where.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># define the model&#39;s configuration file</span>
-<span class="n">root</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;./venice_sfincs_150_full&quot;</span>
+<span class="n">root</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;./venice_sfincs_150&quot;</span>
 
-<span class="c1"># read the model with hydromt sfincs methods</span>
+<span class="c1"># read the model with hydromt methods</span>
 <span class="n">mod</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>
 <span class="n">mod</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 <span class="n">mod</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="n">shaded</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1030,7 +860,7 @@ hydromt_data.yml  sfincs.dep  sfincs.man  sfincs.scs
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1043,13 +873,13 @@ hydromt_data.yml  sfincs.dep  sfincs.man  sfincs.scs
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_build_coastal_model_33_1.png" src="../_images/_examples_build_coastal_model_33_1.png" />
+<img alt="../_images/_examples_build_coastal_model_30_1.png" src="../_images/_examples_build_coastal_model_30_1.png" />
 </div>
 </div>
 </section>
 <section id="Next-steps">
 <h2>Next steps<a class="headerlink" href="#Next-steps" title="Permalink to this headline"></a></h2>
-<p>You can update an existing model, e.g. to replace parameterisations or add forcing. this is descibed in a follow-up notebook <code class="docutils literal notranslate"><span class="pre">sfincs_update_model.ipynb</span></code></p>
+<p>You can update an existing model, e.g. to replace model layers or add forcing. this is described in a follow-up notebook <code class="docutils literal notranslate"><span class="pre">sfincs_update_model.ipynb</span></code></p>
 </section>
 </section>
 
