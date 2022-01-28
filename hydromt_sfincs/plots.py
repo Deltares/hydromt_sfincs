@@ -118,7 +118,7 @@ def plot_basemap(
     geoms : List[str], optional
         list of model geometries to plot, by default all model geometries
     geom_kwargs : Dict of Dict, optional
-        Model geometry styling per geometry, passed to geopands.GeoDataFrame.plot method.
+        Model geometry styling per geometry, passed to geopandas.GeoDataFrame.plot method.
         For instance: {'src': {'markersize': 30}}.
     legend_kwargs : Dict, optional
         Legend kwargs, passed to ax.legend method.
@@ -161,22 +161,21 @@ def plot_basemap(
             vmin, vmax = (
                 staticmaps["dep"].raster.mask_nodata().quantile([0.0, 0.98]).values
             )
-            vmin, vmax = kwargs.pop("vmin", vmin), kwargs.pop("vmax", vmax)
-            c_bat = plt.cm.terrain(np.linspace(0, 0.17, 256))
-            c_dem = plt.cm.terrain(np.linspace(0.25, 1, 256))
+            vmin, vmax = int(kwargs.pop("vmin", vmin)), int(kwargs.pop("vmax", vmax))
+            c_dem = plt.cm.terrain(np.linspace(0.25, 1, vmax))
+            ticks = np.arange(0, vmax, (vmax / 6) // 10 * 10).tolist()
             if vmin < 0:
-                c_all = np.vstack((c_bat, c_dem))
-                cmap = colors.LinearSegmentedColormap.from_list("bat_dem", c_all)
-                norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
-            else:
-                cmap = colors.LinearSegmentedColormap.from_list("dem", c_dem)
-                norm = colors.Normalize(vmin=vmin, vmax=vmax)
+                c_bat = plt.cm.terrain(np.linspace(0, 0.17, abs(vmin) - 1))
+                c_dem = np.vstack((c_bat, c_dem))
+                ticks = [vmin] + ticks
+            cmap = colors.LinearSegmentedColormap.from_list("dem", c_dem)
+            norm = colors.Normalize(vmin=vmin, vmax=vmax)
             cmap, norm = kwargs.pop("cmap", cmap), kwargs.pop("norm", norm)
             kwargs.update(norm=norm, cmap=cmap)
     if variable in staticmaps:
         da = staticmaps[variable].raster.mask_nodata()
         # by default colorbar on lower right & legend upper right
-        kwargs0 = {"cbar_kwargs": {"shrink": 0.6, "anchor": (0, 0)}}
+        kwargs0 = {"cbar_kwargs": {"shrink": 0.6, "anchor": (0, 0), "ticks": ticks}}
         kwargs0.update(kwargs)
         da.plot(transform=utm, ax=ax, zorder=1, **kwargs0)
         if shaded and variable == "dep":
@@ -221,7 +220,10 @@ def plot_basemap(
         gdf_msk = gdf_msk[gdf_msk["value"] != 1]
         gdf_msk["geometry"] = gdf_msk.boundary
         region["geometry"] = region.boundary
-        gdf_msk = gpd.overlay(gdf_msk, region, "intersection", keep_geom_type=False)
+        gdf_msk = gpd.overlay(
+            gdf_msk, region, "intersection", keep_geom_type=False
+        ).explode()
+        gdf_msk = gdf_msk[gdf_msk.length > 0]
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
         gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
         if gdf_msk2.index.size > 0:

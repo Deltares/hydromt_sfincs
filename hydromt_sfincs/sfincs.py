@@ -1631,7 +1631,7 @@ class SfincsModel(Model):
         # combine staticgeoms and forcing locations
         sg = self.staticgeoms.copy()
         for fname, gname in self._FORCING.values():
-            if fname in self._forcing and gname is not None:
+            if fname in self.forcing and gname is not None:
                 sg.update({gname: self._forcing[fname].vector.to_gdf()})
 
         # make sure staticmaps are set
