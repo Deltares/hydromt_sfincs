@@ -94,6 +94,11 @@ def merge_topobathy(
                 .fillna(0)
             )
         da2 = da2.where(da2 == nodata, da2 + da_offset)
+    # mask invalid elevation before merging
+    if elv_min is not None:
+        da2 = da2.where(da2 >= elv_min, nodata)
+    if elv_max is not None:
+        da2 = da2.where(da2 <= elv_max, nodata)
     # merge based merge_method
     if merge_method == "first":
         mask = da1 != nodata
@@ -112,11 +117,6 @@ def merge_topobathy(
     na_mask = da_out != nodata
     if np.any(~na_mask.values):
         na_mask = ndimage.binary_fill_holes(na_mask, structure=struct)
-    # mask invalid elevation values
-    if elv_min is not None:
-        da_out = da_out.where(~np.logical_and(~mask, da2 < elv_min), nodata)
-    if elv_max is not None:
-        da_out = da_out.where(~np.logical_and(~mask, da2 > elv_max), nodata)
     # identify buffer cells and set to nodata
     if merge_buffer > 0:
         mask_dilated = ndimage.binary_dilation(mask, struct, iterations=merge_buffer)
@@ -240,21 +240,21 @@ def get_river_bathymetry(
     rivdph_method : {'gvf', 'manning', 'powlaw'}
         River depth estimate method, by default 'gvf'
     river_upa : float, optional
-        Minumum upstream area threshold for rivers [km2], by default 100.0
+        Minimum upstream area threshold for rivers [km2], by default 100.0
     river_len: float, optional
         Mimimum river length [m] within the model domain to define river cells, by default 1000.
     min_rivwth, min_rivdph: float, optional
-        Minimum river width [m] (by defeault 50.0 m) and depth [m] (by default 1.0 m)
+        Minimum river width [m] (by default 50.0 m) and depth [m] (by default 1.0 m)
     segment_length : float, optional
         Approximate river segment length [m], by default 5e3
     smooth_length : float, optional
-        Approximate smooting length [m], by default 10e3
+        Approximate smoothing length [m], by default 10e3
     min_convergence : float, optional
         Minimum width convergence threshold to define estuaries [m/m], by default 0.01
     max_dist : float, optional
         Maximum distance threshold to spatially merge `gdf_riv` and `gdf_qbf`, by default 100.0
     bankq : float, optional
-        Quantile [1-100] for river bank estimation, by default 25.0
+        quantile [1-100] for river bank estimation, by default 25.0
     constrain_estuary : bool, optional
         If True (default) fix the river depth in estuaries based on the upstream river depth.
     constrain_rivbed : bool, optional
@@ -322,7 +322,7 @@ def get_river_bathymetry(
         buf = np.maximum(gdf_riv_buf["rivwth"] / 2, 1)
         gdf_riv_buf["geometry"] = gdf_riv_buf.buffer(buf)
         da_msk = np.logical_and(
-            ds.raster.geometry_mask(gdf_riv), da_elv != da_elv.raster.nodata
+            ds.raster.geometry_mask(gdf_riv_buf), da_elv != da_elv.raster.nodata
         )
     elif rivmsk_name in ds:  #  merge river mask with river line
         da_msk = ds.raster.geometry_mask(gdf_riv, all_touched=True)

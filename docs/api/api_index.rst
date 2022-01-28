@@ -26,7 +26,7 @@ Setup components
    :toctree: ../generated/
 
    SfincsModel.setup_config
-   SfincsModel.setup_basemaps
+   SfincsModel.setup_topobathy
    SfincsModel.setup_merge_topobathy
    SfincsModel.setup_mask
    SfincsModel.setup_bounds

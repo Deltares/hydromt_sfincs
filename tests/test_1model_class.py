@@ -6,6 +6,7 @@ import numpy as np
 import xarray as xr
 
 from hydromt.cli.cli_utils import parse_config
+from hydromt.log import setuplog
 from hydromt_sfincs.sfincs import SfincsModel
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
@@ -114,7 +115,8 @@ def test_model_build(tmpdir, case):
     region = _cases[case]["region"]
     res = _cases[case]["res"]
     opt = parse_config(ini_fn)
-    mod1 = SfincsModel(root=root, mode="w", **opt.pop("global", {}))
+    logger = setuplog(path=join(root, "hydromt.log"), log_level=10)
+    mod1 = SfincsModel(root=root, mode="w", logger=logger, **opt.pop("global", {}))
     mod1.build(region=region, res=res, opt=opt)
     # Check if model is api compliant
     non_compliant_list = mod1.test_model_api()

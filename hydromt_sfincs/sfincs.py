@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
-from genericpath import isdir
 import os
 from os.path import join, isfile, abspath, dirname, basename, isabs
 import glob
 import numpy as np
 import logging
 import pyflwdir
-from rasterio.warp import transform_bounds
 import geopandas as gpd
+from rasterio.warp import transform_bounds
 from shapely.geometry import box
 import pandas as pd
 import xarray as xr
-import pyproj
-from typing import Dict, Sequence, Tuple, List
+from typing import Dict, Tuple, List
 
 import hydromt
 from hydromt.models.model_api import Model
@@ -47,6 +45,7 @@ class SfincsModel(Model):
         "infiltration": "qinf",
     }  # parsed to hydromt.RasterDataset
     _FOLDERS = []
+    _CLI_ARGS = {"region": "setup_region", "res": "setup_topobathy"}
     _CONF = "sfincs.inp"
     _DATADIR = DATADIR
     _ATTRS = {
@@ -118,19 +117,21 @@ class SfincsModel(Model):
             da_elv = self.staticmaps[self._MAPS["elevtn"]]
             da_mask = (da_elv != da_elv.raster.nodata).astype(np.uint8)
             da_mask.raster.set_nodata(0)
+            self.set_staticmaps(da_mask, name)
         elif name in self._staticmaps:
             da_mask = self.staticmaps[name]
         return da_mask
 
-    def setup_basemaps(
+    def setup_topobathy(
         self,
-        region,
+        topobathy_fn,
         res=100,
         crs="utm",
-        basemaps_fn="merit_hydro",
         reproj_method="bilinear",
     ):
-        """Define model region and setup topobathy (depfile) model layer.
+        """Setup model grid and interpolate topobathy (dep) data to this grid.
+
+        NOTE: This method should be called after `setup_region` but before any other model component.
 
         The input topobathy dataset is reprojected to the model projected `crs` and
         resolution `res` using `reproj_method` interpolation.
@@ -141,9 +142,8 @@ class SfincsModel(Model):
 
         Parameters
         ----------
-        region : dict
-            Dictionary describing region of interest, e.g. {'bbox': [xmin, ymin, xmax, ymax]}
-            See :py:meth:`hydromt.workflows.parse_region()` for all options
+        topobathy_fn : str
+            Path or data source name for topobathy raster data.
         res : float
             Model resolution [m], by default 100 m.
             If None, the basemaps res is used.
@@ -151,59 +151,42 @@ class SfincsModel(Model):
             Model Coordinate Reference System (CRS) as epsg code.
             By default 'utm' in which case the region centroid UTM zone is used.
             If None, the basemaps CRS is used. This must be a projected CRS.
-        basemaps_fn : str
-            Path or data source name for topobathy raster data, by default 'merit_hydro'.
-
-            * Minimal required variables: ['elevtn'].
-            * Required variables to delineate rivers and inflow points in subsequent steps: ['flwdir', 'uparea']
         reproj_method: str, optional
             Method used to reproject topobathy data, by default 'bilinear'
         """
-        name = self._MAPS["elevtn"]
-        # read data (lazy!) and return dataset
-        ds_org = self.data_catalog.get_rasterdataset(
-            basemaps_fn, single_var_as_array=False, variables=["elevtn"]
-        )
-        # get region and clip data
-        kind, region = hydromt.workflows.parse_region(region, logger=self.logger)
-        geom = region.get("geom", None)
-        bbox = region.get("bbox", None)
-        if kind not in ["bbox", "geom"]:
-            raise ValueError(
-                "Unknown region type for SFINCS model: {kind}, select from ['bbox', 'geom']"
-            )
-        if geom is not None and geom.crs is None:
-            raise ValueError('SFINCS region "geom" has no CRS')
+        if self.region is None:
+            raise ValueError("Model region not found, run `setup_region` first.")
+        geom = self.region
 
-        # parse dst_crs. if 'utm' the best utm zone is calculated based on bbox_epsg4326
-        bbox_epsg4326 = bbox if bbox is not None else geom.to_crs(4326).total_bounds
-        if crs is None:
-            dst_crs = ds_org.raster.crs
-        else:
-            dst_crs = hydromt.gis_utils.parse_crs(crs, bbox_epsg4326)
-        if dst_crs.is_geographic:
+        # parse crs. if 'utm' the utm zone is calculated based the region
+        if crs is not None:
+            crs = hydromt.gis_utils.parse_crs(crs, geom.to_crs(4326).total_bounds)
+        if crs is not None and crs.is_geographic:
             raise ValueError("A projected CRS is required.")
+        if crs is not None and geom.crs != crs:
+            # if geom is a rectangular bbox, transform it to a rect bbox in crs
+            poly = geom.geometry[0]
+            if np.isclose(poly.minimum_rotated_rectangle.area, poly.area):
+                dst_bbox = transform_bounds(geom.crs, crs, *geom.total_bounds)
+                geom = gpd.GeoDataFrame(geometry=[box(*dst_bbox)], crs=crs)
+            else:
+                geom = geom.to_crs(crs.to_epsg())
 
-        # transfrom bbox/geom to geom with destination CRS to deal with nonlinear
-        # transformations along domain edges when clipping
-        if geom is not None:
-            # to epsg required to be understood when writing GEOJSON
-            dst_geom = geom.to_crs(dst_crs.to_epsg())
-        else:
-            dst_bbox = transform_bounds(pyproj.CRS.from_epsg(4326), dst_crs, *bbox)
-            dst_geom = gpd.GeoDataFrame(geometry=[box(*dst_bbox)], crs=dst_crs)
+        # read global data (lazy!)
+        da_elv = self.data_catalog.get_rasterdataset(
+            topobathy_fn, geom=geom, buffer=20, variables=["elevtn"]
+        )
 
-        # reproject to destination CRS and clip to actual extent
-        da_elv = ds_org["elevtn"]
-        if ds_org.raster.crs != dst_crs or (
-            res is not None and abs(ds_org.raster.res[0]) != res
-        ):
-            da_elv = da_elv.raster.clip_geom(geom=dst_geom, buffer=20).raster.reproject(
-                dst_res=res, dst_crs=dst_crs, align=True, method=reproj_method
+        # reproject to destination CRS
+        check_crs = crs is not None and da_elv.raster.crs != crs
+        check_res = abs(da_elv.raster.res[0]) != res
+        if check_crs or check_res:
+            da_elv = da_elv.raster.reproject(
+                dst_res=res, dst_crs=crs, align=True, method=reproj_method
             )
-        # clip and mask
+        # clip & mask
         da_elv = (
-            da_elv.raster.clip_geom(dst_geom, mask=True)
+            da_elv.raster.clip_geom(geom, mask=True)
             .raster.mask_nodata()
             .fillna(-9999)  # force nodata value to be -9999
             .round(2)  # cm precision
@@ -211,7 +194,7 @@ class SfincsModel(Model):
         da_elv.raster.set_nodata(-9999)
 
         # set staticmaps
-        self.logger.info("Saving elevation data to staticmaps.")
+        name = self._MAPS["elevtn"]
         da_elv.attrs.update(**self._ATTRS.get(name, {}))
         self.set_staticmaps(data=da_elv, name=name)
         # update config
@@ -231,13 +214,14 @@ class SfincsModel(Model):
         reproj_method="bilinear",
         interp_method="linear",
     ):
-        """Updates the existing model topobathy data (dep file) with a new topobathy source.
+        """Updates the existing model topobathy data (dep file) with a new topobathy
+        source within the current model extent.
 
         By default (`merge_method="first"`) invalid (nodata) cells in the current topobathy
         data are replaced with values from the new topobathy source.
 
         Use `offset_fn` for a spatially varying, or `offset_constant` for a spatially uniform
-        offset to convert the vertical datum of the new soruce before merging.
+        offset to convert the vertical datum of the new source before merging.
 
         Gaps in the data (i.e. areas with nodata cells surrounded areas with valid elevation)
         are interpolated based on `interp_method`, by deafult 'linear'. Gaps are not
@@ -289,8 +273,9 @@ class SfincsModel(Model):
         name = self._MAPS["elevtn"]
         assert name in self.staticmaps
         da_elv = self.staticmaps[name]
+        geom = self.staticmaps.raster.box
         da_elv2 = self.data_catalog.get_rasterdataset(
-            topobathy_fn, geom=self.region, buffer=10, variables=["elevtn"]
+            topobathy_fn, geom=geom, buffer=10, variables=["elevtn"]
         )
         kwargs = dict(
             reproj_method=reproj_method,
@@ -301,13 +286,13 @@ class SfincsModel(Model):
         )
         # mask
         if mask_fn is not None:
-            gdf_mask = self.data_catalog.get_geodataframe(mask_fn, geom=self.region)
+            gdf_mask = self.data_catalog.get_geodataframe(mask_fn)
             da_elv2 = da_elv2.raster.clip_geom(gdf_mask, mask=True)
         # offset
         if offset_fn is not None:
             # variable name not important, but must be single variable
             da_offset = self.data_catalog.get_rasterdataset(
-                offset_fn, geom=self.region, buffer=10
+                offset_fn, geom=geom, buffer=10
             )
             assert isinstance(da_offset, xr.DataArray)
             kwargs.update(da_offset=da_offset)
@@ -330,9 +315,11 @@ class SfincsModel(Model):
         exclude_mask_fn=None,
         elv_min=None,
         elv_max=None,
-        min_cells=0,
-        fill_holes=True,
+        fill_area=10,
+        drop_area=0,
+        connectivity=8,
         all_touched=True,
+        reset_mask=False,
     ):
         """Creates mask of active model cells.
 
@@ -359,17 +346,23 @@ class SfincsModel(Model):
             from the model domain.
         elv_min, elv_max : float, optional
             Minimum and maximum elevation thresholds for active model cells.
-        min_cells : int, optional
-            Minimum number of contigous cells in any contiguous areas.
-        fill_holes : bool, optional
-            If True (Default) cells below the minimum elevation `elv_min` but surrounded
-            by cells with higher elevation are kept as active cells.
+        fill_area : float, optional
+            Maximum area [km2] of contiguous cells below `elv_min` or above `elv_max` but surrounded
+            by cells within the valid elevation range to be kept as active cells, by default 10 km2.
+        drop_area : float, optional
+            Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.
+        connectivity, {4, 8}:
+            The connectivity used to define contiguous cells, if 4 only horizontal and vertical
+            connections are used, if 8 (default) also diagonal connections.
         all_touched: bool, optional
             if True (default) include (or exclude) a cell in the mask if it touches any of the
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
+        reset_mask: bool, optional
+            If True, reset existing mask layer setting all valid elevation values to
+            active cells, by default False.
         """
-        if self._MAPS["mask"] in self.staticmaps:  # reset
+        if reset_mask and self._MAPS["mask"] in self.staticmaps:  # reset
             self._staticmaps = self._staticmaps.drop_vars(self._MAPS["mask"])
 
         # read geometries
@@ -386,8 +379,9 @@ class SfincsModel(Model):
             gdf_exclude=gdf2,
             elv_min=elv_min,
             elv_max=elv_max,
-            min_cells=min_cells,
-            fill_holes=fill_holes,
+            fill_area=fill_area,
+            drop_area=drop_area,
+            connectivity=connectivity,
             all_touched=all_touched,
             logger=self.logger,
         )
@@ -414,6 +408,7 @@ class SfincsModel(Model):
         elv_min=None,
         elv_max=None,
         include_buffer=0,
+        connectivity=8,
         reset_bounds=False,
     ):
         """Set boundary cells in the model mask.
@@ -447,6 +442,9 @@ class SfincsModel(Model):
         reset_bounds: bool, optional
             If True, reset existing boundary cells of the selected boundary
             type (`btype`) before setting new boundary cells, by default False.
+        connectivity, {4, 8}:
+            The connectivity used to detect the model edge, if 4 only horizontal and vertical
+            connections are used, if 8 (default) also diagonal connections.
         """
         btype = btype.lower()
         bvalues = {"waterlevel": 2, "outflow": 3}
@@ -474,6 +472,7 @@ class SfincsModel(Model):
             gdf_exclude=gdf_exclude,
             elv_min=elv_min,
             elv_max=elv_max,
+            connectivity=connectivity,
         )
 
         # update model mask
@@ -632,15 +631,15 @@ class SfincsModel(Model):
             Derive the river with from either the `river_geom_fn` (geom) or
             `river_mask_fn` (mask; default) data.
         river_upa : float, optional
-            Minumum upstream area threshold for rivers [km2], by default 25.0
+            Minimum upstream area threshold for rivers [km2], by default 25.0
         river_len: float, optional
-            Mimimum river length within the model domain thresohld [m], by default 1000 m.
+            Mimimum river length within the model domain threshhold [m], by default 1000 m.
         min_rivwth, min_rivdph: float, optional
             Minimum river width [m] (by default 50.0) and depth [m] (by default 1.0)
         segment_length : float, optional
             Approximate river segment length [m], by default 5e3
         smooth_length : float, optional
-            Approximate smooting length [m], by default 10e3
+            Approximate smoothing length [m], by default 10e3
         constrain_estuary : bool, optional
             If True (default) fix the river depth in estuaries based on the upstream river depth.
         constrain_rivbed : bool, optional
@@ -652,6 +651,7 @@ class SfincsModel(Model):
         if river_geom_fn is None and river_mask_fn is None:
             raise ValueError('"river_geom_fn" or "river_mask_fn" should be provided.')
         # get basemap river flwdir
+        self.mask  # make sure msk is staticmaps
         ds = self.staticmaps
         flwdir = None
         if "flwdir" in ds:
@@ -677,6 +677,11 @@ class SfincsModel(Model):
                 river_mask_fn, geom=self.region
             ).raster.reproject_like(ds, "max")
             ds["rivmsk"] = da_rivmask.where(self.mask != 0, 0) != 0
+        elif "rivmsk" in ds:
+            self.logger.info(
+                'River mask based on internal "rivmsk" layer. If this is unwanted '
+                "delete the gis/rivmsk.tif file or drop the rivmsk staticmaps variable."
+            )
 
         # estimate elevation bed level based on qbankfull (and other parameters)
         if not (gdf_riv is not None and "zb" in gdf_riv):
@@ -780,9 +785,9 @@ class SfincsModel(Model):
 
             * Required layers: ['uparea', 'flwdir'].
         river_upa : float, optional
-            Minumum upstream area threshold for rivers [km2], by default 25.0
+            Minimum upstream area threshold for rivers [km2], by default 25.0
         river_len: float, optional
-            Mimimum river length within the model domain thresohld [m], by default 1000 m.
+            Mimimum river length within the model domain threshhold [m], by default 1000 m.
         keep_rivers_geom: bool, optional
             If True, keep a geometry of the rivers "rivers_in" in staticgeoms. By default False.
         buffer: int, optional
@@ -802,16 +807,13 @@ class SfincsModel(Model):
                     '"uparea" and/or "flwdir" layers missing. '
                     "Run setup_river_hydrography first or provide hydrography_fn dataset."
                 )
-        if "region" not in self.staticgeoms:
-            self.logger.warning(
-                "Run setup_mask() first to define the active model region. The model region "
-                "is now infered from the bounding box and may lead to inaccurate inflow points."
-            )
 
+        # (re)calculate region to make sure it's accurate
+        region = self.mask.where(self.mask <= 1, 1).raster.vectorize()
         gdf_src, gdf_riv = workflows.river_boundary_points(
             da_flwdir=ds["flwdir"],
             da_uparea=ds["uparea"],
-            region=self.region,  # TODO reset region based on mask
+            region=region,
             river_len=river_len,
             river_upa=river_upa,
             btype="inflow",
@@ -842,7 +844,7 @@ class SfincsModel(Model):
         """Setup river outflow boundary (msk=3) where a river flows out of the model domain.
 
         Outflow points are based on a minimal upstream area threshold. Points within
-        half `outflow_width` of a discharge source piont or neighboring a waterlevel
+        half `outflow_width` of a discharge source point or neighboring a waterlevel
         boundary cell are omitted.
 
         NOTE: this method requires the either `hydrography_fn` input or `setup_river_hydrography` to be run first.
@@ -863,9 +865,9 @@ class SfincsModel(Model):
             The width [m] of the outflow boundary in the SFINCS msk file.
             By default 2km, i.e.: 1km to each side of the outflow point.
         river_upa : float, optional
-            Minumum upstream area threshold for rivers [km2], by default 25.0
+            Minimum upstream area threshold for rivers [km2], by default 25.0
         river_len: float, optional
-            Mimimum river length within the model domain thresohld [m], by default 1000 m.
+            Mimimum river length within the model domain threshhold [m], by default 1000 m.
         append_bounds: bool, optional
             If True, write new outflow boundary cells on top of existing. If False (default),
             first reset existing outflow boundary cells to normal active cells.
@@ -886,16 +888,13 @@ class SfincsModel(Model):
                     '"uparea" and/or "flwdir" layers missing. '
                     "Run setup_river_hydrography first or provide hydrography_fn dataset."
                 )
-        if "region" not in self.staticgeoms:
-            self.logger.warning(
-                "Run setup_mask() first to define the active model region. The model region "
-                "is now infered from the bounding box and may lead to inaccurate outflow points."
-            )
 
+        # (re)calculate region to make sure it's accurate
+        region = self.mask.where(self.mask <= 1, 1).raster.vectorize()
         gdf_out, gdf_riv = workflows.river_boundary_points(
             da_flwdir=ds["flwdir"],
             da_uparea=ds["uparea"],
-            region=self.region,  # TODO reset region based on mask
+            region=region,
             river_len=river_len,
             river_upa=river_upa,
             btype="outflow",
@@ -958,7 +957,7 @@ class SfincsModel(Model):
             * Required layers with antecedent runoff conditions: ['cn_dry', 'cn_avg', 'cn_wet']
         antecedent_runoff_conditions: {'dry', 'avg', 'wet'}, optional
             Antecedent runoff conditions.
-            None if data has no atecedent runoff conditions.
+            None if data has no antecedent runoff conditions.
             By default `avg`
         """
         # get data
@@ -989,7 +988,7 @@ class SfincsModel(Model):
     def setup_manning_roughness(
         self, lulc_fn="vito", map_fn=None, riv_man=0.03, lnd_man=0.1
     ):
-        """Setup model manning rouchness map (manningfile) from gridded
+        """Setup model manning roughness map (manningfile) from gridded
         land-use/land-cover map and manning roughness mapping table.
 
         Adds model layers:
@@ -1006,7 +1005,7 @@ class SfincsModel(Model):
             CSV mapping file with lulc classes in the index column and manning values
             in another column with 'N' as header.
         lnd_man, riv_man: float, optional
-            Constant manning rougness values for land (by default lnd_man = 0.1 s.m-1/3)
+            Constant manning roughness values for land (by default lnd_man = 0.1 s.m-1/3)
             and river cells (by default riv_man = 0.03 s.m-1/3).
             These values are set based on the river mask ('rivmsk') staticmaps layer
             from the `setup_river_hydrography` component.
@@ -1020,7 +1019,7 @@ class SfincsModel(Model):
             if map_fn is None:
                 map_fn = join(DATADIR, "lulc", f"{lulc_fn}_mapping.csv")
             if not os.path.isfile(map_fn):
-                raise IOError(f"Mannng roughness mapping file not found: {map_fn}")
+                raise IOError(f"Manning roughness mapping file not found: {map_fn}")
             da_org = self.data_catalog.get_rasterdataset(
                 lulc_fn, geom=self.region, buffer=10, variables=["lulc"]
             )
@@ -1130,7 +1129,7 @@ class SfincsModel(Model):
             gdf = utils.structures2gdf(structs_out, crs=self.crs)
         elif stype == "weir" and np.any(["z" not in s for s in structs]):
             raise ValueError("Weir structure requires z values.")
-        # combine with exisiting structures if present
+        # combine with existing structures if present
         if not overwrite and stype in self.staticgeoms:
             gdf0 = self._staticgeoms.pop(stype)
             gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
@@ -1146,7 +1145,7 @@ class SfincsModel(Model):
         geodataset_fn=None,
         timeseries_fn=None,
         offset_fn=None,
-        buffer=0,
+        buffer=5e3,
         **kwargs,
     ):
         """Setup waterlevel boundary point locations (bnd) and time series (bzs).
@@ -1155,10 +1154,8 @@ class SfincsModel(Model):
         timeseries. The dataset is clipped to the model region plus `buffer` [m], and
         model time based on the model config tstart and tstop entries.
 
-        Use `timeseries_fn` to set a spatially uniform waterlevel boundary representative
-        for all waterlevel boundary cells (msk==2), The timeseries is clipped based on
-        the model config tstart and tstop entries. The boundary point location is infered
-        from the model mask.
+        Use `timeseries_fn` in combination with `geodataset_fn=None` to set a spatially
+        uniform waterlevel for all waterlevel boundary cells (msk==2),
 
         If `timeseries_fn` and `geodataset_fn` are both not provided a dummy (h=0) waterlevel
         boundary is set.
@@ -1178,8 +1175,7 @@ class SfincsModel(Model):
         geodataset_fn: str, Path
             Path or data source name for geospatial point timeseries file.
             This can either be a netcdf file with geospatial coordinates
-            or a combined point location file with a timeseries data csv file
-            which can be setup through the data_catalog.yml file.
+            or a combined point location file with a `timeseries_fn` data csv file.
 
             * Required variables if netcdf: ['waterlevel']
             * Required coordinates if netcdf: ['time', 'index', 'y', 'x']
@@ -1187,14 +1183,16 @@ class SfincsModel(Model):
             Path to spatially uniform timeseries csv file with time index in first column
             and waterlevels in the second column. The first row is interpreted as header,
             see :py:meth:`hydromt.open_timeseries_from_table`, for details.
-            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
+            NOTE: tabulated timeseries files can only in combination with point location
+            coordinates be set as a geodataset in the data_catalog yml file.
         offset_fn: str, optional
             Path or data source name for gridded offset between vertical reference of elevation and waterlevel data,
             Adds to the waterlevel data before merging.
 
             * Required variables: ['mdt']
-        buffer: float
-            Buffer around model region from which to select waterlevel gauges
+        buffer: float, optional
+            Buffer [m] around model water level boundary cells to select waterlevel gauges,
+            by default 5 km.
 
         """
         name = "waterlevel"
@@ -1209,13 +1207,18 @@ class SfincsModel(Model):
 
         tstart, tstop = self.get_model_time()  # model time
         if geodataset_fn is not None:
+            if timeseries_fn is not None:
+                kwargs.update(fn_data=str(timeseries_fn))
             # read and clip data in time & space
+            # buffer around msk==2 values
+            region = self.mask.where(self.mask == 2, 0).raster.vectorize()
             da = self.data_catalog.get_geodataset(
                 geodataset_fn,
-                geom=self.region,
+                geom=region,
                 buffer=buffer,
                 variables=[name],
                 time_tuple=(tstart, tstop),
+                crs=self.crs.to_epsg(),  # assume model crs if no explicit crs defined
                 **kwargs,
             )
         else:
@@ -1253,7 +1256,7 @@ class SfincsModel(Model):
         timeseries. Only locations within the model domain are selected.
 
         Use `timeseries_fn` to set discharge boundary conditions to pre-set (src) locations,
-        e.g. after the :py:meth:`~hydromt_sfins.SfincsModel.setup_river_inflow` method.
+        e.g. after the :py:meth:`~hydromt_sfincs.SfincsModel.setup_river_inflow` method.
 
         The dataset/timeseries are clipped to the model time based on the model config
         tstart and tstop entries.
@@ -1277,7 +1280,8 @@ class SfincsModel(Model):
             Path to tabulated timeseries csv file with time index in first column
             and location IDs in the first row,
             see :py:meth:`hydromt.open_timeseries_from_table`, for details.
-            NOTE: tabulated timeseries files cannot yet be set through the data_catalog yml file.
+            NOTE: tabulated timeseries files can only in combination with point location
+            coordinates be set as a geodataset in the data_catalog yml file.
 
         """
         name = "discharge"
@@ -1290,6 +1294,8 @@ class SfincsModel(Model):
             )
             return
         elif geodataset_fn is not None:
+            if timeseries_fn is not None:
+                kwargs.update(fn_data=str(timeseries_fn))
             # read and clip data
             da = (
                 self.data_catalog.get_geodataset(
@@ -1297,6 +1303,7 @@ class SfincsModel(Model):
                     geom=self.region,
                     variables=[name],
                     time_tuple=(tstart, tstop),
+                    crs=self.crs.to_epsg(),  # assume model crs if none defined
                     **kwargs,
                 )
                 .fillna(0.0)
@@ -1609,7 +1616,7 @@ class SfincsModel(Model):
         geoms : List[str], optional
             list of model geometries to plot, by default all model geometries.
         geom_kwargs : Dict of Dict, optional
-            Model geometry styling per geometry, passed to geopands.GeoDataFrame.plot method.
+            Model geometry styling per geometry, passed to geopandas.GeoDataFrame.plot method.
             For instance: {'src': {'markersize': 30}}.
         legend_kwargs : Dict, optional
             Legend kwargs, passed to ax.legend method.
@@ -1677,7 +1684,7 @@ class SfincsModel(Model):
         self.write_data_catalog()  # new in hydromt v0.4.4
 
     def read_staticmaps(self, crs=None):
-        """Read SFNCS binary staticmaps and save to `staticmaps` attribute.
+        """Read SFINCS binary staticmaps and save to `staticmaps` attribute.
         Known binary files mentioned in the sfincs.inp configuration file are read,
         including: msk/dep/scs/manning/qinf.
 
@@ -1838,6 +1845,11 @@ class SfincsModel(Model):
             Relative path which is prepended to sfincs filenames which are not found in
             the model root, but are found at this relative path from the root.
         """
+        if self.staticmaps is None:
+            self.logger.info(
+                f"Empty model. Skip writing model configuration {self._config_fn}."
+            )
+            return
         for key, value in self.config.items():
             if key.endswith("file"):
                 if not isfile(join(self.root, value)):
@@ -2044,7 +2056,7 @@ class SfincsModel(Model):
             Different variables can be combined in a list.
             By default, variables is ["staticmaps", "states", "results.hmax"]
         root: Path, str, optional
-            The output folder path. If None it defautls to the <model_root>/gis folder (Default)
+            The output folder path. If None it defaults to the <model_root>/gis folder (Default)
         kwargs:
             Key-word arguments passed to hydromt.RasterDataset.to_raster(driver='GTiff', compress='lzw').
         """
@@ -2097,9 +2109,9 @@ class SfincsModel(Model):
         Parameters
         ----------
         variables: str, list, optional
-            Staticgeoms variables. By bedault all staticgeoms are saved.
+            Staticgeoms variables. By default all staticgeoms are saved.
         root: Path, str, optional
-            The output folder path. If None it defautls to the <model_root>/gis folder (Default)
+            The output folder path. If None it defaults to the <model_root>/gis folder (Default)
         kwargs:
             Key-word arguments passed to geopandas.GeoDataFrame.to_file(driver='GeoJSON').
         """
@@ -2215,7 +2227,7 @@ class SfincsModel(Model):
                 ts.vector.set_crs(self.crs.to_epsg())
             elif ts.vector.crs != self.crs:
                 ts = ts.vector.to_crs(self.crs.to_epsg())
-            # fix order based on x_dim after setting crs (for comparibility between OS)
+            # fix order based on x_dim after setting crs (for comparability between OS)
             ts = ts.sortby([ts.vector.x_dim, ts.vector.y_dim], ascending=True)
             # reset index
             dim = ts.vector.index_dim
