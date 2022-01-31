@@ -427,7 +427,7 @@ def mask_topobathy(
         by cells within the valid elevation range to be kept as active cells, by default 10 km2.
     drop_area : float, optional
         Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.
-    connectivity, {4, 8}:
+    connectivity: {4, 8}
         The connectivity used to define contiguous cells, if 4 only horizontal and vertical
         connections are used, if 8 (default) also diagonal connections.
     all_touched: bool, optional
@@ -492,7 +492,7 @@ def mask_bounds(
         Geometries with areas to include/exclude from the model boundary.
     elv_min, elv_max : float, optional
         Minimum and maximum elevation thresholds for boundary cells.
-    connectivity, {4, 8}:
+    connectivity: {4, 8}
         The connectivity used to detect the model edge, if 4 only horizontal and vertical
         connections are used, if 8 (default) also diagonal connections.
 

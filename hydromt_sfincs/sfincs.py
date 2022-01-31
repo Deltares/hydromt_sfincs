@@ -351,7 +351,7 @@ class SfincsModel(Model):
             by cells within the valid elevation range to be kept as active cells, by default 10 km2.
         drop_area : float, optional
             Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.
-        connectivity, {4, 8}:
+        connectivity: {4, 8}
             The connectivity used to define contiguous cells, if 4 only horizontal and vertical
             connections are used, if 8 (default) also diagonal connections.
         all_touched: bool, optional
@@ -442,7 +442,7 @@ class SfincsModel(Model):
         reset_bounds: bool, optional
             If True, reset existing boundary cells of the selected boundary
             type (`btype`) before setting new boundary cells, by default False.
-        connectivity, {4, 8}:
+        connectivity: {4, 8}
             The connectivity used to detect the model edge, if 4 only horizontal and vertical
             connections are used, if 8 (default) also diagonal connections.
         """
