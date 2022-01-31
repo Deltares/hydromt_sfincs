@@ -145,11 +145,7 @@ by several criteria.</p>
 <li><p><strong>fill_area</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Maximum area [km2] of contiguous cells below <cite>elv_min</cite> or above <cite>elv_max</cite> but surrounded
 by cells within the valid elevation range to be kept as active cells, by default 10 km2.</p></li>
 <li><p><strong>drop_area</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.</p></li>
-<li><p><strong>connectivity</strong> – The connectivity used to define contiguous cells, if 4 only horizontal and vertical
-connections are used, if 8 (default) also diagonal connections.</p></li>
-<li><p><strong>{4</strong> – The connectivity used to define contiguous cells, if 4 only horizontal and vertical
-connections are used, if 8 (default) also diagonal connections.</p></li>
-<li><p><strong>8}</strong> – The connectivity used to define contiguous cells, if 4 only horizontal and vertical
+<li><p><strong>connectivity</strong> (<em>{4</em><em>, </em><em>8}</em>) – The connectivity used to define contiguous cells, if 4 only horizontal and vertical
 connections are used, if 8 (default) also diagonal connections.</p></li>
 <li><p><strong>all_touched</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – if True (default) include (or exclude) a cell in the mask if it touches any of the
 include (or exclude) geometries. If False, include a cell only if its center is
