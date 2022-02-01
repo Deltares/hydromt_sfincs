@@ -409,6 +409,7 @@ def mask_topobathy(
     drop_area: float = 0,
     connectivity: int = 8,
     all_touched=True,
+    overrule_with_include=False,
     logger=logger,
 ) -> xr.DataArray:
     """Returns a boolean mask of valid (non nondata) elevation cells, optionally bounded
@@ -441,6 +442,9 @@ def mask_topobathy(
         model elevation mask
     """
     da_mask = da_elv != da_elv.raster.nodata
+    da_mask2 = da_mask
+    da_mask3 = da_mask
+
     transform, latlon = da_elv.raster.transform, da_elv.raster.crs.is_geographic
     s = None if connectivity == 4 else np.ones((3, 3), int)
     if elv_min is not None or elv_max is not None:
@@ -457,9 +461,6 @@ def mask_topobathy(
             n = int(sum(areas / 1e6 < fill_area))
             logger.debug(f"{n} gaps outside valid elevation range < {fill_area} km2.")
         da_mask = da_mask.where(_msk, False)
-    if gdf_include is not None:
-        da_include = da_mask.raster.geometry_mask(gdf_include, all_touched=all_touched)
-        da_mask = da_mask.where(da_include, False)
     if gdf_exclude is not None:
         da_exclude = da_mask.raster.geometry_mask(gdf_exclude, all_touched=all_touched)
         da_mask = da_mask.where(~da_exclude, False)
@@ -470,6 +471,29 @@ def mask_topobathy(
         n = int(sum(areas / 1e6 < drop_area))
         logger.debug(f"{n} regions < {drop_area} km2 dropped.")
         da_mask = da_mask.where(_msk, False)
+
+    if gdf_include is not None:
+        da_include = da_mask2.raster.geometry_mask(gdf_include, all_touched=all_touched)
+        da_mask2 = da_mask2.where(da_include, False)
+
+        logger.debug(f"_msk: {_msk}")
+        logger.debug(f"da_mask: {da_mask}")
+        logger.debug(f"da_mask2: {da_mask2}")
+
+        if overrule_with_include == True:
+
+            _msk = np.logical_or(da_mask, da_mask2)
+
+            logger.debug(f"TL: Attempt to overrule da_mask with include polygon")
+
+        else:
+            _msk = da_mask
+
+        logger.debug(f"_msk: {_msk}")
+
+        da_mask3 = da_mask3.where(_msk, False)      
+        logger.debug(f"da_mask3: {da_mask3}")
+
     return da_mask
 
 

@@ -319,6 +319,7 @@ class SfincsModel(Model):
         drop_area=0,
         connectivity=8,
         all_touched=True,
+        overrule_with_include=False,
         reset_mask=False,
     ):
         """Creates mask of active model cells.
@@ -383,6 +384,7 @@ class SfincsModel(Model):
             drop_area=drop_area,
             connectivity=connectivity,
             all_touched=all_touched,
+            overrule_with_include=overrule_with_include,
             logger=self.logger,
         )
 
