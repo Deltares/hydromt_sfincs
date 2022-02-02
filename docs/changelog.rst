@@ -31,7 +31,7 @@ Changed (**Breaking**)
 
 Changed
 ^^^^^^^
-- `setup_mask` and `setup_bounds` both have include- and exclude polygon and min- and max elevation arguments to determine valid / boundary cells. 
+- `setup_mask` and `setup_bounds` both have a mask_fn, include_mask_fn and exclude_mask_fn polygon and min_elv and max_elv elevation arguments to determine valid / boundary cells. 
 - `setup_mask` and `setup_bounds` have a reset_mask and reset_bounds option respectively to start with a clean mask or remove previously set boundary cells.
 - `setup_mask` takes a new `drop_area` argument to drop regions of contiguous cells smaller than this maximum area threshold, useful to remove (spurious) small islands.
 - `setup_mask` takes a new `fill_area` argument to fill regions of contiguous cells below the `min_elv` or above `max_elv` threshold surrounded by cells within the valid elevation range.
