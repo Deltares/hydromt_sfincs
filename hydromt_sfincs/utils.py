@@ -1,3 +1,4 @@
+from warnings import catch_warnings
 import numpy as np
 import pyproj
 from pyproj.crs.crs import CRS
@@ -448,8 +449,11 @@ def mask_topobathy(
     """
     da_mask = da_elv != da_elv.raster.nodata
     if gdf_mask is not None:
-        _msk = da_mask.raster.geometry_mask(gdf_mask, all_touched=all_touched)
-        da_mask = np.logical_and(da_mask, _msk)
+        try:
+            _msk = da_mask.raster.geometry_mask(gdf_mask, all_touched=all_touched)
+            da_mask = np.logical_and(da_mask, _msk)
+        except:
+            logger.debug(f"No mask cells found within mask polygon!")        
     transform, latlon = da_elv.raster.transform, da_elv.raster.crs.is_geographic
     s = None if connectivity == 4 else np.ones((3, 3), int)
     if elv_min is not None or elv_max is not None:
@@ -474,11 +478,17 @@ def mask_topobathy(
         logger.debug(f"{n} regions < {drop_area} km2 dropped.")
         da_mask = np.logical_and(da_mask, _msk)
     if gdf_exclude is not None:
-        _msk = da_mask.raster.geometry_mask(gdf_exclude, all_touched=all_touched)
-        da_mask = np.logical_and(da_mask, ~_msk)
+        try:
+            _msk = da_mask.raster.geometry_mask(gdf_exclude, all_touched=all_touched)
+            da_mask = np.logical_and(da_mask, ~_msk)
+        except:
+            logger.debug(f"No mask cells found within exclude polygon!")
     if gdf_include is not None:  # should be last to include all include areas
-        _msk = da_mask.raster.geometry_mask(gdf_include, all_touched=all_touched)
-        da_mask = np.logical_or(da_mask, _msk)  # NOTE logical OR statement
+        try:
+            _msk = da_mask.raster.geometry_mask(gdf_include, all_touched=all_touched)
+            da_mask = np.logical_or(da_mask, _msk)  # NOTE logical OR statement
+        except:
+            logger.debug(f"No mask cells found within include polygon!")
     return da_mask
 
 
