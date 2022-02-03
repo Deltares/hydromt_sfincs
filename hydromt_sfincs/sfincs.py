@@ -372,12 +372,13 @@ class SfincsModel(Model):
 
         # read geometries
         gdf0, gdf1, gdf2 = None, None, None
+        bbox = self.region.to_crs(4326).total_bounds
         if mask_fn is not None:
-            gdf0 = self.data_catalog.get_geodataframe(mask_fn, geom=self.region)
+            gdf0 = self.data_catalog.get_geodataframe(mask_fn, bbox=bbox)
         if include_mask_fn is not None:
-            gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, geom=self.region)
+            gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
         if exclude_mask_fn is not None:
-            gdf2 = self.data_catalog.get_geodataframe(exclude_mask_fn, geom=self.region)
+            gdf2 = self.data_catalog.get_geodataframe(exclude_mask_fn, bbox=bbox)
 
         # get mask
         da_mask = utils.mask_topobathy(
@@ -466,17 +467,18 @@ class SfincsModel(Model):
 
         # get mask / include / exclude geometries
         gdf0, gdf_include, gdf_exclude = None, None, None
+        bbox = self.region.to_crs(4326).total_bounds
         if mask_fn:
-            gdf0 = self.data_catalog.get_geodataframe(mask_fn, geom=self.region)
+            gdf0 = self.data_catalog.get_geodataframe(mask_fn, bbox=bbox)
             if include_buffer > 0:  # NOTE assumes model in projected CRS!
                 gdf0["geometry"] = gdf0.to_crs(self.crs).buffer(include_buffer)
         if include_mask_fn:
             gdf_include = self.data_catalog.get_geodataframe(
-                include_mask_fn, geom=self.region
+                include_mask_fn, bbox=bbox
             )
         if exclude_mask_fn:
             gdf_exclude = self.data_catalog.get_geodataframe(
-                exclude_mask_fn, geom=self.region
+                exclude_mask_fn, bbox=bbox
             )
 
         # mask values
