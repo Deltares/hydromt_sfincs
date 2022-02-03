@@ -84,6 +84,7 @@ def plot_basemap(
     shaded: bool = True,
     plot_bounds: bool = True,
     plot_region: bool = False,
+    plot_geoms: bool = True,
     bmap: str = "sat",
     zoomlevel: int = 11,
     figsize: Tuple[int] = None,
@@ -109,6 +110,8 @@ def plot_basemap(
         Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
     plot_region : bool, optional
         If True, plot region outline.
+    plot_geoms : bool, optional
+        If True, plot available geoms.        
     bmap : {'sat', 'osm'}
         background map, by default "sat"
     zoomlevel : int, optional
@@ -122,7 +125,6 @@ def plot_basemap(
         For instance: {'src': {'markersize': 30}}.
     legend_kwargs : Dict, optional
         Legend kwargs, passed to ax.legend method.
-
     Returns
     -------
     fig, axes
@@ -170,6 +172,7 @@ def plot_basemap(
             norm = colors.Normalize(vmin=vmin, vmax=vmax)
             cmap, norm = kwargs.pop("cmap", cmap), kwargs.pop("norm", norm)
             kwargs.update(norm=norm, cmap=cmap)
+
     if variable in staticmaps:
         da = staticmaps[variable].raster.mask_nodata()
         # by default colorbar on lower right & legend upper right
@@ -229,19 +232,22 @@ def plot_basemap(
         if gdf_msk3.index.size > 0:
             gdf_msk3.plot(ax=ax, zorder=3, label="outflow bnd", **geom_style["msk3"])
     # plot static geoms
-    geoms = geoms if isinstance(geoms, list) else list(staticgeoms.keys())
-    for name in geoms:
-        gdf = staticgeoms.get(name, None)
-        if gdf is None or name in ["region", "bbox"]:
-            continue
-        # copy is important to keep annotate working if repeated
-        kwargs = geom_style.get(name, {}).copy()
-        annotate = kwargs.pop("annotate", False)
-        gdf.plot(ax=ax, zorder=3, label=name, **kwargs)
-        if annotate:
-            for label, row in gdf.iterrows():
-                x, y = row.geometry.x, row.geometry.y
-                ax.annotate(label, xy=(x, y), **ann_kwargs)
+    if plot_geoms:
+
+        geoms = geoms if isinstance(geoms, list) else list(staticgeoms.keys())
+        for name in geoms:
+            gdf = staticgeoms.get(name, None)
+            if gdf is None or name in ["region", "bbox"]:
+                continue
+            # copy is important to keep annotate working if repeated
+            kwargs = geom_style.get(name, {}).copy()
+            annotate = kwargs.pop("annotate", False)
+            gdf.plot(ax=ax, zorder=3, label=name, **kwargs)
+            if annotate:
+                for label, row in gdf.iterrows():
+                    x, y = row.geometry.x, row.geometry.y
+                    ax.annotate(label, xy=(x, y), **ann_kwargs)
+
     if "region" in staticgeoms and plot_region:
         staticgeoms["region"].boundary.plot(ax=ax, ls="-", lw=0.5, color="k", zorder=2)
 

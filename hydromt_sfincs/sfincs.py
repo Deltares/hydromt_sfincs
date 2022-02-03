@@ -1686,6 +1686,8 @@ class SfincsModel(Model):
         variable: str = "dep",
         shaded: bool = True,
         plot_bounds: bool = True,
+        plot_region: bool = False,
+        plot_geoms: bool = True,
         bmap: str = "sat",
         zoomlevel: int = 11,
         figsize: Tuple[int] = None,
@@ -1712,6 +1714,10 @@ class SfincsModel(Model):
             Add shade to variable (only for variable = 'dep'), by default True
         plot_bounds : bool, optional
             Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
+        plot_region : bool, optional
+            If True, plot region outline.            
+        plot_geoms : bool, optional
+            If True, plot available geoms.               
         bmap : {'sat', ''}
             background map, by default "sat"
         zoomlevel : int, optional
@@ -1749,6 +1755,8 @@ class SfincsModel(Model):
             variable=variable,
             shaded=shaded,
             plot_bounds=plot_bounds,
+            plot_region=plot_region,
+            plot_geoms=plot_geoms,
             bmap=bmap,
             zoomlevel=zoomlevel,
             figsize=figsize,
