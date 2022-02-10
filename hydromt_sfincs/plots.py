@@ -111,7 +111,7 @@ def plot_basemap(
     plot_region : bool, optional
         If True, plot region outline.
     plot_geoms : bool, optional
-        If True, plot available geoms.        
+        If True, plot available geoms.
     bmap : {'sat', 'osm'}
         background map, by default "sat"
     zoomlevel : int, optional
@@ -231,9 +231,9 @@ def plot_basemap(
             gdf_msk2.plot(ax=ax, zorder=3, label="waterlevel bnd", **geom_style["msk2"])
         if gdf_msk3.index.size > 0:
             gdf_msk3.plot(ax=ax, zorder=3, label="outflow bnd", **geom_style["msk3"])
+
     # plot static geoms
     if plot_geoms:
-
         geoms = geoms if isinstance(geoms, list) else list(staticgeoms.keys())
         for name in geoms:
             gdf = staticgeoms.get(name, None)

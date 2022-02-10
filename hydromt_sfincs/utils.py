@@ -453,7 +453,7 @@ def mask_topobathy(
             _msk = da_mask.raster.geometry_mask(gdf_mask, all_touched=all_touched)
             da_mask = np.logical_and(da_mask, _msk)
         except:
-            logger.debug(f"No mask cells found within mask polygon!")        
+            logger.debug(f"No mask cells found within mask polygon!")
     transform, latlon = da_elv.raster.transform, da_elv.raster.crs.is_geographic
     s = None if connectivity == 4 else np.ones((3, 3), int)
     if elv_min is not None or elv_max is not None:
