@@ -576,7 +576,7 @@ class SfincsModel(Model):
         river_len=1000,
         min_rivwth=50.0,
         min_rivdph=1.0,
-        segment_length=5e3,
+        segment_length=3e3,
         smooth_length=10e3,
         constrain_rivbed=True,
         constrain_estuary=True,
@@ -646,10 +646,12 @@ class SfincsModel(Model):
             If True (default) correct the river bed level to be hydrologically correct,
             i.e. sloping downward in downstream direction.
         dig_river_d4: bool, optional
-            If True (defalt), dig the river out to be hydrologically connected in D4.
+            If True (default), dig the river out to be hydrologically connected in D4.
         """
-        if river_geom_fn is None and river_mask_fn is None:
-            raise ValueError('"river_geom_fn" or "river_mask_fn" should be provided.')
+        if river_mask_fn is None and rivwth_method == "mask":
+            raise ValueError(
+                '"river_mask_fn" should be provided if rivwth_method="mask".'
+            )
         # get basemap river flwdir
         self.mask  # make sure msk is staticmaps
         ds = self.staticmaps
@@ -735,11 +737,9 @@ class SfincsModel(Model):
             for path, ax in zip(paths, axes):
                 g0 = gdf_riv.loc[path, :]
                 x = g0["rivdst"].values
-                ax.plot(x, g0["zs0"], ".k", label="bankfull")
-                ax.plot(x, g0["zs"], "--k", label="bankfull (smoothed)")
+                ax.plot(x, g0["zs"], "--k", label="bankfull")
                 ax.plot(x, g0["elevtn"], ":k", label="original zb")
-                ax.plot(x, g0["zs"] - g0["rivdph0"], ".:g", label=f"{rivdph_method} zb")
-                ax.plot(x, g0["zb"], "--g", label=f"{rivdph_method} zb (smoothed)")
+                ax.plot(x, g0["zb"], "--g", label=f"{rivdph_method} zb (corrected)")
                 mask = da_elv1.raster.geometry_mask(g0).values
                 x1 = flwdir.distnc[mask]
                 y1 = da_elv1.data[mask]
@@ -748,7 +748,8 @@ class SfincsModel(Model):
             ax.legend()
             if not os.path.isdir(join(self.root, "figs")):
                 os.makedirs(join(self.root, "figs"))
-            plt.savefig(join(self.root, "figs", "river_bathymetry.png"))
+            fn_fig = join(self.root, "figs", "river_bathymetry.png")
+            plt.savefig(fn_fig, dpi=225, bbox_inches="tight")
 
         # update dep
         self.set_staticmaps(da_elv1.round(2), name=self._MAPS["elevtn"])
@@ -986,7 +987,12 @@ class SfincsModel(Model):
         self.set_config(f"{mname}file", f"sfincs.{mname}")
 
     def setup_manning_roughness(
-        self, lulc_fn="vito", map_fn=None, riv_man=0.03, lnd_man=0.1
+        self,
+        lulc_fn=None,
+        map_fn=None,
+        riv_man=0.03,
+        lnd_man=0.1,
+        sea_man=None,
     ):
         """Setup model manning roughness map (manningfile) from gridded
         land-use/land-cover map and manning roughness mapping table.
@@ -1004,11 +1010,12 @@ class SfincsModel(Model):
         map_fn: path-like, optional
             CSV mapping file with lulc classes in the index column and manning values
             in another column with 'N' as header.
-        lnd_man, riv_man: float, optional
-            Constant manning roughness values for land (by default lnd_man = 0.1 s.m-1/3)
-            and river cells (by default riv_man = 0.03 s.m-1/3).
-            These values are set based on the river mask ('rivmsk') staticmaps layer
-            from the `setup_river_hydrography` component.
+        lnd_man, riv_man, sea_man: float, optional
+            Constant manning roughness values for land (by default 0.1 s.m-1/3)
+            river (by default 0.03 s.m-1/3) and sea (by default None and skipped).
+            River cells are based on the river mask ('rivmsk') staticmaps layer
+            from the `setup_river_hydrography` component. Sea cells are based on elevation
+            values smaller than zero.
             Manning roughness for land cells are superseeded by the landuse-landcover
             map based values if `lulc_fn` is not None.
         """
@@ -1029,9 +1036,8 @@ class SfincsModel(Model):
             da_man = workflows.landuse(
                 da_org, da_msk, map_fn, logger=self.logger, params=["N"]
             )["N"]
-        if "rivmsk" in self.staticmaps:
-            msg = "Setting constant manning roughness for river cells."
-            self.logger.info(msg)
+        if "rivmsk" in self.staticmaps and riv_man is not None:
+            self.logger.info("Setting constant manning roughness for river cells.")
             da_man = da_man.where(self.staticmaps["rivmsk"] != 1, riv_man)
         elif lulc_fn is None:
             self.logger.warning(
@@ -1040,6 +1046,9 @@ class SfincsModel(Model):
                 ' using the "manning", "manning_land" and/or "manning_sea" parameters in the sfincs.inp file.'
             )
             return
+        if sea_man is not None:
+            self.logger.info("Setting constant manning roughness for sea cells.")
+            da_man = da_man.where(self.staticmaps[self._MAPS["elevtn"]] >= 0, sea_man)
         # mask and set precision
         da_man = da_man.where(da_msk, da_man.raster.nodata).round(3)
         # set staticmaps

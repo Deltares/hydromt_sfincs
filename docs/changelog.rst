@@ -44,6 +44,7 @@ Changed
 - Write dep file with cm accuracy. This should be sufficient but also hides differences between linux and window builds.
 - Exposed `interp_method` argument in `setup_merge_topobathy` to select interpolation method for fill NaNs.
 - `setup_cn_infiltration` and `setup_manning_roughness` use deafult values for river cells as defined in `setup_river_bathymetry`
+- The setup_manning_rougness has a new `sea_man` argument to set a constant roughness for cells below zero elevation.
 - Use mamba to setup CI environments
 - Bumped minimal pyflwdir version to 0.5.4
 
