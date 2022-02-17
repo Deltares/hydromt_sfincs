@@ -40,5 +40,4 @@ dependencies:
   - xarray
   - zarr
   - pip:
-    - git+https://github.com/Deltares/hydromt.git@setup_region
-    # - git+https://github.com/Deltares/hydromt_sfincs.git@setup_region
+    - git+https://github.com/Deltares/hydromt.git
