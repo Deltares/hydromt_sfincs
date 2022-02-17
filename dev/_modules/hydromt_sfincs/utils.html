@@ -82,7 +82,8 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hydromt_sfincs.utils</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">catch_warnings</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pyproj</span>
 <span class="kn">from</span> <span class="nn">pyproj.crs.crs</span> <span class="kn">import</span> <span class="n">CRS</span>
 <span class="kn">import</span> <span class="nn">rasterio</span>
@@ -485,6 +486,7 @@
 
 <div class="viewcode-block" id="mask_topobathy"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.mask_topobathy.html#hydromt_sfincs.mask_topobathy">[docs]</a><span class="k">def</span> <span class="nf">mask_topobathy</span><span class="p">(</span>
     <span class="n">da_elv</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">gdf_include</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">gdf_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">elv_min</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -502,10 +504,15 @@
 <span class="sd">    ----------</span>
 <span class="sd">    da_elv: xr.DataArray</span>
 <span class="sd">        Model elevation</span>
-<span class="sd">    gdf_include, gdf_exclude: geopandas.GeoDataFrame</span>
-<span class="sd">        Geometries with areas to include/exclude from the model boundary.</span>
+<span class="sd">    gdf_mask: geopandas.GeoDataFrame, optional</span>
+<span class="sd">        Geometry describing the initial region with active model cells.</span>
+<span class="sd">        If not given, the initial active model cells are based on valid elevation cells.</span>
+<span class="sd">    gdf_include, gdf_exclude: geopandas.GeoDataFrame, optional</span>
+<span class="sd">        Geometries with areas to include/exclude from the active model cells.</span>
+<span class="sd">        Note that exclude (second last) and include (last) areas are processed after other critera,</span>
+<span class="sd">        i.e. `elv_min`, `elv_max` and `drop_area`, and thus overrule these criteria for active model cells.</span>
 <span class="sd">    elv_min, elv_max : float, optional</span>
-<span class="sd">        Minimum and maximum elevation thresholds for boundary cells.</span>
+<span class="sd">        Minimum and maximum elevation thresholds for active model cells.</span>
 <span class="sd">    fill_area : float, optional</span>
 <span class="sd">        Maximum area [km2] of contiguous cells below `elv_min` or above `elv_max` but surrounded</span>
 <span class="sd">        by cells within the valid elevation range to be kept as active cells, by default 10 km2.</span>
@@ -525,6 +532,12 @@
 <span class="sd">        model elevation mask</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_elv</span> <span class="o">!=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
+    <span class="k">if</span> <span class="n">gdf_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_msk</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_mask</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">)</span>
+            <span class="n">da_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">_msk</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No mask cells found within mask polygon!&quot;</span><span class="p">)</span>
     <span class="n">transform</span><span class="p">,</span> <span class="n">latlon</span> <span class="o">=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span>
     <span class="n">s</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">connectivity</span> <span class="o">==</span> <span class="mi">4</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -540,64 +553,88 @@
             <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">lbls</span><span class="p">[</span><span class="n">areas</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">&lt;</span> <span class="n">fill_area</span><span class="p">]))</span>
             <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">areas</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">&lt;</span> <span class="n">fill_area</span><span class="p">))</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> gaps outside valid elevation range &lt; </span><span class="si">{</span><span class="n">fill_area</span><span class="si">}</span><span class="s2"> km2.&quot;</span><span class="p">)</span>
-        <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">gdf_include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">da_include</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_include</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">)</span>
-        <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_include</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">gdf_exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">da_exclude</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_exclude</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">)</span>
-        <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">da_exclude</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">da_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">_msk</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">drop_area</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">regions</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">da_mask</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">s</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">lbls</span><span class="p">,</span> <span class="n">areas</span> <span class="o">=</span> <span class="n">region_area</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">latlon</span><span class="p">)</span>
         <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">lbls</span><span class="p">[</span><span class="n">areas</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">&gt;=</span> <span class="n">drop_area</span><span class="p">])</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">areas</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">&lt;</span> <span class="n">drop_area</span><span class="p">))</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> regions &lt; </span><span class="si">{</span><span class="n">drop_area</span><span class="si">}</span><span class="s2"> km2 dropped.&quot;</span><span class="p">)</span>
-        <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">da_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">_msk</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">gdf_exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_msk</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_exclude</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">)</span>
+            <span class="n">da_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="o">~</span><span class="n">_msk</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No mask cells found within exclude polygon!&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">gdf_include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># should be last to include all include areas</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_msk</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_include</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">)</span>
+            <span class="n">da_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">_msk</span><span class="p">)</span>  <span class="c1"># NOTE logical OR statement</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No mask cells found within include polygon!&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">da_mask</span></div>
 
 
 <div class="viewcode-block" id="mask_bounds"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.mask_bounds.html#hydromt_sfincs.mask_bounds">[docs]</a><span class="k">def</span> <span class="nf">mask_bounds</span><span class="p">(</span>
-    <span class="n">da_elv</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">da_msk</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">da_elv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">gdf_include</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">gdf_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">elv_min</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">elv_max</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">connectivity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="n">all_touched</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Returns a boolean mask model boundary cells, optionally bounded by several</span>
 <span class="sd">    criteria. Boundary cells are defined by cells at the edge of active model domain.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    da_elv: xr.DataArray</span>
-<span class="sd">        Model elevation</span>
+<span class="sd">    da_msk, da_elv: xr.DataArray</span>
+<span class="sd">        Model mask and elevation data.</span>
+<span class="sd">    gdf_mask: geopandas.GeoDataFrame, optional</span>
+<span class="sd">        Geometry describing the initial region constraining model boundary cells.</span>
 <span class="sd">    gdf_include, gdf_exclude: geopandas.GeoDataFrame</span>
 <span class="sd">        Geometries with areas to include/exclude from the model boundary.</span>
+<span class="sd">        Note that exclude (second last) and include (last) areas are processed after other critera,</span>
+<span class="sd">        i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.</span>
 <span class="sd">    elv_min, elv_max : float, optional</span>
 <span class="sd">        Minimum and maximum elevation thresholds for boundary cells.</span>
 <span class="sd">    connectivity: {4, 8}</span>
 <span class="sd">        The connectivity used to detect the model edge, if 4 only horizontal and vertical</span>
 <span class="sd">        connections are used, if 8 (default) also diagonal connections.</span>
+<span class="sd">    all_touched: bool, optional</span>
+<span class="sd">        if True (default) include (or exclude) a cell in the mask if it touches any of the</span>
+<span class="sd">        include (or exclude) geometries. If False, include a cell only if its center is</span>
+<span class="sd">        within one of the shapes, or if it is selected by Bresenham&#39;s line algorithm.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    bounds: xr.DataArray</span>
 <span class="sd">        Boolean mask of model boundary cells.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">elv_min</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="ow">or</span> <span class="n">da_elv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;da_elv required&quot;</span>
     <span class="n">s</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">connectivity</span> <span class="o">==</span> <span class="mi">4</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
-    <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_elv</span> <span class="o">!=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
-    <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_erosion</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">s</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">gdf_include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">da_include</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_include</span><span class="p">)</span>
-        <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_include</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">gdf_exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">da_exclude</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_exclude</span><span class="p">)</span>
-        <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">da_exclude</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_msk</span> <span class="o">!=</span> <span class="n">da_msk</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
+    <span class="n">bounds0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_erosion</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">s</span><span class="p">))</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">gdf_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_msk</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_mask</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">_msk</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">elv_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_elv</span> <span class="o">&gt;=</span> <span class="n">elv_min</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">da_elv</span> <span class="o">&gt;=</span> <span class="n">elv_min</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">elv_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_elv</span> <span class="o">&lt;=</span> <span class="n">elv_max</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">da_elv</span> <span class="o">&lt;=</span> <span class="n">elv_max</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">gdf_exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">da_exclude</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_exclude</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="o">~</span><span class="n">da_exclude</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">gdf_include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">da_include</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_include</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">bounds0</span><span class="p">,</span> <span class="n">da_include</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">bounds</span></div>
 
 

@@ -166,7 +166,7 @@ Derived ‘uparea’ and ‘flwdir’ maps are saved in the GIS folder and can b
 <section id="changed">
 <h3>Changed<a class="headerlink" href="#changed" title="Permalink to this headline"></a></h3>
 <ul class="simple">
-<li><p><cite>setup_mask</cite> and <cite>setup_bounds</cite> both have include- and exclude polygon and min- and max elevation arguments to determine valid / boundary cells.</p></li>
+<li><p><cite>setup_mask</cite> and <cite>setup_bounds</cite> both have a mask_fn, include_mask_fn and exclude_mask_fn polygon and min_elv and max_elv elevation arguments to determine valid / boundary cells.</p></li>
 <li><p><cite>setup_mask</cite> and <cite>setup_bounds</cite> have a reset_mask and reset_bounds option respectively to start with a clean mask or remove previously set boundary cells.</p></li>
 <li><p><cite>setup_mask</cite> takes a new <cite>drop_area</cite> argument to drop regions of contiguous cells smaller than this maximum area threshold, useful to remove (spurious) small islands.</p></li>
 <li><p><cite>setup_mask</cite> takes a new <cite>fill_area</cite> argument to fill regions of contiguous cells below the <cite>min_elv</cite> or above <cite>max_elv</cite> threshold surrounded by cells within the valid elevation range.</p></li>
@@ -178,6 +178,7 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 </dd>
 </dl>
 </li>
+<li><p><cite>setup_river_inflow</cite> has a closed_bounds_buffer to make sure boundary cells within a radius from source points are closed.</p></li>
 <li><p><cite>write_config</cite> has a new <cite>rel_path</cite> argument that allows you to write sfincs.inp with references to model files in the root and rel_path directory.</p></li>
 <li><p>Write dep file with cm accuracy. This should be sufficient but also hides differences between linux and window builds.</p></li>
 <li><p>Exposed <cite>interp_method</cite> argument in <cite>setup_merge_topobathy</cite> to select interpolation method for fill NaNs.</p></li>

@@ -442,26 +442,17 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/plots.py:221: FutureWarning: Currently, index_parts defaults to True, but in the future, it will default to False to be consistent with Pandas. Use `index_parts=True` to keep the current behavior and True/False to silence the warning.
-  gdf_msk = gpd.overlay(
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_sfincs_results_hmax_6_1.png" src="../_images/_examples_sfincs_results_hmax_6_1.png" />
+<img alt="../_images/_examples_sfincs_results_hmax_6_0.png" src="../_images/_examples_sfincs_results_hmax_6_0.png" />
 </div>
 </div>
 </section>
 <section id="Write-maximum-waterdepth-to-geotiff-file">
 <h2>Write maximum waterdepth to geotiff file<a class="headerlink" href="#Write-maximum-waterdepth-to-geotiff-file" title="Permalink to this headline"></a></h2>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
@@ -474,15 +465,6 @@ div.rendered_html tbody tr:hover {
 <span class="c1"># hmax.raster.to_raster(join(mod.root, &#39;gis&#39;, &#39;hmax.tif&#39;), compress=&#39;LZW&#39;)</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/dask/array/reductions.py:567: RuntimeWarning: All-NaN slice encountered
-  return np.nanmax(x_chunk, axis=axis, keepdims=keepdims)
-</pre></div></div>
 </div>
 </section>
 <section id="Plot-maximum-water-depth-with-surface-water-mask">
@@ -556,15 +538,6 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/dask/array/reductions.py:567: RuntimeWarning: All-NaN slice encountered
-  return np.nanmax(x_chunk, axis=axis, keepdims=keepdims)
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
@@ -577,7 +550,7 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_sfincs_results_hmax_14_2.png" src="../_images/_examples_sfincs_results_hmax_14_2.png" />
+<img alt="../_images/_examples_sfincs_results_hmax_14_1.png" src="../_images/_examples_sfincs_results_hmax_14_1.png" />
 </div>
 </div>
 </section>

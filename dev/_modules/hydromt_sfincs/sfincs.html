@@ -395,6 +395,7 @@
 
 <div class="viewcode-block" id="SfincsModel.setup_mask"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_mask.html#hydromt_sfincs.SfincsModel.setup_mask">[docs]</a>    <span class="k">def</span> <span class="nf">setup_mask</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
+        <span class="n">mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">include_mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">exclude_mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">elv_min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -417,7 +418,7 @@
 <span class="sd">        maximum elevation threshhold.</span>
 <span class="sd">        All conditions are combined using a logical AND operation.</span>
 
-<span class="sd">        NOTE: Inactive cells are set to nodata values in all staticmaps!</span>
+<span class="sd">        NOTE: Inactive cells are set to nodata values in all staticmaps which cannot be undone!</span>
 
 <span class="sd">        Sets model layers:</span>
 
@@ -425,9 +426,13 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
+<span class="sd">        mask_fn: str, optional</span>
+<span class="sd">            Path or data source name of polygons describing the initial region with active model cells.</span>
+<span class="sd">            If not given, the initial active model cells are based on valid elevation cells.</span>
 <span class="sd">        include_mask_fn, exclude_mask_fn: str, optional</span>
-<span class="sd">            Path or data source name for geometries with polygons to include/exclude</span>
-<span class="sd">            from the model domain.</span>
+<span class="sd">            Path or data source name of polygons to include/exclude from the active model domain.</span>
+<span class="sd">            Note that exclude (second last) and include (last) areas are processed after other critera,</span>
+<span class="sd">            i.e. `elv_min`, `elv_max` and `drop_area`, and thus overrule these criteria for active model cells.</span>
 <span class="sd">        elv_min, elv_max : float, optional</span>
 <span class="sd">            Minimum and maximum elevation thresholds for active model cells.</span>
 <span class="sd">        fill_area : float, optional</span>
@@ -435,7 +440,7 @@
 <span class="sd">            by cells within the valid elevation range to be kept as active cells, by default 10 km2.</span>
 <span class="sd">        drop_area : float, optional</span>
 <span class="sd">            Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.</span>
-<span class="sd">        connectivity: {4, 8}</span>
+<span class="sd">        connectivity, {4, 8}:</span>
 <span class="sd">            The connectivity used to define contiguous cells, if 4 only horizontal and vertical</span>
 <span class="sd">            connections are used, if 8 (default) also diagonal connections.</span>
 <span class="sd">        all_touched: bool, optional</span>
@@ -443,22 +448,26 @@
 <span class="sd">            include (or exclude) geometries. If False, include a cell only if its center is</span>
 <span class="sd">            within one of the shapes, or if it is selected by Bresenham&#39;s line algorithm.</span>
 <span class="sd">        reset_mask: bool, optional</span>
-<span class="sd">            If True, reset existing mask layer setting all valid elevation values to</span>
-<span class="sd">            active cells, by default False.</span>
+<span class="sd">            If True, reset existing mask layer. If False (default) updating existing mask.</span>
+<span class="sd">            Note that previously set inactive cells can not be reset to active cells.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">reset_mask</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">:</span>  <span class="c1"># reset</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_staticmaps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_staticmaps</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">])</span>
 
         <span class="c1"># read geometries</span>
-        <span class="n">gdf1</span><span class="p">,</span> <span class="n">gdf2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="n">gdf0</span><span class="p">,</span> <span class="n">gdf1</span><span class="p">,</span> <span class="n">gdf2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span><span class="o">.</span><span class="n">total_bounds</span>
+        <span class="k">if</span> <span class="n">mask_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gdf0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">mask_fn</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">include_mask_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">gdf1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">include_mask_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)</span>
+            <span class="n">gdf1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">include_mask_fn</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">exclude_mask_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">gdf2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">exclude_mask_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)</span>
+            <span class="n">gdf2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">exclude_mask_fn</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
 
         <span class="c1"># get mask</span>
         <span class="n">da_mask</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">mask_topobathy</span><span class="p">(</span>
             <span class="n">da_elv</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]],</span>
+            <span class="n">gdf_mask</span><span class="o">=</span><span class="n">gdf0</span><span class="p">,</span>
             <span class="n">gdf_include</span><span class="o">=</span><span class="n">gdf1</span><span class="p">,</span>
             <span class="n">gdf_exclude</span><span class="o">=</span><span class="n">gdf2</span><span class="p">,</span>
             <span class="n">elv_min</span><span class="o">=</span><span class="n">elv_min</span><span class="p">,</span>
@@ -487,6 +496,7 @@
 <div class="viewcode-block" id="SfincsModel.setup_bounds"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_bounds.html#hydromt_sfincs.SfincsModel.setup_bounds">[docs]</a>    <span class="k">def</span> <span class="nf">setup_bounds</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;waterlevel&quot;</span><span class="p">,</span>
+        <span class="n">mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">include_mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">exclude_mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">elv_min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -515,18 +525,21 @@
 <span class="sd">        ----------</span>
 <span class="sd">        btype: {&#39;waterlevel&#39;, &#39;outflow&#39;}</span>
 <span class="sd">            Boundary type</span>
+<span class="sd">        mask_fn: str, optional</span>
+<span class="sd">            Path or data source name of polygons describing the initial region constraining model boundary cells.</span>
 <span class="sd">        include_mask_fn, exclude_mask_fn: str, optional</span>
-<span class="sd">            Path or data source name for geometries with areas to include/exclude</span>
-<span class="sd">            from the model boundary.</span>
+<span class="sd">            Path or data source name for geometries with areas to include/exclude from the model boundary.</span>
+<span class="sd">            Note that exclude (second last) and include (last) areas are processed after other critera,</span>
+<span class="sd">            i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.</span>
 <span class="sd">        elv_min, elv_max : float, optional</span>
 <span class="sd">            Minimum and maximum elevation thresholds for boundary cells.</span>
-<span class="sd">        include_buffer: float, optional</span>
-<span class="sd">            If larger than zero, extend the include geometry with a buffer [m],</span>
+<span class="sd">        mask_buffer: float, optional</span>
+<span class="sd">            If larger than zero, extend the `mask_fn` geometry with a buffer [m],</span>
 <span class="sd">            by default 0.</span>
 <span class="sd">        reset_bounds: bool, optional</span>
 <span class="sd">            If True, reset existing boundary cells of the selected boundary</span>
 <span class="sd">            type (`btype`) before setting new boundary cells, by default False.</span>
-<span class="sd">        connectivity: {4, 8}</span>
+<span class="sd">        connectivity, {4, 8}:</span>
 <span class="sd">            The connectivity used to detect the model edge, if 4 only horizontal and vertical</span>
 <span class="sd">            connections are used, if 8 (default) also diagonal connections.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -536,22 +549,23 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;btype must be one of &quot;waterlevel&quot;, &quot;outflow&quot;&#39;</span><span class="p">)</span>
         <span class="n">bvalue</span> <span class="o">=</span> <span class="n">bvalues</span><span class="p">[</span><span class="n">btype</span><span class="p">]</span>
 
-        <span class="c1"># get include / exclude geometries</span>
-        <span class="n">gdf_include</span><span class="p">,</span> <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">include_mask_fn</span><span class="p">:</span>
-            <span class="n">gdf_include</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                <span class="n">include_mask_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="c1"># get mask / include / exclude geometries</span>
+        <span class="n">gdf0</span><span class="p">,</span> <span class="n">gdf_include</span><span class="p">,</span> <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span><span class="o">.</span><span class="n">total_bounds</span>
+        <span class="k">if</span> <span class="n">mask_fn</span><span class="p">:</span>
+            <span class="n">gdf0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">mask_fn</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">include_buffer</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># NOTE assumes model in projected CRS!</span>
-                <span class="n">gdf_include</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_include</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">include_buffer</span><span class="p">)</span>
+                <span class="n">gdf0</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf0</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">include_buffer</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_mask_fn</span><span class="p">:</span>
+            <span class="n">gdf_include</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">include_mask_fn</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">exclude_mask_fn</span><span class="p">:</span>
-            <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                <span class="n">exclude_mask_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+            <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">exclude_mask_fn</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
 
         <span class="c1"># mask values</span>
         <span class="n">bounds</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">mask_bounds</span><span class="p">(</span>
+            <span class="n">da_msk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
             <span class="n">da_elv</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">staticmaps</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]],</span>
+            <span class="n">gdf_mask</span><span class="o">=</span><span class="n">gdf0</span><span class="p">,</span>
             <span class="n">gdf_include</span><span class="o">=</span><span class="n">gdf_include</span><span class="p">,</span>
             <span class="n">gdf_exclude</span><span class="o">=</span><span class="n">gdf_exclude</span><span class="p">,</span>
             <span class="n">elv_min</span><span class="o">=</span><span class="n">elv_min</span><span class="p">,</span>
@@ -848,6 +862,7 @@
         <span class="n">hydrography_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">river_upa</span><span class="o">=</span><span class="mf">25.0</span><span class="p">,</span>
         <span class="n">river_len</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span>
+        <span class="n">closed_bounds_buffer</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span>
         <span class="n">keep_rivers_geom</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
     <span class="p">):</span>
@@ -860,6 +875,7 @@
 
 <span class="sd">        * **src** geoms: discharge boundary point locations</span>
 <span class="sd">        * **dis** forcing: dummy discharge timeseries</span>
+<span class="sd">        * **mask** map: SFINCS mask layer (only if `closed_bounds_buffer` &gt; 0)</span>
 <span class="sd">        * **rivers_in** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)</span>
 
 <span class="sd">        Parameters</span>
@@ -872,6 +888,9 @@
 <span class="sd">            Minimum upstream area threshold for rivers [km2], by default 25.0</span>
 <span class="sd">        river_len: float, optional</span>
 <span class="sd">            Mimimum river length within the model domain threshhold [m], by default 1000 m.</span>
+<span class="sd">        closed_bounds_buffer: int, optional</span>
+<span class="sd">            The radius [m] around inflow points in which boundary cells are forced to</span>
+<span class="sd">            be closed (mask = 1), by default 1 km.</span>
 <span class="sd">        keep_rivers_geom: bool, optional</span>
 <span class="sd">            If True, keep a geometry of the rivers &quot;rivers_in&quot; in staticgeoms. By default False.</span>
 <span class="sd">        buffer: int, optional</span>
@@ -914,7 +933,24 @@
         <span class="k">if</span> <span class="n">keep_rivers_geom</span> <span class="ow">and</span> <span class="n">gdf_riv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">())</span>
             <span class="n">gdf_riv</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># one based index</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_staticgeoms</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivers_in&quot;</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_staticgeoms</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivers_in&quot;</span><span class="p">)</span>
+
+        <span class="c1"># update mask if closed_bounds_buffer &gt; 0</span>
+        <span class="k">if</span> <span class="n">closed_bounds_buffer</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># apply buffer</span>
+            <span class="n">gdf_src_buf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span>
+                <span class="n">geometry</span><span class="o">=</span><span class="n">gdf_src</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">closed_bounds_buffer</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">gdf_src</span><span class="o">.</span><span class="n">crs</span>
+            <span class="p">)</span>
+            <span class="c1"># find intersect of buffer and model grid</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">mask_bounds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">gdf_mask</span><span class="o">=</span><span class="n">gdf_src_buf</span><span class="p">)</span>
+            <span class="c1"># update model mask</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">bounds</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">bounds</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_staticmaps</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> closed (mask=1) boundary cells set around src points.&quot;</span>
+                <span class="p">)</span></div>
 
 <div class="viewcode-block" id="SfincsModel.setup_river_outflow"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_river_outflow.html#hydromt_sfincs.SfincsModel.setup_river_outflow">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_outflow</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -926,24 +962,18 @@
         <span class="n">keep_rivers_geom</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup river outflow boundary (msk=3) where a river flows out of the model domain.</span>
-
 <span class="sd">        Outflow points are based on a minimal upstream area threshold. Points within</span>
 <span class="sd">        half `outflow_width` of a discharge source point or neighboring a waterlevel</span>
 <span class="sd">        boundary cell are omitted.</span>
-
 <span class="sd">        NOTE: this method requires the either `hydrography_fn` input or `setup_river_hydrography` to be run first.</span>
 <span class="sd">        NOTE: best to run after `setup_mask`, `setup_bounds` and `setup_river_inflow`</span>
-
 <span class="sd">        Adds / edits model layers:</span>
-
 <span class="sd">        * **msk** map: edited by adding outflow points (msk=3)</span>
 <span class="sd">        * **river_out** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)</span>
-
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        hydrography_fn: str, Path, optional</span>
 <span class="sd">            Path or data source name for hydrography raster data, by default &#39;merit_hydro&#39;.</span>
-
 <span class="sd">            * Required layers: [&#39;uparea&#39;, &#39;flwdir&#39;].</span>
 <span class="sd">        outflow_width: int, optional</span>
 <span class="sd">            The width [m] of the outflow boundary in the SFINCS msk file.</span>
@@ -1008,8 +1038,12 @@
             <span class="n">idx_drop</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">sjoin</span><span class="p">(</span><span class="n">gdf_out_buf</span><span class="p">,</span> <span class="n">gdf_src</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
             <span class="k">if</span> <span class="n">idx_drop</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">gdf_out_buf</span> <span class="o">=</span> <span class="n">gdf_out_buf</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">idx_drop</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">idx_drop</span><span class="o">.</span><span class="n">size</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> outflow (mask=3) boundary cells dropped.&quot;</span>
+                <span class="p">)</span>
+
         <span class="c1"># find intersect of buffer and model grid</span>
-        <span class="n">bounds</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">mask_bounds</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">gdf_include</span><span class="o">=</span><span class="n">gdf_out_buf</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">mask_bounds</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">gdf_mask</span><span class="o">=</span><span class="n">gdf_out_buf</span><span class="p">)</span>
         <span class="c1"># update model mask</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">append_bounds</span><span class="p">:</span>  <span class="c1"># reset existing outflow boundary cells</span>
             <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_mask</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
@@ -1665,6 +1699,8 @@
         <span class="n">variable</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span>
         <span class="n">shaded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">plot_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">plot_region</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">plot_geoms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">bmap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sat&quot;</span><span class="p">,</span>
         <span class="n">zoomlevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span>
         <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1691,6 +1727,10 @@
 <span class="sd">            Add shade to variable (only for variable = &#39;dep&#39;), by default True</span>
 <span class="sd">        plot_bounds : bool, optional</span>
 <span class="sd">            Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.</span>
+<span class="sd">        plot_region : bool, optional</span>
+<span class="sd">            If True, plot region outline.</span>
+<span class="sd">        plot_geoms : bool, optional</span>
+<span class="sd">            If True, plot available geoms.</span>
 <span class="sd">        bmap : {&#39;sat&#39;, &#39;&#39;}</span>
 <span class="sd">            background map, by default &quot;sat&quot;</span>
 <span class="sd">        zoomlevel : int, optional</span>
@@ -1728,6 +1768,8 @@
             <span class="n">variable</span><span class="o">=</span><span class="n">variable</span><span class="p">,</span>
             <span class="n">shaded</span><span class="o">=</span><span class="n">shaded</span><span class="p">,</span>
             <span class="n">plot_bounds</span><span class="o">=</span><span class="n">plot_bounds</span><span class="p">,</span>
+            <span class="n">plot_region</span><span class="o">=</span><span class="n">plot_region</span><span class="p">,</span>
+            <span class="n">plot_geoms</span><span class="o">=</span><span class="n">plot_geoms</span><span class="p">,</span>
             <span class="n">bmap</span><span class="o">=</span><span class="n">bmap</span><span class="p">,</span>
             <span class="n">zoomlevel</span><span class="o">=</span><span class="n">zoomlevel</span><span class="p">,</span>
             <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span>
