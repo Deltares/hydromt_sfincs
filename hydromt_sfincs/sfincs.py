@@ -11,6 +11,7 @@ from shapely.geometry import box
 import pandas as pd
 import xarray as xr
 from typing import Dict, Tuple, List
+from scipy import ndimage
 
 import hydromt
 from hydromt.models.model_api import Model
@@ -121,6 +122,18 @@ class SfincsModel(Model):
         elif name in self._staticmaps:
             da_mask = self.staticmaps[name]
         return da_mask
+
+    def setup_basemaps(
+        self, basemaps_fn, res=100, crs="utm", reproj_method="bilinear", **kwargs
+    ):
+        self.logger.warning(
+            "'setup_basemaps' is deprecated use 'setup_topobathy instead'"
+        )
+        if kwargs:
+            self.logger.warning(f"{list(kwargs.keys())} arguments ignored")
+        self.setup_topobathy(
+            topobathy_fn=basemaps_fn, res=res, crs=crs, reproj_method=reproj_method
+        )
 
     def setup_topobathy(
         self,
@@ -321,6 +334,7 @@ class SfincsModel(Model):
         connectivity=8,
         all_touched=True,
         reset_mask=False,
+        **kwargs,  # to catch deprecated args
     ):
         """Creates mask of active model cells.
 
@@ -367,6 +381,10 @@ class SfincsModel(Model):
             If True, reset existing mask layer. If False (default) updating existing mask.
             Note that previously set inactive cells can not be reset to active cells.
         """
+        if "active_mask_fn" in kwargs:
+            self.logger.warning("'active_mask_fn' is deprecated use 'mask_fn' instead.")
+            mask_fn = kwargs.pop("active_mask_fn")
+
         if reset_mask and self._MAPS["mask"] in self.staticmaps:  # reset
             self._staticmaps = self._staticmaps.drop_vars(self._MAPS["mask"])
 
@@ -417,7 +435,7 @@ class SfincsModel(Model):
         exclude_mask_fn=None,
         elv_min=None,
         elv_max=None,
-        include_buffer=0,
+        mask_buffer=0,
         connectivity=8,
         reset_bounds=False,
     ):
@@ -470,8 +488,8 @@ class SfincsModel(Model):
         bbox = self.region.to_crs(4326).total_bounds
         if mask_fn:
             gdf0 = self.data_catalog.get_geodataframe(mask_fn, bbox=bbox)
-            if include_buffer > 0:  # NOTE assumes model in projected CRS!
-                gdf0["geometry"] = gdf0.to_crs(self.crs).buffer(include_buffer)
+            if mask_buffer > 0:  # NOTE assumes model in projected CRS!
+                gdf0["geometry"] = gdf0.to_crs(self.crs).buffer(mask_buffer)
         if include_mask_fn:
             gdf_include = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
         if exclude_mask_fn:
@@ -494,6 +512,14 @@ class SfincsModel(Model):
         if reset_bounds:  # reset existing boundary cells
             self.logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
             da_mask = da_mask.where(da_mask != np.uint8(bvalue), np.uint8(1))
+        # avoid any msk3 cells neighboring msk2 cells
+        if bvalue == 3 and np.any(da_mask == 2):
+            msk2_dilated = ndimage.binary_dilation(
+                (da_mask == 2).values,
+                structure=np.ones((3, 3)),
+                iterations=1,  # minimal one cell distance between msk2 and msk3 cells
+            )
+            bounds = bounds.where(~msk2_dilated, False)
         ncells = np.count_nonzero(bounds.values)
         if ncells > 0:
             da_mask = da_mask.where(~bounds, np.uint8(bvalue))
@@ -779,9 +805,10 @@ class SfincsModel(Model):
         hydrography_fn=None,
         river_upa=25.0,
         river_len=1e3,
-        closed_bounds_buffer=1e3,
+        river_width=2e3,
         keep_rivers_geom=False,
         buffer=10,
+        **kwargs,  # catch deprecated args
     ):
         """Setup river inflow (source) points where a river enters the model domain.
 
@@ -792,7 +819,7 @@ class SfincsModel(Model):
 
         * **src** geoms: discharge boundary point locations
         * **dis** forcing: dummy discharge timeseries
-        * **mask** map: SFINCS mask layer (only if `closed_bounds_buffer` > 0)
+        * **mask** map: SFINCS mask layer (only if `river_width` > 0)
         * **rivers_in** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)
 
         Parameters
@@ -804,15 +831,22 @@ class SfincsModel(Model):
         river_upa : float, optional
             Minimum upstream area threshold for rivers [km2], by default 25.0
         river_len: float, optional
-            Mimimum river length within the model domain threshhold [m], by default 1000 m.
-        closed_bounds_buffer: int, optional
-            The radius [m] around inflow points in which boundary cells are forced to
-            be closed (mask = 1), by default 1 km.
+            Mimimum river length within the model domain threshhold [m], by default 1 km.
+        river_width: float, optional
+            Estimated constant width [m] of the inflowing river. Boundary cells within
+            half the width are forced to be closed (mask = 1) to avoid instabilities with
+            nearby open or waterlevel boundary cells, by default 1 km.
         keep_rivers_geom: bool, optional
             If True, keep a geometry of the rivers "rivers_in" in staticgeoms. By default False.
         buffer: int, optional
             Buffer [no. of cells] around model domain, by default 10.
         """
+        if "basemaps_fn" in kwargs:
+            self.logger.warning(
+                "'basemaps_fn' is deprecated use 'hydrography_fn' instead."
+            )
+            hydrography_fn = kwargs.pop("basemaps_fn")
+
         if hydrography_fn is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography_fn,
@@ -853,10 +887,10 @@ class SfincsModel(Model):
             self.set_staticgeoms(gdf_riv, name="rivers_in")
 
         # update mask if closed_bounds_buffer > 0
-        if closed_bounds_buffer > 0:
+        if river_width > 0:
             # apply buffer
             gdf_src_buf = gpd.GeoDataFrame(
-                geometry=gdf_src.buffer(closed_bounds_buffer), crs=gdf_src.crs
+                geometry=gdf_src.buffer(river_width / 2), crs=gdf_src.crs
             )
             # find intersect of buffer and model grid
             bounds = utils.mask_bounds(self.mask, gdf_mask=gdf_src_buf)
@@ -873,28 +907,33 @@ class SfincsModel(Model):
         self,
         hydrography_fn=None,
         river_upa=25.0,
-        river_len=1000,
-        outflow_width=2000,
+        river_len=1e3,
+        river_width=2e3,
         append_bounds=False,
         keep_rivers_geom=False,
+        **kwargs,  # catch deprecated arguments
     ):
-        """Setup river outflow boundary (msk=3) where a river flows out of the model domain.
-        Outflow points are based on a minimal upstream area threshold. Points within
-        half `outflow_width` of a discharge source point or neighboring a waterlevel
-        boundary cell are omitted.
+        """Setup open boundary cells (mask=3) where a river flows out of the model domain.
+
+        Outflow locations are based on a minimal upstream area threshold. Locations within
+        half `river_width` of a discharge source point or waterlevel boundary cells are omitted.
+
         NOTE: this method requires the either `hydrography_fn` input or `setup_river_hydrography` to be run first.
         NOTE: best to run after `setup_mask`, `setup_bounds` and `setup_river_inflow`
+
         Adds / edits model layers:
+
         * **msk** map: edited by adding outflow points (msk=3)
         * **river_out** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)
+
         Parameters
         ----------
         hydrography_fn: str, Path, optional
             Path or data source name for hydrography raster data, by default 'merit_hydro'.
             * Required layers: ['uparea', 'flwdir'].
-        outflow_width: int, optional
-            The width [m] of the outflow boundary in the SFINCS msk file.
-            By default 2km, i.e.: 1km to each side of the outflow point.
+        river_width: int, optional
+            The width [m] of the open boundary cells in the SFINCS msk file.
+            By default 2km, i.e.: 1km to each side of the outflow location.
         river_upa : float, optional
             Minimum upstream area threshold for rivers [km2], by default 25.0
         river_len: float, optional
@@ -905,6 +944,17 @@ class SfincsModel(Model):
         keep_rivers_geom: bool, optional
             If True, keep a geometry of the rivers "rivers_out" in staticgeoms. By default False.
         """
+        if "outflow_width" in kwargs:
+            self.logger.warning(
+                "'outflow_width' is deprecated use 'river_width' instead."
+            )
+            river_width = kwargs.pop("outflow_width")
+        if "basemaps_fn" in kwargs:
+            self.logger.warning(
+                "'basemaps_fn' is deprecated use 'hydrography_fn' instead."
+            )
+            hydrography_fn = kwargs.pop("basemaps_fn")
+
         if hydrography_fn is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography_fn,
@@ -935,19 +985,24 @@ class SfincsModel(Model):
         if len(gdf_out.index) == 0:
             return
 
-        # remove points near waterlevel boundary cells
+        # apply buffer
         gdf_out = gdf_out.to_crs(self.crs.to_epsg())  # assumes projected CRS
+        gdf_out_buf = gpd.GeoDataFrame(
+            geometry=gdf_out.buffer(river_width / 2.0), crs=gdf_out.crs
+        )
+        # remove points near waterlevel boundary cells
         da_mask = self.mask
-        msk_wdw = da_mask.raster.sample(gdf_out, wdw=1)
-        gdf_out = gdf_out[~(msk_wdw == 2).any("wdw").values]
+        msk2 = (da_mask == 2).astype(np.int8)
+        msk_wdw = msk2.raster.zonal_stats(gdf_out_buf, stats="max")
+        bool_drop = (msk_wdw[f"{da_mask.name}_max"] == 1).values
+        if np.any(bool_drop):
+            self.logger.debug(
+                f"{int(sum(bool_drop)):d} outflow (mask=3) boundary cells near water level (mask=2) boundary cells dropped."
+            )
+            gdf_out = gdf_out[~bool_drop]
         if len(gdf_out.index) == 0:
             self.logger.debug(f"0 outflow (mask=3) boundary cells set.")
             return
-
-        # apply buffer
-        gdf_out_buf = gpd.GeoDataFrame(
-            geometry=gdf_out.buffer(outflow_width / 2.0), crs=gdf_out.crs
-        )
         # remove outflow points near source points
         fname = self._FORCING["discharge"][0]
         if fname in self.forcing:
@@ -956,7 +1011,7 @@ class SfincsModel(Model):
             if idx_drop.size > 0:
                 gdf_out_buf = gdf_out_buf.drop(idx_drop)
                 self.logger.debug(
-                    f"{idx_drop.size:d} outflow (mask=3) boundary cells dropped."
+                    f"{idx_drop.size:d} outflow (mask=3) boundary cells near src points dropped."
                 )
 
         # find intersect of buffer and model grid
@@ -1372,6 +1427,7 @@ class SfincsModel(Model):
         wdw=1,
         rel_error=0.05,
         abs_error=50,
+        **kwargs,  # catch deprecated args
     ):
         """Setup discharge boundary location (src) and timeseries (dis) based on a
         gridded discharge dataset.
@@ -1414,6 +1470,13 @@ class SfincsModel(Model):
             between the discharge boundary location upstream area and the upstream area of
             the best fit grid cell, only used if "discharge" staticgeoms has a "uparea" column.
         """
+        if "max_error" in kwargs:
+            self.logger.warning(
+                "'max_error' is deprecated use 'rel_error' and 'abs_error' instead."
+            )
+            rel_error = kwargs.pop("max_error")
+            abs_error = 0  # mimic old behaviour
+
         name = "discharge"
         fname = self._FORCING[name][0]
         if locs_fn is not None:
