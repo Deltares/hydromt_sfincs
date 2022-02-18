@@ -5,8 +5,8 @@ All notable changes to this project will be documented in this page.
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
-v0.2.1 (2 August 2021)
-----------------------
+v0.2.1 (18 February 2022)
+-------------------------
 
 Deprecated
 ^^^^^^^^^^

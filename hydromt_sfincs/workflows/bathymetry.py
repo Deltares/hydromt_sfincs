@@ -259,10 +259,11 @@ def get_river_bathymetry(
     max_dist : float, optional
         Maximum distance threshold to spatially merge `gdf_riv` and `gdf_qbf`, by default 100.0
     rivbank: bool, optional
-        Estimate river bank elevation to approxamimate the river surface elevation and as
-        reference level to the river depth.
+        If True (default), approximate the reference elevation for the river depth based
+        on the river bankfull elevation at cells neighboring river cells. Otherwise
+        use the elevation of the local river cell as reference level.
     rivbankq : float, optional
-        quantile [1-100] for river bank estimation, by default 25.0
+        quantile [1-100] for river bank estimation, by default 25
     constrain_estuary : bool, optional
         If True (default) fix the river depth in estuaries based on the upstream river depth.
     constrain_rivbed : bool, optional

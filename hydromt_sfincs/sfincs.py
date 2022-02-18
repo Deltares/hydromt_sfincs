@@ -616,6 +616,8 @@ class SfincsModel(Model):
         river_len=1000,
         min_rivwth=50.0,
         min_rivdph=1.0,
+        rivbank=True,
+        rivbankq=25,
         segment_length=3e3,
         smooth_length=10e3,
         constrain_rivbed=True,
@@ -628,18 +630,26 @@ class SfincsModel(Model):
 
         NOTE: this method is experimental and may change in the near future.
 
-        If a river segment geometry file `river_geom_fn` with bedlevel column ("zb") is
-        provided, this is used directly to set the river cell elevation. River cells are
-        based on the `river_mask_fn` raster file, or the rasterized segments, optionally
-        buffered with half a river width ("rivwth") if that attribute column is in `river_geom_fn`.
+        River cells are based on the `river_mask_fn` raster file if `rivwth_method='mask'`,
+        or if `rivwth_method='geom'` the rasterized segments buffered with half a river width
+        ("rivwth" [m]) if that attribute is found in `river_geom_fn`.
 
-        Otherwise a river depth is estimated based on bankfull discharge ("qbankfull").
-        The bankfull discharge is set from the nearest river segment of `river_geom_fn`
-        or `qbankfull_fn` upstream river boundary  points.
-        The river depth is relative to the bankfull water surface elevation profile,
-        which is estimated from the river bank levels per river segment.
-        This option requires the flow direction ("flwdir") and upstream area
-        ("uparea") maps to be set using the "setup_river_hydrography" method.
+        If a river segment geometry file `river_geom_fn` with bedlevel column ("zb" [m+REF]) or
+        a river depth ("rivdph" [m]) in combination with `rivdph_method='geom'` is provided,
+        this attribute is used directly.
+
+        Otherwise, a river depth is estimated based on bankfull discharge ("qbankfull" [m3/s])
+        attribute taken from the nearest river segment in `river_geom_fn` or `qbankfull_fn`
+        upstream river boundary points if provided.
+
+        The river depth is relative to the bankfull elevation profile if `rivbank=True` (default),
+        which is estimated as the `rivbankq` elevation percentile [0-100] of cells neighboring river cells.
+        This option requires the flow direction ("flwdir") and upstream area ("uparea") maps to be set
+        using the "setup_river_hydrography" method. If `rivbank=False` the depth is simply subtracted
+        from the elevation of river cells.
+
+        Missing river width and river depth values are filled by propagating valid values downstream and
+        using the constant minimum values `min_rivwth` and `min_rivdph` for the remaining missing values.
 
         Updates model layer:
 
@@ -656,7 +666,8 @@ class SfincsModel(Model):
             Line geometry with river attribute data.
 
             * Required variable for direct bed level burning: ['zb']
-            * Variables used for bed level estimates: ['qbankfull', 'rivwth']
+            * Required variable for direct river depth burning: ['rivdph'] (only in combination with rivdph_method='geom')
+            * Variables used for river depth estimates: ['qbankfull', 'rivwth']
 
         river_mask_fn : str, optional
             River mask raster used to define river cells
@@ -676,6 +687,12 @@ class SfincsModel(Model):
             Mimimum river length within the model domain threshhold [m], by default 1000 m.
         min_rivwth, min_rivdph: float, optional
             Minimum river width [m] (by default 50.0) and depth [m] (by default 1.0)
+        rivbank: bool, optional
+            If True (default), approximate the reference elevation for the river depth based
+            on the river bankfull elevation at cells neighboring river cells. Otherwise
+            use the elevation of the local river cell as reference level.
+        rivbankq : float, optional
+            quantile [1-100] for river bank estimation, by default 25
         segment_length : float, optional
             Approximate river segment length [m], by default 5e3
         smooth_length : float, optional
@@ -741,6 +758,8 @@ class SfincsModel(Model):
                 river_len=river_len,
                 min_rivdph=min_rivdph,
                 min_rivwth=min_rivwth,
+                rivbank=rivbank,
+                rivbankq=rivbankq,
                 segment_length=segment_length,
                 smooth_length=smooth_length,
                 elevtn_name=self._MAPS["elevtn"],
