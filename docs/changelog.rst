@@ -31,7 +31,7 @@ Changed (**Breaking**)
 
 Changed
 ^^^^^^^
-- `setup_mask` and `setup_bounds` both have include- and exclude polygon and min- and max elevation arguments to determine valid / boundary cells. 
+- `setup_mask` and `setup_bounds` both have a mask_fn, include_mask_fn and exclude_mask_fn polygon and min_elv and max_elv elevation arguments to determine valid / boundary cells. 
 - `setup_mask` and `setup_bounds` have a reset_mask and reset_bounds option respectively to start with a clean mask or remove previously set boundary cells.
 - `setup_mask` takes a new `drop_area` argument to drop regions of contiguous cells smaller than this maximum area threshold, useful to remove (spurious) small islands.
 - `setup_mask` takes a new `fill_area` argument to fill regions of contiguous cells below the `min_elv` or above `max_elv` threshold surrounded by cells within the valid elevation range.
@@ -40,6 +40,7 @@ Changed
 - `setup_river_inflow` and `setup_river_outflow` are now based on the same `workflows.river_boundary_points` method. 
    Both have a `river_upa` and `river_len` argument and the hydrography data is not required if `setup_river_hydrography` is ran beforehand.
    The model domain is also determined on-the-fly, thus it is not required to run setup_mask beforehand.
+- `setup_river_inflow` has a closed_bounds_buffer to make sure boundary cells within a radius from source points are closed.
 - `write_config` has a new `rel_path` argument that allows you to write sfincs.inp with references to model files in the root and rel_path directory.
 - Write dep file with cm accuracy. This should be sufficient but also hides differences between linux and window builds.
 - Exposed `interp_method` argument in `setup_merge_topobathy` to select interpolation method for fill NaNs.

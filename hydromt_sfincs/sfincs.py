@@ -311,6 +311,7 @@ class SfincsModel(Model):
 
     def setup_mask(
         self,
+        mask_fn=None,
         include_mask_fn=None,
         exclude_mask_fn=None,
         elv_min=None,
@@ -333,7 +334,7 @@ class SfincsModel(Model):
         maximum elevation threshhold.
         All conditions are combined using a logical AND operation.
 
-        NOTE: Inactive cells are set to nodata values in all staticmaps!
+        NOTE: Inactive cells are set to nodata values in all staticmaps which cannot be undone!
 
         Sets model layers:
 
@@ -341,9 +342,13 @@ class SfincsModel(Model):
 
         Parameters
         ----------
+        mask_fn: str, optional
+            Path or data source name of polygons describing the initial region with active model cells.
+            If not given, the initial active model cells are based on valid elevation cells.
         include_mask_fn, exclude_mask_fn: str, optional
-            Path or data source name for geometries with polygons to include/exclude
-            from the model domain.
+            Path or data source name of polygons to include/exclude from the active model domain.
+            Note that exclude (second last) and include (last) areas are processed after other critera,
+            i.e. `elv_min`, `elv_max` and `drop_area`, and thus overrule these criteria for active model cells.
         elv_min, elv_max : float, optional
             Minimum and maximum elevation thresholds for active model cells.
         fill_area : float, optional
@@ -351,7 +356,7 @@ class SfincsModel(Model):
             by cells within the valid elevation range to be kept as active cells, by default 10 km2.
         drop_area : float, optional
             Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.
-        connectivity: {4, 8}
+        connectivity, {4, 8}:
             The connectivity used to define contiguous cells, if 4 only horizontal and vertical
             connections are used, if 8 (default) also diagonal connections.
         all_touched: bool, optional
@@ -359,22 +364,26 @@ class SfincsModel(Model):
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
         reset_mask: bool, optional
-            If True, reset existing mask layer setting all valid elevation values to
-            active cells, by default False.
+            If True, reset existing mask layer. If False (default) updating existing mask.
+            Note that previously set inactive cells can not be reset to active cells.
         """
         if reset_mask and self._MAPS["mask"] in self.staticmaps:  # reset
             self._staticmaps = self._staticmaps.drop_vars(self._MAPS["mask"])
 
         # read geometries
-        gdf1, gdf2 = None, None
+        gdf0, gdf1, gdf2 = None, None, None
+        bbox = self.region.to_crs(4326).total_bounds
+        if mask_fn is not None:
+            gdf0 = self.data_catalog.get_geodataframe(mask_fn, bbox=bbox)
         if include_mask_fn is not None:
-            gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, geom=self.region)
+            gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
         if exclude_mask_fn is not None:
-            gdf2 = self.data_catalog.get_geodataframe(exclude_mask_fn, geom=self.region)
+            gdf2 = self.data_catalog.get_geodataframe(exclude_mask_fn, bbox=bbox)
 
         # get mask
         da_mask = utils.mask_topobathy(
             da_elv=self.staticmaps[self._MAPS["elevtn"]],
+            gdf_mask=gdf0,
             gdf_include=gdf1,
             gdf_exclude=gdf2,
             elv_min=elv_min,
@@ -403,6 +412,7 @@ class SfincsModel(Model):
     def setup_bounds(
         self,
         btype="waterlevel",
+        mask_fn=None,
         include_mask_fn=None,
         exclude_mask_fn=None,
         elv_min=None,
@@ -431,18 +441,21 @@ class SfincsModel(Model):
         ----------
         btype: {'waterlevel', 'outflow'}
             Boundary type
+        mask_fn: str, optional
+            Path or data source name of polygons describing the initial region constraining model boundary cells.
         include_mask_fn, exclude_mask_fn: str, optional
-            Path or data source name for geometries with areas to include/exclude
-            from the model boundary.
+            Path or data source name for geometries with areas to include/exclude from the model boundary.
+            Note that exclude (second last) and include (last) areas are processed after other critera,
+            i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.
         elv_min, elv_max : float, optional
             Minimum and maximum elevation thresholds for boundary cells.
-        include_buffer: float, optional
-            If larger than zero, extend the include geometry with a buffer [m],
+        mask_buffer: float, optional
+            If larger than zero, extend the `mask_fn` geometry with a buffer [m],
             by default 0.
         reset_bounds: bool, optional
             If True, reset existing boundary cells of the selected boundary
             type (`btype`) before setting new boundary cells, by default False.
-        connectivity: {4, 8}
+        connectivity, {4, 8}:
             The connectivity used to detect the model edge, if 4 only horizontal and vertical
             connections are used, if 8 (default) also diagonal connections.
         """
@@ -452,22 +465,23 @@ class SfincsModel(Model):
             raise ValueError('btype must be one of "waterlevel", "outflow"')
         bvalue = bvalues[btype]
 
-        # get include / exclude geometries
-        gdf_include, gdf_exclude = None, None
-        if include_mask_fn:
-            gdf_include = self.data_catalog.get_geodataframe(
-                include_mask_fn, geom=self.region
-            ).to_crs(self.crs)
+        # get mask / include / exclude geometries
+        gdf0, gdf_include, gdf_exclude = None, None, None
+        bbox = self.region.to_crs(4326).total_bounds
+        if mask_fn:
+            gdf0 = self.data_catalog.get_geodataframe(mask_fn, bbox=bbox)
             if include_buffer > 0:  # NOTE assumes model in projected CRS!
-                gdf_include["geometry"] = gdf_include.buffer(include_buffer)
+                gdf0["geometry"] = gdf0.to_crs(self.crs).buffer(include_buffer)
+        if include_mask_fn:
+            gdf_include = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
         if exclude_mask_fn:
-            gdf_exclude = self.data_catalog.get_geodataframe(
-                exclude_mask_fn, geom=self.region
-            ).to_crs(self.crs)
+            gdf_exclude = self.data_catalog.get_geodataframe(exclude_mask_fn, bbox=bbox)
 
         # mask values
         bounds = utils.mask_bounds(
+            da_msk=self.mask,
             da_elv=self.staticmaps[self._MAPS["elevtn"]],
+            gdf_mask=gdf0,
             gdf_include=gdf_include,
             gdf_exclude=gdf_exclude,
             elv_min=elv_min,
@@ -765,6 +779,7 @@ class SfincsModel(Model):
         hydrography_fn=None,
         river_upa=25.0,
         river_len=1e3,
+        closed_bounds_buffer=1e3,
         keep_rivers_geom=False,
         buffer=10,
     ):
@@ -777,6 +792,7 @@ class SfincsModel(Model):
 
         * **src** geoms: discharge boundary point locations
         * **dis** forcing: dummy discharge timeseries
+        * **mask** map: SFINCS mask layer (only if `closed_bounds_buffer` > 0)
         * **rivers_in** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)
 
         Parameters
@@ -789,6 +805,9 @@ class SfincsModel(Model):
             Minimum upstream area threshold for rivers [km2], by default 25.0
         river_len: float, optional
             Mimimum river length within the model domain threshhold [m], by default 1000 m.
+        closed_bounds_buffer: int, optional
+            The radius [m] around inflow points in which boundary cells are forced to
+            be closed (mask = 1), by default 1 km.
         keep_rivers_geom: bool, optional
             If True, keep a geometry of the rivers "rivers_in" in staticgeoms. By default False.
         buffer: int, optional
@@ -833,6 +852,23 @@ class SfincsModel(Model):
             gdf_riv.index = gdf_riv.index.values + 1  # one based index
             self.set_staticgeoms(gdf_riv, name="rivers_in")
 
+        # update mask if closed_bounds_buffer > 0
+        if closed_bounds_buffer > 0:
+            # apply buffer
+            gdf_src_buf = gpd.GeoDataFrame(
+                geometry=gdf_src.buffer(closed_bounds_buffer), crs=gdf_src.crs
+            )
+            # find intersect of buffer and model grid
+            bounds = utils.mask_bounds(self.mask, gdf_mask=gdf_src_buf)
+            # update model mask
+            n = np.count_nonzero(bounds.values)
+            if n > 0:
+                da_mask = self.mask.where(~bounds, np.uint8(1))
+                self.set_staticmaps(da_mask, self._MAPS["mask"])
+                self.logger.debug(
+                    f"{n:d} closed (mask=1) boundary cells set around src points."
+                )
+
     def setup_river_outflow(
         self,
         hydrography_fn=None,
@@ -843,24 +879,18 @@ class SfincsModel(Model):
         keep_rivers_geom=False,
     ):
         """Setup river outflow boundary (msk=3) where a river flows out of the model domain.
-
         Outflow points are based on a minimal upstream area threshold. Points within
         half `outflow_width` of a discharge source point or neighboring a waterlevel
         boundary cell are omitted.
-
         NOTE: this method requires the either `hydrography_fn` input or `setup_river_hydrography` to be run first.
         NOTE: best to run after `setup_mask`, `setup_bounds` and `setup_river_inflow`
-
         Adds / edits model layers:
-
         * **msk** map: edited by adding outflow points (msk=3)
         * **river_out** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)
-
         Parameters
         ----------
         hydrography_fn: str, Path, optional
             Path or data source name for hydrography raster data, by default 'merit_hydro'.
-
             * Required layers: ['uparea', 'flwdir'].
         outflow_width: int, optional
             The width [m] of the outflow boundary in the SFINCS msk file.
@@ -925,8 +955,12 @@ class SfincsModel(Model):
             idx_drop = gpd.sjoin(gdf_out_buf, gdf_src, how="inner").index.values
             if idx_drop.size > 0:
                 gdf_out_buf = gdf_out_buf.drop(idx_drop)
+                self.logger.debug(
+                    f"{idx_drop.size:d} outflow (mask=3) boundary cells dropped."
+                )
+
         # find intersect of buffer and model grid
-        bounds = utils.mask_bounds(da_mask, gdf_include=gdf_out_buf)
+        bounds = utils.mask_bounds(da_mask, gdf_mask=gdf_out_buf)
         # update model mask
         if not append_bounds:  # reset existing outflow boundary cells
             da_mask = da_mask.where(da_mask != 3, np.uint8(1))
@@ -1590,6 +1624,8 @@ class SfincsModel(Model):
         variable: str = "dep",
         shaded: bool = True,
         plot_bounds: bool = True,
+        plot_region: bool = False,
+        plot_geoms: bool = True,
         bmap: str = "sat",
         zoomlevel: int = 11,
         figsize: Tuple[int] = None,
@@ -1616,6 +1652,10 @@ class SfincsModel(Model):
             Add shade to variable (only for variable = 'dep'), by default True
         plot_bounds : bool, optional
             Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
+        plot_region : bool, optional
+            If True, plot region outline.
+        plot_geoms : bool, optional
+            If True, plot available geoms.
         bmap : {'sat', ''}
             background map, by default "sat"
         zoomlevel : int, optional
@@ -1653,6 +1693,8 @@ class SfincsModel(Model):
             variable=variable,
             shaded=shaded,
             plot_bounds=plot_bounds,
+            plot_region=plot_region,
+            plot_geoms=plot_geoms,
             bmap=bmap,
             zoomlevel=zoomlevel,
             figsize=figsize,
