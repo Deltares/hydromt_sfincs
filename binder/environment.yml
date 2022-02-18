@@ -17,7 +17,7 @@ dependencies:
   # - git  # to install git repositories with pip
   - gdal>=3.1
   - geopandas
-#  - hydromt>=0.4.0
+  - hydromt>=0.4.5
   - jupyterlab # to run examples
   - netcdf4
   - matplotlib # to run examples
@@ -26,7 +26,7 @@ dependencies:
   - openpyxl
   - pandas
   - pip
-  - pyflwdir>=0.4.7
+  - pyflwdir>=0.5.5
   - pygeos>=0.8
   - python>=3.7
   - rasterio
@@ -34,6 +34,6 @@ dependencies:
   - scipy
   - xarray
   - zarr
-  - pip:
-    - git+https://github.com/Deltares/hydromt.git
+  # - pip:
+  #   - git+https://github.com/Deltares/hydromt.git
 

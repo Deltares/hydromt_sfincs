@@ -9,13 +9,13 @@ authors = [
     {name = "Tim Leijnse", email = "tim.leijnse@deltares.nl"},
 ]
 dependencies = [
-    "hydromt>=0.4.2",
     "dask",
     "geopandas >=0.8",
+    "hydromt>=0.4.5",
     "netcdf4",
     "numpy",
     "pandas",
-    "pyflwdir>=0.5.4",
+    "pyflwdir>=0.5.5",
     "pygeos",
     "rasterio",
     "scipy",
@@ -40,11 +40,11 @@ test = [
 	"responses",
 	"pytest>=2.7.3",
 	"pytest-cov",
+	"black",
 ]
 doc = [
 	"sphinx",
 	"sphinx_rtd_theme",
-	"black",
 ]
 
 [project.urls]
