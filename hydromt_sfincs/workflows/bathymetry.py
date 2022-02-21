@@ -167,8 +167,10 @@ def get_rivbank_dz(
         River and river-bank masks
     """
     # rasterize streams
+    gdf_riv = gdf_riv.copy()
     gdf_riv["segid"] = np.arange(1, gdf_riv.index.size + 1, dtype=np.int32)
-    segid = da_hnd.raster.rasterize(gdf_riv, "segid").astype(np.int32)
+    valid = gdf_riv.length > 0  # drop pits or any zero length segments
+    segid = da_hnd.raster.rasterize(gdf_riv[valid], "segid").astype(np.int32)
     segid.raster.set_nodata(0)
     segid.name = "segid"
     # NOTE: the assumption is that banks are found in cells adjacent to any da_msk cell
@@ -193,7 +195,7 @@ def get_rivbank_dz(
         index=gdf_riv["segid"].values,
         func=lambda x: 0 if x.size < nmin else np.percentile(x, q),
         out_dtype=da_hnd.dtype,
-        default=0,
+        default=-9999,
     )
     return rivbank_dz, da_riv_mask, da_bnk_mask
 
@@ -213,7 +215,8 @@ def get_river_bathymetry(
     smooth_length: float = 10e3,
     min_convergence: float = 0.01,
     max_dist: float = 100.0,
-    bankq: float = 25,
+    rivbank: bool = True,
+    rivbankq: float = 25,
     constrain_estuary: bool = True,
     constrain_rivbed: bool = True,
     elevtn_name: str = "elevtn",
@@ -237,8 +240,10 @@ def get_river_bathymetry(
         River attribute data with "qbankfull" and "rivwth" data, by default None
     gdf_qbf : gpd.GeoDataFrame, optional
         Bankfull river discharge data with "qbankfull" column, by default None
-    rivdph_method : {'gvf', 'manning', 'powlaw'}
+    rivdph_method : {'gvf', 'manning', 'powlaw', 'geom'}
         River depth estimate method, by default 'gvf'
+    rivwth_method : {'geom', 'mask'}
+        River width estimate method, by default 'mask'
     river_upa : float, optional
         Minimum upstream area threshold for rivers [km2], by default 100.0
     river_len: float, optional
@@ -253,8 +258,12 @@ def get_river_bathymetry(
         Minimum width convergence threshold to define estuaries [m/m], by default 0.01
     max_dist : float, optional
         Maximum distance threshold to spatially merge `gdf_riv` and `gdf_qbf`, by default 100.0
-    bankq : float, optional
-        quantile [1-100] for river bank estimation, by default 25.0
+    rivbank: bool, optional
+        If True (default), approximate the reference elevation for the river depth based
+        on the river bankfull elevation at cells neighboring river cells. Otherwise
+        use the elevation of the local river cell as reference level.
+    rivbankq : float, optional
+        quantile [1-100] for river bank estimation, by default 25
     constrain_estuary : bool, optional
         If True (default) fix the river depth in estuaries based on the upstream river depth.
     constrain_rivbed : bool, optional
@@ -263,7 +272,7 @@ def get_river_bathymetry(
     Returns
     -------
     gdf_riv: gpd.GeoDataFrame
-        River segments with bed level (bz) estimates
+        River segments with bed level (zb) estimates
     da_msk: xr.DataArray:
         River mask
     """
@@ -286,6 +295,7 @@ def get_river_bathymetry(
         mask=rivd8,
     )
     gdf_stream = gpd.GeoDataFrame.from_features(feats, crs=ds.raster.crs)
+    # gdf_stream = gdf_stream[gdf_stream['rivdst']>0]   # remove pits
     flw = pyflwdir.from_dataframe(gdf_stream.set_index("idx"))
     _ = flw.main_upstream(uparea=gdf_stream["uparea"].values)
 
@@ -304,11 +314,16 @@ def get_river_bathymetry(
         valid = dists < max_dist
         gdf_riv.loc[idx_nn[valid], "qbankfull"] = gdf_qbf["qbankfull"].values[valid]
         logger.info(f"{sum(valid)}/{len(idx_nn)} qbankfull boundary points set.")
-    assert "qbankfull" in gdf_riv.columns, 'gdf_riv has no "qbankfull" data'
-    check_rivwth = rivdph_method != "powlaw" or rivwth_method != "mask"
-    assert check_rivwth or "rivwth" in gdf_riv.columns, 'gdf_riv has no "rivwth" data'
+    check_q = rivdph_method == "geom"
+    assert check_q or "qbankfull" in gdf_riv.columns, 'gdf_riv has no "qbankfull" data'
     # propagate qbankfull and rivwth values
-    for col in ["qbankfull", "rivwth"]:
+    if rivwth_method == "geom" and "rivwth" not in gdf_riv.columns:
+        logger.info(f'Setting missing "rivwth" to min_rivwth {min_rivwth:.2f}m')
+        gdf_riv["rivwth"] = min_rivwth
+    if rivdph_method == "geom" and "rivdph" not in gdf_riv.columns:
+        logger.info(f'Setting missing "rivdph" to min_rivdph {min_rivdph:.2f}m')
+        gdf_riv["rivdph"] = min_rivdph
+    for col in ["qbankfull", "rivwth", "rivdph"]:
         if col not in gdf_riv.columns:
             continue
         data = gdf_riv[col].fillna(-9999)
@@ -316,7 +331,7 @@ def get_river_bathymetry(
         gdf_riv[col] = np.maximum(0, data)
 
     # create river mask with river polygon
-    if rivmsk_name not in ds and "rivwth" in gdf_riv:
+    if rivmsk_name not in ds and "rivwth":
         assert gdf_riv.crs.is_projected
         gdf_riv_buf = gdf_riv.copy()
         buf = np.maximum(gdf_riv_buf["rivwth"] / 2, 1)
@@ -324,52 +339,66 @@ def get_river_bathymetry(
         da_msk = np.logical_and(
             ds.raster.geometry_mask(gdf_riv_buf), da_elv != da_elv.raster.nodata
         )
-    elif rivmsk_name in ds:  #  merge river mask with river line
+    elif rivmsk_name in ds:
+        #  merge river mask with river line
         da_msk = ds.raster.geometry_mask(gdf_riv, all_touched=True)
         da_msk = np.logical_or(da_msk, ds[rivmsk_name] > 0)
     else:
         raise ValueError("No river width or river mask provided.")
 
     ## get zs
-    smooth_n = int(np.round(smooth_length / segment_length / 2))
-    logger.info("Deriving bankfull river surface elevation profile.")
     da_hnd = xr.DataArray(flwdir.hand(rivd8.values, da_elv.values), **raster_kwargs)
+    da_hnd = da_hnd.where(da_elv >= 0, 0)
     da_hnd.raster.set_crs(ds.raster.crs)
-    rivbank_dz = get_rivbank_dz(gdf_riv, da_msk=da_msk, da_hnd=da_hnd, q=bankq)[0]
-    gdf_riv["zs0"] = gdf_riv["elevtn"] + rivbank_dz
-    zs0 = flw.dem_adjust(flw.moving_average(gdf_riv["zs0"], n=smooth_n))
-    gdf_riv["zs"] = np.maximum(gdf_riv["elevtn"], zs0)
+    if rivbank:
+        logger.info("Deriving bankfull river surface elevation from its banks.")
+        dz = get_rivbank_dz(gdf_riv, da_msk=da_msk, da_hnd=da_hnd, q=rivbankq)[0]
+        dz = flw.fillnodata(dz, -9999, direction="down", how="max")
+    else:
+        logger.info("Deriving bankfull river surface elevation at its center line.")
+        dz = 0
+    gdf_riv["zs"] = np.maximum(
+        gdf_riv["elevtn"], flw.dem_adjust(gdf_riv["elevtn"] + dz)
+    )
     gdf_riv["rivbank_dz"] = gdf_riv["zs"] - gdf_riv["elevtn"]
 
     # estimate stream segment average width from river mask
     if rivwth_method == "mask":
-        logger.info("Deriving river segment average width.")
+        logger.info("Deriving river segment average width from permanent water mask.")
         rivwth = rivers.river_width(gdf_riv, da_rivmask=da_msk)
         gdf_riv["rivwth"] = flw.fillnodata(rivwth, -9999, direction="down", how="max")
+    smooth_n = int(np.round(smooth_length / segment_length / 2))
+    if smooth_n > 0:
+        logger.info(f"Smoothing river width (n={smooth_n}).")
+        gdf_riv["rivwth"] = flw.moving_average(
+            gdf_riv["rivwth"], n=smooth_n, restrict_strord=True
+        )
+    gdf_riv["rivwth"] = np.maximum(gdf_riv["rivwth"], min_rivwth)
 
     # estimate river depth, smooth and correct
-    gdf_riv["rivwth"] = np.maximum(gdf_riv["rivwth"], min_rivwth)
-    gdf_riv["rivdph0"] = rivers.river_depth(
-        data=gdf_riv,
-        flwdir=flw,
-        method=rivdph_method,
-        rivzs_name="zs",
-        min_rivdph=min_rivdph,
-        **kwargs,
-    )
-    gdf_riv["rivdph"] = flw.moving_average(gdf_riv["rivdph0"], n=smooth_n)
-
+    if "rivdph" not in gdf_riv.columns:
+        gdf_riv["rivdph"] = rivers.river_depth(
+            data=gdf_riv,
+            flwdir=flw,
+            method=rivdph_method,
+            rivzs_name="zs",
+            min_rivdph=min_rivdph,
+            **kwargs,
+        )
     if constrain_estuary:
         # set width from mask and depth constant in estuaries
         # estuaries based on convergence of width from river mask
         gdf_riv["estuary"] = flw.classify_estuaries(
             elevtn=gdf_riv["elevtn"],
-            rivwth=flw.moving_average(gdf_riv["rivwth"], n=smooth_n),
+            rivwth=gdf_riv["rivwth"],
             rivdst=gdf_riv["rivdst"],
             min_convergence=min_convergence,
         )
-        rivdph = np.where(gdf_riv["estuary"] == 1, -9999, gdf_riv["rivdph"].values)
-        gdf_riv["rivdph"] = flw.fillnodata(rivdph, -9999, "down")
+        gdf_riv["rivdph"] = np.where(
+            gdf_riv["estuary"] == 1, -9999, gdf_riv["rivdph"].values
+        )
+    gdf_riv["rivdph"] = flw.fillnodata(gdf_riv["rivdph"], -9999, "down")
+    gdf_riv["rivdph"] = np.maximum(gdf_riv["rivdph"], min_rivdph)
 
     # calculate bed level from river depth
     gdf_riv["zb"] = gdf_riv["zs"] - gdf_riv["rivdph"]
@@ -379,10 +408,13 @@ def get_river_bathymetry(
     gdf_riv["rivdph"] = gdf_riv["zs"] - gdf_riv["zb"]
 
     # calculate rivslp
-    dz = gdf_riv["zb"] - flw.downstream(gdf_riv["zb"])
-    dx = gdf_riv["rivdst"] - flw.downstream(gdf_riv["rivdst"])
-    # fill nodata with upstream neighbors and set lower bound of zero
-    gdf_riv["rivslp"] = np.maximum(0, flw.fillnodata(np.where(dx > 0, dz / dx, -1), -1))
+    if "rivslp" not in gdf_riv:
+        dz = gdf_riv["zb"] - flw.downstream(gdf_riv["zb"])
+        dx = gdf_riv["rivdst"] - flw.downstream(gdf_riv["rivdst"])
+        # fill nodata with upstream neighbors and set lower bound of zero
+        gdf_riv["rivslp"] = np.maximum(
+            0, flw.fillnodata(np.where(dx > 0, dz / dx, -1), -1)
+        )
 
     return gdf_riv, da_msk
 
@@ -401,7 +433,7 @@ def burn_river_zb(
     Parameters
     ----------
     gdf_riv: gpd.GeoDataFrame
-        River segments with bed level (bz) estimates
+        River segments with bed level (zb) estimates
     da_elv : xr.DataArray of float
         Elevation raster
     da_msk: xr.DataArray of bool:
@@ -419,7 +451,8 @@ def burn_river_zb(
     assert da_elv.raster.identical_grid(da_msk)
     logger.debug("Burn bedlevel values into DEM.")
     nodata = da_elv.raster.nodata
-    gdf_riv = gdf_riv[np.isfinite(gdf_riv["zb"])]  # drop invalid segments, e.g. at pits
+    # drop invalid segments, e.g. at pits
+    gdf_riv = gdf_riv[np.logical_and(gdf_riv.length > 0, np.isfinite(gdf_riv["zb"]))]
     zb = da_elv.raster.rasterize(gdf_riv, col_name="zb", nodata=-9999)
     # interpolate values if rivslp and rivdst is given
     if np.all(np.isin(["rivslp", "rivdst"], gdf_riv.columns)) and flwdir is not None:
