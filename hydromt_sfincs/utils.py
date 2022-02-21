@@ -756,6 +756,11 @@ def read_sfincs_map_results(
     """
 
     ds_map = xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs)
+    
+    if 'corner_x' in list(ds_map.data_vars.keys()):
+        ds_map = ds_map.rename({'corner_x':'edge_x', 'corner_y':'edge_y'})
+        ds_map = ds_map.rename_dims({'corner_m': 'edge_m', 'corner_n': 'edge_n'})
+    
     ds_map = ds_map.set_coords(("x", "y", "edge_x", "edge_y"))
     crs = ds_map["crs"].item() if ds_map["crs"].item() != 0 else crs
 
