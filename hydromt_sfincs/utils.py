@@ -756,7 +756,9 @@ def read_sfincs_map_results(
     """
 
     ds_map = xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs)
-    ds_map = ds_map.set_coords(("x", "y", "edge_x", "edge_y"))
+    dvars = list(ds_map.data_vars.keys())
+    edge_dims = [var for var in dvars if (var.endswith("_x") or var.endswith("_y"))]
+    ds_map = ds_map.set_coords(["x", "y"] + edge_dims)
     crs = ds_map["crs"].item() if ds_map["crs"].item() != 0 else crs
 
     if ds_map["inp"].attrs.get("rotation") != 0:
@@ -764,9 +766,16 @@ def read_sfincs_map_results(
         return xr.Dataset(), xr.Dataset()
 
     # split general+face and edge vars
-    dvars = list(ds_map.data_vars.keys())
-    face_vars = [v for v in dvars if "edge_m" not in ds_map[v].dims and v not in drop]
-    edge_vars = [v for v in dvars if "edge_m" in ds_map[v].dims and v not in drop]
+    face_vars = list(ds_map.data_vars.keys())
+    edge_vars = []
+    if len(edge_dims) == 2:
+        edge = edge_dims[0][:-2]
+        face_vars = [
+            v for v in face_vars if f"{edge}_m" not in ds_map[v].dims and v not in drop
+        ]
+        edge_vars = [
+            v for v in face_vars if f"{edge}_m" in ds_map[v].dims and v not in drop
+        ]
 
     # read face vars
     face_coords = {
@@ -795,21 +804,20 @@ def read_sfincs_map_results(
     ds_edge = xr.Dataset()
     if len(edge_vars) > 0:
         edge_coords = {
-            "edge_x": xr.IndexVariable(
-                "edge_x", ds_map["edge_x"].isel(edge_n=0).values
+            f"{edge}_x": xr.IndexVariable(
+                f"{edge}_x", ds_map[f"{edge}_x"].isel(edge_n=0).values
             ),
-            "edge_y": xr.IndexVariable(
-                "edge_y", ds_map["edge_y"].isel(edge_m=0).values
+            f"{edge}_y": xr.IndexVariable(
+                f"{edge}_y", ds_map[f"{edge}_y"].isel(edge_m=0).values
             ),
         }
         ds_edge = (
             ds_map[edge_vars]
-            .drop_vars(["edge_x", "edge_y"])
-            .rename({"edge_n": "edge_y", "edge_m": "edge_x"})
+            .drop_vars([f"{edge}_x", f"{edge}_y"])
+            .rename({f"{edge}_n": f"{edge}_y", f"{edge}_m": f"{edge}_x"})
             .assign_coords(edge_coords)
-            .transpose(..., "edge_y", "edge_x")
-        )
-        ds_edge.raster.set_spatial_dims(x_dim="edge_x", y_dim="edge_y")
+            .transpose(..., f"{edge}_y", f"{edge}_x")
+        ).rename({f"{edge}_x": "x", f"{edge}_y": "y"})
         ds_edge.raster.set_crs(crs)
 
     return ds_face, ds_edge
