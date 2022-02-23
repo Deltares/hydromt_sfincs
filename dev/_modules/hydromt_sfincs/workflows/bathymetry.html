@@ -28,7 +28,7 @@
             <a href="../../../index.html" class="icon icon-home"> hydromt_sfincs
           </a>
               <div class="version">
-                0.2.1.dev
+                0.2.2.dev
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -251,8 +251,10 @@
 <span class="sd">        River and river-bank masks</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># rasterize streams</span>
+    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;segid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
-    <span class="n">segid</span> <span class="o">=</span> <span class="n">da_hnd</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="s2">&quot;segid&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span>  <span class="c1"># drop pits or any zero length segments</span>
+    <span class="n">segid</span> <span class="o">=</span> <span class="n">da_hnd</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="n">valid</span><span class="p">],</span> <span class="s2">&quot;segid&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
     <span class="n">segid</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">segid</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;segid&quot;</span>
     <span class="c1"># NOTE: the assumption is that banks are found in cells adjacent to any da_msk cell</span>
@@ -277,7 +279,7 @@
         <span class="n">index</span><span class="o">=</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;segid&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
         <span class="n">func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="n">nmin</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">q</span><span class="p">),</span>
         <span class="n">out_dtype</span><span class="o">=</span><span class="n">da_hnd</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=-</span><span class="mi">9999</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">rivbank_dz</span><span class="p">,</span> <span class="n">da_riv_mask</span><span class="p">,</span> <span class="n">da_bnk_mask</span></div>
 
@@ -297,7 +299,8 @@
     <span class="n">smooth_length</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10e3</span><span class="p">,</span>
     <span class="n">min_convergence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
     <span class="n">max_dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">,</span>
-    <span class="n">bankq</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span>
+    <span class="n">rivbank</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">rivbankq</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span>
     <span class="n">constrain_estuary</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">constrain_rivbed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">elevtn_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;elevtn&quot;</span><span class="p">,</span>
@@ -321,8 +324,10 @@
 <span class="sd">        River attribute data with &quot;qbankfull&quot; and &quot;rivwth&quot; data, by default None</span>
 <span class="sd">    gdf_qbf : gpd.GeoDataFrame, optional</span>
 <span class="sd">        Bankfull river discharge data with &quot;qbankfull&quot; column, by default None</span>
-<span class="sd">    rivdph_method : {&#39;gvf&#39;, &#39;manning&#39;, &#39;powlaw&#39;}</span>
+<span class="sd">    rivdph_method : {&#39;gvf&#39;, &#39;manning&#39;, &#39;powlaw&#39;, &#39;geom&#39;}</span>
 <span class="sd">        River depth estimate method, by default &#39;gvf&#39;</span>
+<span class="sd">    rivwth_method : {&#39;geom&#39;, &#39;mask&#39;}</span>
+<span class="sd">        River width estimate method, by default &#39;mask&#39;</span>
 <span class="sd">    river_upa : float, optional</span>
 <span class="sd">        Minimum upstream area threshold for rivers [km2], by default 100.0</span>
 <span class="sd">    river_len: float, optional</span>
@@ -337,8 +342,12 @@
 <span class="sd">        Minimum width convergence threshold to define estuaries [m/m], by default 0.01</span>
 <span class="sd">    max_dist : float, optional</span>
 <span class="sd">        Maximum distance threshold to spatially merge `gdf_riv` and `gdf_qbf`, by default 100.0</span>
-<span class="sd">    bankq : float, optional</span>
-<span class="sd">        quantile [1-100] for river bank estimation, by default 25.0</span>
+<span class="sd">    rivbank: bool, optional</span>
+<span class="sd">        If True (default), approximate the reference elevation for the river depth based</span>
+<span class="sd">        on the river bankfull elevation at cells neighboring river cells. Otherwise</span>
+<span class="sd">        use the elevation of the local river cell as reference level.</span>
+<span class="sd">    rivbankq : float, optional</span>
+<span class="sd">        quantile [1-100] for river bank estimation, by default 25</span>
 <span class="sd">    constrain_estuary : bool, optional</span>
 <span class="sd">        If True (default) fix the river depth in estuaries based on the upstream river depth.</span>
 <span class="sd">    constrain_rivbed : bool, optional</span>
@@ -347,7 +356,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    gdf_riv: gpd.GeoDataFrame</span>
-<span class="sd">        River segments with bed level (bz) estimates</span>
+<span class="sd">        River segments with bed level (zb) estimates</span>
 <span class="sd">    da_msk: xr.DataArray:</span>
 <span class="sd">        River mask</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -370,6 +379,7 @@
         <span class="n">mask</span><span class="o">=</span><span class="n">rivd8</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">gdf_stream</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="o">.</span><span class="n">from_features</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+    <span class="c1"># gdf_stream = gdf_stream[gdf_stream[&#39;rivdst&#39;]&gt;0]   # remove pits</span>
     <span class="n">flw</span> <span class="o">=</span> <span class="n">pyflwdir</span><span class="o">.</span><span class="n">from_dataframe</span><span class="p">(</span><span class="n">gdf_stream</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;idx&quot;</span><span class="p">))</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">flw</span><span class="o">.</span><span class="n">main_upstream</span><span class="p">(</span><span class="n">uparea</span><span class="o">=</span><span class="n">gdf_stream</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
 
@@ -388,11 +398,16 @@
         <span class="n">valid</span> <span class="o">=</span> <span class="n">dists</span> <span class="o">&lt;</span> <span class="n">max_dist</span>
         <span class="n">gdf_riv</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">idx_nn</span><span class="p">[</span><span class="n">valid</span><span class="p">],</span> <span class="s2">&quot;qbankfull&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_qbf</span><span class="p">[</span><span class="s2">&quot;qbankfull&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">valid</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">idx_nn</span><span class="p">)</span><span class="si">}</span><span class="s2"> qbankfull boundary points set.&quot;</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="s2">&quot;qbankfull&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="s1">&#39;gdf_riv has no &quot;qbankfull&quot; data&#39;</span>
-    <span class="n">check_rivwth</span> <span class="o">=</span> <span class="n">rivdph_method</span> <span class="o">!=</span> <span class="s2">&quot;powlaw&quot;</span> <span class="ow">or</span> <span class="n">rivwth_method</span> <span class="o">!=</span> <span class="s2">&quot;mask&quot;</span>
-    <span class="k">assert</span> <span class="n">check_rivwth</span> <span class="ow">or</span> <span class="s2">&quot;rivwth&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="s1">&#39;gdf_riv has no &quot;rivwth&quot; data&#39;</span>
+    <span class="n">check_q</span> <span class="o">=</span> <span class="n">rivdph_method</span> <span class="o">==</span> <span class="s2">&quot;geom&quot;</span>
+    <span class="k">assert</span> <span class="n">check_q</span> <span class="ow">or</span> <span class="s2">&quot;qbankfull&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="s1">&#39;gdf_riv has no &quot;qbankfull&quot; data&#39;</span>
     <span class="c1"># propagate qbankfull and rivwth values</span>
-    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;qbankfull&quot;</span><span class="p">,</span> <span class="s2">&quot;rivwth&quot;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">rivwth_method</span> <span class="o">==</span> <span class="s2">&quot;geom&quot;</span> <span class="ow">and</span> <span class="s2">&quot;rivwth&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Setting missing &quot;rivwth&quot; to min_rivwth </span><span class="si">{</span><span class="n">min_rivwth</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">m&#39;</span><span class="p">)</span>
+        <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_rivwth</span>
+    <span class="k">if</span> <span class="n">rivdph_method</span> <span class="o">==</span> <span class="s2">&quot;geom&quot;</span> <span class="ow">and</span> <span class="s2">&quot;rivdph&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Setting missing &quot;rivdph&quot; to min_rivdph </span><span class="si">{</span><span class="n">min_rivdph</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">m&#39;</span><span class="p">)</span>
+        <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_rivdph</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;qbankfull&quot;</span><span class="p">,</span> <span class="s2">&quot;rivwth&quot;</span><span class="p">,</span> <span class="s2">&quot;rivdph&quot;</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="o">-</span><span class="mi">9999</span><span class="p">)</span>
@@ -400,7 +415,7 @@
         <span class="n">gdf_riv</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
 
     <span class="c1"># create river mask with river polygon</span>
-    <span class="k">if</span> <span class="n">rivmsk_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span> <span class="ow">and</span> <span class="s2">&quot;rivwth&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">rivmsk_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span> <span class="ow">and</span> <span class="s2">&quot;rivwth&quot;</span><span class="p">:</span>
         <span class="k">assert</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_projected</span>
         <span class="n">gdf_riv_buf</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">buf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">gdf_riv_buf</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -408,52 +423,66 @@
         <span class="n">da_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
             <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_riv_buf</span><span class="p">),</span> <span class="n">da_elv</span> <span class="o">!=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
         <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">rivmsk_name</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>  <span class="c1">#  merge river mask with river line</span>
+    <span class="k">elif</span> <span class="n">rivmsk_name</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+        <span class="c1">#  merge river mask with river line</span>
         <span class="n">da_msk</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">da_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">da_msk</span><span class="p">,</span> <span class="n">ds</span><span class="p">[</span><span class="n">rivmsk_name</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No river width or river mask provided.&quot;</span><span class="p">)</span>
 
     <span class="c1">## get zs</span>
-    <span class="n">smooth_n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">smooth_length</span> <span class="o">/</span> <span class="n">segment_length</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Deriving bankfull river surface elevation profile.&quot;</span><span class="p">)</span>
     <span class="n">da_hnd</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">flwdir</span><span class="o">.</span><span class="n">hand</span><span class="p">(</span><span class="n">rivd8</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="o">**</span><span class="n">raster_kwargs</span><span class="p">)</span>
+    <span class="n">da_hnd</span> <span class="o">=</span> <span class="n">da_hnd</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_elv</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">da_hnd</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
-    <span class="n">rivbank_dz</span> <span class="o">=</span> <span class="n">get_rivbank_dz</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">da_msk</span><span class="o">=</span><span class="n">da_msk</span><span class="p">,</span> <span class="n">da_hnd</span><span class="o">=</span><span class="n">da_hnd</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">bankq</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zs0&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">rivbank_dz</span>
-    <span class="n">zs0</span> <span class="o">=</span> <span class="n">flw</span><span class="o">.</span><span class="n">dem_adjust</span><span class="p">(</span><span class="n">flw</span><span class="o">.</span><span class="n">moving_average</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zs0&quot;</span><span class="p">],</span> <span class="n">n</span><span class="o">=</span><span class="n">smooth_n</span><span class="p">))</span>
-    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">],</span> <span class="n">zs0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">rivbank</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Deriving bankfull river surface elevation from its banks.&quot;</span><span class="p">)</span>
+        <span class="n">dz</span> <span class="o">=</span> <span class="n">get_rivbank_dz</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">da_msk</span><span class="o">=</span><span class="n">da_msk</span><span class="p">,</span> <span class="n">da_hnd</span><span class="o">=</span><span class="n">da_hnd</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">rivbankq</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dz</span> <span class="o">=</span> <span class="n">flw</span><span class="o">.</span><span class="n">fillnodata</span><span class="p">(</span><span class="n">dz</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s2">&quot;down&quot;</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;max&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Deriving bankfull river surface elevation at its center line.&quot;</span><span class="p">)</span>
+        <span class="n">dz</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+        <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">],</span> <span class="n">flw</span><span class="o">.</span><span class="n">dem_adjust</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dz</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivbank_dz&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zs&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
 
     <span class="c1"># estimate stream segment average width from river mask</span>
     <span class="k">if</span> <span class="n">rivwth_method</span> <span class="o">==</span> <span class="s2">&quot;mask&quot;</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Deriving river segment average width.&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Deriving river segment average width from permanent water mask.&quot;</span><span class="p">)</span>
         <span class="n">rivwth</span> <span class="o">=</span> <span class="n">rivers</span><span class="o">.</span><span class="n">river_width</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">da_rivmask</span><span class="o">=</span><span class="n">da_msk</span><span class="p">)</span>
         <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">flw</span><span class="o">.</span><span class="n">fillnodata</span><span class="p">(</span><span class="n">rivwth</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s2">&quot;down&quot;</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;max&quot;</span><span class="p">)</span>
+    <span class="n">smooth_n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">smooth_length</span> <span class="o">/</span> <span class="n">segment_length</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">smooth_n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Smoothing river width (n=</span><span class="si">{</span><span class="n">smooth_n</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+        <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">flw</span><span class="o">.</span><span class="n">moving_average</span><span class="p">(</span>
+            <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">],</span> <span class="n">n</span><span class="o">=</span><span class="n">smooth_n</span><span class="p">,</span> <span class="n">restrict_strord</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">],</span> <span class="n">min_rivwth</span><span class="p">)</span>
 
     <span class="c1"># estimate river depth, smooth and correct</span>
-    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">],</span> <span class="n">min_rivwth</span><span class="p">)</span>
-    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph0&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rivers</span><span class="o">.</span><span class="n">river_depth</span><span class="p">(</span>
-        <span class="n">data</span><span class="o">=</span><span class="n">gdf_riv</span><span class="p">,</span>
-        <span class="n">flwdir</span><span class="o">=</span><span class="n">flw</span><span class="p">,</span>
-        <span class="n">method</span><span class="o">=</span><span class="n">rivdph_method</span><span class="p">,</span>
-        <span class="n">rivzs_name</span><span class="o">=</span><span class="s2">&quot;zs&quot;</span><span class="p">,</span>
-        <span class="n">min_rivdph</span><span class="o">=</span><span class="n">min_rivdph</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">flw</span><span class="o">.</span><span class="n">moving_average</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph0&quot;</span><span class="p">],</span> <span class="n">n</span><span class="o">=</span><span class="n">smooth_n</span><span class="p">)</span>
-
+    <span class="k">if</span> <span class="s2">&quot;rivdph&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rivers</span><span class="o">.</span><span class="n">river_depth</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">gdf_riv</span><span class="p">,</span>
+            <span class="n">flwdir</span><span class="o">=</span><span class="n">flw</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="n">rivdph_method</span><span class="p">,</span>
+            <span class="n">rivzs_name</span><span class="o">=</span><span class="s2">&quot;zs&quot;</span><span class="p">,</span>
+            <span class="n">min_rivdph</span><span class="o">=</span><span class="n">min_rivdph</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">if</span> <span class="n">constrain_estuary</span><span class="p">:</span>
         <span class="c1"># set width from mask and depth constant in estuaries</span>
         <span class="c1"># estuaries based on convergence of width from river mask</span>
         <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;estuary&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">flw</span><span class="o">.</span><span class="n">classify_estuaries</span><span class="p">(</span>
             <span class="n">elevtn</span><span class="o">=</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">],</span>
-            <span class="n">rivwth</span><span class="o">=</span><span class="n">flw</span><span class="o">.</span><span class="n">moving_average</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">],</span> <span class="n">n</span><span class="o">=</span><span class="n">smooth_n</span><span class="p">),</span>
+            <span class="n">rivwth</span><span class="o">=</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">],</span>
             <span class="n">rivdst</span><span class="o">=</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdst&quot;</span><span class="p">],</span>
             <span class="n">min_convergence</span><span class="o">=</span><span class="n">min_convergence</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">rivdph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;estuary&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-        <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">flw</span><span class="o">.</span><span class="n">fillnodata</span><span class="p">(</span><span class="n">rivdph</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="s2">&quot;down&quot;</span><span class="p">)</span>
+        <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;estuary&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="p">)</span>
+    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">flw</span><span class="o">.</span><span class="n">fillnodata</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">],</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="s2">&quot;down&quot;</span><span class="p">)</span>
+    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">],</span> <span class="n">min_rivdph</span><span class="p">)</span>
 
     <span class="c1"># calculate bed level from river depth</span>
     <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zs&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span>
@@ -463,10 +492,13 @@
     <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zs&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">]</span>
 
     <span class="c1"># calculate rivslp</span>
-    <span class="n">dz</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">flw</span><span class="o">.</span><span class="n">downstream</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">])</span>
-    <span class="n">dx</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdst&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">flw</span><span class="o">.</span><span class="n">downstream</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdst&quot;</span><span class="p">])</span>
-    <span class="c1"># fill nodata with upstream neighbors and set lower bound of zero</span>
-    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivslp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">flw</span><span class="o">.</span><span class="n">fillnodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dx</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dz</span> <span class="o">/</span> <span class="n">dx</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="k">if</span> <span class="s2">&quot;rivslp&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="p">:</span>
+        <span class="n">dz</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">flw</span><span class="o">.</span><span class="n">downstream</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">])</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdst&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">flw</span><span class="o">.</span><span class="n">downstream</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdst&quot;</span><span class="p">])</span>
+        <span class="c1"># fill nodata with upstream neighbors and set lower bound of zero</span>
+        <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivslp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span> <span class="n">flw</span><span class="o">.</span><span class="n">fillnodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dx</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dz</span> <span class="o">/</span> <span class="n">dx</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">gdf_riv</span><span class="p">,</span> <span class="n">da_msk</span></div>
 
@@ -485,7 +517,7 @@
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    gdf_riv: gpd.GeoDataFrame</span>
-<span class="sd">        River segments with bed level (bz) estimates</span>
+<span class="sd">        River segments with bed level (zb) estimates</span>
 <span class="sd">    da_elv : xr.DataArray of float</span>
 <span class="sd">        Elevation raster</span>
 <span class="sd">    da_msk: xr.DataArray of bool:</span>
@@ -503,7 +535,8 @@
     <span class="k">assert</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">identical_grid</span><span class="p">(</span><span class="n">da_msk</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Burn bedlevel values into DEM.&quot;</span><span class="p">)</span>
     <span class="n">nodata</span> <span class="o">=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
-    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">])]</span>  <span class="c1"># drop invalid segments, e.g. at pits</span>
+    <span class="c1"># drop invalid segments, e.g. at pits</span>
+    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">gdf_riv</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">]))]</span>
     <span class="n">zb</span> <span class="o">=</span> <span class="n">da_elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">col_name</span><span class="o">=</span><span class="s2">&quot;zb&quot;</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=-</span><span class="mi">9999</span><span class="p">)</span>
     <span class="c1"># interpolate values if rivslp and rivdst is given</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;rivslp&quot;</span><span class="p">,</span> <span class="s2">&quot;rivdst&quot;</span><span class="p">],</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span> <span class="ow">and</span> <span class="n">flwdir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
