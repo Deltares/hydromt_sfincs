@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this page.
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
-v0.2.1 (18 February 2022)
+v0.2.1 (23 February 2022)
 -------------------------
 
 Deprecated
@@ -20,6 +20,7 @@ Bugfix
 ^^^^^^
 - bugfix **setup_p_forcing** to ensure the data is 1D when passed to set_forcing_1d method
 - bugfix **setup_p_forcing_from_grid** when aggregating with a multi polygon region.
+- bugfix **read_results** with new corner_x/y instead of edge_x/y dimensions in sfincs_map.nc
 
 New
 ^^^
