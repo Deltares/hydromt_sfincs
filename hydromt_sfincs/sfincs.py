@@ -1529,7 +1529,7 @@ class SfincsModel(Model):
         elif "uparea" not in gdf.columns:
             self.logger.warning('No "uparea" column found in location data.')
 
-        da_q = workflows.snap_discharge(
+        ds_snapped = workflows.snap_discharge(
             ds=ds,
             gdf=gdf,
             wdw=wdw,
@@ -1540,10 +1540,18 @@ class SfincsModel(Model):
             logger=self.logger,
         )
         # set zeros for src points without matching discharge
-        da_q = da_q.reindex(index=gdf.index, fill_value=0).fillna(0)
-
+        da_q = ds_snapped[name].reindex(index=gdf.index, fill_value=0).fillna(0)
+        ds_snapped.vector.to_gdf()
         # update forcing
         self.set_forcing_1d(name=name, ts=da_q, xy=gdf)
+
+        # keep snapped locations
+        pnts = gpd.points_from_xy(
+            ds_snapped[ds.raster.x_dim].values, ds_snapped[ds.raster.y_dim].values
+        )
+        gdf1 = gpd.GeoDataFrame(geometry=pnts, crs=ds.raster.crs)
+        gdf1["index"] = ds_snapped["index"].values
+        self.set_staticgeoms(gdf1, f"{self._FORCING[name][1]}_snapped")
 
     def setup_p_forcing_from_grid(
         self, precip_fn=None, dst_res=None, aggregate=False, **kwargs
