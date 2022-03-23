@@ -14,7 +14,7 @@ dependencies:
   - entrypoints
   - ffmpeg  # to run examples (animation)
   - flit>=3.2
-  - gdal>=3.1
+  - gdal==3.4.1  # temp fix of tests 
   - geopandas
   - hydromt>=0.4.5
   - jupyterlab  # to run examples
