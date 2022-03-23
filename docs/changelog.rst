@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this page.
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+Unreleased
+----------
+
+Changed
+^^^^^^^
+- **setup_q_forcing_from_grid** also saves the snapped gauge locations.
+- **snap_discharge** method checks for valid (nonnull) discharge cells
+
 v0.2.1 (23 February 2022)
 -------------------------
 

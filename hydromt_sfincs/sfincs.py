@@ -1462,8 +1462,12 @@ class SfincsModel(Model):
 
         Adds model layers:
 
-        * **src** geom: discharge gauge point locations
         * **dis** forcing: discharge time series [m3/s]
+        * **src** geom: discharge gauge point locations
+
+        Adds meta layer (not used by SFINCS):
+
+        * **src_snapped** geom: snapped gauge location on discharge grid
 
         Parameters
         ----------
@@ -1541,17 +1545,12 @@ class SfincsModel(Model):
         )
         # set zeros for src points without matching discharge
         da_q = ds_snapped[name].reindex(index=gdf.index, fill_value=0).fillna(0)
-        ds_snapped.vector.to_gdf()
         # update forcing
         self.set_forcing_1d(name=name, ts=da_q, xy=gdf)
-
         # keep snapped locations
-        pnts = gpd.points_from_xy(
-            ds_snapped[ds.raster.x_dim].values, ds_snapped[ds.raster.y_dim].values
+        self.set_staticgeoms(
+            ds_snapped.vector.to_gdf(), f"{self._FORCING[name][1]}_snapped"
         )
-        gdf1 = gpd.GeoDataFrame(geometry=pnts, crs=ds.raster.crs)
-        gdf1["index"] = ds_snapped["index"].values
-        self.set_staticgeoms(gdf1, f"{self._FORCING[name][1]}_snapped")
 
     def setup_p_forcing_from_grid(
         self, precip_fn=None, dst_res=None, aggregate=False, **kwargs
