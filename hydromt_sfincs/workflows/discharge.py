@@ -36,17 +36,19 @@ def snap_discharge(
         Window size in number of cells around discharge boundary locations
         to snap to, only used if ``uparea_fn`` is provided. By default 1.
     rel_error, abs_error: float, optional
-        Maximum relative error (defualt 0.05) and absolute error (default 50 km2)
+        Maximum relative error (default 0.05) and absolute error (default 50 km2)
         between the discharge boundary location upstream area and the upstream area of
         the best fit grid cell, only used if "discharge" staticgeoms has a "uparea" column.
 
     Returns
     -------
-    da_q: xarray.DataArray
-        DataArray with snapped discharge values per valid point location.
+    ds: xarray.Dataset
+        snapped dataset
     """
+    ds_wdw = ds.raster.sample(gdf, wdw=wdw)
+    # check if valid discharge
+    valid = ds_wdw[discharge_name].notnull().any("time")
     if uparea_name in ds and uparea_name in gdf.columns:
-        ds_wdw = ds.raster.sample(gdf, wdw=wdw)
         logger.debug(
             f"Snapping {discharge_name} points to best matching uparea cell within wdw (size={wdw})."
         )
@@ -54,22 +56,31 @@ def snap_discharge(
         upa_dff = np.abs(
             ds_wdw[uparea_name].where(ds_wdw[uparea_name] > 0).load() - upa0
         )
-        valid = np.logical_or((upa_dff / upa0) <= rel_error, upa_dff <= abs_error)
+        upa_check = np.logical_or((upa_dff / upa0) <= rel_error, upa_dff <= abs_error)
+        valid = np.logical_and(valid, upa_check)
         # combine valid local cells with best matching windows cells if local cell invalid
-        i_loc = int((1 + 2 * wdw) ** 2 / 2)
-        i_wdw = upa_dff.argmin("wdw").where(~valid.isel(wdw=i_loc), i_loc)
-        idx_valid = np.where(valid.isel(wdw=i_wdw))[0]
-        if idx_valid.size < gdf.index.size:
-            logger.warning(
-                f"{idx_valid.size}/{gdf.index.size} {discharge_name} points succesfully snapped."
-            )
-        i_wdw = i_wdw.isel(index=idx_valid)
-        ds_out = ds_wdw.isel(wdw=i_wdw.load(), index=idx_valid)
+        # i_loc = int((1 + 2 * wdw) ** 2 / 2)  # center cell
+        # i_wdw = upa_dff.argmin("wdw").where(~valid.isel(wdw=i_loc), i_loc).load()
+        # find best matching uparea cell in window
+        i_wdw = upa_dff.argmin("wdw").load()
     else:
         logger.debug(
             f"No {uparea_name} variable found in ds or gdf; "
             f"sampling {discharge_name} points from nearest grid cell."
         )
-        ds_out = ds.raster.sample(gdf)
+        # add distance (measured in cells)
+        ar_wdw = np.abs(np.arange(-wdw, wdw + 1))
+        dist = np.hypot(**np.meshgrid(ar_wdw, ar_wdw)).ravel()
+        ds_wdw["dist"] = xr.Variable(
+            ("index", "wdw"), np.tile(dist, (ds_wdw["index"].size, 1))
+        )
+        i_wdw = ds_wdw["dist"].where(valid, np.inf).argmin("wdw").load()
+    idx_valid = np.where(valid.isel(wdw=i_wdw).values)[0]
+    if idx_valid.size < gdf.index.size:
+        logger.warning(
+            f"{idx_valid.size}/{gdf.index.size} {discharge_name} points successfully snapped."
+        )
+    i_wdw = i_wdw.isel(index=idx_valid)
+    ds_out = ds_wdw.isel(wdw=i_wdw.load(), index=idx_valid)
 
-    return ds_out.reset_coords()[discharge_name]
+    return ds_out  # .reset_coords()[discharge_name]

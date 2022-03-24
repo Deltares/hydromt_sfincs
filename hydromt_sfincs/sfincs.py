@@ -1462,8 +1462,12 @@ class SfincsModel(Model):
 
         Adds model layers:
 
-        * **src** geom: discharge gauge point locations
         * **dis** forcing: discharge time series [m3/s]
+        * **src** geom: discharge gauge point locations
+
+        Adds meta layer (not used by SFINCS):
+
+        * **src_snapped** geom: snapped gauge location on discharge grid
 
         Parameters
         ----------
@@ -1529,7 +1533,7 @@ class SfincsModel(Model):
         elif "uparea" not in gdf.columns:
             self.logger.warning('No "uparea" column found in location data.')
 
-        da_q = workflows.snap_discharge(
+        ds_snapped = workflows.snap_discharge(
             ds=ds,
             gdf=gdf,
             wdw=wdw,
@@ -1540,10 +1544,13 @@ class SfincsModel(Model):
             logger=self.logger,
         )
         # set zeros for src points without matching discharge
-        da_q = da_q.reindex(index=gdf.index, fill_value=0).fillna(0)
-
+        da_q = ds_snapped[name].reindex(index=gdf.index, fill_value=0).fillna(0)
         # update forcing
         self.set_forcing_1d(name=name, ts=da_q, xy=gdf)
+        # keep snapped locations
+        self.set_staticgeoms(
+            ds_snapped.vector.to_gdf(), f"{self._FORCING[name][1]}_snapped"
+        )
 
     def setup_p_forcing_from_grid(
         self, precip_fn=None, dst_res=None, aggregate=False, **kwargs
