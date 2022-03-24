@@ -159,8 +159,12 @@ an upstream area value is available for the discharge boundary locations;
 otherwise it is based on maximum upstream area.</p>
 <p>Adds model layers:</p>
 <ul class="simple">
-<li><p><strong>src</strong> geom: discharge gauge point locations</p></li>
 <li><p><strong>dis</strong> forcing: discharge time series [m3/s]</p></li>
+<li><p><strong>src</strong> geom: discharge gauge point locations</p></li>
+</ul>
+<p>Adds meta layer (not used by SFINCS):</p>
+<ul class="simple">
+<li><p><strong>src_snapped</strong> geom: snapped gauge location on discharge grid</p></li>
 </ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

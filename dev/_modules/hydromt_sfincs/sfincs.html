@@ -1546,8 +1546,12 @@
 
 <span class="sd">        Adds model layers:</span>
 
-<span class="sd">        * **src** geom: discharge gauge point locations</span>
 <span class="sd">        * **dis** forcing: discharge time series [m3/s]</span>
+<span class="sd">        * **src** geom: discharge gauge point locations</span>
+
+<span class="sd">        Adds meta layer (not used by SFINCS):</span>
+
+<span class="sd">        * **src_snapped** geom: snapped gauge location on discharge grid</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1613,7 +1617,7 @@
         <span class="k">elif</span> <span class="s2">&quot;uparea&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;No &quot;uparea&quot; column found in location data.&#39;</span><span class="p">)</span>
 
-        <span class="n">da_q</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">snap_discharge</span><span class="p">(</span>
+        <span class="n">ds_snapped</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">snap_discharge</span><span class="p">(</span>
             <span class="n">ds</span><span class="o">=</span><span class="n">ds</span><span class="p">,</span>
             <span class="n">gdf</span><span class="o">=</span><span class="n">gdf</span><span class="p">,</span>
             <span class="n">wdw</span><span class="o">=</span><span class="n">wdw</span><span class="p">,</span>
@@ -1624,10 +1628,13 @@
             <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># set zeros for src points without matching discharge</span>
-        <span class="n">da_q</span> <span class="o">=</span> <span class="n">da_q</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">gdf</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-
+        <span class="n">da_q</span> <span class="o">=</span> <span class="n">ds_snapped</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">gdf</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="c1"># update forcing</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">da_q</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="n">gdf</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">da_q</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="n">gdf</span><span class="p">)</span>
+        <span class="c1"># keep snapped locations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_staticgeoms</span><span class="p">(</span>
+            <span class="n">ds_snapped</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_FORCING</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">_snapped&quot;</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="SfincsModel.setup_p_forcing_from_grid"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_p_forcing_from_grid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">precip_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>

@@ -57,25 +57,29 @@
 <li class="toctree-l1"><a class="reference internal" href="api/api_index.html">API reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">What’s new</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased">Unreleased</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#v0-2-1-23-february-2022">v0.2.1 (23 February 2022)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#deprecated">Deprecated</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#bugfix">Bugfix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#new">New</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Changed</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#v0-2-0-2-august-2021">v0.2.0 (2 August 2021)</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">Bugfix</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id2">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Bugfix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Changed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#added">Added</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#documentation">Documentation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id3">Deprecated</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Deprecated</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#v0-1-0-18-may-2021">v0.1.0 (18 May 2021)</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id4">Added</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id5">Changed</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id6">Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Documentation</a></li>
 </ul>
 </li>
 </ul>
@@ -135,6 +139,16 @@
 <p>All notable changes to this project will be documented in this page.</p>
 <p>The format is based on <a class="reference external" href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to
 <a class="reference external" href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<section id="unreleased">
+<h2>Unreleased<a class="headerlink" href="#unreleased" title="Permalink to this headline"></a></h2>
+<section id="changed">
+<h3>Changed<a class="headerlink" href="#changed" title="Permalink to this headline"></a></h3>
+<ul class="simple">
+<li><p><strong>setup_q_forcing_from_grid</strong> also saves the snapped gauge locations.</p></li>
+<li><p><strong>snap_discharge</strong> method checks for valid (nonnull) discharge cells</p></li>
+</ul>
+</section>
+</section>
 <section id="v0-2-1-23-february-2022">
 <h2>v0.2.1 (23 February 2022)<a class="headerlink" href="#v0-2-1-23-february-2022" title="Permalink to this headline"></a></h2>
 <section id="deprecated">
@@ -164,8 +178,8 @@ Derived ‘uparea’ and ‘flwdir’ maps are saved in the GIS folder and can b
 <li><p><strong>setup_river_bathymetry</strong> to estimate a river depth based on bankfull discharge and river width. A mask of river cells ‘rivmsk’ is kept in the GIS folder.</p></li>
 </ul>
 </section>
-<section id="changed">
-<h3>Changed<a class="headerlink" href="#changed" title="Permalink to this headline"></a></h3>
+<section id="id1">
+<h3>Changed<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h3>
 <ul class="simple">
 <li><p><strong>setup_mask</strong> and <strong>setup_bounds</strong> both have a “mask_fn”, “include_mask_fn” and “exclude_mask_fn” polygon and “min_elv” and “max_elv” elevation arguments to determine valid / boundary cells.</p></li>
 <li><p><strong>setup_mask</strong> and <strong>setup_bounds</strong> have a “reset_mask” and “reset_bounds” option respectively to start with a clean mask or remove previously set boundary cells.</p></li>
@@ -194,15 +208,15 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 </section>
 <section id="v0-2-0-2-august-2021">
 <h2>v0.2.0 (2 August 2021)<a class="headerlink" href="#v0-2-0-2-august-2021" title="Permalink to this headline"></a></h2>
-<section id="id1">
-<h3>Bugfix<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h3>
+<section id="id2">
+<h3>Bugfix<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h3>
 <ul class="simple">
 <li><p>scsfile variable changed to maximum soil moisture retention [inch]; was curve number [-]</p></li>
 <li><p>fix setting delimited text based geodatasets for h and q forcing.</p></li>
 </ul>
 </section>
-<section id="id2">
-<h3>Changed<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h3>
+<section id="id3">
+<h3>Changed<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
 <ul class="simple">
 <li><p>Bumped minimal hydromt version to 0.4.2</p></li>
 <li><p>splitted <code class="docutils literal notranslate"><span class="pre">setup_topobathy</span></code> into multiple smaller methods: <code class="docutils literal notranslate"><span class="pre">setup_merge_topobathy</span></code>, <code class="docutils literal notranslate"><span class="pre">setup_mask</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_bounds</span></code></p></li>
@@ -246,8 +260,8 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <li><p>overviews with SfincsModel setup components &amp; SfincsModel data</p></li>
 </ul>
 </section>
-<section id="id3">
-<h3>Deprecated<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
+<section id="id4">
+<h3>Deprecated<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">setup_p_gridded</span></code></p></li>
 </ul>
@@ -256,20 +270,20 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <section id="v0-1-0-18-may-2021">
 <h2>v0.1.0 (18 May 2021)<a class="headerlink" href="#v0-1-0-18-may-2021" title="Permalink to this headline"></a></h2>
 <p>Noticeable changes are a new <code class="docutils literal notranslate"><span class="pre">setup_river_inflow</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_river_outflow</span></code> methods</p>
-<section id="id4">
-<h3>Added<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
+<section id="id5">
+<h3>Added<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h3>
 <ul class="simple">
 <li><p>setup_river_outflow method to set ouflow (msk=3) boundary at river outflow points</p></li>
 </ul>
 </section>
-<section id="id5">
-<h3>Changed<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h3>
+<section id="id6">
+<h3>Changed<a class="headerlink" href="#id6" title="Permalink to this headline"></a></h3>
 <ul class="simple">
 <li><p>Updated to hydromt v0.4.1</p></li>
 </ul>
 </section>
-<section id="id6">
-<h3>Documentation<a class="headerlink" href="#id6" title="Permalink to this headline"></a></h3>
+<section id="id7">
+<h3>Documentation<a class="headerlink" href="#id7" title="Permalink to this headline"></a></h3>
 <ul class="simple">
 <li><p>Now <strong>latest</strong> and <strong>stable</strong> versions.</p></li>
 <li><p>Updated build instructions</p></li>
