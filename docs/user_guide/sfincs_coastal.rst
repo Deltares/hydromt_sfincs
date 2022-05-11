@@ -10,7 +10,7 @@ see example below, or a geometry file.
 
 A typical workflow to setup a coastal model schematization is provided in the
 :download:`sfincs_coastal.ini <../_examples/sfincs_coastal.ini>` and shown below. 
-Each section corresponds to one of the model :ref:`components` and the `[global]` section can be used to pass
+Each section corresponds to :ref:`a model method <model_methods>` and the `[global]` section can be used to pass
 additional arguments to the :py:class:`~hydromt.models.sfincs.SfincsModel`. initialization.
 An example is provided in :ref:`examples` section.
 
@@ -24,6 +24,6 @@ An example is provided in :ref:`examples` section.
    :language: Ini
 
 
-.. _region: https://deltares.github.io/hydromt/latest/user_guide/cli.html#region-options
+.. _region: https://deltares.github.io/hydromt/preview/user_guide/model_region
 
 

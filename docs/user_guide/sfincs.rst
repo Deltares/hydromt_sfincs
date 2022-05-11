@@ -1,49 +1,35 @@
 .. currentmodule:: hydromt_sfincs.sfincs
 
-=====================
-SFINCS model: General
-=====================
+============================
+Model methods and components
+============================
 
-With the hydromt_sfincs plugin, you can easily work with SFINCS model schematizations. 
+With the HydroMT SFINCS plugin, you can easily work with SFINCS model schematizations. 
 This plugin helps you preparing or updating several model components of a SFINCS model 
 such as topography/bathymetry, roughness, infiltration maps and dynamic waterlevel and 
 discharge forcing.
 
-When building or updating a model from command line a model region_; a model setup 
-configuration (.ini file) with model components_ and options and, optionally, 
-a data_ sources (.yml) file should be prepared.
 
-The SFINCS model components are available from the HydroMT Command Line and Python Interfaces and 
+.. _model_methods:
+
+Model setup methods
+===================
+
+The SFINCS model methods are available from the HydroMT Command Line and Python Interfaces and 
 allow you to configure HydroMT in order to build or update SFINCS model schematizations.
-See :ref:`Coastal SFINCS model schematization <sfincs_coastal>` and 
-:ref:`Riverine SFINCS model schematization <sfincs_riverine>` for suggested components
-and options to use for coastal or riverine applications.
 
-Note that the order in which the components are listed in the ini file is important: 
-
-- setup_topobathy should always be run first to determine the model grid
-- if discharge location are inferred from hydrography, `setup_river_inflow` should be run before `setup_q_forcing` or `setup_q_forcing_from_grid`.
-
-For python users all SFINCS attributes and methods are available, see :ref:`api_model`
-
-.. _model_components:
-
-SfincsModel setup components
-============================
-
-An overview of the available SfincsModel setup components, workflows and low-level methods
-is provided in the table below. When using hydromt from the command line only the
-setup components are exposed. Click on header to get a full overview or directly on
+An overview of the available SfincsModel methods, workflows and low-level methods
+is provided in the table below. Click on header to get a full overview or directly on
 a specific method see its documentation.  
 
 .. _general_table:
 
-.. list-table:: General setup components
+.. list-table:: General setup methods
    :widths: 20 25 25 30
    :header-rows: 1
 
    * - SFINCS file
-     - :ref:`setup components <components>`
+     - :ref:`model setup methods <model_methods>`
      - :ref:`workflows <workflows>`
      - :ref:`low-level methods <methods>`
    * - model region
@@ -85,12 +71,12 @@ a specific method see its documentation.
 
 .. _forcing_table:
 
-.. list-table:: Forcing setup components
+.. list-table:: Forcing setup methods
    :widths: 20 25 25 30
    :header-rows: 1
 
    * - SFINCS file
-     - :ref:`setup components <components>`
+     - :ref:`model setup methods <model_methods>`
      - :ref:`workflows <workflows>`
      - :ref:`low-level methods <methods>`
    * - bnd- & bzsfile
@@ -112,11 +98,13 @@ a specific method see its documentation.
 
 :sup:`1`) Imported from hydromt core package
 
-SFINCS datamodel
+.. _model_components:
+
+Model components
 ================
 
 The following table provides an overview of which :py:class:`~hydromt_sfincs.SfincsModel` 
-attribute contains which SFINCS in- and output files. The files are read and written with the associated 
+model data component (attribute) contains which SFINCS in- and output files. The files are read and written with the associated 
 read- and write- methods, i.e. :py:func:`~hydromt_sfincs.sfincs.SfincsModel.read_config` 
 and :py:func:`~hydromt_sfincs.sfincs.SfincsModel.write_config` for the 
 :py:attr:`~hydromt_sfincs.sfincs.SfincsModel.config`  attribute. 
@@ -125,7 +113,7 @@ Note that the indfile is not part of the staticmaps dataset but created based on
 the mskfile upon writing and used for reading staticmaps.
 
 
-.. list-table:: SfincsModel data
+.. list-table:: SfincsModel data component
    :widths: 30 70
    :header-rows: 1
 
@@ -144,8 +132,7 @@ the mskfile upon writing and used for reading staticmaps.
    * - :py:attr:`~hydromt_sfincs.SfincsModel.results`
      - sfincs_his.nc, sfincs_map.nc
 
-.. _components:
 
 
 .. _data: https://deltares.github.io/hydromt/latest/user_guide/data.html
-.. _region: https://deltares.github.io/hydromt/latest/user_guide/cli.html#region-options
+.. _region: https://deltares.github.io/hydromt/preview/user_guide/model_region

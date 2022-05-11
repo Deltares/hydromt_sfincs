@@ -1,4 +1,4 @@
-"""HydroMT wflow workflows"""
+"""HydroMT SFINCS workflows"""
 
 from .landuse import *
 from .bathymetry import *

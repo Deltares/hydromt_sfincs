@@ -1,5 +1,8 @@
 .. currentmodule:: hydromt_sfincs
 
+
+.. _api_reference:
+
 =============
 API reference
 =============
@@ -13,7 +16,7 @@ Initialize
 ----------
 
 .. autosummary::
-   :toctree: ../generated/
+   :toctree: _generated/
 
    SfincsModel
 
@@ -23,7 +26,7 @@ Setup components
 ----------------
 
 .. autosummary::
-   :toctree: ../generated/
+   :toctree: _generated/
 
    SfincsModel.setup_config
    SfincsModel.setup_topobathy
@@ -48,7 +51,7 @@ Plot methods
 ------------
 
 .. autosummary::
-   :toctree: ../generated/
+   :toctree: _generated/
 
    SfincsModel.plot_basemap
    SfincsModel.plot_forcing
@@ -57,7 +60,7 @@ Attributes
 ----------
 
 .. autosummary::
-   :toctree: ../generated/
+   :toctree: _generated/
 
    SfincsModel.region
    SfincsModel.mask
@@ -75,7 +78,7 @@ High level methods
 ------------------
 
 .. autosummary::
-   :toctree: ../generated/
+   :toctree: _generated/
 
    SfincsModel.read
    SfincsModel.write
@@ -87,7 +90,7 @@ Low level methods
 -----------------
 
 .. autosummary::
-   :toctree: ../generated/
+   :toctree: _generated/
 
    SfincsModel.update_spatial_attrs
    SfincsModel.get_spatial_attrs
@@ -98,7 +101,7 @@ General methods
 ---------------
 
 .. autosummary::
-   :toctree: ../generated/
+   :toctree: _generated/
 
    SfincsModel.setup_config
    SfincsModel.get_config
@@ -131,7 +134,7 @@ SFINCS workflows
 ================
 
 .. autosummary::
-   :toctree: ../generated/
+   :toctree: _generated/
 
    workflows.merge_topobathy
    workflows.get_rivbank_dz
@@ -151,7 +154,7 @@ Input/Output methods
 ---------------------
 
 .. autosummary::
-   :toctree: ../generated/
+   :toctree: _generated/
 
    read_inp
    write_inp
@@ -174,7 +177,7 @@ Utilities
 ---------
 
 .. autosummary::
-   :toctree: ../generated/
+   :toctree: _generated/
 
    utils.mask_topobathy
    utils.mask_bounds
@@ -187,7 +190,7 @@ Visualization
 -------------
 
 .. autosummary::
-   :toctree: ../generated/
+   :toctree: _generated/
 
    plots.plot_basemap
    plots.plot_forcing
