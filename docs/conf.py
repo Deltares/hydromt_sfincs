@@ -18,21 +18,39 @@
 #
 import os
 import sys
-
-import hydromt  ## to avoid ciruclar dependency
+import shutil
+import hydromt
 import hydromt_sfincs
+from distutils.dir_util import copy_tree
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, os.path.abspath(os.path.join(here, "..")))
 
+
+def remove_dir_content(path: str) -> None:
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            os.unlink(os.path.join(root, f))
+        for d in dirs:
+            shutil.rmtree(os.path.join(root, d))
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+
+
 # -- Project information -----------------------------------------------------
 
-project = "hydromt_sfincs"
+project = "HydroMT SFINCS"
 copyright = "Deltares"
 author = "Dirk Eilander"
 
 # The short version which is displayed
 version = hydromt_sfincs.__version__
+
+# # -- Copy notebooks to include in docs -------
+if os.path.isdir("_examples"):
+    remove_dir_content("_examples")
+os.makedirs("_examples")
+copy_tree("../examples", "_examples")
 
 # -- General configuration ------------------------------------------------
 
@@ -44,6 +62,7 @@ version = hydromt_sfincs.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx_design",
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.todo",
@@ -91,21 +110,37 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
 autodoc_member_order = "bysource"  # overwrite default alphabetical sort
 autoclass_content = "both"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#
-html_theme_options = {"style_external_links": True}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-html_context = {}
+html_css_files = ["theme-deltares.css"]
+html_theme_options = {
+    "show_nav_level": 2,
+    "navbar_align": "content",
+    "icon_links": [
+        {
+            "name": "Deltares",
+            "url": "https://deltares.nl/en/",
+            "icon": "_static/deltares-white.svg",
+            "type": "local",
+        },
+    ],
+    "external_links": [
+        {
+            "name": "HydroMT core",
+            "url": "https://deltares.github.io/hydromt/preview/index.html",
+        },
+    ],
+}
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -150,7 +185,7 @@ latex_documents = [
     (
         master_doc,
         "hydromt_sfincs.tex",
-        "HydroMT SFINCS plugin Documentation",
+        "HydroMT sfincs plugin Documentation",
         [author],
         "manual",
     ),
@@ -162,7 +197,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, "hydromt_sfincs", "HydroMT SFINCS Documentation", [author], 1)
+    (master_doc, "hydromt_sfincs", "HydroMT SFINCS plugin Documentation", [author], 1)
 ]
 
 
@@ -175,10 +210,9 @@ texinfo_documents = [
     (
         master_doc,
         "hydromt_sfincs",
-        "HydroMT SFINCS Documentation",
+        "HydroMT sfincs plugin Documentation",
         author,
-        "HydroMT SFINCS",
-        "Build and analyze SFINCS models like a data-wizard.",
+        "HydroMT sfincs plugin",
         "Miscellaneous",
     ),
 ]
@@ -187,14 +221,30 @@ texinfo_documents = [
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
-    # "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
     # "numpy": ("https://numpy.org/doc/stable", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy", None),
     # "numba": ("https://numba.pydata.org/numba-doc/latest", None),
     # "matplotlib": ("https://matplotlib.org/stable/", None),
     # "dask": ("https://docs.dask.org/en/latest", None),
-    # "rasterio": ("https://rasterio.readthedocs.io/en/latest", None),
+    "rasterio": ("https://rasterio.readthedocs.io/en/latest", None),
     "geopandas": ("https://geopandas.org/en/stable", None),
     "xarray": ("https://xarray.pydata.org/en/stable", None),
-    "hydromt": ("https://deltares.github.io/hydromt/dev", None),
+    "hydromt": ("https://deltares.github.io/hydromt/latest/", None),
 }
+
+# -- NBSPHINX --------------------------------------------------------------
+
+# This is processed by Jinja2 and inserted before each notebook
+nbsphinx_prolog = r"""
+{% set docname = env.doc2path(env.docname, base=None).split('\\')[-1].split('/')[-1] %}
+
+.. TIP::
+
+    .. raw:: html
+
+        <div>
+            For an interactive online version click here: 
+            <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/{{ docname|e }}" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
+        </div>
+"""

@@ -36,8 +36,9 @@ dependencies:
   - requests
   - scipy
   - sphinx # docs
-  - sphinx_rtd_theme # docs
+  - pydata-sphinx-theme # docs
   - xarray
   - zarr
-  # - pip:
+  - pip:
+    - sphinx_design  # docs
   #   - git+https://github.com/Deltares/hydromt.git
