@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>HydroMT-SFINCS: SFINCS plugin for HydroMT &#8212; HydroMT SFINCS  documentation</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/design-style.b7bb847fb20b106c3d81b95245e65545.min.css" />
+    <link rel="stylesheet" type="text/css" href="_static/theme-deltares.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting started" href="getting_started/intro.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+<a class="navbar-brand" href="#">
+<p class="title">HydroMT SFINCS</p>
+</a>
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="getting_started/intro.html">
+  Getting started
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="user_guide/intro.html">
+  User guide
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="api.html">
+  API reference
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="dev_guide/intro.html">
+  Developments
+ </a>
+</li>
+
+    
+    <li class="nav-item">
+        <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/preview/index.html">HydroMT core<i class="fas fa-external-link-alt"></i></a>
+    </li>
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://deltares.nl/en/" rel="noopener" target="_blank" title="Deltares"><img src="_static/deltares-white.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar">
+              <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    
+  </div>
+</nav>
+              </div>
+              <div class="sidebar-end-items">
+              </div>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#what-is-the-hydromt-sfincs-plugin">
+   What is the HydroMT-SFINCS plugin
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#why-hydromt-sfincs">
+   Why HydroMT-SFINCS?
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#how-to-use-hydromt-sfincs">
+   How to use HydroMT-SFINCS?
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#how-to-cite">
+   How to cite?
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#how-to-contribute">
+   How to contribute?
+  </a>
+ </li>
+</ul>
+
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <section id="hydromt-sfincs-sfincs-plugin-for-hydromt">
+<h1>HydroMT-SFINCS: SFINCS plugin for HydroMT<a class="headerlink" href="#hydromt-sfincs-sfincs-plugin-for-hydromt" title="Permalink to this headline">#</a></h1>
+<p><a class="reference external" href="https://pypi.org/project/hydromt_sfincs/"><img alt="Latest PyPI version" src="https://badge.fury.io/py/hydromt_sfincs.svg" /></a> <a class="reference external" href="https://anaconda.org/conda-forge/hydromt_sfincs"><img alt="conda_forge" src="https://anaconda.org/conda-forge/hydromt/badges/installer/conda.svg" /></a> <a class="reference external" href="https://deltares.github.io/hydromt_sfincs/latest"><img alt="Latest developers docs" src="https://img.shields.io/badge/docs-latest-brightgreen.svg" /></a> <a class="reference external" href="https://deltares.github.io/hydromt_sfincs/stable"><img alt="Stable docs last release" src="https://img.shields.io/badge/docs-stable-brightgreen.svg" /></a> <a class="reference external" href="https://codecov.io/gh/Deltares/hydromt_sfincs"><img alt="codecov" src="https://codecov.io/gh/Deltares/hydromt_sfincs/branch/main/graph/badge.svg?token=ss3EgmwHhH" /></a> <a class="reference external" href="https://github.com/Deltares/hydromt_sfincs/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/conda/l/conda-forge/hydromt_sfincs" /></a> <a class="reference external" href="https://zenodo.org/badge/latestdoi/356210788"><img alt="Zenodo" src="https://zenodo.org/badge/356210788.svg" /></a> <a class="reference external" href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples"><img alt="binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
+<section id="what-is-the-hydromt-sfincs-plugin">
+<h2>What is the HydroMT-SFINCS plugin<a class="headerlink" href="#what-is-the-hydromt-sfincs-plugin" title="Permalink to this headline">#</a></h2>
+<p><a class="reference external" href="https://deltares.github.io/hydromt/preview/">HydroMT</a> (Hydro Model Tools) is an open-source Python package that facilitates the process of
+building and analyzing spatial geoscientific models with a focus on water system models.
+It does so by automating the workflow to go from raw data to a complete model instance which
+is ready to run and to analyse model results once the simulation has finished.
+This plugin provides an implementation of the model API for the <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/">SFINCS</a> model.</p>
+</section>
+<section id="why-hydromt-sfincs">
+<h2>Why HydroMT-SFINCS?<a class="headerlink" href="#why-hydromt-sfincs" title="Permalink to this headline">#</a></h2>
+<p>Setting up hydrodynamic models typically requires many (manual) steps
+to process input data and might therefore be time consuming and hard to reproduce.
+Especially improving models based on global geospatial datasets, which are
+rapidly becoming available at increasingly high resolutions, might be challenging.
+Furthermore, analyzing a SFINCS model schematization which use a model-specific binary data formats,
+can be time consuming.
+HydroMT-SFINCS aims to make the model building process <strong>fast</strong>, <strong>modular</strong> and <strong>reproducible</strong>
+and to facilitate the analysis of SFINCS model results</p>
+</section>
+<section id="how-to-use-hydromt-sfincs">
+<h2>How to use HydroMT-SFINCS?<a class="headerlink" href="#how-to-use-hydromt-sfincs" title="Permalink to this headline">#</a></h2>
+<p>The HydroMT-SFINCS plugin can be used as a <strong>command line</strong> application, which provides commands to <em>build</em>,
+<em>update</em> the SFINCS model with a single line, or <strong>from python</strong> to exploit its rich interface.
+You can learn more about how to use HydroMT-SFINCS in its <a class="reference external" href="docs_getting_started">online documentation.</a>
+For a smooth installing experience we recommend installing HydroMT-SFINCS and its dependencies
+from conda-forge in a clean environment, see <a class="reference external" href="docs_install">installation guide.</a></p>
+</section>
+<section id="how-to-cite">
+<h2>How to cite?<a class="headerlink" href="#how-to-cite" title="Permalink to this headline">#</a></h2>
+<p>To reference the software please use the the DOI provided in the Zenodo badge <a class="reference external" href="https://zenodo.org/badge/latestdoi/356210788"><img alt="Zenodo" src="https://zenodo.org/badge/356210788.svg" /></a> that points to the latest release.</p>
+<p>The following paper presents a real-world application of HydroMT-SFINCS:</p>
+<blockquote>
+<div><p>Eilander, D., Couasnon, A., Leijnse, T., Ikeuchi, H., Yamazaki, D., Muis, S., Dullaart, J., Winsemius, H. C., &amp; Ward, P. J. (2022).
+A globally-applicable framework for compound flood hazard modeling. EGUsphere, 1–40. <a class="reference external" href="https://doi.org/10.5194/egusphere-2022-149">https://doi.org/10.5194/egusphere-2022-149</a></p>
+</div></blockquote>
+</section>
+<section id="how-to-contribute">
+<h2>How to contribute?<a class="headerlink" href="#how-to-contribute" title="Permalink to this headline">#</a></h2>
+<p>If you find any issues in the code or documentation feel free to leave an issue on the <a class="reference external" href="https://github.com/Deltares/hydromt_sfincs/issues">github issue tracker.</a>
+You can find information about how to contribute to the HydroMT project at our <a class="reference external" href="https://deltares.github.io/hydromt/preview/dev/contributing">contributing page.</a></p>
+<p>HydroMT seeks active contribution from the (hydro) geoscientific community.
+So far, it has been developed and tested with a range of <a class="reference external" href="https://www.deltares.nl/en/">Deltares</a> models, but
+we believe it is applicable to a much wider set of geoscientific models and are
+happy to discuss how it can be implemented for your model.</p>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+
+
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='right-next' id="next-link" href="getting_started/intro.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Getting started</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright Deltares.<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.5.0.<br>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>

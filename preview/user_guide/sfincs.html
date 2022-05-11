@@ -1,0 +1,467 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Model methods and components &#8212; HydroMT SFINCS  documentation</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.b7bb847fb20b106c3d81b95245e65545.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Building or update a model" href="sfincs_build_update.html" />
+    <link rel="prev" title="User guide" href="intro.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+<a class="navbar-brand" href="../index.html">
+<p class="title">HydroMT SFINCS</p>
+</a>
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../getting_started/intro.html">
+  Getting started
+ </a>
+</li>
+
+<li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="intro.html">
+  User guide
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../api.html">
+  API reference
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../dev_guide/intro.html">
+  Developments
+ </a>
+</li>
+
+    
+    <li class="nav-item">
+        <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/preview/index.html">HydroMT core<i class="fas fa-external-link-alt"></i></a>
+    </li>
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://deltares.nl/en/" rel="noopener" target="_blank" title="Deltares"><img src="../_static/deltares-white.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar">
+              <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Table of Contents
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Model methods and components
+  </a>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="sfincs_build_update.html">
+   Building or update a model
+  </a>
+  <input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="sfincs_coastal.html">
+     Setting up a coastal model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="sfincs_riverine.html">
+     Setting up a riverine model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../_examples/build_coastal_model.html">
+     Example: Build a coastal SFINCS model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../_examples/build_riverine_model.html">
+     Example: Build a riverine SFINCS model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../_examples/update_model.html">
+     Example: Update SFINCS model components
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="process_analyze.html">
+   Postprocessing and visualization
+  </a>
+  <input checked class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../_examples/sfincs_results_hmax.html">
+     Example: Visuazize the maximum water depth
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../_examples/sfincs_results_animation.html">
+     Example: Create a waterdepth animation
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+  </div>
+</nav>
+              </div>
+              <div class="sidebar-end-items">
+              </div>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#model-setup-methods">
+   Model setup methods
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#model-components">
+   Model components
+  </a>
+ </li>
+</ul>
+
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <section id="model-methods-and-components">
+<h1>Model methods and components<a class="headerlink" href="#model-methods-and-components" title="Permalink to this headline">#</a></h1>
+<p>With the HydroMT SFINCS plugin, you can easily work with SFINCS model schematizations.
+This plugin helps you preparing or updating several model components of a SFINCS model
+such as topography/bathymetry, roughness, infiltration maps and dynamic waterlevel and
+discharge forcing.</p>
+<section id="model-setup-methods">
+<span id="model-methods"></span><h2>Model setup methods<a class="headerlink" href="#model-setup-methods" title="Permalink to this headline">#</a></h2>
+<p>The SFINCS model methods are available from the HydroMT Command Line and Python Interfaces and
+allow you to configure HydroMT in order to build or update SFINCS model schematizations.</p>
+<p>An overview of the available SfincsModel methods, workflows and low-level methods
+is provided in the table below. Click on header to get a full overview or directly on
+a specific method see its documentation.</p>
+<span id="general-table"></span><table class="colwidths-given table" id="id2">
+<caption><span class="caption-text">General setup methods</span><a class="headerlink" href="#id2" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>SFINCS file</p></th>
+<th class="head"><p><a class="reference internal" href="#model-methods"><span class="std std-ref">model setup methods</span></a></p></th>
+<th class="head"><p><a class="reference internal" href="../api.html#workflows"><span class="std std-ref">workflows</span></a></p></th>
+<th class="head"><p><a class="reference internal" href="../api.html#methods"><span class="std std-ref">low-level methods</span></a></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>model region</p></td>
+<td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_region()</span></code></p></td>
+<td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">parse_region()</span></code> <code class="xref py py-func docutils literal notranslate"><span class="pre">get_basin_geometry()</span></code></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>sfincs.inp</p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_config.html#hydromt_sfincs.SfincsModel.setup_config" title="hydromt_sfincs.SfincsModel.setup_config"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_config()</span></code></a></p></td>
+<td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">parse_region()</span></code><sup>1</sup> <code class="xref py py-func docutils literal notranslate"><span class="pre">get_basin_geometry()</span></code><sup>1</sup></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.read_inp.html#hydromt_sfincs.read_inp" title="hydromt_sfincs.read_inp"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_inp()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_inp.html#hydromt_sfincs.write_inp" title="hydromt_sfincs.write_inp"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_inp()</span></code></a> <code class="xref py py-func docutils literal notranslate"><span class="pre">get_spatial_attrs()</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>depfile</p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_topobathy.html#hydromt_sfincs.SfincsModel.setup_topobathy" title="hydromt_sfincs.SfincsModel.setup_topobathy"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_topobathy()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_merge_topobathy.html#hydromt_sfincs.SfincsModel.setup_merge_topobathy" title="hydromt_sfincs.SfincsModel.setup_merge_topobathy"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_merge_topobathy()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_river_bathymetry.html#hydromt_sfincs.SfincsModel.setup_river_bathymetry" title="hydromt_sfincs.SfincsModel.setup_river_bathymetry"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_river_bathymetry()</span></code></a></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.workflows.merge_topobathy.html#hydromt_sfincs.workflows.merge_topobathy" title="hydromt_sfincs.workflows.merge_topobathy"><code class="xref py py-func docutils literal notranslate"><span class="pre">merge_topobathy()</span></code></a></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.read_binary_map.html#hydromt_sfincs.read_binary_map" title="hydromt_sfincs.read_binary_map"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_binary_map()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_binary_map.html#hydromt_sfincs.write_binary_map" title="hydromt_sfincs.write_binary_map"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_binary_map()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>mskfile</p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_mask.html#hydromt_sfincs.SfincsModel.setup_mask" title="hydromt_sfincs.SfincsModel.setup_mask"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_mask()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_bounds.html#hydromt_sfincs.SfincsModel.setup_bounds" title="hydromt_sfincs.SfincsModel.setup_bounds"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_bounds()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_river_outflow.html#hydromt_sfincs.SfincsModel.setup_river_outflow" title="hydromt_sfincs.SfincsModel.setup_river_outflow"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_river_outflow()</span></code></a></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.mask_topobathy.html#hydromt_sfincs.utils.mask_topobathy" title="hydromt_sfincs.utils.mask_topobathy"><code class="xref py py-func docutils literal notranslate"><span class="pre">mask_topobathy()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.utils.mask_bounds.html#hydromt_sfincs.utils.mask_bounds" title="hydromt_sfincs.utils.mask_bounds"><code class="xref py py-func docutils literal notranslate"><span class="pre">mask_bounds()</span></code></a></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.read_binary_map.html#hydromt_sfincs.read_binary_map" title="hydromt_sfincs.read_binary_map"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_binary_map()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_binary_map.html#hydromt_sfincs.write_binary_map" title="hydromt_sfincs.write_binary_map"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_binary_map()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>indfile</p></td>
+<td></td>
+<td></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.read_binary_map_index.html#hydromt_sfincs.read_binary_map_index" title="hydromt_sfincs.read_binary_map_index"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_binary_map_index()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_binary_map_index.html#hydromt_sfincs.write_binary_map_index" title="hydromt_sfincs.write_binary_map_index"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_binary_map_index()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>manningfile</p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_manning_roughness.html#hydromt_sfincs.SfincsModel.setup_manning_roughness" title="hydromt_sfincs.SfincsModel.setup_manning_roughness"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_manning_roughness()</span></code></a></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.workflows.landuse.html#hydromt_sfincs.workflows.landuse" title="hydromt_sfincs.workflows.landuse"><code class="xref py py-func docutils literal notranslate"><span class="pre">landuse()</span></code></a></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.read_binary_map.html#hydromt_sfincs.read_binary_map" title="hydromt_sfincs.read_binary_map"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_binary_map()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_binary_map.html#hydromt_sfincs.write_binary_map" title="hydromt_sfincs.write_binary_map"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_binary_map()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>scsfile</p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration" title="hydromt_sfincs.SfincsModel.setup_cn_infiltration"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_cn_infiltration()</span></code></a></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.workflows.cn_to_s.html#hydromt_sfincs.workflows.cn_to_s" title="hydromt_sfincs.workflows.cn_to_s"><code class="xref py py-func docutils literal notranslate"><span class="pre">cn_to_s()</span></code></a></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.read_binary_map.html#hydromt_sfincs.read_binary_map" title="hydromt_sfincs.read_binary_map"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_binary_map()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_binary_map.html#hydromt_sfincs.write_binary_map" title="hydromt_sfincs.write_binary_map"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_binary_map()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>obsfile</p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_gauges.html#hydromt_sfincs.SfincsModel.setup_gauges" title="hydromt_sfincs.SfincsModel.setup_gauges"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_gauges()</span></code></a></p></td>
+<td></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.read_xy.html#hydromt_sfincs.read_xy" title="hydromt_sfincs.read_xy"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_xy()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_xy.html#hydromt_sfincs.write_xy" title="hydromt_sfincs.write_xy"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_xy()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>thd- &amp; weirfile</p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures" title="hydromt_sfincs.SfincsModel.setup_structures"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_structures()</span></code></a></p></td>
+<td></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.read_structures.html#hydromt_sfincs.read_structures" title="hydromt_sfincs.read_structures"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_structures()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_structures.html#hydromt_sfincs.write_structures" title="hydromt_sfincs.write_structures"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_structures()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.utils.gdf2structures.html#hydromt_sfincs.utils.gdf2structures" title="hydromt_sfincs.utils.gdf2structures"><code class="xref py py-func docutils literal notranslate"><span class="pre">gdf2structures()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.utils.structures2gdf.html#hydromt_sfincs.utils.structures2gdf" title="hydromt_sfincs.utils.structures2gdf"><code class="xref py py-func docutils literal notranslate"><span class="pre">structures2gdf()</span></code></a></p></td>
+</tr>
+</tbody>
+</table>
+<span id="forcing-table"></span><table class="colwidths-given table" id="id3">
+<caption><span class="caption-text">Forcing setup methods</span><a class="headerlink" href="#id3" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>SFINCS file</p></th>
+<th class="head"><p><a class="reference internal" href="#model-methods"><span class="std std-ref">model setup methods</span></a></p></th>
+<th class="head"><p><a class="reference internal" href="../api.html#workflows"><span class="std std-ref">workflows</span></a></p></th>
+<th class="head"><p><a class="reference internal" href="../api.html#methods"><span class="std std-ref">low-level methods</span></a></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>bnd- &amp; bzsfile</p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_h_forcing.html#hydromt_sfincs.SfincsModel.setup_h_forcing" title="hydromt_sfincs.SfincsModel.setup_h_forcing"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_h_forcing()</span></code></a></p></td>
+<td></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.read_timeseries.html#hydromt_sfincs.read_timeseries" title="hydromt_sfincs.read_timeseries"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_timeseries()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_timeseries.html#hydromt_sfincs.write_timeseries" title="hydromt_sfincs.write_timeseries"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_timeseries()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.read_xy.html#hydromt_sfincs.read_xy" title="hydromt_sfincs.read_xy"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_xy()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_xy.html#hydromt_sfincs.write_xy" title="hydromt_sfincs.write_xy"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_xy()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>src- &amp; disfile</p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.SfincsModel.setup_river_inflow" title="hydromt_sfincs.SfincsModel.setup_river_inflow"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_river_inflow()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_q_forcing.html#hydromt_sfincs.SfincsModel.setup_q_forcing" title="hydromt_sfincs.SfincsModel.setup_q_forcing"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_q_forcing()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_q_forcing_from_grid()</span></code></a></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.workflows.snap_discharge.html#hydromt_sfincs.workflows.snap_discharge" title="hydromt_sfincs.workflows.snap_discharge"><code class="xref py py-func docutils literal notranslate"><span class="pre">snap_discharge()</span></code></a></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.read_timeseries.html#hydromt_sfincs.read_timeseries" title="hydromt_sfincs.read_timeseries"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_timeseries()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_timeseries.html#hydromt_sfincs.write_timeseries" title="hydromt_sfincs.write_timeseries"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_timeseries()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.read_xy.html#hydromt_sfincs.read_xy" title="hydromt_sfincs.read_xy"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_xy()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_xy.html#hydromt_sfincs.write_xy" title="hydromt_sfincs.write_xy"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_xy()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>precipfile</p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_p_forcing.html#hydromt_sfincs.SfincsModel.setup_p_forcing" title="hydromt_sfincs.SfincsModel.setup_p_forcing"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_p_forcing()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_p_forcing_from_grid()</span></code></a></p></td>
+<td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">resample_time()</span></code><sup>1</sup></p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.read_timeseries.html#hydromt_sfincs.read_timeseries" title="hydromt_sfincs.read_timeseries"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_timeseries()</span></code></a> <a class="reference internal" href="../_generated/hydromt_sfincs.write_timeseries.html#hydromt_sfincs.write_timeseries" title="hydromt_sfincs.write_timeseries"><code class="xref py py-func docutils literal notranslate"><span class="pre">write_timeseries()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>netamprfile</p></td>
+<td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_p_forcing_from_grid()</span></code></a></p></td>
+<td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">resample_time()</span></code><sup>1</sup></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><sup>1</sup>) Imported from hydromt core package</p>
+</section>
+<section id="model-components">
+<span id="id1"></span><h2>Model components<a class="headerlink" href="#model-components" title="Permalink to this headline">#</a></h2>
+<p>The following table provides an overview of which <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel" title="hydromt_sfincs.SfincsModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code></a>
+model data component (attribute) contains which SFINCS in- and output files. The files are read and written with the associated
+read- and write- methods, i.e. <code class="xref py py-func docutils literal notranslate"><span class="pre">read_config()</span></code>
+and <code class="xref py py-func docutils literal notranslate"><span class="pre">write_config()</span></code> for the
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">config</span></code>  attribute.</p>
+<p>Note that the indfile is not part of the staticmaps dataset but created based on
+the mskfile upon writing and used for reading staticmaps.</p>
+<table class="colwidths-given table" id="id4">
+<caption><span class="caption-text">SfincsModel data component</span><a class="headerlink" href="#id4" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 70%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel" title="hydromt_sfincs.SfincsModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code></a> attribute</p></th>
+<th class="head"><p>SFINCS files</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.config.html#hydromt_sfincs.SfincsModel.config" title="hydromt_sfincs.SfincsModel.config"><code class="xref py py-attr docutils literal notranslate"><span class="pre">config</span></code></a></p></td>
+<td><p>sfincs.inp</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.staticmaps.html#hydromt_sfincs.SfincsModel.staticmaps" title="hydromt_sfincs.SfincsModel.staticmaps"><code class="xref py py-attr docutils literal notranslate"><span class="pre">staticmaps</span></code></a></p></td>
+<td><p>depfile, mskfile, manningfile, qinffile, scsfile</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.staticgeoms.html#hydromt_sfincs.SfincsModel.staticgeoms" title="hydromt_sfincs.SfincsModel.staticgeoms"><code class="xref py py-attr docutils literal notranslate"><span class="pre">staticgeoms</span></code></a></p></td>
+<td><p>obsfile, thdfile, weirfile</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.forcing.html#hydromt_sfincs.SfincsModel.forcing" title="hydromt_sfincs.SfincsModel.forcing"><code class="xref py py-attr docutils literal notranslate"><span class="pre">forcing</span></code></a></p></td>
+<td><p>bndfile, bzsfile, srcfile, disfile, precipfile, netamprfile</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.states.html#hydromt_sfincs.SfincsModel.states" title="hydromt_sfincs.SfincsModel.states"><code class="xref py py-attr docutils literal notranslate"><span class="pre">states</span></code></a></p></td>
+<td><p>inifile</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.results.html#hydromt_sfincs.SfincsModel.results" title="hydromt_sfincs.SfincsModel.results"><code class="xref py py-attr docutils literal notranslate"><span class="pre">results</span></code></a></p></td>
+<td><p>sfincs_his.nc, sfincs_map.nc</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="intro.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">User guide</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="sfincs_build_update.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Building or update a model</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright Deltares.<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.5.0.<br>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>

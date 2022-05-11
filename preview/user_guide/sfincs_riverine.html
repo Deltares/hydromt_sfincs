@@ -1,0 +1,371 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Setting up a riverine model &#8212; HydroMT SFINCS  documentation</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.b7bb847fb20b106c3d81b95245e65545.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Make a coastal sfincs model from scratch using hydromt" href="../_examples/build_coastal_model.html" />
+    <link rel="prev" title="Setting up a coastal model" href="sfincs_coastal.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+<a class="navbar-brand" href="../index.html">
+<p class="title">HydroMT SFINCS</p>
+</a>
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../getting_started/intro.html">
+  Getting started
+ </a>
+</li>
+
+<li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="intro.html">
+  User guide
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../api.html">
+  API reference
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../dev_guide/intro.html">
+  Developments
+ </a>
+</li>
+
+    
+    <li class="nav-item">
+        <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/preview/index.html">HydroMT core<i class="fas fa-external-link-alt"></i></a>
+    </li>
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://deltares.nl/en/" rel="noopener" target="_blank" title="Deltares"><img src="../_static/deltares-white.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar">
+              <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Table of Contents
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="sfincs.html">
+   Model methods and components
+  </a>
+ </li>
+ <li class="toctree-l1 current active has-children">
+  <a class="reference internal" href="sfincs_build_update.html">
+   Building or update a model
+  </a>
+  <input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul class="current">
+   <li class="toctree-l2">
+    <a class="reference internal" href="sfincs_coastal.html">
+     Setting up a coastal model
+    </a>
+   </li>
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     Setting up a riverine model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../_examples/build_coastal_model.html">
+     Example: Build a coastal SFINCS model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../_examples/build_riverine_model.html">
+     Example: Build a riverine SFINCS model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../_examples/update_model.html">
+     Example: Update SFINCS model components
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="process_analyze.html">
+   Postprocessing and visualization
+  </a>
+  <input checked class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../_examples/sfincs_results_hmax.html">
+     Example: Visuazize the maximum water depth
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../_examples/sfincs_results_animation.html">
+     Example: Create a waterdepth animation
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+  </div>
+</nav>
+              </div>
+              <div class="sidebar-end-items">
+              </div>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+
+<nav id="bd-toc-nav">
+    
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <section id="setting-up-a-riverine-model">
+<span id="sfincs-riverine"></span><h1>Setting up a riverine model<a class="headerlink" href="#setting-up-a-riverine-model" title="Permalink to this headline">#</a></h1>
+<p>To build a <strong>riverine flood model</strong> with q (discharge) and p (precipitation), but no h
+(waterlevel) boundary conditions, the model <a class="reference external" href="https://deltares.github.io/hydromt/preview/user_guide/model_region">region</a> can either be defined by a
+bounding or the interbasin within a bounding box.</p>
+<p>In the second example below the region is based on the interbasin is based on all cells
+within the bounding box draining into a stream with a minimal upstream area of 20 km2.
+The delineation is based on gridded flow direction data set in the setup_region method.</p>
+<p>At the upstream end of each river a discharge source point can be defined with the
+<cite>setup_river_inflow</cite> method and at the downstream end an  outflow boundary with the
+<cite>setup_river_outflow</cite> method.</p>
+<p>As DEMs typically to not have an accurate representation of the river underwater
+bathymetry, this can be ‘burned’ into the DEM using the <cite>setup_river_bathymetry</cite> method.
+Note that this method requires <cite>setup_river_hydrography</cite> to be executed first.</p>
+<p>A typical workflow to setup a riverine model schematization is provided in the
+<a class="reference download internal" download="" href="../_downloads/51689978eab93efb62c12d4cc98256c2/sfincs_riverine.ini"><code class="xref download docutils literal notranslate"><span class="pre">sfincs_riverine.ini</span></code></a> and shown below.
+Each section corresponds to <a class="reference internal" href="sfincs.html#model-methods"><span class="std std-ref">a model method</span></a> and the <cite>[global]</cite> section can be used to pass
+additional arguments to the <code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code>. initialization.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">hydromt build sfincs /path/to/model_root &quot;{&#39;bbox&#39;: [xmin, ymin, xmax, ymax]}&quot; -i sfincs_riverine.ini -vv</span>
+</pre></div>
+</div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">hydromt build sfincs /path/to/model_root &quot;{&#39;interbasin&#39;: [xmin, ymin, xmax, ymax], &#39;uparea&#39;: 20}&quot; -i sfincs_riverine.ini -vv</span>
+</pre></div>
+</div>
+<div class="highlight-Ini notranslate"><div class="highlight"><pre><span></span><span class="k">[setup_config]</span><span class="w"></span>
+<span class="na">tref</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">20210101 000000</span><span class="w"></span>
+<span class="na">tstart</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">20210101 000000</span><span class="w"></span>
+<span class="na">tstop</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">20210102 000000</span><span class="w"></span>
+<span class="na">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.5</span><span class="w"></span>
+<span class="na">zsini</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.0</span><span class="w"></span>
+<span class="na">dtmaxout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">86400</span><span class="w"></span>
+
+<span class="na">[setup_region]                  # method to determine (hydrological) model region</span><span class="w"></span>
+<span class="na">hydrography_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro</span><span class="w"></span>
+<span class="na">basin_index_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro_index</span><span class="w"></span>
+
+<span class="k">[setup_topobathy]</span><span class="w"></span>
+<span class="na">topobathy_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro       # topobathy basemaps [&#39;elevtn&#39;]</span><span class="w"></span>
+
+<span class="na">[setup_river_hydrography]       # required for setup_river_bathymetry &amp; used by setup_river_inflow &amp; setup_river_outflow if no hydrography_fn passed to those methods</span><span class="w"></span>
+<span class="na">hydrography_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">merit_hydro    # hydrography maps [&#39;flwdir&#39;, &#39;uparea&#39;]</span><span class="w"></span>
+
+<span class="k">[setup_river_bathymetry]</span><span class="w"></span>
+<span class="na">river_geom_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">data/rivers_lin2019_v1.geojson  # river geometry with columns [&#39;qbankfull&#39;, &#39;rivwth&#39;]</span><span class="w"></span>
+<span class="na">river_upa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">25                   # Mimimum upstream area threshold of rivers [km2]</span><span class="w"></span>
+<span class="na">river_len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1000                 # minimum length inside river domain [m] </span><span class="w"></span>
+<span class="na">rivdph_method</span><span class="o">=</span><span class="s">gvf                # gradual varying flow method</span><span class="w"></span>
+<span class="na">rivwth_method</span><span class="o">=</span><span class="s">geom               # with based on values from river_geom_fn</span><span class="w"></span>
+<span class="na">min_rivwth</span><span class="o">=</span><span class="s">50.0                  # minimum river width</span><span class="w"></span>
+<span class="na">min_rivdph</span><span class="o">=</span><span class="s">1.0                   # minimum river depth</span><span class="w"></span>
+
+<span class="k">[setup_river_inflow]</span><span class="w"></span>
+<span class="na">river_upa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">25                   # Mimimum upstream area threshold of rivers [km2]</span><span class="w"></span>
+<span class="na">river_len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1000                 # minimum length inside river domain [m]</span><span class="w"></span>
+
+<span class="k">[setup_river_outflow]</span><span class="w"></span>
+<span class="na">river_upa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10                   # Mimimum upstream area threshold of rivers [km2]</span><span class="w"></span>
+<span class="na">river_len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1000                 # minimum length inside river domain [m] </span><span class="w"></span>
+<span class="na">outflow_width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">2500             # The width [m] of the outflow boundary</span><span class="w"></span>
+
+<span class="k">[setup_cn_infiltration]</span><span class="w"></span>
+<span class="na">cn_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">gcn250                  # curve number source</span><span class="w"></span>
+<span class="na">antecedent_runoff_conditions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">avg # for gcn250: {&#39;dry&#39;, &#39;avg&#39;, &#39;wet&#39;}</span><span class="w"></span>
+
+<span class="k">[setup_manning_roughness]</span><span class="w"></span>
+<span class="na">lulc_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">vito                  # land-use land-cover source</span><span class="w"></span>
+<span class="na">map_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">None                   # mapping file. read from hydromt/data/lulc/{lulc_fn}_mapping.csv if None</span><span class="w"></span>
+
+<span class="k">[setup_gauges]</span><span class="w"></span>
+<span class="na">gauges_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">data/riverine_gauges.csv   # observation point locations</span><span class="w"></span>
+<span class="na">crs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">4326                      # epsg-code for gauges (only used if not in gauges_fn metadata, e.g. when csv file)</span><span class="w"></span>
+
+<span class="k">[setup_q_forcing]</span><span class="w"></span>
+<span class="na">geodataset_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">None                #  discharge point timeseries dataset</span><span class="w"></span>
+<span class="na">timeseries_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">data/discharge_input_sfincs.csv   # timeseries data at discharge gauges (e.g.: from setup_river_inflow)</span><span class="w"></span>
+</pre></div>
+</div>
+</section>
+
+
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="sfincs_coastal.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Setting up a coastal model</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="../_examples/build_coastal_model.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Make a coastal sfincs model from scratch using hydromt</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright Deltares.<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.5.0.<br>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>
