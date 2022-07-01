@@ -14,6 +14,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
@@ -315,6 +316,7 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -323,10 +325,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -338,12 +344,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -371,7 +380,7 @@ div.rendered_html tbody tr:hover {
 }
 </style>
 <section id="Update-existing-Sfincs-model-with-boundary-conditions-and-forcing">
-<h1>Update existing Sfincs model with boundary conditions and forcing<a class="headerlink" href="#Update-existing-Sfincs-model-with-boundary-conditions-and-forcing" title="Permalink to this headline"></a></h1>
+<h1>Update existing Sfincs model with boundary conditions and forcing<a class="headerlink" href="#Update-existing-Sfincs-model-with-boundary-conditions-and-forcing" title="Permalink to this heading"></a></h1>
 <p>This notebook demonstrates how to update an existing SFINCS model with gauges, boundary conditions and forcing such as precipitation. The notebook does not contain the SFINCS code or executables to run the model with.</p>
 <p>We will perform the following: * append an existing schematization that only contains static schematization layers * introduce gridded precipitation only * introduce gridded precipitation, water level boundaries and observation gauge point locations * write the new models to new model folders</p>
 <p>This notebook demonstrates the update functionalities on a test model delivered with the hydromt_sfincs plugin.</p>
@@ -394,7 +403,7 @@ hydroMT model plugins: sfincs (v0.2.2.dev0)
 </pre></div></div>
 </div>
 <section id="Add-precipitation-forcing-to-an-existing-model">
-<h2>Add precipitation forcing to an existing model<a class="headerlink" href="#Add-precipitation-forcing-to-an-existing-model" title="Permalink to this headline"></a></h2>
+<h2>Add precipitation forcing to an existing model<a class="headerlink" href="#Add-precipitation-forcing-to-an-existing-model" title="Permalink to this heading"></a></h2>
 <p>Rather than rebuilding a model from scratch, we can add or update components to an existing model. You may want to update several things at the same time. This may be useful, for instance when you are considering model intercomparisons, with different parameter sets or underlying static maps, or comparing the impact of different forcing datasets.</p>
 <p>This is possible by preparing a <strong>configuration file</strong> that includes every components and settings that you want to do during your update.</p>
 <p>The ini-file contains the model setup configuration and determines which components are updated and in which sequence and sets optional arguments for each component. This configuration is passed to hydromt using <code class="docutils literal notranslate"><span class="pre">-i</span> <span class="pre">&lt;path_to_ini_file&gt;</span></code>.</p>
@@ -480,7 +489,7 @@ Options:
 </div>
 </section>
 <section id="Update-sfincs-precipitation">
-<h2>Update sfincs precipitation<a class="headerlink" href="#Update-sfincs-precipitation" title="Permalink to this headline"></a></h2>
+<h2>Update sfincs precipitation<a class="headerlink" href="#Update-sfincs-precipitation" title="Permalink to this heading"></a></h2>
 <p>Now we will add the precipitation and write the model to a new folder</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
@@ -495,22 +504,22 @@ Options:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2022-03-24 07:47:59,777 - update - log - INFO - HydroMT version: 0.4.5
-2022-03-24 07:47:59,777 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
-2022-03-24 07:47:59,777 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
-2022-03-24 07:47:59,777 - update - main - INFO - User settings:
-2022-03-24 07:47:59,781 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
-2022-03-24 07:47:59,950 - update - sfincs - INFO - Model read
-2022-03-24 07:47:59,954 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
-2022-03-24 07:47:59,954 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
-2022-03-24 07:47:59,954 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
-2022-03-24 07:47:59,957 - update - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
-2022-03-24 07:48:00,035 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.6/era5_hourly.nc
-2022-03-24 07:48:00,111 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
-2022-03-24 07:48:00,152 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
-2022-03-24 07:48:00,195 - update - sfincs - INFO - Write forcing files
-2022-03-24 07:48:00,228 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
-2022-03-24 07:48:00,239 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip/sfincs.inp
+2022-07-01 15:18:36,922 - update - log - INFO - HydroMT version: 0.4.5
+2022-07-01 15:18:36,922 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
+2022-07-01 15:18:36,922 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
+2022-07-01 15:18:36,922 - update - main - INFO - User settings:
+2022-07-01 15:18:36,926 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
+2022-07-01 15:18:37,012 - update - sfincs - INFO - Model read
+2022-07-01 15:18:37,016 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
+2022-07-01 15:18:37,016 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
+2022-07-01 15:18:37,016 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
+2022-07-01 15:18:37,020 - update - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
+2022-07-01 15:18:37,085 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.6/era5_hourly.nc
+2022-07-01 15:18:37,258 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
+2022-07-01 15:18:37,293 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
+2022-07-01 15:18:37,329 - update - sfincs - INFO - Write forcing files
+2022-07-01 15:18:37,359 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2022-07-01 15:18:37,390 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip/sfincs.inp
 
 </pre></div></div>
 </div>
@@ -543,7 +552,7 @@ sfincs.bnd   sfincs.dep  sfincs.inp  sfincs.msk  sfincs.scs
 <p>We now have a <strong>precip.nc</strong> file with the precipitation. The .inp file now also contains a reference to this dataset.</p>
 </section>
 <section id="Inspect-forcing-data">
-<h2>Inspect forcing data<a class="headerlink" href="#Inspect-forcing-data" title="Permalink to this headline"></a></h2>
+<h2>Inspect forcing data<a class="headerlink" href="#Inspect-forcing-data" title="Permalink to this heading"></a></h2>
 <p>The forcing data will also be available for analysis and plotting within hydromt. The <code class="docutils literal notranslate"><span class="pre">plot_forcing</span></code> method plots the area averaged precipitation. If you are familiar with xarray and matplotlib, it is straighforward to make some other plots as well.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -721,36 +730,36 @@ aggregate = False               # if True return the aggregated mean as spatiall
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2022-03-24 07:48:06,630 - update - log - INFO - HydroMT version: 0.4.5
-2022-03-24 07:48:06,630 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
-2022-03-24 07:48:06,630 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
-2022-03-24 07:48:06,630 - update - main - INFO - User settings:
-2022-03-24 07:48:06,634 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
-2022-03-24 07:48:06,799 - update - sfincs - INFO - Model read
-2022-03-24 07:48:06,803 - update - model_api - INFO - setup_gauges.gauges_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
-2022-03-24 07:48:06,803 - update - model_api - INFO - setup_gauges.overwrite: False
-2022-03-24 07:48:06,803 - update - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
-2022-03-24 07:48:06,885 - update - data_adapter - INFO - DataCatalog: Getting venice_gauges GeoDataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
-2022-03-24 07:48:06,886 - update - data_adapter - INFO - GeoDataFrame: Read csv data and clip to geom (epsg:32633) [268650.000, 5018550.000, 332400.000, 5059350.000].
-2022-03-24 07:48:06,899 - update - sfincs - INFO - obs set based on /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
-2022-03-24 07:48:06,899 - update - model_api - INFO - setup_h_forcing.geodataset_fn: gtsmv3_eu_era5
-2022-03-24 07:48:06,899 - update - model_api - INFO - setup_h_forcing.timeseries_fn: None
-2022-03-24 07:48:06,899 - update - model_api - INFO - setup_h_forcing.offset_fn: None
-2022-03-24 07:48:06,899 - update - model_api - INFO - setup_h_forcing.buffer: 0
-2022-03-24 07:48:06,909 - update - data_adapter - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.6/gtsmv3_eu_era5.nc
-2022-03-24 07:48:06,910 - update - data_adapter - INFO - GeoDataset: Read netcdf data and clip to geom (epsg:32633) [288900.000, 5018550.000, 332400.000, 5049900.000].
-2022-03-24 07:48:06,965 - update - model_api - WARNING - Replacing forcing: bzs
-2022-03-24 07:48:06,965 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
-2022-03-24 07:48:06,965 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
-2022-03-24 07:48:06,966 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
-2022-03-24 07:48:06,969 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.6/era5_hourly.nc
-2022-03-24 07:48:07,036 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
-2022-03-24 07:48:07,077 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
-2022-03-24 07:48:07,120 - update - sfincs - INFO - Write staticgeom files
-2022-03-24 07:48:07,121 - update - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
-2022-03-24 07:48:07,129 - update - sfincs - INFO - Write forcing files
-2022-03-24 07:48:07,170 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
-2022-03-24 07:48:07,181 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing/sfincs.inp
+2022-07-01 15:18:43,807 - update - log - INFO - HydroMT version: 0.4.5
+2022-07-01 15:18:43,807 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
+2022-07-01 15:18:43,807 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
+2022-07-01 15:18:43,807 - update - main - INFO - User settings:
+2022-07-01 15:18:43,811 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
+2022-07-01 15:18:43,891 - update - sfincs - INFO - Model read
+2022-07-01 15:18:43,895 - update - model_api - INFO - setup_gauges.gauges_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
+2022-07-01 15:18:43,895 - update - model_api - INFO - setup_gauges.overwrite: False
+2022-07-01 15:18:43,895 - update - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
+2022-07-01 15:18:43,966 - update - data_adapter - INFO - DataCatalog: Getting venice_gauges GeoDataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
+2022-07-01 15:18:43,967 - update - data_adapter - INFO - GeoDataFrame: Read csv data and clip to geom (epsg:32633) [268650.000, 5018550.000, 332400.000, 5059350.000].
+2022-07-01 15:18:43,980 - update - sfincs - INFO - obs set based on /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
+2022-07-01 15:18:43,980 - update - model_api - INFO - setup_h_forcing.geodataset_fn: gtsmv3_eu_era5
+2022-07-01 15:18:43,980 - update - model_api - INFO - setup_h_forcing.timeseries_fn: None
+2022-07-01 15:18:43,980 - update - model_api - INFO - setup_h_forcing.offset_fn: None
+2022-07-01 15:18:43,980 - update - model_api - INFO - setup_h_forcing.buffer: 0
+2022-07-01 15:18:43,990 - update - data_adapter - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.6/gtsmv3_eu_era5.nc
+2022-07-01 15:18:43,990 - update - data_adapter - INFO - GeoDataset: Read netcdf data and clip to geom (epsg:32633) [288900.000, 5018550.000, 332400.000, 5049900.000].
+2022-07-01 15:18:44,045 - update - model_api - WARNING - Replacing forcing: bzs
+2022-07-01 15:18:44,045 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
+2022-07-01 15:18:44,045 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
+2022-07-01 15:18:44,045 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
+2022-07-01 15:18:44,049 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.6/era5_hourly.nc
+2022-07-01 15:18:44,213 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
+2022-07-01 15:18:44,249 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
+2022-07-01 15:18:44,285 - update - sfincs - INFO - Write staticgeom files
+2022-07-01 15:18:44,286 - update - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
+2022-07-01 15:18:44,314 - update - sfincs - INFO - Write forcing files
+2022-07-01 15:18:44,352 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2022-07-01 15:18:44,363 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing/sfincs.inp
 
 </pre></div></div>
 </div>

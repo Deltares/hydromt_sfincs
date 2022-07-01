@@ -14,6 +14,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
@@ -319,6 +320,7 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -327,10 +329,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -342,12 +348,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -375,11 +384,11 @@ div.rendered_html tbody tr:hover {
 }
 </style>
 <section id="Build-a-riverine-SFINCS-model-from-scratch">
-<h1>Build a riverine SFINCS model from scratch<a class="headerlink" href="#Build-a-riverine-SFINCS-model-from-scratch" title="Permalink to this headline"></a></h1>
+<h1>Build a riverine SFINCS model from scratch<a class="headerlink" href="#Build-a-riverine-SFINCS-model-from-scratch" title="Permalink to this heading"></a></h1>
 <p>This notebook demonstrates how to prepare <strong>SFINCS</strong> model from scratch using the command line interace (CLI).</p>
 <p>All lines in this notebook which start with <code class="docutils literal notranslate"><span class="pre">!</span></code> are executed from the command line. Within the notebook environment the logging messages are shown after completion. You can also copy these lines and paste these in your shell to get more direct feedback.</p>
 <section id="hydroMT-CLI-build-interface">
-<h2>hydroMT CLI build interface<a class="headerlink" href="#hydroMT-CLI-build-interface" title="Permalink to this headline"></a></h2>
+<h2>hydroMT CLI build interface<a class="headerlink" href="#hydroMT-CLI-build-interface" title="Permalink to this heading"></a></h2>
 <p>Lets first check if the SFINCS model is recognized by hydromt</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -450,7 +459,7 @@ Options:
 </div>
 </section>
 <section id="setup-SFINCS-model-base-layers">
-<h2>setup SFINCS model base layers<a class="headerlink" href="#setup-SFINCS-model-base-layers" title="Permalink to this headline"></a></h2>
+<h2>setup SFINCS model base layers<a class="headerlink" href="#setup-SFINCS-model-base-layers" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
@@ -465,26 +474,26 @@ Options:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2022-03-24 07:46:31,867 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_base/hydromt.log.
-2022-03-24 07:46:31,867 - build - log - INFO - HydroMT version: 0.4.5
-2022-03-24 07:46:31,867 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_base.
-2022-03-24 07:46:31,867 - build - main - INFO - User settings:
-2022-03-24 07:46:31,870 - build - model_plugins - DEBUG - Loaded model plugin &#39;sfincs = hydromt_sfincs.sfincs.SfincsModel&#39; (0.2.2.dev0)
-2022-03-24 07:46:31,870 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
-2022-03-24 07:46:31,870 - build - model_api - WARNING - &#34;res&#34; argument ignored as the &#34;setup_topobathy&#34; is not in the model build configuration.
-2022-03-24 07:46:31,871 - build - model_api - INFO - setup_region.region: {&#39;bbox&#39;: [11.97, 45.78, 12.28, 45.94]}
-2022-03-24 07:46:31,871 - build - model_api - INFO - setup_region.hydrography_fn: merit_hydro
-2022-03-24 07:46:31,871 - build - model_api - INFO - setup_region.basin_index_fn: merit_hydro_index
-2022-03-24 07:46:31,871 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [11.97, 45.78, 12.28, 45.94]}
-2022-03-24 07:46:31,874 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_base
-2022-03-24 07:46:31,875 - build - sfincs - INFO - Write staticgeom files
-2022-03-24 07:46:31,875 - build - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
-2022-03-24 07:46:31,894 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
-2022-03-24 07:46:31,894 - build - sfincs - ERROR - depfile = sfincs.dep not found
-2022-03-24 07:46:31,894 - build - sfincs - ERROR - mskfile = sfincs.msk not found
-2022-03-24 07:46:31,894 - build - sfincs - ERROR - indexfile = sfincs.ind not found
-2022-03-24 07:46:31,894 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_base/sfincs.inp
-2022-03-24 07:46:31,894 - build - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
+2022-07-01 15:17:16,952 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_base/hydromt.log.
+2022-07-01 15:17:16,952 - build - log - INFO - HydroMT version: 0.4.5
+2022-07-01 15:17:16,952 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_base.
+2022-07-01 15:17:16,952 - build - main - INFO - User settings:
+2022-07-01 15:17:16,955 - build - model_plugins - DEBUG - Loaded model plugin &#39;sfincs = hydromt_sfincs.sfincs.SfincsModel&#39; (0.2.2.dev0)
+2022-07-01 15:17:16,955 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
+2022-07-01 15:17:16,955 - build - model_api - WARNING - &#34;res&#34; argument ignored as the &#34;setup_topobathy&#34; is not in the model build configuration.
+2022-07-01 15:17:16,955 - build - model_api - INFO - setup_region.region: {&#39;bbox&#39;: [11.97, 45.78, 12.28, 45.94]}
+2022-07-01 15:17:16,955 - build - model_api - INFO - setup_region.hydrography_fn: merit_hydro
+2022-07-01 15:17:16,955 - build - model_api - INFO - setup_region.basin_index_fn: merit_hydro_index
+2022-07-01 15:17:16,956 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [11.97, 45.78, 12.28, 45.94]}
+2022-07-01 15:17:16,959 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_base
+2022-07-01 15:17:16,959 - build - sfincs - INFO - Write staticgeom files
+2022-07-01 15:17:16,959 - build - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
+2022-07-01 15:17:16,996 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
+2022-07-01 15:17:16,997 - build - sfincs - ERROR - depfile = sfincs.dep not found
+2022-07-01 15:17:16,997 - build - sfincs - ERROR - mskfile = sfincs.msk not found
+2022-07-01 15:17:16,997 - build - sfincs - ERROR - indexfile = sfincs.ind not found
+2022-07-01 15:17:16,997 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_base/sfincs.inp
+2022-07-01 15:17:16,997 - build - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
 
 </pre></div></div>
 </div>
@@ -499,7 +508,7 @@ Options:
 <p>NOTE: As we did not specify a model configuration, only the model region has been prepared. To build a complete model we need the use a configuraton ini-file.</p>
 </section>
 <section id="Model-setup-configuration">
-<h2>Model setup configuration<a class="headerlink" href="#Model-setup-configuration" title="Permalink to this headline"></a></h2>
+<h2>Model setup configuration<a class="headerlink" href="#Model-setup-configuration" title="Permalink to this heading"></a></h2>
 <p>The ini-file contains the model setup configuration and determines which components are build and in which order and optionally sets non-default arguments for each component. This configuration is passed to hydromt using <code class="docutils literal notranslate"><span class="pre">-i</span> <span class="pre">&lt;path_to_ini_file&gt;</span></code>. We have prepared several example ini-files which are available in the model repository <a class="reference external" href="https://github.com/Deltares/hydromt_sfincs/tree/main/examples">examples folder</a> and from the
 <a class="reference external" href="https://deltares.github.io/hydromt_sfincs/latest/user_guide/sfincs/build_configuration.html">docs(build_configuration)</a>.</p>
 <p>Each header as shown between <code class="docutils literal notranslate"><span class="pre">[...]</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">[setup_topobathy]</span></code>) corresponds to a model component. All model components are explained in the <a class="reference external" href="https://deltares.github.io/hydromt_sfincs/latest/user_guide/sfincs/components.html">docs(model_components)</a>.</p>
@@ -577,13 +586,13 @@ timeseries_fn = data/discharge_input_sfincs.csv   # timeseries data at discharge
 </div>
 </section>
 <section id="Data-for-model-setup">
-<h2>Data for model setup<a class="headerlink" href="#Data-for-model-setup" title="Permalink to this headline"></a></h2>
+<h2>Data for model setup<a class="headerlink" href="#Data-for-model-setup" title="Permalink to this heading"></a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">&lt;...&gt;_fn</span></code> arguments correspond to a data source from the <code class="docutils literal notranslate"><span class="pre">DataCatalog</span></code> which is based on a yml-file with references to the data paths/urls and how the data should be read. This file can be provided to hydromt using <code class="docutils literal notranslate"><span class="pre">-d</span> <span class="pre">&lt;path_to_yml_file&gt;</span></code>.</p>
 <p>By default some example data for the Piave basin will be downloaded to <code class="docutils literal notranslate"><span class="pre">$USER_ROOT$/.hydromt_data/</span></code> which is also used for this example. An overview of the available example data is provided <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/data.html#available-global-datasets">here</a> This example data is a based on the data which available from the Deltares p-drive. If you have acces to this drive, a pre-configured catalog file can be loaded using the <code class="docutils literal notranslate"><span class="pre">--dd</span></code> flag.</p>
 <p>More background how to write a data catalog yml file can be found in the <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/data.html">hydromt core docs</a></p>
 </section>
 <section id="Setup-complete-SFINCS-model">
-<h2>Setup complete SFINCS model<a class="headerlink" href="#Setup-complete-SFINCS-model" title="Permalink to this headline"></a></h2>
+<h2>Setup complete SFINCS model<a class="headerlink" href="#Setup-complete-SFINCS-model" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
@@ -598,56 +607,56 @@ timeseries_fn = data/discharge_input_sfincs.csv   # timeseries data at discharge
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2022-03-24 07:46:34,791 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_full/hydromt.log.
-2022-03-24 07:46:34,791 - build - log - INFO - HydroMT version: 0.4.5
-2022-03-24 07:46:34,791 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_full.
-2022-03-24 07:46:34,791 - build - main - INFO - User settings:
-2022-03-24 07:46:34,796 - build - model_plugins - DEBUG - Loaded model plugin &#39;sfincs = hydromt_sfincs.sfincs.SfincsModel&#39; (0.2.2.dev0)
-2022-03-24 07:46:34,797 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
-2022-03-24 07:46:34,797 - build - model_api - DEBUG - Setting model config options.
-2022-03-24 07:46:34,798 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
-2022-03-24 07:46:34,799 - build - model_api - INFO - setup_region.region: {&#39;bbox&#39;: [11.97, 45.78, 12.28, 45.94]}
-2022-03-24 07:46:34,799 - build - model_api - INFO - setup_region.hydrography_fn: merit_hydro
-2022-03-24 07:46:34,799 - build - model_api - INFO - setup_region.basin_index_fn: merit_hydro_index
-2022-03-24 07:46:34,799 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [11.97, 45.78, 12.28, 45.94]}
-2022-03-24 07:46:34,803 - build - model_api - INFO - setup_topobathy.topobathy_fn: merit_hydro
-2022-03-24 07:46:34,803 - build - model_api - INFO - setup_topobathy.res: 50.0
-2022-03-24 07:46:34,803 - build - model_api - INFO - setup_topobathy.crs: utm
-2022-03-24 07:46:34,803 - build - model_api - INFO - setup_topobathy.reproj_method: bilinear
-2022-03-24 07:46:34,986 - build - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
-2022-03-24 07:46:35,064 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/merit_hydro/{variable}.tif
-2022-03-24 07:46:35,087 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [11.961, 45.772, 12.288, 45.948]
-2022-03-24 07:46:35,149 - build - model_api - INFO - setup_river_hydrography.hydrography_fn: merit_hydro
-2022-03-24 07:46:35,149 - build - model_api - INFO - setup_river_hydrography.adjust_dem: False
-2022-03-24 07:46:35,149 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/merit_hydro/{variable}.tif
-2022-03-24 07:46:35,223 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [11.970, 45.780, 12.280, 45.940]
-2022-03-24 07:46:35,240 - build - sfincs - INFO - Reprojecting hydrography data to destination grid.
-2022-03-24 07:46:36,920 - build - flw - INFO - Deriving flow direction from reprojected synthethic elevation.
-2022-03-24 07:46:44,782 - build - flw - INFO - Calculating upstream area with 5 river inflows.
-2022-03-24 07:46:45,051 - build - flw - DEBUG - New/org max upstream area: 3938.01/3956.60 km2
-2022-03-24 07:46:45,064 - build - sfincs - INFO - Saving hydrography data to staticmaps.
-2022-03-24 07:46:45,068 - build - model_api - INFO - setup_river_bathymetry.river_geom_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/rivers_lin2019_v1.geojson
-2022-03-24 07:46:45,068 - build - model_api - INFO - setup_river_bathymetry.river_mask_fn: None
-2022-03-24 07:46:45,068 - build - model_api - INFO - setup_river_bathymetry.qbankfull_fn: None
-2022-03-24 07:46:45,068 - build - model_api - INFO - setup_river_bathymetry.rivdph_method: gvf
-2022-03-24 07:46:45,068 - build - model_api - INFO - setup_river_bathymetry.rivwth_method: geom
-2022-03-24 07:46:45,068 - build - model_api - INFO - setup_river_bathymetry.river_upa: 25
-2022-03-24 07:46:45,068 - build - model_api - INFO - setup_river_bathymetry.river_len: 1000
-2022-03-24 07:46:45,069 - build - model_api - INFO - setup_river_bathymetry.min_rivwth: 50.0
-2022-03-24 07:46:45,069 - build - model_api - INFO - setup_river_bathymetry.min_rivdph: 1.0
-2022-03-24 07:46:45,069 - build - model_api - INFO - setup_river_bathymetry.rivbank: True
-2022-03-24 07:46:45,069 - build - model_api - INFO - setup_river_bathymetry.rivbankq: 25
-2022-03-24 07:46:45,069 - build - model_api - INFO - setup_river_bathymetry.segment_length: 3000.0
-2022-03-24 07:46:45,069 - build - model_api - INFO - setup_river_bathymetry.smooth_length: 10000.0
-2022-03-24 07:46:45,069 - build - model_api - INFO - setup_river_bathymetry.constrain_rivbed: True
-2022-03-24 07:46:45,069 - build - model_api - INFO - setup_river_bathymetry.constrain_estuary: True
-2022-03-24 07:46:45,069 - build - model_api - INFO - setup_river_bathymetry.dig_river_d4: True
-2022-03-24 07:46:45,069 - build - model_api - INFO - setup_river_bathymetry.plot_riv_profiles: 0
-2022-03-24 07:46:45,139 - build - data_adapter - WARNING - Overwriting data source rivers_lin2019_v1.
-2022-03-24 07:46:45,139 - build - data_adapter - INFO - DataCatalog: Getting rivers_lin2019_v1 GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/rivers_lin2019_v1.geojson
-2022-03-24 07:46:45,140 - build - data_adapter - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:4326) [11.970, 45.780, 12.280, 45.940].
-2022-03-24 07:46:49,659 - build - bathymetry - INFO - Deriving bankfull river surface elevation from its banks.
-2022-03-24 07:46:56,786 - build - bathymetry - INFO - Smoothing river width (n=2).
+2022-07-01 15:17:19,940 - build - log - DEBUG - Writing log messages to new file /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_full/hydromt.log.
+2022-07-01 15:17:19,940 - build - log - INFO - HydroMT version: 0.4.5
+2022-07-01 15:17:19,940 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_full.
+2022-07-01 15:17:19,941 - build - main - INFO - User settings:
+2022-07-01 15:17:19,945 - build - model_plugins - DEBUG - Loaded model plugin &#39;sfincs = hydromt_sfincs.sfincs.SfincsModel&#39; (0.2.2.dev0)
+2022-07-01 15:17:19,945 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
+2022-07-01 15:17:19,946 - build - model_api - DEBUG - Setting model config options.
+2022-07-01 15:17:19,947 - build - model_api - DEBUG - Default config read from /usr/share/miniconda/envs/hydromt-sfincs/lib/python3.9/site-packages/hydromt_sfincs/data/sfincs/sfincs.inp
+2022-07-01 15:17:19,948 - build - model_api - INFO - setup_region.region: {&#39;bbox&#39;: [11.97, 45.78, 12.28, 45.94]}
+2022-07-01 15:17:19,948 - build - model_api - INFO - setup_region.hydrography_fn: merit_hydro
+2022-07-01 15:17:19,948 - build - model_api - INFO - setup_region.basin_index_fn: merit_hydro_index
+2022-07-01 15:17:19,948 - build - basin_mask - DEBUG - Parsed region (kind=bbox): {&#39;bbox&#39;: [11.97, 45.78, 12.28, 45.94]}
+2022-07-01 15:17:19,951 - build - model_api - INFO - setup_topobathy.topobathy_fn: merit_hydro
+2022-07-01 15:17:19,951 - build - model_api - INFO - setup_topobathy.res: 50.0
+2022-07-01 15:17:19,952 - build - model_api - INFO - setup_topobathy.crs: utm
+2022-07-01 15:17:19,952 - build - model_api - INFO - setup_topobathy.reproj_method: bilinear
+2022-07-01 15:17:20,044 - build - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
+2022-07-01 15:17:20,214 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/merit_hydro/{variable}.tif
+2022-07-01 15:17:20,235 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [11.961, 45.772, 12.288, 45.948]
+2022-07-01 15:17:20,291 - build - model_api - INFO - setup_river_hydrography.hydrography_fn: merit_hydro
+2022-07-01 15:17:20,291 - build - model_api - INFO - setup_river_hydrography.adjust_dem: False
+2022-07-01 15:17:20,291 - build - data_adapter - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/merit_hydro/{variable}.tif
+2022-07-01 15:17:20,356 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [11.970, 45.780, 12.280, 45.940]
+2022-07-01 15:17:20,372 - build - sfincs - INFO - Reprojecting hydrography data to destination grid.
+2022-07-01 15:17:21,630 - build - flw - INFO - Deriving flow direction from reprojected synthethic elevation.
+2022-07-01 15:17:28,565 - build - flw - INFO - Calculating upstream area with 5 river inflows.
+2022-07-01 15:17:28,792 - build - flw - DEBUG - New/org max upstream area: 3938.01/3956.60 km2
+2022-07-01 15:17:28,805 - build - sfincs - INFO - Saving hydrography data to staticmaps.
+2022-07-01 15:17:28,808 - build - model_api - INFO - setup_river_bathymetry.river_geom_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/rivers_lin2019_v1.geojson
+2022-07-01 15:17:28,808 - build - model_api - INFO - setup_river_bathymetry.river_mask_fn: None
+2022-07-01 15:17:28,808 - build - model_api - INFO - setup_river_bathymetry.qbankfull_fn: None
+2022-07-01 15:17:28,808 - build - model_api - INFO - setup_river_bathymetry.rivdph_method: gvf
+2022-07-01 15:17:28,808 - build - model_api - INFO - setup_river_bathymetry.rivwth_method: geom
+2022-07-01 15:17:28,808 - build - model_api - INFO - setup_river_bathymetry.river_upa: 25
+2022-07-01 15:17:28,808 - build - model_api - INFO - setup_river_bathymetry.river_len: 1000
+2022-07-01 15:17:28,808 - build - model_api - INFO - setup_river_bathymetry.min_rivwth: 50.0
+2022-07-01 15:17:28,808 - build - model_api - INFO - setup_river_bathymetry.min_rivdph: 1.0
+2022-07-01 15:17:28,809 - build - model_api - INFO - setup_river_bathymetry.rivbank: True
+2022-07-01 15:17:28,809 - build - model_api - INFO - setup_river_bathymetry.rivbankq: 25
+2022-07-01 15:17:28,809 - build - model_api - INFO - setup_river_bathymetry.segment_length: 3000.0
+2022-07-01 15:17:28,809 - build - model_api - INFO - setup_river_bathymetry.smooth_length: 10000.0
+2022-07-01 15:17:28,809 - build - model_api - INFO - setup_river_bathymetry.constrain_rivbed: True
+2022-07-01 15:17:28,809 - build - model_api - INFO - setup_river_bathymetry.constrain_estuary: True
+2022-07-01 15:17:28,809 - build - model_api - INFO - setup_river_bathymetry.dig_river_d4: True
+2022-07-01 15:17:28,809 - build - model_api - INFO - setup_river_bathymetry.plot_riv_profiles: 0
+2022-07-01 15:17:28,867 - build - data_adapter - WARNING - Overwriting data source rivers_lin2019_v1.
+2022-07-01 15:17:28,867 - build - data_adapter - INFO - DataCatalog: Getting rivers_lin2019_v1 GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/rivers_lin2019_v1.geojson
+2022-07-01 15:17:28,868 - build - data_adapter - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:4326) [11.970, 45.780, 12.280, 45.940].
+2022-07-01 15:17:32,873 - build - bathymetry - INFO - Deriving bankfull river surface elevation from its banks.
+2022-07-01 15:17:38,988 - build - bathymetry - INFO - Smoothing river width (n=2).
 The solver successfully reached the end of the integration interval.
 The solver successfully reached the end of the integration interval.
 The solver successfully reached the end of the integration interval.
@@ -660,61 +669,61 @@ The solver successfully reached the end of the integration interval.
 The solver successfully reached the end of the integration interval.
 The solver successfully reached the end of the integration interval.
 The solver successfully reached the end of the integration interval.
-2022-03-24 07:46:58,628 - build - bathymetry - DEBUG - Burn bedlevel values into DEM.
-2022-03-24 07:46:58,641 - build - bathymetry - DEBUG - Interpolate bedlevel values
-2022-03-24 07:46:59,729 - build - bathymetry - DEBUG - Correct for D4 connectivity bed level
-2022-03-24 07:47:01,232 - build - model_api - INFO - setup_river_inflow.hydrography_fn: None
-2022-03-24 07:47:01,232 - build - model_api - INFO - setup_river_inflow.river_upa: 25
-2022-03-24 07:47:01,232 - build - model_api - INFO - setup_river_inflow.river_len: 1000
-2022-03-24 07:47:01,233 - build - model_api - INFO - setup_river_inflow.river_width: 2000.0
-2022-03-24 07:47:01,233 - build - model_api - INFO - setup_river_inflow.keep_rivers_geom: False
-2022-03-24 07:47:01,233 - build - model_api - INFO - setup_river_inflow.buffer: 10
-2022-03-24 07:47:01,501 - build - flwdir - DEBUG - 3 river inflow point locations found.
-2022-03-24 07:47:01,517 - build - sfincs - DEBUG - discharge forcing: setting src data for 3 points.
-2022-03-24 07:47:01,518 - build - sfincs - DEBUG - discharge forcing: setting dis data.
-2022-03-24 07:47:01,623 - build - sfincs - DEBUG - 118 closed (mask=1) boundary cells set around src points.
-2022-03-24 07:47:01,624 - build - model_api - INFO - setup_river_outflow.hydrography_fn: None
-2022-03-24 07:47:01,624 - build - model_api - INFO - setup_river_outflow.river_upa: 10
-2022-03-24 07:47:01,624 - build - model_api - INFO - setup_river_outflow.river_len: 1000
-2022-03-24 07:47:01,624 - build - model_api - INFO - setup_river_outflow.river_width: 2000.0
-2022-03-24 07:47:01,624 - build - model_api - INFO - setup_river_outflow.append_bounds: False
-2022-03-24 07:47:01,624 - build - model_api - INFO - setup_river_outflow.keep_rivers_geom: False
-2022-03-24 07:47:01,624 - build - sfincs - WARNING - &#39;outflow_width&#39; is deprecated use &#39;river_width&#39; instead.
-2022-03-24 07:47:01,898 - build - flwdir - DEBUG - 6 river outflow point locations found.
-2022-03-24 07:47:02,158 - build - sfincs - DEBUG - 307 outflow (mask=3) boundary cells set.
-2022-03-24 07:47:02,159 - build - model_api - INFO - setup_cn_infiltration.cn_fn: gcn250
-2022-03-24 07:47:02,159 - build - model_api - INFO - setup_cn_infiltration.antecedent_runoff_conditions: avg
-2022-03-24 07:47:02,159 - build - data_adapter - INFO - DataCatalog: Getting gcn250 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/gcn250/{variable}.tif
-2022-03-24 07:47:02,168 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [11.970, 45.780, 12.280, 45.940]
-2022-03-24 07:47:02,202 - build - sfincs - INFO - Updating CN map based on &#34;rivmsk&#34; from setup_river_hydrography method.
-2022-03-24 07:47:02,221 - build - model_api - INFO - setup_manning_roughness.lulc_fn: vito
-2022-03-24 07:47:02,221 - build - model_api - INFO - setup_manning_roughness.map_fn: None
-2022-03-24 07:47:02,221 - build - model_api - INFO - setup_manning_roughness.riv_man: 0.03
-2022-03-24 07:47:02,221 - build - model_api - INFO - setup_manning_roughness.lnd_man: 0.1
-2022-03-24 07:47:02,221 - build - model_api - INFO - setup_manning_roughness.sea_man: None
-2022-03-24 07:47:02,224 - build - data_adapter - INFO - DataCatalog: Getting vito RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/vito.tif
-2022-03-24 07:47:02,233 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [11.970, 45.780, 12.280, 45.940]
-2022-03-24 07:47:02,255 - build - landuse - INFO - Deriving N using average resampling (nodata=-999.0).
-2022-03-24 07:47:02,309 - build - sfincs - INFO - Setting constant manning roughness for river cells.
-2022-03-24 07:47:02,319 - build - model_api - INFO - setup_gauges.gauges_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/riverine_gauges.csv
-2022-03-24 07:47:02,319 - build - model_api - INFO - setup_gauges.overwrite: False
-2022-03-24 07:47:02,319 - build - data_adapter - INFO - DataCatalog: Getting riverine_gauges GeoDataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/riverine_gauges.csv
-2022-03-24 07:47:02,320 - build - data_adapter - INFO - GeoDataFrame: Read csv data and clip to geom (epsg:4326) [11.970, 45.780, 12.280, 45.940].
-2022-03-24 07:47:02,331 - build - sfincs - INFO - obs set based on /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/riverine_gauges.csv
-2022-03-24 07:47:02,332 - build - model_api - INFO - setup_q_forcing.geodataset_fn: None
-2022-03-24 07:47:02,332 - build - model_api - INFO - setup_q_forcing.timeseries_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/discharge_input_sfincs.csv
-2022-03-24 07:47:02,349 - build - sfincs - DEBUG - discharge forcing: setting src data for 3 points.
-2022-03-24 07:47:02,349 - build - sfincs - DEBUG - discharge forcing: setting dis data.
-2022-03-24 07:47:02,349 - build - model_api - WARNING - Replacing forcing: dis
-2022-03-24 07:47:02,349 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_full
-2022-03-24 07:47:02,403 - build - sfincs - DEBUG - Write binary map indices based on mask.
-2022-03-24 07:47:02,448 - build - sfincs - DEBUG - Write binary map files: [&#39;dep&#39;, &#39;msk&#39;, &#39;scs&#39;, &#39;manning&#39;].
-2022-03-24 07:47:02,605 - build - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
-2022-03-24 07:47:03,045 - build - sfincs - INFO - Write staticgeom files
-2022-03-24 07:47:03,047 - build - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
-2022-03-24 07:47:03,077 - build - sfincs - INFO - Write forcing files
-2022-03-24 07:47:03,085 - build - sfincs - INFO - Write vector file(s) for forcing.dis to &#39;gis&#39; subfolder
-2022-03-24 07:47:03,096 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_full/sfincs.inp
+2022-07-01 15:17:40,680 - build - bathymetry - DEBUG - Burn bedlevel values into DEM.
+2022-07-01 15:17:40,692 - build - bathymetry - DEBUG - Interpolate bedlevel values
+2022-07-01 15:17:41,640 - build - bathymetry - DEBUG - Correct for D4 connectivity bed level
+2022-07-01 15:17:42,983 - build - model_api - INFO - setup_river_inflow.hydrography_fn: None
+2022-07-01 15:17:42,983 - build - model_api - INFO - setup_river_inflow.river_upa: 25
+2022-07-01 15:17:42,983 - build - model_api - INFO - setup_river_inflow.river_len: 1000
+2022-07-01 15:17:42,983 - build - model_api - INFO - setup_river_inflow.river_width: 2000.0
+2022-07-01 15:17:42,983 - build - model_api - INFO - setup_river_inflow.keep_rivers_geom: False
+2022-07-01 15:17:42,983 - build - model_api - INFO - setup_river_inflow.buffer: 10
+2022-07-01 15:17:43,203 - build - flwdir - DEBUG - 3 river inflow point locations found.
+2022-07-01 15:17:43,218 - build - sfincs - DEBUG - discharge forcing: setting src data for 3 points.
+2022-07-01 15:17:43,218 - build - sfincs - DEBUG - discharge forcing: setting dis data.
+2022-07-01 15:17:43,306 - build - sfincs - DEBUG - 118 closed (mask=1) boundary cells set around src points.
+2022-07-01 15:17:43,307 - build - model_api - INFO - setup_river_outflow.hydrography_fn: None
+2022-07-01 15:17:43,307 - build - model_api - INFO - setup_river_outflow.river_upa: 10
+2022-07-01 15:17:43,307 - build - model_api - INFO - setup_river_outflow.river_len: 1000
+2022-07-01 15:17:43,307 - build - model_api - INFO - setup_river_outflow.river_width: 2000.0
+2022-07-01 15:17:43,307 - build - model_api - INFO - setup_river_outflow.append_bounds: False
+2022-07-01 15:17:43,308 - build - model_api - INFO - setup_river_outflow.keep_rivers_geom: False
+2022-07-01 15:17:43,308 - build - sfincs - WARNING - &#39;outflow_width&#39; is deprecated use &#39;river_width&#39; instead.
+2022-07-01 15:17:43,534 - build - flwdir - DEBUG - 6 river outflow point locations found.
+2022-07-01 15:17:43,755 - build - sfincs - DEBUG - 307 outflow (mask=3) boundary cells set.
+2022-07-01 15:17:43,756 - build - model_api - INFO - setup_cn_infiltration.cn_fn: gcn250
+2022-07-01 15:17:43,756 - build - model_api - INFO - setup_cn_infiltration.antecedent_runoff_conditions: avg
+2022-07-01 15:17:43,756 - build - data_adapter - INFO - DataCatalog: Getting gcn250 RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/gcn250/{variable}.tif
+2022-07-01 15:17:43,764 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [11.970, 45.780, 12.280, 45.940]
+2022-07-01 15:17:43,795 - build - sfincs - INFO - Updating CN map based on &#34;rivmsk&#34; from setup_river_hydrography method.
+2022-07-01 15:17:43,811 - build - model_api - INFO - setup_manning_roughness.lulc_fn: vito
+2022-07-01 15:17:43,811 - build - model_api - INFO - setup_manning_roughness.map_fn: None
+2022-07-01 15:17:43,811 - build - model_api - INFO - setup_manning_roughness.riv_man: 0.03
+2022-07-01 15:17:43,811 - build - model_api - INFO - setup_manning_roughness.lnd_man: 0.1
+2022-07-01 15:17:43,811 - build - model_api - INFO - setup_manning_roughness.sea_man: None
+2022-07-01 15:17:43,814 - build - data_adapter - INFO - DataCatalog: Getting vito RasterDataset raster data from /home/runner/.hydromt_data/data/v0.0.6/vito.tif
+2022-07-01 15:17:43,822 - build - data_adapter - DEBUG - RasterDataset: Clip with geom - [11.970, 45.780, 12.280, 45.940]
+2022-07-01 15:17:43,842 - build - landuse - INFO - Deriving N using average resampling (nodata=-999.0).
+2022-07-01 15:17:43,886 - build - sfincs - INFO - Setting constant manning roughness for river cells.
+2022-07-01 15:17:43,894 - build - model_api - INFO - setup_gauges.gauges_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/riverine_gauges.csv
+2022-07-01 15:17:43,894 - build - model_api - INFO - setup_gauges.overwrite: False
+2022-07-01 15:17:43,894 - build - data_adapter - INFO - DataCatalog: Getting riverine_gauges GeoDataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/riverine_gauges.csv
+2022-07-01 15:17:43,895 - build - data_adapter - INFO - GeoDataFrame: Read csv data and clip to geom (epsg:4326) [11.970, 45.780, 12.280, 45.940].
+2022-07-01 15:17:43,907 - build - sfincs - INFO - obs set based on /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/riverine_gauges.csv
+2022-07-01 15:17:43,907 - build - model_api - INFO - setup_q_forcing.geodataset_fn: None
+2022-07-01 15:17:43,907 - build - model_api - INFO - setup_q_forcing.timeseries_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/discharge_input_sfincs.csv
+2022-07-01 15:17:43,921 - build - sfincs - DEBUG - discharge forcing: setting src data for 3 points.
+2022-07-01 15:17:43,921 - build - sfincs - DEBUG - discharge forcing: setting dis data.
+2022-07-01 15:17:43,921 - build - model_api - WARNING - Replacing forcing: dis
+2022-07-01 15:17:43,921 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_full
+2022-07-01 15:17:43,967 - build - sfincs - DEBUG - Write binary map indices based on mask.
+2022-07-01 15:17:44,006 - build - sfincs - DEBUG - Write binary map files: [&#39;dep&#39;, &#39;msk&#39;, &#39;scs&#39;, &#39;manning&#39;].
+2022-07-01 15:17:44,149 - build - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
+2022-07-01 15:17:44,527 - build - sfincs - INFO - Write staticgeom files
+2022-07-01 15:17:44,529 - build - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
+2022-07-01 15:17:44,561 - build - sfincs - INFO - Write forcing files
+2022-07-01 15:17:44,569 - build - sfincs - INFO - Write vector file(s) for forcing.dis to &#39;gis&#39; subfolder
+2022-07-01 15:17:44,581 - build - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_test_full/sfincs.inp
 
 </pre></div></div>
 </div>
@@ -740,37 +749,37 @@ The solver successfully reached the end of the integration interval.
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 sfincs_test_full
- - sfincs.inp
- - sfincs.scs
  - sfincs.man
- - sfincs.dep
- - sfincs.src
+ - sfincs.scs
  - hydromt.log
- - sfincs.obs
+ - sfincs.inp
+ - sfincs.src
+ - sfincs.msk
+ - sfincs.dep
+ - sfincs.dis
  - sfincs.ind
  - hydromt_data.yml
- - sfincs.dis
- - sfincs.msk
+ - sfincs.obs
 sfincs_test_full/gis
- - region.geojson
- - flwdir.tif
- - src.geojson
- - manning.tif
- - msk.tif
- - obs.geojson
- - rivmsk.tif
  - rivers.geojson
- - scs.tif
- - uparea.tif
  - dep.tif
+ - flwdir.tif
+ - obs.geojson
+ - region.geojson
+ - manning.tif
+ - rivmsk.tif
+ - uparea.tif
+ - msk.tif
+ - scs.tif
+ - src.geojson
 </pre></div></div>
 </div>
 </section>
 <section id="Visualize-and/or-inspect-model-schematization">
-<h2>Visualize and/or inspect model schematization<a class="headerlink" href="#Visualize-and/or-inspect-model-schematization" title="Permalink to this headline"></a></h2>
+<h2>Visualize and/or inspect model schematization<a class="headerlink" href="#Visualize-and/or-inspect-model-schematization" title="Permalink to this heading"></a></h2>
 </section>
 <section id="Inspecting-the-model">
-<h2>Inspecting the model<a class="headerlink" href="#Inspecting-the-model" title="Permalink to this headline"></a></h2>
+<h2>Inspecting the model<a class="headerlink" href="#Inspecting-the-model" title="Permalink to this heading"></a></h2>
 <p>Let’s have a closer look at the model. To interact with a model within a notebook or python script, we need to load a number of modules.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:

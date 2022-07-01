@@ -14,6 +14,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
@@ -315,6 +316,7 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -323,10 +325,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -338,12 +344,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -371,7 +380,7 @@ div.rendered_html tbody tr:hover {
 }
 </style>
 <section id="Sfincs-results:-maximum-water-depth">
-<h1>Sfincs results: maximum water depth<a class="headerlink" href="#Sfincs-results:-maximum-water-depth" title="Permalink to this headline"></a></h1>
+<h1>Sfincs results: maximum water depth<a class="headerlink" href="#Sfincs-results:-maximum-water-depth" title="Permalink to this heading"></a></h1>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
@@ -387,7 +396,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <section id="Read-model-results">
-<h2>Read model results<a class="headerlink" href="#Read-model-results" title="Permalink to this headline"></a></h2>
+<h2>Read model results<a class="headerlink" href="#Read-model-results" title="Permalink to this heading"></a></h2>
 <p>The model results in sfincs_map.nc are saved as in a staggered grid format, see <a class="reference external" href="https://publicwiki.deltares.nl/display/NETCDF/Deltares+proposal+for+Staggered+Grid+data+model+(SGRID)">SGRID convention</a>. Here we show how to retrieve the face values and translate the dimensions from node indices (m, n) to (x, y) coordinates in order to plot the results on a map.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
@@ -451,7 +460,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </section>
 <section id="Write-maximum-waterdepth-to-geotiff-file">
-<h2>Write maximum waterdepth to geotiff file<a class="headerlink" href="#Write-maximum-waterdepth-to-geotiff-file" title="Permalink to this headline"></a></h2>
+<h2>Write maximum waterdepth to geotiff file<a class="headerlink" href="#Write-maximum-waterdepth-to-geotiff-file" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
@@ -468,7 +477,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </section>
 <section id="Plot-maximum-water-depth-with-surface-water-mask">
-<h2>Plot maximum water depth with surface water mask<a class="headerlink" href="#Plot-maximum-water-depth-with-surface-water-mask" title="Permalink to this headline"></a></h2>
+<h2>Plot maximum water depth with surface water mask<a class="headerlink" href="#Plot-maximum-water-depth-with-surface-water-mask" title="Permalink to this heading"></a></h2>
 <p>First we mask the water depth based on a map of permanent water to get the flood extent. The mask is calculated from the Global Surface Water Occurence (GSWO) dataset.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:

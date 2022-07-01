@@ -14,6 +14,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
@@ -130,7 +131,7 @@
 }
 </style>
 <section id="hydromt-sfincs-sfincsmodel-set-forcing-1d">
-<h1>hydromt_sfincs.SfincsModel.set_forcing_1d<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-set-forcing-1d" title="Permalink to this headline"></a></h1>
+<h1>hydromt_sfincs.SfincsModel.set_forcing_1d<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-set-forcing-1d" title="Permalink to this heading"></a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.set_forcing_1d">
 <span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">set_forcing_1d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.set_forcing_1d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.set_forcing_1d" title="Permalink to this definition"></a></dt>
@@ -146,7 +147,7 @@ are given a dummy timeseries with zero values is set.</p>
 <li><p><strong>ts</strong> (<em>pandas.DataFrame</em><em>, </em><a class="reference external" href="https://xarray.pydata.org/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v2022.3.1.dev0)"><em>xarray.DataArray</em></a>) – Timeseries data. If DataArray it should contain time and index dims; if
 DataFrame the index should be a datetime index and the columns the location
 index.</p></li>
-<li><p><strong>xy</strong> (<a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.10.2+0.g04d377f.dirty)"><em>geopandas.GeoDataFrame</em></a>) – Forcing point locations</p></li>
+<li><p><strong>xy</strong> (<a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.11.0)"><em>geopandas.GeoDataFrame</em></a>) – Forcing point locations</p></li>
 </ul>
 </dd>
 </dl>
