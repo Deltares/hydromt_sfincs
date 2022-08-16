@@ -13,7 +13,7 @@ dependencies:
   - descartes # to run examples
   - entrypoints
   - ffmpeg  # to run examples (animation)
-  - flit>=3.2
+  - flit>=3.4
   - gdal==3.4.1  # temp fix of tests 
   - geopandas
   - hydromt>=0.4.5
