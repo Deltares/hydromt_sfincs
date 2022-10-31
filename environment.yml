@@ -6,10 +6,10 @@ channels:
   - conda-forge
 
 dependencies:
-  - cartopy # to run examples
+  - cartopy>=0.20 # to run examples
   - descartes # to run examples
   - ffmpeg  # to run examples (animation)
   - hydromt>=0.4.5
   - hydromt-sfincs
   - jupyterlab # to run examples
-  - matplotlib=3.2.1 # to run examples / https://github.com/SciTools/cartopy/issues/2086
+  - matplotlib==3.5.* # to run examples / https://github.com/SciTools/cartopy/issues/2086
