@@ -130,20 +130,20 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/Deltares/hydromt",  # required
+            "url": "https://github.com/Deltares/hydromt_sfincs",  # required
             "icon": "https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg",
             "type": "url",
         },
         {
             "name": "SFINCS",
             "url": "https://sfincs.readthedocs.io/",
-            "icon": "_static/SFINCS_logo.png",
+            "icon": "_static/sfincs_logo_mHv_icon.ico",
             "type": "local",
         },
         {
             "name": "Deltares",
-            "url": "https://deltares.nl/en/",
-            "icon": "_static/deltares-white.svg",
+            "url": "https://www.deltares.nl/en/",
+            "icon": "_static/deltares-blue.svg",
             "type": "local",
         },
     ],
@@ -153,6 +153,9 @@ html_theme_options = {
             "url": "https://deltares.github.io/hydromt/preview/index.html",
         },
     ],
+    "logo": {
+        "text": "HydroMT SFINCS",
+    },
     "navbar_end": ["navbar-icon-links"],  # remove dark mode switch
 }
 
@@ -167,8 +170,6 @@ html_context = {
 }
 
 remove_from_toctrees = ["_generated/*"]
-
-html_logo = "./_static/sfincs_logo_mHv_icon.ico"
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

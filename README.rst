@@ -72,7 +72,7 @@ happy to discuss how it can be implemented for your model.
     :target: https://pypi.org/project/hydromt_sfincs/
     :alt: Latest PyPI version
 
-.. |conda_forge| image:: https://anaconda.org/conda-forge/hydromt/badges/installer/conda.svg
+.. |conda_forge| image:: https://anaconda.org/conda-forge/hydromt_sfincs/badges/version.svg
     :target: https://anaconda.org/conda-forge/hydromt_sfincs
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg

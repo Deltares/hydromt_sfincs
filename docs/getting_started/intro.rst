@@ -41,11 +41,12 @@ Getting started
         Examples
 
 
+
 .. toctree::
-   :caption: Table of Contents
    :maxdepth: 2
    :hidden:
 
    installation.rst
    example_index.rst
-   User's stories <https://deltares.github.io/hydromt/preview/getting_started/user_stories>
+   User's stories <https://deltares.github.io/hydromt/latest/getting_started/user_stories>
+   faq.rst

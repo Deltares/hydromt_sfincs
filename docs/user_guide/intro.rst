@@ -17,7 +17,6 @@ This plugin assists the SFINCS modeller in:
 - Analysing SFINCS model outputs.
 
 .. toctree::
-   :caption: Table of Contents
    :maxdepth: 2
    :hidden:
 

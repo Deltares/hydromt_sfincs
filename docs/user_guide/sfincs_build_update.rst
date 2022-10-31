@@ -49,4 +49,5 @@ Checkout the HydroMT core documentation for more info on `working with data in H
     sfincs_riverine.rst
     Example: Build a coastal SFINCS model <../_examples/build_coastal_model.ipynb>
     Example: Build a riverine SFINCS model <../_examples/build_riverine_model.ipynb>
+    Example: Build a SFINCS model from Python <../_examples/build_from_py.ipynb>
     Example: Update SFINCS model components <../_examples/update_model.ipynb>

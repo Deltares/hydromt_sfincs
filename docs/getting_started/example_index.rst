@@ -14,6 +14,7 @@ For a static (non-interactive) view of the examples follow one of the links belo
 
   `Build a coastal SFINCS model <../_examples/build_coastal_model.ipynb>`_
   `Build a riverine SFINCS model <../_examples/build_riverine_model.ipynb>`_
+  `Build a model from Python <../_examples/build_from_py.ipynb>`_
 
 **Update an existing model**
 

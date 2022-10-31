@@ -22,18 +22,8 @@ file contained in the repository:
     $ conda env create -f envs/hydromt-sfincs.yml
     $ conda activate hydromt-sfincs
 
-To make changes in hydromt_sfincs, you should make an editable install of HydroMT.
-This is possible using the `flit install <https://flit.pypa.io/en/latest/cmdline.html#flit-install>`_ command.
-
-For Windows:
+Finally, to make changes in hydromt_sfincs, you should make an editable install of HydroMT.
 
 .. code-block:: console
 
-    $ flit install --pth-file
-
-For Linux:
-
-.. code-block:: console
-
-    $ flit install -s
-
+    $ pip install -e .
