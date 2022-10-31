@@ -47,10 +47,10 @@ author = "Dirk Eilander"
 version = hydromt_sfincs.__version__
 
 # # -- Copy notebooks to include in docs -------
-if os.path.isdir("_examples"):
-    remove_dir_content("_examples")
-os.makedirs("_examples")
-copy_tree("../examples", "_examples")
+# if os.path.isdir("_examples"):
+#     remove_dir_content("_examples")
+# os.makedirs("_examples")
+# copy_tree("../examples", "_examples")
 
 # -- General configuration ------------------------------------------------
 
@@ -111,6 +111,7 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 html_theme = "pydata_sphinx_theme"
+html_logo = "_static/hydromt-icon.svg"
 autodoc_member_order = "bysource"  # overwrite default alphabetical sort
 autoclass_content = "both"
 
@@ -128,6 +129,18 @@ html_theme_options = {
     "navbar_align": "content",
     "icon_links": [
         {
+            "name": "GitHub",
+            "url": "https://github.com/Deltares/hydromt",  # required
+            "icon": "https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg",
+            "type": "url",
+        },
+        {
+            "name": "SFINCS",
+            "url": "https://sfincs.readthedocs.io/",
+            "icon": "_static/SFINCS_logo.png",
+            "type": "local",
+        },
+        {
             "name": "Deltares",
             "url": "https://deltares.nl/en/",
             "icon": "_static/deltares-white.svg",
@@ -140,7 +153,20 @@ html_theme_options = {
             "url": "https://deltares.github.io/hydromt/preview/index.html",
         },
     ],
+    "navbar_end": ["navbar-icon-links"],  # remove dark mode switch
 }
+
+
+html_context = {
+    "github_url": "https://github.com",  # or your GitHub Enterprise interprise
+    "github_user": "Deltares",
+    "github_repo": "hydromt_sfincs",
+    "github_version": "main",  # FIXME
+    "doc_path": "docs",
+    "default_mode": "light",
+}
+
+remove_from_toctrees = ["_generated/*"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -229,7 +255,7 @@ intersphinx_mapping = {
     # "dask": ("https://docs.dask.org/en/latest", None),
     "rasterio": ("https://rasterio.readthedocs.io/en/latest", None),
     "geopandas": ("https://geopandas.org/en/stable", None),
-    "xarray": ("https://xarray.pydata.org/en/stable", None),
+    "xarray": ("https://docs.xarray.dev/en/stable", None),
     "hydromt": ("https://deltares.github.io/hydromt/latest/", None),
 }
 
