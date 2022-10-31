@@ -16,6 +16,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -170,7 +171,7 @@ e.g. mean dynamic topography for difference between EGM and MSL levels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>geodataset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Path</em>) – <p>Path or data source name for geospatial point timeseries file.
+<li><p><strong>geodataset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em>) – <p>Path or data source name for geospatial point timeseries file.
 This can either be a netcdf file with geospatial coordinates
 or a combined point location file with a <cite>timeseries_fn</cite> data csv file.</p>
 <ul>
@@ -178,18 +179,18 @@ or a combined point location file with a <cite>timeseries_fn</cite> data csv fil
 <li><p>Required coordinates if netcdf: [‘time’, ‘index’, ‘y’, ‘x’]</p></li>
 </ul>
 </p></li>
-<li><p><strong>timeseries_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Path</em>) – Path to spatially uniform timeseries csv file with time index in first column
+<li><p><strong>timeseries_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em>) – Path to spatially uniform timeseries csv file with time index in first column
 and waterlevels in the second column. The first row is interpreted as header,
 see <code class="xref py py-meth docutils literal notranslate"><span class="pre">hydromt.open_timeseries_from_table()</span></code>, for details.
 NOTE: tabulated timeseries files can only in combination with point location
 coordinates be set as a geodataset in the data_catalog yml file.</p></li>
-<li><p><strong>offset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – <p>Path or data source name for gridded offset between vertical reference of elevation and waterlevel data,
+<li><p><strong>offset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – <p>Path or data source name for gridded offset between vertical reference of elevation and waterlevel data,
 Adds to the waterlevel data before merging.</p>
 <ul>
 <li><p>Required variables: [‘mdt’]</p></li>
 </ul>
 </p></li>
-<li><p><strong>buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Buffer [m] around model water level boundary cells to select waterlevel gauges,
+<li><p><strong>buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Buffer [m] around model water level boundary cells to select waterlevel gauges,
 by default 5 km.</p></li>
 </ul>
 </dd>

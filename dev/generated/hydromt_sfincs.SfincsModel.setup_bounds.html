@@ -16,6 +16,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -167,18 +168,18 @@ All conditions are combined using a logical AND operation.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>btype</strong> (<em>{'waterlevel'</em><em>, </em><em>'outflow'}</em>) – Boundary type</p></li>
-<li><p><strong>mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name of polygons describing the initial region constraining model boundary cells.</p></li>
-<li><p><strong>include_mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name for geometries with areas to include/exclude from the model boundary.
+<li><p><strong>mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name of polygons describing the initial region constraining model boundary cells.</p></li>
+<li><p><strong>include_mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name for geometries with areas to include/exclude from the model boundary.
 Note that exclude (second last) and include (last) areas are processed after other critera,
 i.e. <cite>elv_min</cite>, <cite>elv_max</cite>, and thus overrule these criteria for model boundary cells.</p></li>
-<li><p><strong>exclude_mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name for geometries with areas to include/exclude from the model boundary.
+<li><p><strong>exclude_mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name for geometries with areas to include/exclude from the model boundary.
 Note that exclude (second last) and include (last) areas are processed after other critera,
 i.e. <cite>elv_min</cite>, <cite>elv_max</cite>, and thus overrule these criteria for model boundary cells.</p></li>
-<li><p><strong>elv_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for boundary cells.</p></li>
-<li><p><strong>elv_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for boundary cells.</p></li>
-<li><p><strong>mask_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – If larger than zero, extend the <cite>mask_fn</cite> geometry with a buffer [m],
+<li><p><strong>elv_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for boundary cells.</p></li>
+<li><p><strong>elv_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for boundary cells.</p></li>
+<li><p><strong>mask_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – If larger than zero, extend the <cite>mask_fn</cite> geometry with a buffer [m],
 by default 0.</p></li>
-<li><p><strong>reset_bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, reset existing boundary cells of the selected boundary
+<li><p><strong>reset_bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, reset existing boundary cells of the selected boundary
 type (<cite>btype</cite>) before setting new boundary cells, by default False.</p></li>
 <li><p><strong>connectivity</strong> – The connectivity used to detect the model edge, if 4 only horizontal and vertical
 connections are used, if 8 (default) also diagonal connections.</p></li>

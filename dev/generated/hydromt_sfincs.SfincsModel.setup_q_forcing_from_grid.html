@@ -16,6 +16,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -171,26 +172,26 @@ otherwise it is based on maximum upstream area.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>discharge_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>optional</em>) – <p>Path or data source name for gridded discharge timeseries dataset.</p>
+<li><p><strong>discharge_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>optional</em>) – <p>Path or data source name for gridded discharge timeseries dataset.</p>
 <ul>
 <li><p>Required variables: [‘discharge’ (m3/s)]</p></li>
 <li><p>Required coordinates: [‘time’, ‘y’, ‘x’]</p></li>
 </ul>
 </p></li>
-<li><p><strong>locs_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>optional</em>) – Path or data source name for point location dataset. Not required if
+<li><p><strong>locs_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>optional</em>) – Path or data source name for point location dataset. Not required if
 point location have previously been set with <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.SfincsModel.setup_river_inflow" title="hydromt_sfincs.SfincsModel.setup_river_inflow"><code class="xref py py-meth docutils literal notranslate"><span class="pre">setup_river_inflow()</span></code></a>
 See <code class="xref py py-meth docutils literal notranslate"><span class="pre">hydromt.open_vector()</span></code>, for accepted files.</p></li>
-<li><p><strong>uparea_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>optional</em>) – <p>Path to upstream area grid in gdal (e.g. geotiff) or netcdf format.</p>
+<li><p><strong>uparea_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>optional</em>) – <p>Path to upstream area grid in gdal (e.g. geotiff) or netcdf format.</p>
 <ul>
 <li><p>Required variables: [‘uparea’ (km2)]</p></li>
 </ul>
 </p></li>
-<li><p><strong>wdw</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Window size in number of cells around discharge boundary locations
+<li><p><strong>wdw</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Window size in number of cells around discharge boundary locations
 to snap to, only used if <code class="docutils literal notranslate"><span class="pre">uparea_fn</span></code> is provided. By default 1.</p></li>
-<li><p><strong>rel_error</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Maximum relative error (default 0.05) and absolute error (default 50 km2)
+<li><p><strong>rel_error</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Maximum relative error (default 0.05) and absolute error (default 50 km2)
 between the discharge boundary location upstream area and the upstream area of
 the best fit grid cell, only used if “discharge” staticgeoms has a “uparea” column.</p></li>
-<li><p><strong>abs_error</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Maximum relative error (default 0.05) and absolute error (default 50 km2)
+<li><p><strong>abs_error</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Maximum relative error (default 0.05) and absolute error (default 50 km2)
 between the discharge boundary location upstream area and the upstream area of
 the best fit grid cell, only used if “discharge” staticgeoms has a “uparea” column.</p></li>
 </ul>

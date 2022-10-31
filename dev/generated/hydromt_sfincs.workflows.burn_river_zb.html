@@ -16,6 +16,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -63,7 +64,10 @@
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.merge_topobathy.html">hydromt_sfincs.workflows.merge_topobathy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.get_rivbank_dz.html">hydromt_sfincs.workflows.get_rivbank_dz</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.get_river_bathymetry.html">hydromt_sfincs.workflows.get_river_bathymetry</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">hydromt_sfincs.workflows.burn_river_zb</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">hydromt_sfincs.workflows.burn_river_zb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#hydromt_sfincs.workflows.burn_river_zb"><code class="docutils literal notranslate"><span class="pre">burn_river_zb()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.snap_discharge.html">hydromt_sfincs.workflows.snap_discharge</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.river_boundary_points.html">hydromt_sfincs.workflows.river_boundary_points</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
@@ -137,10 +141,10 @@ indicated in <cite>da_msk</cite>.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>gdf_riv</strong> (<em>gpd.GeoDataFrame</em>) – River segments with bed level (zb) estimates</p></li>
-<li><p><strong>da_elv</strong> (<em>xr.DataArray of float</em>) – Elevation raster</p></li>
-<li><p><strong>da_msk</strong> (<em>xr.DataArray of bool:</em>) – River mask</p></li>
+<li><p><strong>da_elv</strong> (<em>xr.DataArray</em><em> of </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Elevation raster</p></li>
+<li><p><strong>da_msk</strong> (<em>xr.DataArray</em><em> of </em><em>bool:</em>) – River mask</p></li>
 <li><p><strong>flwdir</strong> (<em>pyflwdir.FlwdirRaster</em><em>, </em><em>optional</em>) – Flow direction object</p></li>
-<li><p><strong>river_d4</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True (default) ensure river cells have D4 connectivity</p></li>
+<li><p><strong>river_d4</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – If True (default) ensure river cells have D4 connectivity</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>

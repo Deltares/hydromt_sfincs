@@ -16,6 +16,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -399,7 +400,13 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-hydroMT model plugins: sfincs (v0.2.2.dev0)
+model plugins:
+ - sfincs (hydromt_sfincs 0.2.2.dev0)
+generic models (hydromt 0.6.1.dev):
+ - grid_model
+ - lumped_model
+ - network_model
+
 
 </pre></div></div>
 </div>
@@ -462,26 +469,24 @@ Usage: hydromt update [OPTIONS] MODEL MODEL_ROOT
   Example usage:
   --------------
 
-  Update (overwrite) landuse-landcover maps in a wflow model
-  hydromt update wflow /path/to/model_root -c setup_lulcmaps --opt source_name=vito
+  Update (overwrite!) landuse-landcover based maps in a Wflow model
+  hydromt update wflow /path/to/model_root -c setup_lulcmaps --opt lulc_fn=vito -d /path/to/data_catalog.yml -v
 
-  Update reservoir maps based on default settings in a wflow model and write to new directory
-  hydromt update wflow /path/to/model_root -o /path/to/model_out -c setup_reservoirs
+  Update Wflow model components outlined in an .ini configuration file and write the model to a directory
+  hydromt update wflow /path/to/model_root -o /path/to/model_out -i /path/to/wflow_config.ini -d /path/to/data_catalog.yml -v
 
 Options:
   -o, --model-out DIRECTORY  Output model folder. Maps in MODEL_ROOT are
                              overwritten if left empty.
-  -c, --components TEXT      Model components from ini file to run
-  --opt TEXT                 Component specific keyword arguments, see the
-                             setup_&lt;component&gt; method of the specific model
-                             for more information about the arguments.
+  -c, --components TEXT      Model methods from ini file to run
+  --opt TEXT                 Method specific keyword arguments, see the method
+                             documentation of the specific model for more
+                             information about the arguments.
   -i, --config PATH          Path to hydroMT configuration file, for the model
                              specific implementation.
-  -d, --data PATH            File path to yml data sources file. See
-                             documentation for required yml file format.
-  --dd, --deltares-data      Parse default deltares data yml from
-                             https://github.com/DirkEilander/hydromt-
-                             artifacts/releases
+  -d, --data TEXT            Path to local yaml data catalog file OR name of
+                             predefined data catalog.
+  --dd, --deltares-data      Shortcut to add the &#34;deltares_data&#34; catalog
   -q, --quiet                Decrease verbosity.
   -v, --verbose              Increase verbosity.
   --help                     Show this message and exit.
@@ -505,22 +510,23 @@ Options:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2022-07-01 15:23:22,083 - update - log - INFO - HydroMT version: 0.4.5
-2022-07-01 15:23:22,083 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
-2022-07-01 15:23:22,083 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
-2022-07-01 15:23:22,083 - update - main - INFO - User settings:
-2022-07-01 15:23:22,087 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
-2022-07-01 15:23:22,182 - update - sfincs - INFO - Model read
-2022-07-01 15:23:22,187 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
-2022-07-01 15:23:22,187 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
-2022-07-01 15:23:22,187 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
-2022-07-01 15:23:22,190 - update - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
-2022-07-01 15:23:22,263 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.6/era5_hourly.nc
-2022-07-01 15:23:22,440 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
-2022-07-01 15:23:22,480 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
-2022-07-01 15:23:22,522 - update - sfincs - INFO - Write forcing files
-2022-07-01 15:23:22,558 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
-2022-07-01 15:23:22,594 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip/sfincs.inp
+2022-10-31 21:09:51,927 - update - log - INFO - HydroMT version: 0.6.1.dev
+2022-10-31 21:09:51,927 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
+2022-10-31 21:09:51,927 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
+2022-10-31 21:09:51,927 - update - main - INFO - User settings:
+2022-10-31 21:09:51,945 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
+2022-10-31 21:09:52,056 - update - sfincs - INFO - Model read
+2022-10-31 21:09:52,061 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
+2022-10-31 21:09:52,061 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
+2022-10-31 21:09:52,061 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
+2022-10-31 21:09:52,090 - update - data_catalog - INFO - Reading data catalog artifact_data v0.0.6 from archive
+2022-10-31 21:09:52,091 - update - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.6/data_catalog.yml
+2022-10-31 21:09:52,162 - update - data_catalog - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.6/era5_hourly.nc
+2022-10-31 21:09:52,396 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip
+2022-10-31 21:09:52,433 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
+2022-10-31 21:09:52,473 - update - sfincs - INFO - Write forcing files
+2022-10-31 21:09:52,522 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2022-10-31 21:09:52,558 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_precip/sfincs.inp
 
 </pre></div></div>
 </div>
@@ -731,36 +737,39 @@ aggregate = False               # if True return the aggregated mean as spatiall
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2022-07-01 15:23:30,017 - update - log - INFO - HydroMT version: 0.4.5
-2022-07-01 15:23:30,017 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
-2022-07-01 15:23:30,017 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
-2022-07-01 15:23:30,017 - update - main - INFO - User settings:
-2022-07-01 15:23:30,023 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
-2022-07-01 15:23:30,121 - update - sfincs - INFO - Model read
-2022-07-01 15:23:30,126 - update - model_api - INFO - setup_gauges.gauges_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
-2022-07-01 15:23:30,126 - update - model_api - INFO - setup_gauges.overwrite: False
-2022-07-01 15:23:30,126 - update - data_adapter - INFO - Adding sample data v0.0.6 from artifacts
-2022-07-01 15:23:30,209 - update - data_adapter - INFO - DataCatalog: Getting venice_gauges GeoDataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
-2022-07-01 15:23:30,210 - update - data_adapter - INFO - GeoDataFrame: Read csv data and clip to geom (epsg:32633) [268650.000, 5018550.000, 332400.000, 5059350.000].
-2022-07-01 15:23:30,226 - update - sfincs - INFO - obs set based on /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
-2022-07-01 15:23:30,226 - update - model_api - INFO - setup_h_forcing.geodataset_fn: gtsmv3_eu_era5
-2022-07-01 15:23:30,226 - update - model_api - INFO - setup_h_forcing.timeseries_fn: None
-2022-07-01 15:23:30,226 - update - model_api - INFO - setup_h_forcing.offset_fn: None
-2022-07-01 15:23:30,226 - update - model_api - INFO - setup_h_forcing.buffer: 0
-2022-07-01 15:23:30,237 - update - data_adapter - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.6/gtsmv3_eu_era5.nc
-2022-07-01 15:23:30,238 - update - data_adapter - INFO - GeoDataset: Read netcdf data and clip to geom (epsg:32633) [288900.000, 5018550.000, 332400.000, 5049900.000].
-2022-07-01 15:23:30,301 - update - model_api - WARNING - Replacing forcing: bzs
-2022-07-01 15:23:30,301 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
-2022-07-01 15:23:30,302 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
-2022-07-01 15:23:30,302 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
-2022-07-01 15:23:30,306 - update - data_adapter - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/data/v0.0.6/era5_hourly.nc
-2022-07-01 15:23:30,481 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
-2022-07-01 15:23:30,521 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
-2022-07-01 15:23:30,564 - update - sfincs - INFO - Write staticgeom files
-2022-07-01 15:23:30,565 - update - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
-2022-07-01 15:23:30,598 - update - sfincs - INFO - Write forcing files
-2022-07-01 15:23:30,641 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
-2022-07-01 15:23:30,654 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing/sfincs.inp
+2022-10-31 21:09:58,570 - update - log - INFO - HydroMT version: 0.6.1.dev
+2022-10-31 21:09:58,570 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal (r).
+2022-10-31 21:09:58,570 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
+2022-10-31 21:09:58,570 - update - main - INFO - User settings:
+2022-10-31 21:09:58,587 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v0.2.2.dev0).
+2022-10-31 21:09:58,686 - update - sfincs - INFO - Model read
+2022-10-31 21:09:58,691 - update - model_api - INFO - setup_gauges.gauges_fn: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
+2022-10-31 21:09:58,691 - update - model_api - INFO - setup_gauges.overwrite: False
+2022-10-31 21:09:58,691 - update - model_api - INFO - setup_gauges.crs: 4326
+2022-10-31 21:09:58,716 - update - data_catalog - INFO - Reading data catalog artifact_data v0.0.6 from archive
+2022-10-31 21:09:58,716 - update - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.6/data_catalog.yml
+2022-10-31 21:09:58,796 - update - data_catalog - INFO - DataCatalog: Getting venice_gauges GeoDataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
+2022-10-31 21:09:58,798 - update - geodataframe - INFO - GeoDataFrame: Read csv data and clip to geom (epsg:32633) [268650.000, 5018550.000, 332400.000, 5059350.000].
+2022-10-31 21:09:58,812 - update - sfincs - INFO - obs set based on /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/venice_gauges.csv
+2022-10-31 21:09:58,813 - update - model_api - INFO - setup_h_forcing.geodataset_fn: gtsmv3_eu_era5
+2022-10-31 21:09:58,813 - update - model_api - INFO - setup_h_forcing.timeseries_fn: None
+2022-10-31 21:09:58,813 - update - model_api - INFO - setup_h_forcing.offset_fn: None
+2022-10-31 21:09:58,813 - update - model_api - INFO - setup_h_forcing.buffer: 0
+2022-10-31 21:09:58,813 - update - model_api - INFO - setup_h_forcing.mdt_fn: dtu10mdt_egm96
+2022-10-31 21:09:58,825 - update - data_catalog - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.6/gtsmv3_eu_era5.nc
+2022-10-31 21:09:58,827 - update - geodataset - INFO - GeoDataset: Read netcdf data and clip to geom (epsg:32633) [288900.000, 5018550.000, 332400.000, 5049900.000].
+2022-10-31 21:09:58,910 - update - model_api - WARNING - Replacing forcing: bzs
+2022-10-31 21:09:58,910 - update - model_api - INFO - setup_p_forcing_from_grid.precip_fn: era5_hourly
+2022-10-31 21:09:58,911 - update - model_api - INFO - setup_p_forcing_from_grid.dst_res: None
+2022-10-31 21:09:58,911 - update - model_api - INFO - setup_p_forcing_from_grid.aggregate: False
+2022-10-31 21:09:58,916 - update - data_catalog - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.6/era5_hourly.nc
+2022-10-31 21:09:59,114 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing
+2022-10-31 21:09:59,149 - update - sfincs - INFO - Write raster file(s) for staticmaps to &#39;gis&#39; subfolder
+2022-10-31 21:09:59,189 - update - sfincs - INFO - Write staticgeom files
+2022-10-31 21:09:59,191 - update - sfincs - INFO - Write vector file(s) for staticgeoms to &#39;gis&#39; subfolder
+2022-10-31 21:09:59,221 - update - sfincs - INFO - Write forcing files
+2022-10-31 21:09:59,273 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2022-10-31 21:09:59,287 - update - model_api - INFO - Writing model config to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_coastal_forcing/sfincs.inp
 
 </pre></div></div>
 </div>

@@ -16,6 +16,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -166,23 +167,23 @@ interpolated if <cite>interp_method = None</cite></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>topobathy_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – <p>Path or data source name for topobathy raster data.</p>
+<li><p><strong>topobathy_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – <p>Path or data source name for topobathy raster data.</p>
 <ul>
 <li><p>Required variables: [‘elevtn’]</p></li>
 </ul>
 </p></li>
-<li><p><strong>mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name of polygon with valid new topobathy cells.</p></li>
-<li><p><strong>max_width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Maximum width (number of cells) to append to valid dep cells if larger than
+<li><p><strong>mask_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – Path or data source name of polygon with valid new topobathy cells.</p></li>
+<li><p><strong>max_width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Maximum width (number of cells) to append to valid dep cells if larger than
 zero. By default 0.</p></li>
-<li><p><strong>elv_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for new topobathy cells, cells outside
+<li><p><strong>elv_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for new topobathy cells, cells outside
 this range are linearly interpolated. Note: applied after offset!</p></li>
-<li><p><strong>elv_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for new topobathy cells, cells outside
+<li><p><strong>elv_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation caps for new topobathy cells, cells outside
 this range are linearly interpolated. Note: applied after offset!</p></li>
-<li><p><strong>offset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Path or data source name for Spatially varying map with difference between
+<li><p><strong>offset_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Path or data source name for Spatially varying map with difference between
 the vertical reference of the current model topobathy and the new data source [m].
 The offset is added to the new source before merging.</p></li>
 <li><p><strong>offset_fn</strong> – Same as <cite>offset_fn</cite> but spatially uniform value [m].</p></li>
-<li><p><strong>merge_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Buffer (number of cells) around the original (<cite>merge_method = ‘first’</cite>)
+<li><p><strong>merge_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Buffer (number of cells) around the original (<cite>merge_method = ‘first’</cite>)
 or new (<cite>merge_method = ‘last’</cite>) data source where values are interpolated
 using <cite>interp_method</cite>.
 Not recommended to use in combination with merge_methods ‘min’ or ‘max’</p></li>
