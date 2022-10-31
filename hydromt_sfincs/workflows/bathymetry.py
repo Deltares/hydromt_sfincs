@@ -426,6 +426,7 @@ def burn_river_zb(
     flwdir: pyflwdir.FlwdirRaster = None,
     river_d4: bool = True,
     logger=logger,
+    **kwargs,
 ):
     """Burn bedlevels from `gdf_riv` (column zb) into the DEM `da_elv` at river cells
     indicated in `da_msk`.
@@ -453,7 +454,7 @@ def burn_river_zb(
     nodata = da_elv.raster.nodata
     # drop invalid segments, e.g. at pits
     gdf_riv = gdf_riv[np.logical_and(gdf_riv.length > 0, np.isfinite(gdf_riv["zb"]))]
-    zb = da_elv.raster.rasterize(gdf_riv, col_name="zb", nodata=-9999)
+    zb = da_elv.raster.rasterize(gdf_riv, col_name="zb", nodata=-9999, **kwargs)
     # interpolate values if rivslp and rivdst is given
     if np.all(np.isin(["rivslp", "rivdst"], gdf_riv.columns)) and flwdir is not None:
         logger.debug("Interpolate bedlevel values")
