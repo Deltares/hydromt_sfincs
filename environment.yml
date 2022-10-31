@@ -1,0 +1,15 @@
+# This environment installs the latests released version of hydromt-sfincs,
+# including some dependencies to run the examples 
+name: hydromt-sfincs
+
+channels:
+  - conda-forge
+
+dependencies:
+  - cartopy # to run examples
+  - descartes # to run examples
+  - ffmpeg  # to run examples (animation)
+  - hydromt>=0.4.5
+  - hydromt-sfincs
+  - jupyterlab # to run examples
+  - matplotlib # to run examples
