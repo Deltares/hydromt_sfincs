@@ -7,653 +7,466 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>hydromt_sfincs.SfincsModel.setup_config &#8212; HydroMT SFINCS  documentation</title>
-    
+  <script>
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <link href="../_static/styles/theme.css?digest=1e1de1a1873e13ef5536" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=1e1de1a1873e13ef5536" rel="stylesheet">
 
-    
+  
   <link rel="stylesheet"
-    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+    href="../_static/vendor/fontawesome/6.1.2/css/all.min.css">
   <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+    href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
   <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+    href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.b7bb847fb20b106c3d81b95245e65545.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css" />
-    
+  
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1e1de1a1873e13ef5536">
 
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
     <script src="../_static/design-tabs.js"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.SfincsModel.setup_config';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="hydromt_sfincs.SfincsModel.setup_topobathy" href="hydromt_sfincs.SfincsModel.setup_topobathy.html" />
     <link rel="prev" title="hydromt_sfincs.SfincsModel" href="hydromt_sfincs.SfincsModel.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="en">
-    
-
-    <!-- Google Analytics -->
-    
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
-    
-    <div class="container-fluid" id="banner"></div>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="light">
 
-    
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
 
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
   <div id="navbar-start">
     
     
-<a class="navbar-brand" href="../index.html">
-<p class="title">HydroMT SFINCS</p>
-</a>
+  
 
+
+<a class="navbar-brand logo" href="../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../_static/hydromt-icon.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../_static/hydromt-icon.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+    <p class="title logo__title">HydroMT SFINCS</p>
+  
+</a>
     
   </div>
 
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-
   
-  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+  <div class="col-lg-9 navbar-header-items">
     <div id="navbar-center" class="mr-auto">
       
       <div class="navbar-center-item">
-        <ul id="navbar-main-elements" class="navbar-nav">
-    <li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../getting_started/intro.html">
-  Getting started
- </a>
-</li>
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../getting_started/intro.html">
+                        Getting started
+                    </a>
+                </li>
+                
 
-<li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../user_guide/intro.html">
-  User guide
- </a>
-</li>
+                <li class="nav-item">
+                    <a class="nav-link" href="../user_guide/intro.html">
+                        User guide
+                    </a>
+                </li>
+                
 
-<li class="toctree-l1 current active nav-item">
- <a class="reference internal nav-link" href="../api.html">
-  API reference
- </a>
-</li>
+                <li class="nav-item current active">
+                    <a class="nav-link" href="../api.html">
+                        API reference
+                    </a>
+                </li>
+                
 
-<li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../dev_guide/intro.html">
-  Developments
- </a>
-</li>
+                <li class="nav-item">
+                    <a class="nav-link" href="../dev_guide/intro.html">
+                        Developments
+                    </a>
+                </li>
+                
 
-    
-    <li class="nav-item">
-        <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/preview/index.html">HydroMT core<i class="fas fa-external-link-alt"></i></a>
-    </li>
-    
-</ul>
+            <li class="nav-item">
+                <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/preview/index.html">HydroMT core<i class="fa-solid fa-up-right-from-square"></i></a>
+            </li>
+    </ul>
+</nav>
       </div>
       
     </div>
 
     <div id="navbar-end">
+      <div class="navbar-end-item navbar-end__search-button-container">
+        
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+      </div>
       
       <div class="navbar-end-item">
         <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
         <li class="nav-item">
-          <a class="nav-link" href="https://deltares.nl/en/" rel="noopener" target="_blank" title="Deltares"><img src="../_static/deltares-white.svg" class="icon-link-image" alt="Deltares"/></a>
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
         </li>
       </ul>
       </div>
       
     </div>
   </div>
+
+
+  
+  <div class="search-button-container--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+  </div>
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
 </div>
-    </nav>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../getting_started/intro.html">
+                        Getting started
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../user_guide/intro.html">
+                        User guide
+                    </a>
+                </li>
+                
+
+                <li class="nav-item current active">
+                    <a class="nav-link" href="../api.html">
+                        API reference
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../dev_guide/intro.html">
+                        Developments
+                    </a>
+                </li>
+                
+
+            <li class="nav-item">
+                <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/preview/index.html">HydroMT core<i class="fa-solid fa-up-right-from-square"></i></a>
+            </li>
+    </ul>
+</nav>
+      </div>
+      
+      </div>
     
 
-    <div class="container-xl">
-      <div class="row">
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
           
-            
-            <!-- Only show if we have sidebars configured, else just a small margin  -->
-            <div class="col-12 col-md-3 bd-sidebar">
-              <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-  <div class="bd-toc-item active">
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item"><nav class="bd-links" id="bd-docs-nav" aria-label="Section navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">
+    Section Navigation
+  </p>
+  <div class="bd-toc-item navbar-nav">
     <ul class="nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.html">
-   hydromt_sfincs.SfincsModel
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.html">hydromt_sfincs.SfincsModel</a></li>
 </ul>
 <ul class="current nav bd-sidenav">
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
-   hydromt_sfincs.SfincsModel.setup_config
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_topobathy.html">
-   hydromt_sfincs.SfincsModel.setup_topobathy
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_merge_topobathy.html">
-   hydromt_sfincs.SfincsModel.setup_merge_topobathy
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask.html">
-   hydromt_sfincs.SfincsModel.setup_mask
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_bounds.html">
-   hydromt_sfincs.SfincsModel.setup_bounds
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_hydrography.html">
-   hydromt_sfincs.SfincsModel.setup_river_hydrography
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_bathymetry.html">
-   hydromt_sfincs.SfincsModel.setup_river_bathymetry
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">
-   hydromt_sfincs.SfincsModel.setup_river_inflow
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_outflow.html">
-   hydromt_sfincs.SfincsModel.setup_river_outflow
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html">
-   hydromt_sfincs.SfincsModel.setup_manning_roughness
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html">
-   hydromt_sfincs.SfincsModel.setup_cn_infiltration
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_gauges.html">
-   hydromt_sfincs.SfincsModel.setup_gauges
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_structures.html">
-   hydromt_sfincs.SfincsModel.setup_structures
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_h_forcing.html">
-   hydromt_sfincs.SfincsModel.setup_h_forcing
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_q_forcing.html">
-   hydromt_sfincs.SfincsModel.setup_q_forcing
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid.html">
-   hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_p_forcing.html">
-   hydromt_sfincs.SfincsModel.setup_p_forcing
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid.html">
-   hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid
-  </a>
- </li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_topobathy.html">hydromt_sfincs.SfincsModel.setup_topobathy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_merge_topobathy.html">hydromt_sfincs.SfincsModel.setup_merge_topobathy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask.html">hydromt_sfincs.SfincsModel.setup_mask</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_bounds.html">hydromt_sfincs.SfincsModel.setup_bounds</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_hydrography.html">hydromt_sfincs.SfincsModel.setup_river_hydrography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_bathymetry.html">hydromt_sfincs.SfincsModel.setup_river_bathymetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">hydromt_sfincs.SfincsModel.setup_river_inflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_outflow.html">hydromt_sfincs.SfincsModel.setup_river_outflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html">hydromt_sfincs.SfincsModel.setup_manning_roughness</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html">hydromt_sfincs.SfincsModel.setup_cn_infiltration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_gauges.html">hydromt_sfincs.SfincsModel.setup_gauges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_structures.html">hydromt_sfincs.SfincsModel.setup_structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_h_forcing.html">hydromt_sfincs.SfincsModel.setup_h_forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_q_forcing.html">hydromt_sfincs.SfincsModel.setup_q_forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid.html">hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_p_forcing.html">hydromt_sfincs.SfincsModel.setup_p_forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid.html">hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid</a></li>
 </ul>
 <ul class="nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_basemap.html">
-   hydromt_sfincs.SfincsModel.plot_basemap
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_forcing.html">
-   hydromt_sfincs.SfincsModel.plot_forcing
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_basemap.html">hydromt_sfincs.SfincsModel.plot_basemap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_forcing.html">hydromt_sfincs.SfincsModel.plot_forcing</a></li>
 </ul>
 <ul class="nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.region.html">
-   hydromt_sfincs.SfincsModel.region
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.mask.html">
-   hydromt_sfincs.SfincsModel.mask
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.crs.html">
-   hydromt_sfincs.SfincsModel.crs
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.res.html">
-   hydromt_sfincs.SfincsModel.res
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.root.html">
-   hydromt_sfincs.SfincsModel.root
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.config.html">
-   hydromt_sfincs.SfincsModel.config
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.staticmaps.html">
-   hydromt_sfincs.SfincsModel.staticmaps
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.staticgeoms.html">
-   hydromt_sfincs.SfincsModel.staticgeoms
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.forcing.html">
-   hydromt_sfincs.SfincsModel.forcing
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.states.html">
-   hydromt_sfincs.SfincsModel.states
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.results.html">
-   hydromt_sfincs.SfincsModel.results
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.region.html">hydromt_sfincs.SfincsModel.region</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.mask.html">hydromt_sfincs.SfincsModel.mask</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.crs.html">hydromt_sfincs.SfincsModel.crs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.res.html">hydromt_sfincs.SfincsModel.res</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.root.html">hydromt_sfincs.SfincsModel.root</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.config.html">hydromt_sfincs.SfincsModel.config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.staticmaps.html">hydromt_sfincs.SfincsModel.staticmaps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.staticgeoms.html">hydromt_sfincs.SfincsModel.staticgeoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.forcing.html">hydromt_sfincs.SfincsModel.forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.states.html">hydromt_sfincs.SfincsModel.states</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.results.html">hydromt_sfincs.SfincsModel.results</a></li>
 </ul>
 <ul class="nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.read.html">
-   hydromt_sfincs.SfincsModel.read
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.write.html">
-   hydromt_sfincs.SfincsModel.write
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.build.html">
-   hydromt_sfincs.SfincsModel.build
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.update.html">
-   hydromt_sfincs.SfincsModel.update
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.set_root.html">
-   hydromt_sfincs.SfincsModel.set_root
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read.html">hydromt_sfincs.SfincsModel.read</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.write.html">hydromt_sfincs.SfincsModel.write</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.build.html">hydromt_sfincs.SfincsModel.build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.update.html">hydromt_sfincs.SfincsModel.update</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_root.html">hydromt_sfincs.SfincsModel.set_root</a></li>
 </ul>
 <ul class="nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.update_spatial_attrs.html">
-   hydromt_sfincs.SfincsModel.update_spatial_attrs
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.get_spatial_attrs.html">
-   hydromt_sfincs.SfincsModel.get_spatial_attrs
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.set_forcing_1d.html">
-   hydromt_sfincs.SfincsModel.set_forcing_1d
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.get_model_time.html">
-   hydromt_sfincs.SfincsModel.get_model_time
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.update_spatial_attrs.html">hydromt_sfincs.SfincsModel.update_spatial_attrs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_spatial_attrs.html">hydromt_sfincs.SfincsModel.get_spatial_attrs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_forcing_1d.html">hydromt_sfincs.SfincsModel.set_forcing_1d</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_model_time.html">hydromt_sfincs.SfincsModel.get_model_time</a></li>
 </ul>
 <ul class="current nav bd-sidenav">
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
-   hydromt_sfincs.SfincsModel.setup_config
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.get_config.html">
-   hydromt_sfincs.SfincsModel.get_config
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.set_config.html">
-   hydromt_sfincs.SfincsModel.set_config
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.read_config.html">
-   hydromt_sfincs.SfincsModel.read_config
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.write_config.html">
-   hydromt_sfincs.SfincsModel.write_config
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.set_staticmaps.html">
-   hydromt_sfincs.SfincsModel.set_staticmaps
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.read_staticmaps.html">
-   hydromt_sfincs.SfincsModel.read_staticmaps
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.write_staticmaps.html">
-   hydromt_sfincs.SfincsModel.write_staticmaps
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.set_staticgeoms.html">
-   hydromt_sfincs.SfincsModel.set_staticgeoms
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.read_staticgeoms.html">
-   hydromt_sfincs.SfincsModel.read_staticgeoms
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.write_staticgeoms.html">
-   hydromt_sfincs.SfincsModel.write_staticgeoms
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.set_forcing.html">
-   hydromt_sfincs.SfincsModel.set_forcing
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.read_forcing.html">
-   hydromt_sfincs.SfincsModel.read_forcing
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.write_forcing.html">
-   hydromt_sfincs.SfincsModel.write_forcing
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.set_states.html">
-   hydromt_sfincs.SfincsModel.set_states
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.read_states.html">
-   hydromt_sfincs.SfincsModel.read_states
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.write_states.html">
-   hydromt_sfincs.SfincsModel.write_states
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.set_results.html">
-   hydromt_sfincs.SfincsModel.set_results
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.SfincsModel.read_results.html">
-   hydromt_sfincs.SfincsModel.read_results
-  </a>
- </li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_config.html">hydromt_sfincs.SfincsModel.get_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_config.html">hydromt_sfincs.SfincsModel.set_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_config.html">hydromt_sfincs.SfincsModel.read_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_config.html">hydromt_sfincs.SfincsModel.write_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_staticmaps.html">hydromt_sfincs.SfincsModel.set_staticmaps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_staticmaps.html">hydromt_sfincs.SfincsModel.read_staticmaps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_staticmaps.html">hydromt_sfincs.SfincsModel.write_staticmaps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_staticgeoms.html">hydromt_sfincs.SfincsModel.set_staticgeoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_staticgeoms.html">hydromt_sfincs.SfincsModel.read_staticgeoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_staticgeoms.html">hydromt_sfincs.SfincsModel.write_staticgeoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_forcing.html">hydromt_sfincs.SfincsModel.set_forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_forcing.html">hydromt_sfincs.SfincsModel.read_forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_forcing.html">hydromt_sfincs.SfincsModel.write_forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_states.html">hydromt_sfincs.SfincsModel.set_states</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_states.html">hydromt_sfincs.SfincsModel.read_states</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_states.html">hydromt_sfincs.SfincsModel.write_states</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_results.html">hydromt_sfincs.SfincsModel.set_results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_results.html">hydromt_sfincs.SfincsModel.read_results</a></li>
 </ul>
 <ul class="nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.workflows.merge_topobathy.html">
-   hydromt_sfincs.workflows.merge_topobathy
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.workflows.get_rivbank_dz.html">
-   hydromt_sfincs.workflows.get_rivbank_dz
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.workflows.get_river_bathymetry.html">
-   hydromt_sfincs.workflows.get_river_bathymetry
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.workflows.burn_river_zb.html">
-   hydromt_sfincs.workflows.burn_river_zb
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.workflows.snap_discharge.html">
-   hydromt_sfincs.workflows.snap_discharge
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.workflows.river_boundary_points.html">
-   hydromt_sfincs.workflows.river_boundary_points
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">
-   hydromt_sfincs.workflows.landuse
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">
-   hydromt_sfincs.workflows.cn_to_s
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.merge_topobathy.html">hydromt_sfincs.workflows.merge_topobathy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.get_rivbank_dz.html">hydromt_sfincs.workflows.get_rivbank_dz</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.get_river_bathymetry.html">hydromt_sfincs.workflows.get_river_bathymetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.burn_river_zb.html">hydromt_sfincs.workflows.burn_river_zb</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.snap_discharge.html">hydromt_sfincs.workflows.snap_discharge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.river_boundary_points.html">hydromt_sfincs.workflows.river_boundary_points</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
 </ul>
 <ul class="nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.read_inp.html">
-   hydromt_sfincs.read_inp
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.write_inp.html">
-   hydromt_sfincs.write_inp
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.read_binary_map.html">
-   hydromt_sfincs.read_binary_map
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.write_binary_map.html">
-   hydromt_sfincs.write_binary_map
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.read_binary_map_index.html">
-   hydromt_sfincs.read_binary_map_index
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.write_binary_map_index.html">
-   hydromt_sfincs.write_binary_map_index
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.read_ascii_map.html">
-   hydromt_sfincs.read_ascii_map
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.write_ascii_map.html">
-   hydromt_sfincs.write_ascii_map
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.read_timeseries.html">
-   hydromt_sfincs.read_timeseries
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.write_timeseries.html">
-   hydromt_sfincs.write_timeseries
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.read_xy.html">
-   hydromt_sfincs.read_xy
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.write_xy.html">
-   hydromt_sfincs.write_xy
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.read_structures.html">
-   hydromt_sfincs.read_structures
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.write_structures.html">
-   hydromt_sfincs.write_structures
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.read_sfincs_map_results.html">
-   hydromt_sfincs.read_sfincs_map_results
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.read_sfincs_his_results.html">
-   hydromt_sfincs.read_sfincs_his_results
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.read_inp.html">hydromt_sfincs.read_inp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.write_inp.html">hydromt_sfincs.write_inp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.read_binary_map.html">hydromt_sfincs.read_binary_map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.write_binary_map.html">hydromt_sfincs.write_binary_map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.read_binary_map_index.html">hydromt_sfincs.read_binary_map_index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.write_binary_map_index.html">hydromt_sfincs.write_binary_map_index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.read_ascii_map.html">hydromt_sfincs.read_ascii_map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.write_ascii_map.html">hydromt_sfincs.write_ascii_map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.read_timeseries.html">hydromt_sfincs.read_timeseries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.write_timeseries.html">hydromt_sfincs.write_timeseries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.read_xy.html">hydromt_sfincs.read_xy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.write_xy.html">hydromt_sfincs.write_xy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.read_structures.html">hydromt_sfincs.read_structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.write_structures.html">hydromt_sfincs.write_structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.read_sfincs_map_results.html">hydromt_sfincs.read_sfincs_map_results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.read_sfincs_his_results.html">hydromt_sfincs.read_sfincs_his_results</a></li>
 </ul>
 <ul class="nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.utils.mask_topobathy.html">
-   hydromt_sfincs.utils.mask_topobathy
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.utils.mask_bounds.html">
-   hydromt_sfincs.utils.mask_bounds
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.utils.get_spatial_attrs.html">
-   hydromt_sfincs.utils.get_spatial_attrs
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.utils.parse_datetime.html">
-   hydromt_sfincs.utils.parse_datetime
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.utils.gdf2structures.html">
-   hydromt_sfincs.utils.gdf2structures
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.utils.structures2gdf.html">
-   hydromt_sfincs.utils.structures2gdf
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.mask_topobathy.html">hydromt_sfincs.utils.mask_topobathy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.mask_bounds.html">hydromt_sfincs.utils.mask_bounds</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.get_spatial_attrs.html">hydromt_sfincs.utils.get_spatial_attrs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.parse_datetime.html">hydromt_sfincs.utils.parse_datetime</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.gdf2structures.html">hydromt_sfincs.utils.gdf2structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.structures2gdf.html">hydromt_sfincs.utils.structures2gdf</a></li>
 </ul>
 <ul class="nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.plots.plot_basemap.html">
-   hydromt_sfincs.plots.plot_basemap
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hydromt_sfincs.plots.plot_forcing.html">
-   hydromt_sfincs.plots.plot_forcing
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_basemap.html">hydromt_sfincs.plots.plot_basemap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_forcing.html">hydromt_sfincs.plots.plot_forcing</a></li>
 </ul>
 
   </div>
 </nav>
-              </div>
-              <div class="sidebar-end-items">
-              </div>
+    </div>
+  </div>
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+      </div>
+      <main class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
             </div>
             
-          
-
-          
-          <div class="d-none d-xl-block col-xl-2 bd-toc">
             
+            <article class="bd-article" role="main">
               
-              <div class="toc-item">
-                
-
-<nav id="bd-toc-nav">
-    
-</nav>
-              </div>
-              
-              <div class="toc-item">
-                
-              </div>
-              
-            
-          </div>
-          
-
-          
-          
-            
-          
-          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
-              
-              <div>
-                
   <section id="hydromt-sfincs-sfincsmodel-setup-config">
-<h1>hydromt_sfincs.SfincsModel.setup_config<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-config" title="Permalink to this headline">#</a></h1>
+<h1>hydromt_sfincs.SfincsModel.setup_config<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-config" title="Permalink to this heading">#</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_config">
 <span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">cfdict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_config" title="Permalink to this definition">#</a></dt>
@@ -663,51 +476,116 @@
 </section>
 
 
-              </div>
-              
-              
-              <!-- Previous / next buttons -->
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="hydromt_sfincs.SfincsModel.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">hydromt_sfincs.SfincsModel</p>
-        </div>
-    </a>
-    <a class='right-next' id="next-link" href="hydromt_sfincs.SfincsModel.setup_topobathy.html" title="next page">
-    <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_topobathy</p>
-    </div>
-    <i class="fas fa-angle-right"></i>
+  <a class='left-prev' id="prev-link" href="hydromt_sfincs.SfincsModel.html" title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">hydromt_sfincs.SfincsModel</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="hydromt_sfincs.SfincsModel.setup_topobathy.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_topobathy</p>
+  </div>
+  <i class="fa-solid fa-angle-right"></i>
+  </a>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div class="tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+</div>
+<nav id="bd-toc-nav" class="page-toc">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#hydromt_sfincs.SfincsModel.setup_config">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     SfincsModel.setup_config()
+    </span>
+   </code>
+  </a>
+ </li>
+</ul>
+
+</nav>
+</div>
+
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
+
+<div class="toc-item">
+  
+</div>
+
+<div class="toc-item">
+  
+<div class="tocsection sourcelink">
+    <a href="../_sources/_generated/hydromt_sfincs.SfincsModel.setup_config.rst.txt">
+        <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
 </div>
-              
-          </main>
-          
 
-      </div>
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
     </div>
-  
-  <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
-<footer class="footer mt-5 mt-md-0">
-  <div class="container">
-    
-    <div class="footer-item">
-      <p class="copyright">
-    &copy; Copyright Deltares.<br>
-</p>
-    </div>
-    
-    <div class="footer-item">
-      <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.5.0.<br>
-</p>
-    </div>
-    
   </div>
-</footer>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1e1de1a1873e13ef5536"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright Deltares.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
+</p>
+
+  </div>
+  
+</div>
+  </footer>
   </body>
 </html>
