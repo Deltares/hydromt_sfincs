@@ -25,7 +25,8 @@ dependencies:
   - rasterio
   - scipy
   - sphinx # docs
-  - sphinx_rtd_theme # docs
+  - pydata-sphinx-theme # docs
   - xarray
-  - pip:  # overwrite the hydromt install with latest dev version
+  - pip:
+    - sphinx_design  # docs
     - git+https://github.com/Deltares/hydromt.git

@@ -22,7 +22,7 @@ Note that this method requires `setup_river_hydrography` to be executed first.
 
 A typical workflow to setup a riverine model schematization is provided in the
 :download:`sfincs_riverine.ini <../_examples/sfincs_riverine.ini>` and shown below. 
-Each section corresponds to one of the model :ref:`components` and the `[global]` section can be used to pass
+Each section corresponds to :ref:`a model method <model_methods>` and the `[global]` section can be used to pass
 additional arguments to the :py:class:`~hydromt.models.sfincs.SfincsModel`. initialization. 
 
 
@@ -39,4 +39,4 @@ additional arguments to the :py:class:`~hydromt.models.sfincs.SfincsModel`. init
    :language: Ini
 
 
-.. _region: https://deltares.github.io/hydromt/latest/user_guide/cli.html#region-options
+.. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html
