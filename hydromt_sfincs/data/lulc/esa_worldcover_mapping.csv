@@ -1,0 +1,13 @@
+esa_worldcover,description,landuse,N
+10,Tree cover,10,0.5
+20,Shrubland,20,0.5
+30,Grasland,30,0.15
+40,Cropland,40,0.2
+50,Built-up,50,0.011
+60,Bare / sparse vegetation,60,0.02
+70,Snow and Ice,70,0.01
+80,Permanent water bodies,80,0.01
+90,Herbaceous wetland,90,0.15
+95,Mangroves,95,0.5
+100,Moss and lichen,100,0.085
+0,No data,0,-999

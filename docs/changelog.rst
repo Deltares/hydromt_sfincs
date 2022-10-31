@@ -36,6 +36,7 @@ New
 - **setup_river_hydrography** allows to derive hydrography data ['flwdir', 'uparea'] from the model elevation or reproject it from a global dataset.
   Derived 'uparea' and 'flwdir' maps are saved in the GIS folder and can be reused later (if kept together with the model)
 - **setup_river_bathymetry** to estimate a river depth based on bankfull discharge and river width. A mask of river cells 'rivmsk' is kept in the GIS folder.
+- Added parameter mapping file for ESA Worldcover dataset
 
 Changed
 ^^^^^^^
