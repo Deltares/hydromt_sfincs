@@ -1,89 +1,341 @@
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hydromt_sfincs.sfincs &mdash; hydromt_sfincs  documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>hydromt_sfincs.sfincs &#8212; HydroMT SFINCS  documentation</title>
+  <script>
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script src="../../_static/js/theme.js"></script>
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=1e1de1a1873e13ef5536" rel="stylesheet">
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=1e1de1a1873e13ef5536" rel="stylesheet">
+
+  
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/theme-deltares.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1e1de1a1873e13ef5536">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/sfincs';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
-</head>
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="light">
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> hydromt_sfincs
-            <img src="../../_static/sfincs_logo_mHv_icon.ico" class="logo" alt="Logo"/>
-          </a>
-              <div class="version">
-                0.2.2.dev
-              </div>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/sfincs.html">SFINCS model: General</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/sfincs_coastal.html">Setting up a coastal model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/sfincs_riverine.html">Setting up a riverine model</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">References &amp; Help</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../api/api_index.html">API reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">What’s new</a></li>
-</ul>
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
 
-        </div>
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../_static/hydromt-icon.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../../_static/hydromt-icon.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+    <p class="title logo__title">HydroMT SFINCS</p>
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../../getting_started/intro.html">
+                        Getting started
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../user_guide/intro.html">
+                        User guide
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../api.html">
+                        API reference
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../dev_guide/intro.html">
+                        Developments
+                    </a>
+                </li>
+                
+
+            <li class="nav-item">
+                <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">HydroMT core<i class="fa-solid fa-up-right-from-square"></i></a>
+            </li>
+    </ul>
+</nav>
       </div>
-    </nav>
+      
+    </div>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">hydromt_sfincs</a>
-      </nav>
+    <div id="navbar-end">
+      <div class="navbar-end-item navbar-end__search-button-container">
+        
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
 
-      <div class="wy-nav-content">
-        <div class="rst-content style-external-links">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../index.html">Module code</a> &raquo;</li>
-      <li>hydromt_sfincs.sfincs</li>
-      <li class="wy-breadcrumbs-aside">
-      </li>
-  </ul>
-  <hr/>
+
+  
+  <div class="search-button-container--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+  </div>
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../../getting_started/intro.html">
+                        Getting started
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../user_guide/intro.html">
+                        User guide
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../api.html">
+                        API reference
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../dev_guide/intro.html">
+                        Developments
+                    </a>
+                </li>
+                
+
+            <li class="nav-item">
+                <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">HydroMT core<i class="fa-solid fa-up-right-from-square"></i></a>
+            </li>
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+      </div>
+      <main class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
   <h1>Source code for hydromt_sfincs.sfincs</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="kn">import</span> <span class="nn">os</span>
@@ -112,7 +364,7 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="SfincsModel"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel">[docs]</a><span class="k">class</span> <span class="nc">SfincsModel</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel">[docs]</a><span class="k">class</span> <span class="nc">SfincsModel</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">_NAME</span> <span class="o">=</span> <span class="s2">&quot;sfincs&quot;</span>
     <span class="n">_GEOMS</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;gauges&quot;</span><span class="p">:</span> <span class="s2">&quot;obs&quot;</span><span class="p">,</span>
@@ -151,7 +403,7 @@
         <span class="s2">&quot;precip&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;precipitation&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;mm.hr-1&quot;</span><span class="p">},</span>
     <span class="p">}</span>
 
-<div class="viewcode-block" id="SfincsModel.__init__"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.__init__"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span>
@@ -222,7 +474,7 @@
             <span class="n">topobathy_fn</span><span class="o">=</span><span class="n">basemaps_fn</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">reproj_method</span><span class="o">=</span><span class="n">reproj_method</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="SfincsModel.setup_topobathy"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_topobathy.html#hydromt_sfincs.SfincsModel.setup_topobathy">[docs]</a>    <span class="k">def</span> <span class="nf">setup_topobathy</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_topobathy"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_topobathy.html#hydromt_sfincs.SfincsModel.setup_topobathy">[docs]</a>    <span class="k">def</span> <span class="nf">setup_topobathy</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">topobathy_fn</span><span class="p">,</span>
         <span class="n">res</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
@@ -300,7 +552,7 @@
         <span class="c1"># update config</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_spatial_attrs</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_merge_topobathy"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_merge_topobathy.html#hydromt_sfincs.SfincsModel.setup_merge_topobathy">[docs]</a>    <span class="k">def</span> <span class="nf">setup_merge_topobathy</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_merge_topobathy"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_merge_topobathy.html#hydromt_sfincs.SfincsModel.setup_merge_topobathy">[docs]</a>    <span class="k">def</span> <span class="nf">setup_merge_topobathy</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">topobathy_fn</span><span class="p">,</span>
         <span class="n">elv_min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -409,7 +661,7 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_staticmaps</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">da_dep_merged</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_mask"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_mask.html#hydromt_sfincs.SfincsModel.setup_mask">[docs]</a>    <span class="k">def</span> <span class="nf">setup_mask</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_mask"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_mask.html#hydromt_sfincs.SfincsModel.setup_mask">[docs]</a>    <span class="k">def</span> <span class="nf">setup_mask</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">include_mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -514,7 +766,7 @@
         <span class="n">region</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_mask</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_staticgeoms</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="s2">&quot;region&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_bounds"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_bounds.html#hydromt_sfincs.SfincsModel.setup_bounds">[docs]</a>    <span class="k">def</span> <span class="nf">setup_bounds</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_bounds"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_bounds.html#hydromt_sfincs.SfincsModel.setup_bounds">[docs]</a>    <span class="k">def</span> <span class="nf">setup_bounds</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;waterlevel&quot;</span><span class="p">,</span>
         <span class="n">mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -615,7 +867,7 @@
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ncells</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">btype</span><span class="si">}</span><span class="s2"> (mask=</span><span class="si">{</span><span class="n">bvalue</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2">) boundary cells set.&quot;</span>
             <span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_river_hydrography"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_river_hydrography.html#hydromt_sfincs.SfincsModel.setup_river_hydrography">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_hydrography</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hydrography_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adjust_dem</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.setup_river_hydrography"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_river_hydrography.html#hydromt_sfincs.SfincsModel.setup_river_hydrography">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_hydrography</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hydrography_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adjust_dem</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup hydrography layers for flow directions (&quot;flwdir&quot;) and upstream area</span>
 <span class="sd">        (&quot;uparea&quot;) which are required to setup the setup_river* model components.</span>
 
@@ -691,7 +943,7 @@
             <span class="n">da_elv</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">dem_adjust</span><span class="p">(</span><span class="n">da_elv</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_staticmaps</span><span class="p">(</span><span class="n">da_elv</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_river_bathymetry"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_river_bathymetry.html#hydromt_sfincs.SfincsModel.setup_river_bathymetry">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_bathymetry</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_river_bathymetry"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_river_bathymetry.html#hydromt_sfincs.SfincsModel.setup_river_bathymetry">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_bathymetry</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">river_geom_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">river_mask_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -905,7 +1157,7 @@
         <span class="n">da_rivmask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_staticmaps</span><span class="p">(</span><span class="n">da_rivmask</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivmsk&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_river_inflow"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.SfincsModel.setup_river_inflow">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_inflow</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_river_inflow"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.SfincsModel.setup_river_inflow">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_inflow</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">hydrography_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">river_upa</span><span class="o">=</span><span class="mf">25.0</span><span class="p">,</span>
@@ -1008,7 +1260,7 @@
                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> closed (mask=1) boundary cells set around src points.&quot;</span>
                 <span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_river_outflow"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_river_outflow.html#hydromt_sfincs.SfincsModel.setup_river_outflow">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_outflow</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_river_outflow"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_river_outflow.html#hydromt_sfincs.SfincsModel.setup_river_outflow">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_outflow</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">hydrography_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">river_upa</span><span class="o">=</span><span class="mf">25.0</span><span class="p">,</span>
@@ -1135,7 +1387,7 @@
             <span class="n">gdf_riv</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># one based index</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_staticgeoms</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivers_out&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cn_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn_fn</span><span class="o">=</span><span class="s2">&quot;gcn250&quot;</span><span class="p">,</span> <span class="n">antecedent_runoff_conditions</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cn_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn_fn</span><span class="o">=</span><span class="s2">&quot;gcn250&quot;</span><span class="p">,</span> <span class="n">antecedent_runoff_conditions</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup model potential maximum soil moisture retention map (scsfile)</span>
 <span class="sd">        from gridded curve number map.</span>
 
@@ -1180,7 +1432,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_manning_roughness"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_manning_roughness.html#hydromt_sfincs.SfincsModel.setup_manning_roughness">[docs]</a>    <span class="k">def</span> <span class="nf">setup_manning_roughness</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_manning_roughness"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_manning_roughness.html#hydromt_sfincs.SfincsModel.setup_manning_roughness">[docs]</a>    <span class="k">def</span> <span class="nf">setup_manning_roughness</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">lulc_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">map_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1254,7 +1506,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_gauges"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_gauges.html#hydromt_sfincs.SfincsModel.setup_gauges">[docs]</a>    <span class="k">def</span> <span class="nf">setup_gauges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gauges_fn</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.setup_gauges"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_gauges.html#hydromt_sfincs.SfincsModel.setup_gauges">[docs]</a>    <span class="k">def</span> <span class="nf">setup_gauges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gauges_fn</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup model observation point locations.</span>
 
 <span class="sd">        Adds model layers:</span>
@@ -1283,7 +1535,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> set based on </span><span class="si">{</span><span class="n">gauges_fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_structures"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures">[docs]</a>    <span class="k">def</span> <span class="nf">setup_structures</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_structures"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures">[docs]</a>    <span class="k">def</span> <span class="nf">setup_structures</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">structures_fn</span><span class="p">,</span> <span class="n">stype</span><span class="p">,</span> <span class="n">dz</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup thin dam or weir structures.</span>
@@ -1343,7 +1595,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stype</span><span class="si">}</span><span class="s2"> structure set based on </span><span class="si">{</span><span class="n">structures_fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
     <span class="c1">### FORCING</span>
-<div class="viewcode-block" id="SfincsModel.setup_h_forcing"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_h_forcing.html#hydromt_sfincs.SfincsModel.setup_h_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_h_forcing</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_h_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_h_forcing.html#hydromt_sfincs.SfincsModel.setup_h_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_h_forcing</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">geodataset_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">timeseries_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1452,7 +1704,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> forcing: applied MDT (avg: </span><span class="si">{</span><span class="n">mdt_avg</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">ts</span><span class="o">=</span><span class="n">da</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_q_forcing"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_q_forcing.html#hydromt_sfincs.SfincsModel.setup_q_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_q_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">geodataset_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeseries_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.setup_q_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_q_forcing.html#hydromt_sfincs.SfincsModel.setup_q_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_q_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">geodataset_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeseries_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup discharge boundary point locations (src) and time series (dis).</span>
 
 <span class="sd">        Use `geodataset_fn` to set the discharge boundary from a dataset of point location</span>
@@ -1524,7 +1776,7 @@
                 <span class="s1">&#39;Either &quot;geodataset_fn&quot; or &quot;timeseries_fn&quot; must be provided.&#39;</span>
             <span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_q_forcing_from_grid"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_q_forcing_from_grid</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_q_forcing_from_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_q_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_q_forcing_from_grid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">discharge_fn</span><span class="p">,</span>
         <span class="n">locs_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1638,7 +1890,7 @@
             <span class="n">ds_snapped</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_FORCING</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">_snapped&quot;</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_p_forcing_from_grid"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_p_forcing_from_grid</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_p_forcing_from_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_p_forcing_from_grid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">precip_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup precipitation forcing from a gridded spatially varying data source.</span>
@@ -1729,7 +1981,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">fn_out</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">precip_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">fname</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_p_forcing"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.setup_p_forcing.html#hydromt_sfincs.SfincsModel.setup_p_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_p_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precip_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.setup_p_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_p_forcing.html#hydromt_sfincs.SfincsModel.setup_p_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_p_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precip_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Setup spatially uniform precipitation forcing (precip).</span>
 
 <span class="sd">        Adds model layers:</span>
@@ -1751,7 +2003,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_forcing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">fname2</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname2</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.plot_forcing"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">plot_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;forcing.png&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.plot_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">plot_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;forcing.png&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Plot model timeseries forcing.</span>
 
 <span class="sd">        For distributed forcing a spatial avarage is plotted.</span>
@@ -1793,7 +2045,7 @@
                 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fn_out</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">225</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span></div>
 
-<div class="viewcode-block" id="SfincsModel.plot_basemap"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.plot_basemap.html#hydromt_sfincs.SfincsModel.plot_basemap">[docs]</a>    <span class="k">def</span> <span class="nf">plot_basemap</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.plot_basemap"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.plot_basemap.html#hydromt_sfincs.SfincsModel.plot_basemap">[docs]</a>    <span class="k">def</span> <span class="nf">plot_basemap</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn_out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;basemap.png&quot;</span><span class="p">,</span>
         <span class="n">variable</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span>
@@ -1889,7 +2141,7 @@
         <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span></div>
 
     <span class="c1"># I/O</span>
-<div class="viewcode-block" id="SfincsModel.read"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.read.html#hydromt_sfincs.SfincsModel.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.read"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read.html#hydromt_sfincs.SfincsModel.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Read the complete model schematization and configuration from file.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">read_config</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">read_staticmaps</span><span class="p">()</span>
@@ -1897,7 +2149,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">read_forcing</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Model read&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.write.html#hydromt_sfincs.SfincsModel.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.write"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write.html#hydromt_sfincs.SfincsModel.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Write the complete model schematization and configuration to file.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Writing model data to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_staticmaps</span><span class="p">()</span>
@@ -1909,7 +2161,7 @@
         <span class="c1"># write data catalog with used data sources</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_data_catalog</span><span class="p">()</span>  <span class="c1"># new in hydromt v0.4.4</span></div>
 
-<div class="viewcode-block" id="SfincsModel.read_staticmaps"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.read_staticmaps.html#hydromt_sfincs.SfincsModel.read_staticmaps">[docs]</a>    <span class="k">def</span> <span class="nf">read_staticmaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.read_staticmaps"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_staticmaps.html#hydromt_sfincs.SfincsModel.read_staticmaps">[docs]</a>    <span class="k">def</span> <span class="nf">read_staticmaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Read SFINCS binary staticmaps and save to `staticmaps` attribute.</span>
 <span class="sd">        Known binary files mentioned in the sfincs.inp configuration file are read,</span>
 <span class="sd">        including: msk/dep/scs/manning/qinf.</span>
@@ -1961,7 +2213,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">set_staticmaps</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
             <span class="n">ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write_staticmaps"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.write_staticmaps.html#hydromt_sfincs.SfincsModel.write_staticmaps">[docs]</a>    <span class="k">def</span> <span class="nf">write_staticmaps</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.write_staticmaps"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_staticmaps.html#hydromt_sfincs.SfincsModel.write_staticmaps">[docs]</a>    <span class="k">def</span> <span class="nf">write_staticmaps</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Write SFINCS staticmaps to binary files including map index file.</span>
 <span class="sd">        Filenames are taken from the `config` attribute.</span>
 
@@ -2004,7 +2256,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span><span class="s2">&quot;staticmaps&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.read_staticgeoms"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.read_staticgeoms.html#hydromt_sfincs.SfincsModel.read_staticgeoms">[docs]</a>    <span class="k">def</span> <span class="nf">read_staticgeoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.read_staticgeoms"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_staticgeoms.html#hydromt_sfincs.SfincsModel.read_staticgeoms">[docs]</a>    <span class="k">def</span> <span class="nf">read_staticgeoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Read geometry files if and save to `staticgeoms` attribute.</span>
 <span class="sd">        Known geometry files mentioned in the sfincs.inp configuration file are read,</span>
 <span class="sd">        including: bnd/src/obs xy files and thd/weir structure files.</span>
@@ -2038,7 +2290,7 @@
             <span class="n">gdf</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">open_vector</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_staticgeoms</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write_staticgeoms"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.write_staticgeoms.html#hydromt_sfincs.SfincsModel.write_staticgeoms">[docs]</a>    <span class="k">def</span> <span class="nf">write_staticgeoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.write_staticgeoms"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_staticgeoms.html#hydromt_sfincs.SfincsModel.write_staticgeoms">[docs]</a>    <span class="k">def</span> <span class="nf">write_staticgeoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Write staticgeoms to bnd/src/obs xy files and thd/weir structure files.</span>
 <span class="sd">        Filenames are based on the `config` attribute.</span>
 
@@ -2062,7 +2314,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;staticgeoms&quot;</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write_config"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.write_config.html#hydromt_sfincs.SfincsModel.write_config">[docs]</a>    <span class="k">def</span> <span class="nf">write_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rel_path</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.write_config"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_config.html#hydromt_sfincs.SfincsModel.write_config">[docs]</a>    <span class="k">def</span> <span class="nf">write_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rel_path</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Write config to &lt;root/config_fn&gt;</span>
 
 <span class="sd">        Parameters</span>
@@ -2086,7 +2338,7 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write_config</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="SfincsModel.read_forcing"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.read_forcing.html#hydromt_sfincs.SfincsModel.read_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">read_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.read_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_forcing.html#hydromt_sfincs.SfincsModel.read_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">read_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Read forcing files and save to `forcing` attribute.</span>
 <span class="sd">        Known forcing files mentioned in the sfincs.inp configuration file are read,</span>
 <span class="sd">        including: bzd/dis/precip ascii files and the netampr netcdf file.</span>
@@ -2126,7 +2378,7 @@
                     <span class="n">gdf</span> <span class="o">=</span> <span class="kc">None</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">ts</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="n">gdf</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write_forcing"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.write_forcing.html#hydromt_sfincs.SfincsModel.write_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">write_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.write_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_forcing.html#hydromt_sfincs.SfincsModel.write_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">write_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Write forcing to ascii (bzd/dis/precip) and netcdf (netampr) files.</span>
 <span class="sd">        Filenames are based on the `config` attribute.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -2170,7 +2422,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">gis_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;forcing.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">gis_names</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="SfincsModel.read_states"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.read_states.html#hydromt_sfincs.SfincsModel.read_states">[docs]</a>    <span class="k">def</span> <span class="nf">read_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.read_states"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_states.html#hydromt_sfincs.SfincsModel.read_states">[docs]</a>    <span class="k">def</span> <span class="nf">read_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Read waterlevel state (zsini) from ascii file and save to `states` attribute.</span>
 <span class="sd">        The inifile if mentioned in the sfincs.inp configuration file is read.</span>
 
@@ -2200,7 +2452,7 @@
                 <span class="n">zsini</span> <span class="o">=</span> <span class="n">zsini</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_states</span><span class="p">(</span><span class="n">zsini</span><span class="p">,</span> <span class="s2">&quot;zsini&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write_states"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.write_states.html#hydromt_sfincs.SfincsModel.write_states">[docs]</a>    <span class="k">def</span> <span class="nf">write_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%8.3f</span><span class="s2">&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.write_states"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_states.html#hydromt_sfincs.SfincsModel.write_states">[docs]</a>    <span class="k">def</span> <span class="nf">write_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%8.3f</span><span class="s2">&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Write waterlevel state (zsini)  to ascii map file.</span>
 <span class="sd">        The filenames is based on the `config` attribute.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -2218,7 +2470,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span><span class="s2">&quot;states&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.read_results"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.read_results.html#hydromt_sfincs.SfincsModel.read_results">[docs]</a>    <span class="k">def</span> <span class="nf">read_results</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.read_results"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_results.html#hydromt_sfincs.SfincsModel.read_results">[docs]</a>    <span class="k">def</span> <span class="nf">read_results</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">chunksize</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
         <span class="n">drop</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincsgrid&quot;</span><span class="p">],</span>
@@ -2379,7 +2631,7 @@
                         <span class="k">pass</span>
                 <span class="n">gdf</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.geojson&quot;</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="SfincsModel.set_staticmaps"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.set_staticmaps.html#hydromt_sfincs.SfincsModel.set_staticmaps">[docs]</a>    <span class="k">def</span> <span class="nf">set_staticmaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.set_staticmaps"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.set_staticmaps.html#hydromt_sfincs.SfincsModel.set_staticmaps">[docs]</a>    <span class="k">def</span> <span class="nf">set_staticmaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add data to staticmaps.</span>
 
 <span class="sd">        All layers of staticmaps must have identical spatial coordinates.</span>
@@ -2397,7 +2649,7 @@
             <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">flipud</span><span class="p">()</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_staticmaps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.set_forcing_1d"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.set_forcing_1d.html#hydromt_sfincs.SfincsModel.set_forcing_1d">[docs]</a>    <span class="k">def</span> <span class="nf">set_forcing_1d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.set_forcing_1d"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.set_forcing_1d.html#hydromt_sfincs.SfincsModel.set_forcing_1d">[docs]</a>    <span class="k">def</span> <span class="nf">set_forcing_1d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Set 1D forcing and update staticgoms and config accordingly.</span>
 
 <span class="sd">        For waterlevel and discharge forcing point locations are required to set the</span>
@@ -2483,7 +2735,7 @@
     <span class="k">def</span> <span class="nf">_configwrite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">write_inp</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
 
-<div class="viewcode-block" id="SfincsModel.update_spatial_attrs"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.update_spatial_attrs.html#hydromt_sfincs.SfincsModel.update_spatial_attrs">[docs]</a>    <span class="k">def</span> <span class="nf">update_spatial_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.update_spatial_attrs"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.update_spatial_attrs.html#hydromt_sfincs.SfincsModel.update_spatial_attrs">[docs]</a>    <span class="k">def</span> <span class="nf">update_spatial_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Update geospatial `config` (sfincs.inp) attributes based on staticmaps&quot;&quot;&quot;</span>
         <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">res</span>
         <span class="n">west</span><span class="p">,</span> <span class="n">south</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span>
@@ -2496,7 +2748,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;x0&quot;</span><span class="p">,</span> <span class="n">west</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;y0&quot;</span><span class="p">,</span> <span class="n">south</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.get_spatial_attrs"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.get_spatial_attrs.html#hydromt_sfincs.SfincsModel.get_spatial_attrs">[docs]</a>    <span class="k">def</span> <span class="nf">get_spatial_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.get_spatial_attrs"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.get_spatial_attrs.html#hydromt_sfincs.SfincsModel.get_spatial_attrs">[docs]</a>    <span class="k">def</span> <span class="nf">get_spatial_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get geospatial `config` (sfincs.inp) attributes.</span>
 
 <span class="sd">        Parameters</span>
@@ -2515,7 +2767,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_spatial_attrs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.get_model_time"><a class="viewcode-back" href="../../generated/hydromt_sfincs.SfincsModel.get_model_time.html#hydromt_sfincs.SfincsModel.get_model_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_model_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.get_model_time"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.get_model_time.html#hydromt_sfincs.SfincsModel.get_model_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_model_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return (tstart, tstop) tuple with parsed model start and end time&quot;&quot;&quot;</span>
         <span class="n">tstart</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tstart&quot;</span><span class="p">])</span>
         <span class="n">tstop</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tstop&quot;</span><span class="p">])</span>
@@ -2533,31 +2785,75 @@
         <span class="k">return</span> <span class="n">ts</span></div>
 </pre></div>
 
-           </div>
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+            
           </div>
-          <footer>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
 
-  <hr/>
+<div class="toc-item">
+  
+</div>
 
-  <div role="contentinfo">
-    <p>&#169; Copyright Deltares.</p>
-  </div>
+<div class="toc-item">
+  
+</div>
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
+            </div>
+          
+          
         </div>
-      </div>
-    </section>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
   </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
 
-</body>
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1e1de1a1873e13ef5536"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright Deltares.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
+</p>
+
+  </div>
+  
+</div>
+  </footer>
+  </body>
 </html>

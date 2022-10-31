@@ -1,89 +1,341 @@
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hydromt_sfincs.utils &mdash; hydromt_sfincs  documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>hydromt_sfincs.utils &#8212; HydroMT SFINCS  documentation</title>
+  <script>
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script src="../../_static/js/theme.js"></script>
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=1e1de1a1873e13ef5536" rel="stylesheet">
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=1e1de1a1873e13ef5536" rel="stylesheet">
+
+  
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/theme-deltares.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1e1de1a1873e13ef5536">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/utils';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
-</head>
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="light">
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> hydromt_sfincs
-            <img src="../../_static/sfincs_logo_mHv_icon.ico" class="logo" alt="Logo"/>
-          </a>
-              <div class="version">
-                0.2.2.dev
-              </div>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/sfincs.html">SFINCS model: General</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/sfincs_coastal.html">Setting up a coastal model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/sfincs_riverine.html">Setting up a riverine model</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">References &amp; Help</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../api/api_index.html">API reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">What’s new</a></li>
-</ul>
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
 
-        </div>
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../_static/hydromt-icon.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../../_static/hydromt-icon.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+    <p class="title logo__title">HydroMT SFINCS</p>
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../../getting_started/intro.html">
+                        Getting started
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../user_guide/intro.html">
+                        User guide
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../api.html">
+                        API reference
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../dev_guide/intro.html">
+                        Developments
+                    </a>
+                </li>
+                
+
+            <li class="nav-item">
+                <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">HydroMT core<i class="fa-solid fa-up-right-from-square"></i></a>
+            </li>
+    </ul>
+</nav>
       </div>
-    </nav>
+      
+    </div>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">hydromt_sfincs</a>
-      </nav>
+    <div id="navbar-end">
+      <div class="navbar-end-item navbar-end__search-button-container">
+        
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
 
-      <div class="wy-nav-content">
-        <div class="rst-content style-external-links">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../index.html">Module code</a> &raquo;</li>
-      <li>hydromt_sfincs.utils</li>
-      <li class="wy-breadcrumbs-aside">
-      </li>
-  </ul>
-  <hr/>
+
+  
+  <div class="search-button-container--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+  </div>
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../../getting_started/intro.html">
+                        Getting started
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../user_guide/intro.html">
+                        User guide
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../api.html">
+                        API reference
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../dev_guide/intro.html">
+                        Developments
+                    </a>
+                </li>
+                
+
+            <li class="nav-item">
+                <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">HydroMT core<i class="fa-solid fa-up-right-from-square"></i></a>
+            </li>
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><img src="../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+      </div>
+      <main class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
   <h1>Source code for hydromt_sfincs.utils</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">catch_warnings</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -161,19 +413,19 @@
         <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="read_inp"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_inp.html#hydromt_sfincs.read_inp">[docs]</a><span class="k">def</span> <span class="nf">read_inp</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<div class="viewcode-block" id="read_inp"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.read_inp.html#hydromt_sfincs.read_inp">[docs]</a><span class="k">def</span> <span class="nf">read_inp</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Read sfincs.inp file and parse to dictionary.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">configread</span><span class="p">(</span>
         <span class="n">fn</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cf</span><span class="o">=</span><span class="n">ConfigParserSfincs</span><span class="p">,</span> <span class="n">noheader</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="write_inp"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_inp.html#hydromt_sfincs.write_inp">[docs]</a><span class="k">def</span> <span class="nf">write_inp</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">conf</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="write_inp"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.write_inp.html#hydromt_sfincs.write_inp">[docs]</a><span class="k">def</span> <span class="nf">write_inp</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">conf</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Write sfincs.inp file from dictionary.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">configwrite</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">cf</span><span class="o">=</span><span class="n">ConfigParserSfincs</span><span class="p">,</span> <span class="n">noheader</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_spatial_attrs"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.get_spatial_attrs.html#hydromt_sfincs.get_spatial_attrs">[docs]</a><span class="k">def</span> <span class="nf">get_spatial_attrs</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">):</span>
+<div class="viewcode-block" id="get_spatial_attrs"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.get_spatial_attrs.html#hydromt_sfincs.get_spatial_attrs">[docs]</a><span class="k">def</span> <span class="nf">get_spatial_attrs</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns geospatial attributes shape, crs and transform from config dict.</span>
 
 <span class="sd">    The config dict should contain the following keys:</span>
@@ -252,7 +504,7 @@
 <span class="c1">## BINARY MAPS: sfincs.ind, sfincs.msk, sfincs.dep etc. ##</span>
 
 
-<div class="viewcode-block" id="write_binary_map_index"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_binary_map_index.html#hydromt_sfincs.write_binary_map_index">[docs]</a><span class="k">def</span> <span class="nf">write_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">msk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="write_binary_map_index"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.write_binary_map_index.html#hydromt_sfincs.write_binary_map_index">[docs]</a><span class="k">def</span> <span class="nf">write_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">msk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Write flat index of binary map file.</span>
 
 <span class="sd">    NOTE: The array should be in S-&gt;N and W-&gt;E orientation, with origin in the SW corner.</span>
@@ -270,7 +522,7 @@
     <span class="n">indices_</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="read_binary_map_index"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_binary_map_index.html#hydromt_sfincs.read_binary_map_index">[docs]</a><span class="k">def</span> <span class="nf">read_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="read_binary_map_index"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.read_binary_map_index.html#hydromt_sfincs.read_binary_map_index">[docs]</a><span class="k">def</span> <span class="nf">read_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Read binary map index file.</span>
 
 <span class="sd">    Parameters</span>
@@ -289,7 +541,7 @@
     <span class="k">return</span> <span class="n">ind</span></div>
 
 
-<div class="viewcode-block" id="write_binary_map"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_binary_map.html#hydromt_sfincs.write_binary_map">[docs]</a><span class="k">def</span> <span class="nf">write_binary_map</span><span class="p">(</span>
+<div class="viewcode-block" id="write_binary_map"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.write_binary_map.html#hydromt_sfincs.write_binary_map">[docs]</a><span class="k">def</span> <span class="nf">write_binary_map</span><span class="p">(</span>
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">msk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -314,7 +566,7 @@
     <span class="n">data_out</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="read_binary_map"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_binary_map.html#hydromt_sfincs.read_binary_map">[docs]</a><span class="k">def</span> <span class="nf">read_binary_map</span><span class="p">(</span>
+<div class="viewcode-block" id="read_binary_map"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.read_binary_map.html#hydromt_sfincs.read_binary_map">[docs]</a><span class="k">def</span> <span class="nf">read_binary_map</span><span class="p">(</span>
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">ind</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
@@ -352,7 +604,7 @@
 <span class="c1">## ASCII maps: sfincs.restart ##</span>
 
 
-<div class="viewcode-block" id="read_ascii_map"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_ascii_map.html#hydromt_sfincs.read_ascii_map">[docs]</a><span class="k">def</span> <span class="nf">read_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="read_ascii_map"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.read_ascii_map.html#hydromt_sfincs.read_ascii_map">[docs]</a><span class="k">def</span> <span class="nf">read_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Read ascii map</span>
 
 <span class="sd">    Parameters</span>
@@ -369,7 +621,7 @@
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="write_ascii_map"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_ascii_map.html#hydromt_sfincs.write_ascii_map">[docs]</a><span class="k">def</span> <span class="nf">write_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%8.3f</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="write_ascii_map"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.write_ascii_map.html#hydromt_sfincs.write_ascii_map">[docs]</a><span class="k">def</span> <span class="nf">write_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%8.3f</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Write ascii map</span>
 
 <span class="sd">    NOTE: The array should be in S-&gt;N and W-&gt;E orientation, with origin in the SW corner.</span>
@@ -391,7 +643,7 @@
 <span class="c1"># write_xy defined in hydromt.io</span>
 
 
-<div class="viewcode-block" id="read_xy"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_xy.html#hydromt_sfincs.read_xy">[docs]</a><span class="k">def</span> <span class="nf">read_xy</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+<div class="viewcode-block" id="read_xy"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.read_xy.html#hydromt_sfincs.read_xy">[docs]</a><span class="k">def</span> <span class="nf">read_xy</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Read sfincs xy files and parse to GeoDataFrame.</span>
 
 <span class="sd">    Parameters</span>
@@ -414,7 +666,7 @@
 <span class="c1">## ASCII TIMESERIES: bzs / dis / precip ##</span>
 
 
-<div class="viewcode-block" id="parse_datetime"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.parse_datetime.html#hydromt_sfincs.parse_datetime">[docs]</a><span class="k">def</span> <span class="nf">parse_datetime</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<div class="viewcode-block" id="parse_datetime"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.parse_datetime.html#hydromt_sfincs.parse_datetime">[docs]</a><span class="k">def</span> <span class="nf">parse_datetime</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Checks and/or parses datetime from a string, default sfincs datetime string format&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="nb">format</span><span class="p">)</span>
@@ -423,7 +675,7 @@
     <span class="k">return</span> <span class="n">dt</span></div>
 
 
-<div class="viewcode-block" id="read_timeseries"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_timeseries.html#hydromt_sfincs.read_timeseries">[docs]</a><span class="k">def</span> <span class="nf">read_timeseries</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">tref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<div class="viewcode-block" id="read_timeseries"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.read_timeseries.html#hydromt_sfincs.read_timeseries">[docs]</a><span class="k">def</span> <span class="nf">read_timeseries</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">tref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Read ascii timeseries files such as sfincs.bzs, sfincs.dis and sfincs.precip.</span>
 <span class="sd">    The first column (time index) is parsed to datetime format assumming it represents</span>
 <span class="sd">    seconds from `tref`.</span>
@@ -449,7 +701,7 @@
     <span class="k">return</span> <span class="n">df</span></div>
 
 
-<div class="viewcode-block" id="write_timeseries"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_timeseries.html#hydromt_sfincs.write_timeseries">[docs]</a><span class="k">def</span> <span class="nf">write_timeseries</span><span class="p">(</span>
+<div class="viewcode-block" id="write_timeseries"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.write_timeseries.html#hydromt_sfincs.write_timeseries">[docs]</a><span class="k">def</span> <span class="nf">write_timeseries</span><span class="p">(</span>
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">tref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">],</span>
@@ -487,7 +739,7 @@
 <span class="c1">## MASK</span>
 
 
-<div class="viewcode-block" id="mask_topobathy"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.mask_topobathy.html#hydromt_sfincs.mask_topobathy">[docs]</a><span class="k">def</span> <span class="nf">mask_topobathy</span><span class="p">(</span>
+<div class="viewcode-block" id="mask_topobathy"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.mask_topobathy.html#hydromt_sfincs.mask_topobathy">[docs]</a><span class="k">def</span> <span class="nf">mask_topobathy</span><span class="p">(</span>
     <span class="n">da_elv</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">gdf_include</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -579,7 +831,7 @@
     <span class="k">return</span> <span class="n">da_mask</span></div>
 
 
-<div class="viewcode-block" id="mask_bounds"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.mask_bounds.html#hydromt_sfincs.mask_bounds">[docs]</a><span class="k">def</span> <span class="nf">mask_bounds</span><span class="p">(</span>
+<div class="viewcode-block" id="mask_bounds"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.mask_bounds.html#hydromt_sfincs.mask_bounds">[docs]</a><span class="k">def</span> <span class="nf">mask_bounds</span><span class="p">(</span>
     <span class="n">da_msk</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">da_elv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -644,7 +896,7 @@
 <span class="c1">## STRUCTURES: thd / weir ##</span>
 
 
-<div class="viewcode-block" id="gdf2structures"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.gdf2structures.html#hydromt_sfincs.gdf2structures">[docs]</a><span class="k">def</span> <span class="nf">gdf2structures</span><span class="p">(</span><span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+<div class="viewcode-block" id="gdf2structures"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.gdf2structures.html#hydromt_sfincs.gdf2structures">[docs]</a><span class="k">def</span> <span class="nf">gdf2structures</span><span class="p">(</span><span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;Convert GeoDataFrame[LineString] to list of structure dictionaries</span>
 
 <span class="sd">    The x,y are taken from the geometry.</span>
@@ -680,7 +932,7 @@
     <span class="k">return</span> <span class="n">feats</span></div>
 
 
-<div class="viewcode-block" id="structures2gdf"><a class="viewcode-back" href="../../generated/hydromt_sfincs.utils.structures2gdf.html#hydromt_sfincs.structures2gdf">[docs]</a><span class="k">def</span> <span class="nf">structures2gdf</span><span class="p">(</span><span class="n">feats</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+<div class="viewcode-block" id="structures2gdf"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.structures2gdf.html#hydromt_sfincs.structures2gdf">[docs]</a><span class="k">def</span> <span class="nf">structures2gdf</span><span class="p">(</span><span class="n">feats</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Convert list of structure dictionaries to GeoDataFrame[LineString]</span>
 
 <span class="sd">    Parameters</span>
@@ -709,7 +961,7 @@
     <span class="k">return</span> <span class="n">gdf</span></div>
 
 
-<div class="viewcode-block" id="write_structures"><a class="viewcode-back" href="../../generated/hydromt_sfincs.write_structures.html#hydromt_sfincs.write_structures">[docs]</a><span class="k">def</span> <span class="nf">write_structures</span><span class="p">(</span>
+<div class="viewcode-block" id="write_structures"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.write_structures.html#hydromt_sfincs.write_structures">[docs]</a><span class="k">def</span> <span class="nf">write_structures</span><span class="p">(</span>
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">feats</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">stype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;thd&quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Write list of structure dictionaries to file</span>
@@ -770,7 +1022,7 @@
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span></div>
 
 
-<div class="viewcode-block" id="read_structures"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_structures.html#hydromt_sfincs.read_structures">[docs]</a><span class="k">def</span> <span class="nf">read_structures</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+<div class="viewcode-block" id="read_structures"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.read_structures.html#hydromt_sfincs.read_structures">[docs]</a><span class="k">def</span> <span class="nf">read_structures</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;Read structure files to list of dictionaries.</span>
 
 <span class="sd">    Parameters</span>
@@ -808,7 +1060,7 @@
 <span class="c1">## OUTPUT: sfincs_map.nc, sfincs_his.nc ##</span>
 
 
-<div class="viewcode-block" id="read_sfincs_map_results"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_sfincs_map_results.html#hydromt_sfincs.read_sfincs_map_results">[docs]</a><span class="k">def</span> <span class="nf">read_sfincs_map_results</span><span class="p">(</span>
+<div class="viewcode-block" id="read_sfincs_map_results"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.read_sfincs_map_results.html#hydromt_sfincs.read_sfincs_map_results">[docs]</a><span class="k">def</span> <span class="nf">read_sfincs_map_results</span><span class="p">(</span>
     <span class="n">fn_map</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -910,7 +1162,7 @@
     <span class="k">return</span> <span class="n">ds_face</span><span class="p">,</span> <span class="n">ds_edge</span></div>
 
 
-<div class="viewcode-block" id="read_sfincs_his_results"><a class="viewcode-back" href="../../generated/hydromt_sfincs.read_sfincs_his_results.html#hydromt_sfincs.read_sfincs_his_results">[docs]</a><span class="k">def</span> <span class="nf">read_sfincs_his_results</span><span class="p">(</span>
+<div class="viewcode-block" id="read_sfincs_his_results"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.read_sfincs_his_results.html#hydromt_sfincs.read_sfincs_his_results">[docs]</a><span class="k">def</span> <span class="nf">read_sfincs_his_results</span><span class="p">(</span>
     <span class="n">fn_his</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
@@ -948,31 +1200,75 @@
     <span class="k">return</span> <span class="n">ds_his</span></div>
 </pre></div>
 
-           </div>
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+            
           </div>
-          <footer>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
 
-  <hr/>
+<div class="toc-item">
+  
+</div>
 
-  <div role="contentinfo">
-    <p>&#169; Copyright Deltares.</p>
-  </div>
+<div class="toc-item">
+  
+</div>
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
+            </div>
+          
+          
         </div>
-      </div>
-    </section>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
   </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
 
-</body>
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1e1de1a1873e13ef5536"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright Deltares.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
+</p>
+
+  </div>
+  
+</div>
+  </footer>
+  </body>
 </html>
