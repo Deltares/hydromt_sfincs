@@ -134,5 +134,5 @@ the mskfile upon writing and used for reading staticmaps.
 
 
 
-.. _data: https://deltares.github.io/hydromt/latest/user_guide/data.html
-.. _region: https://deltares.github.io/hydromt/preview/user_guide/model_region
+.. _data: https://deltares.github.io/hydromt/latest/user_guide/data_overview.html
+.. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html

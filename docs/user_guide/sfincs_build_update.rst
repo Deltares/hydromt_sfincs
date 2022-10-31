@@ -37,9 +37,9 @@ Selecting data
 Data sources in HydroMT are provided in one of more yaml data catalog files. 
 Checkout the HydroMT core documentation for more info on `working with data in HydroMT <data>`_.
 
-.. _data: https://deltares.github.io/hydromt/preview/user_guide/data_main
-.. _region: https://deltares.github.io/hydromt/preview/user_guide/model_region
-.. _config: https://deltares.github.io/hydromt/preview/user_guide/model_config
+.. _data: https://deltares.github.io/hydromt/latest/user_guide/data_overview.html
+.. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html
+.. _config: https://deltares.github.io/hydromt/latest/user_guide/model_config.html
 
 
 .. toctree::

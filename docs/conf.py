@@ -150,7 +150,7 @@ html_theme_options = {
     "external_links": [
         {
             "name": "HydroMT core",
-            "url": "https://deltares.github.io/hydromt/preview/index.html",
+            "url": "https://deltares.github.io/hydromt/latest/index.html",
         },
     ],
     "logo": {

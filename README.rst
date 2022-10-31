@@ -45,16 +45,16 @@ The following paper presents a real-world application of HydroMT-SFINCS:
 How to contribute?
 -------------------
 If you find any issues in the code or documentation feel free to leave an issue on the `github issue tracker. <https://github.com/Deltares/hydromt_sfincs/issues>`_
-You can find information about how to contribute to the HydroMT project at our `contributing page. <https://deltares.github.io/hydromt/preview/dev/contributing>`_
+You can find information about how to contribute to the HydroMT project at our `contributing page. <https://deltares.github.io/hydromt/latest/dev/contributing>`_
 
 HydroMT seeks active contribution from the (hydro) geoscientific community.
 So far, it has been developed and tested with a range of `Deltares <https://www.deltares.nl/en/>`_ models, but
 we believe it is applicable to a much wider set of geoscientific models and are
 happy to discuss how it can be implemented for your model.
 
-.. _docs_getting_started: https://deltares.github.io/hydromt_sfincs/preview/getting_started/intro
-.. _docs_install: https://deltares.github.io/hydromt_sfincs/preview/getting_started/installation
-.. _Hydromt: https://deltares.github.io/hydromt/preview/
+.. _docs_getting_started: https://deltares.github.io/hydromt_sfincs/latest/getting_started/intro
+.. _docs_install: https://deltares.github.io/hydromt_sfincs/latest/getting_started/installation
+.. _Hydromt: https://deltares.github.io/hydromt/latest/
 .. _SFINCS: https://sfincs.readthedocs.io/en/latest/
 
 .. |codecov| image:: https://codecov.io/gh/Deltares/hydromt_sfincs/branch/main/graph/badge.svg?token=ss3EgmwHhH

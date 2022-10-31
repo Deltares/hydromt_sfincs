@@ -24,6 +24,7 @@ An example is provided in :ref:`examples` section.
    :language: Ini
 
 
-.. _region: https://deltares.github.io/hydromt/preview/user_guide/model_region
+.. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html
+
 
 

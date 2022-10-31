@@ -39,4 +39,4 @@ additional arguments to the :py:class:`~hydromt.models.sfincs.SfincsModel`. init
    :language: Ini
 
 
-.. _region: https://deltares.github.io/hydromt/preview/user_guide/model_region
+.. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html
