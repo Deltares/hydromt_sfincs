@@ -12,4 +12,4 @@ dependencies:
   - hydromt>=0.4.5
   - hydromt-sfincs
   - jupyterlab # to run examples
-  - matplotlib # to run examples
+  - matplotlib=3.2.1 # to run examples / https://github.com/SciTools/cartopy/issues/2086

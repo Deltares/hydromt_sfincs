@@ -1,6 +1,5 @@
 # Note that these are the developer dependencies, you still need to install hydromt-sfincs itself. 
-# To test with the latest (unreleased hydromt-core package uncomment the last lines)
-name: hydromt-sfincs-dev
+name: hydromt-sfincs
 
 channels:
   - conda-forge
@@ -14,10 +13,11 @@ dependencies:
   - geopandas>=0.8
   - hydromt>=0.4.5
   - jupyterlab  # to run examples
-  - matplotlib # to run examples
+  - matplotlib=3.2.1 # to run examples / https://github.com/SciTools/cartopy/issues/2086
   - nbsphinx  # docs
   - numpy
   - pandas
+  - pip
   - pyflwdir>=0.5.5
   - pytest # tests
   - pytest-cov # tests
@@ -27,5 +27,5 @@ dependencies:
   - sphinx # docs
   - sphinx_rtd_theme # docs
   - xarray
-  # - pip:
-  #   - git+https://github.com/Deltares/hydromt.git
+  - pip:  # overwrite the hydromt install with latest dev version
+    - git+https://github.com/Deltares/hydromt.git
