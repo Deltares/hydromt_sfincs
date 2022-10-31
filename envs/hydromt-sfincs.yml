@@ -1,44 +1,32 @@
+# Note that these are the developer dependencies, you still need to install hydromt-sfincs itself. 
 name: hydromt-sfincs
 
 channels:
   - conda-forge
 
 dependencies:
-  - affine
-  - click
-  - black
-  - bottleneck
-  - cartopy # to run examples
-  - dask
+  - black # formatting
+  - cartopy>=0.20 # to run examples
   - descartes # to run examples
-  - entrypoints
   - ffmpeg  # to run examples (animation)
   - flit>=3.2
-  - gdal==3.4.1  # temp fix of tests 
-  - geopandas
+  - geopandas>=0.8
   - hydromt>=0.4.5
   - jupyterlab  # to run examples
-  - netcdf4
-  - matplotlib # to run examples
+  - matplotlib==3.5.* # to run examples / https://github.com/SciTools/cartopy/issues/2086
   - nbsphinx  # docs
-  - numba
   - numpy
-  - openpyxl
   - pandas
   - pip
   - pyflwdir>=0.5.5
-  - pygeos>=0.8
   - pytest # tests
   - pytest-cov # tests
-  - pytest-benchmark # tests
-  - python>=3.7
+  - python>=3.8
   - rasterio
-  - requests
   - scipy
   - sphinx # docs
   - pydata-sphinx-theme # docs
   - xarray
-  - zarr
   - pip:
     - sphinx_design  # docs
-  #   - git+https://github.com/Deltares/hydromt.git
+    - git+https://github.com/Deltares/hydromt.git

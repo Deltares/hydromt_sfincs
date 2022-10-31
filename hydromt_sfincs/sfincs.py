@@ -588,12 +588,11 @@ class SfincsModel(Model):
             flwdir = hydromt.flw.flwdir_from_da(da_flw, ftype="d8")
             da_upa = xr.DataArray(
                 dims=da_elv.raster.dims,
-                coords=da_elv.raster.coords,
                 data=flwdir.upstream_area(unit="km2"),
                 name="uparea",
             )
             da_upa.raster.set_nodata(-9999)
-            ds_out = xr.merge([da_upa, da_flw])
+            ds_out = xr.merge([da_flw, da_upa.reset_coords(drop=True)])
 
         self.logger.info("Saving hydrography data to staticmaps.")
         self.set_staticmaps(ds_out["uparea"])

@@ -47,10 +47,10 @@ author = "Dirk Eilander"
 version = hydromt_sfincs.__version__
 
 # # -- Copy notebooks to include in docs -------
-# if os.path.isdir("_examples"):
-#     remove_dir_content("_examples")
-# os.makedirs("_examples")
-# copy_tree("../examples", "_examples")
+if os.path.isdir("_examples"):
+    remove_dir_content("_examples")
+os.makedirs("_examples")
+copy_tree("../examples", "_examples")
 
 # -- General configuration ------------------------------------------------
 
@@ -167,6 +167,8 @@ html_context = {
 }
 
 remove_from_toctrees = ["_generated/*"]
+
+html_logo = "./_static/sfincs_logo_mHv_icon.ico"
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
