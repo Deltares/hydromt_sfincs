@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.2.0,<3.3"]
+requires = ["flit_core >=3.4.0,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -9,15 +9,15 @@ authors = [
     {name = "Tim Leijnse", email = "tim.leijnse@deltares.nl"},
 ]
 dependencies = [
-    "dask",
     "geopandas >=0.8",
     "hydromt>=0.4.5",
-    "netcdf4",
     "numpy",
     "pandas",
     "pyflwdir>=0.5.5",
     "pygeos",
+    "pyproj",
     "rasterio",
+    "shapely",
     "scipy",
     "xarray",
 ]
@@ -45,6 +45,10 @@ test = [
 doc = [
 	"sphinx",
 	"sphinx_rtd_theme",
+]
+full = [
+    "matplotlib",
+    "cartopy",
 ]
 
 [project.urls]

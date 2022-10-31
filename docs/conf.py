@@ -107,7 +107,7 @@ html_theme_options = {"style_external_links": True}
 html_static_path = ["_static"]
 html_context = {}
 
-html_logo = './_static/sfincs_logo_mHv_icon.ico'
+html_logo = "./_static/sfincs_logo_mHv_icon.ico"
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
