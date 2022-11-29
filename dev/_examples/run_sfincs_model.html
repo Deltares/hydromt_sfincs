@@ -626,12 +626,12 @@ div.rendered_html tbody tr:hover {
 <p>All lines in this notebook which start with <code class="docutils literal notranslate"><span class="pre">!</span></code> are executed from the command line. Within jupyter (except for jupyter lab) the logging messages are shown after completion.</p>
 <section id="Inspecting-the-batch-file-to-run-SFINCS">
 <h2>Inspecting the batch-file to run SFINCS<a class="headerlink" href="#Inspecting-the-batch-file-to-run-SFINCS" title="Permalink to this heading">#</a></h2>
-<p>On Windows, you can run SFINCS by executing a batch-file. We have already prepared this for an example model called ‘Charleston_subgrid_example_basicforcing’. Let’s now inspect this batch-file.</p>
+<p>On Windows, you can run SFINCS by executing a batch-file. We have already prepared this for an example model called ‘sfincs_riverine_rerun’. Let’s now inspect this batch-file.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s2">&quot;./course/Charleston_subgrid_example_basicforcing/run.bat&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s2">&quot;./sfincs_riverine_rerun/run.bat&quot;</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn_ini</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
@@ -643,8 +643,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-call &#34;..\sfincs_exe\sfincs.exe&#34;&gt;sfincs_log.txt
-echo &#34;Simulation done&#34;
+call &#34;d:\repos\SFINCS\source\sfincs\x64\Release\sfincs.exe&#34;&gt;sfincs_log.txt
 </pre></div></div>
 </div>
 <ul class="simple">
@@ -660,7 +659,7 @@ echo &#34;Simulation done&#34;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s2">&quot;./course/Charleston_subgrid_example_basicforcing/sfincs_log.txt&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s2">&quot;./sfincs_riverine_rerun/sfincs_log.txt&quot;</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn_ini</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
@@ -672,93 +671,24 @@ echo &#34;Simulation done&#34;
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
+<span class="ansi-red-intense-fg ansi-bold">---------------------------------------------------------------------------</span>
+<span class="ansi-red-intense-fg ansi-bold">FileNotFoundError</span>                         Traceback (most recent call last)
+Cell <span class="ansi-green-intense-fg ansi-bold">In [2], line 2</span>
+<span class="ansi-green-fg">      1</span> fn_ini <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">./sfincs_riverine_rerun/sfincs_log.txt</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">----&gt; 2</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">open</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">fn_ini</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">r</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> f:
+<span class="ansi-green-fg">      3</span>     txt <span style="color: rgb(98,98,98)">=</span> f<span style="color: rgb(98,98,98)">.</span>read()
+<span class="ansi-green-fg">      4</span> <span style="color: rgb(0,135,0)">print</span>(txt)
 
- ----------- Welcome to SFINCS -----------
+File <span class="ansi-green-intense-fg ansi-bold">~\Miniconda3\envs\hydromt-sfincs-binder\lib\site-packages\IPython\core\interactiveshell.py:282</span>, in <span class="ansi-cyan-fg">_modified_open</span><span class="ansi-blue-intense-fg ansi-bold">(file, *args, **kwargs)</span>
+<span class="ansi-green-fg">    275</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> file <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> {<span style="color: rgb(98,98,98)">0</span>, <span style="color: rgb(98,98,98)">1</span>, <span style="color: rgb(98,98,98)">2</span>}:
+<span class="ansi-green-fg">    276</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(
+<span class="ansi-green-fg">    277</span>         <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">IPython won</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">t let you open fd=</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>file<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)"> by default </span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-fg">    278</span>         <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">as it is likely to crash IPython. If you know what you are doing, </span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-fg">    279</span>         <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">you can use builtins</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)"> open.</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-fg">    280</span>     )
+<span class="ansi-green-intense-fg ansi-bold">--&gt; 282</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> io_open(file, <span style="color: rgb(98,98,98)">*</span>args, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs)
 
-  @@@@@  @@@@@@@ @@ @@  @@   @@@@   @@@@@
- @@@ @@@ @@@@@@@ @@ @@@ @@ @@@@@@@ @@@ @@@
- @@@     @@      @@ @@@ @@ @@   @@ @@@
-  @@@@@  @@@@@@  @@ @@@@@@ @@       @@@@@
-     @@@ @@      @@ @@ @@@ @@   @@     @@@
- @@@ @@@ @@      @@ @@  @@  @@@@@@ @@@ @@@
-  @@@@@  @@      @@ @@   @   @@@@   @@@@@
-
- -----------------------------------------
-
- Build-Revision: $Rev: v2.0.0$
- Build-Date:     $Date: 2022-11-16
-
- Reading input file ...
- Info : Running SFINCS in subgrid mode ...
- Reading meteo data ...
- Info : Preparing SFINCS grid on regular mesh ...
- Reading sfincs.ind ...
- Reading sfincs.msk ...
- Number of active z points    :       119864
- Number of active u/v points  :       238715
- Reading sfincs.sbg ...
- Reading water level boundaries ...
- Reading observation points ...
- Initializing output ...
-
- ---------- Starting simulation ----------
-
-   0% complete,       - s remaining ...
-   5% complete,    26.1 s remaining ...
-  10% complete,    24.9 s remaining ...
-  15% complete,    23.9 s remaining ...
-  20% complete,    22.0 s remaining ...
-  25% complete,    20.7 s remaining ...
-  30% complete,    18.9 s remaining ...
-  35% complete,    17.2 s remaining ...
-  40% complete,    16.0 s remaining ...
-  45% complete,    14.9 s remaining ...
-  50% complete,    13.5 s remaining ...
-  55% complete,    12.3 s remaining ...
-  60% complete,    11.0 s remaining ...
-  65% complete,     9.6 s remaining ...
-  70% complete,     8.3 s remaining ...
-  75% complete,     6.9 s remaining ...
-  80% complete,     5.5 s remaining ...
-  85% complete,     4.2 s remaining ...
-  90% complete,     2.8 s remaining ...
-  95% complete,     1.4 s remaining ...
- 100% complete,     0.0 s remaining ...
-
- ---------- Simulation finished ----------
-              ..............
-          ......:@@@@@@@@:......
-       ..::::..@@........@@.:::::..
-     ..:::::..@@..::..::..@@.::::::..
-    .::::::..@@............@@.:::::::.
-   .::::::..@@..............@@.:::::::.
-  .::::::::..@@............@@..::::::::.
- .:::::::::...@@.@..@@..@.@@..::::::::::.
- .:::::::::...:@@@..@@..@@@:..:::::::::..
- ............@@.@@..@@..@@.@@............
- ^^^~~^^~~^^@@..............@@^^^~^^^~~^^
- .::::::::::@@..............@@.:::::::::.
-  .......:.@@.....@.....@....@@.:.......
-   .::....@@......@.@@@.@....@@.....::.
-    .:::~@@.:...:.@@...@@.:.:.@@~::::.
-     .::~@@@@@@@@@@.....@@@@@@@@@~::.
-       ..:~~~~~~~:.......:~~~~~~~:..
-          ......................
-              ..............
- -----------------------------------------
-
- Total time             :     27.567
- Total simulation time  :     27.489
- Time in input          :      0.078
- Time in boundaries     :      2.392 (  8.7%)
- Time in momentum       :     18.084 ( 65.8%)
- Time in continuity     :      6.531 ( 23.8%)
- Time in output         :      0.432 (  1.6%)
-
- Average time step (s)  :      6.875
-
- ---------- Closing off SFINCS -----------
-
+<span class="ansi-red-intense-fg ansi-bold">FileNotFoundError</span>: [Errno 2] No such file or directory: &#39;./sfincs_riverine_rerun/sfincs_log.txt&#39;
 </pre></div></div>
 </div>
 <p>In case you get an error message, this means that the log-file is not available, and SFINCS has not run yet.</p>
@@ -772,7 +702,7 @@ echo &#34;Simulation done&#34;
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 
-<span class="n">run_path</span> <span class="o">=</span> <span class="s2">&quot;./course/Charleston_subgrid_example_basicforcing&quot;</span>
+<span class="n">run_path</span> <span class="o">=</span> <span class="s2">&quot;./sfincs_riverine_rerun&quot;</span>
 
 <span class="n">cur_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
 
@@ -793,7 +723,7 @@ echo &#34;Simulation done&#34;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s2">&quot;./course/Charleston_subgrid_example_basicforcing/sfincs_log.txt&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn_ini</span> <span class="o">=</span> <span class="s2">&quot;./sfincs_riverine_rerun/sfincs_log.txt&quot;</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn_ini</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
@@ -818,44 +748,47 @@ echo &#34;Simulation done&#34;
 
  -----------------------------------------
 
- Build-Revision: $Rev: v2.0.0$
+ Build-Revision: $Rev: v2.0.0 Alpe d&#39;Huez$
  Build-Date:     $Date: 2022-11-16
 
  Reading input file ...
- Info : Running SFINCS in subgrid mode ...
+ Info : Running SFINCS in regular mode ...
  Reading meteo data ...
  Info : Preparing SFINCS grid on regular mesh ...
  Reading sfincs.ind ...
  Reading sfincs.msk ...
- Number of active z points    :       119864
- Number of active u/v points  :       238715
- Reading sfincs.sbg ...
- Reading water level boundaries ...
+ Number of active z points    :       184262
+ Number of active u/v points  :       367657
+ Reading sfincs.dep
+ Reading sfincs.man
+ Warning : Boundary points found in mask, without boundary conditions. Using wat
+ er level of 0.0 m at these points
  Reading observation points ...
+ Reading discharges ...
  Initializing output ...
 
  ---------- Starting simulation ----------
 
    0% complete,       - s remaining ...
-   5% complete,    22.4 s remaining ...
-  10% complete,    21.4 s remaining ...
-  15% complete,    20.6 s remaining ...
-  20% complete,    20.2 s remaining ...
-  25% complete,    19.5 s remaining ...
-  30% complete,    18.4 s remaining ...
-  35% complete,    17.2 s remaining ...
-  40% complete,    15.9 s remaining ...
-  45% complete,    14.5 s remaining ...
-  50% complete,    13.2 s remaining ...
-  55% complete,    12.2 s remaining ...
-  60% complete,    10.8 s remaining ...
-  65% complete,     9.5 s remaining ...
-  70% complete,     8.1 s remaining ...
-  75% complete,     6.7 s remaining ...
-  80% complete,     5.5 s remaining ...
-  85% complete,     4.1 s remaining ...
-  90% complete,     2.8 s remaining ...
-  95% complete,     1.4 s remaining ...
+   5% complete,    17.4 s remaining ...
+  10% complete,    18.3 s remaining ...
+  15% complete,    18.1 s remaining ...
+  20% complete,    19.7 s remaining ...
+  25% complete,    18.6 s remaining ...
+  30% complete,    17.7 s remaining ...
+  35% complete,    16.7 s remaining ...
+  40% complete,    15.8 s remaining ...
+  45% complete,    14.8 s remaining ...
+  50% complete,    14.0 s remaining ...
+  55% complete,    12.9 s remaining ...
+  60% complete,    11.7 s remaining ...
+  65% complete,    10.3 s remaining ...
+  70% complete,     8.9 s remaining ...
+  75% complete,     7.5 s remaining ...
+  80% complete,     6.0 s remaining ...
+  85% complete,     4.5 s remaining ...
+  90% complete,     3.0 s remaining ...
+  95% complete,     1.5 s remaining ...
  100% complete,     0.0 s remaining ...
 
  ---------- Simulation finished ----------
@@ -880,15 +813,16 @@ echo &#34;Simulation done&#34;
               ..............
  -----------------------------------------
 
- Total time             :     28.316
- Total simulation time  :     28.239
- Time in input          :      0.077
- Time in boundaries     :      2.402 (  8.5%)
- Time in momentum       :     18.602 ( 65.9%)
- Time in continuity     :      6.809 ( 24.1%)
- Time in output         :      0.379 (  1.3%)
+ Total time             :     29.425
+ Total simulation time  :     29.365
+ Time in input          :      0.060
+ Time in boundaries     :      0.335 (  1.1%)
+ Time in discharges     :      0.016 (  0.1%)
+ Time in momentum       :     19.661 ( 67.0%)
+ Time in continuity     :      9.096 ( 31.0%)
+ Time in output         :      0.202 (  0.7%)
 
- Average time step (s)  :      6.875
+ Average time step (s)  :      3.825
 
  ---------- Closing off SFINCS -----------
 
@@ -897,14 +831,22 @@ echo &#34;Simulation done&#34;
 <p>Now we actually should have output!</p>
 <p>You have run your first SFINCS model.</p>
 </section>
+<section id="Question:">
+<h2>Question:<a class="headerlink" href="#Question:" title="Permalink to this heading">#</a></h2>
+<p>How long did the simulation take?</p>
+</section>
+<section id="id1">
+<h2>Question:<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h2>
+<p>How many active grid cells (active z points) are there?</p>
+</section>
 <section id="Created-netcdf-output-files">
 <h2>Created netcdf output files<a class="headerlink" href="#Created-netcdf-output-files" title="Permalink to this heading">#</a></h2>
 <p>Let’s now inspect what files there are situated in the folder of the model setup:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;./course/Charleston_subgrid_example_basicforcing&#39;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;./sfincs_riverine_rerun&#39;</span>
 
 <span class="n">dir_list</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 
@@ -918,7 +860,7 @@ echo &#34;Simulation done&#34;
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;pre-run_output&#39;, &#39;run.bat&#39;, &#39;sfincs.bnd&#39;, &#39;sfincs.bzs&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.dis&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.sbg&#39;, &#39;sfincs.src&#39;, &#39;sfincs.weir&#39;, &#39;sfincs_his.nc&#39;, &#39;sfincs_log.txt&#39;, &#39;sfincs_map.nc&#39;]
+[&#39;gis&#39;, &#39;run.bat&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.dis&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.man&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.restart&#39;, &#39;sfincs.scs&#39;, &#39;sfincs.src&#39;, &#39;sfincs.thd&#39;, &#39;sfincs.weir&#39;, &#39;sfincs_his.nc&#39;, &#39;sfincs_log.txt&#39;, &#39;sfincs_map.nc&#39;]
 </pre></div></div>
 </div>
 <p>We see here the earlier inspected log-file ‘sfincs_log.txt’</p>
@@ -969,6 +911,16 @@ echo &#34;Simulation done&#34;
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#Created-log-file">
    Created log-file
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#Question:">
+   Question:
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#id1">
+   Question:
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
