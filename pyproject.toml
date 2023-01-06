@@ -56,7 +56,7 @@ Documentation = "https://deltares.github.io/hydromt_sfincs/"
 Source = "https://github.com/Deltares/hydromt_sfincs"
 
 [project.entry-points."hydromt.models"]
-sfincs = "hydromt_sfincs.sfincs:SfincsModel"
+sfincs = "hydromt_sfincs.hydromt_sfincs:SfincsModelBuilder"
 
 [tool.black]
 line-length = 88

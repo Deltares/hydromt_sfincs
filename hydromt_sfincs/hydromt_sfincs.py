@@ -20,12 +20,12 @@ from hydromt.raster import RasterDataset, RasterDataArray
 
 from . import workflows, utils, plots, DATADIR
 
-__all__ = ["SfincsModel"]
+__all__ = ["SfincsModelBuilder"]
 
 logger = logging.getLogger(__name__)
 
 
-class SfincsModel(Model):
+class SfincsModelBuilder(Model):
     _NAME = "sfincs"
     _GEOMS = {
         "gauges": "obs",
@@ -108,6 +108,8 @@ class SfincsModel(Model):
             artifact_data=artifact_data,
             logger=logger,
         )
+
+        self.sfincs = Sfincs()
 
     @property
     def mask(self):
@@ -399,6 +401,7 @@ class SfincsModel(Model):
             gdf2 = self.data_catalog.get_geodataframe(exclude_mask_fn, bbox=bbox)
 
         # get mask
+        self.sfincs.grid.create_mask()
         da_mask = utils.mask_topobathy(
             da_elv=self.staticmaps[self._MAPS["elevtn"]],
             gdf_mask=gdf0,
