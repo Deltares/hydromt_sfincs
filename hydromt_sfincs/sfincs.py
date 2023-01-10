@@ -11,16 +11,21 @@ from . import utils
 
 
 class Sfincs:
-
+    _GEOMS = {
+        "weirs": "weir",
+        "thin_dams": "thd",
+    }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
         "waterlevel": ("bzs", "bnd"),  #  timeseries, locations tuple
         "discharge": ("dis", "src"),
         "precip": ("precip", None),
+        "waves": ("bzi", "bwv"),  # TODO bhs, btp, bwd, bds (timeseries) bwv (loc)
+        "wavemaker": (None, None),  # TODO whi, wti, wst (timeseries) and wvp (loc)
     }
     _FORCING_2D = {
-        "precip": ("netampr", None),
+        "precip": "netampr",
     }
-    _FORCING_SPW = {}
+    _FORCING_SPW = {"spiderweb": "spw"}
     _MAPS = ["dep", "scs", "manning", "qinf"]
 
     def __init__(self, root: Union[str, Path] = "") -> None:
@@ -32,7 +37,7 @@ class Sfincs:
 
         #
         self.forcing = {}
-        self.structures = {}
+        self.geoms = {}
 
     def read_input_file(self, fn_inp: Union[str, Path] = "sfincs.inp"):
         # Reads sfincs.inp
@@ -206,3 +211,81 @@ class Sfincs:
                 xy_fn = getattr(self.inp, f"{xy_name}file", f"sfincs.{xy_name}")
             setattr(self.inp, f"{xy_name}file", xy_fn)  # update inp
             utils.write_xy(fn=os.path.join(self.root, xy_fn), gdf=self.forcing[xy_name])
+
+    # TODO: test read and write functions for 2D forcing
+    def read_forcing_2d(self, name):
+        varname = self._FORCING_2D.get(name, None)
+
+        if varname:
+            fn = getattr(self.inp, f"{varname}file")
+            if fn is None:
+                raise ValueError(f"{fn}file not defined in sfincs inp file")
+            da = xr.open_dataarray(fn, chunks={"time": 24})  # lazy
+            self.forcing.update({varname: da})
+
+    def write_forcing_2d(self, name: str, fn: Union[str, Path] = None):
+        varname = self._FORCING_2D.get(name, None)
+
+        if varname:
+            if not varname in self.forcing:
+                raise ValueError(f"{varname}")
+
+            if fn is None:
+                # if not provided read from inp or fallback to sfincs.<name>
+                fn = getattr(self.inp, f"{varname}file", f"sfincs.{varname}")
+            setattr(self.inp, f"{varname}file", fn)  # update inp
+            self.forcing[varname].to_netcdf(
+                os.path.join(self.root, fn), encoding=encoding
+            )
+
+    def read_obs(self):
+        assert self.inp.obsfile is not None, "obsfile not defined in sfincs inp file"
+
+        fn = self.inp.obsfile
+        gdf = utils.read_xy(os.path.join(self.root, fn), crs=self.grid.crs)
+
+        self.geoms.update({"obs": gdf})
+
+    def write_obs(self, fn: Union[str, Path] = None):
+        assert self.geoms["obs"] is not None, "create observation points first"
+
+        if fn is None:
+            # if not provided read from inp or fallback to sfincs.obs
+            fn = getattr(self.inp, f"obsfile", f"sfincs.obs")
+        setattr(self.inp, f"{varname}file", fn)  # update inp
+
+        utils.write_xy(fn=os.path.join(self.root, fn), gdf=self.geoms["obs"])
+
+    def read_structure(self, name):
+        struct_name = self._GEOMS.get(name, None)
+
+        if struct_name:
+            struct_fn = getattr(self.inp, f"{struct_name}file")
+            if struct_fn is None:
+                raise ValueError(f"{ts_name}file not defined in sfincs inp file")
+            struct = utils.read_structures(ps.path.join(self.root, struct_fn))
+            gdf = utils.structures2gdf(struct, crs=self.grid.crs)
+            self.geoms.update({struct_name: gdf})
+
+    def write_structure(self, name, struct_fn: Union[str, Path] = None):
+        struct_name = self._GEOMS.get(name, None)
+
+        if struct_name:
+            if not struct_name in self.geoms:
+                raise ValueError(f"{struct_name}")
+
+            if struct_fn is None:
+                struct_fn = getattr(
+                    self.inp, f"{struct_name}file", f"sfincs.{struct_name}"
+                )
+            setattr(self.inp, f"{struct_name}file", struct_name)  # update inp
+            struct = utils.gdf2structures(self.geoms[struct_name])
+            utils.write_structures(
+                fn=os.path.join(self.root, struct_fn), feats=struct, stype=struct_name
+            )
+
+    def read_his_results():
+        pass
+
+    def read_map_results():
+        pass
