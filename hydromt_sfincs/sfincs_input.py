@@ -1,3 +1,5 @@
+import datetime
+
 class SfincsInput:
     def __init__(self):
         self.mmax = 0
@@ -83,8 +85,79 @@ class SfincsInput:
         self.wstfile = None
 
         self.inputformat = "bin"
-        self.outputformat = "bin"
+        self.outputformat = "net"
 
         self.cdnrb = 3
         self.cdwnd = [0.0, 28.0, 50.0]
         self.cdval = [0.001, 0.0025, 0.0015]
+
+    def read_input_file(self, fn_inp) -> None:
+
+        with open(fn_inp, "r") as fid:
+            lines = fid.readlines()
+        inp = dict()
+
+        for line in lines:
+            str = line.split("=")
+            if len(str) == 1:
+                # Empty line
+                continue
+            name = str[0].strip()
+            val = str[1].strip()
+            try:
+                # First try to convert to int
+                val = int(val)
+            except ValueError:
+                try:
+                    # Now try to convert to float
+                    val = float(val)
+                except:
+                    pass
+            if name == "tref":
+                try:
+                    val = datetime.datetime.strptime(val.rstrip(), "%Y%m%d %H%M%S")
+                except:
+                    val = None
+            if name == "tstart":
+                try:
+                    val = datetime.datetime.strptime(val.rstrip(), "%Y%m%d %H%M%S")
+                except:
+                    val = None
+            if name == "tstop":
+                try:
+                    val = datetime.datetime.strptime(val.rstrip(), "%Y%m%d %H%M%S")
+                except:
+                    val = None
+            if name == "epsg":
+                name = "crs"
+            inp[name] = val
+
+        # set default values to None if not found in sfincs.inp
+        for name, val in self.__dict__.items():
+            setattr(self, name, self.get(name, None))
+
+    def write_input_file(self, fn_inp) -> None:
+        fid = open(fn_inp, "w")
+        for key, value in self.__dict__.items():
+            if not value is None:
+                if type(value) == "float":
+                    string = f"{key.ljust(20)} = {float(value)}\n"
+                elif type(value) == "int":
+                    string = f"{key.ljust(20)} = {int(value)}\n"
+                elif type(value) == list:
+                    valstr = ""
+                    for v in value:
+                        valstr += str(v) + " "
+                    string = f"{key.ljust(20)} = {valstr}\n"
+                elif isinstance(value, datetime.date):
+                    dstr = value.strftime("%Y%m%d %H%M%S")
+                    string = f"{key.ljust(20)} = {dstr}\n"
+                else:
+                    string = f"{key.ljust(20)} = {value}\n"
+                fid.write(string)
+        fid.close()
+
+    def update_input_file(self, inp_dict) -> None:
+        # (over)write sfincs.inp values based on values from inp_dict 
+        for name, val in inp_dict.items():
+            setattr(self, name, val)

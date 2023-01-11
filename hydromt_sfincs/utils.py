@@ -1,4 +1,4 @@
-"""a;sldkfj
+"""
 """
 
 from warnings import catch_warnings
@@ -11,7 +11,7 @@ import pandas as pd
 import geopandas as gpd
 from datetime import datetime
 from configparser import ConfigParser
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Polygon
 from typing import List, Dict, Union, Tuple, Optional
 from pathlib import Path
 import io
@@ -35,8 +35,12 @@ __all__ = [
     "write_timeseries",
     "read_xy",
     "write_xy",
-    "read_structures",
-    "write_structures",
+    "read_geoms",
+    "write_geoms",
+    "gdf2linestring",
+    "gdf2polygon",
+    "linestring2gdf",
+    "polygon2gdf",
     "read_sfincs_map_results",
     "read_sfincs_his_results",
     "mask_bounds",
@@ -559,8 +563,7 @@ def mask_bounds(
 
 ## STRUCTURES: thd / weir ##
 
-
-def gdf2structures(gdf: gpd.GeoDataFrame) -> List[Dict]:
+def gdf2linestring(gdf: gpd.GeoDataFrame) -> List[Dict]:
     """Convert GeoDataFrame[LineString] to list of structure dictionaries
 
     The x,y are taken from the geometry.
@@ -595,8 +598,36 @@ def gdf2structures(gdf: gpd.GeoDataFrame) -> List[Dict]:
         feats.append(feat)
     return feats
 
+def gdf2polygon(gdf: gpd.GeoDataFrame) -> List[Dict]:
+    """Convert GeoDataFrame[Polygon] to list of structure dictionaries
 
-def structures2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDataFrame:
+    The x,y are taken from the geometry.
+
+    Parameters
+    ----------
+    gdf: geopandas.GeoDataFrame with LineStrings geometries
+        GeoDataFrame structures.
+
+    Returns
+    -------
+    feats: list of dict
+        List of dictionaries describing structures.
+    """
+    feats = []
+    for _, item in gdf.iterrows():
+        feat = item.drop("geometry").dropna().to_dict()
+        # check geom
+        poly = item.geometry
+        if poly.type == "MultiPolygon" and len(line.geoms) == 1:
+            poly = poly.geoms[0]
+        if poly.type != "Polygon":
+            raise ValueError("Invalid geometry type, only LineString is accepted.")
+        x,y = poly.exterior.coords.xy    
+        feat["x"], feat["y"] = list(x), list(y)
+        feats.append(feat)
+    return feats
+
+def linestring2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDataFrame:
     """Convert list of structure dictionaries to GeoDataFrame[LineString]
 
     Parameters
@@ -624,8 +655,37 @@ def structures2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDat
         gdf.set_crs(crs, inplace=True)
     return gdf
 
+def polygon2gdf(feats: List[Dict], crs: Union[int, CRS] = None, zmin: float = None, zmax: float = None) -> gpd.GeoDataFrame:
+    """Convert list of structure dictionaries to GeoDataFrame[Polygon]
 
-def write_structures(
+    Parameters
+    ----------
+    feats: list of dict
+        List of dictionaries describing polygons.
+    crs: int, CRS
+        Coordinate reference system
+
+    Returns
+    -------
+    gdf: geopandas.GeoDataFrame
+        GeoDataFrame structures
+    """
+    records = []
+    for f in feats:
+        feat = copy.deepcopy(f)
+        xy = [feat.pop("x"), feat.pop("y")]
+        feat.update({"geometry": Polygon(list(zip(*xy)))})
+        records.append(feat)
+    gdf = gpd.GeoDataFrame.from_records(records)
+    gdf["zmin"] = zmin 
+    gdf["zmax"] = zmax 
+    if crs is not None:
+        gdf.set_crs(crs, inplace=True)
+    return gdf
+
+
+
+def write_geoms(
     fn: Union[str, Path], feats: List[Dict], stype: str = "thd", fmt="%.1f"
 ) -> None:
     """Write list of structure dictionaries to file
@@ -636,10 +696,10 @@ def write_structures(
         Path to output structure file.
     feats: list of dict
         List of dictionaries describing structures.
-        For thd files "x" and "y" are required, "name" is optional.
+        For pli, pol and thd files "x" and "y" are required, "name" is optional.
         For weir files "x", "y" and "z" are required, "name" and "par1" are optional.
-    stype: {'thd', 'weir'}
-        Structure type thin dams (thd) or weirs (weir).
+    stype: {'pli', 'pol', 'thd', 'weir'}
+        Geom type polylines (pli), polygons (pol) thin dams (thd) or weirs (weir).
     fmt: str
         format for "z" and "par1" fields.
 
@@ -663,7 +723,7 @@ def write_structures(
         ]
     >>> write_structures('sfincs.weir', feats, stype='weir')
     """
-    cols = {"thd": 2, "weir": 4}[stype.lower()]
+    cols = {"pli": 2, "pol": 2, "thd": 2, "weir": 4}[stype.lower()]
     fmt = ["%.0f", "%.0f"] + [fmt for _ in range(cols - 2)]
     if stype.lower() == "weir" and np.any(["z" not in f for f in feats]):
         raise ValueError('"z" value missing for weir files.')
@@ -686,7 +746,7 @@ def write_structures(
             f.write(s.getvalue().decode())
 
 
-def read_structures(fn: Union[str, Path]) -> List[Dict]:
+def read_geoms(fn: Union[str, Path]) -> List[Dict]:
     """Read structure files to list of dictionaries.
 
     Parameters

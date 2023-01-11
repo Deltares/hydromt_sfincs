@@ -109,7 +109,7 @@ class SfincsModelBuilder(Model):
             logger=logger,
         )
 
-        self.sfincs = Sfincs()
+        self.sfincs = SfincsModelBuilder()
 
     @property
     def mask(self):

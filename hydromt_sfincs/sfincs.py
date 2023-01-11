@@ -2,7 +2,7 @@ import datetime
 import os
 import numpy as np
 import xarray as xr
-from typing import Union
+from typing import Union, List
 from pathlib import Path
 
 from .regulargrid import RegularGrid
@@ -16,19 +16,19 @@ class Sfincs:
         "thin_dams": "thd",
     }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
-        "waterlevel": ("bzs", "bnd"),  #  timeseries, locations tuple
-        "discharge": ("dis", "src"),
-        "precip": ("precip", None),
-        "waves": ("bzi", "bwv"),  # TODO bhs, btp, bwd, bds (timeseries) bwv (loc)
-        "wavemaker": (None, None),  # TODO whi, wti, wst (timeseries) and wvp (loc)
+        "waterlevel": (["bzs"], "bnd"),  #  timeseries (can be multiple), locations tuple
+        "discharge": (["dis"], "src"),
+        "precip": (["precip"], None),
+        "waves": (["bhs", "btp", "bwd", "bds"], "bwv"),  # TODO check names and test
+        "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
     }
     _FORCING_2D = {
-        "precip": "netampr",
+        "precip": "netampr", #TODO discuss which 2D forcings exist
     }
-    _FORCING_SPW = {"spiderweb": "spw"}
+    _FORCING_SPW = {"spiderweb": "spw"} #TODO add read and write functions
     _MAPS = ["dep", "scs", "manning", "qinf"]
 
-    def __init__(self, root: Union[str, Path] = "") -> None:
+    def __init__(self, root: Union[str, Path] = "", inp_kwargs={}) -> None:
 
         self.root = root
         self.inp = SfincsInput()
@@ -39,6 +39,9 @@ class Sfincs:
         self.forcing = {}
         self.geoms = {}
 
+        #settings
+        self.write_gis=True
+
     def read_input_file(self, fn_inp: Union[str, Path] = "sfincs.inp"):
         # Reads sfincs.inp
         # check if not none and not absolute
@@ -47,72 +50,17 @@ class Sfincs:
         else:
             self.root = os.path.dirname(fn_inp)
 
-        with open(fn_inp, "r") as fid:
-            lines = fid.readlines()
-        inp = dict()
-        for line in lines:
-            str = line.split("=")
-            if len(str) == 1:
-                # Empty line
-                continue
-            name = str[0].strip()
-            val = str[1].strip()
-            try:
-                # First try to convert to int
-                val = int(val)
-            except ValueError:
-                try:
-                    # Now try to convert to float
-                    val = float(val)
-                except:
-                    pass
-            if name == "tref":
-                try:
-                    val = datetime.datetime.strptime(val.rstrip(), "%Y%m%d %H%M%S")
-                except:
-                    val = None
-            if name == "tstart":
-                try:
-                    val = datetime.datetime.strptime(val.rstrip(), "%Y%m%d %H%M%S")
-                except:
-                    val = None
-            if name == "tstop":
-                try:
-                    val = datetime.datetime.strptime(val.rstrip(), "%Y%m%d %H%M%S")
-                except:
-                    val = None
-            if name == "epsg":
-                name = "crs"
-            inp[name] = val
-
-        # set default values to None if not found in sfincs.inp
-        for name, val in self.inp.__dict__.items():
-            setattr(self.inp, name, inp.get(name, None))
+        self.inp.read_input_file(fn_inp=fn_inp)
 
         # update grid properties based on sfincs.inp
         grid_type = "quadtree" if self.inp.qtrfile is not None else "regular"
         self.create_grid(grid_type=grid_type)
 
     def write_input_file(self, fn_inp: Union[str, Path] = "sfincs.inp"):
-        fid = open(os.path.join(self.root, fn_inp), "w")
-        for key, value in self.inp.__dict__.items():
-            if not value is None:
-                if type(value) == "float":
-                    string = f"{key.ljust(20)} = {float(value)}\n"
-                elif type(value) == "int":
-                    string = f"{key.ljust(20)} = {int(value)}\n"
-                elif type(value) == list:
-                    valstr = ""
-                    for v in value:
-                        valstr += str(v) + " "
-                    string = f"{key.ljust(20)} = {valstr}\n"
-                elif isinstance(value, datetime.date):
-                    dstr = value.strftime("%Y%m%d %H%M%S")
-                    string = f"{key.ljust(20)} = {dstr}\n"
-                else:
-                    string = f"{key.ljust(20)} = {value}\n"
-                fid.write(string)
-        fid.close()
+        self.inp.write_input_file(fn_inp= os.path.join(self.root, fn_inp))
+
+    def update_input_file(self, inp_dict: dict):
+        self.inp.update_input_file(inp_dict=inp_dict)
 
     def create_grid(self, grid_type, **kwargs):
         # initialize grid based kwargs and defaults from inp
@@ -123,6 +71,10 @@ class Sfincs:
             self.grid = RegularGrid(**kwargs)
         elif grid_type == "quadtree":
             pass
+
+    def create_dep(self, bathymetry_sets: List[xr.DataArray]):
+        assert self.grid is not None, "do create_grid() first"
+        self.grid.create_dep(bathymetry_sets = bathymetry_sets)
 
     def read_mask(self):
         assert self.grid is not None, "do create_grid() first"
@@ -137,11 +89,12 @@ class Sfincs:
         assert self.grid is not None, "do create_grid() first"
 
         if msk_fn is None:
-            msk_fn = self.inp.mskfile
+            # if not provided read from inp or fallback to sfincs.<name>
+            msk_fn = getattr(self.inp, f"mskfile", f"sfincs.msk")
         setattr(self.inp, f"mskfile", msk_fn)  # update inp
 
         if ind_fn is None:
-            ind_fn = self.inp.indexfile
+            ind_fn = getattr(self.inp, f"indexfile", f"sfincs.ind")
         setattr(self.inp, f"indexfile", ind_fn)  # update inp
 
         self.grid.write_mask(
@@ -170,8 +123,8 @@ class Sfincs:
         )
 
     def read_forcing_1d(self, name):
-        ts_name, xy_name = self._FORCING_1D.get(name, (None, None))
-        if ts_name:
+        ts_list, xy_name = self._FORCING_1D.get(name, ([], None))
+        for ts_name in ts_list:
             ts_fn = getattr(self.inp, f"{ts_name}file")
             if ts_fn is None:
                 raise ValueError(f"{ts_name}file not defined in sfincs inp file")
@@ -185,11 +138,12 @@ class Sfincs:
             self.forcing.update({xy_name: xy})
 
     def write_forcing_1d(
-        self, name, ts_fn: Union[str, Path] = None, xy_fn: Union[str, Path] = None
+        self, name, ts_fns: Union[str, List[str]] = None, xy_fn: Union[str, Path] = None
     ):
-        ts_name, xy_name = self._FORCING_1D.get(name, (None, None))
+        ts_list, xy_name = self._FORCING_1D.get(name, ([], None))
+        ts_fns = [ts_fns] if isinstance(ts_fns, str) else ts_fns
 
-        if ts_name:
+        for ts_fn, ts_name in zip(ts_fns, ts_list):
             if not ts_name in self.forcing:
                 raise ValueError(f"{ts_name}")
 
@@ -284,8 +238,57 @@ class Sfincs:
                 fn=os.path.join(self.root, struct_fn), feats=struct, stype=struct_name
             )
 
+    #TODO: following functions
+
+    def read_rstfile():
+        #function from self.grid.read_rst()
+        pass
+
     def read_his_results():
         pass
 
     def read_map_results():
         pass
+
+    def write_maps(self):
+        """Write SFINCS maps to binary files including map index file.
+        Filenames are taken from the inp attribute.
+
+        If `write_gis` property is True, all staticmaps are written to geotiff
+        files in a "gis" subfolder.
+        """
+
+        # make sure a mask is set
+        assert "msk" in self.grid.data
+
+        # make sure orientation is S->N
+        ds_out = self.grid.data
+        if ds_out.raster.res[1] < 0:
+            ds_out = ds_out.raster.flipud()
+
+        # write mask and index file
+        self.write_mask()
+
+        # write maps
+        dvars = [v for v in self._MAPS if v in ds_out]
+        for mname in dvars:
+            self.write_map(name=mname)
+
+        # if self._write_gis:
+            # self.write_raster("staticmaps")    
+
+    def write(self):
+        if not os.path.exists(self.root):
+            # if the folder directory is not present 
+            # then create it.
+            os.makedirs(self.root)
+
+        self.write_maps()
+        # self.write_geoms()
+        # self.write_forcing()
+        #TODO self.write_states()
+        # last; might be udpated when writing maps, states or forcing
+        self.write_input_file()
+
+
+    

@@ -117,6 +117,3 @@ venv.bak/
 
 # dask
 dask-worker-space/
-
-# misc
-misc/

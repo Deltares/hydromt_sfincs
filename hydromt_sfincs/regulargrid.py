@@ -3,7 +3,7 @@ import math
 import xarray as xr
 import geopandas as gpd
 from affine import Affine
-from typing import Union, Optional
+from typing import Union, Optional, List
 from pathlib import Path
 from pyproj import CRS
 from .sfincs_input import SfincsInput
@@ -127,6 +127,42 @@ class RegularGrid:
             self.data.update(da_mask.to_dataset())
 
         return da_mask
+
+    def create_dep(
+        self,
+        bathymetry_sets: List[xr.DataArray],
+    ) -> xr.DataArray:
+
+        region = self.mask.raster.box
+
+        # TODO convert list of xarrays into one merged xd.DataArray
+        # For now, we simply take the first
+        da_dep = bathymetry_sets[0]
+
+        # reproject to destination CRS
+        check_crs = self.crs is not None and da_dep.raster.crs != self.crs
+        check_res = abs(da_dep.raster.res[0]) != self.dx
+        if check_crs or check_res:
+            da_dep = da_dep.raster.reproject(
+                dst_res=self.dx, dst_crs=self.crs, align=True, method="bilinear"
+            )
+        # clip & mask
+        da_dep = (
+            da_dep.raster.clip_geom(geom=region, mask=True).drop('mask')
+            .raster.mask_nodata() #set nodata to nan
+            .fillna(-9999)  # force nodata value to be -9999
+            .round(2)  # cm precision
+        )
+        da_dep.raster.set_nodata(-9999)
+
+        # assign to SFINCS model
+        if len(self.data.data_vars) == 0:
+            # overwrite data property if empty
+            self.data = da_dep.to_dataset()
+            self.data.raster.set_crs(self.crs)
+        else:
+            da_dep.name = "dep"            
+            self.data.update(da_dep.to_dataset())
 
     def create_mask_active(
         self,

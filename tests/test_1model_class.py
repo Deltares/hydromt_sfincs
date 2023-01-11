@@ -7,7 +7,7 @@ import xarray as xr
 
 from hydromt.cli.cli_utils import parse_config
 from hydromt.log import setuplog
-from hydromt_sfincs.sfincs import SfincsModel
+from hydromt_sfincs.hydromt_sfincs import SfincsModelBuilder
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
 EXAMPLEDIR = join(dirname(abspath(__file__)), "..", "examples")
