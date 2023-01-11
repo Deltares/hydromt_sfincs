@@ -16,16 +16,19 @@ class Sfincs:
         "thin_dams": "thd",
     }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
-        "waterlevel": (["bzs"], "bnd"),  #  timeseries (can be multiple), locations tuple
+        "waterlevel": (
+            ["bzs"],
+            "bnd",
+        ),  #  timeseries (can be multiple), locations tuple
         "discharge": (["dis"], "src"),
         "precip": (["precip"], None),
         "waves": (["bhs", "btp", "bwd", "bds"], "bwv"),  # TODO check names and test
         "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
     }
     _FORCING_2D = {
-        "precip": "netampr", #TODO discuss which 2D forcings exist
+        "precip": "netampr",  # TODO discuss which 2D forcings exist
     }
-    _FORCING_SPW = {"spiderweb": "spw"} #TODO add read and write functions
+    _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["dep", "scs", "manning", "qinf"]
 
     def __init__(self, root: Union[str, Path] = "", inp_kwargs={}) -> None:
@@ -39,8 +42,8 @@ class Sfincs:
         self.forcing = {}
         self.geoms = {}
 
-        #settings
-        self.write_gis=True
+        # settings
+        self.write_gis = True
 
     def read_input_file(self, fn_inp: Union[str, Path] = "sfincs.inp"):
         # Reads sfincs.inp
@@ -57,7 +60,7 @@ class Sfincs:
         self.create_grid(grid_type=grid_type)
 
     def write_input_file(self, fn_inp: Union[str, Path] = "sfincs.inp"):
-        self.inp.write_input_file(fn_inp= os.path.join(self.root, fn_inp))
+        self.inp.write_input_file(fn_inp=os.path.join(self.root, fn_inp))
 
     def update_input_file(self, inp_dict: dict):
         self.inp.update_input_file(inp_dict=inp_dict)
@@ -74,7 +77,7 @@ class Sfincs:
 
     def create_dep(self, bathymetry_sets: List[xr.DataArray]):
         assert self.grid is not None, "do create_grid() first"
-        self.grid.create_dep(bathymetry_sets = bathymetry_sets)
+        self.grid.create_dep(bathymetry_sets=bathymetry_sets)
 
     def read_mask(self):
         assert self.grid is not None, "do create_grid() first"
@@ -238,10 +241,10 @@ class Sfincs:
                 fn=os.path.join(self.root, struct_fn), feats=struct, stype=struct_name
             )
 
-    #TODO: following functions
+    # TODO: following functions
 
     def read_rstfile():
-        #function from self.grid.read_rst()
+        # function from self.grid.read_rst()
         pass
 
     def read_his_results():
@@ -275,20 +278,17 @@ class Sfincs:
             self.write_map(name=mname)
 
         # if self._write_gis:
-            # self.write_raster("staticmaps")    
+        # self.write_raster("staticmaps")
 
     def write(self):
         if not os.path.exists(self.root):
-            # if the folder directory is not present 
+            # if the folder directory is not present
             # then create it.
             os.makedirs(self.root)
 
         self.write_maps()
         # self.write_geoms()
         # self.write_forcing()
-        #TODO self.write_states()
+        # TODO self.write_states()
         # last; might be udpated when writing maps, states or forcing
         self.write_input_file()
-
-
-    

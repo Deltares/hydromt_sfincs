@@ -148,8 +148,9 @@ class RegularGrid:
             )
         # clip & mask
         da_dep = (
-            da_dep.raster.clip_geom(geom=region, mask=True).drop('mask')
-            .raster.mask_nodata() #set nodata to nan
+            da_dep.raster.clip_geom(geom=region, mask=True)
+            .drop("mask")
+            .raster.mask_nodata()  # set nodata to nan
             .fillna(-9999)  # force nodata value to be -9999
             .round(2)  # cm precision
         )
@@ -161,7 +162,7 @@ class RegularGrid:
             self.data = da_dep.to_dataset()
             self.data.raster.set_crs(self.crs)
         else:
-            da_dep.name = "dep"            
+            da_dep.name = "dep"
             self.data.update(da_dep.to_dataset())
 
     def create_mask_active(

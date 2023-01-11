@@ -1,5 +1,6 @@
 import datetime
 
+
 class SfincsInput:
     def __init__(self):
         self.mmax = 0
@@ -158,6 +159,6 @@ class SfincsInput:
         fid.close()
 
     def update_input_file(self, inp_dict) -> None:
-        # (over)write sfincs.inp values based on values from inp_dict 
+        # (over)write sfincs.inp values based on values from inp_dict
         for name, val in inp_dict.items():
             setattr(self, name, val)

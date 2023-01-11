@@ -563,6 +563,7 @@ def mask_bounds(
 
 ## STRUCTURES: thd / weir ##
 
+
 def gdf2linestring(gdf: gpd.GeoDataFrame) -> List[Dict]:
     """Convert GeoDataFrame[LineString] to list of structure dictionaries
 
@@ -598,6 +599,7 @@ def gdf2linestring(gdf: gpd.GeoDataFrame) -> List[Dict]:
         feats.append(feat)
     return feats
 
+
 def gdf2polygon(gdf: gpd.GeoDataFrame) -> List[Dict]:
     """Convert GeoDataFrame[Polygon] to list of structure dictionaries
 
@@ -622,10 +624,11 @@ def gdf2polygon(gdf: gpd.GeoDataFrame) -> List[Dict]:
             poly = poly.geoms[0]
         if poly.type != "Polygon":
             raise ValueError("Invalid geometry type, only LineString is accepted.")
-        x,y = poly.exterior.coords.xy    
+        x, y = poly.exterior.coords.xy
         feat["x"], feat["y"] = list(x), list(y)
         feats.append(feat)
     return feats
+
 
 def linestring2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDataFrame:
     """Convert list of structure dictionaries to GeoDataFrame[LineString]
@@ -655,7 +658,13 @@ def linestring2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDat
         gdf.set_crs(crs, inplace=True)
     return gdf
 
-def polygon2gdf(feats: List[Dict], crs: Union[int, CRS] = None, zmin: float = None, zmax: float = None) -> gpd.GeoDataFrame:
+
+def polygon2gdf(
+    feats: List[Dict],
+    crs: Union[int, CRS] = None,
+    zmin: float = None,
+    zmax: float = None,
+) -> gpd.GeoDataFrame:
     """Convert list of structure dictionaries to GeoDataFrame[Polygon]
 
     Parameters
@@ -677,12 +686,11 @@ def polygon2gdf(feats: List[Dict], crs: Union[int, CRS] = None, zmin: float = No
         feat.update({"geometry": Polygon(list(zip(*xy)))})
         records.append(feat)
     gdf = gpd.GeoDataFrame.from_records(records)
-    gdf["zmin"] = zmin 
-    gdf["zmax"] = zmax 
+    gdf["zmin"] = zmin
+    gdf["zmax"] = zmax
     if crs is not None:
         gdf.set_crs(crs, inplace=True)
     return gdf
-
 
 
 def write_geoms(
