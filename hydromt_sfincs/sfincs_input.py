@@ -135,7 +135,7 @@ class SfincsInput:
 
         # set default values to None if not found in sfincs.inp
         for name, val in self.__dict__.items():
-            setattr(self, name, self.get(name, None))
+            setattr(self, name, inp.get(name, None))
 
     def write_input_file(self, fn_inp) -> None:
         fid = open(fn_inp, "w")

@@ -190,6 +190,14 @@ class Sfincs:
             if fn is None:
                 # if not provided read from inp or fallback to sfincs.<name>
                 fn = getattr(self.inp, f"{varname}file", f"sfincs.{varname}")
+
+            tref = utils.parse_datetime(self.inp.tref)
+            # for nc files -> time in minutes since tref
+            tref_str = tref.strftime("%Y-%m-%d %H:%M:%S")
+            encoding = dict(
+                time={"units": f"minutes since {tref_str}", "dtype": "float64"}
+            )
+
             setattr(self.inp, f"{varname}file", fn)  # update inp
             self.forcing[varname].to_netcdf(
                 os.path.join(self.root, fn), encoding=encoding
@@ -209,7 +217,7 @@ class Sfincs:
         if fn is None:
             # if not provided read from inp or fallback to sfincs.obs
             fn = getattr(self.inp, f"obsfile", f"sfincs.obs")
-        setattr(self.inp, f"{varname}file", fn)  # update inp
+        setattr(self.inp, f"obsfile", fn)  # update inp
 
         utils.write_xy(fn=os.path.join(self.root, fn), gdf=self.geoms["obs"])
 
@@ -219,8 +227,8 @@ class Sfincs:
         if struct_name:
             struct_fn = getattr(self.inp, f"{struct_name}file")
             if struct_fn is None:
-                raise ValueError(f"{ts_name}file not defined in sfincs inp file")
-            struct = utils.read_structures(ps.path.join(self.root, struct_fn))
+                raise ValueError(f"{struct_name}file not defined in sfincs inp file")
+            struct = utils.read_structures(os.path.join(self.root, struct_fn))
             gdf = utils.structures2gdf(struct, crs=self.grid.crs)
             self.geoms.update({struct_name: gdf})
 
@@ -253,6 +261,7 @@ class Sfincs:
     def read_map_results():
         pass
 
+    #aggregated read and write functions
     def write_maps(self):
         """Write SFINCS maps to binary files including map index file.
         Filenames are taken from the inp attribute.
@@ -280,6 +289,7 @@ class Sfincs:
         # if self._write_gis:
         # self.write_raster("staticmaps")
 
+    #read and write functions for entire model
     def write(self):
         if not os.path.exists(self.root):
             # if the folder directory is not present
