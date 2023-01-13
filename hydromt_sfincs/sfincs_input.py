@@ -158,7 +158,13 @@ class SfincsInput:
                 fid.write(string)
         fid.close()
 
-    def update_input_file(self, inp_dict) -> None:
+    @staticmethod
+    def from_dict(inp_dict) -> None:
         # (over)write sfincs.inp values based on values from inp_dict
+        inp = SfincsInput()
         for name, val in inp_dict.items():
-            setattr(self, name, val)
+            setattr(inp, name, val)
+        return inp
+
+    def to_dict(self):
+        return self.__dict__

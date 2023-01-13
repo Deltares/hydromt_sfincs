@@ -78,8 +78,8 @@ def plot_forcing(forcing: Dict, **kwargs):
 
 
 def plot_basemap(
-    staticmaps: xr.Dataset,
-    staticgeoms: Dict,
+    ds: xr.Dataset,
+    geoms: Dict,
     variable: str = "dep",
     shaded: bool = True,
     plot_bounds: bool = True,
@@ -88,7 +88,7 @@ def plot_basemap(
     bmap: str = "sat",
     zoomlevel: int = 11,
     figsize: Tuple[int] = None,
-    geoms: List[str] = None,
+    geom_names: List[str] = None,
     geom_kwargs: Dict = {},
     legend_kwargs: Dict = {},
     bmap_kwargs: Dict = {},
@@ -98,12 +98,12 @@ def plot_basemap(
 
     Parameters
     ----------
-    staticmaps : xr.Dataset
+    ds : xr.Dataset
         Dataset with model maps
-    staticgeoms : Dict of geopandas.GeoDataFrame
+    geoms : Dict of geopandas.GeoDataFrame
         Model geometries
     variable : str, optional
-        Map name to plot, by default 'dep'
+        Map of variable in ds to plot, by default 'dep'
     shaded : bool, optional
         Add shade to variable (only for variable = 'dep'), by default True
     plot_bounds : bool, optional
@@ -118,7 +118,7 @@ def plot_basemap(
         zoomlevel, by default 11
     figsize : Tuple[int], optional
         figure size, by default None
-    geoms : List[str], optional
+    geom_names : List[str], optional
         list of model geometries to plot, by default all model geometries
     geom_kwargs : Dict of Dict, optional
         Model geometry styling per geometry, passed to geopandas.GeoDataFrame.plot method.
@@ -136,16 +136,16 @@ def plot_basemap(
     import cartopy.crs as ccrs
 
     # read crs and utm zone > convert to cartopy
-    wkt = staticmaps.raster.crs.to_wkt()
+    wkt = ds.raster.crs.to_wkt()
     if "UTM zone " not in wkt:
         raise ValueError("Model CRS UTM zone not found.")
-    utm_zone = staticmaps.raster.crs.to_wkt().split("UTM zone ")[1][:3]
+    utm_zone = ds.raster.crs.to_wkt().split("UTM zone ")[1][:3]
     utm = ccrs.UTM(int(utm_zone[:2]), "S" in utm_zone)
-    extent = np.array(staticmaps.raster.box.buffer(2e3).total_bounds)[[0, 2, 1, 3]]
+    extent = np.array(ds.raster.box.buffer(2e3).total_bounds)[[0, 2, 1, 3]]
 
     # create fig with geo-axis and set background
     if figsize is None:
-        ratio = staticmaps.raster.ycoords.size / (staticmaps.raster.xcoords.size * 1.2)
+        ratio = ds.raster.ycoords.size / (ds.raster.xcoords.size * 1.2)
         figsize = (10, 10 * ratio)
     fig = plt.figure(figsize=figsize)
     ax = plt.subplot(projection=utm)
@@ -160,9 +160,7 @@ def plot_basemap(
     # make nice cmap
     if "cmap" not in kwargs or "norm" not in kwargs:
         if variable == "dep":
-            vmin, vmax = (
-                staticmaps["dep"].raster.mask_nodata().quantile([0.0, 0.98]).values
-            )
+            vmin, vmax = ds["dep"].raster.mask_nodata().quantile([0.0, 0.98]).values
             vmin, vmax = int(kwargs.pop("vmin", vmin)), int(kwargs.pop("vmax", vmax))
             c_dem = plt.cm.terrain(np.linspace(0.25, 1, vmax))
             if vmin < 0:
@@ -173,8 +171,8 @@ def plot_basemap(
             cmap, norm = kwargs.pop("cmap", cmap), kwargs.pop("norm", norm)
             kwargs.update(norm=norm, cmap=cmap)
 
-    if variable in staticmaps:
-        da = staticmaps[variable].raster.mask_nodata()
+    if variable in ds:
+        da = ds[variable].raster.mask_nodata()
         # by default colorbar on lower right & legend upper right
         kwargs0 = {"cbar_kwargs": {"shrink": 0.6, "anchor": (0, 0)}}
         kwargs0.update(kwargs)
@@ -211,12 +209,9 @@ def plot_basemap(
     )
     # plot mask boundaries
     if plot_bounds:
-        gdf_msk = staticmaps["msk"].raster.vectorize()
+        gdf_msk = ds["msk"].raster.vectorize()
         region = (
-            (staticmaps["msk"] >= 1)
-            .astype("int16")
-            .raster.vectorize()
-            .drop(columns="value")
+            (ds["msk"] >= 1).astype("int16").raster.vectorize().drop(columns="value")
         )
         gdf_msk = gdf_msk[gdf_msk["value"] != 1]
         gdf_msk["geometry"] = gdf_msk.boundary
@@ -234,9 +229,9 @@ def plot_basemap(
 
     # plot static geoms
     if plot_geoms:
-        geoms = geoms if isinstance(geoms, list) else list(staticgeoms.keys())
-        for name in geoms:
-            gdf = staticgeoms.get(name, None)
+        geom_names = geom_names if isinstance(geom_names, list) else list(geoms.keys())
+        for name in geom_names:
+            gdf = geoms.get(name, None)
             if gdf is None or name in ["region", "bbox"]:
                 continue
             # copy is important to keep annotate working if repeated
@@ -248,8 +243,8 @@ def plot_basemap(
                     x, y = row.geometry.x, row.geometry.y
                     ax.annotate(label, xy=(x, y), **ann_kwargs)
 
-    if "region" in staticgeoms and plot_region:
-        staticgeoms["region"].boundary.plot(ax=ax, ls="-", lw=0.5, color="k", zorder=2)
+    if "region" in geoms and plot_region:
+        geoms["region"].boundary.plot(ax=ax, ls="-", lw=0.5, color="k", zorder=2)
 
     # title, legend and labels
     ax.xaxis.set_visible(True)
@@ -260,7 +255,7 @@ def plot_basemap(
     ax.set_title(f"SFINCS {variable} map")
     # NOTE without defined loc it takes forever to find a 'best' location
     # by default outside plot
-    if geoms or plot_bounds:
+    if geom_names or plot_bounds:
         legend_kwargs0 = dict(
             bbox_to_anchor=(1.05, 1),
             title="Legend",

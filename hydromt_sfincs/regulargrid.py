@@ -1,19 +1,19 @@
+from affine import Affine
+import geopandas as gpd
 import numpy as np
 import math
-import xarray as xr
-import geopandas as gpd
-from affine import Affine
-from typing import Union, Optional, List
 from pathlib import Path
 from pyproj import CRS
-from .sfincs_input import SfincsInput
+from typing import Union, Optional, List
 from scipy import ndimage
+import xarray as xr
+
 from pyflwdir.regions import region_area
+from .sfincs_input import SfincsInput
 
 
 class RegularGrid:
-    def __init__(self, x0, y0, dx, dy, nmax, mmax, rotation, crs=None):
-
+    def __init__(self, x0, y0, dx, dy, nmax, mmax, crs, rotation=0):
         self.x0 = x0
         self.y0 = y0
         self.dx = dx
@@ -21,11 +21,8 @@ class RegularGrid:
         self.nmax = nmax  # height
         self.mmax = mmax  # width
         self.rotation = rotation
-        self.shape = (nmax, mmax)
-        self.crs = None
-        if crs is not None:
-            self.crs = CRS.from_user_input(crs)
-        self.data = xr.Dataset()
+        self.crs = CRS.from_user_input(crs)
+        # self.data = xr.Dataset()
 
         # cosrot = math.cos(rotation * math.pi / 180)
         # sinrot = math.sin(rotation * math.pi / 180)
@@ -44,133 +41,104 @@ class RegularGrid:
         # self.yz = yg
 
     @property
-    def mask(self):
-        if "msk" in self.data:
-            return self.data["msk"]
-
-    @staticmethod
-    def from_inp(inp: SfincsInput) -> None:
-        return RegularGrid(
-            inp.x0, inp.y0, inp.dx, inp.dy, inp.nmax, inp.mmax, inp.rotation
+    def transform(self):
+        """Return the affine transform of the regular grid."""
+        transform = (
+            Affine.translation(self.x0, self.y0)
+            * Affine.rotation(self.rotation)
+            * Affine.scale(self.dx, self.dy)
         )
+        return transform
 
     @property
-    def affine(self):
-        return Affine(self.dx, 0, self.x0, 0, self.dy, self.y0) * Affine.rotation(
-            self.rotation
-        )
-
-    @property
-    def coordinates(self):
-        # TODO fix for ratated grids
-        transform = self.affine * Affine.translation(0.5, 0.5)
-        if self.affine.is_rectilinear:
-            x_coords, _ = transform * (np.arange(self.mmax), np.zeros(self.mmax))
-            _, y_coords = transform * (np.zeros(self.nmax), np.arange(self.nmax))
-        else:
-            x_coords, y_coords = transform * np.meshgrid(
-                np.arange(self.mmax),
-                np.arange(self.nmax),
+    def coordinates(self, x_dim="x", y_dim="y"):
+        if self.transform.b == 0:
+            x_coords, _ = self.transform * (
+                np.arange(self.mmax) + 0.5,
+                np.zeros(self.mmax) + 0.5,
             )
-        return {"y": y_coords, "x": x_coords}
+            _, y_coords = self.transform * (
+                np.zeros(self.nmax) + 0.5,
+                np.arange(self.nmax) + 0.5,
+            )
+            coords = {
+                y_dim: (y_dim, y_coords),
+                x_dim: (x_dim, x_coords),
+            }
+        else:
+            x_coords, y_coords = (
+                self.transform
+                * self.transform.translation(0.5, 0.5)
+                * np.meshgrid(np.arange(self.mmax), np.arange(self.nmax))
+            )
+            coords = {
+                "yc": ((y_dim, x_dim), y_coords),
+                "xc": ((y_dim, x_dim), x_coords),
+            }
+        return coords
 
     @property
-    def ind(self) -> np.ndarray:
-        # assert ind.max() <= np.multiply(*shape)
-        iok = np.where(np.transpose(self.mask.values) > 0)
+    def empty_mask(self) -> xr.DataArray:
+        """Return mask with only active cells"""
+        da_mask = xr.DataArray(
+            name="msk",
+            data=np.ones((self.nmax, self.mmax), dtype=np.int8),
+            coords=self.coordinates,
+            dims=("y", "x"),
+            attrs={"_FillValue": 0},
+        )
+        da_mask.raster.set_crs(self.crs)
+        return da_mask
+
+    def ind(self, mask: np.ndarray) -> np.ndarray:
+        assert mask.shape == (self.nmax, self.mmax)
+        iok = np.where(np.transpose(mask.values) > 0)
         iok = (iok[1], iok[0])
         ind = np.ravel_multi_index(iok, (self.nmax, self.mmax), order="F")
         return ind
 
-    def write_mask(
+    def write_ind(
         self,
-        msk_fn: Union[str, Path] = "sfincs.msk",
+        mask: np.ndarray,
         ind_fn: Union[str, Path] = "sfincs.ind",
     ) -> None:
-
+        assert mask.shape == (self.nmax, self.mmax)
         # Add 1 because indices in SFINCS start with 1, not 0
-        indices_ = np.array(
-            np.hstack([np.array(len(self.ind)), self.ind + 1]), dtype="u4"
-        )
+        ind = self.ind(mask)
+        indices_ = np.array(np.hstack([np.array(len(ind)), ind + 1]), dtype="u4")
         indices_.tofile(ind_fn)
 
-        self.write_map(map_fn=msk_fn, data=self.mask.values, dtype="u1")
-
-    def read_mask(
+    def read_ind(
         self,
-        msk_fn: Union[str, Path] = "sfincs.msk",
         ind_fn: Union[str, Path] = "sfincs.ind",
-    ) -> xr.DataArray:
+    ) -> np.ndarray:
 
         _ind = np.fromfile(ind_fn, dtype="u4")
         ind = _ind[1:] - 1  # convert to zero based index
         assert _ind[0] == ind.size
 
-        # mask = utils.read_binary_map()
-        nrow, ncol = self.shape
-        mask = np.full((ncol, nrow), 0, dtype="u1")
-        mask.flat[ind] = np.fromfile(msk_fn, dtype=mask.dtype)
-        mask = mask.transpose()
-
-        da_mask = xr.DataArray(
-            name="msk",
-            data=mask,
-            coords=self.coordinates,
-            dims=("y", "x"),
-            attrs={"_FillValue": 0},
-        )
-        if len(self.data.data_vars) == 0:
-            # overwrite data property if empty
-            self.data = da_mask.to_dataset()
-            self.data.raster.set_crs(self.crs)
-        else:
-            self.data.update(da_mask.to_dataset())
-
-        return da_mask
+        return ind
 
     def create_dep(
         self,
         bathymetry_sets: List[xr.DataArray],
+        reproj_method="bilinear",
     ) -> xr.DataArray:
-
-        region = self.mask.raster.box
 
         # TODO convert list of xarrays into one merged xd.DataArray
         # For now, we simply take the first
-        da_dep = bathymetry_sets[0]
-
-        # reproject to destination CRS
-        check_crs = self.crs is not None and da_dep.raster.crs != self.crs
-        check_res = abs(da_dep.raster.res[0]) != self.dx
-        if check_crs or check_res:
-            da_dep = da_dep.raster.reproject(
-                dst_res=self.dx, dst_crs=self.crs, align=True, method="bilinear"
-            )
-        # clip & mask
-        da_dep = (
-            da_dep.raster.clip_geom(geom=region, mask=True)
-            .drop("mask")
-            .raster.mask_nodata()  # set nodata to nan
-            .fillna(-9999)  # force nodata value to be -9999
-            .round(2)  # cm precision
+        da_dep = bathymetry_sets[0].raster.reproject_like(
+            self.empty_mask, method=reproj_method
         )
-        da_dep.raster.set_nodata(-9999)
-
-        # assign to SFINCS model
-        if len(self.data.data_vars) == 0:
-            # overwrite data property if empty
-            self.data = da_dep.to_dataset()
-            self.data.raster.set_crs(self.crs)
-        else:
-            da_dep.name = "dep"
-            self.data.update(da_dep.to_dataset())
+        return da_dep
 
     def create_mask_active(
         self,
-        gdf_include: Optional[gpd.GeoDataFrame] = None,
-        gdf_exclude: Optional[gpd.GeoDataFrame] = None,
-        elv_min: Optional[float] = None,
-        elv_max: Optional[float] = None,
+        da_dep: xr.DataArray = None,
+        gdf_include: gpd.GeoDataFrame = None,
+        gdf_exclude: gpd.GeoDataFrame = None,
+        elv_min: float = None,
+        elv_max: float = None,
         fill_area: float = 10,
         drop_area: float = 0,
         connectivity: int = 8,
@@ -205,40 +173,30 @@ class RegularGrid:
         xr.DataArray
             model elevation mask
         """
-        assert (
-            elv_min is None and elv_max is None
-        ) or "dep" in self.data, "elevation data required"
+        da_mask = self.empty_mask
+        latlon = self.crs.crs.is_geographic
 
-        if "dep" in self.data:
-            # initiate array where no-elevation data part of domain is inactive
-            da_mask = self.data["dep"] != self.data["dep"].raster.nodata
-            transform, latlon = (
-                self.data["dep"].raster.transform,
-                self.data["dep"].raster.crs.is_geographic,
-            )
-        else:
-            # initiate array where enitre domain is inactive
-            da_mask = xr.DataArray(
-                name="msk",
-                data=0,
-                coords=self.coordinates,
-                dims=("y", "x"),
-                attrs={"_FillValue": 0},
-            )
+        if da_dep is None and (elv_min is None and elv_max is None):
+            raise ValueError("da_dep required in combination with elv_min / elv_max")
+        elif da_dep is not None and not da_dep.identical_grid(da_mask):
+            raise ValueError("da_dep does not match regular grid")
+        elif da_dep is not None:
+            da_mask = da_mask.where(da_dep != da_dep.raster.nodata, 0)
 
         s = None if connectivity == 4 else np.ones((3, 3), int)
         if elv_min is not None or elv_max is not None:
-            _msk = self.data["dep"] != self.data["dep"].raster.nodata
+            _msk = da_dep != da_dep.raster.nodata
             if elv_min is not None:
-                _msk = np.logical_and(_msk, self.data["dep"] >= elv_min)
+                _msk = np.logical_and(_msk, da_dep >= elv_min)
             if elv_max is not None:
-                _msk = np.logical_and(_msk, self.data["dep"] <= elv_max)
+                _msk = np.logical_and(_msk, da_dep <= elv_max)
             if fill_area > 0:
                 _msk1 = np.logical_xor(
                     _msk, ndimage.binary_fill_holes(_msk, structure=s)
                 )
                 regions = ndimage.measurements.label(_msk1, structure=s)[0]
-                lbls, areas = region_area(regions, transform, latlon)
+                # TODO check if region_area works for rotated grids!
+                lbls, areas = region_area(regions, self.transform, latlon)
                 _msk = np.logical_or(
                     _msk, np.isin(regions, lbls[areas / 1e6 < fill_area])
                 )
@@ -247,7 +205,7 @@ class RegularGrid:
             da_mask = np.logical_and(da_mask, _msk)
             if drop_area > 0:
                 regions = ndimage.measurements.label(da_mask.values, structure=s)[0]
-                lbls, areas = region_area(regions, transform, latlon)
+                lbls, areas = region_area(regions, self.transform, latlon)
                 _msk = np.isin(regions, lbls[areas / 1e6 >= drop_area])
                 n = int(sum(areas / 1e6 < drop_area))
                 print(f"{n} regions < {drop_area} km2 dropped.")
@@ -270,25 +228,20 @@ class RegularGrid:
             except:
                 print(f"No mask cells found within exclude polygon!")
 
-        # update sfincs mask with boolean mask to conserve mask values
-        da_mask = da_mask.where(da_mask, np.uint8(0))  # unint8 dtype!
-
-        if len(self.data.data_vars) == 0:
-            # overwrite data property if empty
-            self.data = da_mask.to_dataset()
-            self.data.raster.set_crs(self.crs)
-        else:
-            da_mask.name = "msk"
-            da_mask.attrs = {"_FillValue": 0}
-            self.data.update(da_mask.to_dataset())
+        # update sfincs mask name, nodata value and crs
+        da_mask = da_mask.where(da_mask, 0).rename("mask")
+        da_mask.raster.set_nodata(0)
+        da_mask.raster.crs(self.crs)
 
         return da_mask
 
     def create_mask_bounds(
         self,
+        da_mask: xr.DataArray,
         btype: str = "waterlevel",
         gdf_include: Optional[gpd.GeoDataFrame] = None,
         gdf_exclude: Optional[gpd.GeoDataFrame] = None,
+        da_dep: xr.DataArray = None,
         elv_min: Optional[float] = None,
         elv_max: Optional[float] = None,
         connectivity: int = 8,
@@ -320,11 +273,14 @@ class RegularGrid:
         bounds: xr.DataArray
             Boolean mask of model boundary cells.
         """
-        assert (
-            elv_min is None and elv_max is None
-        ) or "dep" in self.data, "elevation data required"
+        if not da_mask.identical_grid(self.empty_mask):
+            raise ValueError("da_mask does not match regular grid")
+        latlon = self.crs.crs.is_geographic
 
-        assert "msk" in self.data, "mask required"
+        if da_dep is None and (elv_min is None and elv_max is None):
+            raise ValueError("da_dep required in combination with elv_min / elv_max")
+        elif da_dep is not None and not da_dep.identical_grid(da_mask):
+            raise ValueError("da_dep does not match regular grid")
 
         btype = btype.lower()
         bvalues = {"waterlevel": 2, "outflow": 3}
@@ -333,14 +289,15 @@ class RegularGrid:
         bvalue = bvalues[btype]
 
         s = None if connectivity == 4 else np.ones((3, 3), int)
-        da_mask = self.data["msk"] != self.data["msk"].raster.nodata
-        bounds0 = np.logical_xor(da_mask, ndimage.binary_erosion(da_mask, structure=s))
+        bounds0 = np.logical_xor(
+            da_mask > 0, ndimage.binary_erosion(da_mask > 0, structure=s)
+        )
         bounds = bounds0.copy()
 
         if elv_min is not None:
-            bounds = np.logical_and(bounds, self.data["dep"] >= elv_min)
+            bounds = np.logical_and(bounds, da_dep >= elv_min)
         if elv_max is not None:
-            bounds = np.logical_and(bounds, self.data["dep"] <= elv_max)
+            bounds = np.logical_and(bounds, da_dep <= elv_max)
         if gdf_include is not None:
             da_include = da_mask.raster.geometry_mask(
                 gdf_include, all_touched=all_touched
@@ -354,7 +311,7 @@ class RegularGrid:
             bounds = np.logical_and(bounds, ~da_exclude)
 
         # avoid any msk3 cells neighboring msk2 cells
-        if bvalue == 3 and np.any(self.data["msk"] == 2):
+        if bvalue == 3 and np.any(da_mask == 2):
             msk2_dilated = ndimage.binary_dilation(
                 (da_mask == 2).values,
                 structure=np.ones((3, 3)),
@@ -364,35 +321,30 @@ class RegularGrid:
 
         ncells = np.count_nonzero(bounds.values)
         if ncells > 0:
-            self.data["msk"] = self.data["msk"].where(~bounds, np.uint8(bvalue))
+            da_mask = da_mask.where(~bounds, np.uint8(bvalue))
 
         return da_mask
 
     def write_map(
         self,
         map_fn: Union[str, Path],
-        data: Union[xr.DataArray, np.ndarray],
+        data: np.ndarray,
+        mask: np.ndarray,
         dtype: Union[str, np.dtype] = "f4",
     ) -> None:
-
-        if isinstance(data, xr.DataArray):
-            data = data.values
-
-        data_out = np.asarray(
-            data.transpose()[self.mask.values.transpose() > 0], dtype=dtype
-        )
+        data_out = np.asarray(data.transpose()[mask.transpose() > 0], dtype=dtype)
         data_out.tofile(map_fn)
 
     def read_map(
         self,
         map_fn: Union[str, Path],
+        ind: np.ndarray,
         dtype: Union[str, np.dtype] = "f4",
         mv: float = -9999.0,
         name: str = None,
     ) -> xr.DataArray:
-        nrow, ncol = self.shape
-        data = np.full((ncol, nrow), mv, dtype=dtype)
-        data.flat[self.ind] = np.fromfile(map_fn, dtype=dtype)
+        data = np.full((self.mmax, self.nmax), mv, dtype=dtype)
+        data.flat[ind] = np.fromfile(map_fn, dtype=dtype)
         data = data.transpose()
 
         da = xr.DataArray(
@@ -402,7 +354,4 @@ class RegularGrid:
             dims=("y", "x"),
             attrs={"_FillValue": mv},
         )
-        self.data.update(da.to_dataset())
-        # da.raster.write_crs(self.crs)
-        # TODO da = ...
         return da
