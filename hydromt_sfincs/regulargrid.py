@@ -96,7 +96,7 @@ class RegularGrid:
 
     def ind(self, mask: np.ndarray) -> np.ndarray:
         assert mask.shape == (self.nmax, self.mmax)
-        iok = np.where(np.transpose(mask.values) > 0)
+        iok = np.where(np.transpose(mask) > 0)
         iok = (iok[1], iok[0])
         ind = np.ravel_multi_index(iok, (self.nmax, self.mmax), order="F")
         return ind
@@ -190,7 +190,7 @@ class RegularGrid:
         da_mask = self.empty_mask
         latlon = self.crs.is_geographic
 
-        if da_dep is None and not (elv_min is None and elv_max is None):
+        if da_dep is None and (elv_min is not None or elv_max is not None):
             raise ValueError("da_dep required in combination with elv_min / elv_max")
         elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
             raise ValueError("da_dep does not match regular grid")
@@ -291,7 +291,7 @@ class RegularGrid:
             raise ValueError("da_mask does not match regular grid")
         latlon = self.crs.is_geographic
 
-        if da_dep is None and not (elv_min is None and elv_max is None):
+        if da_dep is None and (elv_min is not None or elv_max is not None):
             raise ValueError("da_dep required in combination with elv_min / elv_max")
         elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
             raise ValueError("da_dep does not match regular grid")

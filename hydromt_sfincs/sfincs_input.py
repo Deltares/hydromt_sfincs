@@ -3,8 +3,8 @@ import datetime
 
 class SfincsInput:
     def __init__(self):
-        self.mmax = 0
-        self.nmax = 0
+        self.mmax = 10
+        self.nmax = 10
         self.dx = 10.0
         self.dy = 10.0
         self.x0 = 0.0
@@ -92,7 +92,7 @@ class SfincsInput:
         self.cdwnd = [0.0, 28.0, 50.0]
         self.cdval = [0.001, 0.0025, 0.0015]
 
-    def read_input_file(self, fn_inp) -> None:
+    def read(self, fn_inp) -> None:
 
         with open(fn_inp, "r") as fid:
             lines = fid.readlines()
@@ -137,7 +137,7 @@ class SfincsInput:
         for name, val in self.__dict__.items():
             setattr(self, name, inp.get(name, None))
 
-    def write_input_file(self, fn_inp) -> None:
+    def write(self, fn_inp) -> None:
         fid = open(fn_inp, "w")
         for key, value in self.__dict__.items():
             if not value is None:
@@ -167,4 +167,4 @@ class SfincsInput:
         return inp
 
     def to_dict(self):
-        return self.__dict__
+        return {k: v for k, v in self.__dict__.items() if v is not None}
