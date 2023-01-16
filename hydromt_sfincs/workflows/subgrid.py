@@ -1,11 +1,14 @@
-from typing import List, Tuple, Dict
-import xarray as xr
+from hydromt import raster
+import numpy as np
+import os
 from pyproj import CRS
 from scipy import interpolate
-import numpy as np
+from typing import List, Tuple, Dict, Union
+import xarray as xr
 
-from hydromt import raster
 from .merge import merge_multi_dataarrays
+
+__all__ = ["subgrid_reggrid"]
 
 
 def subgrid_reggrid(
@@ -81,7 +84,6 @@ def subgrid_reggrid(
 
             # calculate transform and shape of block at cell and subgrid level
             transform = da_mask_block.raster.transform
-            shape_sbg = np.asarray(da_mask.raster.shape) * refi
             reproj_kwargs = dict(
                 dst_crs=da_mask.raster.crs,
                 dst_transform=transform * transform.scale(1 / refi),
@@ -126,7 +128,7 @@ def subgrid_reggrid(
 
             # compute subgrid tables for tile and update subgrid dataset
             assert da_dep.shape == da_man.shape
-            subgrid_tile(
+            subgrid_reggrid_tile(
                 ds_sbg=ds_sbg_block,  # updates ds_sbg in place
                 da_dep=da_dep,
                 da_man=da_man,

@@ -1,7 +1,15 @@
-from typing import Union, List, Dict
-from hydromt import raster
 import geopandas as gpd
+from hydromt import raster
+import logging
+import numpy as np
+from scipy import ndimage
+from typing import Union, List, Dict
 import xarray as xr
+
+
+logger = logging.getLogger(__name__)
+
+__all__ = ["merge_multi_dataarrays", "merge_dataarrays"]
 
 
 def merge_multi_dataarrays(
@@ -9,8 +17,9 @@ def merge_multi_dataarrays(
     merge_kwargs: Union[Dict, List[Dict]] = {},
     reproj_kwargs: dict = {},
     merge_method: str = "first",
-    reproj_method: str = "bilinear",
+    reproj_method: str = "bilinear",  # #TODO different method for up- and downscaling?
     interp_method: str = "linear",
+    logger=logger,
 ):
     """Merge a list of data arrays by reprojecting these to a common destination grid
     and combine valid values.
@@ -82,7 +91,6 @@ def merge_multi_dataarrays(
     if nempty > 0 and interp_method:
         logger.debug(f"Interpolate data at {int(nempty)} cells")
         da_out = da_out.raster.interpolate_na(method=interp_method)
-        da_out = da_out.where(na_mask, nodata)  # reset extrapolated area
 
     return da1
 
@@ -148,7 +156,7 @@ def merge_dataarrays(
         da1.raster.mask_nodata()
     ## reproject da2 and reset nodata value to match da1 nodata
     da2 = da2.raster.reproject_like(da1, method=reproj_method).raster.mask_nodata()
-    da2 = _mask_invalid(da2, offset, min_valid, max_valid, gdf_valid)
+    da2 = _add_offset_mask_invalid(da2, offset, min_valid, max_valid, gdf_valid)
     # merge based merge_method
     if merge_method == "first":
         mask = ~np.isnan(da1)
@@ -159,7 +167,7 @@ def merge_dataarrays(
     da_out = da1.where(mask, da2)
     da_out.raster.set_nodata(np.nan)
     # identify buffer cells and interpolate data
-    if merge_buffer > 0 and interp_method:
+    if buffer_cells > 0 and interp_method:
         mask_dilated = ndimage.binary_dilation(
             mask, structure=np.ones((3, 3)), iterations=merge_buffer
         )

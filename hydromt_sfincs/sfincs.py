@@ -124,6 +124,19 @@ class SfincsModel(MeshMixin, GridModel):
             elif self.reggrid is not None:
                 return self.reggrid.empty_mask
 
+    @property
+    def region(self) -> gpd.GeoDataFrame:
+        """Returns the geometry of the active model cells."""
+        # NOTE overwrites propertie in GridModel
+        region = gpd.GeoDataFrame()
+        if "region" in self.geoms:
+            region = self.geoms["region"]
+        elif self.mask is not None:
+            da = xr.where(self.mask > 0, 1, 0).astype(np.int16)
+            da.raster.set_nodata(0)
+            region = da.raster.vectorize().dissolve()
+        return region
+
     def create_grid(
         self,
         x0: float,
@@ -166,15 +179,6 @@ class SfincsModel(MeshMixin, GridModel):
             gdf_refinment=gdf_refinment,
         )
 
-    def create_dep(
-        self,
-        bathymetry_sets: List[xr.DataArray],
-    ):
-        if self.grid_type == "regular":
-            pass
-            # TODO
-            # self.reggrid.create_dep()
-
     def create_mask_active(
         self,
         gdf_include: gpd.GeoDataFrame = None,
@@ -216,7 +220,7 @@ class SfincsModel(MeshMixin, GridModel):
             model elevation mask
         """
         if self.grid_type == "regular":
-            self.reggrid.create_mask_active(
+            da_mask = self.reggrid.create_mask_active(
                 da_dep=self.grid["dep"] if "dep" in self.grid else None,
                 gdf_include=gdf_include,
                 gdf_exclude=gdf_exclude,
@@ -227,6 +231,17 @@ class SfincsModel(MeshMixin, GridModel):
                 connectivity=connectivity,
                 all_touched=all_touched,
             )
+            self.set_grid(da_mask, name="msk")
+
+    # TODO should it be dep or topobathy?
+    def create_dep(
+        self,
+        bathymetry_sets: List[xr.DataArray],
+    ):
+        if self.grid_type == "regular":
+            pass
+            # TODO
+            # self.reggrid.create_dep()
 
     def setup_topobathy(
         self,
@@ -1905,9 +1920,9 @@ class SfincsModel(MeshMixin, GridModel):
                 self.set_grid(ds)
                 ds.close()
 
-    def write_grid(self):
+    def write_grid(self, data_vars: List = None):
         """Write SFINCS grid to binary files including map index file.
-        Filenames are taken from the `config` attribute.
+        Filenames are taken from the `config` attribute (i.e. input file).
 
         If `write_gis` property is True, all grid are written to geotiff
         files in a "gis" subfolder.
@@ -1927,7 +1942,8 @@ class SfincsModel(MeshMixin, GridModel):
             ind_fn = self.get_config("indexfile", abs_path=True)
             self.reggrid.write_ind(ind_fn, mask=mask)
 
-            dvars = [v for v in self._MAPS if v in ds_out]
+            if data_vars is None:  # write all maps
+                data_vars = [v for v in self._MAPS if v in ds_out]
             self.logger.debug(f"Write binary map files: {dvars}.")
             for name in dvars:
                 if f"{name}file" not in self.config:
