@@ -132,17 +132,17 @@ class RegularGrid:
         reproj_method: str = "bilinear",  # #TODO different method for up- and downscaling?
         interp_method: str = "linear",
         logger=logger,
-    )-> xr.DataArray:
+    ) -> xr.DataArray:
 
         da_dep = merge_multi_dataarrays(
-            da_list = da_list,
-            merge_kwargs = merge_kwargs,
-            reproj_kwargs = reproj_kwargs,
-            merge_method = merge_method,
-            reproj_method = reproj_method,
-            interp_method = interp_method,
+            da_list=da_list,
+            merge_kwargs=merge_kwargs,
+            reproj_kwargs=reproj_kwargs,
+            merge_method=merge_method,
+            reproj_method=reproj_method,
+            interp_method=interp_method,
             logger=logger,
-            ).raster.reproject_like(self.empty_mask, method=reproj_method)
+        ).raster.reproject_like(self.empty_mask, method=reproj_method)
 
         return da_dep
 

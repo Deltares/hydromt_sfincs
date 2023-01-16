@@ -187,7 +187,9 @@ class SfincsModel(MeshMixin, GridModel):
         reproj_kwargs: dict = {},
     ):
         if self.grid_type == "regular":
-            da_dep = self.reggrid.create_dep(da_list=da_list,merge_kwargs=merge_kwargs,reproj_kwargs=reproj_kwargs)
+            da_dep = self.reggrid.create_dep(
+                da_list=da_list, merge_kwargs=merge_kwargs, reproj_kwargs=reproj_kwargs
+            )
             self.set_grid(da_dep, name="dep")
 
     def create_mask_active(
@@ -284,7 +286,7 @@ class SfincsModel(MeshMixin, GridModel):
 
         if self.grid_type == "regular":
             da_mask = self.reggrid.create_mask_bounds(
-                da_mask = self.grid["msk"],
+                da_mask=self.grid["msk"],
                 btype=btype,
                 gdf_include=gdf_include,
                 gdf_exclude=gdf_exclude,
@@ -294,7 +296,7 @@ class SfincsModel(MeshMixin, GridModel):
                 connectivity=connectivity,
                 all_touched=all_touched,
             )
-            self.set_grid(da_mask, name="msk")        
+            self.set_grid(da_mask, name="msk")
         return da_mask
 
     def setup_topobathy(
@@ -508,7 +510,7 @@ class SfincsModel(MeshMixin, GridModel):
             self._grid = self._grid.drop_vars("msk")
 
         # read geometries
-        gdf1, gdf2 =  None, None
+        gdf1, gdf2 = None, None
         bbox = self.region.to_crs(4326).total_bounds
         if include_mask_fn is not None:
             gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
@@ -606,7 +608,9 @@ class SfincsModel(MeshMixin, GridModel):
         da_mask = self.mask
         if reset_bounds:  # reset existing boundary cells
             self.logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
-            da_mask = da_mask.where(da_mask != np.uint8(bvalue), np.uint8(1)) #TODO check, should be ==?
+            da_mask = da_mask.where(
+                da_mask != np.uint8(bvalue), np.uint8(1)
+            )  # TODO check, should be ==?
 
         # mask values
         da_mask_bounds = self.create_mask_bounds(
@@ -619,7 +623,6 @@ class SfincsModel(MeshMixin, GridModel):
         )
 
         self.set_grid(da_mask_bounds, "msk")
-
 
     def setup_river_hydrography(self, hydrography_fn=None, adjust_dem=False, **kwargs):
         """Setup hydrography layers for flow directions ("flwdir") and upstream area
@@ -1924,7 +1927,9 @@ class SfincsModel(MeshMixin, GridModel):
             da_lst = []
             for mname in self._MAPS:
                 if f"{mname}file" in self.config:
-                    fn = self.get_config(f"{mname}file", f"sfincs.{mname}", abs_path=True)
+                    fn = self.get_config(
+                        f"{mname}file", f"sfincs.{mname}", abs_path=True
+                    )
                     if not isfile(fn):
                         self.logger.warning(f"{mname}file not found at {fn}")
                         continue
@@ -2436,7 +2441,7 @@ class SfincsModel(MeshMixin, GridModel):
     def update_spatial_attrs(self):
         """Update geospatial `config` (sfincs.inp) attributes based on grid"""
         dx, dy = self.res
-        #TODO check self.bounds with rotation!! origin not necessary equal to total_bounds
+        # TODO check self.bounds with rotation!! origin not necessary equal to total_bounds
         west, south, _, _ = self.bounds
         if self.crs is not None:
             self.set_config("crs", self.crs.to_epsg())
