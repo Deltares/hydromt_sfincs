@@ -16,7 +16,7 @@ from scipy import ndimage
 import hydromt
 from hydromt.models.model_grid import GridModel
 from hydromt.models.model_mesh import MeshMixin
-from hydromt.vector import GeoDataArray
+from hydromt.vector import GeoDataset, GeoDataArray
 from hydromt.raster import RasterDataset, RasterDataArray
 
 from . import workflows, utils, plots, DATADIR
@@ -46,7 +46,7 @@ class SfincsModel(MeshMixin, GridModel):
         "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
     }
     _FORCING_2D = {
-        "precip": "netampr",  # TODO discuss which 2D forcings exist
+        "precip2d": "netampr",  # TODO discuss which 2D forcings exist
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["msk", "dep", "scs", "manning", "qinf"]
@@ -1886,10 +1886,16 @@ class SfincsModel(MeshMixin, GridModel):
         # write data catalog with used data sources
         self.write_data_catalog()  # new in hydromt v0.4.4
 
-    def read_grid(self):
+    def read_grid(self, data_vars: Union[List, str] = None) -> None:
         """Read SFINCS binary grid and save to `grid` attribute."""
+        da_lst = []
+        if data_vars is None:
+            data_vars = self._MAPS
+        elif isinstance(data_vars, str):
+            data_vars = list(data_vars)
+
         # read index file
-        ind_fn = self.get_config(f"indexfile", "sfincs.ind", abs_path=True)
+        ind_fn = self.get_config("indexfile", fallback="sfincs.ind", abs_path=True)
         if not isfile(ind_fn):
             raise IOError(f".ind path {ind_fn} does not exist")
 
@@ -1898,18 +1904,23 @@ class SfincsModel(MeshMixin, GridModel):
         if self.reggrid is not None:
             ind = self.reggrid.read_ind(ind_fn=ind_fn)
 
-            da_lst = []
-            for name in self._MAPS:
+            for name in data_vars:
                 if f"{name}file" in self.config:
-                    fn = self.get_config(f"{name}file", f"sfincs.{name}", abs_path=True)
+                    fn = self.get_config(
+                        f"{name}file", fallback=f"sfincs.{name}", abs_path=True
+                    )
                     if not isfile(fn):
-                        self.logger.warning(f"{mname}file not found at {fn}")
+                        self.logger.warning(f"{name}file not found at {fn}")
                         continue
-                    dtype = dtypes.get(mname, "f4")
-                    mv = mvs.get(mname, -9999.0)
+                    dtype = dtypes.get(name, "f4")
+                    mv = mvs.get(name, -9999.0)
                     da = self.reggrid.read_map(fn, ind, dtype, mv, name=name)
                     da_lst.append(da)
-            self.set_grid(xr.merge(da_lst))
+            ds = xr.merge(da_lst)
+            crs = self.config.get("crs", None)
+            if crs is not None:
+                ds.raster.set_crs(crs)
+            self.set_grid(ds)
 
             # keep some metadata maps from gis directory
             keep_maps = ["flwdir", "uparea", "rivmsk"]
@@ -1920,15 +1931,14 @@ class SfincsModel(MeshMixin, GridModel):
                 self.set_grid(ds)
                 ds.close()
 
-    def write_grid(self, data_vars: List = None):
+    def write_grid(self, data_vars: Union[List, str] = None):
         """Write SFINCS grid to binary files including map index file.
         Filenames are taken from the `config` attribute (i.e. input file).
 
         If `write_gis` property is True, all grid are written to geotiff
         files in a "gis" subfolder.
         """
-        if not self._write:
-            raise IOError("Model opened in read-only")
+        self._assert_write_mode
 
         dtypes = {"msk": "u1"}  # default to f4
         if self.reggrid and len(self._grid.data_vars) > 0 and "msk" in self.grid:
@@ -1940,18 +1950,20 @@ class SfincsModel(MeshMixin, GridModel):
 
             self.logger.debug("Write binary map indices based on mask.")
             ind_fn = self.get_config("indexfile", abs_path=True)
-            self.reggrid.write_ind(ind_fn, mask=mask)
+            self.reggrid.write_ind(ind_fn=ind_fn, mask=mask)
 
             if data_vars is None:  # write all maps
                 data_vars = [v for v in self._MAPS if v in ds_out]
-            self.logger.debug(f"Write binary map files: {dvars}.")
-            for name in dvars:
+            elif isinstance(data_vars, str):
+                data_vars = list(data_vars)
+            self.logger.debug(f"Write binary map files: {data_vars}.")
+            for name in data_vars:
                 if f"{name}file" not in self.config:
                     self.set_config(f"{name}file", f"sfincs.{name}")
                 self.reggrid.write_map(
                     map_fn=self.get_config(f"{name}file", abs_path=True),
                     data=ds_out[name].values,
-                    mask=msk,
+                    mask=mask,
                     dtype=dtypes.get(name, "f4"),
                 )
 
@@ -1999,8 +2011,8 @@ class SfincsModel(MeshMixin, GridModel):
         If `write_gis` property is True, all geoms are written to geojson
         files in a "gis" subfolder.
         """
-        if not self._write:
-            raise IOError("Model opened in read-only mode")
+        self._assert_write_mode
+
         if self._geoms:
             self.logger.info("Write staticgeom files")
             for gname, gdf in self.geoms.items():
@@ -2016,52 +2028,81 @@ class SfincsModel(MeshMixin, GridModel):
             if self._write_gis:
                 self.write_vector(variables=["geoms"])
 
-    def read_forcing(self):
+    def read_forcing(self, data_vars: List = None):
         """Read forcing files and save to `forcing` attribute.
         Known forcing files mentioned in the sfincs.inp configuration file are read,
         including: bzd/dis/precip ascii files and the netampr netcdf file.
         """
+        self._assert_read_mode
         if not self._write:
             # start fresh in read-only mode
             self._forcing = {}
-        tref = utils.parse_datetime(self.config["tref"])
-        for name, (fname, gname) in self._FORCING.items():
-            fn = self.get_config(f"{fname}file", abs_path=True)
-            if fn is None:
-                continue
-            elif not isfile(fn):
-                self.logger.warning(f"{fname}file not found at {fn}")
-                continue
-            # read forcing
-            if "net" in fname:
-                da = xr.open_dataarray(fn, chunks={"time": 24})  # lazy
-                self.set_forcing(da, name=fname)
+        if isinstance(data_vars, str):
+            data_vars = list(data_vars)
 
-            else:
-                df = utils.read_timeseries(fn, tref)
-                if gname is not None:  # read bzd/src locations
-                    fn_geom = self.get_config(f"{gname}file", abs_path=True)
-                    if not isfile(fn):
-                        self.logger.warning(f"{gname}file not found at {fn_geom}")
-                        continue
-                    gdf = utils.read_xy(fn_geom, crs=self.crs)
+        # 1D
+        dvars_1d = self._FORCING_1D
+        if data_vars is not None:
+            dvars_1d = [name for name in data_vars if name in dvars_1d]
+        tref = utils.parse_datetime(self.config["tref"])
+        for name in dvars_1d:
+            ts_names, xy_name = self._FORCING_1D[name]
+            # read time series
+            da_lst = []
+            for ts_name in ts_names:
+                ts_fn = self.get_config(f"{ts_name}file", abs_path=True)
+                if ts_fn is None or not isfile(ts_fn):
+                    if ts_fn is not None:
+                        self.logger.warning(f"{ts_name}file not found at {ts_fn}")
+                    continue
+                df = utils.read_timeseries(ts_fn, tref)
+                df.index.name = "time"
+                if xy_name is not None:
+                    df.columns.name = "index"
+                    da = xr.DataArray(df, dims=("time", "index"), name=ts_name)
+                else:  # spatially uniform forcing
+                    da = xr.DataArray(df[df.columns[0]], dims=("time"), name=ts_name)
+                da_lst.append(da)
+            ds = xr.merge(da_lst)
+            # read xy
+            if xy_name is not None:
+                xy_fn = self.get_config(f"{xy_name}file", abs_path=True)
+                if xy_fn is None or not isfile(xy_fn):
+                    if xy_fn is not None:
+                        self.logger.warning(f"{xy_name}file not found at {xy_fn}")
+                else:
+                    gdf = utils.read_xy(xy_fn, crs=self.config.get("crs"))
                     # read attribute data from gis files
-                    fn_gis = join(self.root, "gis", f"{gname}.geojson")
-                    if isfile(fn_gis):
-                        gdf1 = gpd.read_file(fn_gis)
+                    gis_fn = join(self.root, "gis", f"{xy_name}.geojson")
+                    if isfile(gis_fn):
+                        gdf1 = gpd.read_file(gis_fn)
                         if np.any(gdf1.columns != "geometry"):
                             gdf = gpd.sjoin(gdf, gdf1, how="left")[gdf1.columns]
-                else:
-                    df = df[df.columns[0]]  # to series for spatially uniform forcing
-                    gdf = None
-                self.set_forcing_1d(ts=df, xy=gdf, name=name)
+                    # set locations as coordinates dataset
+                    ds = GeoDataset.from_gdf(gdf, ds, index_dim="index")
+            # save in self.forcing
+            self.set_forcing(ds, name=name)
+
+        # 2D
+        dvars_2d = self._FORCING_2D
+        if data_vars is not None:
+            dvars_2d = [name for name in data_vars if name in dvars_2d]
+        for name in dvars_2d:
+            fn = self.get_config(f"{name}file", abs_path=True)
+            if fn is None or not isfile(fn):
+                if fn is not None:
+                    self.logger.warning(f"{name}file not found at {fn}")
+            else:
+                da = xr.open_dataarray(fn, chunks="auto")  # lazy
+                self.set_forcing(da, name=name)
 
     def write_forcing(self):
         """Write forcing to ascii (bzd/dis/precip) and netcdf (netampr) files.
         Filenames are based on the `config` attribute.
         """
-        if not self._write:
-            raise IOError("Model opened in read-only mode")
+        # TODO add data_vars argumetn, split 1d, 2d
+        self._assert_write_mode
+
         if self._forcing:
             self.logger.info("Write forcing files")
             tref = utils.parse_datetime(self.config["tref"])
@@ -2134,8 +2175,8 @@ class SfincsModel(MeshMixin, GridModel):
         """Write waterlevel state (zsini)  to ascii map file.
         The filenames is based on the `config` attribute.
         """
-        if not self._write:
-            raise IOError("Model opened in read-only mode")
+        self._assert_write_mode
+
         assert len(self._states) <= 1
         for name in self._states:
             if f"inifile" not in self.config:
@@ -2216,6 +2257,7 @@ class SfincsModel(MeshMixin, GridModel):
         kwargs:
             Key-word arguments passed to hydromt.RasterDataset.to_raster(driver='GTiff', compress='lzw').
         """
+
         # check variables
         if isinstance(variables, str):
             variables = [variables]
@@ -2309,7 +2351,12 @@ class SfincsModel(MeshMixin, GridModel):
                         pass
                 gdf.to_file(join(root, f"{name}.geojson"), **kwargs)
 
-    def set_forcing_1d(self, name, ts=None, xy=None):
+    def set_forcing_1d(
+        self,
+        name,
+        ts: Union[xr.DataArray, pd.DataFrame, Dict[str, pd.DataFrame]] = None,
+        xy: gpd.GeoDataFrame = None,
+    ):
         """Set 1D forcing and update staticgoms and config accordingly.
 
         For waterlevel and discharge forcing point locations are required to set the
@@ -2329,9 +2376,9 @@ class SfincsModel(MeshMixin, GridModel):
         xy: geopandas.GeoDataFrame
             Forcing point locations
         """
-        fname, gname = self._FORCING.get(name, (None, None))
-        if fname is None:
-            names = [f[0] for f in self._FORCING.values() if "net" not in f[0]]
+        ts_name, gname = self._FORCING_1D.get(name, (None, None))
+        if ts_name is None:
+            names = [f[0] for f in self._FORCING_1D.values() if "net" not in f[0]]
             raise ValueError(f'Unknown forcing "{name}", select from {names}')
         # sort out ts and xy types
         if isinstance(ts, (pd.DataFrame, pd.Series)):
@@ -2339,9 +2386,9 @@ class SfincsModel(MeshMixin, GridModel):
             ts.index.name = "time"
             if isinstance(ts, pd.DataFrame):
                 ts.columns.name = "index"
-                ts = xr.DataArray(ts, dims=("time", "index"), name=fname)
+                ts = xr.DataArray(ts, dims=("time", "index"), name=ts_name)
             else:  # spatially uniform forcing
-                ts = xr.DataArray(ts, dims=("time"), name=fname)
+                ts = xr.DataArray(ts, dims=("time"), name=ts_name)
         if isinstance(xy, gpd.GeoDataFrame):
             if ts is not None:
                 ts = GeoDataArray.from_gdf(xy, ts, index_dim="index")
@@ -2379,27 +2426,29 @@ class SfincsModel(MeshMixin, GridModel):
                 )
 
         # set forcing
-        self.logger.debug(f"{name} forcing: setting {fname} data.")
-        ts.attrs.update(**self._ATTRS.get(fname, {}))
-        self.set_forcing(ts, fname)
+        self.logger.debug(f"forcing: setting {name} data.")
+        self.set_forcing(ts, name)
 
     ## model configuration
 
     def read_config(self, config_fn: str = "sfincs.inp", crs=None):
         if not os.path.isabs(config_fn) and self.root:
-            config_fn = os.path.join(self.root, config_fn)
+            config_fn = os.path.abspath(os.path.join(self.root, config_fn))
         else:
             self.root = os.path.dirname(config_fn)
-        inp = SfincsInput()
-        inp.read_input_file(fn_inp=config_fn)
-        self.setup_config(**inp.to_dict())
+        inp = SfincsInput()  # initialize with defaults
+        if self._read and os.path.isfile(config_fn):
+            inp.read(fn_inp=config_fn)
+        self._config = inp.to_dict()
         self.update_grid_from_config()
-
         # update grid properties based on sfincs.inp
 
     def write_config(self, config_fn: str = "sfincs.inp"):
+        """Write config to <root/config_fn>"""
+        self._assert_write_mode
+
         inp = SfincsInput.from_dict(self.config)
-        inp.write_input_file(fn_inp=os.path.join(self.root, config_fn))
+        inp.write(fn_inp=os.path.join(self.root, config_fn))
 
         # for key, value in self.config.items():
         #     if key.endswith("file"):

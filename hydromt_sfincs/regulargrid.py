@@ -92,7 +92,7 @@ class RegularGrid:
 
     def ind(self, mask: np.ndarray) -> np.ndarray:
         assert mask.shape == (self.nmax, self.mmax)
-        iok = np.where(np.transpose(mask.values) > 0)
+        iok = np.where(np.transpose(mask) > 0)
         iok = (iok[1], iok[0])
         ind = np.ravel_multi_index(iok, (self.nmax, self.mmax), order="F")
         return ind
