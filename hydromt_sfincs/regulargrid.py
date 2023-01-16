@@ -4,12 +4,16 @@ import numpy as np
 import math
 from pathlib import Path
 from pyproj import CRS
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Dict
 from scipy import ndimage
 import xarray as xr
+import logging
 
 from pyflwdir.regions import region_area
 from .sfincs_input import SfincsInput
+from .workflows import merge_multi_dataarrays
+
+logger = logging.getLogger(__name__)
 
 
 class RegularGrid:
@@ -79,10 +83,10 @@ class RegularGrid:
 
     @property
     def empty_mask(self) -> xr.DataArray:
-        """Return mask with only active cells"""
+        """Return mask with only inactive cells"""
         da_mask = xr.DataArray(
             name="msk",
-            data=np.ones((self.nmax, self.mmax), dtype=np.int8),
+            data=np.zeros((self.nmax, self.mmax), dtype=np.int8),
             coords=self.coordinates,
             dims=("y", "x"),
             attrs={"_FillValue": 0},
@@ -121,15 +125,25 @@ class RegularGrid:
 
     def create_dep(
         self,
-        bathymetry_sets: List[xr.DataArray],
-        reproj_method="bilinear",
-    ) -> xr.DataArray:
+        da_list: List[xr.DataArray],
+        merge_kwargs: Union[Dict, List[Dict]] = {},
+        reproj_kwargs: dict = {},
+        merge_method: str = "first",
+        reproj_method: str = "bilinear",  # #TODO different method for up- and downscaling?
+        interp_method: str = "linear",
+        logger=logger,
+    )-> xr.DataArray:
 
-        # TODO convert list of xarrays into one merged xd.DataArray
-        # For now, we simply take the first
-        da_dep = bathymetry_sets[0].raster.reproject_like(
-            self.empty_mask, method=reproj_method
-        )
+        da_dep = merge_multi_dataarrays(
+            da_list = da_list,
+            merge_kwargs = merge_kwargs,
+            reproj_kwargs = reproj_kwargs,
+            merge_method = merge_method,
+            reproj_method = reproj_method,
+            interp_method = interp_method,
+            logger=logger,
+            ).raster.reproject_like(self.empty_mask, method=reproj_method)
+
         return da_dep
 
     def create_mask_active(
@@ -174,11 +188,11 @@ class RegularGrid:
             model elevation mask
         """
         da_mask = self.empty_mask
-        latlon = self.crs.crs.is_geographic
+        latlon = self.crs.is_geographic
 
-        if da_dep is None and (elv_min is None and elv_max is None):
+        if da_dep is None and not (elv_min is None and elv_max is None):
             raise ValueError("da_dep required in combination with elv_min / elv_max")
-        elif da_dep is not None and not da_dep.identical_grid(da_mask):
+        elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
             raise ValueError("da_dep does not match regular grid")
         elif da_dep is not None:
             da_mask = da_mask.where(da_dep != da_dep.raster.nodata, 0)
@@ -231,7 +245,7 @@ class RegularGrid:
         # update sfincs mask name, nodata value and crs
         da_mask = da_mask.where(da_mask, 0).rename("mask")
         da_mask.raster.set_nodata(0)
-        da_mask.raster.crs(self.crs)
+        da_mask.raster.set_crs(self.crs)
 
         return da_mask
 
@@ -273,13 +287,13 @@ class RegularGrid:
         bounds: xr.DataArray
             Boolean mask of model boundary cells.
         """
-        if not da_mask.identical_grid(self.empty_mask):
+        if not da_mask.raster.identical_grid(self.empty_mask):
             raise ValueError("da_mask does not match regular grid")
-        latlon = self.crs.crs.is_geographic
+        latlon = self.crs.is_geographic
 
-        if da_dep is None and (elv_min is None and elv_max is None):
+        if da_dep is None and not (elv_min is None and elv_max is None):
             raise ValueError("da_dep required in combination with elv_min / elv_max")
-        elif da_dep is not None and not da_dep.identical_grid(da_mask):
+        elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
             raise ValueError("da_dep does not match regular grid")
 
         btype = btype.lower()

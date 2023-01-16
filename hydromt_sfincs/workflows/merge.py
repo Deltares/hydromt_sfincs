@@ -20,7 +20,7 @@ def merge_multi_dataarrays(
     reproj_method: str = "bilinear",  # #TODO different method for up- and downscaling?
     interp_method: str = "linear",
     logger=logger,
-):
+) -> xr.DataArray:
     """Merge a list of data arrays by reprojecting these to a common destination grid
     and combine valid values.
 
@@ -87,7 +87,7 @@ def merge_multi_dataarrays(
         )
 
     # interpolate remaining invalid values
-    nempty = np.sum(np.nan(da1))
+    nempty = np.sum(np.isnan(da1.values))
     if nempty > 0 and interp_method:
         logger.debug(f"Interpolate data at {int(nempty)} cells")
         da_out = da_out.raster.interpolate_na(method=interp_method)

@@ -179,6 +179,17 @@ class SfincsModel(MeshMixin, GridModel):
             gdf_refinment=gdf_refinment,
         )
 
+    # TODO should it be dep or topobathy?
+    def create_dep(
+        self,
+        da_list: List[xr.DataArray],
+        merge_kwargs: Union[Dict, List[Dict]] = {},
+        reproj_kwargs: dict = {},
+    ):
+        if self.grid_type == "regular":
+            da_dep = self.reggrid.create_dep(da_list=da_list,merge_kwargs=merge_kwargs,reproj_kwargs=reproj_kwargs)
+            self.set_grid(da_dep, name="dep")
+
     def create_mask_active(
         self,
         gdf_include: gpd.GeoDataFrame = None,
@@ -232,16 +243,59 @@ class SfincsModel(MeshMixin, GridModel):
                 all_touched=all_touched,
             )
             self.set_grid(da_mask, name="msk")
+        return da_mask
 
-    # TODO should it be dep or topobathy?
-    def create_dep(
+    def create_mask_bounds(
         self,
-        bathymetry_sets: List[xr.DataArray],
-    ):
+        btype: str = "waterlevel",
+        gdf_include: gpd.GeoDataFrame = None,
+        gdf_exclude: gpd.GeoDataFrame = None,
+        elv_min: float = None,
+        elv_max: float = None,
+        connectivity: int = 8,
+        all_touched=False,
+    ) -> xr.DataArray:
+        """Returns a boolean mask model boundary cells, optionally bounded by several
+        criteria. Boundary cells are defined by cells at the edge of active model domain.
+
+        Parameters
+        ----------
+        btype: {'waterlevel', 'outflow'}
+            Boundary type
+        gdf_include, gdf_exclude: geopandas.GeoDataFrame
+            Geometries with areas to include/exclude from the model boundary.
+            Note that exclude (second last) and include (last) areas are processed after other critera,
+            i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.
+        elv_min, elv_max : float, optional
+            Minimum and maximum elevation thresholds for boundary cells.
+        connectivity: {4, 8}
+            The connectivity used to detect the model edge, if 4 only horizontal and vertical
+            connections are used, if 8 (default) also diagonal connections.
+        all_touched: bool, optional
+            if True (default) include (or exclude) a cell in the mask if it touches any of the
+            include (or exclude) geometries. If False, include a cell only if its center is
+            within one of the shapes, or if it is selected by Bresenham's line algorithm.
+
+        Returns
+        -------
+        bounds: xr.DataArray
+            Boolean mask of model boundary cells.
+        """
+
         if self.grid_type == "regular":
-            pass
-            # TODO
-            # self.reggrid.create_dep()
+            da_mask = self.reggrid.create_mask_bounds(
+                da_mask = self.grid["msk"],
+                btype=btype,
+                gdf_include=gdf_include,
+                gdf_exclude=gdf_exclude,
+                da_dep=self.grid["dep"] if "dep" in self.grid else None,
+                elv_min=elv_min,
+                elv_max=elv_max,
+                connectivity=connectivity,
+                all_touched=all_touched,
+            )
+            self.set_grid(da_mask, name="msk")        
+        return da_mask
 
     def setup_topobathy(
         self,
@@ -391,11 +445,11 @@ class SfincsModel(MeshMixin, GridModel):
         )
         self.set_grid(data=da_dep_merged.round(2), name=name)
 
-    def setup_mask(
+    def setup_mask_active(
         self,
-        mask_fn=None,
         include_mask_fn=None,
         exclude_mask_fn=None,
+        mask_buffer=0,
         elv_min=None,
         elv_max=None,
         fill_area=10,
@@ -403,7 +457,6 @@ class SfincsModel(MeshMixin, GridModel):
         connectivity=8,
         all_touched=True,
         reset_mask=False,
-        **kwargs,  # to catch deprecated args
     ):
         """Creates mask of active model cells.
 
@@ -425,13 +478,13 @@ class SfincsModel(MeshMixin, GridModel):
 
         Parameters
         ----------
-        mask_fn: str, optional
-            Path or data source name of polygons describing the initial region with active model cells.
-            If not given, the initial active model cells are based on valid elevation cells.
         include_mask_fn, exclude_mask_fn: str, optional
             Path or data source name of polygons to include/exclude from the active model domain.
             Note that exclude (second last) and include (last) areas are processed after other critera,
             i.e. `elv_min`, `elv_max` and `drop_area`, and thus overrule these criteria for active model cells.
+        mask_buffer: float, optional
+            If larger than zero, extend the `include_mask` geometry with a buffer [m],
+            by default 0.
         elv_min, elv_max : float, optional
             Minimum and maximum elevation thresholds for active model cells.
         fill_area : float, optional
@@ -450,28 +503,22 @@ class SfincsModel(MeshMixin, GridModel):
             If True, reset existing mask layer. If False (default) updating existing mask.
             Note that previously set inactive cells can not be reset to active cells.
         """
-        if "active_mask_fn" in kwargs:
-            self.logger.warning("'active_mask_fn' is deprecated use 'mask_fn' instead.")
-            mask_fn = kwargs.pop("active_mask_fn")
 
         if reset_mask and "msk" in self.grid:  # reset
             self._grid = self._grid.drop_vars("msk")
 
         # read geometries
-        gdf0, gdf1, gdf2 = None, None, None
+        gdf1, gdf2 =  None, None
         bbox = self.region.to_crs(4326).total_bounds
-        if mask_fn is not None:
-            gdf0 = self.data_catalog.get_geodataframe(mask_fn, bbox=bbox)
         if include_mask_fn is not None:
             gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
+            if mask_buffer > 0:  # NOTE assumes model in projected CRS!
+                gdf1["geometry"] = gdf1.to_crs(self.crs).buffer(mask_buffer)
         if exclude_mask_fn is not None:
             gdf2 = self.data_catalog.get_geodataframe(exclude_mask_fn, bbox=bbox)
 
         # get mask
-        # self.sfincs.grid.create_mask()
-        da_mask = utils.mask_topobathy(
-            da_elv=self.grid["dep"],
-            gdf_mask=gdf0,
+        da_mask = self.create_mask_active(
             gdf_include=gdf1,
             gdf_exclude=gdf2,
             elv_min=elv_min,
@@ -480,7 +527,7 @@ class SfincsModel(MeshMixin, GridModel):
             drop_area=drop_area,
             connectivity=connectivity,
             all_touched=all_touched,
-            logger=self.logger,
+            # logger=self.logger,
         )
 
         n = np.count_nonzero(da_mask.values)
@@ -497,15 +544,13 @@ class SfincsModel(MeshMixin, GridModel):
         region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
         self.set_geoms(region, "region")
 
-    def setup_bounds(
+    def setup_mask_bounds(
         self,
         btype="waterlevel",
-        mask_fn=None,
         include_mask_fn=None,
         exclude_mask_fn=None,
         elv_min=None,
         elv_max=None,
-        mask_buffer=0,
         connectivity=8,
         reset_bounds=False,
     ):
@@ -529,17 +574,12 @@ class SfincsModel(MeshMixin, GridModel):
         ----------
         btype: {'waterlevel', 'outflow'}
             Boundary type
-        mask_fn: str, optional
-            Path or data source name of polygons describing the initial region constraining model boundary cells.
         include_mask_fn, exclude_mask_fn: str, optional
             Path or data source name for geometries with areas to include/exclude from the model boundary.
             Note that exclude (second last) and include (last) areas are processed after other critera,
             i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.
         elv_min, elv_max : float, optional
             Minimum and maximum elevation thresholds for boundary cells.
-        mask_buffer: float, optional
-            If larger than zero, extend the `mask_fn` geometry with a buffer [m],
-            by default 0.
         reset_bounds: bool, optional
             If True, reset existing boundary cells of the selected boundary
             type (`btype`) before setting new boundary cells, by default False.
@@ -553,23 +593,24 @@ class SfincsModel(MeshMixin, GridModel):
             raise ValueError('btype must be one of "waterlevel", "outflow"')
         bvalue = bvalues[btype]
 
-        # get mask / include / exclude geometries
-        gdf0, gdf_include, gdf_exclude = None, None, None
+        # get include / exclude geometries
+        gdf_include, gdf_exclude = None, None
         bbox = self.region.to_crs(4326).total_bounds
-        if mask_fn:
-            gdf0 = self.data_catalog.get_geodataframe(mask_fn, bbox=bbox)
-            if mask_buffer > 0:  # NOTE assumes model in projected CRS!
-                gdf0["geometry"] = gdf0.to_crs(self.crs).buffer(mask_buffer)
+
         if include_mask_fn:
             gdf_include = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
         if exclude_mask_fn:
             gdf_exclude = self.data_catalog.get_geodataframe(exclude_mask_fn, bbox=bbox)
 
+        # update model mask
+        da_mask = self.mask
+        if reset_bounds:  # reset existing boundary cells
+            self.logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
+            da_mask = da_mask.where(da_mask != np.uint8(bvalue), np.uint8(1)) #TODO check, should be ==?
+
         # mask values
-        bounds = utils.mask_bounds(
-            da_msk=self.mask,
-            da_elv=self.grid["dep"],
-            gdf_mask=gdf0,
+        da_mask_bounds = self.create_mask_bounds(
+            btype=btype,
             gdf_include=gdf_include,
             gdf_exclude=gdf_exclude,
             elv_min=elv_min,
@@ -577,26 +618,8 @@ class SfincsModel(MeshMixin, GridModel):
             connectivity=connectivity,
         )
 
-        # update model mask
-        da_mask = self.mask
-        if reset_bounds:  # reset existing boundary cells
-            self.logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
-            da_mask = da_mask.where(da_mask != np.uint8(bvalue), np.uint8(1))
-        # avoid any msk3 cells neighboring msk2 cells
-        if bvalue == 3 and np.any(da_mask == 2):
-            msk2_dilated = ndimage.binary_dilation(
-                (da_mask == 2).values,
-                structure=np.ones((3, 3)),
-                iterations=1,  # minimal one cell distance between msk2 and msk3 cells
-            )
-            bounds = bounds.where(~msk2_dilated, False)
-        ncells = np.count_nonzero(bounds.values)
-        if ncells > 0:
-            da_mask = da_mask.where(~bounds, np.uint8(bvalue))
-            self.set_grid(da_mask, "msk")
-            self.logger.debug(
-                f"{ncells:d} {btype} (mask={bvalue:d}) boundary cells set."
-            )
+        self.set_grid(da_mask_bounds, "msk")
+
 
     def setup_river_hydrography(self, hydrography_fn=None, adjust_dem=False, **kwargs):
         """Setup hydrography layers for flow directions ("flwdir") and upstream area
@@ -1899,15 +1922,15 @@ class SfincsModel(MeshMixin, GridModel):
             ind = self.reggrid.read_ind(ind_fn=ind_fn)
 
             da_lst = []
-            for name in self._MAPS:
-                if f"{name}file" in self.config:
-                    fn = self.get_config(f"{name}file", f"sfincs.{name}", abs_path=True)
+            for mname in self._MAPS:
+                if f"{mname}file" in self.config:
+                    fn = self.get_config(f"{mname}file", f"sfincs.{mname}", abs_path=True)
                     if not isfile(fn):
                         self.logger.warning(f"{mname}file not found at {fn}")
                         continue
                     dtype = dtypes.get(mname, "f4")
                     mv = mvs.get(mname, -9999.0)
-                    da = self.reggrid.read_map(fn, ind, dtype, mv, name=name)
+                    da = self.reggrid.read_map(fn, ind, dtype, mv, name=mname)
                     da_lst.append(da)
             self.set_grid(xr.merge(da_lst))
 
@@ -1944,14 +1967,14 @@ class SfincsModel(MeshMixin, GridModel):
 
             if data_vars is None:  # write all maps
                 data_vars = [v for v in self._MAPS if v in ds_out]
-            self.logger.debug(f"Write binary map files: {dvars}.")
-            for name in dvars:
+            self.logger.debug(f"Write binary map files: {data_vars}.")
+            for name in data_vars:
                 if f"{name}file" not in self.config:
                     self.set_config(f"{name}file", f"sfincs.{name}")
                 self.reggrid.write_map(
                     map_fn=self.get_config(f"{name}file", abs_path=True),
                     data=ds_out[name].values,
-                    mask=msk,
+                    mask=self.mask,
                     dtype=dtypes.get(name, "f4"),
                 )
 
@@ -2413,9 +2436,10 @@ class SfincsModel(MeshMixin, GridModel):
     def update_spatial_attrs(self):
         """Update geospatial `config` (sfincs.inp) attributes based on grid"""
         dx, dy = self.res
+        #TODO check self.bounds with rotation!! origin not necessary equal to total_bounds
         west, south, _, _ = self.bounds
         if self.crs is not None:
-            self.set_config("epsg", self.crs.to_epsg())
+            self.set_config("crs", self.crs.to_epsg())
         self.set_config("mmax", self.width)
         self.set_config("nmax", self.height)
         self.set_config("dx", dx)
