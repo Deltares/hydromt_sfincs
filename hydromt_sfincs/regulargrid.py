@@ -195,7 +195,8 @@ class RegularGrid:
         elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
             raise ValueError("da_dep does not match regular grid")
         elif da_dep is not None:
-            da_mask = da_mask.where(da_dep != da_dep.raster.nodata, 0)
+            # da_mask = da_dep.where(da_dep != da_dep.raster.nodata, 0)
+            da_mask = da_dep != da_dep.raster.nodata
 
         s = None if connectivity == 4 else np.ones((3, 3), int)
         if elv_min is not None or elv_max is not None:

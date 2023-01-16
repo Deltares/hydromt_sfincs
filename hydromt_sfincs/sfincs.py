@@ -188,7 +188,9 @@ class SfincsModel(MeshMixin, GridModel):
     ):
         if self.grid_type == "regular":
             da_dep = self.reggrid.create_dep(
-                da_list=da_list, merge_kwargs=merge_kwargs, reproj_kwargs=reproj_kwargs
+                da_list=da_list,
+                merge_kwargs=merge_kwargs,
+                reproj_kwargs=reproj_kwargs,
             )
             self.set_grid(da_dep, name="dep")
 

@@ -59,7 +59,7 @@ def merge_multi_dataarrays(
         da1 = da_list[0]
 
     # set nodata to np.nan, Note this might change the dtype to float
-    da1.raster.mask_nodata()
+    da1 = da1.raster.mask_nodata()
 
     # get valid cells of first dataset
     kwargs = merge_kwargs[0] if isinstance(merge_kwargs, list) else merge_kwargs
@@ -73,7 +73,7 @@ def merge_multi_dataarrays(
 
     # combine with next dataset
     for i, da2 in enumerate(da_list[1:]):
-        if merge_method == "first" and not np.any(np.isnan(da1)):
+        if merge_method == "first" and not np.any(np.isnan(da1.values)):
             break
         if isinstance(merge_kwargs, list):
             kwargs = merge_kwargs[i]
@@ -90,7 +90,7 @@ def merge_multi_dataarrays(
     nempty = np.sum(np.isnan(da1.values))
     if nempty > 0 and interp_method:
         logger.debug(f"Interpolate data at {int(nempty)} cells")
-        da_out = da_out.raster.interpolate_na(method=interp_method)
+        da1 = da1.raster.interpolate_na(method=interp_method)
 
     return da1
 
@@ -153,7 +153,7 @@ def merge_dataarrays(
     nodata = da1.raster.nodata
     dtype = da1.dtype
     if not np.isnan(nodata):
-        da1.raster.mask_nodata()
+        da1 = da1.raster.mask_nodata()
     ## reproject da2 and reset nodata value to match da1 nodata
     da2 = da2.raster.reproject_like(da1, method=reproj_method).raster.mask_nodata()
     da2 = _add_offset_mask_invalid(da2, offset, min_valid, max_valid, gdf_valid)
@@ -169,7 +169,7 @@ def merge_dataarrays(
     # identify buffer cells and interpolate data
     if buffer_cells > 0 and interp_method:
         mask_dilated = ndimage.binary_dilation(
-            mask, structure=np.ones((3, 3)), iterations=merge_buffer
+            mask, structure=np.ones((3, 3)), iterations=buffer_cells
         )
         mask_buf = np.logical_xor(mask, mask_dilated)
         da_out = da_out.where(~mask_buf, np.nan)
@@ -182,7 +182,12 @@ def merge_dataarrays(
 
 
 def _add_offset_mask_invalid(
-    da, offset=None, min_valid=None, max_valid=None, gdf_valid=None
+    da,
+    offset=None,
+    min_valid=None,
+    max_valid=None,
+    gdf_valid=None,
+    reproj_method: str = "bilinear",
 ):
     ## add offset
     if offset is not None:
