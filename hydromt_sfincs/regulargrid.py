@@ -82,7 +82,7 @@ class RegularGrid:
         """Return mask with only active cells"""
         da_mask = xr.DataArray(
             name="msk",
-            data=np.ones((self.nmax, self.mmax), dtype=np.int8),
+            data=np.zeros((self.nmax, self.mmax), dtype=np.int8),
             coords=self.coordinates,
             dims=("y", "x"),
             attrs={"_FillValue": 0},
@@ -174,9 +174,9 @@ class RegularGrid:
             model elevation mask
         """
         da_mask = self.empty_mask
-        latlon = self.crs.crs.is_geographic
+        latlon = self.crs.is_geographic
 
-        if da_dep is None and (elv_min is None and elv_max is None):
+        if da_dep is None and (elv_min is not None or elv_max is not None):
             raise ValueError("da_dep required in combination with elv_min / elv_max")
         elif da_dep is not None and not da_dep.identical_grid(da_mask):
             raise ValueError("da_dep does not match regular grid")
@@ -231,7 +231,7 @@ class RegularGrid:
         # update sfincs mask name, nodata value and crs
         da_mask = da_mask.where(da_mask, 0).rename("mask")
         da_mask.raster.set_nodata(0)
-        da_mask.raster.crs(self.crs)
+        da_mask.raster.set_crs(self.crs)
 
         return da_mask
 
@@ -277,7 +277,7 @@ class RegularGrid:
             raise ValueError("da_mask does not match regular grid")
         latlon = self.crs.crs.is_geographic
 
-        if da_dep is None and (elv_min is None and elv_max is None):
+        if da_dep is None and (elv_min is not None or elv_max is not None):
             raise ValueError("da_dep required in combination with elv_min / elv_max")
         elif da_dep is not None and not da_dep.identical_grid(da_mask):
             raise ValueError("da_dep does not match regular grid")
