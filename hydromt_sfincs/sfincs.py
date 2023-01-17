@@ -10,6 +10,7 @@ from rasterio.warp import transform_bounds
 from shapely.geometry import box
 import pandas as pd
 import xarray as xr
+from pathlib import Path
 from typing import Dict, Tuple, List, Union
 from scipy import ndimage
 
@@ -50,6 +51,7 @@ class SfincsModel(MeshMixin, GridModel):
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["msk", "dep", "scs", "manning", "qinf"]
+    _STATES = ["rst", "ini"]
     _FOLDERS = []
     _CLI_ARGS = {"region": "setup_grid", "res": "setup_grid"}
     _CONF = "sfincs.inp"
@@ -114,6 +116,7 @@ class SfincsModel(MeshMixin, GridModel):
         self.grid_type = grid_type
         self.reggrid = None
         self.quadtree = None
+        self.subgrid = xr.Dataset()
 
     @property
     def mask(self):
@@ -131,10 +134,12 @@ class SfincsModel(MeshMixin, GridModel):
         region = gpd.GeoDataFrame()
         if "region" in self.geoms:
             region = self.geoms["region"]
-        elif self.mask is not None:
+        elif "msk" in self.grid: 
             da = xr.where(self.mask > 0, 1, 0).astype(np.int16)
             da.raster.set_nodata(0)
             region = da.raster.vectorize().dissolve()
+        elif self.reggrid is not None:
+            region = self.reggrid.empty_mask.raster.box
         return region
 
     def create_grid(
@@ -179,7 +184,6 @@ class SfincsModel(MeshMixin, GridModel):
             gdf_refinment=gdf_refinment,
         )
 
-    # TODO should it be dep or topobathy?
     def create_dep(
         self,
         da_list: List[xr.DataArray],
@@ -206,6 +210,7 @@ class SfincsModel(MeshMixin, GridModel):
         drop_area: float = 0,
         connectivity: int = 8,
         all_touched=True,
+        reset_mask=False,
     ) -> xr.DataArray:
         """Returns a boolean mask of valid (non nondata) elevation cells, optionally bounded
         by several criteria.
@@ -230,6 +235,8 @@ class SfincsModel(MeshMixin, GridModel):
             if True (default) include (or exclude) a cell in the mask if it touches any of the
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
+        reset_mask: bool, optional
+            If True, reset existing mask layer. If False (default) updating existing mask.
 
         Returns
         -------
@@ -238,6 +245,7 @@ class SfincsModel(MeshMixin, GridModel):
         """
         if self.grid_type == "regular":
             da_mask = self.reggrid.create_mask_active(
+                da_mask=self.grid["msk"] if "msk" in self.grid else None,
                 da_dep=self.grid["dep"] if "dep" in self.grid else None,
                 gdf_include=gdf_include,
                 gdf_exclude=gdf_exclude,
@@ -247,8 +255,15 @@ class SfincsModel(MeshMixin, GridModel):
                 drop_area=drop_area,
                 connectivity=connectivity,
                 all_touched=all_touched,
+                reset_mask=reset_mask,
             )
             self.set_grid(da_mask, name="msk")
+            
+            if "mskfile" not in self.config:
+                self.config.update({"mskfile": "sfincs.msk"})
+            if "indexfile" not in self.config:
+                self.config.update({"indexfile": "sfincs.ind"})
+
         return da_mask
 
     def create_mask_bounds(
@@ -259,7 +274,8 @@ class SfincsModel(MeshMixin, GridModel):
         elv_min: float = None,
         elv_max: float = None,
         connectivity: int = 8,
-        all_touched=False,
+        all_touched: bool =False,
+        reset_bounds: bool =False,
     ) -> xr.DataArray:
         """Returns a boolean mask model boundary cells, optionally bounded by several
         criteria. Boundary cells are defined by cells at the edge of active model domain.
@@ -281,6 +297,9 @@ class SfincsModel(MeshMixin, GridModel):
             if True (default) include (or exclude) a cell in the mask if it touches any of the
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
+        reset_bounds: bool, optional
+            If True, reset existing boundary cells of the selected boundary
+            type (`btype`) before setting new boundary cells, by default False.
 
         Returns
         -------
@@ -299,14 +318,34 @@ class SfincsModel(MeshMixin, GridModel):
                 elv_max=elv_max,
                 connectivity=connectivity,
                 all_touched=all_touched,
+                reset_bounds=reset_bounds,
             )
             self.set_grid(da_mask, name="msk")
         return da_mask
 
-    def setup_topobathy(
+    def create_subgrid(
         self,
-        topobathy_fn,
-        reproj_method="bilinear",
+    ):
+        pass
+
+    def setup_grid(
+        self,
+        **kwargs,
+    ):
+        if "region" in kwargs:
+            gdf_region = gpd.read_file(filename=kwargs["region"])
+            res = 100 if "res" not in kwargs else kwargs["res"]
+            self.create_grid_from_region(gdf_region=gdf_region, res=res)
+        else:
+            for key in ["x0", "y0", "dx", "dy", "nmax", "mmax", "rotation", "crs"]:
+                if key not in kwargs:
+                    ValueError(f"{key} not defined")
+            self.create_grid(**kwargs)
+
+    def setup_dep(
+        self,
+        dep_fns: List[Union[str,Path]],
+        merge_kwargs: Union[Dict, List[Dict]] = {},
     ):
         """Setup model grid and interpolate topobathy (dep) data to this grid.
 
@@ -326,21 +365,20 @@ class SfincsModel(MeshMixin, GridModel):
         res : float
             Model resolution [m], by default 100 m.
             If None, the basemaps res is used.
-        crs : str, int, optional
-            Model Coordinate Reference System (CRS) as epsg code.
-            By default 'utm' in which case the region centroid UTM zone is used.
-            If None, the basemaps CRS is used. This must be a projected CRS.
-        reproj_method: str, optional
-            Method used to reproject topobathy data, by default 'bilinear'
         """
-        if self.region is None:
-            raise ValueError("Model region not found, run `setup_region` first.")
+        #TODO check what to do with region!!
+        # if self.region is None:
+        #     raise ValueError("Model region not found, run `setup_region` first.")
 
         # read global data (lazy!)
-        da_elv = self.data_catalog.get_rasterdataset(
-            topobathy_fn, geom=self.region, buffer=20, variables=["elevtn"]
-        )
-        # self.create_dep()
+        da_lst = []
+        for dep_fn in dep_fns:
+            da_elv = self.data_catalog.get_rasterdataset(
+                dep_fn, geom=self.region, buffer=20, variables=["elevtn"]
+            )
+            da_lst.append(da_elv)
+
+        self.create_dep(da_list=da_lst,merge_kwargs=merge_kwargs)
 
     def setup_merge_topobathy(
         self,
@@ -507,11 +545,7 @@ class SfincsModel(MeshMixin, GridModel):
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
         reset_mask: bool, optional
             If True, reset existing mask layer. If False (default) updating existing mask.
-            Note that previously set inactive cells can not be reset to active cells.
         """
-
-        if reset_mask and "msk" in self.grid:  # reset
-            self._grid = self._grid.drop_vars("msk")
 
         # read geometries
         gdf1, gdf2 = None, None
@@ -533,6 +567,7 @@ class SfincsModel(MeshMixin, GridModel):
             drop_area=drop_area,
             connectivity=connectivity,
             all_touched=all_touched,
+            reset_mask=reset_mask,
             # logger=self.logger,
         )
 
@@ -608,23 +643,18 @@ class SfincsModel(MeshMixin, GridModel):
         if exclude_mask_fn:
             gdf_exclude = self.data_catalog.get_geodataframe(exclude_mask_fn, bbox=bbox)
 
-        # update model mask
-        da_mask = self.mask
-        if reset_bounds:  # reset existing boundary cells
-            self.logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
-            da_mask = da_mask.where(da_mask != np.uint8(bvalue), np.uint8(1))
-
         # mask values
-        da_mask_bounds = self.create_mask_bounds(
+        da_mask = self.create_mask_bounds(
             btype=btype,
             gdf_include=gdf_include,
             gdf_exclude=gdf_exclude,
             elv_min=elv_min,
             elv_max=elv_max,
             connectivity=connectivity,
+            reset_bounds=reset_bounds,
         )
 
-        self.set_grid(da_mask_bounds, "msk")
+        self.set_grid(da_mask, "msk")
 
     def setup_river_hydrography(self, hydrography_fn=None, adjust_dem=False, **kwargs):
         """Setup hydrography layers for flow directions ("flwdir") and upstream area

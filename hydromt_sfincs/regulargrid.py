@@ -148,6 +148,7 @@ class RegularGrid:
 
     def create_mask_active(
         self,
+        da_mask: xr.DataArray = None,
         da_dep: xr.DataArray = None,
         gdf_include: gpd.GeoDataFrame = None,
         gdf_exclude: gpd.GeoDataFrame = None,
@@ -156,7 +157,8 @@ class RegularGrid:
         fill_area: float = 10,
         drop_area: float = 0,
         connectivity: int = 8,
-        all_touched=True,
+        all_touched: bool = True,
+        reset_mask: bool = False,
     ) -> xr.DataArray:
         """Returns a boolean mask of valid (non nondata) elevation cells, optionally bounded
         by several criteria.
@@ -181,22 +183,26 @@ class RegularGrid:
             if True (default) include (or exclude) a cell in the mask if it touches any of the
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
+        reset_mask: bool, optional
+            If True, reset existing mask layer. If False (default) updating existing mask.
 
         Returns
         -------
         xr.DataArray
             model elevation mask
         """
-        da_mask = self.empty_mask > 0
+
+        if not reset_mask and da_mask is not None: 
+            da_mask = da_mask > 0 # use current mask
+        else: 
+            da_mask = self.empty_mask > 0 #reset
+
         latlon = self.crs.is_geographic
 
         if da_dep is None and (elv_min is not None or elv_max is not None):
             raise ValueError("da_dep required in combination with elv_min / elv_max")
         elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
             raise ValueError("da_dep does not match regular grid")
-        elif da_dep is not None:
-            # da_mask = da_dep.where(da_dep != da_dep.raster.nodata, 0)
-            da_mask = da_dep != da_dep.raster.nodata
 
         s = None if connectivity == 4 else np.ones((3, 3), int)
         if elv_min is not None or elv_max is not None:
@@ -217,7 +223,7 @@ class RegularGrid:
                 )
                 n = int(sum(areas / 1e6 < fill_area))
                 print(f"{n} gaps outside valid elevation range < {fill_area} km2.")
-            da_mask = np.logical_and(da_mask, _msk)
+            da_mask = np.logical_or(da_mask, _msk)
             if drop_area > 0:
                 regions = ndimage.measurements.label(da_mask.values, structure=s)[0]
                 lbls, areas = region_area(regions, self.transform, latlon)
@@ -261,6 +267,7 @@ class RegularGrid:
         elv_max: Optional[float] = None,
         connectivity: int = 8,
         all_touched=False,
+        reset_bounds=False,
     ) -> xr.DataArray:
         """Returns a boolean mask model boundary cells, optionally bounded by several
         criteria. Boundary cells are defined by cells at the edge of active model domain.
@@ -282,7 +289,9 @@ class RegularGrid:
             if True (default) include (or exclude) a cell in the mask if it touches any of the
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
-
+        reset_bounds: bool, optional
+            If True, reset existing boundary cells of the selected boundary
+            type (`btype`) before setting new boundary cells, by default False.
         Returns
         -------
         bounds: xr.DataArray
@@ -302,6 +311,12 @@ class RegularGrid:
         if btype not in bvalues:
             raise ValueError('btype must be one of "waterlevel", "outflow"')
         bvalue = bvalues[btype]
+
+        if reset_bounds:  # reset existing boundary cells
+            # self.logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
+            da_mask = da_mask.where(da_mask != np.uint8(bvalue), np.uint8(1))
+            if elv_min is None and elv_max is None and gdf_include is None and gdf_exclude is None:
+                return da_mask
 
         s = None if connectivity == 4 else np.ones((3, 3), int)
         bounds0 = np.logical_xor(

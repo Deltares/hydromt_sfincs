@@ -76,7 +76,7 @@ def merge_multi_dataarrays(
         if merge_method == "first" and not np.any(np.isnan(da1.values)):
             break
         if isinstance(merge_kwargs, list):
-            kwargs = merge_kwargs[i]
+            kwargs = merge_kwargs[i+1]
         da1 = merge_dataarrays(
             da1,
             da2,
