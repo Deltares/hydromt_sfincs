@@ -11,7 +11,6 @@ import logging
 
 from pyflwdir.regions import region_area
 from .sfincs_input import SfincsInput
-from .workflows import merge_multi_dataarrays
 
 logger = logging.getLogger(__name__)
 
@@ -124,29 +123,6 @@ class RegularGrid:
         assert _ind[0] == ind.size
 
         return ind
-
-    def create_dep(
-        self,
-        da_list: List[xr.DataArray],
-        merge_kwargs: Union[Dict, List[Dict]] = {},
-        reproj_kwargs: dict = {},
-        merge_method: str = "first",
-        reproj_method: str = "bilinear",  # #TODO different method for up- and downscaling?
-        interp_method: str = "linear",
-        logger=logger,
-    ) -> xr.DataArray:
-
-        da_dep = merge_multi_dataarrays(
-            da_list=da_list,
-            merge_kwargs=merge_kwargs,
-            reproj_kwargs=reproj_kwargs,
-            merge_method=merge_method,
-            reproj_method=reproj_method,
-            interp_method=interp_method,
-            logger=logger,
-        ).raster.reproject_like(self.empty_mask, method=reproj_method)
-
-        return da_dep
 
     def create_mask_active(
         self,

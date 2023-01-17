@@ -183,14 +183,31 @@ class SfincsModel(MeshMixin, GridModel):
     def create_dep(
         self,
         da_list: List[xr.DataArray],
-        merge_kwargs: Union[Dict, List[Dict]] = {},
-        reproj_kwargs: dict = {},
-    ):
+        offset: List[Union[xr.DataArray, float]] = None,
+        min_valid: List[float] = None,
+        max_valid: List[float] = None,
+        gdf_valid: List[gpd.GeoDataFrame] = None,
+        reproj_method: Union[List[str], str] = "bilinear",
+        buffer_cells: int = 0,  # not in list
+        interp_method: str = "linear",  # not in list
+        merge_method: str = "first",  # not in list
+        logger=logger,
+    ) -> xr.DataArray:
+
         if self.grid_type == "regular":
-            da_dep = self.reggrid.create_dep(
+            # I don't think there is a need for this method in ReggularGrid
+            da_dep = workflows.merge_multi_dataarrays(
                 da_list=da_list,
-                merge_kwargs=merge_kwargs,
-                reproj_kwargs=reproj_kwargs,
+                da_like=self.mask,
+                offset=offset,
+                min_valid=min_valid,
+                max_valid=max_valid,
+                gdf_valid=gdf_valid,
+                reproj_method=reproj_method,
+                buffer_cells=buffer_cells,
+                interp_method=interp_method,
+                merge_method=merge_method,
+                logger=logger,
             )
             self.set_grid(da_dep, name="dep")
             if "depfile" not in self.config:

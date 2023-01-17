@@ -3,7 +3,7 @@ from hydromt import raster
 import logging
 import numpy as np
 from scipy import ndimage
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Any
 import xarray as xr
 
 
@@ -14,47 +14,48 @@ __all__ = ["merge_multi_dataarrays", "merge_dataarrays"]
 
 def merge_multi_dataarrays(
     da_list: List[xr.DataArray],
-    merge_kwargs: Union[Dict, List[Dict]] = {},
-    reproj_kwargs: dict = {},
-    merge_method: str = "first",
-    reproj_method: str = "bilinear",  # #TODO different method for up- and downscaling?
-    interp_method: str = "linear",
+    da_like: xr.DataArray = None,
+    offset: List[Union[xr.DataArray, float]] = None,
+    min_valid: List[float] = None,
+    max_valid: List[float] = None,
+    gdf_valid: List[gpd.GeoDataFrame] = None,
+    reproj_method: Union[List[str], str] = "bilinear",
+    reproj_kwargs: Dict = {},
+    buffer_cells: int = 0,  # not in list
+    interp_method: str = "linear",  # not in list
+    merge_method: str = "first",  # not in list
     logger=logger,
 ) -> xr.DataArray:
     """Merge a list of data arrays by reprojecting these to a common destination grid
     and combine valid values.
 
+    see :py:func:`~hydromt_sfincs.workflows.merge.merge_dataarrays`
+
     Parameters
     ----------
     da_list : List[xr.DataArray]
-        _description_
-    merge_kwargs : Union[Dict, List[Dict]], optional
-        Arguments passes to :py:func:`~hydromt_sfincs.workflows.merge.merge_dataarrays`, by default {}
-    reproj_kwargs
-        Optional arguments such as dst_transform, dst_width, dst_height and dst_crs
-        to define the destination grid.
-    merge_method: {'first','last'}, optional
-        merge method, by default 'first':
-
-        * first: use valid new where existing invalid
-        * last: use valid new
-    reproj_method: {'bilinear', 'cubic', 'nearest'}
-        Method used to reproject the offset and second dataset to the grid of the
-        first dataset, by default 'bilinear'
-    interp_method, {'linear', 'nearest', 'rio_idw'}
-        Method used to interpolate the buffer cells between data arrays
-        and any remaining nodata holes, by default 'linear'.
+        list of data arrays to merge
+    da_like : xr.Dataarray, optional
+        Destination grid, by default None.
+        If provided the output data is projected to this grid, otherwise to the first input grid.
 
     Returns
     -------
     xr.DataArray
         merge data array
     """
-    if not isinstance(merge_kwargs, dict) and len(da_list) != len(merge_kwargs):
-        raise ValueError("merge_kwargs and da_list should have equal length")
+
+    def list_get(lst: List, i: int, fallback: Any = None) -> Any:
+        if not isinstance(lst, list):
+            lst = [lst]
+        return (lst + [fallback] * i)[i]
+
     # start with common grid
-    if reproj_kwargs:  # reproject first raster to destination grid
-        da1 = da_list[0].raster.reproject(method=reproj_method, **reproj_kwargs)
+    method = list_get(reproj_method, 0, "bilinear")
+    if da_like is not None:  # reproject first raster to destination grid
+        da1 = da_list[0].raster.reproject_like(da_like, method=method)
+    elif reproj_kwargs:
+        da1 = da_list[0].raster.reproject(method=method, **reproj_kwargs)
     else:  # start with first raster as destination grid
         da1 = da_list[0]
 
@@ -62,36 +63,36 @@ def merge_multi_dataarrays(
     da1 = da1.raster.mask_nodata()
 
     # get valid cells of first dataset
-    kwargs = merge_kwargs[0] if isinstance(merge_kwargs, list) else merge_kwargs
     da1 = _add_offset_mask_invalid(
         da1,
-        offset=kwargs.get("offset", None),
-        min_valid=kwargs.get("min_valid", None),
-        max_valid=kwargs.get("max_valid", None),
-        gdf_valid=kwargs.get("gdf_valid", None),
+        offset=list_get(offset, 0),
+        min_valid=list_get(min_valid, 0),
+        max_valid=list_get(max_valid, 0),
+        gdf_valid=list_get(gdf_valid, 0),
+        reproj_method="bilinear",  # always bilinear!
     )
 
     # combine with next dataset
     for i, da2 in enumerate(da_list[1:]):
         if merge_method == "first" and not np.any(np.isnan(da1.values)):
             break
-        if isinstance(merge_kwargs, list):
-            kwargs = merge_kwargs[i]
         da1 = merge_dataarrays(
             da1,
             da2,
-            reproj_method=reproj_method,
+            offset=list_get(offset, i + 1),
+            min_valid=list_get(min_valid, i + 1),
+            max_valid=list_get(max_valid, i + 1),
+            gdf_valid=list_get(gdf_valid, i + 1),
+            reproj_method=list_get(reproj_method, i + 1, "bilinear"),
             merge_method=merge_method,
             interp_method=interp_method,
-            **kwargs,
         )
 
-    # interpolate remaining invalid values
-    nempty = np.sum(np.isnan(da1.values))
-    if nempty > 0 and interp_method:
-        logger.debug(f"Interpolate data at {int(nempty)} cells")
-        da1 = da1.raster.interpolate_na(method=interp_method)
-
+    # TODO identify holes in merged elevation and interpolate?
+    # na_holes = ndimage.binary_fill_holes(np.isnan(da1.values), structure=np.ones((3, 3)))
+    # if np.any(na_holes) > 0 and interp_method:
+    #     logger.debug(f"Interpolate data at {int(np.sum(na_holes))} cells")
+    #     da1 = da1.raster.interpolate_na(method=interp_method).where(na_holes)
     return da1
 
 
@@ -156,7 +157,14 @@ def merge_dataarrays(
         da1 = da1.raster.mask_nodata()
     ## reproject da2 and reset nodata value to match da1 nodata
     da2 = da2.raster.reproject_like(da1, method=reproj_method).raster.mask_nodata()
-    da2 = _add_offset_mask_invalid(da2, offset, min_valid, max_valid, gdf_valid)
+    da2 = _add_offset_mask_invalid(
+        da=da2,
+        offset=offset,
+        min_valid=min_valid,
+        max_valid=max_valid,
+        gdf_valid=gdf_valid,
+        reproj_method="bilinear",  # always bilinear!
+    )
     # merge based merge_method
     if merge_method == "first":
         mask = ~np.isnan(da1)
