@@ -86,7 +86,7 @@ class RegularGrid:
         """Return mask with only inactive cells"""
         da_mask = xr.DataArray(
             name="msk",
-            data=np.zeros((self.nmax, self.mmax), dtype=np.int8),
+            data=np.zeros((self.nmax, self.mmax), dtype=np.uint8),
             coords=self.coordinates,
             dims=("y", "x"),
             attrs={"_FillValue": 0},
@@ -187,7 +187,7 @@ class RegularGrid:
         xr.DataArray
             model elevation mask
         """
-        da_mask = self.empty_mask
+        da_mask = self.empty_mask > 0
         latlon = self.crs.is_geographic
 
         if da_dep is None and (elv_min is not None or elv_max is not None):
@@ -244,7 +244,7 @@ class RegularGrid:
                 print(f"No mask cells found within exclude polygon!")
 
         # update sfincs mask name, nodata value and crs
-        da_mask = da_mask.where(da_mask, 0).rename("mask")
+        da_mask = da_mask.where(da_mask, 0).astype(np.uint8).rename("mask")
         da_mask.raster.set_nodata(0)
         da_mask.raster.set_crs(self.crs)
 

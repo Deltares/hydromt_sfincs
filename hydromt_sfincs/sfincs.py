@@ -193,6 +193,8 @@ class SfincsModel(MeshMixin, GridModel):
                 reproj_kwargs=reproj_kwargs,
             )
             self.set_grid(da_dep, name="dep")
+            if "depfile" not in self.config:
+                self.config.update({"depfile": "sfincs.dep"})
 
     def create_mask_active(
         self,
@@ -610,9 +612,7 @@ class SfincsModel(MeshMixin, GridModel):
         da_mask = self.mask
         if reset_bounds:  # reset existing boundary cells
             self.logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
-            da_mask = da_mask.where(
-                da_mask != np.uint8(bvalue), np.uint8(1)
-            )  # TODO check, should be ==?
+            da_mask = da_mask.where(da_mask != np.uint8(bvalue), np.uint8(1))
 
         # mask values
         da_mask_bounds = self.create_mask_bounds(
