@@ -1,4 +1,6 @@
-import datetime
+from datetime import datetime
+from ast import literal_eval
+from typing import Dict
 
 
 class SfincsInput:
@@ -17,6 +19,7 @@ class SfincsInput:
         self.tstop = None
         self.tspinup = 60.0
         self.t0out = None
+        self.dtout = None
         self.dtmapout = 600.0
         self.dthisout = 600.0
         self.dtrstout = 0.0
@@ -55,8 +58,8 @@ class SfincsInput:
         self.bzifile = None
         self.bwvfile = None
         self.bhsfile = None
-        #        self.bhifile=None
-        #        self.bstfile=None
+        # self.bhifile=None
+        # self.bstfile=None
         self.btpfile = None
         self.bwdfile = None
         self.bdsfile = None
@@ -92,65 +95,49 @@ class SfincsInput:
         self.cdwnd = [0.0, 28.0, 50.0]
         self.cdval = [0.001, 0.0025, 0.0015]
 
-    def read(self, fn_inp) -> None:
+    def read(self, inp_fn: str) -> None:
 
-        with open(fn_inp, "r") as fid:
+        with open(inp_fn, "r") as fid:
             lines = fid.readlines()
-        inp = dict()
 
+        inp_dict = dict()
         for line in lines:
-            str = line.split("=")
-            if len(str) == 1:
-                # Empty line
+            line = [x.strip() for x in line.split("=")]
+            if len(line) != 2:  #  Empty or unrecognized line
                 continue
-            name = str[0].strip()
-            val = str[1].strip()
-            try:
-                # First try to convert to int
-                val = int(val)
-            except ValueError:
+            name, val = line
+            if name in ["tref", "tstart", "tstop"]:
                 try:
-                    # Now try to convert to float
-                    val = float(val)
-                except:
+                    val = datetime.strptime(val, "%Y%m%d %H%M%S")
+                except ValueError:
+                    ValueError(f'"{name} = {val}" not understood.')
+            else:
+                try:
+                    val = literal_eval(val)
+                except ValueError:  # normal string
                     pass
-            if name == "tref":
-                try:
-                    val = datetime.datetime.strptime(val.rstrip(), "%Y%m%d %H%M%S")
-                except:
-                    val = None
-            if name == "tstart":
-                try:
-                    val = datetime.datetime.strptime(val.rstrip(), "%Y%m%d %H%M%S")
-                except:
-                    val = None
-            if name == "tstop":
-                try:
-                    val = datetime.datetime.strptime(val.rstrip(), "%Y%m%d %H%M%S")
-                except:
-                    val = None
             if name == "epsg":
                 name = "crs"
-            inp[name] = val
+            inp_dict[name] = val
+            setattr(self, name, val)
 
-        # set default values to None if not found in sfincs.inp
-        for name, val in self.__dict__.items():
-            setattr(self, name, inp.get(name, None))
+        # set default values to None if not found in inp_dict to avoid writing these later
+        for name in self.__dict__:
+            if name not in inp_dict:
+                setattr(self, name, None)
 
-    def write(self, fn_inp) -> None:
-        fid = open(fn_inp, "w")
+    def write(self, inp_fn: str) -> None:
+        fid = open(inp_fn, "w")
         for key, value in self.__dict__.items():
             if not value is None:
-                if type(value) == "float":
-                    string = f"{key.ljust(20)} = {float(value)}\n"
-                elif type(value) == "int":
-                    string = f"{key.ljust(20)} = {int(value)}\n"
-                elif type(value) == list:
-                    valstr = ""
-                    for v in value:
-                        valstr += str(v) + " "
+                if isinstance(value, float):  # remove insignificant traling zeros
+                    string = f"{key.ljust(20)} = {value}\n"
+                elif isinstance(value, int):
+                    string = f"{key.ljust(20)} = {value}\n"
+                elif isinstance(value, list):
+                    valstr = " ".join([str(v) for v in value])
                     string = f"{key.ljust(20)} = {valstr}\n"
-                elif isinstance(value, datetime.date):
+                elif hasattr(value, "strftime"):
                     dstr = value.strftime("%Y%m%d %H%M%S")
                     string = f"{key.ljust(20)} = {dstr}\n"
                 else:
@@ -159,12 +146,15 @@ class SfincsInput:
         fid.close()
 
     @staticmethod
-    def from_dict(inp_dict) -> None:
-        # (over)write sfincs.inp values based on values from inp_dict
+    def from_dict(inp_dict: Dict) -> None:
         inp = SfincsInput()
         for name, val in inp_dict.items():
             setattr(inp, name, val)
+        # set default values to None if not found in inp_dict
+        for name in inp.__dict__:
+            if name not in inp_dict:
+                setattr(inp, name, None)
         return inp
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         return {k: v for k, v in self.__dict__.items() if v is not None}
