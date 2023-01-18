@@ -192,10 +192,16 @@ class RegularGrid:
             model elevation mask
         """
 
-        if not reset_mask and da_mask is not None: 
-            da_mask = da_mask > 0 # use current mask
-        else: 
-            da_mask = self.empty_mask > 0 #reset
+        if not reset_mask and da_mask is not None:
+            # use current active mask
+            da_mask = da_mask > 0
+        elif da_dep is not None:
+            # start with active mask where dep available
+            da_mask = da_dep != da_dep.raster.nodata
+        else:
+            # no dep info provided, start with inactive mask
+            # Only include and exclude polygons are used
+            da_mask = self.empty_mask > 0
 
         latlon = self.crs.is_geographic
 
@@ -223,7 +229,7 @@ class RegularGrid:
                 )
                 n = int(sum(areas / 1e6 < fill_area))
                 print(f"{n} gaps outside valid elevation range < {fill_area} km2.")
-            da_mask = np.logical_or(da_mask, _msk)
+            da_mask = np.logical_and(da_mask, _msk)
             if drop_area > 0:
                 regions = ndimage.measurements.label(da_mask.values, structure=s)[0]
                 lbls, areas = region_area(regions, self.transform, latlon)
@@ -315,7 +321,12 @@ class RegularGrid:
         if reset_bounds:  # reset existing boundary cells
             # self.logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
             da_mask = da_mask.where(da_mask != np.uint8(bvalue), np.uint8(1))
-            if elv_min is None and elv_max is None and gdf_include is None and gdf_exclude is None:
+            if (
+                elv_min is None
+                and elv_max is None
+                and gdf_include is None
+                and gdf_exclude is None
+            ):
                 return da_mask
 
         s = None if connectivity == 4 else np.ones((3, 3), int)

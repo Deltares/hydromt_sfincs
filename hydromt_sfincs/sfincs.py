@@ -134,7 +134,7 @@ class SfincsModel(MeshMixin, GridModel):
         region = gpd.GeoDataFrame()
         if "region" in self.geoms:
             region = self.geoms["region"]
-        elif "msk" in self.grid: 
+        elif "msk" in self.grid:
             da = xr.where(self.mask > 0, 1, 0).astype(np.int16)
             da.raster.set_nodata(0)
             region = da.raster.vectorize().dissolve()
@@ -258,7 +258,7 @@ class SfincsModel(MeshMixin, GridModel):
                 reset_mask=reset_mask,
             )
             self.set_grid(da_mask, name="msk")
-            
+
             if "mskfile" not in self.config:
                 self.config.update({"mskfile": "sfincs.msk"})
             if "indexfile" not in self.config:
@@ -274,8 +274,8 @@ class SfincsModel(MeshMixin, GridModel):
         elv_min: float = None,
         elv_max: float = None,
         connectivity: int = 8,
-        all_touched: bool =False,
-        reset_bounds: bool =False,
+        all_touched: bool = False,
+        reset_bounds: bool = False,
     ) -> xr.DataArray:
         """Returns a boolean mask model boundary cells, optionally bounded by several
         criteria. Boundary cells are defined by cells at the edge of active model domain.
@@ -332,10 +332,13 @@ class SfincsModel(MeshMixin, GridModel):
         self,
         **kwargs,
     ):
-        if "region" in kwargs:
-            gdf_region = gpd.read_file(filename=kwargs["region"])
-            res = 100 if "res" not in kwargs else kwargs["res"]
-            self.create_grid_from_region(gdf_region=gdf_region, res=res)
+        if self.region:
+            if "res" not in kwargs:
+                res = 100
+                self.logger.warning(f"default resolution used of {res} m")
+            else:
+                res = kwargs["res"]
+            self.create_grid_from_region(gdf_region=self.region, res=res)
         else:
             for key in ["x0", "y0", "dx", "dy", "nmax", "mmax", "rotation", "crs"]:
                 if key not in kwargs:
@@ -344,7 +347,7 @@ class SfincsModel(MeshMixin, GridModel):
 
     def setup_dep(
         self,
-        dep_fns: List[Union[str,Path]],
+        dep_fns: List[Union[str, Path]],
         merge_kwargs: Union[Dict, List[Dict]] = {},
     ):
         """Setup model grid and interpolate topobathy (dep) data to this grid.
@@ -366,7 +369,7 @@ class SfincsModel(MeshMixin, GridModel):
             Model resolution [m], by default 100 m.
             If None, the basemaps res is used.
         """
-        #TODO check what to do with region!!
+        # TODO check what to do with region!!
         # if self.region is None:
         #     raise ValueError("Model region not found, run `setup_region` first.")
 
@@ -378,7 +381,7 @@ class SfincsModel(MeshMixin, GridModel):
             )
             da_lst.append(da_elv)
 
-        self.create_dep(da_list=da_lst,merge_kwargs=merge_kwargs)
+        self.create_dep(da_list=da_lst, merge_kwargs=merge_kwargs)
 
     def setup_merge_topobathy(
         self,
