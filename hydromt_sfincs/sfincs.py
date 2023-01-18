@@ -53,7 +53,7 @@ class SfincsModel(MeshMixin, GridModel):
     _MAPS = ["msk", "dep", "scs", "manning", "qinf"]
     _STATES = ["rst", "ini"]
     _FOLDERS = []
-    _CLI_ARGS = {"region": "setup_region", "res": "setup_grid_from_region"}
+    _CLI_ARGS = {"region": "setup_grid_from_region", "res": "setup_grid_from_region"}
     _CONF = "sfincs.inp"
     _DATADIR = DATADIR
     _ATTRS = {
@@ -153,7 +153,7 @@ class SfincsModel(MeshMixin, GridModel):
         rotation: float = None,
         crs: int = None,
         grid_type: str = "regular",
-        gdf_refinment: gpd.GeoDataFrame = None,
+        gdf_refinement: gpd.GeoDataFrame = None,
     ):
         self._config.update(
             x0=x0, y0=y0, dx=dx, dy=dy, nmax=nmax, mmax=mmax, rotation=rotation, crs=crs
@@ -334,11 +334,12 @@ class SfincsModel(MeshMixin, GridModel):
         pass
 
     def setup_grid_from_region(
+        self,
         region: dict,
         res: float,
         crs: Union[str, int] = 'utm',
         grid_type: str = "regular",
-        gdf_refinment: str=None,
+        refinement_fn: str = None,
         hydrography_fn: str = "merit_hydro",
         basin_index_fn: str = "merit_hydro_index",
     ):
@@ -355,25 +356,29 @@ class SfincsModel(MeshMixin, GridModel):
         self.create_grid_from_region(
             region = self.region,
             res = res,
-            grid_tryp=grid_type,
+            grid_type=grid_type,
         )
 
     def setup_grid(
         self,
-        x0:int,
+        x0: float,
+        y0: float,
+        dx: float,
+        dy: float,
+        nmax: int,
+        mmax: int,
+        rotation: float,
+        crs: int,
+        refinement_fn: str = None,
     ):
-        if self.region:
-            if "res" not in kwargs:
-                res = 100
-                self.logger.warning(f"default resolution used of {res} m")
-            else:
-                res = kwargs["res"]
-            self.create_grid_from_region(gdf_region=self.region, res=res)
+
+        if refinement_fn is not None:
+            grid_type = "quadtree"
+            # gdf_refinement = gpd.read_file()
         else:
-            for key in ["x0", "y0", "dx", "dy", "nmax", "mmax", "rotation", "crs"]:
-                if key not in kwargs:
-                    ValueError(f"{key} not defined")
-            self.create_grid(**kwargs)
+            grid_type = "regular"
+            gdf_refinement = None
+        self.create_grid(x0=x0, y0=y0, dx=dx, dy=dy, nmax=nmax, mmax=mmax, rotation=rotation, crs=crs, grid_type=grid_type, gdf_refinement=gdf_refinement )
 
     def setup_dep(
         self,
@@ -399,9 +404,6 @@ class SfincsModel(MeshMixin, GridModel):
             Model resolution [m], by default 100 m.
             If None, the basemaps res is used.
         """
-        # TODO check what to do with region!!
-        # if self.region is None:
-        #     raise ValueError("Model region not found, run `setup_region` first.")
 
         # read global data (lazy!)
         da_lst = []
