@@ -155,7 +155,7 @@ class SfincsModel(MeshMixin, GridModel):
         grid_type: str = "regular",
         gdf_refinement: gpd.GeoDataFrame = None,
     ):
-        self._config.update(
+        self.config.update(
             x0=x0, y0=y0, dx=dx, dy=dy, nmax=nmax, mmax=mmax, rotation=rotation, crs=crs
         )
         self.update_grid_from_config()
@@ -187,14 +187,31 @@ class SfincsModel(MeshMixin, GridModel):
     def create_dep(
         self,
         da_list: List[xr.DataArray],
-        merge_kwargs: Union[Dict, List[Dict]] = {},
-        reproj_kwargs: dict = {},
-    ):
+        offset: List[Union[xr.DataArray, float]] = None,
+        min_valid: List[float] = None,
+        max_valid: List[float] = None,
+        gdf_valid: List[gpd.GeoDataFrame] = None,
+        reproj_method: Union[List[str], str] = "bilinear",
+        buffer_cells: int = 0,  # not in list
+        interp_method: str = "linear",  # not in list
+        merge_method: str = "first",  # not in list
+        logger=logger,
+    ) -> xr.DataArray:
+
         if self.grid_type == "regular":
-            da_dep = self.reggrid.create_dep(
+            # I don't think there is a need for this method in ReggularGrid
+            da_dep = workflows.merge_multi_dataarrays(
                 da_list=da_list,
-                merge_kwargs=merge_kwargs,
-                reproj_kwargs=reproj_kwargs,
+                da_like=self.mask,
+                offset=offset,
+                min_valid=min_valid,
+                max_valid=max_valid,
+                gdf_valid=gdf_valid,
+                reproj_method=reproj_method,
+                buffer_cells=buffer_cells,
+                interp_method=interp_method,
+                merge_method=merge_method,
+                logger=logger,
             )
             self.set_grid(da_dep, name="dep")
             if "depfile" not in self.config:
@@ -2524,24 +2541,50 @@ class SfincsModel(MeshMixin, GridModel):
 
     ## model configuration
 
-    def read_config(self, config_fn: str = "sfincs.inp", crs=None):
-        if not os.path.isabs(config_fn) and self.root:
-            config_fn = os.path.abspath(os.path.join(self.root, config_fn))
-        else:
-            self.root = os.path.dirname(config_fn)
+    def read_config(self, config_fn: str = "sfincs.inp", crs: int = None) -> None:
+        """Parse config from SFINCS input file.
+        If in write-only mode the config is initialized with default settings.
+
+        Parameters
+        ----------
+        config_fn: str
+            Filename of config file, by default "sfincs.inp".
+            If in a different folder than the model root, the root is updated.
+        crs: int
+            EPSG code of the model CRS. Only used if missing in the SFINCS input file, by default None.
+        """
         inp = SfincsInput()  # initialize with defaults
-        if self._read and os.path.isfile(config_fn):
-            inp.read(fn_inp=config_fn)
-        self._config = inp.to_dict()
-        self.update_grid_from_config()
-        # update grid properties based on sfincs.inp
+        if self._read:  # in read-only or append mode, try reading config_fn
+            if not isfile(config_fn) and not isabs(config_fn) and self._root:
+                # path relative to self.root
+                config_fn = abspath(join(self.root, config_fn))
+            elif isfile(config_fn) and abspath(dirname(config_fn)) != self._root:
+                # new root
+                mode = (
+                    "r+"
+                    if self._write and self._read
+                    else ("w" if self._write else "r")
+                )
+                root = abspath(dirname(config_fn))
+                self.logger.warning(f"updating the model root to: {root}")
+                self.set_root(root=root, mode=self.mode)
+            else:
+                raise IOError(f"SFINCS input file not found {config_fn}")
+            # read config_fn
+            inp.read(inp_fn=config_fn)
+        self._config = inp.to_dict()  # overwrite / initialize config attribute
+        if crs is not None and "crs" not in self.config:
+            self.config.update(crs=crs)
+        self.update_grid_from_config()  # update grid properties based on sfincs.inp
 
     def write_config(self, config_fn: str = "sfincs.inp"):
         """Write config to <root/config_fn>"""
         self._assert_write_mode
+        if not isabs(config_fn) and self._root:
+            config_fn = join(self.root, config_fn)
 
         inp = SfincsInput.from_dict(self.config)
-        inp.write(fn_inp=os.path.join(self.root, config_fn))
+        inp.write(inp_fn=abspath(config_fn))
 
         # for key, value in self.config.items():
         #     if key.endswith("file"):

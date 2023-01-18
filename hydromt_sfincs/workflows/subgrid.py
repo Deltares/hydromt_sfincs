@@ -94,11 +94,11 @@ def subgrid_reggrid(
             # get subgrid bathymetry tile
             da_dep = merge_multi_dataarrays(
                 bathymetry_set,
-                merge_kwargs=bathymetry_merge_kwargs,
                 reproj_kwargs=reproj_kwargs,
                 merge_method="first",
                 reproj_method="bilinear",
                 interp_method="linear",
+                **bathymetry_merge_kwargs,
             )
             # TODO what to do with remaining cell with nan values
             # da_dep = da_dep.fillna(value)
@@ -108,11 +108,11 @@ def subgrid_reggrid(
             if len(manning_set) > 0:
                 da_man = merge_multi_dataarrays(
                     manning_set,
-                    merge_kwargs=manning_merge_kwargs,
                     reproj_kwargs=reproj_kwargs,
                     merge_method="first",
                     reproj_method="bilinear",
                     interp_method="linear",
+                    **manning_merge_kwargs,
                 )
 
             else:
