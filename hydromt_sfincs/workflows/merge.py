@@ -84,6 +84,7 @@ def merge_multi_dataarrays(
             max_valid=list_get(max_valid, i + 1),
             gdf_valid=list_get(gdf_valid, i + 1),
             reproj_method=list_get(reproj_method, i + 1, "bilinear"),
+            buffer_cells=buffer_cells,
             merge_method=merge_method,
             interp_method=interp_method,
         )

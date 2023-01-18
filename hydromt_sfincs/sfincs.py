@@ -400,7 +400,14 @@ class SfincsModel(MeshMixin, GridModel):
     def setup_dep(
         self,
         dep_fns: List[Union[str, Path]],
-        merge_kwargs: Union[Dict, List[Dict]] = {},
+        offset: List[Union[str, float]] = [],
+        min_valid: List[float] = None,
+        max_valid: List[float] = None,
+        gdf_valid_fns: List[str] = [],
+        reproj_method: Union[List[str], str] = "bilinear",
+        buffer_cells: int = 0,  # not in list
+        interp_method: str = "linear",  # not in list
+        merge_method: str = "first",  # not in list
     ):
         """Setup model grid and interpolate topobathy (dep) data to this grid.
 
@@ -423,14 +430,50 @@ class SfincsModel(MeshMixin, GridModel):
         """
 
         # read global data (lazy!)
-        da_lst = []
+        da_elv_lst = []
         for dep_fn in dep_fns:
             da_elv = self.data_catalog.get_rasterdataset(
                 dep_fn, geom=self.region, buffer=20, variables=["elevtn"]
             )
-            da_lst.append(da_elv)
+            da_elv_lst.append(da_elv)
 
-        self.create_dep(da_list=da_lst, merge_kwargs=merge_kwargs)
+        # read offsets
+        # NOTE offsets can be xr.DataArrays and floats
+        da_offset_lst = []
+        for offset_fn in offset:
+            if isinstance(offset_fn, str):
+                da_offset = self.data_catalog.get_rasterdataset(
+                    offset_fn, geom=self.region, buffer=20,
+                )
+            elif isinstance(offset_fn, float):
+                da_offset = offset_fn
+            else:
+                da_offset = None    
+            da_offset_lst.append(da_offset)       
+
+        # read geodataframes
+        gdf_valid_lst = []
+        for gdf_fn in gdf_valid_fns:
+            if gdf_fn is not None:
+                gdf_valid = self.data_catalog.get_geodataframe(
+                    path_or_key=gdf_fn, geom=self.region,
+                )
+            else:
+                gdf_valid = None
+            gdf_valid_lst.append(gdf_valid)
+
+        self.create_dep(
+            da_list=da_elv_lst,         
+            offset = da_offset_lst if da_offset_lst else None,
+            min_valid = min_valid,
+            max_valid = max_valid,
+            gdf_valid = gdf_valid_lst if gdf_valid_lst else None,
+            reproj_method = reproj_method,
+            buffer_cells = buffer_cells,
+            interp_method = interp_method,
+            merge_method = merge_method,
+            logger=self.logger,
+        )
 
     def setup_merge_topobathy(
         self,
