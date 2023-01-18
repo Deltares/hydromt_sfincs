@@ -53,7 +53,7 @@ class SfincsModel(MeshMixin, GridModel):
     _MAPS = ["msk", "dep", "scs", "manning", "qinf"]
     _STATES = ["rst", "ini"]
     _FOLDERS = []
-    _CLI_ARGS = {"region": "setup_grid", "res": "setup_grid"}
+    _CLI_ARGS = {"region": "setup_region", "res": "setup_grid_from_region"}
     _CONF = "sfincs.inp"
     _DATADIR = DATADIR
     _ATTRS = {
@@ -256,13 +256,18 @@ class SfincsModel(MeshMixin, GridModel):
                 connectivity=connectivity,
                 all_touched=all_touched,
                 reset_mask=reset_mask,
+                # logger=self.logger,
             )
             self.set_grid(da_mask, name="msk")
-
+            # update config
             if "mskfile" not in self.config:
                 self.config.update({"mskfile": "sfincs.msk"})
             if "indexfile" not in self.config:
                 self.config.update({"indexfile": "sfincs.ind"})
+            # update region
+            self.logger.info(f"Derive region geometry based on active cells.")
+            region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
+            self.set_geoms(region, "region")
 
         return da_mask
 
@@ -328,9 +333,34 @@ class SfincsModel(MeshMixin, GridModel):
     ):
         pass
 
+    def setup_grid_from_region(
+        region: dict,
+        res: float,
+        crs: Union[str, int] = 'utm',
+        grid_type: str = "regular",
+        gdf_refinment: str=None,
+        hydrography_fn: str = "merit_hydro",
+        basin_index_fn: str = "merit_hydro_index",
+    ):
+        self.setup_region(
+            region = region,
+            hydrography_fn = hydrography_fn,
+            basin_index_fn = basin_index_fn,
+        )
+        # get pyproj crs of best UTM zone if crs=utm
+        pyproj_crs = hydromt.gis_utils.parse_crs(crs, self.region.to_crs(4326).total_bounds)
+        if self.region.crs != pyproj_crs:
+            self.geoms['region'] = self.geoms['region'].to_crs(pyproj_crs)
+
+        self.create_grid_from_region(
+            region = self.region,
+            res = res,
+            grid_tryp=grid_type,
+        )
+
     def setup_grid(
         self,
-        **kwargs,
+        x0:int,
     ):
         if self.region:
             if "res" not in kwargs:
@@ -574,15 +604,15 @@ class SfincsModel(MeshMixin, GridModel):
             # logger=self.logger,
         )
 
-        n = np.count_nonzero(da_mask.values)
-        self.logger.debug(f"Mask with {n:d} active cells set; updating grid ...")
-        # update all grid layers
-        for name in self._grid.raster.vars:
-            da = self._grid[name]
-            self._grid[name] = da.where(da_mask, da.raster.nodata)
+        # n = np.count_nonzero(da_mask.values)
+        # self.logger.debug(f"Mask with {n:d} active cells set; updating grid ...")
+        # # update all grid layers
+        # for name in self._grid.raster.vars:
+        #     da = self._grid[name]
+        #     self._grid[name] = da.where(da_mask, da.raster.nodata)
         # update sfincs mask with boolean mask to conserve mask values
-        da_mask = self.mask.where(da_mask, np.uint8(0))  # unint8 dtype!
-        self.set_grid(da_mask, "msk")
+        # da_mask = self.mask.where(da_mask, np.uint8(0))  # unint8 dtype!
+        # self.set_grid(da_mask, "msk")
 
         self.logger.debug(f"Derive region geometry based on active cells.")
         region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
