@@ -159,14 +159,14 @@ class SfincsModel(MeshMixin, GridModel):
             x0=x0, y0=y0, dx=dx, dy=dy, nmax=nmax, mmax=mmax, rotation=rotation, crs=crs
         )
         self.update_grid_from_config()
-        # TODO gdf_refinment for quadtree
+        # TODO gdf_refinement for quadtree
 
     def create_grid_from_region(
         self,
         gdf_region: gpd.GeoDataFrame,
         res: float,
         grid_type: str = "regular",
-        gdf_refinment: gpd.GeoDataFrame = None,
+        gdf_refinement: gpd.GeoDataFrame = None,
     ):
         west, south, east, north = gdf_region.total_bounds
         mmax = int(np.ceil((east - west) / res))
@@ -181,7 +181,7 @@ class SfincsModel(MeshMixin, GridModel):
             nmax=nmax,
             mmax=mmax,
             grid_type=grid_type,
-            gdf_refinment=gdf_refinment,
+            gdf_refinement=gdf_refinement,
         )
 
     def create_dep(
@@ -354,25 +354,27 @@ class SfincsModel(MeshMixin, GridModel):
         self,
         region: dict,
         res: float,
-        crs: Union[str, int] = 'utm',
+        crs: Union[str, int] = "utm",
         grid_type: str = "regular",
         refinement_fn: str = None,
         hydrography_fn: str = "merit_hydro",
         basin_index_fn: str = "merit_hydro_index",
     ):
         self.setup_region(
-            region = region,
-            hydrography_fn = hydrography_fn,
-            basin_index_fn = basin_index_fn,
+            region=region,
+            hydrography_fn=hydrography_fn,
+            basin_index_fn=basin_index_fn,
         )
         # get pyproj crs of best UTM zone if crs=utm
-        pyproj_crs = hydromt.gis_utils.parse_crs(crs, self.region.to_crs(4326).total_bounds)
+        pyproj_crs = hydromt.gis_utils.parse_crs(
+            crs, self.region.to_crs(4326).total_bounds
+        )
         if self.region.crs != pyproj_crs:
-            self.geoms['region'] = self.geoms['region'].to_crs(pyproj_crs)
+            self.geoms["region"] = self.geoms["region"].to_crs(pyproj_crs)
 
         self.create_grid_from_region(
-            region = self.region,
-            res = res,
+            region=self.region,
+            res=res,
             grid_type=grid_type,
         )
 
@@ -395,7 +397,18 @@ class SfincsModel(MeshMixin, GridModel):
         else:
             grid_type = "regular"
             gdf_refinement = None
-        self.create_grid(x0=x0, y0=y0, dx=dx, dy=dy, nmax=nmax, mmax=mmax, rotation=rotation, crs=crs, grid_type=grid_type, gdf_refinement=gdf_refinement )
+        self.create_grid(
+            x0=x0,
+            y0=y0,
+            dx=dx,
+            dy=dy,
+            nmax=nmax,
+            mmax=mmax,
+            rotation=rotation,
+            crs=crs,
+            grid_type=grid_type,
+            gdf_refinement=gdf_refinement,
+        )
 
     def setup_dep(
         self,
@@ -443,35 +456,38 @@ class SfincsModel(MeshMixin, GridModel):
         for offset_fn in offset:
             if isinstance(offset_fn, str):
                 da_offset = self.data_catalog.get_rasterdataset(
-                    offset_fn, geom=self.region, buffer=20,
+                    offset_fn,
+                    geom=self.region,
+                    buffer=20,
                 )
             elif isinstance(offset_fn, float):
                 da_offset = offset_fn
             else:
-                da_offset = None    
-            da_offset_lst.append(da_offset)       
+                da_offset = None
+            da_offset_lst.append(da_offset)
 
         # read geodataframes
         gdf_valid_lst = []
         for gdf_fn in gdf_valid_fns:
             if gdf_fn is not None:
                 gdf_valid = self.data_catalog.get_geodataframe(
-                    path_or_key=gdf_fn, geom=self.region,
+                    path_or_key=gdf_fn,
+                    geom=self.region,
                 )
             else:
                 gdf_valid = None
             gdf_valid_lst.append(gdf_valid)
 
         self.create_dep(
-            da_list=da_elv_lst,         
-            offset = da_offset_lst if da_offset_lst else None,
-            min_valid = min_valid,
-            max_valid = max_valid,
-            gdf_valid = gdf_valid_lst if gdf_valid_lst else None,
-            reproj_method = reproj_method,
-            buffer_cells = buffer_cells,
-            interp_method = interp_method,
-            merge_method = merge_method,
+            da_list=da_elv_lst,
+            offset=da_offset_lst if da_offset_lst else None,
+            min_valid=min_valid,
+            max_valid=max_valid,
+            gdf_valid=gdf_valid_lst if gdf_valid_lst else None,
+            reproj_method=reproj_method,
+            buffer_cells=buffer_cells,
+            interp_method=interp_method,
+            merge_method=merge_method,
             logger=self.logger,
         )
 
