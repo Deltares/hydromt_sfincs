@@ -2,18 +2,19 @@ from affine import Affine
 import geopandas as gpd
 import numpy as np
 import math
+import os
 from pathlib import Path
 from pyproj import CRS
-from typing import Union, Optional, List, Dict
+from typing import Union, Optional, List, Dict, Tuple
 from scipy import ndimage
 import xarray as xr
 import logging
 
 from pyflwdir.regions import region_area
 from .sfincs_input import SfincsInput
+from . import workflows
 
 logger = logging.getLogger(__name__)
-
 
 class RegularGrid:
     def __init__(self, x0, y0, dx, dy, nmax, mmax, crs=None, rotation=0):
@@ -374,3 +375,197 @@ class RegularGrid:
             attrs={"_FillValue": mv},
         )
         return da
+
+    def create_subgrid(
+        self,
+        da_mask: xr.DataArray,
+        da_dep_lst: List[dict],
+        da_manning_lst: List[dict] = [],
+        nbins: int = 10,
+        nr_subgrid_pixels: int = 20,
+        nrmax: int = 2000,  # blocksize
+        max_gradient: float = 5.0,
+        zmin: float = -99999.0,
+        manning_land: float = 0.04,
+        manning_sea: float = 0.02,
+        rgh_lev_land: float = 0.0,
+        highres_dir=None,
+    ) -> xr.Dataset:
+        #TODO add buffer cells
+        refi = nr_subgrid_pixels
+        # create empty subgrid dataset based on mask dataarray and nbins
+        height, width = da_mask.raster.shape
+        x_dim, y_dim = da_mask.raster.x_dim, da_mask.raster.y_dim
+        ds_sbg = xr.Dataset(coords={"bins": np.arange(nbins), **da_mask.raster.coords})
+        # 2D arrays
+        for name in [
+            "z_zmin",
+            "z_zmax",
+            "z_zmin",
+            "z_zmean",
+            "z_volmax",
+            "u_zmin",
+            "u_zmax",
+            "v_zmin",
+            "v_zmax",
+        ]:
+            ds_sbg[name] = xr.Variable(
+                (y_dim, x_dim), np.empty((height, width), dtype=np.float32)
+            )
+        # 3D arrays
+        for name in ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]:
+            ds_sbg[name] = xr.Variable(
+                ("bins", y_dim, x_dim), np.empty((nbins, height, width), dtype=np.float32)
+            )
+
+        dx, dy = da_mask.raster.res  # cell size
+        dxp = dx / refi  # size of subgrid pixel
+        dyp = dy / refi  # size of subgrid pixel
+
+        # Compute pixel size in metres
+        # if da_mask.raster.crs.is_geographic:
+        #     ygc = yg[nn : nn + refi, mm : mm + refi] # FIXME
+        #     mean_lat =np.abs(np.mean(ygc))
+        #     dxpm = dxp*111111.0*np.cos(np.pi*mean_lat/180.0)
+        #     dypm = dyp*111111.0
+        # else:
+        dxpm = dxp
+        dypm = dyp
+
+        nrcb = int(np.floor(nrmax / refi))  # nr of regular cells in a block
+        nrbn = int(np.ceil(height / nrcb))  # nr of blocks in n direction
+        nrbm = int(np.ceil(width / nrcb))  # nr of blocks in m direction
+        ## Loop through blocks
+        ib = 0
+        for ii in range(nrbm):  # col
+            for jj in range(nrbn):  # row
+                ib += 1
+                print(f"tile {ib}/{nrbn*nrbm}")
+                # slices of first block (cell level)
+                yslice = slice(jj * nrcb, (jj + 1) * nrcb)
+                xslice = slice(ii * nrcb, (ii + 1) * nrcb)
+                da_mask_block = da_mask.isel({x_dim: xslice, y_dim: yslice})
+                ds_sbg_block = ds_sbg.isel({x_dim: xslice, y_dim: yslice})
+
+                # calculate transform and shape of block at cell and subgrid level
+                transform = da_mask_block.raster.transform
+                reproj_kwargs = dict(
+                    dst_crs=da_mask.raster.crs,
+                    dst_transform=transform * transform.scale(1 / refi),
+                    dst_width=(da_mask_block.raster.width + 1) * refi,  # add 1 cell overlap
+                    dst_height=(da_mask_block.raster.height + 1) * refi,
+                )
+
+                # get subgrid bathymetry tile
+                da_dep = workflows.merge_multi_dataarrays(
+                    da_list=da_dep_lst,
+                    reproj_kwargs=reproj_kwargs,
+                    merge_method="first",
+                    interp_method="linear",
+                )
+                # TODO what to do with remaining cell with nan values
+                # da_dep = da_dep.fillna(value)
+                assert np.all(~np.isnan(da_dep))
+
+                # get subgrid manning roughness tile
+                if len(da_manning_lst) > 0:
+                    da_man = workflows.merge_multi_dataarrays(
+                        da_list=da_manning_lst,
+                        reproj_kwargs=reproj_kwargs,
+                        merge_method="first",
+                        interp_method="linear",
+                    )
+
+                else:
+                    da_man = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
+                assert np.all(~np.isnan(da_man))
+
+                # optional write tile to file
+                # TODO also write manning tiles?
+                # NOTE tiles have overlap!
+                if highres_dir:
+                    fn_dep_tile = os.path.join(highres_dir, f"dep{ib:05d}.tif")
+                    da_dep.raster.to_raster(fn_dep_tile, compress="deflate")
+
+                # compute subgrid tables for tile and update subgrid dataset
+                assert da_dep.shape == da_man.shape
+                subgrid_tile(
+                    ds_sbg=ds_sbg_block,  # updates ds_sbg in place
+                    da_dep=da_dep,
+                    da_man=da_man,
+                    da_mask=da_mask_block,
+                    res=(dxpm, dypm),
+                    refi=refi,
+                    zmin=zmin,
+                    max_gradient=max_gradient,
+                )
+
+        return ds_sbg
+
+def subgrid_tile(
+    ds_sbg: xr.Dataset,  # updated inplace!
+    da_dep: xr.DataArray,  # subgrid 2050x2050
+    da_man: xr.DataArray,  # subgrid 2050x2050
+    da_mask: xr.DataArray,  # computational grid 20x20
+    res: Tuple[float] = (1.0, 1.0),  # subgrid resolution [m]
+    refi: int = 100,  # subgrid pixels per computational cell
+    zmin: float = -20.0,  #
+    max_gradient: float = 5.0,  #
+):
+    # TODO make docstring
+    nbins = ds_sbg["bins"].size
+    dxpm, dypm = res
+
+    count = 0
+    for n in range(da_mask.shape[0]):  # row
+        for m in range(da_mask.shape[1]):  # col
+            print(count)
+            count += 1
+            if da_mask[n, m] < 1:  # Not an active point
+                continue
+
+            # First the volumes in the cells
+            nslice = slice(n * refi, (n + 1) * refi)
+            mslice = slice(m * refi, (m + 1) * refi)
+            zv = da_dep[nslice, mslice].values.flatten()
+            if not np.all(~np.isnan(zv)):
+                print(zv)
+            z, v, zmin, zmax, zmean = workflows.subgrid_v_table(
+                zv, dxpm, dypm, nbins, zmin, max_gradient
+            )
+            ds_sbg["z_zmin"][n, m] = zmin
+            ds_sbg["z_zmax"][n, m] = zmax
+            ds_sbg["z_zmean"][n, m] = zmean
+            ds_sbg["z_volmax"][n, m] = v[-1]
+            ds_sbg["z_depth"][:, n, m] = z[1:]
+
+            # Now the U/V points
+            # U
+            nslice_u = slice(n * refi, (n + 1) * refi)
+            mslice_u = slice(int((m + 0.5) * refi), int((m + 1.5) * refi))
+            zv = da_dep[nslice_u, mslice_u].values.transpose().flatten()
+            rv = da_man[nslice_u, mslice_u].values.transpose().flatten()
+            assert rv.size == zv.size
+            if not (np.all(~np.isnan(zv)) and np.all(~np.isnan(rv))):
+                print(zv)
+            zmin, zmax, hrep, navg, zz = workflows.subgrid_q_table(zv, rv, nbins)
+            ds_sbg["u_zmin"][n, m] = zmin
+            ds_sbg["u_zmax"][n, m] = zmax
+            ds_sbg["u_hrep"][:, n, m] = hrep
+            ds_sbg["u_navg"][:, n, m] = navg
+
+            # V
+            nslice_v = slice(int((n + 0.5) * refi), int((n + 1.5) * refi))
+            mslice_v = slice(m * refi, (m + 1) * refi)
+            zv = da_dep[nslice_v, mslice_v].values.flatten()
+            rv = da_man[nslice_v, mslice_v].values.flatten()
+            assert rv.size == zv.size
+            if not (np.all(~np.isnan(zv)) and np.all(~np.isnan(rv))):
+                print(zv)
+            zmin, zmax, hrep, navg, zz = workflows.subgrid_q_table(zv, rv, nbins)
+            ds_sbg["v_zmin"][n, m] = zmin
+            ds_sbg["v_zmax"][n, m] = zmax
+            ds_sbg["v_hrep"][:, n, m] = hrep
+            ds_sbg["v_navg"][:, n, m] = navg
+
+    return ds_sbg        

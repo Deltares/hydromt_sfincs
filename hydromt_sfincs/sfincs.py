@@ -161,6 +161,38 @@ class SfincsModel(MeshMixin, GridModel):
         self.update_grid_from_config()
         # TODO gdf_refinement for quadtree
 
+    def setup_grid(
+        self,
+        x0: float,
+        y0: float,
+        dx: float,
+        dy: float,
+        nmax: int,
+        mmax: int,
+        rotation: float,
+        crs: int,
+        refinement_fn: str = None,
+    ):
+
+        if refinement_fn is not None:
+            grid_type = "quadtree"
+            # gdf_refinement = gpd.read_file()
+        else:
+            grid_type = "regular"
+            gdf_refinement = None
+        self.create_grid(
+            x0=x0,
+            y0=y0,
+            dx=dx,
+            dy=dy,
+            nmax=nmax,
+            mmax=mmax,
+            rotation=rotation,
+            crs=crs,
+            grid_type=grid_type,
+            gdf_refinement=gdf_refinement,
+        )
+
     def create_grid_from_region(
         self,
         gdf_region: gpd.GeoDataFrame,
@@ -184,14 +216,37 @@ class SfincsModel(MeshMixin, GridModel):
             gdf_refinement=gdf_refinement,
         )
 
+    def setup_grid_from_region(
+        self,
+        region: dict,
+        res: float,
+        crs: Union[str, int] = "utm",
+        grid_type: str = "regular",
+        refinement_fn: str = None,
+        hydrography_fn: str = "merit_hydro",
+        basin_index_fn: str = "merit_hydro_index",
+    ):
+        self.setup_region(
+            region=region,
+            hydrography_fn=hydrography_fn,
+            basin_index_fn=basin_index_fn,
+        )
+        # get pyproj crs of best UTM zone if crs=utm
+        pyproj_crs = hydromt.gis_utils.parse_crs(
+            crs, self.region.to_crs(4326).total_bounds
+        )
+        if self.region.crs != pyproj_crs:
+            self.geoms["region"] = self.geoms["region"].to_crs(pyproj_crs)
+
+        self.create_grid_from_region(
+            region=self.region,
+            res=res,
+            grid_type=grid_type,
+        )       
+
     def create_dep(
         self,
-        da_list: List[xr.DataArray],
-        offset: List[Union[xr.DataArray, float]] = None,
-        min_valid: List[float] = None,
-        max_valid: List[float] = None,
-        gdf_valid: List[gpd.GeoDataFrame] = None,
-        reproj_method: Union[List[str], str] = "bilinear",
+        da_dep_lst: List[dict],
         buffer_cells: int = 0,  # not in list
         interp_method: str = "linear",  # not in list
         merge_method: str = "first",  # not in list
@@ -199,15 +254,9 @@ class SfincsModel(MeshMixin, GridModel):
     ) -> xr.DataArray:
 
         if self.grid_type == "regular":
-            # I don't think there is a need for this method in ReggularGrid
             da_dep = workflows.merge_multi_dataarrays(
-                da_list=da_list,
+                da_list=da_dep_lst,
                 da_like=self.mask,
-                offset=offset,
-                min_valid=min_valid,
-                max_valid=max_valid,
-                gdf_valid=gdf_valid,
-                reproj_method=reproj_method,
                 buffer_cells=buffer_cells,
                 interp_method=interp_method,
                 merge_method=merge_method,
@@ -216,6 +265,73 @@ class SfincsModel(MeshMixin, GridModel):
             self.set_grid(da_dep, name="dep")
             if "depfile" not in self.config:
                 self.config.update({"depfile": "sfincs.dep"})
+
+    def setup_dep(
+        self,
+        datasets_dep: List[dict],
+        buffer_cells: int = 0,  # not in list
+        interp_method: str = "linear",  # not in list
+        merge_method: str = "first",  # not in list
+    ):
+        """Setup model grid and interpolate topobathy (dep) data to this grid.
+
+        NOTE: This method should be called after `setup_region` but before any other model component.
+
+        The input topobathy dataset is reprojected to the model projected `crs` and
+        resolution `res` using `reproj_method` interpolation.
+
+        Adds model layers:
+
+        * **dep** map: combined elevation/bathymetry [m+ref]
+
+        Parameters
+        ----------
+        topobathy_fn : str
+            Path or data source name for topobathy raster data.
+        res : float
+            Model resolution [m], by default 100 m.
+            If None, the basemaps res is used.
+        """
+
+        da_dep_lst = []
+        # read filenames and convert to xr.DataArrays or gpd.Geodataframes
+        for dataset in datasets_dep:
+            # read in depth datasets; replace da_fn for da
+            dep_fn = dataset.get("dep_fn")
+            da_elv = self.data_catalog.get_rasterdataset(
+                dep_fn, geom=self.region, buffer=20, variables=["elevtn"]
+            )
+            dataset.update({"da": da_elv})
+
+            # read offsets
+            # NOTE offsets can be xr.DataArrays and floats
+            offset = dataset.get("offset", None)
+            if isinstance(offset, str):
+                da_offset = self.data_catalog.get_rasterdataset(
+                    offset,
+                    geom=self.region,
+                    buffer=20,
+                )
+                dataset.update({"offset": da_offset})
+
+            # read geodataframes describing valid areas
+            gdf_valid_fn = dataset.get("gdf_valid_fn", None)
+            if gdf_valid_fn is not None:
+                gdf_valid = self.data_catalog.get_geodataframe(
+                    path_or_key=gdf_valid_fn,
+                    geom=self.region,
+                )
+                dataset.update({"gdf_valid": gdf_valid})
+            
+            da_dep_lst.append(dataset)
+
+        self.create_dep(
+            da_dep_lst=da_dep_lst,
+            buffer_cells=buffer_cells,
+            interp_method=interp_method,
+            merge_method=merge_method,
+            logger=self.logger,
+        )
 
     def create_mask_active(
         self,
@@ -287,318 +403,6 @@ class SfincsModel(MeshMixin, GridModel):
             self.set_geoms(region, "region")
 
         return da_mask
-
-    def create_mask_bounds(
-        self,
-        btype: str = "waterlevel",
-        gdf_include: gpd.GeoDataFrame = None,
-        gdf_exclude: gpd.GeoDataFrame = None,
-        elv_min: float = None,
-        elv_max: float = None,
-        connectivity: int = 8,
-        all_touched: bool = False,
-        reset_bounds: bool = False,
-    ) -> xr.DataArray:
-        """Returns a boolean mask model boundary cells, optionally bounded by several
-        criteria. Boundary cells are defined by cells at the edge of active model domain.
-
-        Parameters
-        ----------
-        btype: {'waterlevel', 'outflow'}
-            Boundary type
-        gdf_include, gdf_exclude: geopandas.GeoDataFrame
-            Geometries with areas to include/exclude from the model boundary.
-            Note that exclude (second last) and include (last) areas are processed after other critera,
-            i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.
-        elv_min, elv_max : float, optional
-            Minimum and maximum elevation thresholds for boundary cells.
-        connectivity: {4, 8}
-            The connectivity used to detect the model edge, if 4 only horizontal and vertical
-            connections are used, if 8 (default) also diagonal connections.
-        all_touched: bool, optional
-            if True (default) include (or exclude) a cell in the mask if it touches any of the
-            include (or exclude) geometries. If False, include a cell only if its center is
-            within one of the shapes, or if it is selected by Bresenham's line algorithm.
-        reset_bounds: bool, optional
-            If True, reset existing boundary cells of the selected boundary
-            type (`btype`) before setting new boundary cells, by default False.
-
-        Returns
-        -------
-        bounds: xr.DataArray
-            Boolean mask of model boundary cells.
-        """
-
-        if self.grid_type == "regular":
-            da_mask = self.reggrid.create_mask_bounds(
-                da_mask=self.grid["msk"],
-                btype=btype,
-                gdf_include=gdf_include,
-                gdf_exclude=gdf_exclude,
-                da_dep=self.grid["dep"] if "dep" in self.grid else None,
-                elv_min=elv_min,
-                elv_max=elv_max,
-                connectivity=connectivity,
-                all_touched=all_touched,
-                reset_bounds=reset_bounds,
-            )
-            self.set_grid(da_mask, name="msk")
-        return da_mask
-
-    def create_subgrid(
-        self,
-    ):
-        pass
-
-    def setup_grid_from_region(
-        self,
-        region: dict,
-        res: float,
-        crs: Union[str, int] = "utm",
-        grid_type: str = "regular",
-        refinement_fn: str = None,
-        hydrography_fn: str = "merit_hydro",
-        basin_index_fn: str = "merit_hydro_index",
-    ):
-        self.setup_region(
-            region=region,
-            hydrography_fn=hydrography_fn,
-            basin_index_fn=basin_index_fn,
-        )
-        # get pyproj crs of best UTM zone if crs=utm
-        pyproj_crs = hydromt.gis_utils.parse_crs(
-            crs, self.region.to_crs(4326).total_bounds
-        )
-        if self.region.crs != pyproj_crs:
-            self.geoms["region"] = self.geoms["region"].to_crs(pyproj_crs)
-
-        self.create_grid_from_region(
-            region=self.region,
-            res=res,
-            grid_type=grid_type,
-        )
-
-    def setup_grid(
-        self,
-        x0: float,
-        y0: float,
-        dx: float,
-        dy: float,
-        nmax: int,
-        mmax: int,
-        rotation: float,
-        crs: int,
-        refinement_fn: str = None,
-    ):
-
-        if refinement_fn is not None:
-            grid_type = "quadtree"
-            # gdf_refinement = gpd.read_file()
-        else:
-            grid_type = "regular"
-            gdf_refinement = None
-        self.create_grid(
-            x0=x0,
-            y0=y0,
-            dx=dx,
-            dy=dy,
-            nmax=nmax,
-            mmax=mmax,
-            rotation=rotation,
-            crs=crs,
-            grid_type=grid_type,
-            gdf_refinement=gdf_refinement,
-        )
-
-    def setup_dep(
-        self,
-        dep_fns: List[Union[str, Path]],
-        offset: List[Union[str, float]] = [],
-        min_valid: List[float] = None,
-        max_valid: List[float] = None,
-        gdf_valid_fns: List[str] = [],
-        reproj_method: Union[List[str], str] = "bilinear",
-        buffer_cells: int = 0,  # not in list
-        interp_method: str = "linear",  # not in list
-        merge_method: str = "first",  # not in list
-    ):
-        """Setup model grid and interpolate topobathy (dep) data to this grid.
-
-        NOTE: This method should be called after `setup_region` but before any other model component.
-
-        The input topobathy dataset is reprojected to the model projected `crs` and
-        resolution `res` using `reproj_method` interpolation.
-
-        Adds model layers:
-
-        * **dep** map: combined elevation/bathymetry [m+ref]
-
-        Parameters
-        ----------
-        topobathy_fn : str
-            Path or data source name for topobathy raster data.
-        res : float
-            Model resolution [m], by default 100 m.
-            If None, the basemaps res is used.
-        """
-
-        # read global data (lazy!)
-        da_elv_lst = []
-        for dep_fn in dep_fns:
-            da_elv = self.data_catalog.get_rasterdataset(
-                dep_fn, geom=self.region, buffer=20, variables=["elevtn"]
-            )
-            da_elv_lst.append(da_elv)
-
-        # read offsets
-        # NOTE offsets can be xr.DataArrays and floats
-        da_offset_lst = []
-        for offset_fn in offset:
-            if isinstance(offset_fn, str):
-                da_offset = self.data_catalog.get_rasterdataset(
-                    offset_fn,
-                    geom=self.region,
-                    buffer=20,
-                )
-            elif isinstance(offset_fn, float):
-                da_offset = offset_fn
-            else:
-                da_offset = None
-            da_offset_lst.append(da_offset)
-
-        # read geodataframes
-        gdf_valid_lst = []
-        for gdf_fn in gdf_valid_fns:
-            if gdf_fn is not None:
-                gdf_valid = self.data_catalog.get_geodataframe(
-                    path_or_key=gdf_fn,
-                    geom=self.region,
-                )
-            else:
-                gdf_valid = None
-            gdf_valid_lst.append(gdf_valid)
-
-        self.create_dep(
-            da_list=da_elv_lst,
-            offset=da_offset_lst if da_offset_lst else None,
-            min_valid=min_valid,
-            max_valid=max_valid,
-            gdf_valid=gdf_valid_lst if gdf_valid_lst else None,
-            reproj_method=reproj_method,
-            buffer_cells=buffer_cells,
-            interp_method=interp_method,
-            merge_method=merge_method,
-            logger=self.logger,
-        )
-
-    def setup_merge_topobathy(
-        self,
-        topobathy_fn,
-        elv_min=None,
-        elv_max=None,
-        mask_fn=None,
-        max_width=0,
-        offset_fn=None,
-        offset_constant=0,
-        merge_buffer=0,
-        merge_method="first",
-        reproj_method="bilinear",
-        interp_method="linear",
-    ):
-        """Updates the existing model topobathy data (dep file) with a new topobathy
-        source within the current model extent.
-
-        By default (`merge_method="first"`) invalid (nodata) cells in the current topobathy
-        data are replaced with values from the new topobathy source.
-
-        Use `offset_fn` for a spatially varying, or `offset_constant` for a spatially uniform
-        offset to convert the vertical datum of the new source before merging.
-
-        Gaps in the data (i.e. areas with nodata cells surrounded areas with valid elevation)
-        are interpolated based on `interp_method`, by deafult 'linear'. Gaps are not
-        interpolated if `interp_method = None`
-
-        Updates model layer:
-
-        * **dep** map: combined elevation/bathymetry [m+ref]
-
-        Parameters
-        ----------
-        topobathy_fn : str, optional
-            Path or data source name for topobathy raster data.
-
-            * Required variables: ['elevtn']
-        mask_fn : str, optional
-            Path or data source name of polygon with valid new topobathy cells.
-        max_width: int, optional
-            Maximum width (number of cells) to append to valid dep cells if larger than
-            zero. By default 0.
-        elv_min, elv_max : float, optional
-            Minimum and maximum elevation caps for new topobathy cells, cells outside
-            this range are linearly interpolated. Note: applied after offset!
-        offset_fn : str, optional
-            Path or data source name for Spatially varying map with difference between
-            the vertical reference of the current model topobathy and the new data source [m].
-            The offset is added to the new source before merging.
-        offset_fn : float, optional
-            Same as `offset_fn` but spatially uniform value [m].
-        merge_buffer : int, optional
-            Buffer (number of cells) around the original (`merge_method = 'first'`)
-            or new (`merge_method = 'last'`) data source where values are interpolated
-            using `interp_method`.
-            Not recommended to use in combination with merge_methods 'min' or 'max'
-        merge_method: {'first','last','min','max'}, optional
-            merge method, by default 'first':
-
-            * first: use valid new where existing invalid
-            * last: use valid new
-            * min: pixel-wise min of existing and new
-            * max: pixel-wise max of existing and new
-        reproj_method: {'bilinear', 'cubic', 'nearest'}
-            Method used to reproject the offset and second dataset to the grid of the
-            new topobathy dataset, by default 'bilinear'
-        interp_method, {'linear', 'nearest', 'rio_idw'}, optional
-            Method used to interpolate holes of nodata in the merged dataset,
-            by default 'linear'. If None holes are not interpolated.
-        """
-        name = "dep"
-        assert name in self.grid
-        da_elv = self.grid[name]
-        geom = self.grid.raster.box
-        da_elv2 = self.data_catalog.get_rasterdataset(
-            topobathy_fn, geom=geom, buffer=10, variables=["elevtn"]
-        )
-        kwargs = dict(
-            reproj_method=reproj_method,
-            interp_method=interp_method,
-            merge_buffer=merge_buffer,
-            merge_method=merge_method,
-            max_width=max_width,
-        )
-        # mask
-        if mask_fn is not None:
-            gdf_mask = self.data_catalog.get_geodataframe(mask_fn)
-            da_elv2 = da_elv2.raster.clip_geom(gdf_mask, mask=True)
-        # offset
-        if offset_fn is not None:
-            # variable name not important, but must be single variable
-            da_offset = self.data_catalog.get_rasterdataset(
-                offset_fn, geom=geom, buffer=10
-            )
-            assert isinstance(da_offset, xr.DataArray)
-            kwargs.update(da_offset=da_offset)
-        elif offset_constant > 0:
-            kwargs.update(da_offset=offset_constant)
-        # merge
-        da_dep_merged = workflows.merge_topobathy(
-            da_elv,
-            da_elv2,
-            elv_min=elv_min,
-            elv_max=elv_max,
-            logger=self.logger,
-            **kwargs,
-        )
-        self.set_grid(data=da_dep_merged.round(2), name=name)
 
     def setup_mask_active(
         self,
@@ -696,6 +500,64 @@ class SfincsModel(MeshMixin, GridModel):
         region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
         self.set_geoms(region, "region")
 
+    def create_mask_bounds(
+        self,
+        btype: str = "waterlevel",
+        gdf_include: gpd.GeoDataFrame = None,
+        gdf_exclude: gpd.GeoDataFrame = None,
+        elv_min: float = None,
+        elv_max: float = None,
+        connectivity: int = 8,
+        all_touched: bool = False,
+        reset_bounds: bool = False,
+    ) -> xr.DataArray:
+        """Returns a boolean mask model boundary cells, optionally bounded by several
+        criteria. Boundary cells are defined by cells at the edge of active model domain.
+
+        Parameters
+        ----------
+        btype: {'waterlevel', 'outflow'}
+            Boundary type
+        gdf_include, gdf_exclude: geopandas.GeoDataFrame
+            Geometries with areas to include/exclude from the model boundary.
+            Note that exclude (second last) and include (last) areas are processed after other critera,
+            i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.
+        elv_min, elv_max : float, optional
+            Minimum and maximum elevation thresholds for boundary cells.
+        connectivity: {4, 8}
+            The connectivity used to detect the model edge, if 4 only horizontal and vertical
+            connections are used, if 8 (default) also diagonal connections.
+        all_touched: bool, optional
+            if True (default) include (or exclude) a cell in the mask if it touches any of the
+            include (or exclude) geometries. If False, include a cell only if its center is
+            within one of the shapes, or if it is selected by Bresenham's line algorithm.
+        reset_bounds: bool, optional
+            If True, reset existing boundary cells of the selected boundary
+            type (`btype`) before setting new boundary cells, by default False.
+
+        Returns
+        -------
+        bounds: xr.DataArray
+            Boolean mask of model boundary cells.
+        """
+
+        if self.grid_type == "regular":
+            da_mask = self.reggrid.create_mask_bounds(
+                da_mask=self.grid["msk"],
+                btype=btype,
+                gdf_include=gdf_include,
+                gdf_exclude=gdf_exclude,
+                da_dep=self.grid["dep"] if "dep" in self.grid else None,
+                elv_min=elv_min,
+                elv_max=elv_max,
+                connectivity=connectivity,
+                all_touched=all_touched,
+                reset_bounds=reset_bounds,
+            )
+            self.set_grid(da_mask, name="msk")
+
+        return da_mask
+
     def setup_mask_bounds(
         self,
         btype="waterlevel",
@@ -766,6 +628,117 @@ class SfincsModel(MeshMixin, GridModel):
         )
 
         self.set_grid(da_mask, "msk")
+
+    def create_subgrid(
+        self,
+        da_dep_lst: List[dict],
+        da_manning_lst: List[dict] = [],
+        nbins: int = 10,
+        nr_subgrid_pixels: int = 20,
+        nrmax: int = 2000,  # blocksize
+        max_gradient: float = 5.0,
+        zmin: float = -99999.0,
+        manning_land: float = 0.04,
+        manning_sea: float = 0.02,
+        rgh_lev_land: float = 0.0,
+        highres_dir=None,
+    ) -> xr.Dataset:
+
+        if self.grid_type == "regular":
+            self.subgrid = self.reggrid.create_subgrid(
+                da_mask = self.mask,
+                da_dep_lst = da_dep_lst,
+                da_manning_lst = da_manning_lst,
+                nbins = nbins,
+                nr_subgrid_pixels = nr_subgrid_pixels,
+                nrmax = nrmax,
+                max_gradient = max_gradient,
+                zmin = zmin,
+                manning_land = manning_land,
+                manning_sea = manning_sea,
+                rgh_lev_land = rgh_lev_land,
+                highres_dir = highres_dir,
+            )
+        if "sbgfile" not in self.config:
+            self.config.update({"sbgfile": "sfincs.sbg"})
+
+    def setup_subgrid(
+        self,
+        datasets_dep: List[dict],
+        datasets_rgh: List[dict] = [],
+        nbins: int = 10,
+        nr_subgrid_pixels: int = 20,
+        nrmax: int = 2000,  # blocksize
+        max_gradient: float = 5.0,
+        zmin: float = -99999.0,
+        manning_land: float = 0.04,
+        manning_sea: float = 0.02,
+        rgh_lev_land: float = 0.0,
+        highres_dir=None,
+    ):
+        da_dep_lst = []
+        # read filenames and convert to xr.DataArrays or gpd.Geodataframes
+        # TODO _parse_datasets_dep to internal function
+        for dataset in datasets_dep:
+            # read in depth datasets; replace da_fn for da
+            dep_fn = dataset.get("dep_fn")
+            da_elv = self.data_catalog.get_rasterdataset(
+                dep_fn, geom=self.region, buffer=20, variables=["elevtn"]
+            )
+            dataset.update({"da": da_elv})
+
+            # read offsets
+            # NOTE offsets can be xr.DataArrays and floats
+            offset = dataset.get("offset", None)
+            if isinstance(offset, str):
+                da_offset = self.data_catalog.get_rasterdataset(
+                    offset,
+                    geom=self.region,
+                    buffer=20,
+                )
+                dataset.update({"offset": da_offset})
+
+            # read geodataframes describing valid areas
+            gdf_valid_fn = dataset.get("gdf_valid_fn", None)
+            if gdf_valid_fn is not None:
+                gdf_valid = self.data_catalog.get_geodataframe(
+                    path_or_key=gdf_valid_fn,
+                    geom=self.region,
+                )
+                dataset.update({"gdf_valid": gdf_valid})
+            
+            da_dep_lst.append(dataset)
+
+        da_manning_lst = []
+        if len(datasets_rgh) > 0:
+            for dataset in datasets_rgh:
+                pass
+                # read in depth datasets; replace da_fn for da
+                # da_fn = dataset.get("da_fn")
+                # da_lulc = self.data_catalog.get_rasterdataset(
+                #     da_fn, geom=self.region, buffer=10, variables=["lulc"]
+                # )
+                # reproject and reclassify
+                # TODO move to create!
+                # df_map = self.data_catalog.get_dataframe(map_fn)
+                # da_lulc.raster.reclassify(df_map)
+                # dataset.update({"da": da_man})
+
+                # da_manning_lst.append(dataset)    
+
+        self.create_subgrid(
+            da_dep_lst = da_dep_lst,
+            da_manning_lst = da_manning_lst,
+            nbins = nbins,
+            nr_subgrid_pixels = nr_subgrid_pixels,
+            nrmax = nrmax,
+            max_gradient = max_gradient,
+            zmin = zmin,
+            manning_land = manning_land,
+            manning_sea = manning_sea,
+            rgh_lev_land = rgh_lev_land,
+            highres_dir = highres_dir,
+        )    
 
     def setup_river_hydrography(self, hydrography_fn=None, adjust_dem=False, **kwargs):
         """Setup hydrography layers for flow directions ("flwdir") and upstream area

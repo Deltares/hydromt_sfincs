@@ -13,13 +13,8 @@ __all__ = ["merge_multi_dataarrays", "merge_dataarrays"]
 
 
 def merge_multi_dataarrays(
-    da_list: List[xr.DataArray],
+    da_list: List[dict],
     da_like: xr.DataArray = None,
-    offset: List[Union[xr.DataArray, float]] = None,
-    min_valid: List[float] = None,
-    max_valid: List[float] = None,
-    gdf_valid: List[gpd.GeoDataFrame] = None,
-    reproj_method: Union[List[str], str] = "bilinear",
     reproj_kwargs: Dict = {},
     buffer_cells: int = 0,  # not in list
     interp_method: str = "linear",  # not in list
@@ -33,8 +28,8 @@ def merge_multi_dataarrays(
 
     Parameters
     ----------
-    da_list : List[xr.DataArray]
-        list of data arrays to merge
+    da_list : List[dict]
+        list of dicts with xr.DataArrays and optional merge arguments
     da_like : xr.Dataarray, optional
         Destination grid, by default None.
         If provided the output data is projected to this grid, otherwise to the first input grid.
@@ -42,22 +37,17 @@ def merge_multi_dataarrays(
     Returns
     -------
     xr.DataArray
-        merge data array
+        merged data array
     """
 
-    def list_get(lst: List, i: int, fallback: Any = None) -> Any:
-        if not isinstance(lst, list):
-            lst = [lst]
-        return (lst + [fallback] * i)[i]
-
     # start with common grid
-    method = list_get(reproj_method, 0, "bilinear")
+    method = da_list[0].get("reproj_method", "bilinear")
     if da_like is not None:  # reproject first raster to destination grid
-        da1 = da_list[0].raster.reproject_like(da_like, method=method)
+        da1 = da_list[0].get("da").raster.reproject_like(da_like, method=method)
     elif reproj_kwargs:
-        da1 = da_list[0].raster.reproject(method=method, **reproj_kwargs)
+        da1 = da_list[0].get("da").raster.reproject(method=method, **reproj_kwargs)
     else:  # start with first raster as destination grid
-        da1 = da_list[0]
+        da1 = da_list[0].get("da")
 
     # set nodata to np.nan, Note this might change the dtype to float
     da1 = da1.raster.mask_nodata()
@@ -65,10 +55,10 @@ def merge_multi_dataarrays(
     # get valid cells of first dataset
     da1 = _add_offset_mask_invalid(
         da1,
-        offset=list_get(offset, 0),
-        min_valid=list_get(min_valid, 0),
-        max_valid=list_get(max_valid, 0),
-        gdf_valid=list_get(gdf_valid, 0),
+        offset=da_list[0].get("offset", None),
+        min_valid=da_list[0].get("min_valid", None),
+        max_valid=da_list[0].get("max_valid", None),
+        gdf_valid=da_list[0].get("gdf_valid", None),
         reproj_method="bilinear",  # always bilinear!
     )
 
@@ -78,12 +68,12 @@ def merge_multi_dataarrays(
             break
         da1 = merge_dataarrays(
             da1,
-            da2,
-            offset=list_get(offset, i + 1),
-            min_valid=list_get(min_valid, i + 1),
-            max_valid=list_get(max_valid, i + 1),
-            gdf_valid=list_get(gdf_valid, i + 1),
-            reproj_method=list_get(reproj_method, i + 1, "bilinear"),
+            da2=da_list[i+1].get("da"),
+            offset=da_list[i+1].get("offset", None),
+            min_valid=da_list[i+1].get("min_valid", None),
+            max_valid=da_list[i+1].get("max_valid", None),
+            gdf_valid=da_list[i+1].get("gdf_valid", None),
+            reproj_method=da_list[i+1].get("reproj_method", "bilinear"),
             buffer_cells=buffer_cells,
             merge_method=merge_method,
             interp_method=interp_method,
