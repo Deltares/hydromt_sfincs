@@ -49,6 +49,9 @@ class SubgridTableRegular:
 
     def save(self, file_name, mask):
 
+        if isinstance(mask, xr.DataArray):
+            mask = mask.values
+
         iok = np.where(np.transpose(mask) > 0)
         iok = (iok[1], iok[0])
 
@@ -65,7 +68,6 @@ class SubgridTableRegular:
 
         # Z
         v = self.z_zmin[iok]
-        print(np.shape(v))
         file.write(np.float32(v))
         v = self.z_zmax[iok]
         file.write(np.float32(v))
@@ -130,23 +132,23 @@ class SubgridTableRegular:
         x_dim, y_dim = da_mask.raster.x_dim, da_mask.raster.y_dim
 
         # Z points
-        self.z_zmin = np.empty(grid_dim, dtype=float)
-        self.z_zmax = np.empty(grid_dim, dtype=float)
-        self.z_zmean = np.empty(grid_dim, dtype=float)
-        self.z_volmax = np.empty(grid_dim, dtype=float)
-        self.z_depth = np.empty((nbins, *grid_dim), dtype=float)
+        self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.z_depth = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
 
         # U points
-        self.u_zmin = np.empty(grid_dim, dtype=float)
-        self.u_zmax = np.empty(grid_dim, dtype=float)
-        self.u_hrep = np.empty((nbins, *grid_dim), dtype=float)
-        self.u_navg = np.empty((nbins, *grid_dim), dtype=float)
+        self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.u_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
+        self.u_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
 
         # V points
-        self.v_zmin = np.empty(grid_dim, dtype=float)
-        self.v_zmax = np.empty(grid_dim, dtype=float)
-        self.v_hrep = np.empty((nbins, *grid_dim), dtype=float)
-        self.v_navg = np.empty((nbins, *grid_dim), dtype=float)
+        self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.v_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
+        self.v_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
 
         n0 = 0
         n1 = (
@@ -318,6 +320,8 @@ class SubgridTableRegular:
 
     def to_xarray(self, dims, coords):
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})
+        ds_sbg.attrs.update({"_FillValue": np.nan})
+
         zlst2 = ["z_zmin", "z_zmax", "z_zmin", "z_zmean", "z_volmax"]
         uvlst2 = ["u_zmin", "u_zmax", "v_zmin", "v_zmax"]
         lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]

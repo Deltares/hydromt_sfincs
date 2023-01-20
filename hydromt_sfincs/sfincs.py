@@ -293,37 +293,7 @@ class SfincsModel(MeshMixin, GridModel):
             If None, the basemaps res is used.
         """
 
-        da_dep_lst = []
-        # read filenames and convert to xr.DataArrays or gpd.Geodataframes
-        for dataset in datasets_dep:
-            # read in depth datasets; replace da_fn for da
-            dep_fn = dataset.get("dep_fn")
-            da_elv = self.data_catalog.get_rasterdataset(
-                dep_fn, geom=self.region, buffer=20, variables=["elevtn"]
-            )
-            dataset.update({"da": da_elv})
-
-            # read offsets
-            # NOTE offsets can be xr.DataArrays and floats
-            offset = dataset.get("offset", None)
-            if isinstance(offset, str):
-                da_offset = self.data_catalog.get_rasterdataset(
-                    offset,
-                    geom=self.region,
-                    buffer=20,
-                )
-                dataset.update({"offset": da_offset})
-
-            # read geodataframes describing valid areas
-            gdf_valid_fn = dataset.get("gdf_valid_fn", None)
-            if gdf_valid_fn is not None:
-                gdf_valid = self.data_catalog.get_geodataframe(
-                    path_or_key=gdf_valid_fn,
-                    geom=self.region,
-                )
-                dataset.update({"gdf_valid": gdf_valid})
-
-            da_dep_lst.append(dataset)
+        da_dep_lst = self._parse_datasets_dep(datasets_dep)
 
         self.create_dep(
             da_dep_lst=da_dep_lst,
@@ -466,11 +436,22 @@ class SfincsModel(MeshMixin, GridModel):
         gdf1, gdf2 = None, None
         bbox = self.region.to_crs(4326).total_bounds
         if include_mask_fn is not None:
-            gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
+            if include_mask_fn.endswith(".pol"):
+                # NOTE polygons should be in same CRS as model
+                gdf1 = utils.polygon2gdf(
+                    feats=utils.read_geoms(fn=include_mask_fn), crs=self.region.crs
+                )
+            else:
+                gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
             if mask_buffer > 0:  # NOTE assumes model in projected CRS!
                 gdf1["geometry"] = gdf1.to_crs(self.crs).buffer(mask_buffer)
         if exclude_mask_fn is not None:
-            gdf2 = self.data_catalog.get_geodataframe(exclude_mask_fn, bbox=bbox)
+            if exclude_mask_fn.endswith(".pol"):
+                gdf2 = utils.polygon2gdf(
+                    feats=utils.read_geoms(fn=exclude_mask_fn), crs=self.region.crs
+                )
+            else:
+                gdf2 = self.data_catalog.get_geodataframe(exclude_mask_fn, bbox=bbox)
 
         # get mask
         da_mask = self.create_mask_active(
@@ -561,8 +542,8 @@ class SfincsModel(MeshMixin, GridModel):
     def setup_mask_bounds(
         self,
         btype="waterlevel",
-        include_mask_fn=None,
-        exclude_mask_fn=None,
+        include_fn=None,
+        exclude_fn=None,
         elv_min=None,
         elv_max=None,
         connectivity=8,
@@ -601,20 +582,25 @@ class SfincsModel(MeshMixin, GridModel):
             The connectivity used to detect the model edge, if 4 only horizontal and vertical
             connections are used, if 8 (default) also diagonal connections.
         """
-        btype = btype.lower()
-        bvalues = {"waterlevel": 2, "outflow": 3}
-        if btype not in bvalues:
-            raise ValueError('btype must be one of "waterlevel", "outflow"')
-        bvalue = bvalues[btype]
 
         # get include / exclude geometries
         gdf_include, gdf_exclude = None, None
         bbox = self.region.to_crs(4326).total_bounds
 
-        if include_mask_fn:
-            gdf_include = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
-        if exclude_mask_fn:
-            gdf_exclude = self.data_catalog.get_geodataframe(exclude_mask_fn, bbox=bbox)
+        if include_fn:
+            if include_fn.endswith(".pol"):
+                gdf_include = utils.polygon2gdf(
+                    feats=utils.read_geoms(fn=include_fn), crs=self.region.crs
+                )
+            else:
+                gdf_include = self.data_catalog.get_geodataframe(include_fn, bbox=bbox)
+        if exclude_fn:
+            if exclude_fn.endswith(".pol"):
+                gdf_exclude = utils.polygon2gdf(
+                    feats=utils.read_geoms(fn=exclude_fn), crs=self.region.crs
+                )
+            else:
+                gdf_exclude = self.data_catalog.get_geodataframe(exclude_fn, bbox=bbox)
 
         # mask values
         da_mask = self.create_mask_bounds(
@@ -678,55 +664,14 @@ class SfincsModel(MeshMixin, GridModel):
         rgh_lev_land: float = 0.0,
         highres_dir=None,
     ):
-        da_dep_lst = []
-        # read filenames and convert to xr.DataArrays or gpd.Geodataframes
-        # TODO _parse_datasets_dep to internal function
-        for dataset in datasets_dep:
-            # read in depth datasets; replace da_fn for da
-            dep_fn = dataset.get("dep_fn")
-            da_elv = self.data_catalog.get_rasterdataset(
-                dep_fn, geom=self.region, buffer=20, variables=["elevtn"]
-            )
-            dataset.update({"da": da_elv})
 
-            # read offsets
-            # NOTE offsets can be xr.DataArrays and floats
-            offset = dataset.get("offset", None)
-            if isinstance(offset, str):
-                da_offset = self.data_catalog.get_rasterdataset(
-                    offset,
-                    geom=self.region,
-                    buffer=20,
-                )
-                dataset.update({"offset": da_offset})
+        da_dep_lst = self._parse_datasets_dep(datasets_dep)
 
-            # read geodataframes describing valid areas
-            gdf_valid_fn = dataset.get("gdf_valid_fn", None)
-            if gdf_valid_fn is not None:
-                gdf_valid = self.data_catalog.get_geodataframe(
-                    path_or_key=gdf_valid_fn,
-                    geom=self.region,
-                )
-                dataset.update({"gdf_valid": gdf_valid})
-
-            da_dep_lst.append(dataset)
-
-        da_manning_lst = []
         if len(datasets_rgh) > 0:
-            for dataset in datasets_rgh:
-                pass
-                # read in depth datasets; replace da_fn for da
-                # da_fn = dataset.get("da_fn")
-                # da_lulc = self.data_catalog.get_rasterdataset(
-                #     da_fn, geom=self.region, buffer=10, variables=["lulc"]
-                # )
-                # reproject and reclassify
-                # TODO move to create!
-                # df_map = self.data_catalog.get_dataframe(map_fn)
-                # da_lulc.raster.reclassify(df_map)
-                # dataset.update({"da": da_man})
-
-                # da_manning_lst.append(dataset)
+            # NOTE conversion from landuse/landcover to manning happens here
+            da_manning_lst = self._parse_datasets_rgh(datasets_rgh)
+        else:
+            da_manning_lst = []
 
         self.create_subgrid(
             da_dep_lst=da_dep_lst,
@@ -2014,6 +1959,7 @@ class SfincsModel(MeshMixin, GridModel):
         """Read the complete model schematization and configuration from file."""
         self.read_config()
         self.read_grid()
+        self.read_subgrid()
         self.read_geoms()
         self.read_forcing()
         self.logger.info("Model read")
@@ -2022,6 +1968,7 @@ class SfincsModel(MeshMixin, GridModel):
         """Write the complete model schematization and configuration to file."""
         self.logger.info(f"Writing model data to {self.root}")
         self.write_grid()
+        self.write_subgrid()
         self.write_geoms()
         self.write_forcing()
         self.write_states()
@@ -2113,6 +2060,29 @@ class SfincsModel(MeshMixin, GridModel):
 
         if self._write_gis:
             self.write_raster("grid")
+
+    def read_subgrid(self):
+        self._assert_read_mode
+
+        if "sbgfile" in self.config:
+            fn = self.get_config("sbgfile", abs_path=True)
+            if not isfile(fn):
+                self.logger.warning(f"sbgfile not found at {fn}")
+                return
+
+            self.reggrid.subgrid.load(file_name=fn)
+            self.subgrid = self.reggrid.subgrid.to_xarray(
+                dims=self.mask.raster.dims, coords=self.mask.raster.coords
+            )
+
+    def write_subgrid(self):
+        self._assert_write_mode
+
+        if self.subgrid:
+            if f"sbgfile" not in self.config:
+                self.set_config(f"sbgfile", f"sfincs.sbg")
+            fn = self.get_config(f"sbgfile", abs_path=True)
+            self.reggrid.subgrid.save(file_name=fn, mask=self.mask)
 
     def read_geoms(self):
         """Read geometry files if and save to `geoms` attribute.
@@ -2697,3 +2667,58 @@ class SfincsModel(MeshMixin, GridModel):
         )
         ts = GeoDataArray.from_gdf(gdf, df, dims=("time", "index"), name=name)
         return ts
+
+    def _parse_datasets_dep(self, datasets_dep):
+        for dataset in datasets_dep:
+            # read in depth datasets; replace da_fn for da
+            dep_fn = dataset.get("dep_fn")
+            da_elv = self.data_catalog.get_rasterdataset(
+                dep_fn, geom=self.region, buffer=10, variables=["elevtn"]
+            )
+            dataset.update({"da": da_elv})
+
+            # read offset filenames
+            # NOTE offsets can be xr.DataArrays and floats
+            offset_fn = dataset.get("offset_fn", None)
+            if offset_fn is not None:
+                da_offset = self.data_catalog.get_rasterdataset(
+                    offset_fn,
+                    geom=self.region,
+                    buffer=20,
+                )
+                dataset.update({"offset": da_offset})
+
+            # read geodataframes describing valid areas
+            gdf_valid_fn = dataset.get("gdf_valid_fn", None)
+            if gdf_valid_fn is not None:
+                gdf_valid = self.data_catalog.get_geodataframe(
+                    path_or_key=gdf_valid_fn,
+                    geom=self.region,
+                )
+                dataset.update({"gdf_valid": gdf_valid})
+
+        return datasets_dep
+
+    def _parse_datasets_rgh(self, datasets_rgh):
+        for dataset in datasets_rgh:
+            manning_fn = dataset.get("manning_fn", None)
+            # landuse/landcover should always be combined with mapping
+            lulc_fn = dataset.get("lulc_fn", None)
+            map_fn = dataset.get("lulc_fn", None)
+
+            if manning_fn is not None:
+                da_man = self.data_catalog.get_rasterdataset(
+                    manning_fn,
+                    geom=self.region,
+                    buffer=10,
+                )
+                dataset.update({"da": da_man})
+            elif lulc_fn is not None and map_fn is not None:
+                da_lulc = self.data_catalog.get_rasterdataset(
+                    da_lulc, geom=self.region, buffer=10, variables=["lulc"]
+                )
+                df_map = self.data_catalog.get_dataframe(map_fn)
+                da_man = da_lulc.raster.reclassify(df_map)
+                dataset.update({"da": da_man})
+
+        return datasets_rgh
