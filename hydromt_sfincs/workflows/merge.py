@@ -43,11 +43,13 @@ def merge_multi_dataarrays(
     # start with common grid
     method = da_list[0].get("reproj_method", "bilinear")
     if da_like is not None:  # reproject first raster to destination grid
-        da1 = da_list[0].get("da").raster.reproject_like(da_like, method=method)
+        da1 = da_list[0].get("da").raster.reproject_like(da_like, method=method).load()
     elif reproj_kwargs:
-        da1 = da_list[0].get("da").raster.reproject(method=method, **reproj_kwargs)
+        da1 = (
+            da_list[0].get("da").raster.reproject(method=method, **reproj_kwargs).load()
+        )
     else:  # start with first raster as destination grid
-        da1 = da_list[0].get("da")
+        da1 = da_list[0].get("da").load()
 
     # set nodata to np.nan, Note this might change the dtype to float
     da1 = da1.raster.mask_nodata()
@@ -63,17 +65,17 @@ def merge_multi_dataarrays(
     )
 
     # combine with next dataset
-    for i, da2 in enumerate(da_list[1:]):
+    for i in range(1, len(da_list)):
         if merge_method == "first" and not np.any(np.isnan(da1.values)):
             break
         da1 = merge_dataarrays(
             da1,
-            da2=da_list[i+1].get("da"),
-            offset=da_list[i+1].get("offset", None),
-            min_valid=da_list[i+1].get("min_valid", None),
-            max_valid=da_list[i+1].get("max_valid", None),
-            gdf_valid=da_list[i+1].get("gdf_valid", None),
-            reproj_method=da_list[i+1].get("reproj_method", "bilinear"),
+            da2=da_list[i].get("da"),
+            offset=da_list[i].get("offset", None),
+            min_valid=da_list[i].get("min_valid", None),
+            max_valid=da_list[i].get("max_valid", None),
+            gdf_valid=da_list[i].get("gdf_valid", None),
+            reproj_method=da_list[i].get("reproj_method", "bilinear"),
             buffer_cells=buffer_cells,
             merge_method=merge_method,
             interp_method=interp_method,
@@ -147,7 +149,9 @@ def merge_dataarrays(
     if not np.isnan(nodata):
         da1 = da1.raster.mask_nodata()
     ## reproject da2 and reset nodata value to match da1 nodata
-    da2 = da2.raster.reproject_like(da1, method=reproj_method).raster.mask_nodata()
+    da2 = (
+        da2.raster.reproject_like(da1, method=reproj_method).raster.mask_nodata().load()
+    )
     da2 = _add_offset_mask_invalid(
         da=da2,
         offset=offset,

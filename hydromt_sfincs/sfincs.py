@@ -242,7 +242,7 @@ class SfincsModel(MeshMixin, GridModel):
             region=self.region,
             res=res,
             grid_type=grid_type,
-        )       
+        )
 
     def create_dep(
         self,
@@ -322,7 +322,7 @@ class SfincsModel(MeshMixin, GridModel):
                     geom=self.region,
                 )
                 dataset.update({"gdf_valid": gdf_valid})
-            
+
             da_dep_lst.append(dataset)
 
         self.create_dep(
@@ -645,19 +645,21 @@ class SfincsModel(MeshMixin, GridModel):
     ) -> xr.Dataset:
 
         if self.grid_type == "regular":
-            self.subgrid = self.reggrid.create_subgrid(
-                da_mask = self.mask,
-                da_dep_lst = da_dep_lst,
-                da_manning_lst = da_manning_lst,
-                nbins = nbins,
-                nr_subgrid_pixels = nr_subgrid_pixels,
-                nrmax = nrmax,
-                max_gradient = max_gradient,
-                zmin = zmin,
-                manning_land = manning_land,
-                manning_sea = manning_sea,
-                rgh_lev_land = rgh_lev_land,
-                highres_dir = highres_dir,
+            self.reggrid.subgrid.build(
+                da_mask=self.mask,
+                da_dep_lst=da_dep_lst,
+                da_manning_lst=da_manning_lst,
+                nbins=nbins,
+                nr_subgrid_pixels=nr_subgrid_pixels,
+                nrmax=nrmax,
+                max_gradient=max_gradient,
+                manning_land=manning_land,
+                manning_sea=manning_sea,
+                rgh_lev_land=rgh_lev_land,
+                highres_dir=highres_dir,
+            )
+            self.subgrid = self.reggrid.subgrid.to_xarray(
+                dims=self.mask.raster.dims, coords=self.mask.raster.coords
             )
         if "sbgfile" not in self.config:
             self.config.update({"sbgfile": "sfincs.sbg"})
@@ -706,7 +708,7 @@ class SfincsModel(MeshMixin, GridModel):
                     geom=self.region,
                 )
                 dataset.update({"gdf_valid": gdf_valid})
-            
+
             da_dep_lst.append(dataset)
 
         da_manning_lst = []
@@ -724,21 +726,21 @@ class SfincsModel(MeshMixin, GridModel):
                 # da_lulc.raster.reclassify(df_map)
                 # dataset.update({"da": da_man})
 
-                # da_manning_lst.append(dataset)    
+                # da_manning_lst.append(dataset)
 
         self.create_subgrid(
-            da_dep_lst = da_dep_lst,
-            da_manning_lst = da_manning_lst,
-            nbins = nbins,
-            nr_subgrid_pixels = nr_subgrid_pixels,
-            nrmax = nrmax,
-            max_gradient = max_gradient,
-            zmin = zmin,
-            manning_land = manning_land,
-            manning_sea = manning_sea,
-            rgh_lev_land = rgh_lev_land,
-            highres_dir = highres_dir,
-        )    
+            da_dep_lst=da_dep_lst,
+            da_manning_lst=da_manning_lst,
+            nbins=nbins,
+            nr_subgrid_pixels=nr_subgrid_pixels,
+            nrmax=nrmax,
+            max_gradient=max_gradient,
+            zmin=zmin,
+            manning_land=manning_land,
+            manning_sea=manning_sea,
+            rgh_lev_land=rgh_lev_land,
+            highres_dir=highres_dir,
+        )
 
     def setup_river_hydrography(self, hydrography_fn=None, adjust_dem=False, **kwargs):
         """Setup hydrography layers for flow directions ("flwdir") and upstream area
