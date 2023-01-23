@@ -2103,8 +2103,8 @@ class SfincsModel(MeshMixin, GridModel):
                     self.logger.warning(f"{gname}file not found at {fn}")
                     continue
                 if gname in ["thd", "weir"]:
-                    struct = utils.read_structures(fn)
-                    gdf = utils.structures2gdf(struct, crs=self.crs)
+                    struct = utils.read_geoms(fn)
+                    gdf = utils.linestring2gdf(struct, crs=self.crs)
                 else:
                     gdf = utils.read_xy(fn, crs=self.crs)
                 self.set_geoms(gdf, name=gname)

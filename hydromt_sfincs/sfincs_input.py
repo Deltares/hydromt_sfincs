@@ -111,6 +111,10 @@ class SfincsInput:
                     val = datetime.strptime(val, "%Y%m%d %H%M%S")
                 except ValueError:
                     ValueError(f'"{name} = {val}" not understood.')
+            elif name in ["cdwnd", "cdval"]:
+                vals = []
+                [vals.append(float(val)) for val in val.split()]
+                val = vals
             else:
                 try:
                     val = literal_eval(val)
