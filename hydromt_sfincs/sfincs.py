@@ -2070,7 +2070,7 @@ class SfincsModel(MeshMixin, GridModel):
                 self.logger.warning(f"sbgfile not found at {fn}")
                 return
 
-            self.reggrid.subgrid.load(file_name=fn)
+            self.reggrid.subgrid.load(file_name=fn,mask=self.mask)
             self.subgrid = self.reggrid.subgrid.to_xarray(
                 dims=self.mask.raster.dims, coords=self.mask.raster.coords
             )
@@ -2111,7 +2111,7 @@ class SfincsModel(MeshMixin, GridModel):
         # read additional geojson files from gis directory
         for fn in glob.glob(join(self.root, "gis", "*.geojson")):
             name = basename(fn).replace(".geojson", "")
-            gnames = [f[1] for f in self._FORCING.values() if f[1] is not None]
+            gnames = [f[1] for f in self._FORCING_1D.values() if f[1] is not None]
             skip = gnames + list(self._GEOMS.values())
             if name in skip:
                 continue

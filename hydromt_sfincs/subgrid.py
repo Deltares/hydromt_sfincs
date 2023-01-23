@@ -16,7 +16,18 @@ class SubgridTableRegular:
         # A regular subgrid table contains only for cells with msk>0
         self.version = version
 
-    def load(self, file_name):
+    def load(self, file_name, mask):
+
+        if isinstance(mask, xr.DataArray):
+            mask = mask.values
+
+        iok = np.where(np.transpose(mask) > 0)
+        iok = (iok[1], iok[0])
+
+        nmax = np.shape(mask)[0]
+        mmax = np.shape(mask)[1]
+
+        grid_dim = (nmax, mmax)
 
         file = open(file_name, "rb")
 
@@ -25,24 +36,53 @@ class SubgridTableRegular:
         self.nr_cells = np.fromfile(file, dtype="i4", count=1)[0]
         self.nr_uv_points = np.fromfile(file, dtype="i4", count=1)[0]
         self.nbins = np.fromfile(file, dtype="i4", count=1)[0]
-        self.z_zmin = np.fromfile(file, dtype="f4", count=self.nr_cells)
-        self.z_zmax = np.fromfile(file, dtype="f4", count=self.nr_cells)
-        self.z_zmean = np.fromfile(file, dtype="f4", count=self.nr_cells)
-        self.z_volmax = np.fromfile(file, dtype="f4", count=self.nr_cells)
-        self.z_depth = np.zeros((self.nbins, self.nr_cells), dtype=float)
+
+        # Z points
+        self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.z_depth = np.full((self.nbins, *grid_dim), fill_value=np.nan, dtype=float)
+
+        # U points
+        self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.u_hrep = np.full((self.nbins, *grid_dim), fill_value=np.nan, dtype=float)
+        self.u_navg = np.full((self.nbins, *grid_dim), fill_value=np.nan, dtype=float)
+
+        # V points
+        self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
+        self.v_hrep = np.full((self.nbins, *grid_dim), fill_value=np.nan, dtype=float)
+        self.v_navg = np.full((self.nbins, *grid_dim), fill_value=np.nan, dtype=float)
+
+        self.z_zmin[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
+        self.z_zmax[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
+        self.z_zmean[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
+        self.z_volmax[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
         for ibin in range(self.nbins):
-            self.z_depth[ibin, :] = np.fromfile(file, dtype="f4", count=self.nr_cells)
-        self.uv_zmin = np.fromfile(file, dtype="f4", count=self.nr_uv_points)
-        self.uv_zmax = np.fromfile(file, dtype="f4", count=self.nr_uv_points)
-        self.uv_hrep = np.zeros((self.nbins, self.nr_uv_points), dtype=float)
+            self.z_depth[ibin, iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
+
+        self.u_zmin[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
+        self.u_zmax[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
         for ibin in range(self.nbins):
-            self.uv_hrep[ibin, :] = np.fromfile(
-                file, dtype="f4", count=self.nr_uv_points
+            self.u_hrep[ibin, iok[0], iok[1]] = np.fromfile(
+                file, dtype="f4", count=self.nr_cells
             )
-        self.uv_navg = np.zeros((self.nbins, self.nr_uv_points), dtype=float)
         for ibin in range(self.nbins):
-            self.uv_navg[ibin, :] = np.fromfile(
-                file, dtype="f4", count=self.nr_uv_points
+            self.u_navg[ibin, iok[0], iok[1]] = np.fromfile(
+                file, dtype="f4", count=self.nr_cells
+            )
+
+        self.v_zmin[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
+        self.v_zmax[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
+        for ibin in range(self.nbins):
+            self.v_hrep[ibin, iok[0], iok[1]] = np.fromfile(
+                file, dtype="f4", count=self.nr_cells
+            )
+        for ibin in range(self.nbins):
+            self.v_navg[ibin, iok[0], iok[1]] = np.fromfile(
+                file, dtype="f4", count=self.nr_cells
             )
 
         file.close()
@@ -62,6 +102,7 @@ class SubgridTableRegular:
         ind = np.ravel_multi_index(iok, (nmax, mmax), order="F") + 1
 
         file = open(file_name, "wb")
+        file.write(np.int32(self.version)) #version
         file.write(np.int32(np.size(ind)))  # Nr of active points
         file.write(np.int32(1))  # min
         file.write(np.int32(self.nbins))
