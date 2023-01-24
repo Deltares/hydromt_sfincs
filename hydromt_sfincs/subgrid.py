@@ -58,10 +58,16 @@ class SubgridTableRegular:
 
         self.z_zmin[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
         self.z_zmax[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
-        self.z_zmean[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
-        self.z_volmax[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
+        self.z_zmean[iok[0], iok[1]] = np.fromfile(
+            file, dtype="f4", count=self.nr_cells
+        )
+        self.z_volmax[iok[0], iok[1]] = np.fromfile(
+            file, dtype="f4", count=self.nr_cells
+        )
         for ibin in range(self.nbins):
-            self.z_depth[ibin, iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
+            self.z_depth[ibin, iok[0], iok[1]] = np.fromfile(
+                file, dtype="f4", count=self.nr_cells
+            )
 
         self.u_zmin[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
         self.u_zmax[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
@@ -102,7 +108,7 @@ class SubgridTableRegular:
         ind = np.ravel_multi_index(iok, (nmax, mmax), order="F") + 1
 
         file = open(file_name, "wb")
-        file.write(np.int32(self.version)) #version
+        file.write(np.int32(self.version))  # version
         file.write(np.int32(np.size(ind)))  # Nr of active points
         file.write(np.int32(1))  # min
         file.write(np.int32(self.nbins))
@@ -251,6 +257,8 @@ class SubgridTableRegular:
                 yslice = slice(jj * nrcb, (jj + 1) * nrcb)
                 xslice = slice(ii * nrcb, (ii + 1) * nrcb)
                 da_mask_block = da_mask.isel({x_dim: xslice, y_dim: yslice})
+                if np.all(da_mask_block == 0):  # not active cells in block
+                    continue
                 transform = da_mask_block.raster.transform
                 reproj_kwargs = dict(
                     dst_crs=da_mask.raster.crs,
