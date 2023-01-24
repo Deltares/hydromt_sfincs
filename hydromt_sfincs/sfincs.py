@@ -1289,6 +1289,7 @@ class SfincsModel(MeshMixin, GridModel):
         da_man = xr.full_like(da_msk, lnd_man, dtype=np.float32)
         da_man.raster.set_nodata(-9999.0)
         if lulc_fn is not None:
+            # TODO move this to data catalog yml in DATADIR
             if map_fn is None:
                 map_fn = join(DATADIR, "lulc", f"{lulc_fn}_mapping.csv")
             if not os.path.isfile(map_fn):
@@ -1297,11 +1298,12 @@ class SfincsModel(MeshMixin, GridModel):
                 lulc_fn, geom=self.region, buffer=10, variables=["lulc"]
             )
             # reproject and reclassify
+            df_map = self.data_catalog.get_dataframe(map_fn, index_col=0)
+            da_man = da_org.raster.reclassify(df_map)["N"].raster.reproject_like(da_msk, method="bilinear")
             # TODO use generic names for parameters
-            # FIXME use hydromt general version!!
-            da_man = workflows.landuse(
-                da_org, da_msk, map_fn, logger=self.logger, params=["N"]
-            )["N"]
+            # da_man = workflows.landuse(
+            #     da_org, da_msk, map_fn, logger=self.logger, params=["N"]
+            # )["N"]
         if "rivmsk" in self.grid and riv_man is not None:
             self.logger.info("Setting constant manning roughness for river cells.")
             da_man = da_man.where(self.grid["rivmsk"] != 1, riv_man)

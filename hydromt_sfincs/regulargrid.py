@@ -175,7 +175,7 @@ class RegularGrid:
         if not reset_mask and da_mask is not None:
             # use current active mask
             da_mask = da_mask > 0
-        elif da_dep is not None:
+        elif da_dep is not None and (elv_min is not None or elv_max is not None):
             # start with active mask where dep available
             da_mask = da_dep != da_dep.raster.nodata
         else:
