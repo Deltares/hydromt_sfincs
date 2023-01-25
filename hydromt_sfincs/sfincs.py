@@ -35,6 +35,7 @@ class SfincsModel(MeshMixin, GridModel):
         "gauges": "obs",
         "weirs": "weir",
         "thin_dams": "thd",
+        "inflow": "src",
     }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
         "waterlevel": (
@@ -265,6 +266,7 @@ class SfincsModel(MeshMixin, GridModel):
             self.set_grid(da_dep, name="dep")
             if "depfile" not in self.config:
                 self.config.update({"depfile": "sfincs.dep"})
+        return da_dep
 
     def setup_dep(
         self,
@@ -725,6 +727,11 @@ class SfincsModel(MeshMixin, GridModel):
         name = "dep"
         assert name in self.grid
         da_elv = self.grid[name]
+
+        # check N->S orientation
+        if da_elv.raster.res[1] > 0:
+            da_elv = da_elv.raster.flipud()
+
         if hydrography_fn is not None:
             ds_hydro = self.data_catalog.get_rasterdataset(
                 hydrography_fn, geom=self.region, buffer=20, single_var_as_array=False
@@ -1056,7 +1063,9 @@ class SfincsModel(MeshMixin, GridModel):
 
         # set forcing with dummy timeseries to keep valid sfincs model
         gdf_src = gdf_src.to_crs(self.crs.to_epsg())
+        self.set_geoms(gdf_src, name="src")
         self.set_forcing_1d(xy=gdf_src, name="discharge")
+
         # set river
         if keep_rivers_geom and gdf_riv is not None:
             gdf_riv = gdf_riv.to_crs(self.crs.to_epsg())
@@ -2179,7 +2188,7 @@ class SfincsModel(MeshMixin, GridModel):
                 else:  # spatially uniform forcing
                     da = xr.DataArray(df[df.columns[0]], dims=("time"), name=ts_name)
                 da_lst.append(da)
-            ds = xr.merge(da_lst)
+            ds = xr.merge(da_lst[:])
             # read xy
             if xy_name is not None:
                 xy_fn = self.get_config(f"{xy_name}file", abs_path=True)
@@ -2212,48 +2221,70 @@ class SfincsModel(MeshMixin, GridModel):
                 da = xr.open_dataarray(fn, chunks="auto")  # lazy
                 self.set_forcing(da, name=name)
 
-    def write_forcing(self):
+    def write_forcing(self, data_vars: Union[List, str] = None):
         """Write forcing to ascii (bzd/dis/precip) and netcdf (netampr) files.
         Filenames are based on the `config` attribute.
         """
         # TODO add data_vars argumetn, split 1d, 2d
         self._assert_write_mode
 
-        if self._forcing:
+        if self.forcing:
             self.logger.info("Write forcing files")
+
             tref = utils.parse_datetime(self.config["tref"])
             # for nc files -> time in minutes since tref
             tref_str = tref.strftime("%Y-%m-%d %H:%M:%S")
             encoding = dict(
                 time={"units": f"minutes since {tref_str}", "dtype": "float64"}
             )
-            names = {f[0]: f[1] for f in self._FORCING.values()}
+
             gis_names = []
-            for fname in self._forcing:
-                if fname not in names:
+
+            # 1D
+            dvars_1d = self._FORCING_1D
+            if data_vars is not None:
+                dvars_1d = [name for name in data_vars if name in self._FORCING_1D]
+            for name in dvars_1d:
+                ts_names, xy_name = self._FORCING_1D[name]
+                for ts_name in ts_names:    
+                    if ts_name not in self.forcing:
+                        logger.warning(f"{ts_name} forcing unknown and skipped.")
+                        continue
+                    if f"{ts_name}file" not in self.config:
+                        self.set_config(f"{ts_name}file", f"sfincs.{ts_name}")
+                    fn = self.get_config(f"{ts_name}file", abs_path=True)
+                    da = self.forcing[ts_name]
+                    if len(da.dims) == 2:  # forcing at point locations
+                        df = da.to_series().unstack(0)
+                        gname = self.forcing[ts_name]
+                        if gname is None:
+                            raise ValueError(f"Locations missing for {ts_name}")
+                        gdf = self.forcing[ts_name].vector.to_gdf()
+                        if f"{xy_name}file" not in self.config:
+                            self.set_config(f"{xy_name}file", f"sfincs.{xy_name}")
+                        fn_xy = self.get_config(f"{xy_name}file", abs_path=True)
+                        utils.write_xy(fn_xy, gdf, fmt="%8.2f")
+                        if xy_name not in gis_names:
+                            gis_names.append(xy_name) 
+                    else:  # spatially uniform forcing
+                        df = da.to_series().to_frame()
+                    utils.write_timeseries(fn, df, tref)
+
+            # 2D
+            dvars_2d = self._FORCING_2D
+            if data_vars is not None:
+                dvars_2d = [name for name in data_vars if name in self._FORCING_2D]
+            for name in dvars_2d:
+                fname = self._FORCING_2D[name]
+                if fname not in self.forcing:
                     logger.warning(f"{fname} forcing unknown and skipped.")
                     continue
                 if f"{fname}file" not in self.config:
                     self.set_config(f"{fname}file", f"sfincs.{fname}")
                 fn = self.get_config(f"{fname}file", abs_path=True)
-                da = self._forcing[fname]
-                if "net" in fname:  # spatially distributed forcing
-                    da.to_netcdf(fn, encoding=encoding)
-                else:
-                    if len(da.dims) == 2:  # forcing at point locations
-                        df = da.to_series().unstack(0)
-                        gname = names[fname]
-                        if gname is None:
-                            raise ValueError(f"Locations missing for {fname}")
-                        gdf = self._forcing[fname].vector.to_gdf()
-                        if f"{gname}file" not in self.config:
-                            self.set_config(f"{gname}file", f"sfincs.{gname}")
-                        fn_xy = self.get_config(f"{gname}file", abs_path=True)
-                        utils.write_xy(fn_xy, gdf, fmt="%8.2f")
-                        gis_names.append(fname)
-                    else:  # spatially uniform forcing
-                        df = da.to_series().to_frame()
-                    utils.write_timeseries(fn, df, tref)
+                da = self.forcing[fname]
+                da.to_netcdf(fn, encoding=encoding)
+               
             if self._write_gis and len(gis_names) > 0:
                 self.write_vector(variables=[f"forcing.{name}" for name in gis_names])
 
