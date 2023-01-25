@@ -42,14 +42,11 @@ def merge_multi_dataarrays(
 
     # start with common grid
     method = da_list[0].get("reproj_method", "bilinear")
+    da1 = da_list[0].get("da")
     if da_like is not None:  # reproject first raster to destination grid
-        da1 = da_list[0].get("da").raster.reproject_like(da_like, method=method).load()
+        da1 = da1.raster.reproject_like(da_like, method=method).load()
     elif reproj_kwargs:
-        da1 = (
-            da_list[0].get("da").raster.reproject(method=method, **reproj_kwargs).load()
-        )
-    else:  # start with first raster as destination grid
-        da1 = da_list[0].get("da").load()
+        da1 = da1.raster.reproject(method=method, **reproj_kwargs).load()
 
     # set nodata to np.nan, Note this might change the dtype to float
     da1 = da1.raster.mask_nodata()

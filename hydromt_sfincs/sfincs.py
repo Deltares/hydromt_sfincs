@@ -1308,7 +1308,9 @@ class SfincsModel(MeshMixin, GridModel):
             )
             # reproject and reclassify
             df_map = self.data_catalog.get_dataframe(map_fn, index_col=0)
-            da_man = da_org.raster.reclassify(df_map)["N"].raster.reproject_like(da_msk, method="bilinear")
+            da_man = da_org.raster.reclassify(df_map)["N"].raster.reproject_like(
+                da_msk, method="bilinear"
+            )
             # TODO use generic names for parameters
             # da_man = workflows.landuse(
             #     da_org, da_msk, map_fn, logger=self.logger, params=["N"]
@@ -2081,7 +2083,7 @@ class SfincsModel(MeshMixin, GridModel):
                 self.logger.warning(f"sbgfile not found at {fn}")
                 return
 
-            self.reggrid.subgrid.load(file_name=fn,mask=self.mask)
+            self.reggrid.subgrid.load(file_name=fn, mask=self.mask)
             self.subgrid = self.reggrid.subgrid.to_xarray(
                 dims=self.mask.raster.dims, coords=self.mask.raster.coords
             )
@@ -2706,7 +2708,7 @@ class SfincsModel(MeshMixin, GridModel):
             # read in depth datasets; replace da_fn for da
             dep_fn = dataset.get("dep_fn")
             da_elv = self.data_catalog.get_rasterdataset(
-                dep_fn, geom=self.region, buffer=10, variables=["elevtn"]
+                dep_fn, geom=self.mask.raster.box, buffer=10, variables=["elevtn"]
             )
             dataset.update({"da": da_elv})
 
@@ -2716,7 +2718,7 @@ class SfincsModel(MeshMixin, GridModel):
             if offset_fn is not None:
                 da_offset = self.data_catalog.get_rasterdataset(
                     offset_fn,
-                    geom=self.region,
+                    geom=self.mask.raster.box,
                     buffer=20,
                 )
                 dataset.update({"offset": da_offset})
@@ -2726,7 +2728,7 @@ class SfincsModel(MeshMixin, GridModel):
             if gdf_valid_fn is not None:
                 gdf_valid = self.data_catalog.get_geodataframe(
                     path_or_key=gdf_valid_fn,
-                    geom=self.region,
+                    geom=self.mask.raster.box,
                 )
                 dataset.update({"gdf_valid": gdf_valid})
 
@@ -2742,13 +2744,13 @@ class SfincsModel(MeshMixin, GridModel):
             if manning_fn is not None:
                 da_man = self.data_catalog.get_rasterdataset(
                     manning_fn,
-                    geom=self.region,
+                    geom=self.mask.raster.box,
                     buffer=10,
                 )
                 dataset.update({"da": da_man})
             elif lulc_fn is not None and map_fn is not None:
                 da_lulc = self.data_catalog.get_rasterdataset(
-                    da_lulc, geom=self.region, buffer=10, variables=["lulc"]
+                    da_lulc, geom=self.mask.raster.box, buffer=10, variables=["lulc"]
                 )
                 df_map = self.data_catalog.get_dataframe(map_fn)
                 da_man = da_lulc.raster.reclassify(df_map)
