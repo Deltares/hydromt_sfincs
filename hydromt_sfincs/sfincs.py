@@ -307,6 +307,7 @@ class SfincsModel(MeshMixin, GridModel):
 
     def create_mask_active(
         self,
+        gdf_region: gpd.GeoDataFrame = None,
         gdf_include: gpd.GeoDataFrame = None,
         gdf_exclude: gpd.GeoDataFrame = None,
         elv_min: float = None,
@@ -322,6 +323,9 @@ class SfincsModel(MeshMixin, GridModel):
 
         Parameters
         ----------
+        gdf_region: geopandas.GeoDataFrame, optional
+            Geometry with area to initiliaze active mask with; proceding arguments can be used to include/exclude cells
+            If not given, existing mask (if present) used, else mask is initialized empty.
         gdf_include, gdf_exclude: geopandas.GeoDataFrame, optional
             Geometries with areas to include/exclude from the active model cells.
             Note that include (second last) and exclude (last) and areas are processed after other critera,
@@ -352,6 +356,7 @@ class SfincsModel(MeshMixin, GridModel):
             da_mask = self.reggrid.create_mask_active(
                 da_mask=self.grid["msk"] if "msk" in self.grid else None,
                 da_dep=self.grid["dep"] if "dep" in self.grid else None,
+                gdf_region=gdf_region,
                 gdf_include=gdf_include,
                 gdf_exclude=gdf_exclude,
                 elv_min=elv_min,
@@ -378,6 +383,7 @@ class SfincsModel(MeshMixin, GridModel):
 
     def setup_mask_active(
         self,
+        region_fn=None,
         include_mask_fn=None,
         exclude_mask_fn=None,
         mask_buffer=0,
@@ -409,6 +415,9 @@ class SfincsModel(MeshMixin, GridModel):
 
         Parameters
         ----------
+        region_fn: str, optional
+            Path or data source name of polygons to initiliaze active mask with; proceding arguments can be used to include/exclude cells
+            If not given, existing mask (if present) used, else mask is initialized empty.
         include_mask_fn, exclude_mask_fn: str, optional
             Path or data source name of polygons to include/exclude from the active model domain.
             Note that exclude (second last) and include (last) areas are processed after other critera,
@@ -435,8 +444,18 @@ class SfincsModel(MeshMixin, GridModel):
         """
 
         # read geometries
-        gdf1, gdf2 = None, None
+        gdf0, gdf1, gdf2 = None, None, None
         bbox = self.region.to_crs(4326).total_bounds
+        if region_fn is not None:
+            if region_fn.endswith(".pol"):
+                # NOTE polygons should be in same CRS as model
+                gdf0 = utils.polygon2gdf(
+                    feats=utils.read_geoms(fn=region_fn), crs=self.region.crs
+                )
+            else:
+                gdf1 = self.data_catalog.get_geodataframe(region_fn, bbox=bbox)
+            if mask_buffer > 0:  # NOTE assumes model in projected CRS!
+                gdf1["geometry"] = gdf1.to_crs(self.crs).buffer(mask_buffer)
         if include_mask_fn is not None:
             if include_mask_fn.endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
@@ -445,8 +464,6 @@ class SfincsModel(MeshMixin, GridModel):
                 )
             else:
                 gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
-            if mask_buffer > 0:  # NOTE assumes model in projected CRS!
-                gdf1["geometry"] = gdf1.to_crs(self.crs).buffer(mask_buffer)
         if exclude_mask_fn is not None:
             if exclude_mask_fn.endswith(".pol"):
                 gdf2 = utils.polygon2gdf(
@@ -457,6 +474,7 @@ class SfincsModel(MeshMixin, GridModel):
 
         # get mask
         da_mask = self.create_mask_active(
+            gdf_region=gdf0,
             gdf_include=gdf1,
             gdf_exclude=gdf2,
             elv_min=elv_min,
@@ -734,11 +752,14 @@ class SfincsModel(MeshMixin, GridModel):
 
         if hydrography_fn is not None:
             ds_hydro = self.data_catalog.get_rasterdataset(
-                hydrography_fn, geom=self.region, buffer=20, single_var_as_array=False
+                hydrography_fn,
+                geom=self.grid.raster.box,
+                buffer=20,
+                single_var_as_array=False,
             )
             assert "uparea" in ds_hydro
-            warp = ~da_elv.raster.aligned_grid(ds_hydro)
-            if warp or "flwdir" not in ds_hydro:
+            warp = da_elv.raster.aligned_grid(ds_hydro)
+            if not warp or "flwdir" not in ds_hydro:
                 self.logger.info("Reprojecting hydrography data to destination grid.")
                 ds_out = hydromt.flw.reproject_hydrography_like(
                     ds_hydro, da_elv, logger=self.logger, **kwargs
@@ -2071,6 +2092,7 @@ class SfincsModel(MeshMixin, GridModel):
                     dtype=dtypes.get(name, "f4"),
                 )
 
+        # TODO: discuss if we want to write tiffs clipped on region/mask
         if self._write_gis:
             self.write_raster("grid")
 
@@ -2248,7 +2270,7 @@ class SfincsModel(MeshMixin, GridModel):
                 dvars_1d = [name for name in data_vars if name in self._FORCING_1D]
             for name in dvars_1d:
                 ts_names, xy_name = self._FORCING_1D[name]
-                for ts_name in ts_names:    
+                for ts_name in ts_names:
                     if ts_name not in self.forcing:
                         logger.warning(f"{ts_name} forcing unknown and skipped.")
                         continue
@@ -2267,7 +2289,7 @@ class SfincsModel(MeshMixin, GridModel):
                         fn_xy = self.get_config(f"{xy_name}file", abs_path=True)
                         utils.write_xy(fn_xy, gdf, fmt="%8.2f")
                         if xy_name not in gis_names:
-                            gis_names.append(xy_name) 
+                            gis_names.append(xy_name)
                     else:  # spatially uniform forcing
                         df = da.to_series().to_frame()
                     utils.write_timeseries(fn, df, tref)
@@ -2286,7 +2308,7 @@ class SfincsModel(MeshMixin, GridModel):
                 fn = self.get_config(f"{fname}file", abs_path=True)
                 da = self.forcing[fname]
                 da.to_netcdf(fn, encoding=encoding)
-               
+
             if self._write_gis and len(gis_names) > 0:
                 self.write_vector(variables=[f"forcing.{name}" for name in gis_names])
 

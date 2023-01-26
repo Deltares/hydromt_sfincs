@@ -130,6 +130,7 @@ class RegularGrid:
         self,
         da_mask: xr.DataArray = None,
         da_dep: xr.DataArray = None,
+        gdf_region: gpd.GeoDataFrame = None,
         gdf_include: gpd.GeoDataFrame = None,
         gdf_exclude: gpd.GeoDataFrame = None,
         elv_min: float = None,
@@ -145,6 +146,9 @@ class RegularGrid:
 
         Parameters
         ----------
+        gdf_region: geopandas.GeoDataFrame, optional
+            Geometry with area to initiliaze active mask with; proceding arguments can be used to include/exclude cells
+            If not given, existing mask (if present) used, else mask is initialized empty.
         gdf_include, gdf_exclude: geopandas.GeoDataFrame, optional
             Geometries with areas to include/exclude from the active model cells.
             Note that include (second last) and exclude (last) and areas are processed after other critera,
@@ -165,23 +169,26 @@ class RegularGrid:
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
         reset_mask: bool, optional
             If True, reset existing mask layer. If False (default) updating existing mask.
-
         Returns
         -------
         xr.DataArray
             model elevation mask
         """
 
+        da_mask0 = None
         if not reset_mask and da_mask is not None:
             # use current active mask
-            da_mask = da_mask > 0
-        elif da_dep is not None and (elv_min is not None or elv_max is not None):
-            # start with active mask where dep available
-            da_mask = da_dep != da_dep.raster.nodata
-        else:
-            # no dep info provided, start with inactive mask
-            # Only include and exclude polygons are used
-            da_mask = self.empty_mask > 0
+            da_mask0 = da_mask > 0
+        elif gdf_region is not None:
+            # start with active mask within provided region
+            da_mask0 = (
+                self.empty_mask.raster.geometry_mask(
+                    gdf_region, all_touched=all_touched
+                )
+                > 0
+            )
+        # always intiliaze an inactive mask
+        da_mask = self.empty_mask > 0
 
         latlon = self.crs.is_geographic
 
@@ -197,26 +204,36 @@ class RegularGrid:
                 _msk = np.logical_and(_msk, da_dep >= elv_min)
             if elv_max is not None:
                 _msk = np.logical_and(_msk, da_dep <= elv_max)
-            if fill_area > 0:
-                _msk1 = np.logical_xor(
-                    _msk, ndimage.binary_fill_holes(_msk, structure=s)
-                )
-                regions = ndimage.measurements.label(_msk1, structure=s)[0]
-                # TODO check if region_area works for rotated grids!
-                lbls, areas = region_area(regions, self.transform, latlon)
-                _msk = np.logical_or(
-                    _msk, np.isin(regions, lbls[areas / 1e6 < fill_area])
-                )
-                n = int(sum(areas / 1e6 < fill_area))
-                print(f"{n} gaps outside valid elevation range < {fill_area} km2.")
+            if da_mask0 is not None:
+                # if mask was provided; keep active mask only within valid elevations
+                da_mask = np.logical_and(da_mask0, _msk)
+            else:
+                # no mask provided; set mask to valid elevations
+                da_mask = _msk
+        elif elv_min is None and elv_max is None and da_mask0 is not None:
+            # in case a mask/region was provided, but you didn't want to update the mask based on elevation
+            # just continue with the provided mask
+            da_mask = da_mask0
+
+        if fill_area > 0:
+            _msk1 = np.logical_xor(
+                da_mask, ndimage.binary_fill_holes(da_mask, structure=s)
+            )
+            regions = ndimage.measurements.label(_msk1, structure=s)[0]
+            # TODO check if region_area works for rotated grids!
+            lbls, areas = region_area(regions, self.transform, latlon)
+            n = int(sum(areas / 1e6 < fill_area))
+            print(f"{n} gaps outside valid elevation range < {fill_area} km2.")
+            da_mask = np.logical_or(
+                da_mask, np.isin(regions, lbls[areas / 1e6 < fill_area])
+            )
+        if drop_area > 0:
+            regions = ndimage.measurements.label(da_mask.values, structure=s)[0]
+            lbls, areas = region_area(regions, self.transform, latlon)
+            _msk = np.isin(regions, lbls[areas / 1e6 >= drop_area])
+            n = int(sum(areas / 1e6 < drop_area))
+            print(f"{n} regions < {drop_area} km2 dropped.")
             da_mask = np.logical_and(da_mask, _msk)
-            if drop_area > 0:
-                regions = ndimage.measurements.label(da_mask.values, structure=s)[0]
-                lbls, areas = region_area(regions, self.transform, latlon)
-                _msk = np.isin(regions, lbls[areas / 1e6 >= drop_area])
-                n = int(sum(areas / 1e6 < drop_area))
-                print(f"{n} regions < {drop_area} km2 dropped.")
-                da_mask = np.logical_and(da_mask, _msk)
 
         if gdf_include is not None:
             try:

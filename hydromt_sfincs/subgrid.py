@@ -400,13 +400,6 @@ def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
     volume : np.ndarray (1D flattened from elevation) containing volumes (lowest value zero) per sorted elevation value
     """
 
-    def get_dhdz(z, V, dx, dy):
-        # change in level per unit of volume (m/m)
-        dz = np.diff(z)
-        # change in volume (normalized to meters)
-        dh = np.diff(V) / (dx * dy)
-        return dh / dz
-
     def get_dzdh(z, V, a):
         # change in level per unit of volume (m/m)
         dz = np.diff(z)
@@ -436,7 +429,6 @@ def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
     V = steps * volume.max()
     dvol = volume.max() / nbins
     z = interpolate.interp1d(volume, ele_sort)(V)
-    #    dhdz = get_dhdz(z, V, dx, dy)
     dzdh = get_dzdh(z, V, a)
     n = 0
     while (
@@ -447,12 +439,6 @@ def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
         z[idx + 1] = z[idx] + max_gradient * (dvol / a)
         dzdh = get_dzdh(z, V, a)
         n += 1
-    # while ((dhdz.min() < max_gradient and not(np.isclose(dhdz.min(), max_gradient))) and n < nbins):
-    #     # reshape until gradient is satisfactory
-    #     idx = np.where(dhdz == dhdz.min())[0]
-    #     z[idx + 1] = z[idx] + (np.diff(V)[idx]/(dy*dx))/max_gradient
-    #     dhdz = get_dhdz(z, V, dx, dy)
-    #     n += 1
     return z, V, elevation.min(), z.max(), ele_sort.mean()
 
 
@@ -474,25 +460,14 @@ def subgrid_q_table(elevation, manning, nbins):
     navg = np.zeros(nbins)
     zz = np.zeros(nbins)
 
-    n = int(np.size(elevation) / 2)  # Nr of pixels in a half grid cell
+    n = int(np.size(elevation))  # Nr of pixels in grid cell
+    n05 = int(n / 2)
 
-    # Side A
-    elevation_a = elevation[0:n]
-    manning_a = manning[0:n]
-    idx = np.argsort(elevation_a)
-    z_a = elevation_a[idx]
-    manning_a = manning_a[idx]
-    zmin_a = z_a[0]
-    zmax_a = z_a[-1]
+    zmin_a = np.min(elevation[0:n05])
+    zmax_a = np.max(elevation[0:n05])
 
-    # Side B
-    elevation_b = elevation[n:]
-    manning_b = manning[n:]
-    idx = np.argsort(elevation_b)
-    z_b = elevation_b[idx]
-    manning_b = manning_b[idx]
-    zmin_b = z_b[0]
-    zmax_b = z_b[-1]
+    zmin_b = np.min(elevation[n05:])
+    zmax_b = np.max(elevation[n05:])
 
     zmin = max(zmin_a, zmin_b)
     zmax = max(zmax_a, zmax_b)
@@ -511,31 +486,16 @@ def subgrid_q_table(elevation, manning, nbins):
         zbin = zmin + (ibin + 1) * dbin
         zz[ibin] = zbin
 
-        # Side A
-        ibelow = np.where(z_a <= zbin)  # index of pixels below bin level
-        h = np.maximum(zbin - z_a, 0.0)  # water depth in each pixel
-        qi = h ** (5.0 / 3.0) / manning_a  # unit discharge in each pixel
+        ibelow = np.where(elevation <= zbin)  # index of pixels below bin level
+        h = np.maximum(
+            zbin - np.maximum(elevation, zmin), 0.0
+        )  # water depth in each pixel
+        qi = h ** (5.0 / 3.0) / manning  # unit discharge in each pixel
         q = np.sum(qi) / n  # combined unit discharge for cell
 
-        if not np.any(manning_a[ibelow]):
+        if not np.any(manning[ibelow]):
             print("NaNs found?!")
-        navg_a = manning_a[ibelow].mean()  # mean manning's n
-        hrep_a = (q * navg_a) ** (3.0 / 5.0)  # conveyance depth
-
-        # Side B
-        ibelow = np.where(z_b <= zbin)  # index of pixels below bin level
-        h = np.maximum(zbin - z_b, 0.0)  # water depth in each pixel
-        qi = h ** (5.0 / 3.0) / manning_b  # unit discharge in each pixel
-        q = np.sum(qi) / n  # combined unit discharge for cell
-        navg_b = manning_b[ibelow].mean()  # mean manning's n
-        hrep_b = (q * navg_b) ** (3.0 / 5.0)  # conveyance depth
-
-        # Now take minimum value of cells A and B
-        if hrep_a <= hrep_b:
-            hrep[ibin] = hrep_a
-            navg[ibin] = navg_a
-        else:
-            hrep[ibin] = hrep_b
-            navg[ibin] = navg_b
+        navg[ibin] = manning[ibelow].mean()  # mean manning's n
+        hrep[ibin] = (q * navg[ibin]) ** (3.0 / 5.0)  # conveyance depth
 
     return zmin, zmax, hrep, navg, zz
