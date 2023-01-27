@@ -147,9 +147,13 @@ def merge_dataarrays(
         da1 = da1.raster.mask_nodata()
     ## reproject da2 and reset nodata value to match da1 nodata
     # TODO try except
-    da2 = (
-        da2.raster.reproject_like(da1, method=reproj_method).raster.mask_nodata().load()
-    )
+    try:
+        da2 = (
+            da2.raster.reproject_like(da1, method=reproj_method).raster.mask_nodata().load()
+        )
+    except:
+        print("'No data for this tile")
+
     da2 = _add_offset_mask_invalid(
         da=da2,
         offset=offset,
