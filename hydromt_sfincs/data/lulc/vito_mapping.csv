@@ -6,7 +6,7 @@ vito,description,landuse,N
 60,Bare / sparse vegetation,60,0.023
 70,Snow and Ice,70,0.01
 80,Permanent water bodies,80,0.02
-90,Herbaceous wetland,90,0.35
+90,Herbaceous wetland,90,0.035
 100,Moss and lichen,100,0.025
 111,Closed forest evergreen needle leaf,111,0.11
 112,Closed forest evergreen broad leaf,112,0.11

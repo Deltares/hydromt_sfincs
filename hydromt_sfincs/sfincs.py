@@ -277,10 +277,7 @@ class SfincsModel(MeshMixin, GridModel):
     ):
         """Setup model grid and interpolate topobathy (dep) data to this grid.
 
-        NOTE: This method should be called after `setup_region` but before any other model component.
-
-        The input topobathy dataset is reprojected to the model projected `crs` and
-        resolution `res` using `reproj_method` interpolation.
+        The input topobathy datasets are reprojected to the model grid.
 
         Adds model layers:
 
@@ -288,11 +285,9 @@ class SfincsModel(MeshMixin, GridModel):
 
         Parameters
         ----------
-        topobathy_fn : str
-            Path or data source name for topobathy raster data.
-        res : float
-            Model resolution [m], by default 100 m.
-            If None, the basemaps res is used.
+        datasets_dep : list[dict]
+            Per dataset to be merged, a filename (dep_fn) and mutliple merge arguments (min_valid, max_valid,
+            gdf_valid, offset) can be provided. The order of merging is from first to last.
         """
 
         da_dep_lst = self._parse_datasets_dep(datasets_dep)
@@ -1282,13 +1277,62 @@ class SfincsModel(MeshMixin, GridModel):
         self.config.pop("qinf", None)
         self.set_config(f"{mname}file", f"sfincs.{mname}")
 
+    def create_manning_roughness(
+        self,
+        da_manning_lst: List[dict],
+        manning_riv=0.03,
+        manning_land=0.04,
+        rgh_lev_land=0,
+        manning_sea=None,
+    ):
+        if self.grid_type == "regular":
+            if len(da_manning_lst) > 0:
+                da_man = workflows.merge_multi_dataarrays(
+                    da_list=da_manning_lst,
+                    da_like = self.mask,
+                    interp_method="linear",
+                    merge_method="first",
+                    logger=logger,
+                )
+            elif "dep" in self.grid:
+                da_man = xr.where(self.grid["dep"] >= rgh_lev_land, manning_land, manning_sea)
+            else:
+                da_msk = self.mask > 0
+                da_man = xr.full_like(da_msk, manning_land, dtype=np.float32)
+            da_man.raster.set_nodata(-9999.0)
+
+            if "rivmsk" in self.grid and manning_riv is not None:
+                self.logger.info("Setting constant manning roughness for river cells.")
+                da_man = da_man.where(self.grid["rivmsk"] != 1, manning_riv)
+            #TODO check if this statement is still neccessary?    
+            elif len(da_manning_lst) == 0:
+                self.logger.warning(
+                    'Skipping spatial variable manning roughness map as no river mask ("rivmsk" grid layer)'
+                    ' or roughness datasetwas provided. Set constant manning roughness'
+                    ' using the "rgh_lev_land", "manning_land" and/or "manning_sea" parameters in the sfincs.inp file.'
+                )
+                return
+            if manning_sea is not None:
+                self.logger.info("Setting constant manning roughness for sea cells.")
+                da_man = da_man.where(self.grid["dep"] >= rgh_lev_land, manning_sea)
+            # mask and set precision
+            da_man = da_man.where(self.mask, da_man.raster.nodata).round(3)
+            # set grid
+            mname = "manning"
+            da_man.attrs.update(**self._ATTRS.get(mname, {}))
+            self.set_grid(da_man, name=mname)
+            # update config: remove default manning values and set maning map
+            for v in ["manning_land", "manning_sea", "rgh_lev_land"]:
+                self.config.pop(v, None)
+            self.set_config(f"{mname}file", f"sfincs.{mname[:3]}")
+
     def setup_manning_roughness(
         self,
-        lulc_fn=None,
-        map_fn=None,
-        riv_man=0.03,
-        lnd_man=0.1,
-        sea_man=None,
+        datasets_rgh: List[dict] = [],
+        manning_riv=0.03,
+        manning_land=0.04,
+        rgh_lev_land=0,
+        manning_sea=None,
     ):
         """Setup model manning roughness map (manningfile) from gridded
         land-use/land-cover map and manning roughness mapping table.
@@ -1299,13 +1343,10 @@ class SfincsModel(MeshMixin, GridModel):
 
         Parameters
         ---------
-        lulc_fn: str, optional
-            Name of landuse-landcover map.
-
-            * Required layers: ['lulc']
-        map_fn: path-like, optional
-            CSV mapping file with lulc classes in the index column and manning values
-            in another column with 'N' as header.
+        datasets_rgh : list[dict]
+            Per dataset to be merged, a landuse/landcover filename (lulc_fn) and mapping filename (map_fn) should be provided.
+            In addition, mutliple merge arguments (min_valid, max_valid, gdf_valid, offset) can be provided.
+            The order of merging is from first to last.
         lnd_man, riv_man, sea_man: float, optional
             Constant manning roughness values for land (by default 0.1 s.m-1/3)
             river (by default 0.03 s.m-1/3) and sea (by default None and skipped).
@@ -1315,50 +1356,18 @@ class SfincsModel(MeshMixin, GridModel):
             Manning roughness for land cells are superseeded by the landuse-landcover
             map based values if `lulc_fn` is not None.
         """
-        da_msk = self.mask > 0
-        da_man = xr.full_like(da_msk, lnd_man, dtype=np.float32)
-        da_man.raster.set_nodata(-9999.0)
-        if lulc_fn is not None:
-            # TODO move this to data catalog yml in DATADIR
-            if map_fn is None:
-                map_fn = join(DATADIR, "lulc", f"{lulc_fn}_mapping.csv")
-            if not os.path.isfile(map_fn):
-                raise IOError(f"Manning roughness mapping file not found: {map_fn}")
-            da_org = self.data_catalog.get_rasterdataset(
-                lulc_fn, geom=self.region, buffer=10, variables=["lulc"]
+        if len(datasets_rgh) > 0:
+            da_manning_lst = self._parse_datasets_rgh(datasets_rgh)
+        else:
+            da_manning_lst = []
+
+        self.create_manning_roughness(
+                da_manning_lst=da_manning_lst,
+                manning_riv=manning_riv,
+                manning_land=manning_land,
+                rgh_lev_land=rgh_lev_land,
+                manning_sea=manning_sea,
             )
-            # reproject and reclassify
-            df_map = self.data_catalog.get_dataframe(map_fn, index_col=0)
-            da_man = da_org.raster.reclassify(df_map)["N"].raster.reproject_like(
-                da_msk, method="bilinear"
-            )
-            # TODO use generic names for parameters
-            # da_man = workflows.landuse(
-            #     da_org, da_msk, map_fn, logger=self.logger, params=["N"]
-            # )["N"]
-        if "rivmsk" in self.grid and riv_man is not None:
-            self.logger.info("Setting constant manning roughness for river cells.")
-            da_man = da_man.where(self.grid["rivmsk"] != 1, riv_man)
-        elif lulc_fn is None:
-            self.logger.warning(
-                'Skipping spatial variable manning roughness map as no river mask ("rivmsk" grid layer)'
-                ' or landuse-landcover map ("lulc_fn" argument) was provided. Set constant manning roughness'
-                ' using the "manning", "manning_land" and/or "manning_sea" parameters in the sfincs.inp file.'
-            )
-            return
-        if sea_man is not None:
-            self.logger.info("Setting constant manning roughness for sea cells.")
-            da_man = da_man.where(self.grid["dep"] >= 0, sea_man)
-        # mask and set precision
-        da_man = da_man.where(da_msk, da_man.raster.nodata).round(3)
-        # set grid
-        mname = "manning"
-        da_man.attrs.update(**self._ATTRS.get(mname, {}))
-        self.set_grid(da_man, name=mname)
-        # update config: remove default manning values and set maning map
-        for v in ["manning_land", "manning_sea", "rgh_lev_land"]:
-            self.config.pop(v, None)
-        self.set_config(f"{mname}file", f"sfincs.{mname[:3]}")
 
     def setup_gauges(self, gauges_fn, overwrite=False, **kwargs):
         """Setup model observation point locations.
@@ -2761,7 +2770,7 @@ class SfincsModel(MeshMixin, GridModel):
             manning_fn = dataset.get("manning_fn", None)
             # landuse/landcover should always be combined with mapping
             lulc_fn = dataset.get("lulc_fn", None)
-            map_fn = dataset.get("lulc_fn", None)
+            map_fn = dataset.get("map_fn", None)
 
             if manning_fn is not None:
                 da_man = self.data_catalog.get_rasterdataset(
@@ -2770,12 +2779,18 @@ class SfincsModel(MeshMixin, GridModel):
                     buffer=10,
                 )
                 dataset.update({"da": da_man})
-            elif lulc_fn is not None and map_fn is not None:
+            elif lulc_fn is not None:
+                if map_fn is None:
+                    map_fn = join(DATADIR, "lulc", f"{lulc_fn}_mapping.csv")
+                if not os.path.isfile(map_fn):
+                    raise IOError(f"Manning roughness mapping file not found: {map_fn}")
                 da_lulc = self.data_catalog.get_rasterdataset(
-                    da_lulc, geom=self.mask.raster.box, buffer=10, variables=["lulc"]
+                    lulc_fn, geom=self.mask.raster.box, buffer=10, variables=["lulc"]
                 )
-                df_map = self.data_catalog.get_dataframe(map_fn)
-                da_man = da_lulc.raster.reclassify(df_map)
+                df_map = self.data_catalog.get_dataframe(map_fn, index_col=0)
+                # reclassify
+                da_man = da_lulc.raster.reclassify(df_map)["N"]
+
                 dataset.update({"da": da_man})
 
         return datasets_rgh
