@@ -197,22 +197,23 @@ class SubgridTableRegular:
         self.v_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
         self.v_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
 
-        n0 = 0
-        n1 = (
-            grid_dim[0] - 1
-        )  # + 1 # add extra cell to compute u and v in the last row/column
-        m0 = 0
-        m1 = (
-            grid_dim[1] - 1
-        )  # + 1 # add extra cell to compute u and v in the last row/column
-
         dx, dy = da_mask.raster.res
         dxp = dx / refi  # size of subgrid pixel
         dyp = dy / refi  # size of subgrid pixel
 
+        n1, m1 = grid_dim
         nrcb = int(np.floor(nrmax / refi))  # nr of regular cells in a block
-        nrbn = int(np.ceil((n1 - n0 + 1) / nrcb))  # nr of blocks in n direction
-        nrbm = int(np.ceil((m1 - m0 + 1) / nrcb))  # nr of blocks in m direction
+        nrbn = int(np.ceil(n1 / nrcb))  # nr of blocks in n direction
+        nrbm = int(np.ceil(m1 / nrcb))  # nr of blocks in m direction
+
+        # avoid blocks with width or height of 1
+        merge_last_row = False
+        if m1 % nrcb == 1:
+            nrbm -= 1
+            merge_last_col = True
+        if n1 % nrcb == 1:
+            nrbn -= 1
+            merge_last_row = True
 
         # TODO add to logger
         if not quiet:
@@ -227,44 +228,45 @@ class SubgridTableRegular:
         ## Loop through blocks
         ib = -1
         for ii in range(nrbm):
+            bm0 = ii * nrcb  # Index of first m in block
+            bm1 = min(bm0 + nrcb, m1) + 1  # last m in block
+            if merge_last_col and ii == (nrbm - 1):
+                bm1 += 1
+
             for jj in range(nrbn):
+                bn0 = jj * nrcb  # Index of first n in block
+                bn1 = min(bn0 + nrcb, n1) + 1  # last n in block
+                if merge_last_row and jj == (nrbn - 1):
+                    bn1 += 1
 
                 # Count
                 ib += 1
-
-                bn0 = n0 + jj * nrcb  # Index of first n in block
-                bn1 = (
-                    min(bn0 + nrcb - 1, n1) + 1
-                )  # Index of last n in block (cut off excess above, but add extra cell to compute u and v in the last row)
-                bm0 = m0 + ii * nrcb  # Index of first m in block
-                bm1 = (
-                    min(bm0 + nrcb - 1, m1) + 1
-                )  # Index of last m in block (cut off excess to the right, but add extra cell to compute u and v in the last column)
-
                 if not quiet:
                     print(
-                        "--------------------------------------------------------------"
-                    )
-                    print(
-                        "Processing block "
-                        + str(ib + 1)
-                        + " of "
-                        + str(nrbn * nrbm)
-                        + " ..."
+                        f"\nblock {ib + 1}/{nrbn * nrbm} -- "
+                        f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
                     )
 
                 # calculate transform and shape of block at cell and subgrid level
-                yslice = slice(jj * nrcb, (jj + 1) * nrcb)
-                xslice = slice(ii * nrcb, (ii + 1) * nrcb)
-                da_mask_block = da_mask.isel({x_dim: xslice, y_dim: yslice})
+                da_mask_block = da_mask.isel(
+                    {x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}
+                )
+                assert np.all(
+                    [s > 1 for s in da_mask_block.shape]
+                ), "this shouldn't happen"
                 if np.all(da_mask_block == 0):  # not active cells in block
+                    print("Skip block - No active cells")
                     continue
+                print(
+                    f"Processing block with {np.sum(da_mask_block):d} active cells .."
+                )
+
                 transform = da_mask_block.raster.transform
+                # add refi cells overlap in both dimensions for u and v in last row / col
                 reproj_kwargs = dict(
                     dst_crs=da_mask.raster.crs,
                     dst_transform=transform * transform.scale(1 / refi),
-                    dst_width=(da_mask_block.raster.width + 1)
-                    * refi,  # add 1 cell overlap
+                    dst_width=(da_mask_block.raster.width + 1) * refi,
                     dst_height=(da_mask_block.raster.height + 1) * refi,
                 )
 
@@ -304,7 +306,6 @@ class SubgridTableRegular:
                 yg = da_dep.raster.ycoords.values
 
                 # Now compute subgrid properties
-
                 # Loop through all active cells in this block
                 for m in range(bm0, bm1):
                     for n in range(bn0, bn1):
