@@ -207,6 +207,7 @@ class SubgridTableRegular:
         nrbm = int(np.ceil(m1 / nrcb))  # nr of blocks in m direction
 
         # avoid blocks with width or height of 1
+        merge_last_col = False
         merge_last_row = False
         if m1 % nrcb == 1:
             nrbm -= 1
