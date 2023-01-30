@@ -32,7 +32,7 @@ class SubgridTableRegular:
         file = open(file_name, "rb")
 
         # File version
-        self.version = np.fromfile(file, dtype="i4", count=1)[0]
+        # self.version = np.fromfile(file, dtype="i4", count=1)[0]
         self.nr_cells = np.fromfile(file, dtype="i4", count=1)[0]
         self.nr_uv_points = np.fromfile(file, dtype="i4", count=1)[0]
         self.nbins = np.fromfile(file, dtype="i4", count=1)[0]
@@ -108,7 +108,7 @@ class SubgridTableRegular:
         ind = np.ravel_multi_index(iok, (nmax, mmax), order="F") + 1
 
         file = open(file_name, "wb")
-        file.write(np.int32(self.version))  # version
+        # file.write(np.int32(self.version))  # version
         file.write(np.int32(np.size(ind)))  # Nr of active points
         file.write(np.int32(1))  # min
         file.write(np.int32(self.nbins))
