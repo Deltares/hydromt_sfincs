@@ -35,6 +35,8 @@ __all__ = [
     "write_timeseries",
     "read_xy",
     "write_xy",
+    "read_xyn",
+    "write_xyn",
     "read_geoms",
     "write_geoms",
     "gdf2linestring",
@@ -329,6 +331,34 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
     gdf = hydromt.open_vector(fn, crs=crs, driver="xy")
     gdf.index = np.arange(1, gdf.index.size + 1, dtype=int)  # index starts at 1
     return gdf
+
+
+def read_xyn(fn: str, crs: int = None):
+
+    df = pd.read_csv(fn, index_col=False, header=None, delim_whitespace=True).rename(
+        columns={0: "x", 1: "y"}
+    )
+    if len(df.columns) > 2:
+        df = df.rename(columns={2: "name"})
+    else:
+        df["name"] = df.index
+
+    points = gpd.points_from_xy(df["x"], df["y"])
+    gdf = gpd.GeoDataFrame(df.drop(columns=["x", "y"]), geometry=points, crs=crs)
+
+    return gdf
+
+
+def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, crs: int = None):
+    with open(fn, "w") as fid:
+        for point in gdf.iterfeatures():
+            x, y = point["geometry"]["coordinates"]
+            name = point["properties"]["name"]
+            if crs.is_geographic:
+                string = f'{x:12.6f}{y:12.6f}  "{name}"\n'
+            else:
+                string = f'{x:12.1f}{y:12.1f}  "{name}"\n'
+            fid.write(string)
 
 
 ## ASCII TIMESERIES: bzs / dis / precip ##

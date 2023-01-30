@@ -1289,13 +1289,15 @@ class SfincsModel(MeshMixin, GridModel):
             if len(da_manning_lst) > 0:
                 da_man = workflows.merge_multi_dataarrays(
                     da_list=da_manning_lst,
-                    da_like = self.mask,
+                    da_like=self.mask,
                     interp_method="linear",
                     merge_method="first",
                     logger=logger,
                 )
             elif "dep" in self.grid:
-                da_man = xr.where(self.grid["dep"] >= rgh_lev_land, manning_land, manning_sea)
+                da_man = xr.where(
+                    self.grid["dep"] >= rgh_lev_land, manning_land, manning_sea
+                )
             else:
                 da_msk = self.mask > 0
                 da_man = xr.full_like(da_msk, manning_land, dtype=np.float32)
@@ -1304,11 +1306,11 @@ class SfincsModel(MeshMixin, GridModel):
             if "rivmsk" in self.grid and manning_riv is not None:
                 self.logger.info("Setting constant manning roughness for river cells.")
                 da_man = da_man.where(self.grid["rivmsk"] != 1, manning_riv)
-            #TODO check if this statement is still neccessary?    
+            # TODO check if this statement is still neccessary?
             elif len(da_manning_lst) == 0:
                 self.logger.warning(
                     'Skipping spatial variable manning roughness map as no river mask ("rivmsk" grid layer)'
-                    ' or roughness datasetwas provided. Set constant manning roughness'
+                    " or roughness datasetwas provided. Set constant manning roughness"
                     ' using the "rgh_lev_land", "manning_land" and/or "manning_sea" parameters in the sfincs.inp file.'
                 )
                 return
@@ -1362,12 +1364,12 @@ class SfincsModel(MeshMixin, GridModel):
             da_manning_lst = []
 
         self.create_manning_roughness(
-                da_manning_lst=da_manning_lst,
-                manning_riv=manning_riv,
-                manning_land=manning_land,
-                rgh_lev_land=rgh_lev_land,
-                manning_sea=manning_sea,
-            )
+            da_manning_lst=da_manning_lst,
+            manning_riv=manning_riv,
+            manning_land=manning_land,
+            rgh_lev_land=rgh_lev_land,
+            manning_sea=manning_sea,
+        )
 
     def setup_gauges(self, gauges_fn, overwrite=False, **kwargs):
         """Setup model observation point locations.
@@ -1998,9 +2000,11 @@ class SfincsModel(MeshMixin, GridModel):
         return fig, ax
 
     # I/O
-    def read(self):
+    def read(self, crs: int = None):
         """Read the complete model schematization and configuration from file."""
-        self.read_config()
+        self.read_config(crs=crs)
+        if crs is None and "crs" not in self.config:
+            raise ValueError(f"Please specify crs (EPSG-code) to read this model")
         self.read_grid()
         self.read_subgrid()
         self.read_geoms()
@@ -2149,6 +2153,8 @@ class SfincsModel(MeshMixin, GridModel):
                 if gname in ["thd", "weir"]:
                     struct = utils.read_geoms(fn)
                     gdf = utils.linestring2gdf(struct, crs=self.crs)
+                elif gname == "obs":
+                    gdf = utils.read_xyn(fn, crs=self.crs)
                 else:
                     gdf = utils.read_xy(fn, crs=self.crs)
                 self.set_geoms(gdf, name=gname)
@@ -2181,6 +2187,8 @@ class SfincsModel(MeshMixin, GridModel):
                     if gname in ["thd", "weir"]:
                         struct = utils.gdf2structures(gdf)
                         utils.write_structures(fn, struct, stype=gname)
+                    elif gname == "obs":
+                        utils.write_xyn(fn, gdf, crs=self.crs)
                     else:
                         utils.write_xy(fn, gdf, fmt="%8.2f")
             if self._write_gis:

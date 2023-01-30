@@ -149,7 +149,9 @@ def merge_dataarrays(
     # TODO try except
     try:
         da2 = (
-            da2.raster.reproject_like(da1, method=reproj_method).raster.mask_nodata().load()
+            da2.raster.reproject_like(da1, method=reproj_method)
+            .raster.mask_nodata()
+            .load()
         )
     except:
         print("No data for this tile")
