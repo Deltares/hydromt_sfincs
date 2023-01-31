@@ -30,6 +30,9 @@ logger = logging.getLogger(__name__)
 
 
 class SfincsModel(MeshMixin, GridModel):
+    # Static class variables that can be used by all methods within 
+    # SfincsModel class. Typically list of variables (e.g. _MAPS) or 
+    # dict with varname - filename pairs (e.g. thin_dams : thd)
     _NAME = "sfincs"
     _GEOMS = {
         "gauges": "obs",
@@ -38,13 +41,11 @@ class SfincsModel(MeshMixin, GridModel):
         "inflow": "src",
     }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
-        "waterlevel": (
-            ["bzs"],
-            "bnd",
-        ),  #  timeseries (can be multiple), locations tuple
+        # timeseries (can be multiple), locations tuple
+        "waterlevel": (["bzs"], "bnd"),  
         "discharge": (["dis"], "src"),
         "precip": (["precip"], None),
-        "waves": (["bhs", "btp", "bwd", "bds"], "bwv"),  # TODO check names and test
+        "waves": (["bhs", "btp", "bwd", "bds"], "bwv"),
         "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
     }
     _FORCING_2D = {
@@ -131,7 +132,7 @@ class SfincsModel(MeshMixin, GridModel):
     @property
     def region(self) -> gpd.GeoDataFrame:
         """Returns the geometry of the active model cells."""
-        # NOTE overwrites propertie in GridModel
+        # NOTE overwrites property in GridModel
         region = gpd.GeoDataFrame()
         if "region" in self.geoms:
             region = self.geoms["region"]
