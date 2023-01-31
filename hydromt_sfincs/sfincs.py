@@ -214,6 +214,8 @@ class SfincsModel(MeshMixin, GridModel):
             dy=res,
             nmax=nmax,
             mmax=mmax,
+            rotation=0, #Set rotation to 0 for grid based on region (see also TODO)
+            crs = gdf_region.crs.to_epsg(),
             grid_type=grid_type,
             gdf_refinement=gdf_refinement,
         )
@@ -241,7 +243,7 @@ class SfincsModel(MeshMixin, GridModel):
             self.geoms["region"] = self.geoms["region"].to_crs(pyproj_crs)
 
         self.create_grid_from_region(
-            region=self.region,
+            gdf_region=self.region,
             res=res,
             grid_type=grid_type,
         )
