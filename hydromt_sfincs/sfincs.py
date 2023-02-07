@@ -744,6 +744,14 @@ class SfincsModel(MeshMixin, GridModel):
         assert name in self.grid
         da_elv = self.grid[name]
 
+        da_elv = (
+            da_elv.raster.clip_geom(self.region, mask=True)
+            .raster.mask_nodata()
+            .fillna(-9999)  # force nodata value to be -9999
+            .round(2)  # cm precision
+        )
+        da_elv.raster.set_nodata(-9999)
+
         # check N->S orientation
         if da_elv.raster.res[1] > 0:
             da_elv = da_elv.raster.flipud()
@@ -863,7 +871,7 @@ class SfincsModel(MeshMixin, GridModel):
         rivdph_method : {'gvf', 'manning', 'powlaw'}
             River depth estimate method, by default 'gvf'
         rivwth_method : {'geom', 'mask'}
-            Derive the river with from either the `river_geom_fn` (geom) or
+            Derive the river width from either the `river_geom_fn` (geom) or
             `river_mask_fn` (mask; default) data.
         river_upa : float, optional
             Minimum upstream area threshold for rivers [km2], by default 25.0
@@ -894,8 +902,13 @@ class SfincsModel(MeshMixin, GridModel):
                 '"river_mask_fn" should be provided if rivwth_method="mask".'
             )
         # get basemap river flwdir
-        self.mask  # make sure msk is grid
-        ds = self.grid
+        assert "msk" in self.grid  # make sure msk is grid
+
+        if self.grid.raster.res[1] > 0:
+            ds = self.grid.raster.flipud()
+        else:
+            ds = self.grid
+
         flwdir = None
         if "flwdir" in ds:
             flwdir = hydromt.flw.flwdir_from_da(ds["flwdir"], mask=False)
@@ -919,7 +932,7 @@ class SfincsModel(MeshMixin, GridModel):
             da_rivmask = self.data_catalog.get_rasterdataset(
                 river_mask_fn, geom=self.region
             ).raster.reproject_like(ds, "max")
-            ds["rivmsk"] = da_rivmask.where(self.mask != 0, 0) != 0
+            ds["rivmsk"] = da_rivmask.where(ds["msk"] != 0, 0) != 0
         elif "rivmsk" in ds:
             self.logger.info(
                 'River mask based on internal "rivmsk" layer. If this is unwanted '
@@ -1058,7 +1071,10 @@ class SfincsModel(MeshMixin, GridModel):
                 buffer=buffer,
             )
         else:
-            ds = self.grid
+            if self.grid.raster.res[1] > 0:
+                ds = self.grid.raster.flipud()
+            else:
+                ds = self.grid
             if "uparea" not in ds or "flwdir" not in ds:
                 raise ValueError(
                     '"uparea" and/or "flwdir" layers missing. '
@@ -1168,7 +1184,10 @@ class SfincsModel(MeshMixin, GridModel):
                 buffer=10,
             )
         else:
-            ds = self.grid
+            if self.grid.raster.res[1] > 0:
+                ds = self.grid.raster.flipud()
+            else:
+                ds = self.grid
             if "uparea" not in ds or "flwdir" not in ds:
                 raise ValueError(
                     '"uparea" and/or "flwdir" layers missing. '
