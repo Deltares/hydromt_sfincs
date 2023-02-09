@@ -170,10 +170,9 @@ class SubgridTableRegular:
         quiet=False,  # TODO replace by logger
     ):
 
-        if highres_dir and not os.path.isdir(highres_dir):
-            os.makedirs(highres_dir)
-            # Write the raster paths to a text file
-        filelist = open(f"{highres_dir}\\filelist.txt", "w")
+        if highres_dir:
+            filelist = open(f"{highres_dir}\\filelist.txt", "w")
+        # Write the raster paths to a text file
 
         refi = nr_subgrid_pixels
         z_minimum = zmin
@@ -302,7 +301,7 @@ class SubgridTableRegular:
                 # TODO also write manning tiles?
                 # NOTE tiles have overlap!
                 if highres_dir:
-                    fn_dep_tile = os.path.join(highres_dir, f"dep{ib:05d}.tif")
+                    fn_dep_tile = os.path.join(highres_dir, f"merged_dep_tile_{ib:05d}.tif")
                     da_dep.raster.to_raster(fn_dep_tile, compress="deflate")
                     # add to filelist
                     filelist.write(f"{fn_dep_tile}\n")

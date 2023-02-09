@@ -645,8 +645,18 @@ class SfincsModel(MeshMixin, GridModel):
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
-        highres_dir=None,
+        make_tiles: bool = False,
     ) -> xr.Dataset:
+
+        # tile folder
+        if make_tiles:
+            #TODO check if root exists
+            highres_dir = join(self.root, "tiles")
+            if not os.path.isdir(highres_dir):
+                os.makedirs(highres_dir)
+        else:
+            highres_dir = None
+
 
         if self.grid_type == "regular":
             self.reggrid.subgrid.build(
@@ -680,7 +690,7 @@ class SfincsModel(MeshMixin, GridModel):
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
-        highres_dir=None,
+        make_tiles: bool = False,
     ):
 
         da_dep_lst = self._parse_datasets_dep(datasets_dep)
@@ -702,7 +712,7 @@ class SfincsModel(MeshMixin, GridModel):
             manning_land=manning_land,
             manning_sea=manning_sea,
             rgh_lev_land=rgh_lev_land,
-            highres_dir=highres_dir,
+            make_tiles=make_tiles,
         )
 
     def setup_river_hydrography(self, hydrography_fn=None, adjust_dem=False, **kwargs):
@@ -2036,6 +2046,7 @@ class SfincsModel(MeshMixin, GridModel):
     def write(self):
         """Write the complete model schematization and configuration to file."""
         self.logger.info(f"Writing model data to {self.root}")
+        # TODO - add check for subgrid & quadtree > give flags to self.write_grid() and self.write_config()
         self.write_grid()
         self.write_subgrid()
         self.write_geoms()
