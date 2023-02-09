@@ -9,7 +9,7 @@ import os
 from scipy import interpolate
 import xarray as xr
 from . import workflows
-
+from hydromt import gis_utils
 
 class SubgridTableRegular:
     def __init__(self, version=0):
@@ -172,6 +172,9 @@ class SubgridTableRegular:
 
         if highres_dir and not os.path.isdir(highres_dir):
             os.makedirs(highres_dir)
+            # Write the raster paths to a text file
+        filelist = open(f"{highres_dir}\\filelist.txt", "w")
+
         refi = nr_subgrid_pixels
         z_minimum = zmin
         self.nbins = nbins
@@ -301,6 +304,8 @@ class SubgridTableRegular:
                 if highres_dir:
                     fn_dep_tile = os.path.join(highres_dir, f"dep{ib:05d}.tif")
                     da_dep.raster.to_raster(fn_dep_tile, compress="deflate")
+                    # add to filelist
+                    filelist.write(f"{fn_dep_tile}\n")
 
                 zg = da_dep.values
                 manning_grid = da_man.values
@@ -368,6 +373,11 @@ class SubgridTableRegular:
                         self.v_zmax[n, m] = zmax
                         self.v_hrep[:, n, m] = hrep
                         self.v_navg[:, n, m] = navg
+                
+        # write VRT file with all tiles at the end of the loop
+        # if highres_dir:
+        #     # Create a vrt using GDAL
+        #     gis_utils.create_vrt(highres_dir, "dep")
 
     def to_xarray(self, dims, coords):
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})
@@ -386,6 +396,9 @@ class SubgridTableRegular:
                 ds_sbg[name] = xr.Variable(("bins", *dims), getattr(self, name))
         return ds_sbg
 
+    def from_xarray(self, ds_sbg):
+        for name in ds_sbg.data_vars:
+            setattr(self, name, ds_sbg[name].values)    
 
 # @njit
 def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):

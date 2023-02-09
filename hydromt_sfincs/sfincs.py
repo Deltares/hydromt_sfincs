@@ -2207,8 +2207,8 @@ class SfincsModel(MeshMixin, GridModel):
                         self.set_config(f"{gname}file", f"sfincs.{gname}")
                     fn = self.get_config(f"{gname}file", abs_path=True)
                     if gname in ["thd", "weir"]:
-                        struct = utils.gdf2structures(gdf)
-                        utils.write_structures(fn, struct, stype=gname)
+                        struct = utils.gdf2linestring(gdf)
+                        utils.write_geoms(fn, struct, stype=gname)
                     elif gname == "obs":
                         utils.write_xyn(fn, gdf, crs=self.crs)
                     else:

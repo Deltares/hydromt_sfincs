@@ -650,10 +650,10 @@ def gdf2polygon(gdf: gpd.GeoDataFrame) -> List[Dict]:
         feat = item.drop("geometry").dropna().to_dict()
         # check geom
         poly = item.geometry
-        if poly.type == "MultiPolygon" and len(line.geoms) == 1:
+        if poly.type == "MultiPolygon" and len(poly.geoms) == 1:
             poly = poly.geoms[0]
         if poly.type != "Polygon":
-            raise ValueError("Invalid geometry type, only LineString is accepted.")
+            raise ValueError("Invalid geometry type, only Polygon is accepted.")
         x, y = poly.exterior.coords.xy
         feat["x"], feat["y"] = list(x), list(y)
         feats.append(feat)
