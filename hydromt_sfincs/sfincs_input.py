@@ -14,9 +14,9 @@ class SfincsInput:
         self.rotation = 0.0
         self.crs = None
         self.latitude = 0.0
-        self.tref = None
-        self.tstart = None
-        self.tstop = None
+        self.tref = datetime(2010,2,1,0,0,0)
+        self.tstart = datetime(2010,2,1,0,0,0)
+        self.tstop = datetime(2010,2,2,0,0,0)
         self.tspinup = 60.0
         self.t0out = None
         self.dtout = None

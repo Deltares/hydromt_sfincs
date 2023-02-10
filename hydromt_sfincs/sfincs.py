@@ -645,18 +645,24 @@ class SfincsModel(MeshMixin, GridModel):
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
-        make_tiles: bool = False,
+        make_dep_tiles: bool = False,
+        make_manning_tiles: bool = False,
     ) -> xr.Dataset:
 
-        # tile folder
-        if make_tiles:
-            #TODO check if root exists
-            highres_dir = join(self.root, "tiles")
-            if not os.path.isdir(highres_dir):
-                os.makedirs(highres_dir)
+        # tile folders
+        if make_dep_tiles:
+            highres_dep_dir = os.path.join(self.root, "tiles", "subgrid", "dep")
+            if not os.path.isdir(highres_dep_dir):
+                os.makedirs(highres_dep_dir)
         else:
-            highres_dir = None
+            highres_dep_dir = None
 
+        if make_manning_tiles:
+            highres_manning_dir = os.path.join(self.root, "tiles", "subgrid", "manning")
+            if not os.path.isdir(highres_manning_dir):
+                os.makedirs(highres_manning_dir)
+        else:
+            highres_manning_dir = None
 
         if self.grid_type == "regular":
             self.reggrid.subgrid.build(
@@ -670,13 +676,22 @@ class SfincsModel(MeshMixin, GridModel):
                 manning_land=manning_land,
                 manning_sea=manning_sea,
                 rgh_lev_land=rgh_lev_land,
-                highres_dir=highres_dir,
+                highres_dep_dir=highres_dep_dir,
+                highres_manning_dir=highres_manning_dir,
             )
             self.subgrid = self.reggrid.subgrid.to_xarray(
                 dims=self.mask.raster.dims, coords=self.mask.raster.coords
             )
-        if "sbgfile" not in self.config:
+        elif self.grid_type == "quadtree":
+            pass
+
+        if "sbgfile" not in self.config: # only add sbgfile if not already present
             self.config.update({"sbgfile": "sfincs.sbg"})
+        # subgrid is used so no depfile or manningfile needed
+        if "depfile" in self.config:
+            self.config.pop("depfile")  # remove depfile from config
+        if "manningfile" in self.config:
+            self.config.pop("manningfile")  # remove manningfile from config
 
     def setup_subgrid(
         self,
@@ -690,7 +705,8 @@ class SfincsModel(MeshMixin, GridModel):
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
-        make_tiles: bool = False,
+        make_dep_tiles: bool = False,
+        make_manning_tiles: bool = False,
     ):
 
         da_dep_lst = self._parse_datasets_dep(datasets_dep)
@@ -712,7 +728,8 @@ class SfincsModel(MeshMixin, GridModel):
             manning_land=manning_land,
             manning_sea=manning_sea,
             rgh_lev_land=rgh_lev_land,
-            make_tiles=make_tiles,
+            make_dep_tiles=make_dep_tiles,
+            make_manning_tiles=make_manning_tiles,
         )
 
     def setup_river_hydrography(self, hydrography_fn=None, adjust_dem=False, **kwargs):
@@ -2131,6 +2148,9 @@ class SfincsModel(MeshMixin, GridModel):
             for name in data_vars:
                 if f"{name}file" not in self.config:
                     self.set_config(f"{name}file", f"sfincs.{name}")
+                # do not write depfile if subgrid is used    
+                if (name == "dep" or name == "manning") and self.subgrid:
+                    continue
                 self.reggrid.write_map(
                     map_fn=self.get_config(f"{name}file", abs_path=True),
                     data=ds_out[name].values,
@@ -2505,6 +2525,11 @@ class SfincsModel(MeshMixin, GridModel):
                 da = obj[layer]
                 if len(da.dims) != 2 or "time" in da.dims:
                     continue
+                # only write active cells to gis files
+                da = (
+                    da.raster.clip_geom(self.region, mask=True)
+                    .raster.mask_nodata()
+                )
                 if da.raster.res[1] > 0:  # make sure orientation is N->S
                     da = da.raster.flipud()
                 da.raster.to_raster(

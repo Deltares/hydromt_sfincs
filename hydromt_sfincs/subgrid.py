@@ -166,13 +166,19 @@ class SubgridTableRegular:
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
-        highres_dir: str = None,
+        highres_dep_dir: str = None,
+        highres_manning_dir: str = None,
         quiet=False,  # TODO replace by logger
     ):
 
-        if highres_dir:
-            filelist = open(f"{highres_dir}\\filelist.txt", "w")
-        # Write the raster paths to a text file
+        if highres_dep_dir:
+            # Write the raster paths to a text file
+            highres_dir = os.path.abspath(os.path.join(highres_dep_dir, os.pardir))
+            filelist_dep = open(f"{highres_dir}\\filelist_dep.txt", "w")
+        if highres_manning_dir:
+            # Write the raster paths to a text file
+            highres_dir = os.path.abspath(os.path.join(highres_manning_dir, os.pardir))
+            filelist_man = open(f"{highres_dir}\\filelist_man.txt", "w")
 
         refi = nr_subgrid_pixels
         z_minimum = zmin
@@ -298,13 +304,24 @@ class SubgridTableRegular:
                 assert np.all(~np.isnan(da_man))
 
                 # optional write tile to file
-                # TODO also write manning tiles?
-                # NOTE tiles have overlap!
-                if highres_dir:
-                    fn_dep_tile = os.path.join(highres_dir, f"merged_dep_tile_{ib:05d}.tif")
-                    da_dep.raster.to_raster(fn_dep_tile, compress="deflate")
+                # NOTE tiles have overlap! da_dep[:-refi,:-refi]
+                # TODO properly fix the flipud issue in raster.to_raster
+                if highres_dep_dir:
+                    fn_dep_tile = os.path.join(highres_dep_dir, f"merged_dep_m{ii:05d}_n{jj:05d}.tif")
+                    if da_dep.raster.res[1] > 0:
+                        da_dep.raster.flipud().raster.to_raster(fn_dep_tile, compress="deflate")
+                    else:
+                        da_dep.raster.to_raster(fn_dep_tile, compress="deflate")
                     # add to filelist
-                    filelist.write(f"{fn_dep_tile}\n")
+                    filelist_dep.write(f"{fn_dep_tile}\n")
+                if highres_manning_dir:
+                    fn_man_tile = os.path.join(highres_manning_dir, f"merged_man_m{ii:05d}_n{jj:05d}.tif")
+                    if da_man.raster.res[1] > 0:
+                        da_man.raster.flipud().raster.to_raster(fn_man_tile, compress="deflate")
+                    else:
+                        da_man.raster.to_raster(fn_man_tile, compress="deflate")
+                    # add to filelist
+                    filelist_man.write(f"{fn_man_tile}\n")
 
                 zg = da_dep.values
                 manning_grid = da_man.values
@@ -372,11 +389,16 @@ class SubgridTableRegular:
                         self.v_zmax[n, m] = zmax
                         self.v_hrep[:, n, m] = hrep
                         self.v_navg[:, n, m] = navg
-                
+        
         # write VRT file with all tiles at the end of the loop
-        # if highres_dir:
-        #     # Create a vrt using GDAL
-        #     gis_utils.create_vrt(highres_dir, "dep")
+        if highres_dep_dir:
+            filelist_dep.close()
+            # Create a vrt using GDAL
+            # gis_utils.create_vrt(f"{highres_dir}//filelist_dep.txt", f"{highres_dir}//"dep.vrt")
+        if highres_manning_dir:
+            filelist_man.close()
+            # Create a vrt using GDAL
+            # gis_utils.create_vrt(f"{highres_dir}//filelist_man.txt", f"{highres_dir}//"manning.vrt")
 
     def to_xarray(self, dims, coords):
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})
