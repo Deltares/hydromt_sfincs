@@ -7,7 +7,7 @@ import logging
 import pyflwdir
 import geopandas as gpd
 from rasterio.warp import transform_bounds
-from shapely.geometry import box
+from shapely.geometry import Point, box
 import pandas as pd
 import xarray as xr
 from pathlib import Path
@@ -43,13 +43,20 @@ class SfincsModel(MeshMixin, GridModel):
     _FORCING_1D = {
         # timeseries (can be multiple), locations tuple
         "waterlevel": (["bzs"], "bnd"),
+        "waves": (["bz"], "bnd"),
         "discharge": (["dis"], "src"),
         "precip": (["precip"], None),
-        "waves": (["bhs", "btp", "bwd", "bds"], "bwv"),
+        "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),
         "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
     }
     _FORCING_2D = {
-        "precip2d": "netampr",  # TODO discuss which 2D forcings exist
+        "wind_u": "amu",
+        "wind_v": "amv",
+    } # TODO add
+    _FORCING_NET = {
+        "netbndbzsbzi",
+        "netsrcdis",
+        "netampr",  
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["msk", "dep", "scs", "manning", "qinf"]
@@ -68,6 +75,7 @@ class SfincsModel(MeshMixin, GridModel):
         "qinf": {"standard_name": "infiltration rate", "unit": "mm.hr-1"},
         "manning": {"standard_name": "manning roughness", "unit": "s.m-1/3"},
         "bzs": {"standard_name": "waterlevel", "unit": "m+ref"},
+        "bzi": {"standard_name": "wave height", "unit": "m"},
         "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
         "netampr": {"standard_name": "precipitation", "unit": "mm.hr-1"},
         "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
@@ -153,12 +161,12 @@ class SfincsModel(MeshMixin, GridModel):
         nmax: int,
         mmax: int,
         rotation: float = None,
-        crs: int = None,
+        epsg: int = None,
         grid_type: str = "regular",
         gdf_refinement: gpd.GeoDataFrame = None,
     ):
         self.config.update(
-            x0=x0, y0=y0, dx=dx, dy=dy, nmax=nmax, mmax=mmax, rotation=rotation, crs=crs
+            x0=x0, y0=y0, dx=dx, dy=dy, nmax=nmax, mmax=mmax, rotation=rotation, epsg=epsg
         )
         self.update_grid_from_config()
         # TODO gdf_refinement for quadtree
@@ -172,7 +180,7 @@ class SfincsModel(MeshMixin, GridModel):
         nmax: int,
         mmax: int,
         rotation: float,
-        crs: int,
+        epsg: int,
         refinement_fn: str = None,
     ):
 
@@ -190,7 +198,7 @@ class SfincsModel(MeshMixin, GridModel):
             nmax=nmax,
             mmax=mmax,
             rotation=rotation,
-            crs=crs,
+            epsg=epsg,
             grid_type=grid_type,
             gdf_refinement=gdf_refinement,
         )
@@ -215,7 +223,7 @@ class SfincsModel(MeshMixin, GridModel):
             nmax=nmax,
             mmax=mmax,
             rotation=0,  # Set rotation to 0 for grid based on region (see also TODO)
-            crs=gdf_region.crs.to_epsg(),
+            epsg=gdf_region.crs.to_epsg(),
             grid_type=grid_type,
             gdf_refinement=gdf_refinement,
         )
@@ -2106,9 +2114,9 @@ class SfincsModel(MeshMixin, GridModel):
                     da = self.reggrid.read_map(fn, ind, dtype, mv, name=name)
                     da_lst.append(da)
             ds = xr.merge(da_lst)
-            crs = self.config.get("crs", None)
-            if crs is not None:
-                ds.raster.set_crs(crs)
+            epsg = self.config.get("epsg", None)
+            if epsg is not None:
+                ds.raster.set_crs(epsg)
             self.set_grid(ds)
 
             # keep some metadata maps from gis directory
@@ -2291,7 +2299,7 @@ class SfincsModel(MeshMixin, GridModel):
                     if xy_fn is not None:
                         self.logger.warning(f"{xy_name}file not found at {xy_fn}")
                 else:
-                    gdf = utils.read_xy(xy_fn, crs=self.config.get("crs"))
+                    gdf = utils.read_xy(xy_fn, crs=self.crs)
                     # read attribute data from gis files
                     gis_fn = join(self.root, "gis", f"{xy_name}.geojson")
                     if isfile(gis_fn):
@@ -2308,7 +2316,8 @@ class SfincsModel(MeshMixin, GridModel):
         if data_vars is not None:
             dvars_2d = [name for name in data_vars if name in dvars_2d]
         for name in dvars_2d:
-            fn = self.get_config(f"{name}file", abs_path=True)
+            fname = self._FORCING_2D[name]
+            fn = self.get_config(f"{fname}file", abs_path=True)
             if fn is None or not isfile(fn):
                 if fn is not None:
                     self.logger.warning(f"{name}file not found at {fn}")
@@ -2316,11 +2325,41 @@ class SfincsModel(MeshMixin, GridModel):
                 da = xr.open_dataarray(fn, chunks="auto")  # lazy
                 self.set_forcing(da, name=name)
 
+        # NETCDF forcing files; FEWS format
+        dvars_net = self._FORCING_NET
+        if data_vars is not None:
+            dvars_net = [name for name in data_vars if name in dvars_net]
+        for name in dvars_net:
+            fn = self.get_config(f"{name}file", abs_path=True)
+            if fn is None or not isfile(fn):
+                if fn is not None:
+                    self.logger.warning(f"{name}file not found at {fn}")
+            elif name == "netbndbzsbzi":
+                da = xr.open_dataset(fn)
+                geom = [Point(x,y) for x, y in zip(da['x'], da['y'])]
+                gdf = gpd.GeoDataFrame(geometry=geom)
+                if "zs" in da:
+                    ds = GeoDataset.from_gdf(gdf, da["zs"].rename("bzs"), index_dim="stations")
+                    self.set_forcing(ds, name="bzs")
+                if "zi" in da:
+                    ds = GeoDataset.from_gdf(gdf, da["zi"].rename("bzi"), index_dim="stations")
+                    self.set_forcing(ds, name="bzi")
+            elif name == "netsrcdis":
+                da = xr.open_dataset(fn)
+                geom = [Point(x,y) for x, y in zip(da['x'], da['y'])]
+                gdf = gpd.GeoDataFrame(geometry=geom)
+                if "discharge" in da:
+                    ds = GeoDataset.from_gdf(gdf, da["discharge"].rename("dis"), index_dim="stations")
+                    self.set_forcing(ds, name="dis")
+            elif name == "netampr":
+                da = xr.open_dataset(fn)
+                if "Precipitation" in da:
+                    self.set_forcing(da["Precipitation"], name="precip")        
+
     def write_forcing(self, data_vars: Union[List, str] = None):
         """Write forcing to ascii (bzd/dis/precip) and netcdf (netampr) files.
         Filenames are based on the `config` attribute.
         """
-        # TODO add data_vars argumetn, split 1d, 2d
         self._assert_write_mode
 
         if self.forcing:
