@@ -2050,11 +2050,11 @@ class SfincsModel(MeshMixin, GridModel):
         return fig, ax
 
     # I/O
-    def read(self, crs: int = None):
+    def read(self, epsg: int = None):
         """Read the complete model schematization and configuration from file."""
-        self.read_config(crs=crs)
-        if crs is None and "crs" not in self.config:
-            raise ValueError(f"Please specify crs (EPSG-code) to read this model")
+        self.read_config(epsg=epsg)
+        if epsg is None and "epsg" not in self.config:
+            raise ValueError(f"Please specify epsg to read this model")
         self.read_grid()
         self.read_subgrid()
         self.read_geoms()
@@ -2675,7 +2675,7 @@ class SfincsModel(MeshMixin, GridModel):
 
     ## model configuration
 
-    def read_config(self, config_fn: str = "sfincs.inp", crs: int = None) -> None:
+    def read_config(self, config_fn: str = "sfincs.inp", epsg: int = None) -> None:
         """Parse config from SFINCS input file.
         If in write-only mode the config is initialized with default settings.
 
@@ -2707,8 +2707,8 @@ class SfincsModel(MeshMixin, GridModel):
             # read config_fn
             inp.read(inp_fn=config_fn)
         self._config = inp.to_dict()  # overwrite / initialize config attribute
-        if crs is not None and "crs" not in self.config:
-            self.config.update(crs=crs)
+        if epsg is not None and "epsg" not in self.config:
+            self.config.update(epsg=epsg)
         self.update_grid_from_config()  # update grid properties based on sfincs.inp
 
     def write_config(self, config_fn: str = "sfincs.inp"):
@@ -2735,7 +2735,7 @@ class SfincsModel(MeshMixin, GridModel):
         # TODO check self.bounds with rotation!! origin not necessary equal to total_bounds
         west, south, _, _ = self.bounds
         if self.crs is not None:
-            self.set_config("crs", self.crs.to_epsg())
+            self.set_config("epsg", self.crs.to_epsg())
         self.set_config("mmax", self.width)
         self.set_config("nmax", self.height)
         self.set_config("dx", dx)
@@ -2756,7 +2756,7 @@ class SfincsModel(MeshMixin, GridModel):
                 nmax=self.config.get("nmax"),
                 mmax=self.config.get("mmax"),
                 rotation=self.config.get("rotation", 0),
-                crs=self.config.get("crs"),
+                epsg=self.config.get("epsg"),
             )
         else:
             pass

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class RegularGrid:
-    def __init__(self, x0, y0, dx, dy, nmax, mmax, crs=None, rotation=0):
+    def __init__(self, x0, y0, dx, dy, nmax, mmax, epsg=None, rotation=0):
         self.x0 = x0
         self.y0 = y0
         self.dx = dx
@@ -26,8 +26,8 @@ class RegularGrid:
         self.mmax = mmax  # width
         self.rotation = rotation
         self.crs = None
-        if crs is not None:
-            self.crs = CRS.from_user_input(crs)
+        if epsg is not None:
+            self.crs = CRS.from_user_input(epsg)
         self.subgrid = SubgridTableRegular()
         # self.data = xr.Dataset()
 

@@ -12,7 +12,7 @@ class SfincsInput:
         self.x0 = 0.0
         self.y0 = 0.0
         self.rotation = 0.0
-        self.crs = None
+        self.epsg = None
         self.latitude = 0.0
         self.tref = datetime(2010, 2, 1, 0, 0, 0)
         self.tstart = datetime(2010, 2, 1, 0, 0, 0)
@@ -120,8 +120,8 @@ class SfincsInput:
                     val = literal_eval(val)
                 except ValueError:  # normal string
                     pass
-            if name == "epsg":
-                name = "crs"
+            if name == "crs":
+                name = "epsg"
             inp_dict[name] = val
             setattr(self, name, val)
 
