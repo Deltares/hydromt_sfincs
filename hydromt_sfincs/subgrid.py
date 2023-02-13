@@ -162,7 +162,7 @@ class SubgridTableRegular:
         nr_subgrid_pixels=20,
         nrmax=2000,
         max_gradient=5.0,
-        zmin=-99999.0,  # unused
+        z_minimum=-99999.0,  # unused
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
@@ -181,7 +181,6 @@ class SubgridTableRegular:
             filelist_man = open(f"{highres_dir}\\filelist_man.txt", "w")
 
         refi = nr_subgrid_pixels
-        z_minimum = zmin
         self.nbins = nbins
         grid_dim = da_mask.raster.shape
         x_dim, y_dim = da_mask.raster.x_dim, da_mask.raster.y_dim
@@ -286,6 +285,9 @@ class SubgridTableRegular:
                     merge_method="first",
                     interp_method="linear",
                 ).load()
+
+                # set minimum depth
+                da_dep = np.maximum(da_dep, z_minimum)
                 # TODO what to do with remaining cell with nan values
                 # da_dep = da_dep.fillna(value)
                 assert np.all(~np.isnan(da_dep))
