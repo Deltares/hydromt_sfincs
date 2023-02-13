@@ -11,6 +11,7 @@ import xarray as xr
 from . import workflows
 from hydromt import gis_utils
 
+
 class SubgridTableRegular:
     def __init__(self, version=0):
         # A regular subgrid table contains only for cells with msk>0
@@ -309,17 +310,25 @@ class SubgridTableRegular:
                 # NOTE tiles have overlap! da_dep[:-refi,:-refi]
                 # TODO properly fix the flipud issue in raster.to_raster
                 if highres_dep_dir:
-                    fn_dep_tile = os.path.join(highres_dep_dir, f"merged_dep_m{ii:05d}_n{jj:05d}.tif")
+                    fn_dep_tile = os.path.join(
+                        highres_dep_dir, f"merged_dep_m{ii:05d}_n{jj:05d}.tif"
+                    )
                     if da_dep.raster.res[1] > 0:
-                        da_dep.raster.flipud().raster.to_raster(fn_dep_tile, compress="deflate")
+                        da_dep.raster.flipud().raster.to_raster(
+                            fn_dep_tile, compress="deflate"
+                        )
                     else:
                         da_dep.raster.to_raster(fn_dep_tile, compress="deflate")
                     # add to filelist
                     filelist_dep.write(f"{fn_dep_tile}\n")
                 if highres_manning_dir:
-                    fn_man_tile = os.path.join(highres_manning_dir, f"merged_man_m{ii:05d}_n{jj:05d}.tif")
+                    fn_man_tile = os.path.join(
+                        highres_manning_dir, f"merged_man_m{ii:05d}_n{jj:05d}.tif"
+                    )
                     if da_man.raster.res[1] > 0:
-                        da_man.raster.flipud().raster.to_raster(fn_man_tile, compress="deflate")
+                        da_man.raster.flipud().raster.to_raster(
+                            fn_man_tile, compress="deflate"
+                        )
                     else:
                         da_man.raster.to_raster(fn_man_tile, compress="deflate")
                     # add to filelist
@@ -391,7 +400,7 @@ class SubgridTableRegular:
                         self.v_zmax[n, m] = zmax
                         self.v_hrep[:, n, m] = hrep
                         self.v_navg[:, n, m] = navg
-        
+
         # write VRT file with all tiles at the end of the loop
         if highres_dep_dir:
             filelist_dep.close()
@@ -421,7 +430,8 @@ class SubgridTableRegular:
 
     def from_xarray(self, ds_sbg):
         for name in ds_sbg.data_vars:
-            setattr(self, name, ds_sbg[name].values)    
+            setattr(self, name, ds_sbg[name].values)
+
 
 # @njit
 def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):

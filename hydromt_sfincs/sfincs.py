@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class SfincsModel(MeshMixin, GridModel):
-    # Static class variables that can be used by all methods within 
-    # SfincsModel class. Typically list of variables (e.g. _MAPS) or 
+    # Static class variables that can be used by all methods within
+    # SfincsModel class. Typically list of variables (e.g. _MAPS) or
     # dict with varname - filename pairs (e.g. thin_dams : thd)
     _NAME = "sfincs"
     _GEOMS = {
@@ -42,7 +42,7 @@ class SfincsModel(MeshMixin, GridModel):
     }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
         # timeseries (can be multiple), locations tuple
-        "waterlevel": (["bzs"], "bnd"),  
+        "waterlevel": (["bzs"], "bnd"),
         "discharge": (["dis"], "src"),
         "precip": (["precip"], None),
         "waves": (["bhs", "btp", "bwd", "bds"], "bwv"),
@@ -214,8 +214,8 @@ class SfincsModel(MeshMixin, GridModel):
             dy=res,
             nmax=nmax,
             mmax=mmax,
-            rotation=0, #Set rotation to 0 for grid based on region (see also TODO)
-            crs = gdf_region.crs.to_epsg(),
+            rotation=0,  # Set rotation to 0 for grid based on region (see also TODO)
+            crs=gdf_region.crs.to_epsg(),
             grid_type=grid_type,
             gdf_refinement=gdf_refinement,
         )
@@ -686,7 +686,7 @@ class SfincsModel(MeshMixin, GridModel):
         elif self.grid_type == "quadtree":
             pass
 
-        if "sbgfile" not in self.config: # only add sbgfile if not already present
+        if "sbgfile" not in self.config:  # only add sbgfile if not already present
             self.config.update({"sbgfile": "sfincs.sbg"})
         # subgrid is used so no depfile or manningfile needed
         if "depfile" in self.config:
@@ -2149,7 +2149,7 @@ class SfincsModel(MeshMixin, GridModel):
             for name in data_vars:
                 if f"{name}file" not in self.config:
                     self.set_config(f"{name}file", f"sfincs.{name}")
-                # do not write depfile if subgrid is used    
+                # do not write depfile if subgrid is used
                 if (name == "dep" or name == "manning") and self.subgrid:
                     continue
                 self.reggrid.write_map(
@@ -2527,10 +2527,7 @@ class SfincsModel(MeshMixin, GridModel):
                 if len(da.dims) != 2 or "time" in da.dims:
                     continue
                 # only write active cells to gis files
-                da = (
-                    da.raster.clip_geom(self.region, mask=True)
-                    .raster.mask_nodata()
-                )
+                da = da.raster.clip_geom(self.region, mask=True).raster.mask_nodata()
                 if da.raster.res[1] > 0:  # make sure orientation is N->S
                     da = da.raster.flipud()
                 da.raster.to_raster(
