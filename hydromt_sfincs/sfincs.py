@@ -43,7 +43,7 @@ class SfincsModel(MeshMixin, GridModel):
     _FORCING_1D = {
         # timeseries (can be multiple), locations tuple
         "waterlevel": (["bzs"], "bnd"),
-        "waves": (["bz"], "bnd"),
+        "waves": (["bzi"], "bnd"),
         "discharge": (["dis"], "src"),
         "precip": (["precip"], None),
         "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),

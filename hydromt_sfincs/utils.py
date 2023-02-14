@@ -954,7 +954,7 @@ def read_sfincs_his_results(
     cvars = ["id", "name", "x", "y"]
     ds_his = ds_his.set_coords([v for v in dvars if v.split("_")[-1] in cvars])
     ds_his.vector.set_spatial_dims(
-        x_dim="station_x", y_dim="station_y", index_dim="stations"
+        x_name="station_x", y_name="station_y", index_dim="stations"
     )
     # set crs
     ds_his.vector.set_crs(crs)
