@@ -453,7 +453,7 @@ class SfincsModel(MeshMixin, GridModel):
         gdf0, gdf1, gdf2 = None, None, None
         bbox = self.region.to_crs(4326).total_bounds
         if region_fn is not None:
-            if region_fn.endswith(".pol"):
+            if str(region_fn).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf0 = utils.polygon2gdf(
                     feats=utils.read_geoms(fn=region_fn), crs=self.region.crs
@@ -463,7 +463,7 @@ class SfincsModel(MeshMixin, GridModel):
             if mask_buffer > 0:  # NOTE assumes model in projected CRS!
                 gdf1["geometry"] = gdf1.to_crs(self.crs).buffer(mask_buffer)
         if include_mask_fn is not None:
-            if include_mask_fn.endswith(".pol"):
+            if str(include_mask_fn).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf1 = utils.polygon2gdf(
                     feats=utils.read_geoms(fn=include_mask_fn), crs=self.region.crs
@@ -471,7 +471,7 @@ class SfincsModel(MeshMixin, GridModel):
             else:
                 gdf1 = self.data_catalog.get_geodataframe(include_mask_fn, bbox=bbox)
         if exclude_mask_fn is not None:
-            if exclude_mask_fn.endswith(".pol"):
+            if str(exclude_mask_fn).endswith(".pol"):
                 gdf2 = utils.polygon2gdf(
                     feats=utils.read_geoms(fn=exclude_mask_fn), crs=self.region.crs
                 )
@@ -614,14 +614,14 @@ class SfincsModel(MeshMixin, GridModel):
         bbox = self.region.to_crs(4326).total_bounds
 
         if include_fn:
-            if include_fn.endswith(".pol"):
+            if str(include_fn).endswith(".pol"):
                 gdf_include = utils.polygon2gdf(
                     feats=utils.read_geoms(fn=include_fn), crs=self.region.crs
                 )
             else:
                 gdf_include = self.data_catalog.get_geodataframe(include_fn, bbox=bbox)
         if exclude_fn:
-            if exclude_fn.endswith(".pol"):
+            if str(exclude_fn).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
                     feats=utils.read_geoms(fn=exclude_fn), crs=self.region.crs
                 )
@@ -2696,7 +2696,10 @@ class SfincsModel(MeshMixin, GridModel):
             elif ts.vector.crs != self.crs:
                 ts = ts.vector.to_crs(self.crs.to_epsg())
             # fix order based on x_dim after setting crs (for comparability between OS)
-            ts = ts.sortby([ts.vector.x_dim, ts.vector.y_dim], ascending=True)
+            # FIXME next line is original code
+            # ts = ts.sortby([ts.vector.x_dim, ts.vector.y_dim], ascending=True)
+            # NOTE this line of code provided coordinates, but string are expected
+            # ts.sortby([ts.vector.geometry.x.values,ts.vector.geometry.y.values])
             # reset index
             dim = ts.vector.index_dim
             ts[dim] = xr.IndexVariable(dim, np.arange(1, ts[dim].size + 1, dtype=int))
