@@ -759,7 +759,7 @@ def read_sfincs_map_results(
     dvars = list(ds_map.data_vars.keys())
     edge_dims = [var for var in dvars if (var.endswith("_x") or var.endswith("_y"))]
     ds_map = ds_map.set_coords(["x", "y"] + edge_dims)
-    crs = ds_map["crs"].item() if ds_map["crs"].item() != 0 else crs
+    crs = ds_map["crs"].item() if ds_map["crs"].item() > 0 else crs
 
     if ds_map["inp"].attrs.get("rotation") != 0:
         logger.warning("Cannot parse rotated maps. Skip reading sfincs.map.nc")
