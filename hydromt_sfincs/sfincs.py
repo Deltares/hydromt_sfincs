@@ -39,6 +39,7 @@ class SfincsModel(MeshMixin, GridModel):
         "weirs": "weir",
         "thin_dams": "thd",
         "inflow": "src",
+        "waterlevel": "bnd",
     }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
         # timeseries (can be multiple), locations tuple
