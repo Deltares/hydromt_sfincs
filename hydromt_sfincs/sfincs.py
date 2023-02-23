@@ -231,7 +231,7 @@ class SfincsModel(MeshMixin, GridModel):
     def setup_grid_from_region(
         self,
         region: dict,
-        res: float,
+        res: float = 100,
         crs: Union[str, int] = "utm",
         grid_type: str = "regular",
         refinement_fn: str = None,
