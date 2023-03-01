@@ -10,12 +10,11 @@ dependencies:
   - descartes # to run examples
   - ffmpeg  # to run examples (animation)
   # - git
-  - hydromt>=0.6.0
+  - hydromt>=0.7.0
   - hydromt_sfincs
   - jupyterlab # to run examples
   - matplotlib==3.5.* # to run examples / https://github.com/SciTools/cartopy/issues/2086
   - pip
   - python=3.10 # fixing python version for binder  
   - pip:
-    - git+https://github.com/Deltares/hydromt.git#raster/rotated
     - git+https://github.com/Deltares/hydromt_sfincs.git#main/v1
