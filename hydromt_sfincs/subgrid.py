@@ -4,12 +4,13 @@ Created on Thu Apr 21 16:25:23 2022
 
 @author: ormondt
 """
+from hydromt import gis_utils
+from numba import njit
 import numpy as np
 import os
-from scipy import interpolate
 import xarray as xr
+
 from . import workflows
-from hydromt import gis_utils
 
 
 class SubgridTableRegular:
@@ -18,7 +19,6 @@ class SubgridTableRegular:
         self.version = version
 
     def load(self, file_name, mask):
-
         if isinstance(mask, xr.DataArray):
             mask = mask.values
 
@@ -95,7 +95,6 @@ class SubgridTableRegular:
         file.close()
 
     def save(self, file_name, mask):
-
         if isinstance(mask, xr.DataArray):
             mask = mask.values
 
@@ -171,7 +170,6 @@ class SubgridTableRegular:
         highres_manning_dir: str = None,
         quiet=False,  # TODO replace by logger
     ):
-
         if highres_dep_dir:
             # Write the raster paths to a text file
             highres_dir = os.path.abspath(os.path.join(highres_dep_dir, os.pardir))
@@ -259,15 +257,15 @@ class SubgridTableRegular:
                 # calculate transform and shape of block at cell and subgrid level
                 da_mask_block = da_mask.isel(
                     {x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}
-                )
+                ).load()
                 assert np.all(
                     [s > 1 for s in da_mask_block.shape]
-                ), "this shouldn't happen"
+                ), f"unexpected block shape {da_mask_block.shape}"
                 if np.all(da_mask_block == 0):  # not active cells in block
                     print("Skip block - No active cells")
                     continue
                 print(
-                    f"Processing block with {np.sum(da_mask_block):d} active cells .."
+                    f"Processing block with {np.sum(da_mask_block.values):d} active cells .."
                 )
 
                 transform = da_mask_block.raster.transform
@@ -342,7 +340,6 @@ class SubgridTableRegular:
                 # Loop through all active cells in this block
                 for m in range(bm0, bm1):
                     for n in range(bn0, bn1):
-
                         if da_mask.values[n, m] < 1:
                             # Not an active point
                             continue
@@ -401,15 +398,24 @@ class SubgridTableRegular:
                         self.v_hrep[:, n, m] = hrep
                         self.v_navg[:, n, m] = navg
 
+                del da_mask_block, da_dep, da_man
+                del manning, zg
+
         # write VRT file with all tiles at the end of the loop
         if highres_dep_dir:
             filelist_dep.close()
             # Create a vrt using GDAL
-            gis_utils.create_vrt(vrt_path=f"{highres_dir}//dep.vrt",file_list_path=f"{highres_dir}//filelist_dep.txt")
+            gis_utils.create_vrt(
+                vrt_path=f"{highres_dir}//dep.vrt",
+                file_list_path=f"{highres_dir}//filelist_dep.txt",
+            )
         if highres_manning_dir:
             filelist_man.close()
             # Create a vrt using GDAL
-            gis_utils.create_vrt(vrt_path=f"{highres_dir}//manning.vrt",file_list_path=f"{highres_dir}//filelist_man.txt")
+            gis_utils.create_vrt(
+                vrt_path=f"{highres_dir}//manning.vrt",
+                file_list_path=f"{highres_dir}//filelist_man.txt",
+            )
 
     def to_xarray(self, dims, coords):
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})
@@ -433,7 +439,21 @@ class SubgridTableRegular:
             setattr(self, name, ds_sbg[name].values)
 
 
-# @njit
+@njit
+def get_dzdh(z, V, a):
+    # change in level per unit of volume (m/m)
+    dz = np.diff(z)
+    # change in volume (normalized to meters)
+    dh = np.maximum(np.diff(V) / a, 0.001)
+    return dz / dh
+
+
+@njit
+def isclose(a, b, rtol=1e-05, atol=1e-08):
+    return abs(a - b) <= (atol + rtol * abs(b))
+
+
+@njit
 def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
     """
     map vector of elevation values into a hypsometric volume - depth relationship for one grid cell
@@ -448,39 +468,33 @@ def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
     volume : np.ndarray (1D flattened from elevation) containing volumes (lowest value zero) per sorted elevation value
     """
 
-    def get_dzdh(z, V, a):
-        # change in level per unit of volume (m/m)
-        dz = np.diff(z)
-        # change in volume (normalized to meters)
-        dh = np.maximum(np.diff(V) / a, 0.001)
-        return dz / dh
-
     # Cell area
-    a = np.size(elevation) * dx * dy
+    a = float(elevation.size * dx * dy)
 
     # Set minimum elevation to -20 (needed with single precision), and sort
     ele_sort = np.sort(np.maximum(elevation, zvolmin).flatten())
 
     # Make sure each consecutive point is larger than previous
-    for j in range(1, np.size(ele_sort)):
+    for j in range(1, ele_sort.size):
         if ele_sort[j] <= ele_sort[j - 1]:
             ele_sort[j] += 1.0e-6
 
     depth = ele_sort - ele_sort.min()
 
-    volume = np.cumsum((np.diff(depth) * dx * dy) * np.arange(len(depth))[1:])
-    # add trailing zero for first value
-    volume = np.concatenate([np.array([0]), volume])
+    volume = np.zeros_like(depth)
+    volume[1:] = np.cumsum((np.diff(depth) * dx * dy) * np.arange(1, depth.size))
 
     # Resample volumes to discrete bins
     steps = np.arange(nbins + 1) / nbins
     V = steps * volume.max()
     dvol = volume.max() / nbins
-    z = interpolate.interp1d(volume, ele_sort)(V)
+    # scipy not supported in numba jit
+    # z = interpolate.interp1d(volume, ele_sort)(V)
+    z = np.interp(V, volume, ele_sort)
     dzdh = get_dzdh(z, V, a)
     n = 0
     while (
-        dzdh.max() > max_gradient and not (np.isclose(dzdh.max(), max_gradient))
+        dzdh.max() > max_gradient and not (isclose(dzdh.max(), max_gradient))
     ) and n < nbins:
         # reshape until gradient is satisfactory
         idx = np.where(dzdh == dzdh.max())[0]
@@ -490,6 +504,7 @@ def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
     return z, V, elevation.min(), z.max(), ele_sort.mean()
 
 
+@njit
 def subgrid_q_table(elevation, manning, nbins):
     """
     map vector of elevation values into a hypsometric hydraulic radius - depth relationship for one grid cell
@@ -504,11 +519,11 @@ def subgrid_q_table(elevation, manning, nbins):
     ele_sort, R : np.ndarray of sorted elevation values, np.ndarray of sorted hydraulic radii that belong with depth
     """
 
-    hrep = np.zeros(nbins)
-    navg = np.zeros(nbins)
-    zz = np.zeros(nbins)
+    hrep = np.zeros(nbins, dtype=np.float32)
+    navg = np.zeros(nbins, dtype=np.float32)
+    zz = np.zeros(nbins, dtype=np.float32)
 
-    n = int(np.size(elevation))  # Nr of pixels in grid cell
+    n = int(elevation.size)  # Nr of pixels in grid cell
     n05 = int(n / 2)
 
     zmin_a = np.min(elevation[0:n05])
@@ -529,15 +544,13 @@ def subgrid_q_table(elevation, manning, nbins):
 
     # Loop through bins
     for ibin in range(nbins):
-
         # Top of bin
         zbin = zmin + (ibin + 1) * dbin
         zz[ibin] = zbin
 
         ibelow = np.where(elevation <= zbin)  # index of pixels below bin level
-        h = np.maximum(
-            zbin - np.maximum(elevation, zmin), 0.0
-        )  # water depth in each pixel
+        # water depth in each pixel
+        h = np.maximum(zbin - np.maximum(elevation, zmin), 0.0)
         qi = h ** (5.0 / 3.0) / manning  # unit discharge in each pixel
         q = np.sum(qi) / n  # combined unit discharge for cell
 
