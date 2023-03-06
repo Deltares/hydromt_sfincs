@@ -261,8 +261,7 @@ class SfincsModel(MeshMixin, GridModel):
         self,
         da_dep_lst: List[dict],
         buffer_cells: int = 0,  # not in list
-        interp_method: str = "linear",  # not in list
-        merge_method: str = "first",  # not in list
+        interp_method: str = "linear",  # used for buffer cells only
         logger=logger,
     ) -> xr.DataArray:
 
@@ -272,7 +271,6 @@ class SfincsModel(MeshMixin, GridModel):
                 da_like=self.mask,
                 buffer_cells=buffer_cells,
                 interp_method=interp_method,
-                merge_method=merge_method,
                 logger=logger,
             )
             self.set_grid(da_dep, name="dep")
@@ -284,8 +282,7 @@ class SfincsModel(MeshMixin, GridModel):
         self,
         datasets_dep: List[dict],
         buffer_cells: int = 0,  # not in list
-        interp_method: str = "linear",  # not in list
-        merge_method: str = "first",  # not in list
+        interp_method: str = "linear",  # used for buffer cells only
     ):
         """Setup model grid and interpolate topobathy (dep) data to this grid.
 
@@ -308,7 +305,6 @@ class SfincsModel(MeshMixin, GridModel):
             da_dep_lst=da_dep_lst,
             buffer_cells=buffer_cells,
             interp_method=interp_method,
-            merge_method=merge_method,
             logger=self.logger,
         )
 
