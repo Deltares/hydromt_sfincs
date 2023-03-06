@@ -43,7 +43,7 @@ def plot_forcing(forcing: Dict, **kwargs):
     fig, axes = plt.subplots(n, 1, **kwargs0)
     axes = [axes] if n == 1 else axes
     for i, name in enumerate(forcing):
-        da = forcing[name]
+        da = forcing[name].transpose("time", ...)
         longname = da.attrs.get("standard_name", "")
         unit = da.attrs.get("unit", "")
         prefix = ""
@@ -51,12 +51,12 @@ def plot_forcing(forcing: Dict, **kwargs):
             da = da.mean(dim=[da.raster.x_dim, da.raster.y_dim])
             prefix = "mean "
         # convert to Single index dataframe (bar plots don't work with xarray)
-        df = da.squeeze().to_series()
+        df = da.to_pandas()
         if isinstance(df.index, pd.MultiIndex):
             df = df.unstack(0)
         # convert dates a-priori as automatic conversion doesn't always work
         df.index = mdates.date2num(df.index)
-        if longname == "precipitation":
+        if name.startswith("precip"):
             axes[i].bar(df.index, df.values, facecolor="darkblue")
         else:
             df.plot.line(ax=axes[i]).legend(
@@ -172,11 +172,11 @@ def plot_basemap(
             kwargs.update(norm=norm, cmap=cmap)
 
     if variable in ds:
-        da = ds[variable].raster.mask_nodata()
+        da = ds[variable].raster.mask_nodata().where(ds["msk"] > 0)
         # by default colorbar on lower right & legend upper right
         kwargs0 = {"cbar_kwargs": {"shrink": 0.6, "anchor": (0, 0)}}
         kwargs0.update(kwargs)
-        da.plot(transform=utm, ax=ax, zorder=1, **kwargs0)
+        da.plot.imshow(transform=utm, ax=ax, zorder=1, **kwargs0)
         if shaded and variable == "dep":
             ls = colors.LightSource(azdeg=315, altdeg=45)
             dx, dy = da.raster.res

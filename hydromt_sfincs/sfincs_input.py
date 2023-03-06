@@ -96,7 +96,6 @@ class SfincsInput:
         self.cdval = [0.001, 0.0025, 0.0015]
 
     def read(self, inp_fn: str) -> None:
-
         with open(inp_fn, "r") as fid:
             lines = fid.readlines()
 
