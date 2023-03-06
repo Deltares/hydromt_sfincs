@@ -405,11 +405,17 @@ class SubgridTableRegular:
         if highres_dep_dir:
             filelist_dep.close()
             # Create a vrt using GDAL
-            gis_utils.create_vrt(vrt_path=f"{highres_dir}//dep.vrt",file_list_path=f"{highres_dir}//filelist_dep.txt")
+            gis_utils.create_vrt(
+                vrt_path=f"{highres_dir}//dep.vrt",
+                file_list_path=f"{highres_dir}//filelist_dep.txt",
+            )
         if highres_manning_dir:
             filelist_man.close()
             # Create a vrt using GDAL
-            gis_utils.create_vrt(vrt_path=f"{highres_dir}//manning.vrt",file_list_path=f"{highres_dir}//filelist_man.txt")
+            gis_utils.create_vrt(
+                vrt_path=f"{highres_dir}//manning.vrt",
+                file_list_path=f"{highres_dir}//filelist_man.txt",
+            )
 
     def to_xarray(self, dims, coords):
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})

@@ -53,11 +53,11 @@ class SfincsModel(MeshMixin, GridModel):
     _FORCING_2D = {
         "wind_u": "amu",
         "wind_v": "amv",
-    } # TODO add
+    }  # TODO add
     _FORCING_NET = {
         "netbndbzsbzi",
         "netsrcdis",
-        "netampr",  
+        "netampr",
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["msk", "dep", "scs", "manning", "qinf"]
@@ -167,7 +167,14 @@ class SfincsModel(MeshMixin, GridModel):
         gdf_refinement: gpd.GeoDataFrame = None,
     ):
         self.config.update(
-            x0=x0, y0=y0, dx=dx, dy=dy, nmax=nmax, mmax=mmax, rotation=rotation, epsg=epsg
+            x0=x0,
+            y0=y0,
+            dx=dx,
+            dy=dy,
+            nmax=nmax,
+            mmax=mmax,
+            rotation=rotation,
+            epsg=epsg,
         )
         self.update_grid_from_config()
         # TODO gdf_refinement for quadtree
@@ -296,10 +303,17 @@ class SfincsModel(MeshMixin, GridModel):
         ----------
         datasets_dep : list[dict]
             Per dataset to be merged, a filename (dep_fn) and mutliple merge arguments (min_valid, max_valid,
-            gdf_valid, offset) can be provided. The order of merging is from first to last.
+            gdf_valid, offset, merge_method) can be provided. If not specified explicitly, order of merging is from first to last.
         """
 
-        da_dep_lst = self._parse_datasets_dep(datasets_dep)
+        # retrieve model resolution
+        # TODO fix for quadtree
+        if not self.mask.raster.crs.is_geographic:
+            res = np.abs(self.mask.raster.res[0])
+        else:
+            res = np.abs(self.mask.raster.res[0]) * 111e3
+
+        da_dep_lst = self._parse_datasets_dep(datasets_dep, res=res)
 
         self.create_dep(
             da_dep_lst=da_dep_lst,
@@ -715,7 +729,14 @@ class SfincsModel(MeshMixin, GridModel):
         make_manning_tiles: bool = False,
     ):
 
-        da_dep_lst = self._parse_datasets_dep(datasets_dep)
+        # retrieve model resolution
+        # TODO fix for quadtree
+        if not self.mask.raster.crs.is_geographic:
+            res = np.abs(self.mask.raster.res[0]) / nr_subgrid_pixels
+        else:
+            res = np.abs(self.mask.raster.res[0]) * 111e3 / nr_subgrid_pixels
+
+        da_dep_lst = self._parse_datasets_dep(datasets_dep, res=res)
 
         if len(datasets_rgh) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
@@ -2333,25 +2354,31 @@ class SfincsModel(MeshMixin, GridModel):
                     self.logger.warning(f"{name}file not found at {fn}")
             elif name == "netbndbzsbzi":
                 da = xr.open_dataset(fn)
-                geom = [Point(x,y) for x, y in zip(da['x'], da['y'])]
+                geom = [Point(x, y) for x, y in zip(da["x"], da["y"])]
                 gdf = gpd.GeoDataFrame(geometry=geom)
                 if "zs" in da:
-                    ds = GeoDataset.from_gdf(gdf, da["zs"].rename("bzs"), index_dim="stations")
+                    ds = GeoDataset.from_gdf(
+                        gdf, da["zs"].rename("bzs"), index_dim="stations"
+                    )
                     self.set_forcing(ds, name="bzs")
                 if "zi" in da:
-                    ds = GeoDataset.from_gdf(gdf, da["zi"].rename("bzi"), index_dim="stations")
+                    ds = GeoDataset.from_gdf(
+                        gdf, da["zi"].rename("bzi"), index_dim="stations"
+                    )
                     self.set_forcing(ds, name="bzi")
             elif name == "netsrcdis":
                 da = xr.open_dataset(fn)
-                geom = [Point(x,y) for x, y in zip(da['x'], da['y'])]
+                geom = [Point(x, y) for x, y in zip(da["x"], da["y"])]
                 gdf = gpd.GeoDataFrame(geometry=geom)
                 if "discharge" in da:
-                    ds = GeoDataset.from_gdf(gdf, da["discharge"].rename("dis"), index_dim="stations")
+                    ds = GeoDataset.from_gdf(
+                        gdf, da["discharge"].rename("dis"), index_dim="stations"
+                    )
                     self.set_forcing(ds, name="dis")
             elif name == "netampr":
                 da = xr.open_dataset(fn)
                 if "Precipitation" in da:
-                    self.set_forcing(da["Precipitation"], name="precip")        
+                    self.set_forcing(da["Precipitation"], name="precip")
 
     def write_forcing(self, data_vars: Union[List, str] = None):
         """Write forcing to ascii (bzd/dis/precip) and netcdf (netampr) files.
@@ -2837,12 +2864,16 @@ class SfincsModel(MeshMixin, GridModel):
         ts = GeoDataArray.from_gdf(gdf, df, dims=("time", "index"), name=name)
         return ts
 
-    def _parse_datasets_dep(self, datasets_dep):
+    def _parse_datasets_dep(self, datasets_dep, res):
         for dataset in datasets_dep:
             # read in depth datasets; replace da_fn for da
             dep_fn = dataset.get("dep_fn")
             da_elv = self.data_catalog.get_rasterdataset(
-                dep_fn, geom=self.mask.raster.box, buffer=10, variables=["elevtn"]
+                dep_fn,
+                geom=self.mask.raster.box,
+                buffer=10,
+                variables=["elevtn"],
+                zoom_level=(res, "meter"),
             )
             dataset.update({"da": da_elv})
 

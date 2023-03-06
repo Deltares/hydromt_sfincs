@@ -35,7 +35,7 @@ def merge_multi_dataarrays(
     reproj_kwargs: dict, optional
         Keyword arguments for reprojecting the data to the destination grid.
         *reproj_method: str, optional
-            Reprojection method, if not provided, method is based on resolution (avarged when resolution of destination grid is coarser then data reosltuion, else bilinear). 
+            Reprojection method, if not provided, method is based on resolution (avarged when resolution of destination grid is coarser then data reosltuion, else bilinear).
         *offset: xr.DataArray, float, optional
             Dataset with spatially varying offset or float with uniform offset
         *min_valid, max_valid : float, optional
@@ -43,7 +43,7 @@ def merge_multi_dataarrays(
             Note: applied after offset!
         *gdf_valid: gpd.GeoDataFrame, optional
             Geometry of the valid region for da2
-        
+
 
     Returns
     -------
@@ -56,20 +56,28 @@ def merge_multi_dataarrays(
     da1 = da_list[0].get("da")
 
     # get resolution of da1 in meters
-    dx_1 = np.abs(da1.raster.res[0]) if not da1.raster.crs.is_geographic else np.abs(da1.raster.res[0]) * 111e3
+    dx_1 = (
+        np.abs(da1.raster.res[0])
+        if not da1.raster.crs.is_geographic
+        else np.abs(da1.raster.res[0]) * 111e3
+    )
 
     # if no reprojection method is specified, base method on resolutions
     # if resolution dataset >= resolution destination grid: bilinear
     # if resolution dataset < resolution destination grid: average
 
     if method is None and da_like is not None:
-        dx_like = np.abs(da_like.raster.res[0]) if not da_like.raster.crs.is_geographic else np.abs(da_like.raster.res[0]) * 111e3
+        dx_like = (
+            np.abs(da_like.raster.res[0])
+            if not da_like.raster.crs.is_geographic
+            else np.abs(da_like.raster.res[0]) * 111e3
+        )
         if dx_1 >= dx_like:
             method = "bilinear"
         else:
             method = "average"
     else:
-        method="bilinear"
+        method = "bilinear"
 
     if da_like is not None:  # reproject first raster to destination grid
         da1 = da1.raster.reproject_like(da_like, method=method).load()
@@ -96,17 +104,21 @@ def merge_multi_dataarrays(
         if merge_method == "first" and not np.any(np.isnan(da1.values)):
             break
 
-        #base reprojection method on resolution of datasets
+        # base reprojection method on resolution of datasets
         reproj_method = da_list[i].get("reproj_method", None)
-        da2=da_list[i].get("da")
+        da2 = da_list[i].get("da")
         if reproj_method is None:
-            dx_2 = np.abs(da2.raster.res[0]) if not da2.raster.crs.is_geographic else np.abs(da2.raster.res[0]) * 111e3
+            dx_2 = (
+                np.abs(da2.raster.res[0])
+                if not da2.raster.crs.is_geographic
+                else np.abs(da2.raster.res[0]) * 111e3
+            )
             if dx_2 >= dx_1:
                 reproj_method = "bilinear"
             else:
                 reproj_method = "average"
         else:
-            reproj_method="bilinear"
+            reproj_method = "bilinear"
         logger.debug(f"Reprojection method of dataset {str(i)} is: {method}")
 
         da1 = merge_dataarrays(
@@ -123,7 +135,9 @@ def merge_multi_dataarrays(
         )
 
     # NOTE: this is still open for discussion
-    na_holes = ndimage.binary_fill_holes(np.isnan(da1.values), structure=np.ones((3, 3)))
+    na_holes = ndimage.binary_fill_holes(
+        np.isnan(da1.values), structure=np.ones((3, 3))
+    )
     if np.any(na_holes) > 0 and interp_method:
         logger.debug(f"Interpolate data at {int(np.sum(na_holes))} cells")
         da1 = da1.raster.interpolate_na(method=interp_method).where(na_holes)
@@ -178,7 +192,7 @@ def merge_dataarrays(
 
     reproj_method: {'bilinear', 'cubic', 'nearest', 'average', 'max', 'min'}
         Method used to reproject the offset and second dataset to the grid of the
-        first dataset, by default 'bilinear'. 
+        first dataset, by default 'bilinear'.
         See :py:meth:`rasterio.warp.reproject` for more methods
     interp_method, {'linear', 'nearest', 'rio_idw'}
         Method used to interpolate the buffer cells, by default 'linear'.
