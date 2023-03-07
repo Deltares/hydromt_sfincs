@@ -311,7 +311,7 @@ class SfincsModel(MeshMixin, GridModel):
         if not self.mask.raster.crs.is_geographic:
             res = np.abs(self.mask.raster.res[0])
         else:
-            res = np.abs(self.mask.raster.res[0]) * 111e3
+            res = np.abs(self.mask.raster.res[0]) * 111111.0
 
         da_dep_lst = self._parse_datasets_dep(datasets_dep, res=res)
 
@@ -734,7 +734,7 @@ class SfincsModel(MeshMixin, GridModel):
         if not self.mask.raster.crs.is_geographic:
             res = np.abs(self.mask.raster.res[0]) / nr_subgrid_pixels
         else:
-            res = np.abs(self.mask.raster.res[0]) * 111e3 / nr_subgrid_pixels
+            res = np.abs(self.mask.raster.res[0]) * 111111.0 / nr_subgrid_pixels
 
         da_dep_lst = self._parse_datasets_dep(datasets_dep, res=res)
 
