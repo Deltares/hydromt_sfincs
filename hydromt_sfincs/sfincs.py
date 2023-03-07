@@ -160,7 +160,7 @@ class SfincsModel(MeshMixin, GridModel):
             self.reggrid.crs = CRS.from_user_input(crs)
             self.grid.raster.set_crs(self.reggrid.crs)
         elif self.grid_type == "quadtree":
-            self.quadgrid.crs = CRS.from_user_input(crs)
+            self.quadtree.crs = CRS.from_user_input(crs)
 
     def create_grid(
         self,
@@ -397,7 +397,7 @@ class SfincsModel(MeshMixin, GridModel):
             if "indexfile" not in self.config:
                 self.config.update({"indexfile": "sfincs.ind"})
             # update region
-            self.logger.info(f"Derive region geometry based on active cells.")
+            self.logger.info("Derive region geometry based on active cells.")
             region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
             self.set_geoms(region, "region")
 
@@ -519,7 +519,7 @@ class SfincsModel(MeshMixin, GridModel):
         # da_mask = self.mask.where(da_mask, np.uint8(0))  # unint8 dtype!
         # self.set_grid(da_mask, "msk")
 
-        self.logger.debug(f"Derive region geometry based on active cells.")
+        self.logger.debug("Derive region geometry based on active cells.")
         region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
         self.set_geoms(region, "region")
 
@@ -1156,8 +1156,7 @@ class SfincsModel(MeshMixin, GridModel):
 
         # set forcing with dummy timeseries to keep valid sfincs model
         gdf_src = gdf_src.to_crs(self.crs.to_epsg())
-        self.set_geoms(gdf_src, name="src")
-        self.set_forcing_1d(xy=gdf_src, name="discharge")
+        self.set_forcing_1d(gdf_locs=gdf_src, name="dis")
 
         # set river
         if keep_rivers_geom and gdf_riv is not None:
@@ -1467,11 +1466,10 @@ class SfincsModel(MeshMixin, GridModel):
 
         if not overwrite and name in self.geoms:
             gdf0 = self._geoms.pop(name)
-            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
+            gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
             self.logger.info(f"Adding new observation points to existing ones.")
-        self.set_geoms(gdf, name)
+        self.set_geoms(gdf_obs, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
-        self.logger.info(f"{name} set based on {obs_fn}")
 
     def setup_observation_points(
         self, obs_fn: Union[str, Path], overwrite: bool = False, **kwargs
@@ -1490,13 +1488,17 @@ class SfincsModel(MeshMixin, GridModel):
         overwrite: bool, optional
             If True, overwrite existing observation points instead of appending the new observation points.
         """
+        name = self._GEOMS["observation_points"]
+
         # ensure the catalog is loaded before adding any new entries
         self.data_catalog.sources
+
         gdf = self.data_catalog.get_geodataframe(
             obs_fn, geom=self.region, assert_gtype="Point", **kwargs
         ).to_crs(self.crs)
 
         self.create_observation_points(gdf_obs=gdf, overwrite=overwrite)
+        self.logger.info(f"{name} set based on {obs_fn}")
 
     def create_structures(
         self,
@@ -1531,9 +1533,11 @@ class SfincsModel(MeshMixin, GridModel):
             "weir": ["name", "z", "par1", "geometry"],
         }
         assert stype in cols
-        gdf = gdf[[c for c in cols[stype] if c in gdf.columns]]  # keep relevant cols
+        gdf = gdf_structures[
+            [c for c in cols[stype] if c in gdf_structures.columns]
+        ]  # keep relevant cols
 
-        structs = utils.gdf2structures(gdf_structures)  # check if it parsed correct
+        structs = utils.gdf2structures(gdf)  # check if it parsed correct
         # sample zb values from dep file and set z = zb + dz
         if stype == "weir" and dz is not None:
             elv = self.grid["dep"]
@@ -1556,7 +1560,6 @@ class SfincsModel(MeshMixin, GridModel):
         # set structures
         self.set_geoms(gdf, stype)
         self.set_config(f"{stype}file", f"sfincs.{stype}")
-        self.logger.info(f"{stype} structure set based on {structures_fn}")
 
     def setup_structures(
         self,
@@ -1598,6 +1601,7 @@ class SfincsModel(MeshMixin, GridModel):
         self.create_structures(
             gdf_structures=gdf, stype=stype, dz=dz, overwrite=overwrite
         )
+        self.logger.info(f"{stype} structure set based on {structures_fn}")
 
     ### FORCING
     def set_forcing_1d(
@@ -2875,7 +2879,7 @@ class SfincsModel(MeshMixin, GridModel):
                 )
                 root = abspath(dirname(config_fn))
                 self.logger.warning(f"updating the model root to: {root}")
-                self.set_root(root=root, mode=self.mode)
+                self.set_root(root=root, mode=mode)
             else:
                 raise IOError(f"SFINCS input file not found {config_fn}")
             # read config_fn
@@ -2919,6 +2923,7 @@ class SfincsModel(MeshMixin, GridModel):
         self.set_config("y0", south)
 
     def update_grid_from_config(self):
+        """Update grid properties based on `config` (sfincs.inp) attributes"""
         self.grid_type = (
             "quadtree" if self.config.get("qtrfile") is not None else "regular"
         )
