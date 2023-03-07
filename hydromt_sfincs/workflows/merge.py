@@ -59,7 +59,7 @@ def merge_multi_dataarrays(
     dx_1 = (
         np.abs(da1.raster.res[0])
         if not da1.raster.crs.is_geographic
-        else np.abs(da1.raster.res[0]) * 111e3
+        else np.abs(da1.raster.res[0]) * 111111.0
     )
 
     # if no reprojection method is specified, base method on resolutions
@@ -70,7 +70,7 @@ def merge_multi_dataarrays(
         dx_like = (
             np.abs(da_like.raster.res[0])
             if not da_like.raster.crs.is_geographic
-            else np.abs(da_like.raster.res[0]) * 111e3
+            else np.abs(da_like.raster.res[0]) * 111111.0
         )
         if dx_1 >= dx_like:
             method = "bilinear"
@@ -111,7 +111,7 @@ def merge_multi_dataarrays(
             dx_2 = (
                 np.abs(da2.raster.res[0])
                 if not da2.raster.crs.is_geographic
-                else np.abs(da2.raster.res[0]) * 111e3
+                else np.abs(da2.raster.res[0]) * 111111.0
             )
             if dx_2 >= dx_1:
                 reproj_method = "bilinear"
