@@ -18,7 +18,6 @@ def merge_multi_dataarrays(
     reproj_kwargs: Dict = {},
     buffer_cells: int = 0,  # not in list
     interp_method: str = "linear",  # not in list
-    merge_method: str = "first",  # not in list
     logger=logger,
 ) -> xr.DataArray:
     """Merge a list of data arrays by reprojecting these to a common destination grid
@@ -33,6 +32,18 @@ def merge_multi_dataarrays(
     da_like : xr.Dataarray, optional
         Destination grid, by default None.
         If provided the output data is projected to this grid, otherwise to the first input grid.
+    reproj_kwargs: dict, optional
+        Keyword arguments for reprojecting the data to the destination grid.
+        *reproj_method: str, optional
+            Reprojection method, if not provided, method is based on resolution (avarged when resolution of destination grid is coarser then data reosltuion, else bilinear).
+        *offset: xr.DataArray, float, optional
+            Dataset with spatially varying offset or float with uniform offset
+        *min_valid, max_valid : float, optional
+            Range of valid values for da2 -  only valid cells are not merged.
+            Note: applied after offset!
+        *gdf_valid: gpd.GeoDataFrame, optional
+            Geometry of the valid region for da2
+
 
     Returns
     -------
@@ -41,12 +52,38 @@ def merge_multi_dataarrays(
     """
 
     # start with common grid
-    method = da_list[0].get("reproj_method", "bilinear")
+    method = da_list[0].get("reproj_method", None)
     da1 = da_list[0].get("da")
+
+    # get resolution of da1 in meters
+    dx_1 = (
+        np.abs(da1.raster.res[0])
+        if not da1.raster.crs.is_geographic
+        else np.abs(da1.raster.res[0]) * 111111.0
+    )
+
+    # if no reprojection method is specified, base method on resolutions
+    # if resolution dataset >= resolution destination grid: bilinear
+    # if resolution dataset < resolution destination grid: average
+
+    if method is None and da_like is not None:
+        dx_like = (
+            np.abs(da_like.raster.res[0])
+            if not da_like.raster.crs.is_geographic
+            else np.abs(da_like.raster.res[0]) * 111111.0
+        )
+        if dx_1 >= dx_like:
+            method = "bilinear"
+        else:
+            method = "average"
+    else:
+        method = "bilinear"
+
     if da_like is not None:  # reproject first raster to destination grid
         da1 = da1.raster.reproject_like(da_like, method=method).load()
     elif reproj_kwargs:
         da1 = da1.raster.reproject(method=method, **reproj_kwargs).load()
+    logger.debug(f"Reprojection method of first dataset is: {method}")
 
     # set nodata to np.nan, Note this might change the dtype to float
     da1 = da1.raster.mask_nodata()
@@ -63,26 +100,47 @@ def merge_multi_dataarrays(
 
     # combine with next dataset
     for i in range(1, len(da_list)):
+        merge_method = da_list[i].get("merge_method", "first")
         if merge_method == "first" and not np.any(np.isnan(da1.values)):
             break
+
+        # base reprojection method on resolution of datasets
+        reproj_method = da_list[i].get("reproj_method", None)
+        da2 = da_list[i].get("da")
+        if reproj_method is None:
+            dx_2 = (
+                np.abs(da2.raster.res[0])
+                if not da2.raster.crs.is_geographic
+                else np.abs(da2.raster.res[0]) * 111111.0
+            )
+            if dx_2 >= dx_1:
+                reproj_method = "bilinear"
+            else:
+                reproj_method = "average"
+        else:
+            reproj_method = "bilinear"
+        logger.debug(f"Reprojection method of dataset {str(i)} is: {method}")
+
         da1 = merge_dataarrays(
             da1,
-            da2=da_list[i].get("da"),
+            da2=da2,
             offset=da_list[i].get("offset", None),
             min_valid=da_list[i].get("min_valid", None),
             max_valid=da_list[i].get("max_valid", None),
             gdf_valid=da_list[i].get("gdf_valid", None),
-            reproj_method=da_list[i].get("reproj_method", "bilinear"),
-            buffer_cells=buffer_cells,
+            reproj_method=reproj_method,
             merge_method=merge_method,
+            buffer_cells=buffer_cells,
             interp_method=interp_method,
         )
 
-    # TODO identify holes in merged elevation and interpolate?
-    # na_holes = ndimage.binary_fill_holes(np.isnan(da1.values), structure=np.ones((3, 3)))
-    # if np.any(na_holes) > 0 and interp_method:
-    #     logger.debug(f"Interpolate data at {int(np.sum(na_holes))} cells")
-    #     da1 = da1.raster.interpolate_na(method=interp_method).where(na_holes)
+    # NOTE: this is still open for discussion
+    na_holes = ndimage.binary_fill_holes(
+        np.isnan(da1.values), structure=np.ones((3, 3))
+    )
+    if np.any(na_holes) > 0 and interp_method:
+        logger.debug(f"Interpolate data at {int(np.sum(na_holes))} cells")
+        da1 = da1.raster.interpolate_na(method=interp_method).where(na_holes)
     return da1
 
 
@@ -124,14 +182,18 @@ def merge_dataarrays(
         Buffer (number of cells) around valid cells in da1 (if `merge_method='first'`)
         or da2 (if `merge_method='last'`) where values are interpolated
         to create a smooth surface between both datasets, by default 0.
-    merge_method: {'first','last'}, optional
+    merge_method: {'first','last', 'mean', 'max', 'min'}, optional
         merge method, by default 'first':
-
         * first: use valid new where existing invalid
         * last: use valid new
-    reproj_method: {'bilinear', 'cubic', 'nearest'}
+        * mean: use mean of valid new and existing
+        * max: use max of valid new and existing
+        * min: use min of valid new and existing
+
+    reproj_method: {'bilinear', 'cubic', 'nearest', 'average', 'max', 'min'}
         Method used to reproject the offset and second dataset to the grid of the
-        first dataset, by default 'bilinear'
+        first dataset, by default 'bilinear'.
+        See :py:meth:`rasterio.warp.reproject` for more methods
     interp_method, {'linear', 'nearest', 'rio_idw'}
         Method used to interpolate the buffer cells, by default 'linear'.
 
@@ -146,7 +208,6 @@ def merge_dataarrays(
     if not np.isnan(nodata):
         da1 = da1.raster.mask_nodata()
     ## reproject da2 and reset nodata value to match da1 nodata
-    # TODO try except
     try:
         da2 = (
             da2.raster.reproject_like(da1, method=reproj_method)
@@ -169,6 +230,13 @@ def merge_dataarrays(
         mask = ~np.isnan(da1)
     elif merge_method == "last":
         mask = np.isnan(da2)
+    elif merge_method == "mean":
+        mask = np.isnan(da1)
+        da2 = (da1 + da2) / 2
+    elif merge_method == "max":
+        mask = da1 >= da2
+    elif merge_method == "min":
+        mask = da1 <= da2
     else:
         raise ValueError(f"Unknown merge_method: {merge_method}")
     da_out = da1.where(mask, da2)

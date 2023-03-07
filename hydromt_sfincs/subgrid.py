@@ -172,10 +172,11 @@ class SubgridTableRegular:
         nr_subgrid_pixels=20,
         nrmax=2000,
         max_gradient=5.0,
-        z_minimum=-99999.0,  # unused
+        z_minimum=-99999.0,
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
+        buffer_cells: int = 0,
         highres_dep_dir: str = None,
         highres_manning_dir: str = None,
         quiet=False,  # TODO replace by logger
@@ -291,8 +292,8 @@ class SubgridTableRegular:
                 da_dep = workflows.merge_multi_dataarrays(
                     da_list=da_dep_lst,
                     reproj_kwargs=reproj_kwargs,
-                    merge_method="first",
                     interp_method="linear",
+                    buffer_cells=buffer_cells,
                 ).load()
 
                 # set minimum depth
@@ -306,8 +307,8 @@ class SubgridTableRegular:
                     da_man = workflows.merge_multi_dataarrays(
                         da_list=da_manning_lst,
                         reproj_kwargs=reproj_kwargs,
-                        merge_method="first",
                         interp_method="linear",
+                        buffer_cells=buffer_cells,
                     ).load()
 
                 else:

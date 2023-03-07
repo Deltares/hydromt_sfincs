@@ -276,8 +276,7 @@ class SfincsModel(MeshMixin, GridModel):
         self,
         da_dep_lst: List[dict],
         buffer_cells: int = 0,  # not in list
-        interp_method: str = "linear",  # not in list
-        merge_method: str = "first",  # not in list
+        interp_method: str = "linear",  # used for buffer cells only
         logger=logger,
     ) -> xr.DataArray:
         if self.grid_type == "regular":
@@ -286,7 +285,6 @@ class SfincsModel(MeshMixin, GridModel):
                 da_like=self.mask,
                 buffer_cells=buffer_cells,
                 interp_method=interp_method,
-                merge_method=merge_method,
                 logger=logger,
             )
             self.set_grid(da_dep, name="dep")
@@ -298,8 +296,7 @@ class SfincsModel(MeshMixin, GridModel):
         self,
         datasets_dep: List[dict],
         buffer_cells: int = 0,  # not in list
-        interp_method: str = "linear",  # not in list
-        merge_method: str = "first",  # not in list
+        interp_method: str = "linear",  # used for buffer cells only
     ):
         """Interpolate topobathy (dep) data to the model grid.
 
@@ -311,16 +308,22 @@ class SfincsModel(MeshMixin, GridModel):
         ----------
         datasets_dep : list[dict]
             Per dataset to be merged, a filename (dep_fn) and mutliple merge arguments (min_valid, max_valid,
-            gdf_valid, offset) can be provided. The order of merging is from first to last.
+            gdf_valid, offset, merge_method) can be provided. If not specified explicitly, order of merging is from first to last.
         """
 
-        da_dep_lst = self._parse_datasets_dep(datasets_dep)
+        # retrieve model resolution
+        # TODO fix for quadtree
+        if not self.mask.raster.crs.is_geographic:
+            res = np.abs(self.mask.raster.res[0])
+        else:
+            res = np.abs(self.mask.raster.res[0]) * 111111.0
+
+        da_dep_lst = self._parse_datasets_dep(datasets_dep, res=res)
 
         self.create_dep(
             da_dep_lst=da_dep_lst,
             buffer_cells=buffer_cells,
             interp_method=interp_method,
-            merge_method=merge_method,
             logger=self.logger,
         )
 
@@ -729,7 +732,15 @@ class SfincsModel(MeshMixin, GridModel):
         make_dep_tiles: bool = False,
         make_manning_tiles: bool = False,
     ):
-        da_dep_lst = self._parse_datasets_dep(datasets_dep)
+
+        # retrieve model resolution
+        # TODO fix for quadtree
+        if not self.mask.raster.crs.is_geographic:
+            res = np.abs(self.mask.raster.res[0]) / nr_subgrid_pixels
+        else:
+            res = np.abs(self.mask.raster.res[0]) * 111111.0 / nr_subgrid_pixels
+
+        da_dep_lst = self._parse_datasets_dep(datasets_dep, res=res)
 
         if len(datasets_rgh) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
@@ -2893,12 +2904,16 @@ class SfincsModel(MeshMixin, GridModel):
 
     ## helper method
 
-    def _parse_datasets_dep(self, datasets_dep):
+    def _parse_datasets_dep(self, datasets_dep, res):
         for dataset in datasets_dep:
             # read in depth datasets; replace da_fn for da
             dep_fn = dataset.get("dep_fn")
             da_elv = self.data_catalog.get_rasterdataset(
-                dep_fn, geom=self.mask.raster.box, buffer=10, variables=["elevtn"]
+                dep_fn,
+                geom=self.mask.raster.box,
+                buffer=10,
+                variables=["elevtn"],
+                zoom_level=(res, "meter"),
             )
             dataset.update({"da": da_elv})
 
