@@ -34,7 +34,7 @@ class SfincsModel(MeshMixin, GridModel):
     # dict with varname - filename pairs (e.g. thin_dams : thd)
     _NAME = "sfincs"
     _GEOMS = {
-        "gauges": "obs",
+        "observation_points": "obs",
         "weirs": "weir",
         "thin_dams": "thd",
     }  # parsed to dict of geopandas.GeoDataFrame
@@ -1451,7 +1451,31 @@ class SfincsModel(MeshMixin, GridModel):
             manning_sea=manning_sea,
         )
 
-    def setup_gauges(self, gauges_fn, overwrite=False, **kwargs):
+    def create_observation_points(
+        self, gdf_obs: gpd.GeoDataFrame, overwrite: bool = False
+    ):
+        """Creat model observation point locations.
+
+        Parameters
+        ----------
+        gdf_obs : gpd.GeoDataFrame
+            Geodataframe with observation point locations.
+        overwrite : bool, optional
+            If True, overwrite existing observation_points instead of appending the new observation_points.
+        """
+        name = self._GEOMS["observation_points"]
+
+        if not overwrite and name in self.geoms:
+            gdf0 = self._geoms.pop(name)
+            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
+            self.logger.info(f"Adding new observation points to existing ones.")
+        self.set_geoms(gdf, name)
+        self.set_config(f"{name}file", f"sfincs.{name}")
+        self.logger.info(f"{name} set based on {obs_fn}")
+
+    def setup_observation_points(
+        self, obs_fn: Union[str, Path], overwrite: bool = False, **kwargs
+    ):
         """Setup model observation point locations.
 
         Adds model layers:
@@ -1460,28 +1484,87 @@ class SfincsModel(MeshMixin, GridModel):
 
         Parameters
         ---------
-        gauges_fn: str
+        obs_fn: str, Path
             Path to observation points geometry file.
             See :py:meth:`hydromt.open_vector`, for accepted files.
         overwrite: bool, optional
-            If True, overwrite existing gauges instead of appending the new gauges.
+            If True, overwrite existing observation points instead of appending the new observation points.
         """
-        name = self._GEOMS["gauges"]
         # ensure the catalog is loaded before adding any new entries
         self.data_catalog.sources
         gdf = self.data_catalog.get_geodataframe(
-            gauges_fn, geom=self.region, assert_gtype="Point", **kwargs
+            obs_fn, geom=self.region, assert_gtype="Point", **kwargs
         ).to_crs(self.crs)
-        if not overwrite and name in self.geoms:
-            gdf0 = self._geoms.pop(name)
+
+        self.create_observation_points(gdf_obs=gdf, overwrite=overwrite)
+
+    def create_structures(
+        self,
+        gdf_structures: gpd.GeoDataFrame,
+        stype: str,
+        dz: float = None,
+        overwrite: bool = False,
+    ):
+        """Create thin dam or weir structures.
+
+        Adds model layer (depending on `stype`):
+
+        * **thd** geom: thin dam
+        * **weir** geom: weir / levee
+
+        Parameters
+        ----------
+        gdf_structures : gpd.GeoDataFrame
+            GeoDataFrame with structure locations and attributes.
+        stype : str
+            Structure type.
+        dz : float, optional
+            If provided, for weir structures the z value is calculated from
+            the model elevation (dep) plus dz.
+        overwrite : bool, optional
+            If True, overwrite existing 'stype' structures instead of appending the
+            new structures.
+        """
+
+        cols = {
+            "thd": ["name", "geometry"],
+            "weir": ["name", "z", "par1", "geometry"],
+        }
+        assert stype in cols
+        gdf = gdf[[c for c in cols[stype] if c in gdf.columns]]  # keep relevant cols
+
+        structs = utils.gdf2structures(gdf_structures)  # check if it parsed correct
+        # sample zb values from dep file and set z = zb + dz
+        if stype == "weir" and dz is not None:
+            elv = self.grid["dep"]
+            structs_out = []
+            for s in structs:
+                pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
+                zb = elv.raster.sample(gpd.GeoDataFrame(geometry=pnts, crs=self.crs))
+                s["z"] = zb.values + float(dz)
+                structs_out.append(s)
+            gdf = utils.structures2gdf(structs_out, crs=self.crs)
+        # Else function if you define elevation of weir
+        elif stype == "weir" and np.any(["z" not in s for s in structs]):
+            raise ValueError("Weir structure requires z values.")
+        # combine with existing structures if present
+        if not overwrite and stype in self.geoms:
+            gdf0 = self._geoms.pop(stype)
             gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
-            self.logger.info(f"Adding new gauges to existing gauges.")
-        self.set_geoms(gdf, name)
-        self.set_config(f"{name}file", f"sfincs.{name}")
-        self.logger.info(f"{name} set based on {gauges_fn}")
+            self.logger.info(f"Adding {stype} structures to existing structures.")
+
+        # set structures
+        self.set_geoms(gdf, stype)
+        self.set_config(f"{stype}file", f"sfincs.{stype}")
+        self.logger.info(f"{stype} structure set based on {structures_fn}")
 
     def setup_structures(
-        self, structures_fn, stype, dz=None, overwrite=False, **kwargs
+        self,
+        structures_fn: Union[str, Path],
+        stype: str,
+        dz: float = None,
+        overwrite: bool = False,
+        **kwargs,
     ):
         """Setup thin dam or weir structures.
 
@@ -1513,49 +1596,8 @@ class SfincsModel(MeshMixin, GridModel):
         ).to_crs(self.crs)
 
         self.create_structures(
-            gdf_structures=gdf,
-            stype=stype,
-            dz=dz,
-            overwrite=overwrite)
-
-    def create_structures(
-        self, 
-        gdf_structures, 
-        stype, 
-        dz=None, 
-        overwrite=False
-    ):
-        cols = {
-            "thd": ["name", "geometry"],
-            "weir": ["name", "z", "par1", "geometry"],
-        }
-        assert stype in cols
-        gdf = gdf[[c for c in cols[stype] if c in gdf.columns]]  # keep relevant cols
-
-        structs = utils.gdf2structures(gdf_structures)  # check if it parsed correct
-        # sample zb values from dep file and set z = zb + dz
-        if stype == "weir" and dz is not None:
-            elv = self.grid["dep"]
-            structs_out = []
-            for s in structs:
-                pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
-                zb = elv.raster.sample(gpd.GeoDataFrame(geometry=pnts, crs=self.crs))
-                s["z"] = zb.values + float(dz)
-                structs_out.append(s)
-            gdf = utils.structures2gdf(structs_out, crs=self.crs)
-        #Else function if you define elevation of weir
-        elif stype == "weir" and np.any(["z" not in s for s in structs]):
-            raise ValueError("Weir structure requires z values.")
-        # combine with existing structures if present
-        if not overwrite and stype in self.geoms:
-            gdf0 = self._geoms.pop(stype)
-            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
-            self.logger.info(f"Adding {stype} structures to existing structures.")
-
-        # set structures
-        self.set_geoms(gdf, stype)
-        self.set_config(f"{stype}file", f"sfincs.{stype}")
-        self.logger.info(f"{stype} structure set based on {structures_fn}")
+            gdf_structures=gdf, stype=stype, dz=dz, overwrite=overwrite
+        )
 
     ### FORCING
     def set_forcing_1d(
