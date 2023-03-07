@@ -1485,17 +1485,33 @@ class SfincsModel(MeshMixin, GridModel):
             If provided, for weir structures the z value is calculated from
             the model elevation (dep) plus dz.
         """
+
+        # read, clip and reproject
+        gdf = self.data_catalog.get_geodataframe(
+            structures_fn, geom=self.region, **kwargs
+        ).to_crs(self.crs)
+
+        self.create_structures(
+            gdf_structures=gdf,
+            stype=stype,
+            dz=dz,
+            overwrite=overwrite)
+
+    def create_structures(
+        self, 
+        gdf_structures, 
+        stype, 
+        dz=None, 
+        overwrite=False
+    ):
         cols = {
             "thd": ["name", "geometry"],
             "weir": ["name", "z", "par1", "geometry"],
         }
         assert stype in cols
-        # read, clip and reproject
-        gdf = self.data_catalog.get_geodataframe(
-            structures_fn, geom=self.region, **kwargs
-        ).to_crs(self.crs)
         gdf = gdf[[c for c in cols[stype] if c in gdf.columns]]  # keep relevant cols
-        structs = utils.gdf2structures(gdf)  # check if it parsed correct
+
+        structs = utils.gdf2structures(gdf_structures)  # check if it parsed correct
         # sample zb values from dep file and set z = zb + dz
         if stype == "weir" and dz is not None:
             elv = self.grid["dep"]
@@ -1506,6 +1522,7 @@ class SfincsModel(MeshMixin, GridModel):
                 s["z"] = zb.values + float(dz)
                 structs_out.append(s)
             gdf = utils.structures2gdf(structs_out, crs=self.crs)
+        #Else function if you define elevation of weir
         elif stype == "weir" and np.any(["z" not in s for s in structs]):
             raise ValueError("Weir structure requires z values.")
         # combine with existing structures if present
@@ -1513,6 +1530,7 @@ class SfincsModel(MeshMixin, GridModel):
             gdf0 = self._geoms.pop(stype)
             gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
             self.logger.info(f"Adding {stype} structures to existing structures.")
+
         # set structures
         self.set_geoms(gdf, stype)
         self.set_config(f"{stype}file", f"sfincs.{stype}")
