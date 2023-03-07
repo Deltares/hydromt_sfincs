@@ -63,27 +63,27 @@ def test_structs(tmpdir):
     mod = SfincsModel(root=root, mode="r+")
     # read
     mod.set_config("thdfile", "sfincs.thd")
-    mod.read_staticmaps()
-    mod.read_staticgeoms()
-    assert "thd" in mod.staticgeoms
+    mod.read_grid()
+    mod.read_geoms()
+    assert "thd" in mod.geoms
     # write thd file only
-    mod._staticgeoms = {"thd": mod.staticgeoms["thd"]}
     tmp_root = str(tmpdir.join("struct_test"))
     mod.set_root(tmp_root, mode="w")
-    mod.write_staticgeoms()
+    mod.write_geoms(data_vars=["thd"])
     assert isfile(join(mod.root, "sfincs.thd"))
+    assert not isfile(join(mod.root, "sfincs.obs"))  
     fn_thd_gis = join(mod.root, "gis", "thd.geojson")
     assert isfile(fn_thd_gis)
     # add second thd file
     mod.setup_structures(fn_thd_gis, stype="thd")
-    assert len(mod.staticgeoms["thd"].index) == 2
+    assert len(mod.geoms["thd"].index) == 2
     # setup weir file from thd.geojson using dz option
     with pytest.raises(ValueError, match="Weir structure requires z"):
         mod.setup_structures(fn_thd_gis, stype="weir")
     mod.setup_structures(fn_thd_gis, stype="weir", dz=2)
-    assert "weir" in mod.staticgeoms
+    assert "weir" in mod.geoms
     assert "weirfile" in mod.config
-    mod.write_staticgeoms()
+    mod.write_geoms()
     assert isfile(join(mod.root, "sfincs.weir"))
 
 

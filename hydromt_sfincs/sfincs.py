@@ -1537,7 +1537,7 @@ class SfincsModel(MeshMixin, GridModel):
             [c for c in cols[stype] if c in gdf_structures.columns]
         ]  # keep relevant cols
 
-        structs = utils.gdf2structures(gdf)  # check if it parsed correct
+        structs = utils.gdf2linestring(gdf)  # check if it parsed correct
         # sample zb values from dep file and set z = zb + dz
         if stype == "weir" and dz is not None:
             elv = self.grid["dep"]
@@ -1547,7 +1547,7 @@ class SfincsModel(MeshMixin, GridModel):
                 zb = elv.raster.sample(gpd.GeoDataFrame(geometry=pnts, crs=self.crs))
                 s["z"] = zb.values + float(dz)
                 structs_out.append(s)
-            gdf = utils.structures2gdf(structs_out, crs=self.crs)
+            gdf = utils.linestring2gdf(structs_out, crs=self.crs)
         # Else function if you define elevation of weir
         elif stype == "weir" and np.any(["z" not in s for s in structs]):
             raise ValueError("Weir structure requires z values.")
@@ -2377,7 +2377,6 @@ class SfincsModel(MeshMixin, GridModel):
                     dtype=dtypes.get(name, "f4"),
                 )
 
-        # TODO: discuss if we want to write tiffs clipped on region/mask
         if self._write_gis:
             self.write_raster("grid")
 
@@ -2439,19 +2438,23 @@ class SfincsModel(MeshMixin, GridModel):
             gdf = hydromt.open_vector(fn, crs=self.crs)
             self.set_geoms(gdf, name=name)
 
-    def write_geoms(self):
+    def write_geoms(self, data_vars: Union[List, str] = None):
         """Write geoms to bnd/src/obs xy files and thd/weir structure files.
         Filenames are based on the `config` attribute.
 
         If `write_gis` property is True, all geoms are written to geojson
         files in a "gis" subfolder.
-        """
+        
+        """        
         self._assert_write_mode
-
-        if self._geoms:
-            self.logger.info("Write staticgeom files")
+        
+        if self.geoms:
+            dvars = self._GEOMS.values()
+            if data_vars is not None:
+                dvars = [name for name in data_vars if name in self._GEOMS.values()]
+            self.logger.info("Write geom files")
             for gname, gdf in self.geoms.items():
-                if gname in self._GEOMS.values():
+                if gname in dvars:
                     if f"{gname}file" not in self.config:
                         self.set_config(f"{gname}file", f"sfincs.{gname}")
                     fn = self.get_config(f"{gname}file", abs_path=True)
@@ -2462,6 +2465,8 @@ class SfincsModel(MeshMixin, GridModel):
                         utils.write_xyn(fn, gdf, crs=self.crs)
                     else:
                         utils.write_xy(fn, gdf, fmt="%8.2f")
+
+            #NOTE: all geoms are written to geojson files in a "gis" subfolder
             if self._write_gis:
                 self.write_vector(variables=["geoms"])
 
