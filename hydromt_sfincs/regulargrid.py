@@ -4,7 +4,7 @@ import numpy as np
 import math
 import os
 from pathlib import Path
-from pyproj import CRS
+from pyproj import CRS, Transformer
 from typing import Union, Optional, List, Dict, Tuple
 from scipy import ndimage
 import xarray as xr
@@ -12,6 +12,7 @@ import logging
 
 from pyflwdir.regions import region_area
 from .subgrid import SubgridTableRegular
+from .utils import num2deg, deg2num
 
 logger = logging.getLogger(__name__)
 
@@ -395,3 +396,104 @@ class RegularGrid:
             attrs={"_FillValue": mv},
         )
         return da
+
+    def create_index_tiles(
+        self,
+        root: Union[str, Path],
+        region: gpd.GeoDataFrame,
+        zoom_range: Union[int, List[int]] = [0, 13],
+    ):
+        """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the correct SFINCS cell.
+
+        Parameters
+        ----------
+        region : gpd.GeoDataFrame
+            _description_
+        root : Union[str, Path]
+            _description_
+        zoom_range : Union[int, List[int]], optional
+            _description_, by default [0,13]
+        """
+
+        index_path = os.path.join(root, "index")
+        npix = 256
+
+        # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
+        if isinstance(zoom_range, int):
+            zoom_range = [0, zoom_range]
+
+        # get bounding box of sfincs model in EPSG:4326
+        minx, miny, maxx, maxy = region.total_bounds
+        transformer = Transformer.from_crs(region.crs.to_epsg(), 4326)
+        lat_range, lon_range = transformer.transform([minx, maxx], [miny, maxy])
+
+        cosrot = math.cos(-self.rotation * math.pi / 180)
+        sinrot = math.sin(-self.rotation * math.pi / 180)
+
+        transformer_a = Transformer.from_crs(
+            CRS.from_epsg(4326), CRS.from_epsg(3857), always_xy=True
+        )
+        transformer_b = Transformer.from_crs(
+            CRS.from_epsg(3857), region.crs, always_xy=True
+        )
+
+        for izoom in range(zoom_range[0], zoom_range[1] + 1):
+
+            print("Processing zoom level " + str(izoom))
+
+            zoom_path = os.path.join(index_path, str(izoom))
+
+            dxy = (40075016.686 / npix) / 2**izoom
+            xx = np.linspace(0.0, (npix - 1) * dxy, num=npix)
+            yy = xx[:]
+            xv, yv = np.meshgrid(xx, yy)
+
+            ix0, iy0 = deg2num(lat_range[0], lon_range[0], izoom)
+            ix1, iy1 = deg2num(lat_range[1], lon_range[1], izoom)
+
+            for i in range(ix0, ix1 + 1):
+
+                path_okay = False
+                zoom_path_i = os.path.join(zoom_path, str(i))
+
+                for j in range(iy0, iy1 + 1):
+
+                    file_name = os.path.join(zoom_path_i, str(j) + ".dat")
+
+                    # Compute lat/lon at ll corner of tile
+                    lat, lon = num2deg(i, j, izoom)
+
+                    # Convert to Global Mercator
+                    xo, yo = transformer_a.transform(lon, lat)
+
+                    # Tile grid on local mercator
+                    x = xv[:] + xo + 0.5 * dxy
+                    y = yv[:] + yo + 0.5 * dxy
+
+                    # Convert tile grid to crs of SFINCS model
+                    x, y = transformer_b.transform(x, y)
+
+                    # Now rotate around origin of SFINCS model
+                    x00 = x - self.x0
+                    y00 = y - self.y0
+                    xg = x00 * cosrot - y00 * sinrot
+                    yg = x00 * sinrot + y00 * cosrot
+
+                    iind = np.floor(xg / self.dx).astype(int)
+                    jind = np.floor(yg / self.dy).astype(int)
+                    ind = iind * self.nmax + jind
+                    ind[iind < 0] = -999
+                    ind[jind < 0] = -999
+                    ind[iind >= self.mmax] = -999
+                    ind[jind >= self.nmax] = -999
+
+                    if np.any(ind >= 0):
+                        if not path_okay:
+                            if not os.path.exists(zoom_path_i):
+                                os.makedirs(zoom_path_i)
+                                path_okay = True
+
+                        # And write indices to file
+                        fid = open(file_name, "wb")
+                        fid.write(ind)
+                        fid.close()

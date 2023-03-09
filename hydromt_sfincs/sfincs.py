@@ -2131,6 +2131,113 @@ class SfincsModel(MeshMixin, GridModel):
         )
         self.create_precip_forcing(df_ts)
 
+    def create_index_tiles(
+        self,
+        root: Union[str, Path] = None,
+        region: gpd.GeoDataFrame = None,
+        zoom_range: Union[int, List[int]] = [0, 13],
+    ):
+        """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the correct SFINCS cell.
+
+        Parameters
+        ----------
+        region : gpd.GeoDataFrame
+            _description_
+        root : Union[str, Path]
+            _description_
+        zoom_range : Union[int, List[int]], optional
+            _description_, by default [0,13]
+        """
+        if root is None:
+            root = os.path.join(self.root, "tiles")
+        if region is None:
+            region = self.region
+
+        if self.grid_type == "regular":
+            self.reggrid.create_index_tiles(region=region, root=root, zoom_range=zoom_range)
+        elif self.grid_type == "quadtree":
+            raise NotImplementedError("Index tiles not yet implemented for quadtree grids.")
+
+    def create_topobathy_tiles(
+        self,
+        root: Union[str, Path] = None,
+        region: gpd.GeoDataFrame = None,
+        da_dep_lst: List[dict] = [],
+        index_path: Union[str, Path] = None,
+        zoom_range: Union[int, List[int]] = [0, 13],
+        z_range: List[int] = [-20000.0, 20000.0],
+    ):   
+        """Create webmercator tiles for merged topography and bathymetry.
+
+        Parameters
+        ----------
+        root : Union[str, Path]
+            _description_
+        region : gpd.GeoDataFrame
+            _description_
+        da_dep_lst : List[dict]
+            _description_
+        index_path : Union[str, Path], optional
+            _description_, by default None
+        zoom_range : Union[int, List[int]], optional
+            _description_, by default [0, 13]
+        z_range : List[int], optional
+            _description_, by default [-20000.0, 20000.0]
+        """
+
+        if root is None:
+            root = os.path.join(self.root, "tiles")
+        if region is None:
+            # if region not provided, use model region
+            region = self.region
+        if index_path is None:
+            # if index_path not provided, check the default folder
+            if os.path.exists(os.path.join(self.root, "tiles", "index")):
+                index_path = os.path.join(self.root, "tiles", "index")
+
+        # if no datasets provided, check if high-res subgrid tiles are there
+        if len(da_dep_lst) == 0:
+            if os.path.exists(os.path.join(self.root, "tiles", "subgrid")):
+                # check if there is a dep.vrt
+                dep_vrt = os.path.join(self.root, "tiles", "subgrid", "dep.vrt")
+                if os.path.exists(dep_vrt):
+                    da = self.data_catalog.get_rasterdataset(dep_vrt)
+                    da_dep_lst.append({"da": da})
+                else:
+                    # read filelist_dep.txt and loop over files
+                    dep_filelist = os.path.join(self.root, "tiles", "subgrid", "filelist_dep.txt")
+                    if os.path.exists(dep_filelist):
+                        with open(dep_filelist, "r") as f:
+                            for line in f:
+                                fn = line.strip()
+                                if os.path.exists(fn):
+                                    da = self.data_catalog.get_rasterdataset(fn)
+                                    da_dep_lst.append({"da": da})
+                    else:
+                        raise ValueError("No topobathy datasets provided.")
+
+        # create topobathy tiles
+        workflows.tiling.make_topobathy_tiles(
+            root=root,
+            region=region,
+            da_dep_lst=da_dep_lst,
+            index_path=index_path,
+            zoom_range=zoom_range,
+            z_range=z_range,
+        )
+
+    def setup_tiles(
+        self,
+        make_index_tiles: bool = True,
+        make_topobathy_tiles: bool = True,
+    ):
+        
+        if make_index_tiles:
+            self.create_index_tiles()
+        if make_topobathy_tiles:
+            self.create_topobathy_tiles()
+
+    # Plotting
     def plot_forcing(self, fn_out="forcing.png", **kwargs):
         """Plot model timeseries forcing.
 
@@ -2255,7 +2362,7 @@ class SfincsModel(MeshMixin, GridModel):
             geom_names=geom_names,
             geom_kwargs=geom_kwargs,
             legend_kwargs=legend_kwargs,
-            **kwargs,
+            **kwargs,)
         )
 
         if fn_out is not None:
@@ -2444,10 +2551,10 @@ class SfincsModel(MeshMixin, GridModel):
 
         If `write_gis` property is True, all geoms are written to geojson
         files in a "gis" subfolder.
-        
-        """        
+
+        """
         self._assert_write_mode
-        
+
         if self.geoms:
             dvars = self._GEOMS.values()
             if data_vars is not None:
@@ -2466,7 +2573,7 @@ class SfincsModel(MeshMixin, GridModel):
                     else:
                         utils.write_xy(fn, gdf, fmt="%8.2f")
 
-            #NOTE: all geoms are written to geojson files in a "gis" subfolder
+            # NOTE: all geoms are written to geojson files in a "gis" subfolder
             if self._write_gis:
                 self.write_vector(variables=["geoms"])
 
@@ -2867,7 +2974,7 @@ class SfincsModel(MeshMixin, GridModel):
         config_fn: str
             Filename of config file, by default "sfincs.inp".
             If in a different folder than the model root, the root is updated.
-        crs: int
+        epsg: int
             EPSG code of the model CRS. Only used if missing in the SFINCS input file, by default None.
         """
         inp = SfincsInput()  # initialize with defaults

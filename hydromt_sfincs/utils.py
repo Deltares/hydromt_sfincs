@@ -20,6 +20,7 @@ import hydromt
 from hydromt.io import write_xy
 from scipy import ndimage
 from pyflwdir.regions import region_area
+import math
 
 
 __all__ = [
@@ -47,6 +48,8 @@ __all__ = [
     "read_sfincs_his_results",
     "mask_bounds",
     "mask_topobathy",
+    "deg2num",
+    "num2deg",
 ]
 
 logger = logging.getLogger(__name__)
@@ -963,3 +966,21 @@ def read_sfincs_his_results(
     ds_his.vector.set_crs(crs)
 
     return ds_his
+
+
+def deg2num(lat_deg, lon_deg, zoom):
+    """Convert lat/lon to webmercator tile number"""	    
+    lat_rad = math.radians(lat_deg)
+    n = 2**zoom
+    xtile = int((lon_deg + 180.0) / 360.0 * n)
+    ytile = int((1.0 - math.asinh(math.tan(-lat_rad)) / math.pi) / 2.0 * n)
+    return (xtile, ytile)
+
+
+def num2deg(xtile, ytile, zoom):
+    """Convert webmercator tile number to lat/lon"""
+    n = 2**zoom
+    lon_deg = xtile / n * 360.0 - 180.0
+    lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
+    lat_deg = math.degrees(-lat_rad)
+    return (lat_deg, lon_deg)
