@@ -1,7 +1,6 @@
 """
 """
 
-from warnings import catch_warnings
 import numpy as np
 import pyproj
 from pyproj.crs.crs import CRS
@@ -21,6 +20,7 @@ import hydromt
 from hydromt.io import write_xy
 from scipy import ndimage
 from pyflwdir.regions import region_area
+
 
 __all__ = [
     "read_inp",
@@ -334,7 +334,6 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
 
 
 def read_xyn(fn: str, crs: int = None):
-
     df = pd.read_csv(fn, index_col=False, header=None, delim_whitespace=True).rename(
         columns={0: "x", 1: "y"}
     )
@@ -401,7 +400,7 @@ def read_timeseries(fn: Union[str, Path], tref: Union[str, datetime]) -> pd.Data
 
 def write_timeseries(
     fn: Union[str, Path],
-    df: pd.DataFrame,
+    df: Union[pd.DataFrame, pd.Series],
     tref: Union[str, datetime],
     fmt: str = "%7.2f",
 ) -> None:
@@ -420,6 +419,10 @@ def write_timeseries(
     fmt: str, optional
         Output value format, by default "%7.2f".
     """
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
+    elif not isinstance(df, pd.DataFrame):
+        raise ValueError(f"Unknown type for df: {type(df)})")
     tref = parse_datetime(tref)
     if df.index.size == 0:
         raise ValueError("df does not contain data.")

@@ -4,12 +4,13 @@ Created on Thu Apr 21 16:25:23 2022
 
 @author: ormondt
 """
+from hydromt import gis_utils
+from numba import njit
 import numpy as np
 import os
-from scipy import interpolate
 import xarray as xr
+
 from . import workflows
-from hydromt import gis_utils
 
 
 class SubgridTableRegular:
@@ -18,7 +19,6 @@ class SubgridTableRegular:
         self.version = version
 
     def load(self, file_name, mask):
-
         if isinstance(mask, xr.DataArray):
             mask = mask.values
 
@@ -39,23 +39,33 @@ class SubgridTableRegular:
         self.nbins = np.fromfile(file, dtype="i4", count=1)[0]
 
         # Z points
-        self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.z_depth = np.full((self.nbins, *grid_dim), fill_value=np.nan, dtype=float)
+        self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_depth = np.full(
+            (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
 
         # U points
-        self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.u_hrep = np.full((self.nbins, *grid_dim), fill_value=np.nan, dtype=float)
-        self.u_navg = np.full((self.nbins, *grid_dim), fill_value=np.nan, dtype=float)
+        self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.u_hrep = np.full(
+            (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.u_navg = np.full(
+            (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
 
         # V points
-        self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.v_hrep = np.full((self.nbins, *grid_dim), fill_value=np.nan, dtype=float)
-        self.v_navg = np.full((self.nbins, *grid_dim), fill_value=np.nan, dtype=float)
+        self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.v_hrep = np.full(
+            (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.v_navg = np.full(
+            (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
 
         self.z_zmin[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
         self.z_zmax[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
@@ -95,7 +105,6 @@ class SubgridTableRegular:
         file.close()
 
     def save(self, file_name, mask):
-
         if isinstance(mask, xr.DataArray):
             mask = mask.values
 
@@ -163,15 +172,15 @@ class SubgridTableRegular:
         nr_subgrid_pixels=20,
         nrmax=2000,
         max_gradient=5.0,
-        z_minimum=-99999.0,  # unused
+        z_minimum=-99999.0,
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
+        buffer_cells: int = 0,
         highres_dep_dir: str = None,
         highres_manning_dir: str = None,
         quiet=False,  # TODO replace by logger
     ):
-
         if highres_dep_dir:
             # Write the raster paths to a text file
             highres_dir = os.path.abspath(os.path.join(highres_dep_dir, os.pardir))
@@ -187,23 +196,23 @@ class SubgridTableRegular:
         x_dim, y_dim = da_mask.raster.x_dim, da_mask.raster.y_dim
 
         # Z points
-        self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.z_depth = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
+        self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_depth = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
 
         # U points
-        self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.u_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
-        self.u_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
+        self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.u_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
 
         # V points
-        self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=float)
-        self.v_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
-        self.v_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=float)
+        self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.v_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
 
         dx, dy = da_mask.raster.res
         dxp = dx / refi  # size of subgrid pixel
@@ -259,15 +268,15 @@ class SubgridTableRegular:
                 # calculate transform and shape of block at cell and subgrid level
                 da_mask_block = da_mask.isel(
                     {x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}
-                )
+                ).load()
                 assert np.all(
                     [s > 1 for s in da_mask_block.shape]
-                ), "this shouldn't happen"
+                ), f"unexpected block shape {da_mask_block.shape}"
                 if np.all(da_mask_block == 0):  # not active cells in block
                     print("Skip block - No active cells")
                     continue
                 print(
-                    f"Processing block with {np.sum(da_mask_block):d} active cells .."
+                    f"Processing block with {np.sum(da_mask_block.values):d} active cells .."
                 )
 
                 transform = da_mask_block.raster.transform
@@ -283,8 +292,8 @@ class SubgridTableRegular:
                 da_dep = workflows.merge_multi_dataarrays(
                     da_list=da_dep_lst,
                     reproj_kwargs=reproj_kwargs,
-                    merge_method="first",
                     interp_method="linear",
+                    buffer_cells=buffer_cells,
                 ).load()
 
                 # set minimum depth
@@ -298,8 +307,8 @@ class SubgridTableRegular:
                     da_man = workflows.merge_multi_dataarrays(
                         da_list=da_manning_lst,
                         reproj_kwargs=reproj_kwargs,
-                        merge_method="first",
                         interp_method="linear",
+                        buffer_cells=buffer_cells,
                     ).load()
 
                 else:
@@ -334,82 +343,56 @@ class SubgridTableRegular:
                     # add to filelist
                     filelist_man.write(f"{fn_man_tile}\n")
 
-                zg = da_dep.values
-                manning_grid = da_man.values
                 yg = da_dep.raster.ycoords.values
+                if yg.ndim == 1:
+                    yg = np.repeat(np.atleast_2d(yg), da_dep.raster.shape[0], axis=0)
 
                 # Now compute subgrid properties
-                # Loop through all active cells in this block
-                for m in range(bm0, bm1):
-                    for n in range(bn0, bn1):
+                sn, sm = slice(bn0, bn1), slice(bm0, bm1)
+                (
+                    self.z_zmin[sn, sm],
+                    self.z_zmax[sn, sm],
+                    self.z_zmean[sn, sm],
+                    self.z_volmax[sn, sm],
+                    self.z_depth[:, sn, sm],
+                    self.u_zmin[sn, sm],
+                    self.u_zmax[sn, sm],
+                    self.u_hrep[:, sn, sm],
+                    self.u_navg[:, sn, sm],
+                    self.v_zmin[sn, sm],
+                    self.v_zmax[sn, sm],
+                    self.v_hrep[:, sn, sm],
+                    self.v_navg[:, sn, sm],
+                ) = process_tile(
+                    da_mask_block.values,
+                    da_dep.values,
+                    da_man.values,
+                    dxp,
+                    dyp,
+                    refi,
+                    nbins,
+                    yg,
+                    max_gradient,
+                    da_mask.raster.crs.is_geographic,
+                )
 
-                        if da_mask.values[n, m] < 1:
-                            # Not an active point
-                            continue
-
-                        # # Compute pixel size in metres
-                        if da_mask.raster.crs.is_geographic:
-                            ygc = yg[nn : nn + refi, mm : mm + refi]
-                            mean_lat = np.abs(np.mean(ygc))
-                            dxpm = dxp * 111111.0 * np.cos(np.pi * mean_lat / 180.0)
-                            dypm = dyp * 111111.0
-                        else:
-                            dxpm = dxp
-                            dypm = dyp
-
-                        # First the volumes in the cells
-                        nn = (n - bn0) * refi
-                        mm = (m - bm0) * refi
-                        zgc = zg[nn : nn + refi, mm : mm + refi]
-                        zv = zgc.flatten()
-                        zvmin = -20.0
-                        z, v, zmin, zmax, zmean = subgrid_v_table(
-                            zv, dxpm, dypm, nbins, zvmin, max_gradient
-                        )
-                        self.z_zmin[n, m] = zmin
-                        self.z_zmax[n, m] = zmax
-                        self.z_zmean[n, m] = zmean
-                        self.z_volmax[n, m] = v[-1]
-                        self.z_depth[:, n, m] = z[1:]
-
-                        # Now the U/V points
-                        # U
-                        nn = (n - bn0) * refi
-                        mm = (m - bm0) * refi + int(0.5 * refi)
-                        zgu = zg[nn : nn + refi, mm : mm + refi]
-                        zgu = np.transpose(zgu)
-                        zv = zgu.flatten()
-                        manning = manning_grid[nn : nn + refi, mm : mm + refi]
-                        manning = np.transpose(manning)
-                        manning = manning.flatten()
-                        zmin, zmax, hrep, navg, zz = subgrid_q_table(zv, manning, nbins)
-                        self.u_zmin[n, m] = zmin
-                        self.u_zmax[n, m] = zmax
-                        self.u_hrep[:, n, m] = hrep
-                        self.u_navg[:, n, m] = navg
-
-                        # V
-                        nn = (n - bn0) * refi + int(0.5 * refi)
-                        mm = (m - bm0) * refi
-                        zgu = zg[nn : nn + refi, mm : mm + refi]
-                        zv = zgu.flatten()
-                        manning = manning_grid[nn : nn + refi, mm : mm + refi]
-                        manning = manning.flatten()
-                        zmin, zmax, hrep, navg, zz = subgrid_q_table(zv, manning, nbins)
-                        self.v_zmin[n, m] = zmin
-                        self.v_zmax[n, m] = zmax
-                        self.v_hrep[:, n, m] = hrep
-                        self.v_navg[:, n, m] = navg
+                del da_mask_block, da_dep, da_man
 
         # write VRT file with all tiles at the end of the loop
         if highres_dep_dir:
             filelist_dep.close()
             # Create a vrt using GDAL
-            gis_utils.create_vrt(vrt_path=f"{highres_dir}//dep.vrt",file_list_path=f"{highres_dir}//filelist_dep.txt")
+            gis_utils.create_vrt(
+                vrt_path=f"{highres_dir}//dep.vrt",
+                file_list_path=f"{highres_dir}//filelist_dep.txt",
+            )
         if highres_manning_dir:
             filelist_man.close()
             # Create a vrt using GDAL
-            gis_utils.create_vrt(vrt_path=f"{highres_dir}//manning.vrt",file_list_path=f"{highres_dir}//filelist_man.txt")
+            gis_utils.create_vrt(
+                vrt_path=f"{highres_dir}//manning.vrt",
+                file_list_path=f"{highres_dir}//filelist_man.txt",
+            )
 
     def to_xarray(self, dims, coords):
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})
@@ -433,7 +416,124 @@ class SubgridTableRegular:
             setattr(self, name, ds_sbg[name].values)
 
 
-# @njit
+@njit
+def process_tile(
+    mask, zg, manning_grid, dxp, dyp, refi, nbins, yg, max_gradient, is_geographic=False
+):
+    """calculate subgrid properties for a single tile"""
+    # Z points
+    grid_dim = mask.shape
+    z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+    z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+    z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+    z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+    z_depth = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+
+    # U points
+    u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+    u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+    u_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+    u_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+
+    # V points
+    v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+    v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+    v_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+    v_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+
+    # Loop through all active cells in this block
+    for n in range(mask.shape[0]):
+        for m in range(mask.shape[1]):
+            if mask[n, m] < 1:
+                # Not an active point
+                continue
+
+            nn = int(n * refi)
+            mm = int(m * refi)
+
+            # # Compute pixel size in metres
+            if is_geographic:
+                mean_lat = float(np.abs(np.mean(yg[nn : nn + refi, mm : mm + refi])))
+                dxpm = float(dxp * 111111.0 * np.cos(np.pi * mean_lat / 180.0))
+                dypm = float(dyp * 111111.0)
+            else:
+                dxpm = float(dxp)
+                dypm = float(dyp)
+
+            # First the volumes in the cells
+            zgc = zg[nn : nn + refi, mm : mm + refi]
+            zv = zgc.flatten()
+            zvmin = -20.0
+            z, v, zmin, zmax, zmean = subgrid_v_table(
+                zv, dxpm, dypm, nbins, zvmin, max_gradient
+            )
+            z_zmin[n, m] = zmin
+            z_zmax[n, m] = zmax
+            z_zmean[n, m] = zmean
+            z_volmax[n, m] = v[-1]
+            z_depth[:, n, m] = z[1:]
+
+            # Now the U/V points
+            # U
+            nn = n * refi
+            mm = m * refi + int(0.5 * refi)
+            zgu = zg[nn : nn + refi, mm : mm + refi]
+            zgu = np.transpose(zgu)
+            zv = zgu.flatten()
+            manning = manning_grid[nn : nn + refi, mm : mm + refi]
+            manning = np.transpose(manning)
+            manning = manning.flatten()
+            zmin, zmax, hrep, navg, zz = subgrid_q_table(zv, manning, nbins)
+            u_zmin[n, m] = zmin
+            u_zmax[n, m] = zmax
+            u_hrep[:, n, m] = hrep
+            u_navg[:, n, m] = navg
+
+            # V
+            nn = n * refi + int(0.5 * refi)
+            mm = m * refi
+            zgu = zg[nn : nn + refi, mm : mm + refi]
+            zv = zgu.flatten()
+            manning = manning_grid[nn : nn + refi, mm : mm + refi]
+            manning = manning.flatten()
+            zmin, zmax, hrep, navg, zz = subgrid_q_table(zv, manning, nbins)
+            v_zmin[n, m] = zmin
+            v_zmax[n, m] = zmax
+            v_hrep[:, n, m] = hrep
+            v_navg[:, n, m] = navg
+
+    return (
+        z_zmin,
+        z_zmax,
+        z_zmean,
+        z_volmax,
+        z_depth,
+        u_zmin,
+        u_zmax,
+        u_hrep,
+        u_navg,
+        v_zmin,
+        v_zmax,
+        v_hrep,
+        v_navg,
+    )
+
+
+@njit
+def get_dzdh(z, V, a):
+    # change in level per unit of volume (m/m)
+    dz = np.diff(z)
+    # change in volume (normalized to meters)
+    dh = np.maximum(np.diff(V) / a, 0.001)
+    return dz / dh
+
+
+@njit
+def isclose(a, b, rtol=1e-05, atol=1e-08):
+    return abs(a - b) <= (atol + rtol * abs(b))
+
+
+@njit
 def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
     """
     map vector of elevation values into a hypsometric volume - depth relationship for one grid cell
@@ -448,39 +548,33 @@ def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
     volume : np.ndarray (1D flattened from elevation) containing volumes (lowest value zero) per sorted elevation value
     """
 
-    def get_dzdh(z, V, a):
-        # change in level per unit of volume (m/m)
-        dz = np.diff(z)
-        # change in volume (normalized to meters)
-        dh = np.maximum(np.diff(V) / a, 0.001)
-        return dz / dh
-
     # Cell area
-    a = np.size(elevation) * dx * dy
+    a = float(elevation.size * dx * dy)
 
     # Set minimum elevation to -20 (needed with single precision), and sort
     ele_sort = np.sort(np.maximum(elevation, zvolmin).flatten())
 
     # Make sure each consecutive point is larger than previous
-    for j in range(1, np.size(ele_sort)):
+    for j in range(1, ele_sort.size):
         if ele_sort[j] <= ele_sort[j - 1]:
             ele_sort[j] += 1.0e-6
 
     depth = ele_sort - ele_sort.min()
 
-    volume = np.cumsum((np.diff(depth) * dx * dy) * np.arange(len(depth))[1:])
-    # add trailing zero for first value
-    volume = np.concatenate([np.array([0]), volume])
+    volume = np.zeros_like(depth)
+    volume[1:] = np.cumsum((np.diff(depth) * dx * dy) * np.arange(1, depth.size))
 
     # Resample volumes to discrete bins
     steps = np.arange(nbins + 1) / nbins
     V = steps * volume.max()
     dvol = volume.max() / nbins
-    z = interpolate.interp1d(volume, ele_sort)(V)
+    # scipy not supported in numba jit
+    # z = interpolate.interp1d(volume, ele_sort)(V)
+    z = np.interp(V, volume, ele_sort)
     dzdh = get_dzdh(z, V, a)
     n = 0
     while (
-        dzdh.max() > max_gradient and not (np.isclose(dzdh.max(), max_gradient))
+        dzdh.max() > max_gradient and not (isclose(dzdh.max(), max_gradient))
     ) and n < nbins:
         # reshape until gradient is satisfactory
         idx = np.where(dzdh == dzdh.max())[0]
@@ -490,6 +584,7 @@ def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
     return z, V, elevation.min(), z.max(), ele_sort.mean()
 
 
+@njit
 def subgrid_q_table(elevation, manning, nbins):
     """
     map vector of elevation values into a hypsometric hydraulic radius - depth relationship for one grid cell
@@ -504,11 +599,11 @@ def subgrid_q_table(elevation, manning, nbins):
     ele_sort, R : np.ndarray of sorted elevation values, np.ndarray of sorted hydraulic radii that belong with depth
     """
 
-    hrep = np.zeros(nbins)
-    navg = np.zeros(nbins)
-    zz = np.zeros(nbins)
+    hrep = np.zeros(nbins, dtype=np.float32)
+    navg = np.zeros(nbins, dtype=np.float32)
+    zz = np.zeros(nbins, dtype=np.float32)
 
-    n = int(np.size(elevation))  # Nr of pixels in grid cell
+    n = int(elevation.size)  # Nr of pixels in grid cell
     n05 = int(n / 2)
 
     zmin_a = np.min(elevation[0:n05])
@@ -529,15 +624,13 @@ def subgrid_q_table(elevation, manning, nbins):
 
     # Loop through bins
     for ibin in range(nbins):
-
         # Top of bin
         zbin = zmin + (ibin + 1) * dbin
         zz[ibin] = zbin
 
         ibelow = np.where(elevation <= zbin)  # index of pixels below bin level
-        h = np.maximum(
-            zbin - np.maximum(elevation, zmin), 0.0
-        )  # water depth in each pixel
+        # water depth in each pixel
+        h = np.maximum(zbin - np.maximum(elevation, zmin), 0.0)
         qi = h ** (5.0 / 3.0) / manning  # unit discharge in each pixel
         q = np.sum(qi) / n  # combined unit discharge for cell
 

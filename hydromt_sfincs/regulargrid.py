@@ -119,7 +119,6 @@ class RegularGrid:
         self,
         ind_fn: Union[str, Path] = "sfincs.ind",
     ) -> np.ndarray:
-
         _ind = np.fromfile(ind_fn, dtype="u4")
         ind = _ind[1:] - 1  # convert to zero based index
         assert _ind[0] == ind.size
@@ -277,6 +276,8 @@ class RegularGrid:
 
         Parameters
         ----------
+        da_mask: xr.DataArray
+            initial mask
         btype: {'waterlevel', 'outflow'}
             Boundary type
         gdf_include, gdf_exclude: geopandas.GeoDataFrame
@@ -295,10 +296,11 @@ class RegularGrid:
         reset_bounds: bool, optional
             If True, reset existing boundary cells of the selected boundary
             type (`btype`) before setting new boundary cells, by default False.
+
         Returns
         -------
-        bounds: xr.DataArray
-            Boolean mask of model boundary cells.
+        da_mask: xr.DataArray
+            model mask updated with new boundary cells
         """
         if not da_mask.raster.identical_grid(self.empty_mask):
             raise ValueError("da_mask does not match regular grid")
