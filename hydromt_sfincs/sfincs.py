@@ -2157,9 +2157,13 @@ class SfincsModel(MeshMixin, GridModel):
             region = self.region
 
         if self.grid_type == "regular":
-            self.reggrid.create_index_tiles(region=region, root=root, zoom_range=zoom_range,fmt=fmt)
+            self.reggrid.create_index_tiles(
+                region=region, root=root, zoom_range=zoom_range, fmt=fmt
+            )
         elif self.grid_type == "quadtree":
-            raise NotImplementedError("Index tiles not yet implemented for quadtree grids.")
+            raise NotImplementedError(
+                "Index tiles not yet implemented for quadtree grids."
+            )
 
     def create_topobathy_tiles(
         self,
@@ -2170,7 +2174,7 @@ class SfincsModel(MeshMixin, GridModel):
         zoom_range: Union[int, List[int]] = [0, 13],
         z_range: List[int] = [-20000.0, 20000.0],
         fmt: str = "bin",
-    ):   
+    ):
         """Create webmercator tiles for merged topography and bathymetry.
 
         Parameters
@@ -2211,7 +2215,9 @@ class SfincsModel(MeshMixin, GridModel):
                     da_dep_lst.append({"da": da})
                 else:
                     # read filelist_dep.txt and loop over files
-                    dep_filelist = os.path.join(self.root, "tiles", "subgrid", "filelist_dep.txt")
+                    dep_filelist = os.path.join(
+                        self.root, "tiles", "subgrid", "filelist_dep.txt"
+                    )
                     if os.path.exists(dep_filelist):
                         with open(dep_filelist, "r") as f:
                             for line in f:
@@ -2247,12 +2253,14 @@ class SfincsModel(MeshMixin, GridModel):
         # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
         if isinstance(zoom_range, int):
             zoom_range = [0, zoom_range]
-        
+
         if make_index_tiles:
             # only binary and png are supported for index tiles so set to binary if tif
             fmt_ind = "bin" if fmt == "tif" else fmt
-                
-            self.create_index_tiles(root=root, region=region, zoom_range=zoom_range, fmt=fmt_ind)
+
+            self.create_index_tiles(
+                root=root, region=region, zoom_range=zoom_range, fmt=fmt_ind
+            )
 
         if make_topobathy_tiles:
             # compute resolution of highest zoom level
@@ -2260,7 +2268,14 @@ class SfincsModel(MeshMixin, GridModel):
             res = 156543.03392804097 / 2 ** zoom_range[1]
 
             da_dep_lst = self._parse_datasets_dep(datasets_dep, res=res)
-            self.create_topobathy_tiles(root=root, region=region, da_dep_lst=da_dep_lst, zoom_range=zoom_range, z_range=z_range, fmt=fmt)
+            self.create_topobathy_tiles(
+                root=root,
+                region=region,
+                da_dep_lst=da_dep_lst,
+                zoom_range=zoom_range,
+                z_range=z_range,
+                fmt=fmt,
+            )
 
     # Plotting
     def plot_forcing(self, fn_out="forcing.png", **kwargs):

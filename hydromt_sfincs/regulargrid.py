@@ -12,7 +12,7 @@ import logging
 
 from pyflwdir.regions import region_area
 from .subgrid import SubgridTableRegular
-from .utils import num2deg, deg2num,int2png,tile_window
+from .utils import num2deg, deg2num, int2png, tile_window
 
 logger = logging.getLogger(__name__)
 
@@ -402,7 +402,7 @@ class RegularGrid:
         root: Union[str, Path],
         region: gpd.GeoDataFrame,
         zoom_range: Union[int, List[int]] = [0, 13],
-        fmt:str = "bin",
+        fmt: str = "bin",
     ):
         """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the corresponding SFINCS cell.
 
@@ -424,7 +424,7 @@ class RegularGrid:
         # for binary format, use .dat extension
         if fmt == "bin":
             extension = "dat"
-        # for net, tif and png extension and format are the same    
+        # for net, tif and png extension and format are the same
         else:
             extension = fmt
 
@@ -440,17 +440,21 @@ class RegularGrid:
         cosrot = math.cos(-self.rotation * math.pi / 180)
         sinrot = math.sin(-self.rotation * math.pi / 180)
 
-        # axis order is different for geographic and projected CRS 
+        # axis order is different for geographic and projected CRS
         if region.crs.is_geographic:
             minx, miny = map(
                 max, zip(transformer.transform(miny, minx), [-20037508.34] * 2)
             )
-            maxx, maxy = map(min, zip(transformer.transform(maxy, maxx), [20037508.34] * 2))
+            maxx, maxy = map(
+                min, zip(transformer.transform(maxy, maxx), [20037508.34] * 2)
+            )
         else:
             minx, miny = map(
                 max, zip(transformer.transform(minx, miny), [-20037508.34] * 2)
             )
-            maxx, maxy = map(min, zip(transformer.transform(maxx, maxy), [20037508.34] * 2))
+            maxx, maxy = map(
+                min, zip(transformer.transform(maxx, maxy), [20037508.34] * 2)
+            )
 
         for izoom in range(zoom_range[0], zoom_range[1] + 1):
 
@@ -461,7 +465,9 @@ class RegularGrid:
             for transform, col, row in tile_window(izoom, minx, miny, maxx, maxy):
                 # transform is a rasterio Affine object
                 # col, row are the tile indices
-                file_name = os.path.join(zoom_path, str(col), str(row) + "." + extension)
+                file_name = os.path.join(
+                    zoom_path, str(col), str(row) + "." + extension
+                )
 
                 # get the coordinates of the tile in webmercator projection
                 x = np.arange(0, npix) + 0.5

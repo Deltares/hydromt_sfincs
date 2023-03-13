@@ -134,7 +134,7 @@ def merge_multi_dataarrays(
             interp_method=interp_method,
         )
 
-    # NOTE: this is still open for discussion, 
+    # NOTE: this is still open for discussion,
     # prabably better to check within subgrid routine
     # na_holes = ndimage.binary_fill_holes(
     #     np.isnan(da1.values), structure=np.ones((3, 3))

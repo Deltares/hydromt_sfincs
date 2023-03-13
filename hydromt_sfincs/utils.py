@@ -976,7 +976,7 @@ def read_sfincs_his_results(
 
 
 def deg2num(lat_deg, lon_deg, zoom):
-    """Convert lat/lon to webmercator tile number"""	    
+    """Convert lat/lon to webmercator tile number"""
     lat_rad = math.radians(lat_deg)
     n = 2**zoom
     xtile = int((lon_deg + 180.0) / 360.0 * n)
@@ -994,15 +994,15 @@ def num2deg(xtile, ytile, zoom):
 
 
 def rgba2int(rgba):
-    """Convert rgba tuple to int"""	
+    """Convert rgba tuple to int"""
     r, g, b, a = rgba
-    return (r * 256 ** 3) + (g * 256 ** 2) + (b * 256) + n
+    return (r * 256**3) + (g * 256**2) + (b * 256) + n
 
 
 def int2rgba(int_val):
-    """Convert int to rgba tuple"""	
-    r = (int_val // 256 ** 3) % 256
-    g = (int_val // 256 ** 2) % 256
+    """Convert int to rgba tuple"""
+    r = (int_val // 256**3) % 256
+    g = (int_val // 256**2) % 256
     b = (int_val // 256) % 256
     a = int_val % 256
     return (r, g, b, a)
@@ -1018,20 +1018,20 @@ def elevation2rgb(val):
     return (r, g, b)
 
 
-def rgb2elevation(r,g,b):
-    """Convert rgb tuple to elevation"""	
+def rgb2elevation(r, g, b):
+    """Convert rgb tuple to elevation"""
     val = (r * 256 + g + b / 256) - 32768
     return val
 
 
 def png2int(png_file):
-    """Convert png to int array"""	
+    """Convert png to int array"""
     # Open the PNG image
     image = Image.open(png_file)
 
     # Convert the image to RGBA mode if it's not already in RGBN mode
-    if image.mode != 'RGBA':
-        image = image.convert('RGBA')
+    if image.mode != "RGBA":
+        image = image.convert("RGBA")
 
     # Get the pixel data from the image
     pixel_data = list(image.getdata())
@@ -1047,15 +1047,15 @@ def png2int(png_file):
 def int2png(val, png_file):
     """Convert int array to png"""
     # Convert index integers to RGBA values
-    rgba = np.zeros((256*256,4),'uint8')
-    r,g,b,a = int2rgba(val)
+    rgba = np.zeros((256 * 256, 4), "uint8")
+    r, g, b, a = int2rgba(val)
 
-    rgba[:,0] = r.flatten()
-    rgba[:,1] = g.flatten()
-    rgba[:,2] = b.flatten()
-    rgba[:,3] = a.flatten()
+    rgba[:, 0] = r.flatten()
+    rgba[:, 1] = g.flatten()
+    rgba[:, 2] = b.flatten()
+    rgba[:, 3] = a.flatten()
 
-    rgba = rgba.reshape([256,256,4])
+    rgba = rgba.reshape([256, 256, 4])
 
     # Create PIL Image from RGB values and save as PNG
     img = Image.fromarray(rgba)
@@ -1065,23 +1065,23 @@ def int2png(val, png_file):
 def png2elevation(png_file):
     """Convert png to elevation array based on terrarium interpretation"""
     img = Image.open(png_file)
-    arr = np.array(img.convert('RGB'))
+    arr = np.array(img.convert("RGB"))
     # Convert RGB values to elevation values
     elevations = np.apply_along_axis(rgb2elevation, 2, arr)
     return elevations
 
 
 def elevation2png(val, png_file):
-    """Convert elevation array to png using terrarium interpretation"""	
+    """Convert elevation array to png using terrarium interpretation"""
 
-    rgb = np.zeros((256*256,3),'uint8')      
-    r,g,b = elevation2rgb(val)
+    rgb = np.zeros((256 * 256, 3), "uint8")
+    r, g, b = elevation2rgb(val)
 
-    rgb[:,0] = r.values.flatten()
-    rgb[:,1] = g.values.flatten()
-    rgb[:,2] = b.values.flatten()
+    rgb[:, 0] = r.values.flatten()
+    rgb[:, 1] = g.values.flatten()
+    rgb[:, 2] = b.values.flatten()
 
-    rgb = rgb.reshape([256,256,3])
+    rgb = rgb.reshape([256, 256, 3])
 
     # Create PIL Image from RGB values and save as PNG
     img = Image.fromarray(rgb)
