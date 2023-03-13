@@ -673,7 +673,7 @@ class SfincsModel(MeshMixin, GridModel):
         make_manning_tiles: bool = False,
     ) -> xr.Dataset:
         # tile folders
-        if make_dep_tiles  or make_manning_tiles:
+        if make_dep_tiles or make_manning_tiles:
             highres_dir = os.path.join(self.root, "tiles", "subgrid")
             if not os.path.isdir(highres_dir):
                 os.makedirs(highres_dir)
@@ -2205,8 +2205,8 @@ class SfincsModel(MeshMixin, GridModel):
                 if os.path.exists(dep):
                     da = self.data_catalog.get_rasterdataset(dep)
                     da_dep_lst.append({"da": da})
-                    else:
-                        raise ValueError("No topobathy datasets provided.")
+                else:
+                    raise ValueError("No topobathy datasets provided.")
 
         # create topobathy tiles
         workflows.tiling.create_topobathy_tiles(
