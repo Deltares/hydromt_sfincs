@@ -673,19 +673,10 @@ class SfincsModel(MeshMixin, GridModel):
         make_manning_tiles: bool = False,
     ) -> xr.Dataset:
         # tile folders
-        if make_dep_tiles:
-            highres_dep_dir = os.path.join(self.root, "tiles", "subgrid", "dep")
-            if not os.path.isdir(highres_dep_dir):
-                os.makedirs(highres_dep_dir)
-        else:
-            highres_dep_dir = None
-
-        if make_manning_tiles:
-            highres_manning_dir = os.path.join(self.root, "tiles", "subgrid", "manning")
-            if not os.path.isdir(highres_manning_dir):
-                os.makedirs(highres_manning_dir)
-        else:
-            highres_manning_dir = None
+        if make_dep_tiles  or make_manning_tiles:
+            highres_dir = os.path.join(self.root, "tiles", "subgrid")
+            if not os.path.isdir(highres_dir):
+                os.makedirs(highres_dir)
 
         if self.grid_type == "regular":
             self.reggrid.subgrid.build(
@@ -700,8 +691,9 @@ class SfincsModel(MeshMixin, GridModel):
                 manning_land=manning_land,
                 manning_sea=manning_sea,
                 rgh_lev_land=rgh_lev_land,
-                highres_dep_dir=highres_dep_dir,
-                highres_manning_dir=highres_manning_dir,
+                make_dep_tiles=make_dep_tiles,
+                make_manning_tiles=make_manning_tiles,
+                highres_dir=highres_dir,
             )
             self.subgrid = self.reggrid.subgrid.to_xarray(
                 dims=self.mask.raster.dims, coords=self.mask.raster.coords
@@ -2205,26 +2197,14 @@ class SfincsModel(MeshMixin, GridModel):
             if os.path.exists(os.path.join(self.root, "tiles", "index")):
                 index_path = os.path.join(self.root, "tiles", "index")
 
-        # if no datasets provided, check if high-res subgrid tiles are there
+        # if no datasets provided, check if high-res subgrid geotiff is there
         if len(da_dep_lst) == 0:
             if os.path.exists(os.path.join(self.root, "tiles", "subgrid")):
-                # check if there is a dep.vrt
-                dep_vrt = os.path.join(self.root, "tiles", "subgrid", "dep.vrt")
-                if os.path.exists(dep_vrt):
-                    da = self.data_catalog.get_rasterdataset(dep_vrt)
+                # check if there is a dep_subgrid.tif
+                dep = os.path.join(self.root, "tiles", "subgrid", "dep_subgrid.tif")
+                if os.path.exists(dep):
+                    da = self.data_catalog.get_rasterdataset(dep)
                     da_dep_lst.append({"da": da})
-                else:
-                    # read filelist_dep.txt and loop over files
-                    dep_filelist = os.path.join(
-                        self.root, "tiles", "subgrid", "filelist_dep.txt"
-                    )
-                    if os.path.exists(dep_filelist):
-                        with open(dep_filelist, "r") as f:
-                            for line in f:
-                                fn = line.strip()
-                                if os.path.exists(fn):
-                                    da = self.data_catalog.get_rasterdataset(fn)
-                                    da_dep_lst.append({"da": da})
                     else:
                         raise ValueError("No topobathy datasets provided.")
 

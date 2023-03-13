@@ -179,10 +179,14 @@ class SubgridTableRegular:
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
         buffer_cells: int = 0,
-        highres_dep_dir: str = None,
-        highres_manning_dir: str = None,
+        make_dep_tiles: bool = False,
+        make_manning_tiles: bool = False,
+        highres_dir: str = None,
         quiet=False,  # TODO replace by logger
     ):
+
+        if make_dep_tiles or make_manning_tiles:
+            assert highres_dir is not None, "highres_dir must be specified"
 
         refi = nr_subgrid_pixels
         self.nbins = nbins
@@ -197,10 +201,7 @@ class SubgridTableRegular:
             1 / nr_subgrid_pixels
         )
 
-        if highres_dep_dir:
-            # Write the raster paths to a text file
-            highres_dir = os.path.abspath(os.path.join(highres_dep_dir, os.pardir))
-
+        if make_dep_tiles:
             # create the CloudOptimizedGeotiff
             dep_tif = rasterio.open(
                 os.path.join(highres_dir, "dep_subgrid.tif"),
@@ -222,9 +223,6 @@ class SubgridTableRegular:
             )
 
         if highres_manning_dir:
-            # Write the raster paths to a text file
-            highres_dir = os.path.abspath(os.path.join(highres_manning_dir, os.pardir))
-
             # create the CloudOptimizedGeotiff
             man_tif = rasterio.open(
                 os.path.join(highres_dir, "manning_subgrid.tif"),
@@ -367,7 +365,7 @@ class SubgridTableRegular:
 
                 # optional write tile to file
                 # NOTE tiles have overlap! da_dep[:-refi,:-refi]
-                if highres_dep_dir:
+                if make_dep_tiles:
                     # write the block to the output COG
                     window = Window(
                         bm0 * nr_subgrid_pixels,
@@ -381,7 +379,7 @@ class SubgridTableRegular:
                         indexes=1,
                     )
 
-                if highres_manning_dir:
+                if make_manning_tiles:
                     # write the block to the output COG
                     window = Window(
                         bm0 * nr_subgrid_pixels,
@@ -431,10 +429,10 @@ class SubgridTableRegular:
                 del da_mask_block, da_dep, da_man
 
         # close the output cloud optimized geotiff
-        if highres_dep_dir:
+        if make_dep_tiles:
             dep_tif.close()
 
-        if highres_manning_dir:
+        if make_manning_tiles:
             man_tif.close()
 
     def to_xarray(self, dims, coords):
