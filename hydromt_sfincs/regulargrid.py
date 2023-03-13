@@ -12,7 +12,7 @@ import logging
 
 from pyflwdir.regions import region_area
 from .subgrid import SubgridTableRegular
-from .utils import num2deg, deg2num
+from .utils import num2deg, deg2num,int2png,tile_window
 
 logger = logging.getLogger(__name__)
 
@@ -402,40 +402,55 @@ class RegularGrid:
         root: Union[str, Path],
         region: gpd.GeoDataFrame,
         zoom_range: Union[int, List[int]] = [0, 13],
+        fmt:str = "bin",
     ):
-        """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the correct SFINCS cell.
+        """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the corresponding SFINCS cell.
 
         Parameters
         ----------
         region : gpd.GeoDataFrame
-            _description_
+            GeoDataFrame containing the region of interest
         root : Union[str, Path]
-            _description_
+            Directory where index tiles are stored
         zoom_range : Union[int, List[int]], optional
-            _description_, by default [0,13]
+            Range of zoom levels for which tiles are created, by default [0,13]
+        fmt : str, optional
+            Format of index tiles, either "bin" (binary, default) or "png"
         """
 
         index_path = os.path.join(root, "index")
         npix = 256
 
+        # for binary format, use .dat extension
+        if fmt == "bin":
+            extension = "dat"
+        # for net, tif and png extension and format are the same    
+        else:
+            extension = fmt
+
         # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
         if isinstance(zoom_range, int):
             zoom_range = [0, zoom_range]
 
-        # get bounding box of sfincs model in EPSG:4326
+        # get bounding box of sfincs model
         minx, miny, maxx, maxy = region.total_bounds
-        transformer = Transformer.from_crs(region.crs.to_epsg(), 4326)
-        lat_range, lon_range = transformer.transform([minx, maxx], [miny, maxy])
+        transformer = Transformer.from_crs(region.crs.to_epsg(), 3857)
 
+        # rotation of the model
         cosrot = math.cos(-self.rotation * math.pi / 180)
         sinrot = math.sin(-self.rotation * math.pi / 180)
 
-        transformer_a = Transformer.from_crs(
-            CRS.from_epsg(4326), CRS.from_epsg(3857), always_xy=True
-        )
-        transformer_b = Transformer.from_crs(
-            CRS.from_epsg(3857), region.crs, always_xy=True
-        )
+        # axis order is different for geographic and projected CRS 
+        if region.crs.is_geographic:
+            minx, miny = map(
+                max, zip(transformer.transform(miny, minx), [-20037508.34] * 2)
+            )
+            maxx, maxy = map(min, zip(transformer.transform(maxy, maxx), [20037508.34] * 2))
+        else:
+            minx, miny = map(
+                max, zip(transformer.transform(minx, miny), [-20037508.34] * 2)
+            )
+            maxx, maxy = map(min, zip(transformer.transform(maxx, maxy), [20037508.34] * 2))
 
         for izoom in range(zoom_range[0], zoom_range[1] + 1):
 
@@ -443,57 +458,45 @@ class RegularGrid:
 
             zoom_path = os.path.join(index_path, str(izoom))
 
-            dxy = (40075016.686 / npix) / 2**izoom
-            xx = np.linspace(0.0, (npix - 1) * dxy, num=npix)
-            yy = xx[:]
-            xv, yv = np.meshgrid(xx, yy)
+            for transform, col, row in tile_window(izoom, minx, miny, maxx, maxy):
+                # transform is a rasterio Affine object
+                # col, row are the tile indices
+                file_name = os.path.join(zoom_path, str(col), str(row) + "." + extension)
 
-            ix0, iy0 = deg2num(lat_range[0], lon_range[0], izoom)
-            ix1, iy1 = deg2num(lat_range[1], lon_range[1], izoom)
+                # get the coordinates of the tile in webmercator projection
+                x = np.arange(0, npix) + 0.5
+                y = np.arange(0, npix) + 0.5
+                x3857, y3857 = transform * (x, y)
+                x3857, y3857 = np.meshgrid(x3857, y3857)
 
-            for i in range(ix0, ix1 + 1):
+                # convert to SFINCS coordinates
+                x, y = transformer.transform(x3857, y3857, direction="INVERSE")
 
-                path_okay = False
-                zoom_path_i = os.path.join(zoom_path, str(i))
+                # Now rotate around origin of SFINCS model
+                x00 = x - self.x0
+                y00 = y - self.y0
+                xg = x00 * cosrot - y00 * sinrot
+                yg = x00 * sinrot + y00 * cosrot
 
-                for j in range(iy0, iy1 + 1):
+                # determine the SFINCS cell indices
+                iind = np.floor(xg / self.dx).astype(int)
+                jind = np.floor(yg / self.dy).astype(int)
+                ind = iind * self.nmax + jind
+                ind[iind < 0] = -999
+                ind[jind < 0] = -999
+                ind[iind >= self.mmax] = -999
+                ind[jind >= self.nmax] = -999
 
-                    file_name = os.path.join(zoom_path_i, str(j) + ".dat")
-
-                    # Compute lat/lon at ll corner of tile
-                    lat, lon = num2deg(i, j, izoom)
-
-                    # Convert to Global Mercator
-                    xo, yo = transformer_a.transform(lon, lat)
-
-                    # Tile grid on local mercator
-                    x = xv[:] + xo + 0.5 * dxy
-                    y = yv[:] + yo + 0.5 * dxy
-
-                    # Convert tile grid to crs of SFINCS model
-                    x, y = transformer_b.transform(x, y)
-
-                    # Now rotate around origin of SFINCS model
-                    x00 = x - self.x0
-                    y00 = y - self.y0
-                    xg = x00 * cosrot - y00 * sinrot
-                    yg = x00 * sinrot + y00 * cosrot
-
-                    iind = np.floor(xg / self.dx).astype(int)
-                    jind = np.floor(yg / self.dy).astype(int)
-                    ind = iind * self.nmax + jind
-                    ind[iind < 0] = -999
-                    ind[jind < 0] = -999
-                    ind[iind >= self.mmax] = -999
-                    ind[jind >= self.nmax] = -999
-
-                    if np.any(ind >= 0):
-                        if not path_okay:
-                            if not os.path.exists(zoom_path_i):
-                                os.makedirs(zoom_path_i)
-                                path_okay = True
-
-                        # And write indices to file
+                # only write tiles that link to at least one SFINCS cell
+                if np.any(ind >= 0):
+                    if not os.path.exists(os.path.join(zoom_path, str(col))):
+                        os.makedirs(os.path.join(zoom_path, str(col)))
+                    # And write indices to file
+                    if fmt == "bin":
                         fid = open(file_name, "wb")
                         fid.write(ind)
                         fid.close()
+                    elif fmt == "png":
+                        # for png, change nodata -999 nodata into 0
+                        ind[ind == -999] = 0
+                        int2png(ind, file_name)

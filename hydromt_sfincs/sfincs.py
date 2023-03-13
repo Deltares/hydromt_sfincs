@@ -2136,17 +2136,20 @@ class SfincsModel(MeshMixin, GridModel):
         root: Union[str, Path] = None,
         region: gpd.GeoDataFrame = None,
         zoom_range: Union[int, List[int]] = [0, 13],
+        fmt: str = "bin",
     ):
         """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the correct SFINCS cell.
 
         Parameters
         ----------
         region : gpd.GeoDataFrame
-            _description_
+            GeoDataFrame defining the area of interest, if None, the model region is used.
         root : Union[str, Path]
-            _description_
+            Directory in which to store the index tiles, if None, the model root is used.
         zoom_range : Union[int, List[int]], optional
-            _description_, by default [0,13]
+            Range of zoom levels for which tiles are created, by default [0,13]
+        fmt : str, optional
+            Format of the index tiles, either "bin" (binary, default) or "png".
         """
         if root is None:
             root = os.path.join(self.root, "tiles")
@@ -2154,7 +2157,7 @@ class SfincsModel(MeshMixin, GridModel):
             region = self.region
 
         if self.grid_type == "regular":
-            self.reggrid.create_index_tiles(region=region, root=root, zoom_range=zoom_range)
+            self.reggrid.create_index_tiles(region=region, root=root, zoom_range=zoom_range,fmt=fmt)
         elif self.grid_type == "quadtree":
             raise NotImplementedError("Index tiles not yet implemented for quadtree grids.")
 
@@ -2166,23 +2169,26 @@ class SfincsModel(MeshMixin, GridModel):
         index_path: Union[str, Path] = None,
         zoom_range: Union[int, List[int]] = [0, 13],
         z_range: List[int] = [-20000.0, 20000.0],
+        fmt: str = "bin",
     ):   
         """Create webmercator tiles for merged topography and bathymetry.
 
         Parameters
         ----------
         root : Union[str, Path]
-            _description_
+            Directory in which to store the index tiles, if None, the model root is used.
         region : gpd.GeoDataFrame
-            _description_
+            GeoDataFrame defining the area of interest, if None, the model region is used.
         da_dep_lst : List[dict]
-            _description_
+            List of dict containing xarray.DataArray and metadata for each dataset.
         index_path : Union[str, Path], optional
-            _description_, by default None
+            Directory where index tiles are stored. If defined, topobathy tiles are only created where index tiles are present.
         zoom_range : Union[int, List[int]], optional
-            _description_, by default [0, 13]
+            Range of zoom levels for which tiles are created, by default [0,13]
         z_range : List[int], optional
-            _description_, by default [-20000.0, 20000.0]
+            Range of validations that are included in the topobathy tiles, by default [-20000.0, 20000.0]
+        fmt : str, optional
+            Format of the topobathy tiles: "bin" (binary, default), "png" or "tif".
         """
 
         if root is None:
@@ -2217,25 +2223,44 @@ class SfincsModel(MeshMixin, GridModel):
                         raise ValueError("No topobathy datasets provided.")
 
         # create topobathy tiles
-        workflows.tiling.make_topobathy_tiles(
+        workflows.tiling.create_topobathy_tiles(
             root=root,
             region=region,
             da_dep_lst=da_dep_lst,
             index_path=index_path,
             zoom_range=zoom_range,
             z_range=z_range,
+            fmt=fmt,
         )
 
-    def setup_tiles(
+    def setup_webmercator_tiles(
         self,
         make_index_tiles: bool = True,
         make_topobathy_tiles: bool = True,
+        root: Union[str, Path] = None,
+        region: gpd.GeoDataFrame = None,
+        datasets_dep: List[dict] = [],
+        zoom_range: Union[int, List[int]] = [0, 13],
+        z_range: List[int] = [-20000.0, 20000.0],
+        fmt: str = "bin",
     ):
+        # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
+        if isinstance(zoom_range, int):
+            zoom_range = [0, zoom_range]
         
         if make_index_tiles:
-            self.create_index_tiles()
+            # only binary and png are supported for index tiles so set to binary if tif
+            fmt_ind = "bin" if fmt == "tif" else fmt
+                
+            self.create_index_tiles(root=root, region=region, zoom_range=zoom_range, fmt=fmt_ind)
+
         if make_topobathy_tiles:
-            self.create_topobathy_tiles()
+            # compute resolution of highest zoom level
+            # resolution of zoom level 0  on equator: 156543.03392804097
+            res = 156543.03392804097 / 2 ** zoom_range[1]
+
+            da_dep_lst = self._parse_datasets_dep(datasets_dep, res=res)
+            self.create_topobathy_tiles(root=root, region=region, da_dep_lst=da_dep_lst, zoom_range=zoom_range, z_range=z_range, fmt=fmt)
 
     # Plotting
     def plot_forcing(self, fn_out="forcing.png", **kwargs):
@@ -2362,7 +2387,7 @@ class SfincsModel(MeshMixin, GridModel):
             geom_names=geom_names,
             geom_kwargs=geom_kwargs,
             legend_kwargs=legend_kwargs,
-            **kwargs,)
+            **kwargs,
         )
 
         if fn_out is not None:
