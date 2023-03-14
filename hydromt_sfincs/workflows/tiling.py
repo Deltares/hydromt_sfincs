@@ -5,10 +5,12 @@ from pyproj import CRS, Transformer
 from typing import Union, Optional, List, Dict, Tuple
 import xarray as xr
 import geopandas as gpd
+import math
+from PIL import Image
+from itertools import product
+from affine import Affine
 
 from .merge import merge_multi_dataarrays
-from hydromt_sfincs.utils import deg2num, num2deg, elevation2png, tile_window
-
 
 def create_topobathy_tiles(
     root: Union[str, Path],
@@ -137,138 +139,133 @@ def create_topobathy_tiles(
             elif fmt == "tif":
                 da_dep.raster.to_raster(file_name)
 
+def deg2num(lat_deg, lon_deg, zoom):
+    """Convert lat/lon to webmercator tile number"""
+    lat_rad = math.radians(lat_deg)
+    n = 2**zoom
+    xtile = int((lon_deg + 180.0) / 360.0 * n)
+    ytile = int((1.0 - math.asinh(math.tan(-lat_rad)) / math.pi) / 2.0 * n)
+    return (xtile, ytile)
 
-# def make_topobathy_tiles_old(
-#         root:Union[str, Path],
-#         region:gpd.GeoDataFrame,
-#         da_dep_lst:List[dict],
-#         index_path: Union[str, Path] = None,
-#         zoom_range: Union[int, List[int]] = [0, 13],
-#         z_range: List[int] = [-20000.0, 20000.0],
-#         fmt = "bin",
-#     ):
-#     """_summary_
 
-#     Parameters
-#     ----------
-#     root : Union[str, Path]
-#         _description_
-#     region : gpd.GeoDataFrame
-#         _description_
-#     da_dep_lst : List[dict]
-#         _description_
-#     index_path : Union[str, Path], optional
-#         _description_, by default None
-#     zoom_range : Union[int, List[int]], optional
-#         _description_, by default [0, 13]
-#     z_range : List[int], optional
-#         _description_, by default [-20000.0, 20000.0]
-#     format : str, optional
-#         _description_, by default "bin"
-#     """
+def num2deg(xtile, ytile, zoom):
+    """Convert webmercator tile number to lat/lon"""
+    n = 2**zoom
+    lon_deg = xtile / n * 360.0 - 180.0
+    lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
+    lat_deg = math.degrees(-lat_rad)
+    return (lat_deg, lon_deg)
 
-#     assert len(da_dep_lst) > 0, "No DEMs provided"
 
-#     # for binary format, use .dat extension
-#     if fmt == "bin":
-#         extension = "dat"
-#     # for net, tif and png extension and format are the same
-#     else:
-#         extension = fmt
+def rgba2int(rgba):
+    """Convert rgba tuple to int"""
+    r, g, b, a = rgba
+    return (r * 256**3) + (g * 256**2) + (b * 256) + n
 
-#     topobathy_path = os.path.join(root, "topobathy")
-#     npix = 256
 
-#     # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
-#     if isinstance(zoom_range, int):
-#         zoom_range = [0, zoom_range]
+def int2rgba(int_val):
+    """Convert int to rgba tuple"""
+    r = (int_val // 256**3) % 256
+    g = (int_val // 256**2) % 256
+    b = (int_val // 256) % 256
+    a = int_val % 256
+    return (r, g, b, a)
 
-#     # get bounding box of region in EPSG:4326
-#     minx, miny, maxx, maxy = region.total_bounds
-#     transformer = Transformer.from_crs(region.crs.to_epsg(), 4326)
-#     lat_range, lon_range = transformer.transform([minx, maxx], [miny, maxy])
 
-#     for izoom in range(zoom_range[0], zoom_range[1] + 1):
+def elevation2rgb(val):
+    """Convert elevation to rgb tuple"""
+    val += 32768
+    r = np.floor(val / 256)
+    g = np.floor(val % 256)
+    b = np.floor((val - np.floor(val)) * 256)
 
-#         print("Processing zoom level " + str(izoom))
+    return (r, g, b)
 
-#         zoom_path = os.path.join(topobathy_path, str(izoom))
 
-#         dxy = (40075016.686/npix) / 2 ** izoom
-#         xx = np.linspace(0.0, (npix - 1)*dxy, num=npix)
-#         yy = xx[:]
-#         xv, yv = np.meshgrid(xx, yy)
+def rgb2elevation(r, g, b):
+    """Convert rgb tuple to elevation"""
+    val = (r * 256 + g + b / 256) - 32768
+    return val
 
-#         ix0, iy0 = deg2num(lat_range[0], lon_range[0], izoom)
-#         ix1, iy1 = deg2num(lat_range[1], lon_range[1], izoom)
 
-#         transformer_4326_to_3857 = Transformer.from_crs(
-#             CRS.from_epsg(4326), CRS.from_epsg(3857), always_xy=True
-#         )
+def png2int(png_file):
+    """Convert png to int array"""
+    # Open the PNG image
+    image = Image.open(png_file)
 
-#         for i in range(ix0, ix1 + 1):
+    # Convert the image to RGBA mode if it's not already in RGBN mode
+    if image.mode != "RGBA":
+        image = image.convert("RGBA")
 
-#             path_okay   = False
-#             zoom_path_i = os.path.join(zoom_path, str(i))
+    # Get the pixel data from the image
+    pixel_data = list(image.getdata())
 
-#             for j in range(iy0, iy1 + 1):
+    # Convert RGBA values to unique integers
+    val = []
+    for rgba in pixel_data:
+        val.append(rgba2int(rgba))
 
-#                 file_name = os.path.join(zoom_path_i, str(j) + "." + extension)
+    return val
 
-#                 if index_path:
-#                     # Only make tiles for which there is an index file (can be .dat or .png)
-#                     index_file_name_dat = os.path.join(index_path, str(izoom), str(i), str(j) + ".dat")
-#                     index_file_name_png = os.path.join(index_path, str(izoom), str(i), str(j) + ".png")
-#                     if not os.path.exists(index_file_name_dat) and not os.path.exists(index_file_name_png):
-#                         continue
 
-#                 # Compute lat/lon at ll corner of tile
-#                 lat, lon = num2deg(i, j, izoom)
+def int2png(val, png_file):
+    """Convert int array to png"""
+    # Convert index integers to RGBA values
+    rgba = np.zeros((256 * 256, 4), "uint8")
+    r, g, b, a = int2rgba(val)
 
-#                 # Convert origin to Global Mercator
-#                 xo, yo = transformer_4326_to_3857.transform(lon,lat)
+    rgba[:, 0] = r.flatten()
+    rgba[:, 1] = g.flatten()
+    rgba[:, 2] = b.flatten()
+    rgba[:, 3] = a.flatten()
 
-#                 # Tile grid on Global mercator
-#                 x3857 = xv[:] + xo + 0.5*dxy
-#                 y3857 = yv[:] + yo + 0.5*dxy
-#                 zg    = np.float32(np.full([npix, npix], np.nan))
+    rgba = rgba.reshape([256, 256, 4])
 
-#                 # convert into xarray
-#                 da_dep = xr.DataArray(
-#                     zg,
-#                     coords = {
-#                         "yc": (("y","x"), y3857),
-#                         "xc": (("y","x"), x3857),
-#                     },
-#                     dims=["y", "x"],
-#                 )
-#                 da_dep.raster.set_crs(3857)
+    # Create PIL Image from RGB values and save as PNG
+    img = Image.fromarray(rgba)
+    img.save(png_file)
 
-#                 # get subgrid bathymetry tile
-#                 da_dep = merge_multi_dataarrays(
-#                     da_list=da_dep_lst,
-#                     da_like=da_dep,
-#                 )
 
-#                 if np.isnan(da_dep.values).all():
-#                     # only nans in this tile
-#                     continue
+def png2elevation(png_file):
+    """Convert png to elevation array based on terrarium interpretation"""
+    img = Image.open(png_file)
+    arr = np.array(img.convert("RGB"))
+    # Convert RGB values to elevation values
+    elevations = np.apply_along_axis(rgb2elevation, 2, arr)
+    return elevations
 
-#                 if np.nanmax(da_dep.values)<z_range[0] or np.nanmin(da_dep.values)>z_range[1]:
-#                     # all values in tile outside z_range
-#                     continue
 
-#                 if not path_okay:
-#                     if not os.path.exists(zoom_path_i):
-#                         os.makedirs(zoom_path_i)
-#                         path_okay = True
+def elevation2png(val, png_file):
+    """Convert elevation array to png using terrarium interpretation"""
 
-#                 if fmt == "bin":
-#                     # And write indices to file
-#                     fid = open(file_name, "wb")
-#                     fid.write(da_dep.values)
-#                     fid.close()
-#                 elif fmt == "png":
-#                     elevation2png(da_dep, file_name)
-#                 elif fmt == "tif":
-#                     da_dep.raster.to_raster(file_name)
+    rgb = np.zeros((256 * 256, 3), "uint8")
+    r, g, b = elevation2rgb(val)
+
+    rgb[:, 0] = r.values.flatten()
+    rgb[:, 1] = g.values.flatten()
+    rgb[:, 2] = b.values.flatten()
+
+    rgb = rgb.reshape([256, 256, 3])
+
+    # Create PIL Image from RGB values and save as PNG
+    img = Image.fromarray(rgb)
+    img.save(png_file)
+
+
+def tile_window(zl, minx, miny, maxx, maxy):
+    """Window generator for a given zoom level and bounding box"""
+    dxy = (20037508.34 * 2) / (2**zl)
+    # Origin displacement
+    odx = np.floor(abs(-20037508.34 - minx) / dxy)
+    ody = np.floor(abs(20037508.34 - maxy) / dxy)
+
+    # Set the new origin
+    minx = -20037508.34 + odx * dxy
+    maxy = 20037508.34 - ody * dxy
+
+    # Create window generator
+    lu = product(np.arange(minx, maxx, dxy), np.arange(maxy, miny, -dxy))
+    for l, u in lu:
+        col = int(odx + (l - minx) / dxy)
+        row = int(ody + (maxy - u) / dxy)
+        yield Affine(dxy / 256, 0, l, 0, -dxy / 256, u), col, row

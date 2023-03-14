@@ -21,10 +21,7 @@ import hydromt
 from hydromt.io import write_xy
 from scipy import ndimage
 from pyflwdir.regions import region_area
-import math
-from PIL import Image
-from itertools import product
-from affine import Affine
+form hydromt_sfincs.workflows import tiling
 
 __all__ = [
     "read_inp",
@@ -51,13 +48,6 @@ __all__ = [
     "read_sfincs_his_results",
     "mask_bounds",
     "mask_topobathy",
-    "deg2num",
-    "num2deg",
-    "elevation2png",
-    "png2elevation",
-    "int2png",
-    "png2int",
-    "tile_window",
 ]
 
 logger = logging.getLogger(__name__)
@@ -978,15 +968,13 @@ def read_sfincs_his_results(
 def downscale_floodmap(
     zsmax:xr.DataArray,
     dep:xr.DataArray,
-    region: gpd.GeoDataFrame = None,
+    hmin:float=0.05,
     floodmap_fn:Union[Path, str] ="floodmap.tif",
 ):
     """Create a downscaled floodmap for (model) region.
 
     Parameters
     ----------
-    region : gpd.GeoDataFrame, optional
-        _description_, by default None
     map_fn : str, optional
         _description_, by default "sfincs_map.nc"
     dep_fn : Union[Path, str], optional
@@ -995,9 +983,30 @@ def downscale_floodmap(
         _description_, by default "floodmap.tif" 
     """    
 
+    # interpolate zsmax to dep grid
+    zsmax = zsmax.raster.reproject_like(dep, method="nearest")
+    zsmax.raster.set_nodata(np.nan)
 
+    # compute hmax
+    if "timemax" in zsmax.dims:
+        hmax = zsmax.max("timemax") - dep
+    else:
+        hmax = zsmax - dep
 
-    pass    
+    # remove flood-depths below threshold
+    hmax = hmax.where(hmax > hmin, np.nan)
+
+    # write floodmap
+    hmax.raster.to_raster(floodmap_fn,
+        driver="GTiff",
+        count=1,
+        dtype=np.float32,
+        tiled=True,
+        blockxsize=256,
+        blockysize=256,
+        compress="deflate",
+        predictor=2,
+        profile="COG")
 
 def downscale_floodmap_webmercator(
     zsmax:Union[np.array, xr.DataArray],
@@ -1058,14 +1067,14 @@ def downscale_floodmap_webmercator(
                 if fmt_in == "bin":
                     ind = np.fromfile(index_fn, dtype="i4")
                 elif fmt_in == "png":
-                    ind = png2int(index_fn)
+                    ind = tiling.png2int(index_fn)
 
                 # read the topobathy file
                 dep_fn = os.path.join(topobathy_path, str(izoom), x, y_file)
                 if fmt_in == "bin":
                     dep = np.fromfile(dep_fn, dtype="f4")
                 elif fmt_in == "png":
-                    dep = png2elevation(dep_fn)
+                    dep = tiling.png2elevation(dep_fn)
 
                 # create the floodmap
                 hmax = zsmax[ind]                   
@@ -1088,135 +1097,4 @@ def downscale_floodmap_webmercator(
                     fid.write(hmax)
                     fid.close()
                 elif fmt_out == "png":
-                    elevation2png(hmax, floodmap_fn)
-
-def deg2num(lat_deg, lon_deg, zoom):
-    """Convert lat/lon to webmercator tile number"""
-    lat_rad = math.radians(lat_deg)
-    n = 2**zoom
-    xtile = int((lon_deg + 180.0) / 360.0 * n)
-    ytile = int((1.0 - math.asinh(math.tan(-lat_rad)) / math.pi) / 2.0 * n)
-    return (xtile, ytile)
-
-
-def num2deg(xtile, ytile, zoom):
-    """Convert webmercator tile number to lat/lon"""
-    n = 2**zoom
-    lon_deg = xtile / n * 360.0 - 180.0
-    lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
-    lat_deg = math.degrees(-lat_rad)
-    return (lat_deg, lon_deg)
-
-
-def rgba2int(rgba):
-    """Convert rgba tuple to int"""
-    r, g, b, a = rgba
-    return (r * 256**3) + (g * 256**2) + (b * 256) + n
-
-
-def int2rgba(int_val):
-    """Convert int to rgba tuple"""
-    r = (int_val // 256**3) % 256
-    g = (int_val // 256**2) % 256
-    b = (int_val // 256) % 256
-    a = int_val % 256
-    return (r, g, b, a)
-
-
-def elevation2rgb(val):
-    """Convert elevation to rgb tuple"""
-    val += 32768
-    r = np.floor(val / 256)
-    g = np.floor(val % 256)
-    b = np.floor((val - np.floor(val)) * 256)
-
-    return (r, g, b)
-
-
-def rgb2elevation(r, g, b):
-    """Convert rgb tuple to elevation"""
-    val = (r * 256 + g + b / 256) - 32768
-    return val
-
-
-def png2int(png_file):
-    """Convert png to int array"""
-    # Open the PNG image
-    image = Image.open(png_file)
-
-    # Convert the image to RGBA mode if it's not already in RGBN mode
-    if image.mode != "RGBA":
-        image = image.convert("RGBA")
-
-    # Get the pixel data from the image
-    pixel_data = list(image.getdata())
-
-    # Convert RGBA values to unique integers
-    val = []
-    for rgb in pixel_data:
-        val.append(rgba2int(rgba))
-
-    return val
-
-
-def int2png(val, png_file):
-    """Convert int array to png"""
-    # Convert index integers to RGBA values
-    rgba = np.zeros((256 * 256, 4), "uint8")
-    r, g, b, a = int2rgba(val)
-
-    rgba[:, 0] = r.flatten()
-    rgba[:, 1] = g.flatten()
-    rgba[:, 2] = b.flatten()
-    rgba[:, 3] = a.flatten()
-
-    rgba = rgba.reshape([256, 256, 4])
-
-    # Create PIL Image from RGB values and save as PNG
-    img = Image.fromarray(rgba)
-    img.save(png_file)
-
-
-def png2elevation(png_file):
-    """Convert png to elevation array based on terrarium interpretation"""
-    img = Image.open(png_file)
-    arr = np.array(img.convert("RGB"))
-    # Convert RGB values to elevation values
-    elevations = np.apply_along_axis(rgb2elevation, 2, arr)
-    return elevations
-
-
-def elevation2png(val, png_file):
-    """Convert elevation array to png using terrarium interpretation"""
-
-    rgb = np.zeros((256 * 256, 3), "uint8")
-    r, g, b = elevation2rgb(val)
-
-    rgb[:, 0] = r.values.flatten()
-    rgb[:, 1] = g.values.flatten()
-    rgb[:, 2] = b.values.flatten()
-
-    rgb = rgb.reshape([256, 256, 3])
-
-    # Create PIL Image from RGB values and save as PNG
-    img = Image.fromarray(rgb)
-    img.save(png_file)
-
-
-def tile_window(zl, minx, miny, maxx, maxy):
-    """Window generator for a given zoom level and bounding box"""
-    dxy = (20037508.34 * 2) / (2**zl)
-    # Origin displacement
-    odx = np.floor(abs(-20037508.34 - minx) / dxy)
-    ody = np.floor(abs(20037508.34 - maxy) / dxy)
-
-    # Set the new origin
-    minx = -20037508.34 + odx * dxy
-    maxy = 20037508.34 - ody * dxy
-
-    # Create window generator
-    lu = product(np.arange(minx, maxx, dxy), np.arange(maxy, miny, -dxy))
-    for l, u in lu:
-        col = int(odx + (l - minx) / dxy)
-        row = int(ody + (maxy - u) / dxy)
-        yield Affine(dxy / 256, 0, l, 0, -dxy / 256, u), col, row
+                    tiling.elevation2png(hmax, floodmap_fn)

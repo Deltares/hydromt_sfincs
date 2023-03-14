@@ -222,7 +222,7 @@ class SubgridTableRegular:
                 nodata=np.nan,
             )
 
-        if highres_manning_dir:
+        if make_manning_tiles:
             # create the CloudOptimizedGeotiff
             man_tif = rasterio.open(
                 os.path.join(highres_dir, "manning_subgrid.tif"),

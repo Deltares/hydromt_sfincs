@@ -12,7 +12,7 @@ import logging
 
 from pyflwdir.regions import region_area
 from .subgrid import SubgridTableRegular
-from .utils import num2deg, deg2num, int2png, tile_window
+from .workflows.tiling import int2png, tile_window
 
 logger = logging.getLogger(__name__)
 
