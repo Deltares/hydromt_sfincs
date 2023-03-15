@@ -21,7 +21,7 @@ import hydromt
 from hydromt.io import write_xy
 from scipy import ndimage
 from pyflwdir.regions import region_area
-form hydromt_sfincs.workflows import tiling
+from hydromt_sfincs.workflows import tiling
 
 __all__ = [
     "read_inp",
