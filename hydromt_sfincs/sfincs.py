@@ -1902,7 +1902,7 @@ class SfincsModel(MeshMixin, GridModel):
         # set/ update forcing
         self.create_discharge_forcing(merge=merge, **kwargs)
 
-    def setup_discarge_forcing_from_grid(
+    def setup_discharge_forcing_from_grid(
         self,
         discharge_fn,
         locs_fn=None,
