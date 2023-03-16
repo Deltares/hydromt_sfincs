@@ -1369,10 +1369,9 @@ class SfincsModel(MeshMixin, GridModel):
                 da_man = workflows.merge_multi_dataarrays(
                     da_list=da_manning_lst,
                     da_like=self.mask,
-                    interp_method="linear",
-                    merge_method="first",
+                    interp_method="linear",                    
                     logger=logger,
-                )
+                ) #TL: argument -merge_method="first"- is not expected in workflows.merge_multi_dataarrays
             elif "dep" in self.grid:
                 da_man = xr.where(
                     self.grid["dep"] >= rgh_lev_land, manning_land, manning_sea
