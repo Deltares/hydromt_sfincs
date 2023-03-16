@@ -1,1 +1,1 @@
-call "d:\repos\SFINCS\source\sfincs\x64\Release\sfincs.exe">sfincs_log.txt
+call "c:\change_path_of_folder\sfincs.exe">sfincs_log.txt
