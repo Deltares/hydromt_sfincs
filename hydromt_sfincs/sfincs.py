@@ -1362,7 +1362,6 @@ class SfincsModel(MeshMixin, GridModel):
                     da_list=da_manning_lst,
                     da_like=self.mask,
                     interp_method="linear",
-                    merge_method="first",
                     logger=logger,
                 )
             elif "dep" in self.grid:
