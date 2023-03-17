@@ -594,6 +594,47 @@ def mask_bounds(
         bounds = np.logical_or(bounds, np.logical_and(bounds0, da_include))
     return bounds
 
+def mask2gdf(
+    da_mask: xr.DataArray,
+    option: str = "all",
+) -> gpd.GeoDataFrame:
+    """Convert a boolean mask to a GeoDataFrame of polygons.
+
+    Parameters
+    ----------
+    da_mask: xr.DataArray
+        Mask with integer values.
+    option: {"all", "active", "wlev", "outflow"}
+
+    Returns
+    -------
+    gdf: geopandas.GeoDataFrame
+        GeoDataFrame of Points.
+    """
+    if option == "all":
+        da_mask = da_mask != da_mask.raster.nodata
+    elif option == "active":
+        da_mask = da_mask == 1
+    elif option == "wlev":
+        da_mask = da_mask == 2
+    elif option == "outflow":
+        da_mask = da_mask == 3
+
+    indices = np.stack(np.where(da_mask), axis=-1)
+
+    if "x" in da_mask.coords:
+        x = da_mask.coords["x"].values[indices[:,1]]
+        y = da_mask.coords["y"].values[indices[:,0]]
+    else:
+        x = da_mask.coords["xc"].values[indices[:, 0], indices[:, 1]]
+        y = da_mask.coords["yc"].values[indices[:, 0], indices[:, 1]]
+
+    points = gpd.GeoDataFrame(geometry=gpd.points_from_xy(x, y), crs=da_mask.raster.crs)
+                              
+    if len(points) > 0:
+        return gpd.GeoDataFrame(points, crs=da_mask.raster.crs)
+    else:
+        return None
 
 ## STRUCTURES: thd / weir ##
 
