@@ -12,9 +12,10 @@ authors = [
 ]
 dependencies = [
     "geopandas >=0.8",
-    "hydromt>=0.4.5",
+    "hydromt>=0.7.0",
     "numpy",
     "pandas",
+    "pillow",
     "pyflwdir>=0.5.5",
     "pygeos",
     "pyproj",
