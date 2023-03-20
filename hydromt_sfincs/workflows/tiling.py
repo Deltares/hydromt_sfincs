@@ -22,25 +22,27 @@ def create_topobathy_tiles(
     z_range: List[int] = [-20000.0, 20000.0],
     fmt="bin",
 ):
-    """_summary_
+    """Create webmercator topobathy tiles for a given region.
 
     Parameters
     ----------
     root : Union[str, Path]
-        _description_
+        Directory where the topobathy tiles will be stored.
     region : gpd.GeoDataFrame
-        _description_
+        GeoDataFrame defining the region for which the tiles will be created.
     da_dep_lst : List[dict]
-        _description_
+        List of dictionaries containing the bathymetry dataarrays.
     index_path : Union[str, Path], optional
-        _description_, by default None
+        Directory where index tiles are stored, by default None
     zoom_range : Union[int, List[int]], optional
-        _description_, by default [0, 13]
+        Range of zoom levels for which tiles are created, by default [0, 13]
     z_range : List[int], optional
-        _description_, by default [-20000.0, 20000.0]
+        Range of valid elevations, by default [-20000.0, 20000.0]
     format : str, optional
-        _description_, by default "bin"
+        The desired output format of the topobathy tiles, by default "bin". Also "png" and "tif" are supported.
     """
+    # TODO change the order of the zoom_levels
+    # basing large scale zoom levels on the high-resolution ones prevents memory errors
 
     assert len(da_dep_lst) > 0, "No DEMs provided"
 
