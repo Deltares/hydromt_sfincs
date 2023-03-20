@@ -1804,6 +1804,40 @@ class SfincsModel(MeshMixin, GridModel):
         # set/ update forcing
         self.create_waterlevel_forcing(merge=merge, **kwargs)
 
+    def setup_waterlevel_forcing_from_grid(
+        self,
+        distance: float = 1e4,
+        merge: bool = True,
+    ):
+        """Create waterlevel boundary points along the model waterlevel boundary.
+
+        Parameters
+        ----------
+        distance: float, optional
+            Distance [m] between waterlevel boundary points,
+            by default 10 km.
+        merge : bool, optional
+            If True, merge with existing forcing data, by default True.
+        """
+
+        if np.any(self.mask == 2):
+            region = self.mask.where(self.mask == 2, 0).raster.vectorize()
+        else:
+            raise ValueError("No mask == 2 values found.")
+
+        x = []
+        y = []
+
+        for i in range(0, len(region)):
+            distances = np.arange(0, region.boundary[i].length, distance)
+            for d in distances:
+                x.append(region.boundary[i].interpolate(d).x)
+                y.append(region.boundary[i].interpolate(d).y)
+
+        gdf = gpd.GeoDataFrame(geometry=gpd.points_from_xy(x, y), crs=region.crs)
+
+        self.create_waterlevel_forcing(gdf_locs=gdf, merge=merge)
+
     def create_discharge_forcing(
         self,
         df_ts: pd.DataFrame = None,

@@ -12,6 +12,7 @@ from affine import Affine
 
 from .merge import merge_multi_dataarrays
 
+
 def create_topobathy_tiles(
     root: Union[str, Path],
     region: gpd.GeoDataFrame,
@@ -138,6 +139,7 @@ def create_topobathy_tiles(
                 elevation2png(da_dep, file_name)
             elif fmt == "tif":
                 da_dep.raster.to_raster(file_name)
+
 
 def deg2num(lat_deg, lon_deg, zoom):
     """Convert lat/lon to webmercator tile number"""

@@ -594,6 +594,7 @@ def mask_bounds(
         bounds = np.logical_or(bounds, np.logical_and(bounds0, da_include))
     return bounds
 
+
 def mask2gdf(
     da_mask: xr.DataArray,
     option: str = "all",
@@ -623,18 +624,19 @@ def mask2gdf(
     indices = np.stack(np.where(da_mask), axis=-1)
 
     if "x" in da_mask.coords:
-        x = da_mask.coords["x"].values[indices[:,1]]
-        y = da_mask.coords["y"].values[indices[:,0]]
+        x = da_mask.coords["x"].values[indices[:, 1]]
+        y = da_mask.coords["y"].values[indices[:, 0]]
     else:
         x = da_mask.coords["xc"].values[indices[:, 0], indices[:, 1]]
         y = da_mask.coords["yc"].values[indices[:, 0], indices[:, 1]]
 
     points = gpd.GeoDataFrame(geometry=gpd.points_from_xy(x, y), crs=da_mask.raster.crs)
-                              
+
     if len(points) > 0:
         return gpd.GeoDataFrame(points, crs=da_mask.raster.crs)
     else:
         return None
+
 
 ## STRUCTURES: thd / weir ##
 
@@ -1006,23 +1008,26 @@ def read_sfincs_his_results(
 
     return ds_his
 
+
 def downscale_floodmap(
-    zsmax:xr.DataArray,
-    dep:xr.DataArray,
-    hmin:float=0.05,
-    floodmap_fn:Union[Path, str] ="floodmap.tif",
+    zsmax: xr.DataArray,
+    dep: xr.DataArray,
+    hmin: float = 0.05,
+    floodmap_fn: Union[Path, str] = "floodmap.tif",
 ):
     """Create a downscaled floodmap for (model) region.
 
     Parameters
     ----------
-    map_fn : str, optional
-        _description_, by default "sfincs_map.nc"
-    dep_fn : Union[Path, str], optional
-        _description_, by default "dep_subgrid.tif"
+    zsmax : xr.DataArray
+        Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
+    dep : xr.DataArray
+        High-resolution DEM (m) of model region.
+    hmin : float, optional
+        Minimum water depth (m) to be considered as "flooded", by default 0.05
     floodmap_fn : Union[Path, str], optional
-        _description_, by default "floodmap.tif" 
-    """    
+        Name (path) of output floodmap, by default "floodmap.tif"
+    """
 
     # interpolate zsmax to dep grid
     zsmax = zsmax.raster.reproject_like(dep, method="nearest")
@@ -1031,6 +1036,8 @@ def downscale_floodmap(
     # compute hmax
     if "timemax" in zsmax.dims:
         hmax = zsmax.max("timemax") - dep
+    elif "time" in zsmax.dims:
+        hmax = zsmax.max("time") - dep
     else:
         hmax = zsmax - dep
 
@@ -1038,40 +1045,54 @@ def downscale_floodmap(
     hmax = hmax.where(hmax > hmin, np.nan)
 
     # write floodmap
-    hmax.raster.to_raster(floodmap_fn,
+    hmax.raster.to_raster(
+        floodmap_fn,
         driver="GTiff",
-        count=1,
         dtype=np.float32,
         tiled=True,
         blockxsize=256,
         blockysize=256,
         compress="deflate",
         predictor=2,
-        profile="COG")
+        profile="COG",
+        nodata=np.nan,
+    )
+
 
 def downscale_floodmap_webmercator(
-    zsmax:Union[np.array, xr.DataArray],
-    index_path:str,
-    topobathy_path:str,
-    floodmap_path:str,
-    hmin:float=0.05,
+    zsmax: Union[np.array, xr.DataArray],
+    index_path: str,
+    topobathy_path: str,
+    floodmap_path: str,
+    hmin: float = 0.05,
     zoom_range: Union[int, List[int]] = [0, 13],
-    fmt_in:str="bin",
-    fmt_out:str="png",
-    merge:bool = True,
+    fmt_in: str = "bin",
+    fmt_out: str = "png",
+    merge: bool = True,
 ):
-    """Create a downscaled floodmap for (model) region.
+    """Create a downscaled floodmap for (model) region in webmercator tile format
 
     Parameters
     ----------
-    map_fn : str, optional
-        _description_, by default "sfincs_map.nc"
-    dep_fn : Union[Path, str], optional
-        _description_, by default "dep_subgrid.tif"
-    floodmap_fn : Union[Path, str], optional
-        _description_, by default "floodmap.tif" 
-    """ 
-
+    zsmax : Union[np.array, xr.DataArray]
+        DataArray with maximum water level (m) for each cell
+    index_path : str
+        Directory with index files
+    topobathy_path : str
+        Directory with topobathy files
+    floodmap_path : str
+        Directory where floodmap files will be stored
+    hmin : float, optional
+        Minimum water depth considered as "flooded", by default 0.05 m
+    zoom_range : Union[int, List[int]], optional
+        Range of zoom levels, by default [0, 13]
+    fmt_in : str, optional
+        Format of the index and topobathy tiles, by default "bin"
+    fmt_out : str, optional
+        Format of the floodmap tiles to be created, by default "png"
+    merge : bool, optional
+        Merge floodmap tiles with existing floodmap tiles (this could for example happen when there is overlap between models), by default True
+    """
     # if zsmax is an xarray, convert to numpy array
     if isinstance(zsmax, xr.DataArray):
         zsmax = zsmax.values
@@ -1083,12 +1104,12 @@ def downscale_floodmap_webmercator(
 
     for izoom in range(zoom_range[0], zoom_range[1] + 1):
         index_zoom_path = os.path.join(index_path, str(izoom))
-    
+
         if not os.path.exists(index_zoom_path):
             continue
-        
-        # list the available x-folders 
-        x_folders = [ f.path for f in os.scandir(index_zoom_path) if f.is_dir() ]
+
+        # list the available x-folders
+        x_folders = [f.path for f in os.scandir(index_zoom_path) if f.is_dir()]
 
         # loop over x-folders
         for x_folder in x_folders:
@@ -1118,9 +1139,9 @@ def downscale_floodmap_webmercator(
                     dep = tiling.png2elevation(dep_fn)
 
                 # create the floodmap
-                hmax = zsmax[ind]                   
+                hmax = zsmax[ind]
                 hmax = hmax - dep
-                hmax[hmax<hmin] = np.nan
+                hmax[hmax < hmin] = np.nan
                 hmax = hmax.reshape(256, 256)
 
                 # save the floodmap
@@ -1131,7 +1152,9 @@ def downscale_floodmap_webmercator(
                 if not os.path.exists(os.path.join(floodmap_path, str(izoom), x)):
                     os.makedirs(os.path.join(floodmap_path, str(izoom), x))
 
-                floodmap_fn = os.path.join(floodmap_path, str(izoom), x, y_file.replace(fmt_in, fmt_out))
+                floodmap_fn = os.path.join(
+                    floodmap_path, str(izoom), x, y_file.replace(fmt_in, fmt_out)
+                )
                 if fmt_out == "bin":
                     # And write indices to file
                     fid = open(floodmap_fn, "wb")

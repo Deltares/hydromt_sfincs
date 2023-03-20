@@ -91,13 +91,13 @@ class RegularGrid:
         x_edges, y_edges = (
             self.transform
             * self.transform.translation(0, 0)
-            * np.meshgrid(np.arange(self.mmax+1), np.arange(self.nmax+1))
+            * np.meshgrid(np.arange(self.mmax + 1), np.arange(self.nmax + 1))
         )
         # edges = {
         #     "yg": ((y_dim, x_dim), y_edges),
         #     "xg": ((y_dim, x_dim), x_edges),
         # }
-        return x_edges,y_edges
+        return x_edges, y_edges
 
     @property
     def empty_mask(self) -> xr.DataArray:
@@ -410,21 +410,21 @@ class RegularGrid:
             attrs={"_FillValue": mv},
         )
         return da
-    
+
     def to_vector_lines(self):
         """Return a geopandas GeoDataFrame with a geometry for each grid line."""
         x, y = self.edges
 
         # create vertical lines
         vertical_lines = []
-        for i in range(self.nmax+1):
-            line = LineString([(x[i,0], y[i,0]), (x[i,-1], y[i,-1])])
+        for i in range(self.nmax + 1):
+            line = LineString([(x[i, 0], y[i, 0]), (x[i, -1], y[i, -1])])
             vertical_lines.append(line)
 
         # create horizontal lines
         horizontal_lines = []
-        for j in range(self.mmax+1):
-            line = LineString([(x[0,j], y[0,j]), (x[-1,j], y[-1,j])])
+        for j in range(self.mmax + 1):
+            line = LineString([(x[0, j], y[0, j]), (x[-1, j], y[-1, j])])
             horizontal_lines.append(line)
 
         # combine lines into a single list
