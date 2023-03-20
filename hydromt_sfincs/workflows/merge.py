@@ -135,12 +135,12 @@ def merge_multi_dataarrays(
         )
 
     # NOTE: this is still open for discussion
-    na_holes = ndimage.binary_fill_holes(
-        np.isnan(da1.values), structure=np.ones((3, 3))
-    )
-    if np.any(na_holes) > 0 and interp_method:
-        logger.debug(f"Interpolate data at {int(np.sum(na_holes))} cells")
-        da1 = da1.raster.interpolate_na(method=interp_method).where(na_holes)
+    # na_holes = ndimage.binary_fill_holes(
+    #     np.isnan(da1.values), structure=np.ones((3, 3))
+    # )
+    # if np.any(na_holes) > 0 and interp_method:
+    #     logger.debug(f"Interpolate data at {int(np.sum(na_holes))} cells")
+    #     da1 = da1.raster.interpolate_na(method=interp_method).where(na_holes)
     return da1
 
 

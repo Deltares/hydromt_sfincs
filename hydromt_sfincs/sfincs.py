@@ -287,9 +287,17 @@ class SfincsModel(MeshMixin, GridModel):
                 interp_method=interp_method,
                 logger=logger,
             )
+            
+            # check if no nan data is present in the bed levels
+            assert not np.isnan(da_dep).any(), "NaN values in bed levels"
+
             self.set_grid(da_dep, name="dep")
+            if self.crs is not None and self.grid.raster.crs is None:
+                self.grid.set_crs(self.crs)
+            
             if "depfile" not in self.config:
                 self.config.update({"depfile": "sfincs.dep"})
+
         return da_dep
 
     def setup_dep(

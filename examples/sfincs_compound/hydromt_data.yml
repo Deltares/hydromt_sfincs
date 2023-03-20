@@ -1,6 +1,6 @@
 gebco:
   data_type: RasterDataset
-  path: C:\Users\leijnse\.hydromt_data\artifact_data\v0.0.8\gebco.tif
+  path: C:\Users\goede_rl\.hydromt_data\artifact_data\v0.0.8\gebco.tif
   driver: raster
   filesystem: local
   crs: 4326
@@ -14,7 +14,7 @@ gebco:
     unit: m+MSL
 merit_hydro:
   data_type: RasterDataset
-  path: C:\Users\leijnse\.hydromt_data\artifact_data\v0.0.8\merit_hydro\{variable}.tif
+  path: C:\Users\goede_rl\.hydromt_data\artifact_data\v0.0.8\merit_hydro\{variable}.tif
   driver: raster
   filesystem: local
   crs: 4326

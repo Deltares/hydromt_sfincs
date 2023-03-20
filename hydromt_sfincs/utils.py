@@ -352,7 +352,10 @@ def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, crs: int = N
     with open(fn, "w") as fid:
         for point in gdf.iterfeatures():
             x, y = point["geometry"]["coordinates"]
-            name = point["properties"]["name"]
+            try:
+                name = point["properties"]["name"]
+            except:
+                name = "obs" + str(point["id"])
             if crs.is_geographic:
                 string = f'{x:12.6f}{y:12.6f}  "{name}"\n'
             else:
