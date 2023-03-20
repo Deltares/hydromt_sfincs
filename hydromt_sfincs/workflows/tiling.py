@@ -162,7 +162,7 @@ def num2deg(xtile, ytile, zoom):
 def rgba2int(rgba):
     """Convert rgba tuple to int"""
     r, g, b, a = rgba
-    return (r * 256**3) + (g * 256**2) + (b * 256) + n
+    return (r * 256**3) + (g * 256**2) + (b * 256) + a
 
 
 def int2rgba(int_val):
