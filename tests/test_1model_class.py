@@ -71,7 +71,7 @@ def test_structs(tmpdir):
     mod.set_root(tmp_root, mode="w")
     mod.write_geoms(data_vars=["thd"])
     assert isfile(join(mod.root, "sfincs.thd"))
-    assert not isfile(join(mod.root, "sfincs.obs"))  
+    assert not isfile(join(mod.root, "sfincs.obs"))
     fn_thd_gis = join(mod.root, "gis", "thd.geojson")
     assert isfile(fn_thd_gis)
     # add second thd file

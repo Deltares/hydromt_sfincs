@@ -4,14 +4,16 @@ import numpy as np
 import math
 import os
 from pathlib import Path
-from pyproj import CRS
+from pyproj import CRS, Transformer
 from typing import Union, Optional, List, Dict, Tuple
 from scipy import ndimage
 import xarray as xr
 import logging
+from shapely.geometry import LineString
 
 from pyflwdir.regions import region_area
 from .subgrid import SubgridTableRegular
+from .workflows.tiling import int2png, tile_window
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +85,19 @@ class RegularGrid:
                 "xc": ((y_dim, x_dim), x_coords),
             }
         return coords
+
+    @property
+    def edges(self, x_dim="xg", y_dim="yg"):
+        x_edges, y_edges = (
+            self.transform
+            * self.transform.translation(0, 0)
+            * np.meshgrid(np.arange(self.mmax + 1), np.arange(self.nmax + 1))
+        )
+        # edges = {
+        #     "yg": ((y_dim, x_dim), y_edges),
+        #     "xg": ((y_dim, x_dim), x_edges),
+        # }
+        return x_edges, y_edges
 
     @property
     def empty_mask(self) -> xr.DataArray:
@@ -395,3 +410,134 @@ class RegularGrid:
             attrs={"_FillValue": mv},
         )
         return da
+
+    def to_vector_lines(self):
+        """Return a geopandas GeoDataFrame with a geometry for each grid line."""
+        x, y = self.edges
+
+        # create vertical lines
+        vertical_lines = []
+        for i in range(self.nmax + 1):
+            line = LineString([(x[i, 0], y[i, 0]), (x[i, -1], y[i, -1])])
+            vertical_lines.append(line)
+
+        # create horizontal lines
+        horizontal_lines = []
+        for j in range(self.mmax + 1):
+            line = LineString([(x[0, j], y[0, j]), (x[-1, j], y[-1, j])])
+            horizontal_lines.append(line)
+
+        # combine lines into a single list
+        grid_lines = vertical_lines + horizontal_lines
+
+        return gpd.GeoDataFrame(geometry=grid_lines, crs=self.crs)
+
+    def create_index_tiles(
+        self,
+        root: Union[str, Path],
+        region: gpd.GeoDataFrame,
+        zoom_range: Union[int, List[int]] = [0, 13],
+        fmt: str = "bin",
+    ):
+        """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the corresponding SFINCS cell.
+
+        Parameters
+        ----------
+        region : gpd.GeoDataFrame
+            GeoDataFrame containing the region of interest
+        root : Union[str, Path]
+            Directory where index tiles are stored
+        zoom_range : Union[int, List[int]], optional
+            Range of zoom levels for which tiles are created, by default [0,13]
+        fmt : str, optional
+            Format of index tiles, either "bin" (binary, default) or "png"
+        """
+
+        index_path = os.path.join(root, "index")
+        npix = 256
+
+        # for binary format, use .dat extension
+        if fmt == "bin":
+            extension = "dat"
+        # for net, tif and png extension and format are the same
+        else:
+            extension = fmt
+
+        # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
+        if isinstance(zoom_range, int):
+            zoom_range = [0, zoom_range]
+
+        # get bounding box of sfincs model
+        minx, miny, maxx, maxy = region.total_bounds
+        transformer = Transformer.from_crs(region.crs.to_epsg(), 3857)
+
+        # rotation of the model
+        cosrot = math.cos(-self.rotation * math.pi / 180)
+        sinrot = math.sin(-self.rotation * math.pi / 180)
+
+        # axis order is different for geographic and projected CRS
+        if region.crs.is_geographic:
+            minx, miny = map(
+                max, zip(transformer.transform(miny, minx), [-20037508.34] * 2)
+            )
+            maxx, maxy = map(
+                min, zip(transformer.transform(maxy, maxx), [20037508.34] * 2)
+            )
+        else:
+            minx, miny = map(
+                max, zip(transformer.transform(minx, miny), [-20037508.34] * 2)
+            )
+            maxx, maxy = map(
+                min, zip(transformer.transform(maxx, maxy), [20037508.34] * 2)
+            )
+
+        for izoom in range(zoom_range[0], zoom_range[1] + 1):
+
+            print("Processing zoom level " + str(izoom))
+
+            zoom_path = os.path.join(index_path, str(izoom))
+
+            for transform, col, row in tile_window(izoom, minx, miny, maxx, maxy):
+                # transform is a rasterio Affine object
+                # col, row are the tile indices
+                file_name = os.path.join(
+                    zoom_path, str(col), str(row) + "." + extension
+                )
+
+                # get the coordinates of the tile in webmercator projection
+                x = np.arange(0, npix) + 0.5
+                y = np.arange(0, npix) + 0.5
+                x3857, y3857 = transform * (x, y)
+                x3857, y3857 = np.meshgrid(x3857, y3857)
+
+                # convert to SFINCS coordinates
+                x, y = transformer.transform(x3857, y3857, direction="INVERSE")
+
+                # Now rotate around origin of SFINCS model
+                x00 = x - self.x0
+                y00 = y - self.y0
+                xg = x00 * cosrot - y00 * sinrot
+                yg = x00 * sinrot + y00 * cosrot
+
+                # determine the SFINCS cell indices
+                iind = np.floor(xg / self.dx).astype(int)
+                jind = np.floor(yg / self.dy).astype(int)
+                ind = iind * self.nmax + jind
+                ind[iind < 0] = -999
+                ind[jind < 0] = -999
+                ind[iind >= self.mmax] = -999
+                ind[jind >= self.nmax] = -999
+
+                # only write tiles that link to at least one SFINCS cell
+                if np.any(ind >= 0):
+                    if not os.path.exists(os.path.join(zoom_path, str(col))):
+                        os.makedirs(os.path.join(zoom_path, str(col)))
+                    # And write indices to file
+                    if fmt == "bin":
+                        fid = open(file_name, "wb")
+                        fid.write(ind)
+                        fid.close()
+                    elif fmt == "png":
+                        # for png, change nodata -999 nodata into 0
+                        ind[ind == -999] = 0
+                        int2png(ind, file_name)

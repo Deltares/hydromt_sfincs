@@ -9,6 +9,8 @@ from numba import njit
 import numpy as np
 import os
 import xarray as xr
+import rasterio
+from rasterio.windows import Window
 
 from . import workflows
 
@@ -177,23 +179,69 @@ class SubgridTableRegular:
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
         buffer_cells: int = 0,
-        highres_dep_dir: str = None,
-        highres_manning_dir: str = None,
+        make_dep_tiles: bool = False,
+        make_manning_tiles: bool = False,
+        highres_dir: str = None,
         quiet=False,  # TODO replace by logger
     ):
-        if highres_dep_dir:
-            # Write the raster paths to a text file
-            highres_dir = os.path.abspath(os.path.join(highres_dep_dir, os.pardir))
-            filelist_dep = open(f"{highres_dir}\\filelist_dep.txt", "w")
-        if highres_manning_dir:
-            # Write the raster paths to a text file
-            highres_dir = os.path.abspath(os.path.join(highres_manning_dir, os.pardir))
-            filelist_man = open(f"{highres_dir}\\filelist_man.txt", "w")
+
+        if make_dep_tiles or make_manning_tiles:
+            assert highres_dir is not None, "highres_dir must be specified"
 
         refi = nr_subgrid_pixels
         self.nbins = nbins
         grid_dim = da_mask.raster.shape
         x_dim, y_dim = da_mask.raster.x_dim, da_mask.raster.y_dim
+
+        # determine the output dimensions and transform to match the resolution of da_mask
+        # NOTE: this is only usef for writing the cloud optimized geotiffs
+        output_width = da_mask.sizes[x_dim] * nr_subgrid_pixels
+        output_height = da_mask.sizes[y_dim] * nr_subgrid_pixels
+        output_transform = da_mask.raster.transform * da_mask.raster.transform.scale(
+            1 / nr_subgrid_pixels
+        )
+
+        if make_dep_tiles:
+            # create the CloudOptimizedGeotiff
+            dep_tif = rasterio.open(
+                os.path.join(highres_dir, "dep_subgrid.tif"),
+                "w",
+                driver="GTiff",
+                width=output_width,
+                height=output_height,
+                count=1,
+                dtype=np.float32,
+                crs=da_mask.raster.crs,
+                transform=output_transform,
+                tiled=True,
+                blockxsize=256,
+                blockysize=256,
+                compress="deflate",
+                predictor=2,
+                profile="COG",
+                nodata=np.nan,
+            )
+
+        if make_manning_tiles:
+            # create the CloudOptimizedGeotiff
+            man_tif = rasterio.open(
+                os.path.join(highres_dir, "manning_subgrid.tif"),
+                "w",
+                driver="GTiff",
+                width=output_width,
+                height=output_height,
+                count=1,
+                dtype=np.float32,
+                crs=da_mask.raster.crs,
+                transform=output_transform,
+                tiled=True,
+                blockxsize=256,
+                blockysize=256,
+                compress="deflate",
+                predictor=2,
+                profile="COG",
+                nodata=np.nan,
+            )
 
         # Z points
         self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
@@ -317,31 +365,33 @@ class SubgridTableRegular:
 
                 # optional write tile to file
                 # NOTE tiles have overlap! da_dep[:-refi,:-refi]
-                # TODO properly fix the flipud issue in raster.to_raster
-                if highres_dep_dir:
-                    fn_dep_tile = os.path.join(
-                        highres_dep_dir, f"merged_dep_m{ii:05d}_n{jj:05d}.tif"
+                if make_dep_tiles:
+                    # write the block to the output COG
+                    window = Window(
+                        bm0 * nr_subgrid_pixels,
+                        bn0 * nr_subgrid_pixels,
+                        da_dep[:-refi, :-refi].sizes[x_dim],
+                        da_dep[:-refi, :-refi].sizes[y_dim],
                     )
-                    if da_dep.raster.res[1] > 0:
-                        da_dep.raster.flipud().raster.to_raster(
-                            fn_dep_tile, compress="deflate"
-                        )
-                    else:
-                        da_dep.raster.to_raster(fn_dep_tile, compress="deflate")
-                    # add to filelist
-                    filelist_dep.write(f"{fn_dep_tile}\n")
-                if highres_manning_dir:
-                    fn_man_tile = os.path.join(
-                        highres_manning_dir, f"merged_man_m{ii:05d}_n{jj:05d}.tif"
+                    dep_tif.write(
+                        da_dep[:-refi, :-refi].values.astype(dep_tif.dtypes[0]),
+                        window=window,
+                        indexes=1,
                     )
-                    if da_man.raster.res[1] > 0:
-                        da_man.raster.flipud().raster.to_raster(
-                            fn_man_tile, compress="deflate"
-                        )
-                    else:
-                        da_man.raster.to_raster(fn_man_tile, compress="deflate")
-                    # add to filelist
-                    filelist_man.write(f"{fn_man_tile}\n")
+
+                if make_manning_tiles:
+                    # write the block to the output COG
+                    window = Window(
+                        bm0 * nr_subgrid_pixels,
+                        bn0 * nr_subgrid_pixels,
+                        da_man[:-refi, :-refi].sizes[x_dim],
+                        da_man[:-refi, :-refi].sizes[y_dim],
+                    )
+                    man_tif.write(
+                        da_man[:-refi, :-refi].values.astype(da_man.dtypes[0]),
+                        window=window,
+                        indexes=1,
+                    )
 
                 yg = da_dep.raster.ycoords.values
                 if yg.ndim == 1:
@@ -378,21 +428,12 @@ class SubgridTableRegular:
 
                 del da_mask_block, da_dep, da_man
 
-        # write VRT file with all tiles at the end of the loop
-        if highres_dep_dir:
-            filelist_dep.close()
-            # Create a vrt using GDAL
-            gis_utils.create_vrt(
-                vrt_path=f"{highres_dir}//dep.vrt",
-                file_list_path=f"{highres_dir}//filelist_dep.txt",
-            )
-        if highres_manning_dir:
-            filelist_man.close()
-            # Create a vrt using GDAL
-            gis_utils.create_vrt(
-                vrt_path=f"{highres_dir}//manning.vrt",
-                file_list_path=f"{highres_dir}//filelist_man.txt",
-            )
+        # close the output cloud optimized geotiff
+        if make_dep_tiles:
+            dep_tif.close()
+
+        if make_manning_tiles:
+            man_tif.close()
 
     def to_xarray(self, dims, coords):
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})
