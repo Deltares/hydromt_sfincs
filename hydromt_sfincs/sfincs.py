@@ -669,6 +669,7 @@ class SfincsModel(MeshMixin, GridModel):
         self,
         da_dep_lst: List[dict],
         da_manning_lst: List[dict] = [],
+        buffer_cells: int = 0,
         nbins: int = 10,
         nr_subgrid_pixels: int = 20,
         nrmax: int = 2000,  # blocksize
@@ -685,12 +686,15 @@ class SfincsModel(MeshMixin, GridModel):
             highres_dir = os.path.join(self.root, "tiles", "subgrid")
             if not os.path.isdir(highres_dir):
                 os.makedirs(highres_dir)
+        else:
+            highres_dir = None
 
         if self.grid_type == "regular":
             self.reggrid.subgrid.build(
                 da_mask=self.mask,
                 da_dep_lst=da_dep_lst,
                 da_manning_lst=da_manning_lst,
+                buffer_cells=buffer_cells,
                 nbins=nbins,
                 nr_subgrid_pixels=nr_subgrid_pixels,
                 nrmax=nrmax,
@@ -721,6 +725,7 @@ class SfincsModel(MeshMixin, GridModel):
         self,
         datasets_dep: List[dict],
         datasets_rgh: List[dict] = [],
+        buffer_cells: int = 0,
         nbins: int = 10,
         nr_subgrid_pixels: int = 20,
         nrmax: int = 2000,  # blocksize
@@ -751,6 +756,7 @@ class SfincsModel(MeshMixin, GridModel):
         self.create_subgrid(
             da_dep_lst=da_dep_lst,
             da_manning_lst=da_manning_lst,
+            buffer_cells=buffer_cells,
             nbins=nbins,
             nr_subgrid_pixels=nr_subgrid_pixels,
             nrmax=nrmax,
