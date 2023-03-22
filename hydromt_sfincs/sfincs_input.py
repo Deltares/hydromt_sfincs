@@ -14,6 +14,7 @@ class SfincsInput:
         self.rotation = 0.0
         self.epsg = None
         self.latitude = 0.0
+        self.utmzone = None
         self.tref = datetime(2010, 2, 1, 0, 0, 0)
         self.tstart = datetime(2010, 2, 1, 0, 0, 0)
         self.tstop = datetime(2010, 2, 2, 0, 0, 0)
@@ -112,6 +113,8 @@ class SfincsInput:
                 vals = []
                 [vals.append(float(val)) for val in val.split()]
                 val = vals
+            elif name == "utmzone":
+                val = str(val)
             else:
                 try:
                     val = literal_eval(val)
