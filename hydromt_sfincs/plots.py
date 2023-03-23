@@ -171,6 +171,9 @@ def plot_basemap(
             cmap, norm = kwargs.pop("cmap", cmap), kwargs.pop("norm", norm)
             kwargs.update(norm=norm, cmap=cmap)
 
+    if not np.any(ds["msk"] > 0):
+        raise ValueError("No active cells (mask>0) found. Set active cells first using setup_mask_active.")
+
     if variable in ds:
         da = ds[variable].raster.mask_nodata().where(ds["msk"] > 0)
         # by default colorbar on lower right & legend upper right
@@ -208,7 +211,7 @@ def plot_basemap(
         ],
     )
     # plot mask boundaries
-    if plot_bounds:
+    if plot_bounds and (ds["msk"] >= 1).any():
         gdf_msk = ds["msk"].raster.vectorize()
         region = (
             (ds["msk"] >= 1).astype("int16").raster.vectorize().drop(columns="value")
