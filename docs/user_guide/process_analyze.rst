@@ -9,5 +9,5 @@ The Hydromt SFINCS plugin provides several possibilities to postprocess and visu
 .. toctree::
     :hidden:
 
-    Example: Visuazize the maximum water depth <../_examples/sfincs_results_hmax.ipynb>
-    Example: Create a waterdepth animation <../_examples/sfincs_results_animation.ipynb>
+    Example: Analyse regular grid type SFINCS model - TO ADD
+    Example: Analyse subgrid type SFINCS model - TO ADD  

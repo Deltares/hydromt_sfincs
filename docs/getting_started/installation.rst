@@ -37,16 +37,6 @@ Then, activate the environment (as stated by mamba/conda) to start making use of
 
   conda activate hydromt-sfincs
 
-**Alternatively** to install hydromt_sfincs using pip do (not recommended):
-
-.. Note::
-
-    Make sure this is installed in the same environment as HydroMT.
-
-.. code-block:: console
-
-  $ pip install hydromt_sfincs
-
 Install HydroMT-SFINCS in an existing environment
 -------------------------------------------------
 
@@ -56,8 +46,6 @@ Note that if some dependencies are not installed from conda-forge the installati
 .. code-block:: console
 
    $ conda install -c conda-forge hydromt_sfincs
-
-For **Using pip** from pypi (not recommended) see above
 
 Developer install
 ==================

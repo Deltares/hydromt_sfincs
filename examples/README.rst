@@ -1,7 +1,7 @@
 .. image:: https://mybinder.org/badge_logo.svg
     :target: https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples
 
-This folder contains several ipython notebook examples for **hydroMT-sfincs**. 
+This folder contains several ipython notebook examples for **HydroMT-sfincs**. 
 
 To run these examples start with the **binder** badge above.
 

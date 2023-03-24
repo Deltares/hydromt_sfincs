@@ -183,6 +183,7 @@ remove_from_toctrees = ["_generated/*"]
 #     ]
 # }
 
+nbsphinx_allow_errors = True
 
 # -- Options for HTMLHelp output ------------------------------------------
 

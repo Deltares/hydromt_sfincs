@@ -1,7 +1,13 @@
 .. _sfincs_build:
 
-Building or update a model
+Examples to build or update a model
 ==========================
+
+In the additional tabs under this section, multiple examples are given in iPython notebooks how to build your SFINCS model in HydroMT using either a configuration file, or the underlying Python scripts.
+For a brief overview, see the 2 options explained below.
+
+From configuration file - Basic
+-------------------------------
 
 This plugin allows users to **build** a complete SFINCS model from available data: 
 
@@ -17,9 +23,8 @@ Or to **update**  an existing SFINCS model:
 
 .. _sfincs_config:
 
-Configuration file
-------------------
-Settings to build or update a Wflow model are managed in a configuration file. In this file,
+
+Settings to build or update a SFINCS model are managed in a configuration file. In this file,
 every option from each :ref:`model component <model_methods>` can be changed by the user
 in its corresponding section. See the HydroMT core documentation for more info about the `model configuration .ini file <config>`_
 
@@ -32,6 +37,23 @@ See :ref:`Coastal SFINCS model schematization <sfincs_coastal>` and
 :ref:`Riverine SFINCS model schematization <sfincs_riverine>` for suggested components
 and options to use for coastal or riverine applications.
 
+From Python scripts - Advanced
+------------------------------
+
+A short example of how these methods can be called in a separate Python script that you can build yourself is showed below:
+
+.. code-block:: console
+
+    from hydromt_sfincs import SfincsModel
+  
+    sf = SfincsModel(data_libs=["artifact_data"], root="sfincs_compound")
+
+    sf.create_grid(grid_type="regular", **inp_dict)
+
+    sf.plot_basemap()
+
+    sf.write() # write all
+
 Selecting data
 --------------
 Data sources in HydroMT are provided in one of more yaml data catalog files. 
@@ -41,13 +63,12 @@ Checkout the HydroMT core documentation for more info on `working with data in H
 .. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html
 .. _config: https://deltares.github.io/hydromt/latest/user_guide/model_config.html
 
-
 .. toctree::
     :hidden:
     
-    sfincs_coastal.rst
-    sfincs_riverine.rst
-    Example: Build a coastal SFINCS model <../_examples/build_coastal_model.ipynb>
-    Example: Build a riverine SFINCS model <../_examples/build_riverine_model.ipynb>
-    Example: Build a SFINCS model from Python <../_examples/build_from_py.ipynb>
-    Example: Update SFINCS model components <../_examples/update_model.ipynb>
+    sfincs_compound.rst
+    Example: Build a simple compound SFINCS model from configuration file <../_examples/build_simple_compound_model.ipynb>
+
+    Example: Build a simple compound SFINCS model from Python scripts <../_examples/build_simple_compound_model_from_script.ipynb>
+    Example: Update a simple compound SFINCS model to subgrid from Python scripts <../_examples/upgrade_simple_compound_model_to_subgrid_from_script.ipynb>
+    Example: Build an advanced compound SFINCS model from configuration file <../_examples/build_advanced_subgrid_compound_model_from_script.ipynb>
