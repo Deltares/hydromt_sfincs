@@ -1016,6 +1016,7 @@ def downscale_floodmap(
     zsmax: xr.DataArray,
     dep: xr.DataArray,
     hmin: float = 0.05,
+    gdf_mask: gpd.GeoDataFrame = None,
     floodmap_fn: Union[Path, str] = "floodmap.tif",
 ):
     """Create a downscaled floodmap for (model) region.
@@ -1028,6 +1029,9 @@ def downscale_floodmap(
         High-resolution DEM (m) of model region.
     hmin : float, optional
         Minimum water depth (m) to be considered as "flooded", by default 0.05
+    gdf_mask : gpd.GeoDataFrame, optional
+        Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
+        Note that the area outside the polygons is set to nodata.
     floodmap_fn : Union[Path, str], optional
         Name (path) of output floodmap, by default "floodmap.tif"
     """
@@ -1046,6 +1050,17 @@ def downscale_floodmap(
 
     # remove flood-depths below threshold
     hmax = hmax.where(hmax > hmin, np.nan)
+
+    if gdf_mask is not None:
+        mask = hmax.raster.geometry_mask(
+            gdf_mask, all_touched=True
+        )
+        hmax = hmax.where(mask)
+        floodmap_fn = floodmap_fn.replace(".tif", "_mask.tif")
+    
+
+    if floodmap_fn is None:
+        return hmax
 
     # write floodmap
     hmax.raster.to_raster(
