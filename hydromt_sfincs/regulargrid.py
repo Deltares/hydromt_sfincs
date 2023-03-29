@@ -61,6 +61,7 @@ class RegularGrid:
 
     @property
     def coordinates(self, x_dim="x", y_dim="y"):
+        """Return the coordinates of the cell-centers the regular grid."""
         if self.transform.b == 0:
             x_coords, _ = self.transform * (
                 np.arange(self.mmax) + 0.5,
@@ -88,6 +89,7 @@ class RegularGrid:
 
     @property
     def edges(self, x_dim="xg", y_dim="yg"):
+        """Return the coordinates of the cell-edges the regular grid."""
         x_edges, y_edges = (
             self.transform
             * self.transform.translation(0, 0)
@@ -113,6 +115,7 @@ class RegularGrid:
         return da_mask
 
     def ind(self, mask: np.ndarray) -> np.ndarray:
+        """Return indices of active cells in mask."""
         assert mask.shape == (self.nmax, self.mmax)
         iok = np.where(np.transpose(mask) > 0)
         iok = (iok[1], iok[0])
@@ -124,6 +127,7 @@ class RegularGrid:
         mask: np.ndarray,
         ind_fn: Union[str, Path] = "sfincs.ind",
     ) -> None:
+        """Write indices of active cells in mask to binary file."""	
         assert mask.shape == (self.nmax, self.mmax)
         # Add 1 because indices in SFINCS start with 1, not 0
         ind = self.ind(mask)
@@ -134,6 +138,7 @@ class RegularGrid:
         self,
         ind_fn: Union[str, Path] = "sfincs.ind",
     ) -> np.ndarray:
+        """Read indices of active cells in mask from binary file."""
         _ind = np.fromfile(ind_fn, dtype="u4")
         ind = _ind[1:] - 1  # convert to zero based index
         assert _ind[0] == ind.size
@@ -155,17 +160,22 @@ class RegularGrid:
         all_touched: bool = True,
         reset_mask: bool = False,
     ) -> xr.DataArray:
-        """Returns a boolean mask of valid (non nondata) elevation cells, optionally bounded
+        """Create an integer mask with inactive (msk=0) and active (msk=1) cells, optionally bounded
         by several criteria.
 
         Parameters
         ----------
+        da_mask: xarray.DataArray, optional
+            Mask with 0) Inactive and 1) active cells to initialize with.
+            If not provided, mask is initialized empty.
+        da_dep: xarray.DataArray, optional
+            Elevation data to use for active mask.
         gdf_region: geopandas.GeoDataFrame, optional
             Geometry with area to initiliaze active mask with; proceding arguments can be used to include/exclude cells
-            If not given, existing mask (if present) used, else mask is initialized empty.
+            If not given, existing mask (if present) is used, else mask is initialized empty.
         gdf_include, gdf_exclude: geopandas.GeoDataFrame, optional
             Geometries with areas to include/exclude from the active model cells.
-            Note that include (second last) and exclude (last) and areas are processed after other critera,
+            Note that include (second last) and exclude (last) areas are processed after other critera,
             i.e. `zmin`, `zmax` and `drop_area`, and thus overrule these criteria for active model cells.
         zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for active model cells.
@@ -183,10 +193,11 @@ class RegularGrid:
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
         reset_mask: bool, optional
             If True, reset existing mask layer. If False (default) updating existing mask.
+
         Returns
         -------
-        xr.DataArray
-            model elevation mask
+        da_mask: xr.DataArray
+            Integer SFINCS model mask with inactive (msk=0), active (msk=1) cells
         """
 
         da_mask0 = None
@@ -286,21 +297,21 @@ class RegularGrid:
         all_touched=False,
         reset_bounds=False,
     ) -> xr.DataArray:
-        """Returns a boolean mask model boundary cells, optionally bounded by several
-        criteria. Boundary cells are defined by cells at the edge of active model domain.
+        """Returns an integer SFINCS model mask with inactive (msk=0), active (msk=1), and waterlevel boundary (msk=2)
+            and outflow boundary (msk=3) cells.  Boundary cells are defined by cells at the edge of active model domain.
 
         Parameters
         ----------
-        da_mask: xr.DataArray
-            initial mask
+        da_mask: xarray.DataArray
+            SFINCS model mask with inactive (msk=0) active (msk>0) cells.
         btype: {'waterlevel', 'outflow'}
             Boundary type
         gdf_include, gdf_exclude: geopandas.GeoDataFrame
             Geometries with areas to include/exclude from the model boundary.
-            Note that exclude (second last) and include (last) areas are processed after other critera,
-            i.e. `zmin`, `zmax`, and thus overrule these criteria for model boundary cells.
         zmin, zmax : float, optional
-            Minimum and maximum elevation thresholds for boundary cells.
+            Minimum and maximum elevation thresholds for boundary cells.             
+            Note that when include and exclude areas are used, the elevation range is only applied
+            on cells within the include area and outside the exclude area.
         connectivity: {4, 8}
             The connectivity used to detect the model edge, if 4 only horizontal and vertical
             connections are used, if 8 (default) also diagonal connections.
@@ -315,7 +326,9 @@ class RegularGrid:
         Returns
         -------
         da_mask: xr.DataArray
-            model mask updated with new boundary cells
+            Integer SFINCS model mask with inactive (msk=0), active (msk=1), and waterlevel boundary (msk=2)
+            and outflow boundary (msk=3) cells
+            
         """
         if not da_mask.raster.identical_grid(self.empty_mask):
             raise ValueError("da_mask does not match regular grid")
@@ -387,6 +400,8 @@ class RegularGrid:
         mask: np.ndarray,
         dtype: Union[str, np.dtype] = "f4",
     ) -> None:
+        """Write one of the grid variables of the SFINCS model map to a binary file."""
+
         data_out = np.asarray(data.transpose()[mask.transpose() > 0], dtype=dtype)
         data_out.tofile(map_fn)
 
@@ -398,6 +413,8 @@ class RegularGrid:
         mv: float = -9999.0,
         name: str = None,
     ) -> xr.DataArray:
+        """Read one of the grid variables of the SFINCS model map from a binary file."""
+
         data = np.full((self.mmax, self.nmax), mv, dtype=dtype)
         data.flat[ind] = np.fromfile(map_fn, dtype=dtype)
         data = data.transpose()
@@ -413,6 +430,7 @@ class RegularGrid:
 
     def to_vector_lines(self):
         """Return a geopandas GeoDataFrame with a geometry for each grid line."""
+        
         x, y = self.edges
 
         # create vertical lines
