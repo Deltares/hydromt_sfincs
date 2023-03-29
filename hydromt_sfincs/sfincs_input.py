@@ -5,6 +5,7 @@ from typing import Dict
 
 class SfincsInput:
     def __init__(self):
+        """Initialize SfincsInput class with default values""" 
         self.mmax = 10
         self.nmax = 10
         self.dx = 10.0
@@ -95,6 +96,7 @@ class SfincsInput:
         self.cdval = [0.001, 0.0025, 0.0015]
 
     def read(self, inp_fn: str) -> None:
+        """Read sfincs input file and set attributes to values in file."""
         with open(inp_fn, "r") as fid:
             lines = fid.readlines()
 
@@ -131,6 +133,7 @@ class SfincsInput:
                 setattr(self, name, None)
 
     def write(self, inp_fn: str) -> None:
+        """Write sfincs input file from attributes."""
         fid = open(inp_fn, "w")
         for key, value in self.__dict__.items():
             if not value is None:
@@ -151,6 +154,7 @@ class SfincsInput:
 
     @staticmethod
     def from_dict(inp_dict: Dict) -> None:
+        """Create SfincsInput object from dictionary."""
         inp = SfincsInput()
         for name, val in inp_dict.items():
             setattr(inp, name, val)
@@ -161,4 +165,5 @@ class SfincsInput:
         return inp
 
     def to_dict(self) -> Dict:
+        """Return dictionary of attributes."""
         return {k: v for k, v in self.__dict__.items() if v is not None}

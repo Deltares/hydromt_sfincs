@@ -23,8 +23,6 @@ def merge_multi_dataarrays(
     """Merge a list of data arrays by reprojecting these to a common destination grid
     and combine valid values.
 
-    see :py:func:`~hydromt_sfincs.workflows.merge.merge_dataarrays`
-
     Parameters
     ----------
     da_list : List[dict]
@@ -44,11 +42,20 @@ def merge_multi_dataarrays(
         If provided the output data is projected to this grid, otherwise to the first input grid.
     reproj_kwargs: dict, optional
         Keyword arguments for reprojecting the data to the destination grid. Only used of no da_like is provided.
-      
+    buffer_cells : int, optional
+        Number of cells between datasets to ensure smooth transition of bed levels, by default 0
+    interp_method : str, optional
+        Interpolation method used to fill the buffer cells , by default "linear"    
+    
     Returns
     -------
     xr.DataArray
         merged data array
+
+    See Also:
+    ---------
+    :py:func:`~hydromt_sfincs.workflows.merge.merge_dataarrays`
+
     """
 
     # start with common grid

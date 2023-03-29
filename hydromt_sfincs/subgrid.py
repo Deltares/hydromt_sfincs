@@ -21,6 +21,8 @@ class SubgridTableRegular:
         self.version = version
 
     def load(self, file_name, mask):
+        """Load subgrid table from file for a regular grid with given mask."""
+
         if isinstance(mask, xr.DataArray):
             mask = mask.values
 
@@ -107,6 +109,7 @@ class SubgridTableRegular:
         file.close()
 
     def save(self, file_name, mask):
+        """Save the subgrid data to a binary file."""
         if isinstance(mask, xr.DataArray):
             mask = mask.values
 
@@ -184,6 +187,44 @@ class SubgridTableRegular:
         highres_dir: str = None,
         quiet=False,  # TODO replace by logger
     ):
+        """Create subgrid tables for regular grid based on a list of depth and Manning's n datasets.
+
+        Parameters
+        ----------
+        da_mask : xr.DataArray
+            Mask of the SFINCS domain, with 1,2,3 for active (and boundary) cells and 0 for inactive cells.
+        datasets_dep : List[dict]
+            List of dictionaries with topobathy data, each containing an xarray.DataSet and optional merge arguments e.g.:
+            [{'da': merit_hydro_da, 'zmin': 0.01}, {'da': gebco_da, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
+            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+        datsets_rgh : List[dict], optional
+            List of dictionaries with Manning's n data, each containing an xarray.DataSet with manning values and optional merge arguments
+        nbins : int, optional
+            Number of bins in the subgrid tables, by default 10
+        nr_subgrid_pixels : int, optional
+            Number of subgrid pixels per computational cell, by default 20
+        nrmax : int, optional
+            Maximum number of cells per subgrid-block, by default 2000
+            These blocks are used to prevent memory issues while working with large datasets
+        max_gradient : float, optional
+            Maximum gradient in the subgrid tables, by default 5.0
+        z_minimum : float, optional
+            Minimum depth in the subgrid tables, by default -99999.0
+        manning_land, manning_sea : float, optional
+            Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
+            Note that these values are only used when no Manning's n datasets are provided, or to fill the nodata values
+        rgh_lev_land : float, optional
+            Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
+        buffer_cells : int, optional
+            Number of cells between datasets to ensure smooth transition of bed levels, by default 0
+        make_dep_tiles : bool, optional
+            Create geotiff of the merged topobathy on the subgrid resolution, by default False
+        make_rgh_tiles : bool, optional
+            Create geotiff of the merged roughness on the subgrid resolution, by default False
+        highres_dir : str, optional
+            Directory where high-resolution geotiffs for topobathy and manning are stored, by default None
+        """        
+
         if make_dep_tiles or make_manning_tiles:
             assert highres_dir is not None, "highres_dir must be specified"
 
@@ -201,7 +242,7 @@ class SubgridTableRegular:
         )
 
         if make_dep_tiles:
-            # create the CloudOptimizedGeotiff
+            # create the CloudOptimizedGeotiff containing the merged topobathy data
             dep_tif = rasterio.open(
                 os.path.join(highres_dir, "dep_subgrid.tif"),
                 "w",
@@ -222,7 +263,7 @@ class SubgridTableRegular:
             )
 
         if make_manning_tiles:
-            # create the CloudOptimizedGeotiff
+            # create the CloudOptimizedGeotiff creating the merged manning roughness
             man_tif = rasterio.open(
                 os.path.join(highres_dir, "manning_subgrid.tif"),
                 "w",
@@ -438,6 +479,7 @@ class SubgridTableRegular:
             man_tif.close()
 
     def to_xarray(self, dims, coords):
+        """Convert subgrid class to xarray dataset."""
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})
         ds_sbg.attrs.update({"_FillValue": np.nan})
 
@@ -455,6 +497,7 @@ class SubgridTableRegular:
         return ds_sbg
 
     def from_xarray(self, ds_sbg):
+        """Convert xarray dataset to subgrid class."""
         for name in ds_sbg.data_vars:
             setattr(self, name, ds_sbg[name].values)
 
@@ -580,11 +623,16 @@ def isclose(a, b, rtol=1e-05, atol=1e-08):
 def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
     """
     map vector of elevation values into a hypsometric volume - depth relationship for one grid cell
+
     Parameters
     ----------
     elevation : np.ndarray (nr of pixels in one cell) containing subgrid elevation values for one grid cell [m]
     dx: float, x-directional cell size (typically not known at this level) [m]
     dy: float, y-directional cell size (typically not known at this level) [m]
+    nbins: int, number of bins to use for the hypsometric curve
+    zvolmin: float, minimum elevation value to use for volume calculation (typically -20 m)
+    max_gradient: float, maximum gradient to use for volume calculation (typically 0.1)
+
     Return
     ------
     ele_sort : np.ndarray (1D flattened from elevation) with sorted and flattened elevation values
@@ -631,12 +679,15 @@ def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
 def subgrid_q_table(elevation, manning, nbins):
     """
     map vector of elevation values into a hypsometric hydraulic radius - depth relationship for one grid cell
+
     Parameters
     ----------
     elevation : np.ndarray (nr of pixels in one cell) containing subgrid elevation values for one grid cell [m]
     manning : np.ndarray (nr of pixels in one cell) containing subgrid manning roughness values for one grid cell [s m^(-1/3)]
+    nbins : int, number of bins to use for the hypsometric curve
     dx : float, x-directional cell size (typically not known at this level) [m]
     dy : float, y-directional cell size (typically not known at this level) [m]
+
     Returns
     -------
     ele_sort, R : np.ndarray of sorted elevation values, np.ndarray of sorted hydraulic radii that belong with depth
