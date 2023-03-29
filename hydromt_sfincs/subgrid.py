@@ -168,8 +168,8 @@ class SubgridTableRegular:
     def build(
         self,
         da_mask: xr.DataArray,
-        da_dep_lst: list[dict],
-        da_manning_lst: list[dict] = [],
+        datasets_dep: list[dict],
+        datasets_rgh: list[dict] = [],
         nbins=10,
         nr_subgrid_pixels=20,
         nrmax=2000,
@@ -337,7 +337,7 @@ class SubgridTableRegular:
 
                 # get subgrid bathymetry tile
                 da_dep = workflows.merge_multi_dataarrays(
-                    da_list=da_dep_lst,
+                    da_list=datasets_dep,
                     reproj_kwargs=reproj_kwargs,
                     interp_method="linear",
                     buffer_cells=buffer_cells,
@@ -346,20 +346,27 @@ class SubgridTableRegular:
                 # set minimum depth
                 da_dep = np.maximum(da_dep, z_minimum)
                 # TODO what to do with remaining cell with nan values
-                # da_dep = da_dep.fillna(value)
+                # NOTE: this is still open for discussion, but for now we interpolate
+                if np.any(np.isnan(da_dep.values)) > 0:
+                    print(
+                        f"WARNING: Interpolate data at {int(np.sum(np.isnan(da_dep.values)))} cells"
+                    )
+                    da_dep = da_dep.raster.interpolate_na(method="rio_idw")
                 assert np.all(~np.isnan(da_dep))
 
                 # get subgrid manning roughness tile
-                if len(da_manning_lst) > 0:
+                if len(datasets_rgh) > 0:
                     da_man = workflows.merge_multi_dataarrays(
-                        da_list=da_manning_lst,
+                        da_list=datasets_rgh,
                         reproj_kwargs=reproj_kwargs,
                         interp_method="linear",
                         buffer_cells=buffer_cells,
                     ).load()
                     if np.isnan(da_man).any():
                         print("WARNING: nan values in manning roughness array")
-                        da_man0 = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
+                        da_man0 = xr.where(
+                            da_dep >= rgh_lev_land, manning_land, manning_sea
+                        )
                         da_man = da_man.where(~np.isnan(da_man), da_man0)
                 else:
                     da_man = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
@@ -390,7 +397,7 @@ class SubgridTableRegular:
                         da_man[:-refi, :-refi].sizes[y_dim],
                     )
                     man_tif.write(
-                        da_man[:-refi, :-refi].values.astype(da_man.dtypes[0]),
+                        da_man[:-refi, :-refi].values.astype(man_tif.dtypes[0]),
                         window=window,
                         indexes=1,
                     )

@@ -82,7 +82,6 @@ class SfincsModel(MeshMixin, GridModel):
         root: str = None,
         mode: str = "w",
         config_fn: str = "sfincs.inp",
-        grid_type: str = "regular",
         write_gis: bool = True,
         data_libs: Union[List[str], str] = None,
         logger=logger,
@@ -119,7 +118,7 @@ class SfincsModel(MeshMixin, GridModel):
         )
 
         # placeholder grid classes
-        self.grid_type = grid_type
+        self.grid_type = None
         self.reggrid = None
         self.quadtree = None
         self.subgrid = xr.Dataset()
@@ -140,7 +139,7 @@ class SfincsModel(MeshMixin, GridModel):
         region = gpd.GeoDataFrame()
         if "region" in self.geoms:
             region = self.geoms["region"]
-        elif "msk" in self.grid:
+        elif "msk" in self.grid and np.any(self.grid["msk"] > 0):
             da = xr.where(self.mask > 0, 1, 0).astype(np.int16)
             da.raster.set_nodata(0)
             region = da.raster.vectorize().dissolve()
@@ -150,7 +149,7 @@ class SfincsModel(MeshMixin, GridModel):
 
     @property
     def crs(self) -> CRS | None:
-        """Returns the model crs"""	
+        """Returns the model crs"""
         if self.grid_type == "regular":
             return self.reggrid.crs
         elif self.grid_type == "quadtree":
@@ -174,8 +173,6 @@ class SfincsModel(MeshMixin, GridModel):
         nmax: int,
         rotation: float = None,
         epsg: int = None,
-        grid_type: str = "regular",
-        gdf_refinement: gpd.GeoDataFrame = None,
     ):
         """Creates a regular or quadtree grid.
 
@@ -191,11 +188,7 @@ class SfincsModel(MeshMixin, GridModel):
             rotation of grid [degree angle], by default None
         epsg : int, optional
             epsg-code of the coordinate reference system, by default None
-        grid_type : str, optional
-            grid type, "regular" (default) or "quadtree"
-        gdf_refinement : gpd.GeoDataFrame, optional
-            GeoDataFrame with polygons where grid is refined, only used when grid_type=quadtree, by default None
-        """        
+        """
         self.config.update(
             x0=x0,
             y0=y0,
@@ -207,6 +200,7 @@ class SfincsModel(MeshMixin, GridModel):
             epsg=epsg,
         )
         self.update_grid_from_config()
+
         # TODO gdf_refinement for quadtree
 
     def setup_grid(
@@ -219,9 +213,8 @@ class SfincsModel(MeshMixin, GridModel):
         mmax: int,
         rotation: float,
         epsg: int,
-        refinement_fn: str = None,
     ):
-        """Setup a regular or quadtree grid.	
+        """Setup a regular or quadtree grid.
 
         Parameters
         ----------
@@ -235,23 +228,12 @@ class SfincsModel(MeshMixin, GridModel):
             rotation of grid [degree angle], by default None
         epsg : int, optional
             epsg-code of the coordinate reference system, by default None
-        grid_type : str, optional
-            grid type, "regular" (default) or "quadtree"
-        refinement_fn : str, optional
-            Path or data source name of polygons where grid should be refined, only used when grid_type=quadtree, by default None
 
         See Also
         --------
         :py:meth:`SfincsModel.create_grid`
-        """        
-        if refinement_fn is not None:
-            grid_type = "quadtree"
-            #TODO read refinement_fn
-            # gdf_refinement = gpd.read_file()
-        else:
-            grid_type = "regular"
-            gdf_refinement = None
-
+        """
+        # for now the setup and create methods are identical, this will change when quadtree is implemented
         self.create_grid(
             x0=x0,
             y0=y0,
@@ -261,16 +243,12 @@ class SfincsModel(MeshMixin, GridModel):
             mmax=mmax,
             rotation=rotation,
             epsg=epsg,
-            grid_type=grid_type,
-            gdf_refinement=gdf_refinement,
         )
 
     def create_grid_from_region(
         self,
         gdf_region: gpd.GeoDataFrame,
         res: float,
-        grid_type: str = "regular",
-        gdf_refinement: gpd.GeoDataFrame = None,
     ):
         """Creates a regular or quadtree grid from a region.
 
@@ -280,11 +258,7 @@ class SfincsModel(MeshMixin, GridModel):
             GeoDataFrame with a single polygon defining the region
         res : float
             grid resolution
-        grid_type : str, optional
-            grid type, "regular" (default) or "quadtree"
-        gdf_refinement : gpd.GeoDataFrame, optional
-            GeoDataFrame with polygons where grid is refined, only used when grid_type=quadtree, by default None
-        """        
+        """
         west, south, east, north = gdf_region.total_bounds
         mmax = int(np.ceil((east - west) / res))
         nmax = int(np.ceil((north - south) / res))
@@ -299,8 +273,6 @@ class SfincsModel(MeshMixin, GridModel):
             mmax=mmax,
             rotation=0,  # Set rotation to 0 for grid based on region (see also TODO)
             epsg=gdf_region.crs.to_epsg(),
-            grid_type=grid_type,
-            gdf_refinement=gdf_refinement,
         )
 
     def setup_grid_from_region(
@@ -308,10 +280,8 @@ class SfincsModel(MeshMixin, GridModel):
         region: dict,
         res: float = 100,
         crs: Union[str, int] = "utm",
-        grid_type: str = "regular",
-        refinement_fn: str = None,
-        hydrography_fn: str = "merit_hydro",
-        basin_index_fn: str = "merit_hydro_index",
+        hydrography_fn: str = "merit_hydro",  # TODO: change to None
+        basin_index_fn: str = "merit_hydro_index",  # TODO: change to None
     ):
         """Setup a regular or quadtree grid from a region.
 
@@ -323,7 +293,7 @@ class SfincsModel(MeshMixin, GridModel):
             * {'geom': 'path/to/polygon_geometry'}
 
             For a complete overview of all region options,
-            see :py:function:~hydromt.workflows.basin_mask.parse_region    
+            see :py:function:~hydromt.workflows.basin_mask.parse_region
         res : float, optional
             grid resolution, by default 100 m
         crs : Union[str, int], optional
@@ -344,9 +314,9 @@ class SfincsModel(MeshMixin, GridModel):
         See Also:
         ---------
         :py:meth:`SfincsModel.create_grid_from_region`
-            
+
         """
-        # setup `region` of interest of the model.            
+        # setup `region` of interest of the model.
         self.setup_region(
             region=region,
             hydrography_fn=hydrography_fn,
@@ -363,17 +333,16 @@ class SfincsModel(MeshMixin, GridModel):
         self.create_grid_from_region(
             gdf_region=self.region,
             res=res,
-            grid_type=grid_type,
         )
 
     def create_dep(
         self,
-        da_dep_lst: List[dict],
+        datasets_dep: List[dict],
         buffer_cells: int = 0,  # not in list
         interp_method: str = "linear",  # used for buffer cells only
         logger=logger,
     ) -> xr.DataArray:
-        """ Interpolate topobathy (dep) data to the model grid
+        """Interpolate topobathy (dep) data to the model grid
 
         Adds model grid layers:
 
@@ -381,7 +350,7 @@ class SfincsModel(MeshMixin, GridModel):
 
         Parameters
         ----------
-        da_dep_lst : List[dict]
+        datasets_dep : List[dict]
             List of dictionaries with topobathy data, each containing an xarray.DataSet and optional merge arguments e.g.:
             [{'da': merit_hydro_da, 'zmin': 0.01}, {'da': gebco_da, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
             For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
@@ -394,11 +363,11 @@ class SfincsModel(MeshMixin, GridModel):
         -------
         xr.DataArray
             Topobathy data on the model grid
-        """        
-        
+        """
+
         if self.grid_type == "regular":
             da_dep = workflows.merge_multi_dataarrays(
-                da_list=da_dep_lst,
+                da_list=datasets_dep,
                 da_like=self.mask,
                 buffer_cells=buffer_cells,
                 interp_method=interp_method,
@@ -407,7 +376,10 @@ class SfincsModel(MeshMixin, GridModel):
 
             # check if no nan data is present in the bed levels
             if not np.isnan(da_dep).any():
-                self.logger.warning("NaN values in bed levels")
+                self.logger.warning(
+                    f"Interpolate data at {int(np.sum(np.isnan(da_dep.values)))} cells"
+                )
+                da_dep = da_dep.raster.interpolate_na(method="rio_idw")
 
             self.set_grid(da_dep, name="dep")
             # FIXME this shouldn't be necessary, since da_dep should already have the crs
@@ -444,7 +416,7 @@ class SfincsModel(MeshMixin, GridModel):
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         interp_method : str, optional
-            Interpolation method used to fill the buffer cells , by default "linear"    
+            Interpolation method used to fill the buffer cells , by default "linear"
         """
 
         # retrieve model resolution to determine zoom level for xyz-datasets
@@ -454,10 +426,10 @@ class SfincsModel(MeshMixin, GridModel):
         else:
             res = np.abs(self.mask.raster.res[0]) * 111111.0
 
-        da_dep_lst = self._parse_datasets_dep(datasets_dep, res=res)
+        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
 
         self.create_dep(
-            da_dep_lst=da_dep_lst,
+            datasets_dep=datasets_dep,
             buffer_cells=buffer_cells,
             interp_method=interp_method,
             logger=self.logger,
@@ -795,8 +767,8 @@ class SfincsModel(MeshMixin, GridModel):
 
     def create_subgrid(
         self,
-        da_dep_lst: List[dict],
-        da_manning_lst: List[dict] = [],
+        datasets_dep: List[dict],
+        datasets_rgh: List[dict] = [],
         buffer_cells: int = 0,
         nbins: int = 10,
         nr_subgrid_pixels: int = 20,
@@ -820,8 +792,8 @@ class SfincsModel(MeshMixin, GridModel):
         if self.grid_type == "regular":
             self.reggrid.subgrid.build(
                 da_mask=self.mask,
-                da_dep_lst=da_dep_lst,
-                da_manning_lst=da_manning_lst,
+                datasets_dep=datasets_dep,
+                datasets_rgh=datasets_rgh,
                 buffer_cells=buffer_cells,
                 nbins=nbins,
                 nr_subgrid_pixels=nr_subgrid_pixels,
@@ -872,17 +844,17 @@ class SfincsModel(MeshMixin, GridModel):
         else:
             res = np.abs(self.mask.raster.res[0]) * 111111.0 / nr_subgrid_pixels
 
-        da_dep_lst = self._parse_datasets_dep(datasets_dep, res=res)
+        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
 
         if len(datasets_rgh) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
-            da_manning_lst = self._parse_datasets_rgh(datasets_rgh)
+            datasets_rgh = self._parse_datasets_rgh(datasets_rgh)
         else:
-            da_manning_lst = []
+            datasets_rgh = []
 
         self.create_subgrid(
-            da_dep_lst=da_dep_lst,
-            da_manning_lst=da_manning_lst,
+            datasets_dep=datasets_dep,
+            datasets_rgh=datasets_rgh,
             buffer_cells=buffer_cells,
             nbins=nbins,
             nr_subgrid_pixels=nr_subgrid_pixels,
@@ -1491,21 +1463,21 @@ class SfincsModel(MeshMixin, GridModel):
 
     def create_manning_roughness(
         self,
-        da_manning_lst: List[dict],
+        datasets_rgh: List[dict],
         manning_land=0.04,
         manning_sea=0.02,
         rgh_lev_land=0,
     ):
-        fromdep = len(da_manning_lst) == 0
+        fromdep = len(datasets_rgh) == 0
         if self.grid_type == "regular":
-            if len(da_manning_lst) > 0:
+            if len(datasets_rgh) > 0:
                 da_man = workflows.merge_multi_dataarrays(
-                    da_list=da_manning_lst,
+                    da_list=datasets_rgh,
                     da_like=self.mask,
                     interp_method="linear",
                     logger=logger,
                 )
-                fromdep = np.isnan(da_man).where(self.mask>0, False).any()
+                fromdep = np.isnan(da_man).where(self.mask > 0, False).any()
             if "dep" in self.grid and fromdep:
                 da_man0 = xr.where(
                     self.grid["dep"] >= rgh_lev_land, manning_land, manning_sea
@@ -1513,7 +1485,7 @@ class SfincsModel(MeshMixin, GridModel):
             elif fromdep:
                 da_man0 = xr.full_like(self.mask, manning_land, dtype=np.float32)
 
-            if len(da_manning_lst) > 0 and fromdep:
+            if len(datasets_rgh) > 0 and fromdep:
                 print("WARNING: nan values in manning roughness array")
                 da_man = da_man.where(~np.isnan(da_man), da_man0)
             elif fromdep:
@@ -1559,12 +1531,12 @@ class SfincsModel(MeshMixin, GridModel):
             map based values if `lulc_fn` is not None.
         """
         if len(datasets_rgh) > 0:
-            da_manning_lst = self._parse_datasets_rgh(datasets_rgh)
+            datasets_rgh = self._parse_datasets_rgh(datasets_rgh)
         else:
-            da_manning_lst = []
+            datasets_rgh = []
 
         self.create_manning_roughness(
-            da_manning_lst=da_manning_lst,
+            datasets_rgh=datasets_rgh,
             manning_land=manning_land,
             manning_sea=manning_sea,
             rgh_lev_land=rgh_lev_land,
@@ -2323,7 +2295,7 @@ class SfincsModel(MeshMixin, GridModel):
         self,
         root: Union[str, Path] = None,
         region: gpd.GeoDataFrame = None,
-        da_dep_lst: List[dict] = [],
+        datasets_dep: List[dict] = [],
         index_path: Union[str, Path] = None,
         zoom_range: Union[int, List[int]] = [0, 13],
         z_range: List[int] = [-20000.0, 20000.0],
@@ -2337,7 +2309,7 @@ class SfincsModel(MeshMixin, GridModel):
             Directory in which to store the index tiles, if None, the model root is used.
         region : gpd.GeoDataFrame
             GeoDataFrame defining the area of interest, if None, the model region is used.
-        da_dep_lst : List[dict]
+        datasets_dep : List[dict]
             List of dict containing xarray.DataArray and metadata for each dataset.
         index_path : Union[str, Path], optional
             Directory where index tiles are stored. If defined, topobathy tiles are only created where index tiles are present.
@@ -2360,13 +2332,13 @@ class SfincsModel(MeshMixin, GridModel):
                 index_path = os.path.join(self.root, "tiles", "index")
 
         # if no datasets provided, check if high-res subgrid geotiff is there
-        if len(da_dep_lst) == 0:
+        if len(datasets_dep) == 0:
             if os.path.exists(os.path.join(self.root, "tiles", "subgrid")):
                 # check if there is a dep_subgrid.tif
                 dep = os.path.join(self.root, "tiles", "subgrid", "dep_subgrid.tif")
                 if os.path.exists(dep):
                     da = self.data_catalog.get_rasterdataset(dep)
-                    da_dep_lst.append({"da": da})
+                    datasets_dep.append({"da": da})
                 else:
                     raise ValueError("No topobathy datasets provided.")
 
@@ -2374,7 +2346,7 @@ class SfincsModel(MeshMixin, GridModel):
         workflows.tiling.create_topobathy_tiles(
             root=root,
             region=region,
-            da_dep_lst=da_dep_lst,
+            datasets_dep=datasets_dep,
             index_path=index_path,
             zoom_range=zoom_range,
             z_range=z_range,
@@ -2409,11 +2381,11 @@ class SfincsModel(MeshMixin, GridModel):
             # resolution of zoom level 0  on equator: 156543.03392804097
             res = 156543.03392804097 / 2 ** zoom_range[1]
 
-            da_dep_lst = self._parse_datasets_dep(datasets_dep, res=res)
+            datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
             self.create_topobathy_tiles(
                 root=root,
                 region=region,
-                da_dep_lst=da_dep_lst,
+                datasets_dep=datasets_dep,
                 zoom_range=zoom_range,
                 z_range=z_range,
                 fmt=fmt,
@@ -2467,13 +2439,13 @@ class SfincsModel(MeshMixin, GridModel):
 
     def plot_basemap(
         self,
-        fn_out: str = "basemap.png",
+        fn_out: str = None,
         variable: str = "dep",
-        shaded: bool = True,
+        shaded: bool = False,
         plot_bounds: bool = True,
         plot_region: bool = False,
         plot_geoms: bool = True,
-        bmap: str = "sat",
+        bmap: str = None,
         zoomlevel: int = 11,
         figsize: Tuple[int] = None,
         geom_names: List[str] = None,
@@ -2485,22 +2457,23 @@ class SfincsModel(MeshMixin, GridModel):
 
         Parameters
         ----------
-        fn_out: str
-            Path to output figure file.
+        fn_out: str, optional
+            Path to output figure file, by default None.
             If a basename is given it is saved to <model_root>/figs/<fn_out>
             If None, no file is saved.
         variable : str, optional
             Map of variable in ds to plot, by default 'dep'
         shaded : bool, optional
-            Add shade to variable (only for variable = 'dep'), by default True
+            Add shade to variable (only for variable = 'dep' and non-rotated grids),
+            by default False
         plot_bounds : bool, optional
             Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
         plot_region : bool, optional
             If True, plot region outline.
         plot_geoms : bool, optional
             If True, plot available geoms.
-        bmap : {'sat', ''}
-            background map, by default "sat"
+        bmap : {'sat', 'osm'}, optional
+            background map, by default None
         zoomlevel : int, optional
             zoomlevel, by default 11
         figsize : Tuple[int], optional
@@ -2524,7 +2497,10 @@ class SfincsModel(MeshMixin, GridModel):
         sg = self.geoms.copy()
         for fname, gname in self._FORCING_1D.items():
             if fname in self.forcing and gname is not None:
-                sg.update({gname: self._forcing[fname].vector.to_gdf()})
+                try:
+                    sg.update({gname: self._forcing[fname].vector.to_gdf()})
+                except ValueError:
+                    self.logger.debug(f'unable to plot forcing location: "{fname}"')
 
         # make sure grid are set
         if "msk" not in self.grid:
@@ -3233,7 +3209,7 @@ class SfincsModel(MeshMixin, GridModel):
                 epsg=self.config.get("epsg"),
             )
         else:
-            pass
+            raise not NotImplementedError("Quadtree grid not implemented yet")
             # self.quadtree = QuadtreeGrid()
 
     def get_spatial_attrs(self, crs=None):

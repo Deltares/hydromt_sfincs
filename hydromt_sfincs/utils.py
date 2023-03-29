@@ -444,6 +444,33 @@ def write_timeseries(
 ## MASK
 
 
+def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
+    """Get bounds of vectorized mask as GeoDataFrame.
+
+    Parameters
+    ----------
+    da_msk: xr.DataArray
+        Mask as DataArray with values 0 (inactive), 1 (active),
+        and boundary cells 2 (waterlevels) and 3 (outflow).
+
+    Returns
+    -------
+    gdf_msk: gpd.GeoDataFrame
+        GeoDataFrame with line geometries of mask boundaries.
+    """
+    gdf_msk = da_msk.raster.vectorize()
+    gdf_msk["geometry"] = gdf_msk.buffer(1)  # small buffer for rounding errors
+    region = (da_msk >= 1).astype("int16").raster.vectorize()
+    region = region[region["value"] == 1].drop(columns="value")
+    region["geometry"] = region.boundary
+    gdf_msk = gdf_msk[gdf_msk["value"] != 1]
+    gdf_msk = gpd.overlay(
+        region, gdf_msk, "intersection", keep_geom_type=False
+    ).explode()
+    gdf_msk = gdf_msk[gdf_msk.length > 0]
+    return gdf_msk
+
+
 def mask_topobathy(
     da_elv: xr.DataArray,
     gdf_mask: Optional[gpd.GeoDataFrame] = None,
@@ -575,9 +602,7 @@ def mask_bounds(
     bounds: xr.DataArray
         Boolean mask of model boundary cells.
     """
-    assert (
-        zmin is None and zmax is None
-    ) or da_elv is not None, "da_elv required"
+    assert (zmin is None and zmax is None) or da_elv is not None, "da_elv required"
     s = None if connectivity == 4 else np.ones((3, 3), int)
     da_mask = da_msk != da_msk.raster.nodata
     bounds0 = np.logical_xor(da_mask, ndimage.binary_erosion(da_mask, structure=s))

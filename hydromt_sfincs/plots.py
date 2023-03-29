@@ -4,6 +4,8 @@ import numpy as np
 import xarray as xr
 from typing import Dict, Tuple, List
 
+from .utils import get_bounds_vector
+
 __all__ = ["plot_forcing", "plot_basemap"]
 
 geom_style = {
@@ -11,8 +13,8 @@ geom_style = {
     "rivers_out": dict(linestyle="-", linewidth=1.0, color="darkgreen"),
     "msk2": dict(linestyle="-", linewidth=1.5, color="r"),
     "msk3": dict(linestyle="-", linewidth=1.5, color="m"),
-    "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=True),
-    "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=True),
+    "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=False),
+    "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=False),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
     "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
     "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
@@ -81,11 +83,11 @@ def plot_basemap(
     ds: xr.Dataset,
     geoms: Dict,
     variable: str = "dep",
-    shaded: bool = True,
+    shaded: bool = False,
     plot_bounds: bool = True,
     plot_region: bool = False,
     plot_geoms: bool = True,
-    bmap: str = "sat",
+    bmap: str = None,
     zoomlevel: int = 11,
     figsize: Tuple[int] = None,
     geom_names: List[str] = None,
@@ -105,7 +107,7 @@ def plot_basemap(
     variable : str, optional
         Map of variable in ds to plot, by default 'dep'
     shaded : bool, optional
-        Add shade to variable (only for variable = 'dep'), by default True
+        Add shade to variable (only for variable = 'dep'), by default False
     plot_bounds : bool, optional
         Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
     plot_region : bool, optional
@@ -125,6 +127,7 @@ def plot_basemap(
         For instance: {'src': {'markersize': 30}}.
     legend_kwargs : Dict, optional
         Legend kwargs, passed to ax.legend method.
+
     Returns
     -------
     fig, axes
@@ -141,7 +144,7 @@ def plot_basemap(
         raise ValueError("Model CRS UTM zone not found.")
     utm_zone = ds.raster.crs.to_wkt().split("UTM zone ")[1][:3]
     utm = ccrs.UTM(int(utm_zone[:2]), "S" in utm_zone)
-    extent = np.array(ds.raster.box.buffer(2e3).total_bounds)[[0, 2, 1, 3]]
+    extent = np.array(ds.raster.box.buffer(1e2).total_bounds)[[0, 2, 1, 3]]
 
     # create fig with geo-axis and set background
     if figsize is None:
@@ -154,12 +157,15 @@ def plot_basemap(
         ax.add_image(cimgt.QuadtreeTiles(**bmap_kwargs), zoomlevel)
     elif bmap == "osm":
         ax.add_image(cimgt.OSM(**bmap_kwargs), zoomlevel)
-    elif hasattr(cimgt, bmap):
+    elif bmap is not None and hasattr(cimgt, bmap):
         ax.add_image(getattr(cimgt, bmap)(**bmap_kwargs), zoomlevel)
 
+    # by default colorbar on lower right & legend upper right
+    kwargs0 = {"cbar_kwargs": {"shrink": 0.6, "anchor": (0, 0)}}
+    kwargs0.update(kwargs)
     # make nice cmap
     if "cmap" not in kwargs or "norm" not in kwargs:
-        if variable == "dep":
+        if variable == "dep" and "dep" in ds:
             vmin, vmax = ds["dep"].raster.mask_nodata().quantile([0.0, 0.98]).values
             vmin, vmax = int(kwargs.pop("vmin", vmin)), int(kwargs.pop("vmax", vmax))
             c_dem = plt.cm.terrain(np.linspace(0.25, 1, vmax))
@@ -169,20 +175,24 @@ def plot_basemap(
             cmap = colors.LinearSegmentedColormap.from_list("dem", c_dem)
             norm = colors.Normalize(vmin=vmin, vmax=vmax)
             cmap, norm = kwargs.pop("cmap", cmap), kwargs.pop("norm", norm)
-            kwargs.update(norm=norm, cmap=cmap)
-
-    if not np.any(ds["msk"] > 0):
-        raise ValueError(
-            "No active cells (mask>0) found. Set active cells first using setup_mask_active."
-        )
+            kwargs0.update(norm=norm, cmap=cmap)
+        elif variable == "msk" and "msk" in ds:
+            cmap = colors.LinearSegmentedColormap.from_list(
+                "Set1", ["grey", "r", "m"], N=4
+            )
+            norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5], 3)
+            kwargs0.update(norm=norm, cmap=cmap)
+            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3], shrink=0.4)
 
     if variable in ds:
-        da = ds[variable].raster.mask_nodata().where(ds["msk"] > 0)
-        # by default colorbar on lower right & legend upper right
-        kwargs0 = {"cbar_kwargs": {"shrink": 0.6, "anchor": (0, 0)}}
-        kwargs0.update(kwargs)
-        da.plot.imshow(transform=utm, ax=ax, zorder=1, **kwargs0)
-        if shaded and variable == "dep":
+        da = ds[variable].raster.mask_nodata()
+        if np.any(ds["msk"] > 0):
+            da = da.where(ds["msk"] > 0)
+        if da.raster.rotation != 0 and "xc" in da.coords and "yc" in da.coords:
+            da.plot(transform=utm, x="xc", y="yc", ax=ax, zorder=1, **kwargs0)
+        else:
+            da.plot.imshow(transform=utm, ax=ax, zorder=1, **kwargs0)
+        if shaded and variable == "dep" and da.raster.rotation == 0:
             ls = colors.LightSource(azdeg=315, altdeg=45)
             dx, dy = da.raster.res
             _rgb = ls.shade(
@@ -214,17 +224,7 @@ def plot_basemap(
     )
     # plot mask boundaries
     if plot_bounds and (ds["msk"] >= 1).any():
-        gdf_msk = ds["msk"].raster.vectorize()
-        region = (
-            (ds["msk"] >= 1).astype("int16").raster.vectorize().drop(columns="value")
-        )
-        gdf_msk = gdf_msk[gdf_msk["value"] != 1]
-        gdf_msk["geometry"] = gdf_msk.boundary
-        region["geometry"] = region.boundary
-        gdf_msk = gpd.overlay(
-            gdf_msk, region, "intersection", keep_geom_type=False
-        ).explode()
-        gdf_msk = gdf_msk[gdf_msk.length > 0]
+        gdf_msk = get_bounds_vector(ds["msk"])
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
         gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
         if gdf_msk2.index.size > 0:
@@ -243,13 +243,15 @@ def plot_basemap(
             kwargs = geom_style.get(name, {}).copy()
             annotate = kwargs.pop("annotate", False)
             gdf.plot(ax=ax, zorder=3, label=name, **kwargs)
-            if annotate:
+            if annotate and np.all(gdf.geometry.type == "Point"):
                 for label, row in gdf.iterrows():
                     x, y = row.geometry.x, row.geometry.y
                     ax.annotate(label, xy=(x, y), **ann_kwargs)
 
     if "region" in geoms and plot_region:
-        geoms["region"].boundary.plot(ax=ax, ls="-", lw=0.5, color="k", zorder=2)
+        geoms["region"].boundary.plot(
+            ax=ax, ls="-", lw=0.5, color="k", zorder=2, label="region"
+        )
 
     # title, legend and labels
     ax.xaxis.set_visible(True)

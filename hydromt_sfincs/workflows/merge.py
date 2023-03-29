@@ -44,7 +44,7 @@ def merge_multi_dataarrays(
         If provided the output data is projected to this grid, otherwise to the first input grid.
     reproj_kwargs: dict, optional
         Keyword arguments for reprojecting the data to the destination grid. Only used of no da_like is provided.
-      
+
     Returns
     -------
     xr.DataArray
@@ -134,10 +134,6 @@ def merge_multi_dataarrays(
             interp_method=interp_method,
         )
 
-    # NOTE: this is still open for discussion, but for now we interpolate
-    if np.any(np.isnan(da1.values)) > 0:
-        logger.debug(f"Interpolate data at {int(np.sum(np.isnan(da1.values)))} cells")
-        da1 = da1.raster.interpolate_na(method="rio_idw")
     return da1
 
 
