@@ -17,4 +17,4 @@ dependencies:
   - pip
   - python=3.10 # fixing python version for binder  
   - pip:
-    - git+https://github.com/Deltares/hydromt_sfincs.git#main-examples/v1
+    - git+https://github.com/Deltares/hydromt_sfincs.git#main/v1
