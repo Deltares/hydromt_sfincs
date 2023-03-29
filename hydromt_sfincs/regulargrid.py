@@ -147,8 +147,8 @@ class RegularGrid:
         gdf_region: gpd.GeoDataFrame = None,
         gdf_include: gpd.GeoDataFrame = None,
         gdf_exclude: gpd.GeoDataFrame = None,
-        elv_min: float = None,
-        elv_max: float = None,
+        zmin: float = None,
+        zmax: float = None,
         fill_area: float = 10,
         drop_area: float = 0,
         connectivity: int = 8,
@@ -166,11 +166,11 @@ class RegularGrid:
         gdf_include, gdf_exclude: geopandas.GeoDataFrame, optional
             Geometries with areas to include/exclude from the active model cells.
             Note that include (second last) and exclude (last) and areas are processed after other critera,
-            i.e. `elv_min`, `elv_max` and `drop_area`, and thus overrule these criteria for active model cells.
-        elv_min, elv_max : float, optional
+            i.e. `zmin`, `zmax` and `drop_area`, and thus overrule these criteria for active model cells.
+        zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for active model cells.
         fill_area : float, optional
-            Maximum area [km2] of contiguous cells below `elv_min` or above `elv_max` but surrounded
+            Maximum area [km2] of contiguous cells below `zmin` or above `zmax` but surrounded
             by cells within the valid elevation range to be kept as active cells, by default 10 km2.
         drop_area : float, optional
             Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.
@@ -206,25 +206,25 @@ class RegularGrid:
 
         latlon = self.crs.is_geographic
 
-        if da_dep is None and (elv_min is not None or elv_max is not None):
-            raise ValueError("da_dep required in combination with elv_min / elv_max")
+        if da_dep is None and (zmin is not None or zmax is not None):
+            raise ValueError("da_dep required in combination with zmin / zmax")
         elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
             raise ValueError("da_dep does not match regular grid")
 
         s = None if connectivity == 4 else np.ones((3, 3), int)
-        if elv_min is not None or elv_max is not None:
+        if zmin is not None or zmax is not None:
             _msk = da_dep != da_dep.raster.nodata
-            if elv_min is not None:
-                _msk = np.logical_and(_msk, da_dep >= elv_min)
-            if elv_max is not None:
-                _msk = np.logical_and(_msk, da_dep <= elv_max)
+            if zmin is not None:
+                _msk = np.logical_and(_msk, da_dep >= zmin)
+            if zmax is not None:
+                _msk = np.logical_and(_msk, da_dep <= zmax)
             if da_mask0 is not None:
                 # if mask was provided; keep active mask only within valid elevations
                 da_mask = np.logical_and(da_mask0, _msk)
             else:
                 # no mask provided; set mask to valid elevations
                 da_mask = _msk
-        elif elv_min is None and elv_max is None and da_mask0 is not None:
+        elif zmin is None and zmax is None and da_mask0 is not None:
             # in case a mask/region was provided, but you didn't want to update the mask based on elevation
             # just continue with the provided mask
             da_mask = da_mask0
@@ -280,8 +280,8 @@ class RegularGrid:
         gdf_include: Optional[gpd.GeoDataFrame] = None,
         gdf_exclude: Optional[gpd.GeoDataFrame] = None,
         da_dep: xr.DataArray = None,
-        elv_min: Optional[float] = None,
-        elv_max: Optional[float] = None,
+        zmin: Optional[float] = None,
+        zmax: Optional[float] = None,
         connectivity: int = 8,
         all_touched=False,
         reset_bounds=False,
@@ -298,8 +298,8 @@ class RegularGrid:
         gdf_include, gdf_exclude: geopandas.GeoDataFrame
             Geometries with areas to include/exclude from the model boundary.
             Note that exclude (second last) and include (last) areas are processed after other critera,
-            i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.
-        elv_min, elv_max : float, optional
+            i.e. `zmin`, `zmax`, and thus overrule these criteria for model boundary cells.
+        zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for boundary cells.
         connectivity: {4, 8}
             The connectivity used to detect the model edge, if 4 only horizontal and vertical
@@ -321,8 +321,8 @@ class RegularGrid:
             raise ValueError("da_mask does not match regular grid")
         latlon = self.crs.is_geographic
 
-        if da_dep is None and (elv_min is not None or elv_max is not None):
-            raise ValueError("da_dep required in combination with elv_min / elv_max")
+        if da_dep is None and (zmin is not None or zmax is not None):
+            raise ValueError("da_dep required in combination with zmin / zmax")
         elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
             raise ValueError("da_dep does not match regular grid")
 
@@ -336,8 +336,8 @@ class RegularGrid:
             # self.logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
             da_mask = da_mask.where(da_mask != np.uint8(bvalue), np.uint8(1))
             if (
-                elv_min is None
-                and elv_max is None
+                zmin is None
+                and zmax is None
                 and gdf_include is None
                 and gdf_exclude is None
             ):
@@ -349,10 +349,10 @@ class RegularGrid:
         )
         bounds = bounds0.copy()
 
-        if elv_min is not None:
-            bounds = np.logical_and(bounds, da_dep >= elv_min)
-        if elv_max is not None:
-            bounds = np.logical_and(bounds, da_dep <= elv_max)
+        if zmin is not None:
+            bounds = np.logical_and(bounds, da_dep >= zmin)
+        if zmax is not None:
+            bounds = np.logical_and(bounds, da_dep <= zmax)
         if gdf_include is not None:
             da_include = da_mask.raster.geometry_mask(
                 gdf_include, all_touched=all_touched

@@ -449,8 +449,8 @@ def mask_topobathy(
     gdf_mask: Optional[gpd.GeoDataFrame] = None,
     gdf_include: Optional[gpd.GeoDataFrame] = None,
     gdf_exclude: Optional[gpd.GeoDataFrame] = None,
-    elv_min: Optional[float] = None,
-    elv_max: Optional[float] = None,
+    zmin: Optional[float] = None,
+    zmax: Optional[float] = None,
     fill_area: float = 10,
     drop_area: float = 0,
     connectivity: int = 8,
@@ -470,11 +470,11 @@ def mask_topobathy(
     gdf_include, gdf_exclude: geopandas.GeoDataFrame, optional
         Geometries with areas to include/exclude from the active model cells.
         Note that exclude (second last) and include (last) areas are processed after other critera,
-        i.e. `elv_min`, `elv_max` and `drop_area`, and thus overrule these criteria for active model cells.
-    elv_min, elv_max : float, optional
+        i.e. `zmin`, `zmax` and `drop_area`, and thus overrule these criteria for active model cells.
+    zmin, zmax : float, optional
         Minimum and maximum elevation thresholds for active model cells.
     fill_area : float, optional
-        Maximum area [km2] of contiguous cells below `elv_min` or above `elv_max` but surrounded
+        Maximum area [km2] of contiguous cells below `zmin` or above `zmax` but surrounded
         by cells within the valid elevation range to be kept as active cells, by default 10 km2.
     drop_area : float, optional
         Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.
@@ -500,12 +500,12 @@ def mask_topobathy(
             logger.debug(f"No mask cells found within mask polygon!")
     transform, latlon = da_elv.raster.transform, da_elv.raster.crs.is_geographic
     s = None if connectivity == 4 else np.ones((3, 3), int)
-    if elv_min is not None or elv_max is not None:
+    if zmin is not None or zmax is not None:
         _msk = da_elv != da_elv.raster.nodata
-        if elv_min is not None:
-            _msk = np.logical_and(_msk, da_elv >= elv_min)
-        if elv_max is not None:
-            _msk = np.logical_and(_msk, da_elv <= elv_max)
+        if zmin is not None:
+            _msk = np.logical_and(_msk, da_elv >= zmin)
+        if zmax is not None:
+            _msk = np.logical_and(_msk, da_elv <= zmax)
         if fill_area > 0:
             _msk1 = np.logical_xor(_msk, ndimage.binary_fill_holes(_msk, structure=s))
             regions = ndimage.measurements.label(_msk1, structure=s)[0]
@@ -542,8 +542,8 @@ def mask_bounds(
     gdf_mask: Optional[gpd.GeoDataFrame] = None,
     gdf_include: Optional[gpd.GeoDataFrame] = None,
     gdf_exclude: Optional[gpd.GeoDataFrame] = None,
-    elv_min: Optional[float] = None,
-    elv_max: Optional[float] = None,
+    zmin: Optional[float] = None,
+    zmax: Optional[float] = None,
     connectivity: int = 8,
     all_touched=False,
 ) -> xr.DataArray:
@@ -559,8 +559,8 @@ def mask_bounds(
     gdf_include, gdf_exclude: geopandas.GeoDataFrame
         Geometries with areas to include/exclude from the model boundary.
         Note that exclude (second last) and include (last) areas are processed after other critera,
-        i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.
-    elv_min, elv_max : float, optional
+        i.e. `zmin`, `zmax`, and thus overrule these criteria for model boundary cells.
+    zmin, zmax : float, optional
         Minimum and maximum elevation thresholds for boundary cells.
     connectivity: {4, 8}
         The connectivity used to detect the model edge, if 4 only horizontal and vertical
@@ -576,7 +576,7 @@ def mask_bounds(
         Boolean mask of model boundary cells.
     """
     assert (
-        elv_min is None and elv_max is None
+        zmin is None and zmax is None
     ) or da_elv is not None, "da_elv required"
     s = None if connectivity == 4 else np.ones((3, 3), int)
     da_mask = da_msk != da_msk.raster.nodata
@@ -585,10 +585,10 @@ def mask_bounds(
     if gdf_mask is not None:
         _msk = da_mask.raster.geometry_mask(gdf_mask, all_touched=all_touched)
         bounds = np.logical_and(bounds, _msk)
-    if elv_min is not None:
-        bounds = np.logical_and(bounds, da_elv >= elv_min)
-    if elv_max is not None:
-        bounds = np.logical_and(bounds, da_elv <= elv_max)
+    if zmin is not None:
+        bounds = np.logical_and(bounds, da_elv >= zmin)
+    if zmax is not None:
+        bounds = np.logical_and(bounds, da_elv <= zmax)
     if gdf_exclude is not None:
         da_exclude = da_mask.raster.geometry_mask(gdf_exclude, all_touched=all_touched)
         bounds = np.logical_and(bounds, ~da_exclude)

@@ -150,12 +150,14 @@ class SfincsModel(MeshMixin, GridModel):
 
     @property
     def crs(self) -> CRS | None:
+        """Returns the model crs"""	
         if self.grid_type == "regular":
             return self.reggrid.crs
         elif self.grid_type == "quadtree":
             return self.quadtree.crs
 
     def set_crs(self, crs: Any) -> None:
+        """Sets the model crs"""
         if self.grid_type == "regular":
             self.reggrid.crs = CRS.from_user_input(crs)
             self.grid.raster.set_crs(self.reggrid.crs)
@@ -168,13 +170,32 @@ class SfincsModel(MeshMixin, GridModel):
         y0: float,
         dx: float,
         dy: float,
-        nmax: int,
         mmax: int,
+        nmax: int,
         rotation: float = None,
         epsg: int = None,
         grid_type: str = "regular",
         gdf_refinement: gpd.GeoDataFrame = None,
     ):
+        """Creates a regular or quadtree grid.
+
+        Parameters
+        ----------
+        x0, y0 : float
+            x,y coordinates of the origin of the grid
+        dx, dy : float
+            grid cell size in x and y direction
+        mmax, nmax : int
+            number of grid cells in x and y direction
+        rotation : float, optional
+            rotation of grid [degree angle], by default None
+        epsg : int, optional
+            epsg-code of the coordinate reference system, by default None
+        grid_type : str, optional
+            grid type, "regular" (default) or "quadtree"
+        gdf_refinement : gpd.GeoDataFrame, optional
+            GeoDataFrame with polygons where grid is refined, only used when grid_type=quadtree, by default None
+        """        
         self.config.update(
             x0=x0,
             y0=y0,
@@ -200,12 +221,37 @@ class SfincsModel(MeshMixin, GridModel):
         epsg: int,
         refinement_fn: str = None,
     ):
+        """Setup a regular or quadtree grid.	
+
+        Parameters
+        ----------
+        x0, y0 : float
+            x,y coordinates of the origin of the grid
+        dx, dy : float
+            grid cell size in x and y direction
+        mmax, nmax : int
+            number of grid cells in x and y direction
+        rotation : float, optional
+            rotation of grid [degree angle], by default None
+        epsg : int, optional
+            epsg-code of the coordinate reference system, by default None
+        grid_type : str, optional
+            grid type, "regular" (default) or "quadtree"
+        refinement_fn : str, optional
+            Path or data source name of polygons where grid should be refined, only used when grid_type=quadtree, by default None
+
+        See Also
+        --------
+        :py:meth:`SfincsModel.create_grid`
+        """        
         if refinement_fn is not None:
             grid_type = "quadtree"
+            #TODO read refinement_fn
             # gdf_refinement = gpd.read_file()
         else:
             grid_type = "regular"
             gdf_refinement = None
+
         self.create_grid(
             x0=x0,
             y0=y0,
@@ -226,6 +272,19 @@ class SfincsModel(MeshMixin, GridModel):
         grid_type: str = "regular",
         gdf_refinement: gpd.GeoDataFrame = None,
     ):
+        """Creates a regular or quadtree grid from a region.
+
+        Parameters
+        ----------
+        gdf_region : gpd.GeoDataFrame
+            GeoDataFrame with a single polygon defining the region
+        res : float
+            grid resolution
+        grid_type : str, optional
+            grid type, "regular" (default) or "quadtree"
+        gdf_refinement : gpd.GeoDataFrame, optional
+            GeoDataFrame with polygons where grid is refined, only used when grid_type=quadtree, by default None
+        """        
         west, south, east, north = gdf_region.total_bounds
         mmax = int(np.ceil((east - west) / res))
         nmax = int(np.ceil((north - south) / res))
@@ -254,6 +313,40 @@ class SfincsModel(MeshMixin, GridModel):
         hydrography_fn: str = "merit_hydro",
         basin_index_fn: str = "merit_hydro_index",
     ):
+        """Setup a regular or quadtree grid from a region.
+
+        Parameters
+        ----------
+        region : dict
+            Dictionary describing region of interest, e.g.:
+            * {'bbox': [xmin, ymin, xmax, ymax]}
+            * {'geom': 'path/to/polygon_geometry'}
+
+            For a complete overview of all region options,
+            see :py:function:~hydromt.workflows.basin_mask.parse_region    
+        res : float, optional
+            grid resolution, by default 100 m
+        crs : Union[str, int], optional
+            coordinate reference system of the grid
+            if "utm" (default) the best UTM zone is selected
+            else a pyproj crs string or epsg code (int) can be provided
+        grid_type : str, optional
+            grid type, "regular" (default) or "quadtree"
+        refinement_fn : str, optional
+            Path or data source name of polygons where grid should be refined, only used when grid_type=quadtree, by default None
+        hydrography_fn : str
+            Name of data source for hydrography data.
+        basin_index_fn : str
+            Name of data source with basin (bounding box) geometries associated with
+            the 'basins' layer of `hydrography_fn`. Only required if the `region` is
+            based on a (sub)(inter)basins without a 'bounds' argument.
+
+        See Also:
+        ---------
+        :py:meth:`SfincsModel.create_grid_from_region`
+            
+        """
+        # setup `region` of interest of the model.            
         self.setup_region(
             region=region,
             hydrography_fn=hydrography_fn,
@@ -266,6 +359,7 @@ class SfincsModel(MeshMixin, GridModel):
         if self.region.crs != pyproj_crs:
             self.geoms["region"] = self.geoms["region"].to_crs(pyproj_crs)
 
+        # create grid from region
         self.create_grid_from_region(
             gdf_region=self.region,
             res=res,
@@ -279,6 +373,29 @@ class SfincsModel(MeshMixin, GridModel):
         interp_method: str = "linear",  # used for buffer cells only
         logger=logger,
     ) -> xr.DataArray:
+        """ Interpolate topobathy (dep) data to the model grid
+
+        Adds model grid layers:
+
+        * **dep**: combined elevation/bathymetry [m+ref]
+
+        Parameters
+        ----------
+        da_dep_lst : List[dict]
+            List of dictionaries with topobathy data, each containing an xarray.DataSet and optional merge arguments e.g.:
+            [{'da': merit_hydro_da, 'zmin': 0.01}, {'da': gebco_da, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
+            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+        buffer_cells : int, optional
+            Number of cells between datasets to ensure smooth transition of bed levels, by default 0
+        interp_method : str, optional
+            Interpolation method used to fill the buffer cells , by default "linear"
+
+        Returns
+        -------
+        xr.DataArray
+            Topobathy data on the model grid
+        """        
+        
         if self.grid_type == "regular":
             da_dep = workflows.merge_multi_dataarrays(
                 da_list=da_dep_lst,
@@ -289,14 +406,20 @@ class SfincsModel(MeshMixin, GridModel):
             )
 
             # check if no nan data is present in the bed levels
-            assert not np.isnan(da_dep).any(), "NaN values in bed levels"
+            if not np.isnan(da_dep).any():
+                self.logger.warning("NaN values in bed levels")
 
             self.set_grid(da_dep, name="dep")
+            # FIXME this shouldn't be necessary, since da_dep should already have the crs
             if self.crs is not None and self.grid.raster.crs is None:
                 self.grid.set_crs(self.crs)
 
             if "depfile" not in self.config:
                 self.config.update({"depfile": "sfincs.dep"})
+        elif self.grid_type == "quadtree":
+            raise NotImplementedError(
+                "Create dep not yet implemented for quadtree grids."
+            )
 
         return da_dep
 
@@ -314,12 +437,17 @@ class SfincsModel(MeshMixin, GridModel):
 
         Parameters
         ----------
-        datasets_dep : list[dict]
-            Per dataset to be merged, a filename (dep_fn) and mutliple merge arguments (min_valid, max_valid,
-            gdf_valid, offset, merge_method) can be provided. If not specified explicitly, order of merging is from first to last.
+        datasets_dep : List[dict]
+            List of dictionaries with topobathy data, each containing a dataset name or Path and optional merge arguments e.g.:
+            [{'dep_fn': merit_hydro, 'zmin': 0.01}, {'dep_fn': gebco, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
+            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+        buffer_cells : int, optional
+            Number of cells between datasets to ensure smooth transition of bed levels, by default 0
+        interp_method : str, optional
+            Interpolation method used to fill the buffer cells , by default "linear"    
         """
 
-        # retrieve model resolution
+        # retrieve model resolution to determine zoom level for xyz-datasets
         # TODO fix for quadtree
         if not self.mask.raster.crs.is_geographic:
             res = np.abs(self.mask.raster.res[0])
@@ -340,15 +468,15 @@ class SfincsModel(MeshMixin, GridModel):
         gdf_region: gpd.GeoDataFrame = None,
         gdf_include: gpd.GeoDataFrame = None,
         gdf_exclude: gpd.GeoDataFrame = None,
-        elv_min: float = None,
-        elv_max: float = None,
+        zmin: float = None,
+        zmax: float = None,
         fill_area: float = 10,
         drop_area: float = 0,
         connectivity: int = 8,
         all_touched=True,
         reset_mask=False,
     ) -> xr.DataArray:
-        """Returns a boolean mask of valid (non nondata) elevation cells, optionally bounded
+        """Create an integer mask of active grid cells, optionally bounded
         by several criteria.
 
         Parameters
@@ -359,11 +487,11 @@ class SfincsModel(MeshMixin, GridModel):
         gdf_include, gdf_exclude: geopandas.GeoDataFrame, optional
             Geometries with areas to include/exclude from the active model cells.
             Note that include (second last) and exclude (last) and areas are processed after other critera,
-            i.e. `elv_min`, `elv_max` and `drop_area`, and thus overrule these criteria for active model cells.
-        elv_min, elv_max : float, optional
+            i.e. `zmin`, `zmax` and `drop_area`, and thus overrule these criteria for active model cells.
+        zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for active model cells.
         fill_area : float, optional
-            Maximum area [km2] of contiguous cells below `elv_min` or above `elv_max` but surrounded
+            Maximum area [km2] of contiguous cells below `zmin` or above `zmax` but surrounded
             by cells within the valid elevation range to be kept as active cells, by default 10 km2.
         drop_area : float, optional
             Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.
@@ -389,8 +517,8 @@ class SfincsModel(MeshMixin, GridModel):
                 gdf_region=gdf_region,
                 gdf_include=gdf_include,
                 gdf_exclude=gdf_exclude,
-                elv_min=elv_min,
-                elv_max=elv_max,
+                zmin=zmin,
+                zmax=zmax,
                 fill_area=fill_area,
                 drop_area=drop_area,
                 connectivity=connectivity,
@@ -417,8 +545,8 @@ class SfincsModel(MeshMixin, GridModel):
         include_mask_fn=None,
         exclude_mask_fn=None,
         mask_buffer=0,
-        elv_min=None,
-        elv_max=None,
+        zmin=None,
+        zmax=None,
         fill_area=10,
         drop_area=0,
         connectivity=8,
@@ -451,14 +579,14 @@ class SfincsModel(MeshMixin, GridModel):
         include_mask_fn, exclude_mask_fn: str, optional
             Path or data source name of polygons to include/exclude from the active model domain.
             Note that exclude (second last) and include (last) areas are processed after other critera,
-            i.e. `elv_min`, `elv_max` and `drop_area`, and thus overrule these criteria for active model cells.
+            i.e. `zmin`, `zmax` and `drop_area`, and thus overrule these criteria for active model cells.
         mask_buffer: float, optional
             If larger than zero, extend the `include_mask` geometry with a buffer [m],
             by default 0.
-        elv_min, elv_max : float, optional
+        zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for active model cells.
         fill_area : float, optional
-            Maximum area [km2] of contiguous cells below `elv_min` or above `elv_max` but surrounded
+            Maximum area [km2] of contiguous cells below `zmin` or above `zmax` but surrounded
             by cells within the valid elevation range to be kept as active cells, by default 10 km2.
         drop_area : float, optional
             Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.
@@ -507,8 +635,8 @@ class SfincsModel(MeshMixin, GridModel):
             gdf_region=gdf0,
             gdf_include=gdf1,
             gdf_exclude=gdf2,
-            elv_min=elv_min,
-            elv_max=elv_max,
+            zmin=zmin,
+            zmax=zmax,
             fill_area=fill_area,
             drop_area=drop_area,
             connectivity=connectivity,
@@ -536,8 +664,8 @@ class SfincsModel(MeshMixin, GridModel):
         btype: str = "waterlevel",
         gdf_include: gpd.GeoDataFrame = None,
         gdf_exclude: gpd.GeoDataFrame = None,
-        elv_min: float = None,
-        elv_max: float = None,
+        zmin: float = None,
+        zmax: float = None,
         connectivity: int = 8,
         all_touched: bool = False,
         reset_bounds: bool = False,
@@ -552,8 +680,8 @@ class SfincsModel(MeshMixin, GridModel):
         gdf_include, gdf_exclude: geopandas.GeoDataFrame
             Geometries with areas to include/exclude from the model boundary.
             Note that exclude (second last) and include (last) areas are processed after other critera,
-            i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.
-        elv_min, elv_max : float, optional
+            i.e. `zmin`, `zmax`, and thus overrule these criteria for model boundary cells.
+        zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for boundary cells.
         connectivity: {4, 8}
             The connectivity used to detect the model edge, if 4 only horizontal and vertical
@@ -579,8 +707,8 @@ class SfincsModel(MeshMixin, GridModel):
                 gdf_include=gdf_include,
                 gdf_exclude=gdf_exclude,
                 da_dep=self.grid["dep"] if "dep" in self.grid else None,
-                elv_min=elv_min,
-                elv_max=elv_max,
+                zmin=zmin,
+                zmax=zmax,
                 connectivity=connectivity,
                 all_touched=all_touched,
                 reset_bounds=reset_bounds,
@@ -594,8 +722,8 @@ class SfincsModel(MeshMixin, GridModel):
         btype="waterlevel",
         include_fn=None,
         exclude_fn=None,
-        elv_min=None,
-        elv_max=None,
+        zmin=None,
+        zmax=None,
         connectivity=8,
         reset_bounds=False,
     ):
@@ -622,8 +750,8 @@ class SfincsModel(MeshMixin, GridModel):
         include_mask_fn, exclude_mask_fn: str, optional
             Path or data source name for geometries with areas to include/exclude from the model boundary.
             Note that exclude (second last) and include (last) areas are processed after other critera,
-            i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.
-        elv_min, elv_max : float, optional
+            i.e. `zmin`, `zmax`, and thus overrule these criteria for model boundary cells.
+        zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for boundary cells.
         reset_bounds: bool, optional
             If True, reset existing boundary cells of the selected boundary
@@ -657,8 +785,8 @@ class SfincsModel(MeshMixin, GridModel):
             btype=btype,
             gdf_include=gdf_include,
             gdf_exclude=gdf_exclude,
-            elv_min=elv_min,
-            elv_max=elv_max,
+            zmin=zmin,
+            zmax=zmax,
             connectivity=connectivity,
             reset_bounds=reset_bounds,
         )
@@ -1364,11 +1492,11 @@ class SfincsModel(MeshMixin, GridModel):
     def create_manning_roughness(
         self,
         da_manning_lst: List[dict],
-        manning_riv=0.03,
         manning_land=0.04,
+        manning_sea=0.02,
         rgh_lev_land=0,
-        manning_sea=None,
     ):
+        fromdep = len(da_manning_lst) == 0
         if self.grid_type == "regular":
             if len(da_manning_lst) > 0:
                 da_man = workflows.merge_multi_dataarrays(
@@ -1376,32 +1504,22 @@ class SfincsModel(MeshMixin, GridModel):
                     da_like=self.mask,
                     interp_method="linear",
                     logger=logger,
-                )  # TL: argument -merge_method="first"- is not expected in workflows.merge_multi_dataarrays
-            elif "dep" in self.grid:
-                da_man = xr.where(
+                )
+                fromdep = np.isnan(da_man).where(self.mask>0, False).any()
+            if "dep" in self.grid and fromdep:
+                da_man0 = xr.where(
                     self.grid["dep"] >= rgh_lev_land, manning_land, manning_sea
                 )
-            else:
-                da_msk = self.mask > 0
-                da_man = xr.full_like(da_msk, manning_land, dtype=np.float32)
+            elif fromdep:
+                da_man0 = xr.full_like(self.mask, manning_land, dtype=np.float32)
+
+            if len(da_manning_lst) > 0 and fromdep:
+                print("WARNING: nan values in manning roughness array")
+                da_man = da_man.where(~np.isnan(da_man), da_man0)
+            elif fromdep:
+                da_man = da_man0
             da_man.raster.set_nodata(-9999.0)
 
-            if "rivmsk" in self.grid and manning_riv is not None:
-                self.logger.info("Setting constant manning roughness for river cells.")
-                da_man = da_man.where(self.grid["rivmsk"] != 1, manning_riv)
-            # TODO check if this statement is still neccessary?
-            elif len(da_manning_lst) == 0:
-                self.logger.warning(
-                    'Skipping spatial variable manning roughness map as no river mask ("rivmsk" grid layer)'
-                    " or roughness datasetwas provided. Set constant manning roughness"
-                    ' using the "rgh_lev_land", "manning_land" and/or "manning_sea" parameters in the sfincs.inp file.'
-                )
-                return
-            if manning_sea is not None:
-                self.logger.info("Setting constant manning roughness for sea cells.")
-                da_man = da_man.where(self.grid["dep"] >= rgh_lev_land, manning_sea)
-            # mask and set precision
-            da_man = da_man.where(self.mask, da_man.raster.nodata).round(3)
             # set grid
             mname = "manning"
             da_man.attrs.update(**self._ATTRS.get(mname, {}))
@@ -1414,10 +1532,9 @@ class SfincsModel(MeshMixin, GridModel):
     def setup_manning_roughness(
         self,
         datasets_rgh: List[dict] = [],
-        manning_riv=0.03,
         manning_land=0.04,
+        manning_sea=0.02,
         rgh_lev_land=0,
-        manning_sea=None,
     ):
         """Setup model manning roughness map (manningfile) from gridded
         land-use/land-cover map and manning roughness mapping table.
@@ -1430,7 +1547,7 @@ class SfincsModel(MeshMixin, GridModel):
         ---------
         datasets_rgh : list[dict]
             Per dataset to be merged, a landuse/landcover filename (lulc_fn) and mapping filename (map_fn) should be provided.
-            In addition, mutliple merge arguments (min_valid, max_valid, gdf_valid, offset) can be provided.
+            In addition, mutliple merge arguments (e.g. merge_method, gdf_valid) can be provided.
             The order of merging is from first to last.
         lnd_man, riv_man, sea_man: float, optional
             Constant manning roughness values for land (by default 0.1 s.m-1/3)
@@ -1448,10 +1565,9 @@ class SfincsModel(MeshMixin, GridModel):
 
         self.create_manning_roughness(
             da_manning_lst=da_manning_lst,
-            manning_riv=manning_riv,
             manning_land=manning_land,
-            rgh_lev_land=rgh_lev_land,
             manning_sea=manning_sea,
+            rgh_lev_land=rgh_lev_land,
         )
 
     def create_observation_points(

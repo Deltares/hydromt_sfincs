@@ -28,23 +28,23 @@ def merge_multi_dataarrays(
     Parameters
     ----------
     da_list : List[dict]
-        list of dicts with xr.DataArrays and optional merge arguments
+        list of dicts with xr.DataArrays and optional merge arguments.
+        Possible merge arguments are:
+        *reproj_method: str, optional
+            Reprojection method, if not provided, method is based on resolution (average when resolution of destination grid is coarser then data reosltuion, else bilinear).
+        *offset: xr.DataArray, float, optional
+            Dataset with spatially varying offset or float with uniform offset
+        *zmin, zmax : float, optional
+            Range of valid elevations for da2 -  only valid cells are not merged.
+            Note: applied after offset!
+        *gdf_valid: gpd.GeoDataFrame, optional
+            Geometry of the valid region for da2
     da_like : xr.Dataarray, optional
         Destination grid, by default None.
         If provided the output data is projected to this grid, otherwise to the first input grid.
     reproj_kwargs: dict, optional
-        Keyword arguments for reprojecting the data to the destination grid.
-        *reproj_method: str, optional
-            Reprojection method, if not provided, method is based on resolution (avarged when resolution of destination grid is coarser then data reosltuion, else bilinear).
-        *offset: xr.DataArray, float, optional
-            Dataset with spatially varying offset or float with uniform offset
-        *min_valid, max_valid : float, optional
-            Range of valid values for da2 -  only valid cells are not merged.
-            Note: applied after offset!
-        *gdf_valid: gpd.GeoDataFrame, optional
-            Geometry of the valid region for da2
-
-
+        Keyword arguments for reprojecting the data to the destination grid. Only used of no da_like is provided.
+      
     Returns
     -------
     xr.DataArray
@@ -92,8 +92,8 @@ def merge_multi_dataarrays(
     da1 = _add_offset_mask_invalid(
         da1,
         offset=da_list[0].get("offset", None),
-        min_valid=da_list[0].get("min_valid", None),
-        max_valid=da_list[0].get("max_valid", None),
+        min_valid=da_list[0].get("zmin", None),
+        max_valid=da_list[0].get("zmax", None),
         gdf_valid=da_list[0].get("gdf_valid", None),
         reproj_method="bilinear",  # always bilinear!
     )
@@ -125,8 +125,8 @@ def merge_multi_dataarrays(
             da1,
             da2=da2,
             offset=da_list[i].get("offset", None),
-            min_valid=da_list[i].get("min_valid", None),
-            max_valid=da_list[i].get("max_valid", None),
+            min_valid=da_list[i].get("zmin", None),
+            max_valid=da_list[i].get("zmax", None),
             gdf_valid=da_list[i].get("gdf_valid", None),
             reproj_method=reproj_method,
             merge_method=merge_method,
@@ -134,14 +134,10 @@ def merge_multi_dataarrays(
             interp_method=interp_method,
         )
 
-    # NOTE: this is still open for discussion,
-    # prabably better to check within subgrid routine
-    # na_holes = ndimage.binary_fill_holes(
-    #     np.isnan(da1.values), structure=np.ones((3, 3))
-    # )
-    # if np.any(na_holes) > 0 and interp_method:
-    #     logger.debug(f"Interpolate data at {int(np.sum(na_holes))} cells")
-    #     da1 = da1.raster.interpolate_na(method=interp_method).where(na_holes)
+    # NOTE: this is still open for discussion, but for now we interpolate
+    if np.any(np.isnan(da1.values)) > 0:
+        logger.debug(f"Interpolate data at {int(np.sum(np.isnan(da1.values)))} cells")
+        da1 = da1.raster.interpolate_na(method="rio_idw")
     return da1
 
 
@@ -190,7 +186,6 @@ def merge_dataarrays(
         * mean: use mean of valid new and existing
         * max: use max of valid new and existing
         * min: use min of valid new and existing
-
     reproj_method: {'bilinear', 'cubic', 'nearest', 'average', 'max', 'min'}
         Method used to reproject the offset and second dataset to the grid of the
         first dataset, by default 'bilinear'.

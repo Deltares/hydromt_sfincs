@@ -357,7 +357,10 @@ class SubgridTableRegular:
                         interp_method="linear",
                         buffer_cells=buffer_cells,
                     ).load()
-
+                    if np.isnan(da_man).any():
+                        print("WARNING: nan values in manning roughness array")
+                        da_man0 = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
+                        da_man = da_man.where(~np.isnan(da_man), da_man0)
                 else:
                     da_man = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
                 assert np.all(~np.isnan(da_man))
