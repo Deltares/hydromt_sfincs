@@ -492,7 +492,6 @@ class RegularGrid:
             )
 
         for izoom in range(zoom_range[0], zoom_range[1] + 1):
-
             print("Processing zoom level " + str(izoom))
 
             zoom_path = os.path.join(index_path, str(izoom))

@@ -32,7 +32,6 @@ class Sfincs:
     _MAPS = ["dep", "scs", "manning", "qinf"]
 
     def __init__(self, root: Union[str, Path] = "", inp_kwargs={}) -> None:
-
         self.root = root
         self.inp = SfincsInput()
         self.grid_type = None

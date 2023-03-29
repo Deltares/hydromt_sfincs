@@ -1052,12 +1052,9 @@ def downscale_floodmap(
     hmax = hmax.where(hmax > hmin, np.nan)
 
     if gdf_mask is not None:
-        mask = hmax.raster.geometry_mask(
-            gdf_mask, all_touched=True
-        )
+        mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
         hmax = hmax.where(mask)
         floodmap_fn = floodmap_fn.replace(".tif", "_mask.tif")
-    
 
     if floodmap_fn is None:
         return hmax

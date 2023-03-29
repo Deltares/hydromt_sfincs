@@ -63,6 +63,7 @@ def landuse(da, ds_like, fn_map, logger=logger, params=None):
         raise ValueError(f"Parameter(s) missing in mapping file: {missing}")
     # setup ds out
     ds_out = xr.Dataset(coords=ds_like.raster.coords)
+
     # setup reclass method
     def reclass(x):
         return np.vectorize(d.get)(x, nodata)

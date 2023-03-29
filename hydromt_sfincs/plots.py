@@ -172,7 +172,9 @@ def plot_basemap(
             kwargs.update(norm=norm, cmap=cmap)
 
     if not np.any(ds["msk"] > 0):
-        raise ValueError("No active cells (mask>0) found. Set active cells first using setup_mask_active.")
+        raise ValueError(
+            "No active cells (mask>0) found. Set active cells first using setup_mask_active."
+        )
 
     if variable in ds:
         da = ds[variable].raster.mask_nodata().where(ds["msk"] > 0)

@@ -287,14 +287,14 @@ class SfincsModel(MeshMixin, GridModel):
                 interp_method=interp_method,
                 logger=logger,
             )
-            
+
             # check if no nan data is present in the bed levels
             assert not np.isnan(da_dep).any(), "NaN values in bed levels"
 
             self.set_grid(da_dep, name="dep")
             if self.crs is not None and self.grid.raster.crs is None:
                 self.grid.set_crs(self.crs)
-            
+
             if "depfile" not in self.config:
                 self.config.update({"depfile": "sfincs.dep"})
 
@@ -737,7 +737,6 @@ class SfincsModel(MeshMixin, GridModel):
         make_dep_tiles: bool = False,
         make_manning_tiles: bool = False,
     ):
-
         # retrieve model resolution
         # TODO fix for quadtree
         if not self.mask.raster.crs.is_geographic:
@@ -1377,7 +1376,7 @@ class SfincsModel(MeshMixin, GridModel):
                     da_like=self.mask,
                     interp_method="linear",
                     logger=logger,
-                ) #TL: argument -merge_method="first"- is not expected in workflows.merge_multi_dataarrays
+                )  # TL: argument -merge_method="first"- is not expected in workflows.merge_multi_dataarrays
             elif "dep" in self.grid:
                 da_man = xr.where(
                     self.grid["dep"] >= rgh_lev_land, manning_land, manning_sea

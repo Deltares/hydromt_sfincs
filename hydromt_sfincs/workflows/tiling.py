@@ -77,7 +77,6 @@ def create_topobathy_tiles(
         maxx, maxy = map(min, zip(transformer.transform(maxx, maxy), [20037508.34] * 2))
 
     for izoom in range(zoom_range[0], zoom_range[1] + 1):
-
         print("Processing zoom level " + str(izoom))
 
         zoom_path = os.path.join(topobathy_path, str(izoom))

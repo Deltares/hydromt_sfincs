@@ -184,7 +184,6 @@ class SubgridTableRegular:
         highres_dir: str = None,
         quiet=False,  # TODO replace by logger
     ):
-
         if make_dep_tiles or make_manning_tiles:
             assert highres_dir is not None, "highres_dir must be specified"
 
