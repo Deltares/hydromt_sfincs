@@ -1570,7 +1570,7 @@ class SfincsModel(MeshMixin, GridModel):
         rgh_lev_land : float, optional
             Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
         """        
-        fromdep = len(da_manning_lst) == 0
+        fromdep = len(datasets_rgh) == 0
         if self.grid_type == "regular":
             if len(datasets_rgh) > 0:
                 da_man = workflows.merge_multi_dataarrays(
