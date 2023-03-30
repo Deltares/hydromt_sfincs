@@ -2011,12 +2011,12 @@ class SfincsModel(MeshMixin, GridModel):
         # set/ update forcing
         self.create_waterlevel_forcing(merge=merge, **kwargs)
 
-    def setup_waterlevel_forcing_from_grid(
+    def setup_waterlevel_bnd_from_mask(
         self,
         distance: float = 1e4,
         merge: bool = True,
     ):
-        """Create waterlevel boundary points along the model waterlevel boundary.
+        """Create waterlevel boundary points along the model waterlevel boundary (msk=2).
 
         Parameters
         ----------
@@ -2026,23 +2026,22 @@ class SfincsModel(MeshMixin, GridModel):
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
         """
+        # get waterlevel boundary vector based on mask
+        gdf_msk = utils.get_bounds_vector(self.mask)
+        gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
 
-        if np.any(self.mask == 2):
-            region = self.mask.where(self.mask == 2, 0).raster.vectorize()
-        else:
-            raise ValueError("No mask == 2 values found.")
-
-        x = []
-        y = []
-
-        for i in range(0, len(region)):
-            distances = np.arange(0, region.boundary[i].length, distance)
+        # create points along boundary
+        points = []
+        for _,row in gdf_msk2.iterrows():
+            distances = np.arange(0, row.geometry.length, distance)
             for d in distances:
-                x.append(region.boundary[i].interpolate(d).x)
-                y.append(region.boundary[i].interpolate(d).y)
+                point = row.geometry.interpolate(d)
+                points.append((point.x, point.y))
 
-        gdf = gpd.GeoDataFrame(geometry=gpd.points_from_xy(x, y), crs=region.crs)
+        # create geodataframe with points
+        gdf = gpd.GeoDataFrame(geometry=gpd.points_from_xy(*zip(*points)), crs=self.crs)
 
+        # set waterlevel boundary
         self.create_waterlevel_forcing(gdf_locs=gdf, merge=merge)
 
     def create_discharge_forcing(
