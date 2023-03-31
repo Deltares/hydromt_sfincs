@@ -1,0 +1,7 @@
+{
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32633" } },
+"features": [
+{ "type": "Feature", "properties": { "ID": 1001, "Name": "River1", "x": 321732, "y": 5047136 }, "geometry": { "type": "Point", "coordinates": [ 321732.0, 5047136.0 ] } }
+]
+}

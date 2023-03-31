@@ -1938,6 +1938,7 @@ class SfincsModel(MeshMixin, GridModel):
         self,
         geodataset_fn=None,
         timeseries_fn=None,
+        locs_fn=None,
         offset_fn=None,
         buffer=5e3,
         merge: bool = True,
@@ -1962,6 +1963,8 @@ class SfincsModel(MeshMixin, GridModel):
             Path or data source name for geospatial point timeseries file,
         timeseries_fn: str, Path, optional
             Path or data source name for timeseries file
+        locs_fn: str, Path
+            Path to geojson or tabulated csv file containing ID and x,y coordinates of the bnd points    
         offset_fn: str, optional
             Path or data source name for gridded offset between vertical reference of elevation and waterlevel data,
             Adds to the waterlevel data before merging.
@@ -1994,6 +1997,16 @@ class SfincsModel(MeshMixin, GridModel):
                 gdf_locs=da.vector.to_gdf(),
             )
         elif timeseries_fn is not None:
+            if locs_fn is not None:
+                # for csv files, we assume that coordinates are in the same crs as the model
+                gdf_locs = self.data_catalog.get_geodataframe(
+                    locs_fn, geom=self.region, crs=self.crs
+                )
+                # set index to ID column
+                if "ID" in gdf_locs.columns:
+                    gdf_locs.set_index("ID", inplace=True)
+                kwargs.update(gdf_locs=gdf_locs)
+
             df = self.data_catalog.get_dataframe(
                 timeseries_fn,
                 time_tuple=(tstart, tstop),
@@ -2068,7 +2081,7 @@ class SfincsModel(MeshMixin, GridModel):
         self.set_forcing_1d(df_ts, gdf_locs, name="dis", merge=merge)
 
     def setup_discharge_forcing(
-        self, geodataset_fn=None, timeseries_fn=None, merge=True
+        self, geodataset_fn=None, timeseries_fn=None, locs_fn=None, merge=True
     ):
         """Setup discharge boundary point locations (src) and time series (dis).
 
@@ -2099,8 +2112,10 @@ class SfincsModel(MeshMixin, GridModel):
             Path to tabulated timeseries csv file with time index in first column
             and location IDs in the first row,
             see :py:meth:`hydromt.open_timeseries_from_table`, for details.
-            NOTE: tabulated timeseries files can only in combination with point location
-            coordinates be set as a geodataset in the data_catalog yml file.
+            NOTE: tabulated timeseries files can be combined with point location
+            coordinates be set as a geodataset in the data_catalog yml file or using the locs_fn
+        locs_fn: str, Path
+            Path to geojson or tabulated csv file containing ID and x,y coordinates of the discharge points
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
         """
@@ -2120,6 +2135,16 @@ class SfincsModel(MeshMixin, GridModel):
                 gdf_locs=da.vector.to_gdf(),
             )
         elif timeseries_fn is not None:
+            if locs_fn is not None:
+                # for csv files, we assume that coordinates are in the same crs as the model
+                gdf_locs = self.data_catalog.get_geodataframe(
+                    locs_fn, geom=self.region, crs=self.crs
+                )
+                # set index to ID column
+                if "ID" in gdf_locs.columns:
+                    gdf_locs.set_index("ID", inplace=True)
+                kwargs.update(gdf_locs=gdf_locs)
+
             df = self.data_catalog.get_dataframe(
                 timeseries_fn,
                 time_tuple=(tstart, tstop),
