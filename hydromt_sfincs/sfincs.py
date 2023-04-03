@@ -2000,11 +2000,10 @@ class SfincsModel(MeshMixin, GridModel):
             if locs_fn is not None:
                 # for csv files, we assume that coordinates are in the same crs as the model
                 gdf_locs = self.data_catalog.get_geodataframe(
-                    locs_fn, geom=self.region, crs=self.crs
+                    locs_fn, crs=self.crs
                 )
-                # set index to ID column
-                if "ID" in gdf_locs.columns:
-                    gdf_locs.set_index("ID", inplace=True)
+                # set index to ID or index column
+                gdf_locs.set_index(gdf_locs.columns.intersection(["ID", "index"]).tolist()[0], inplace=True)
                 kwargs.update(gdf_locs=gdf_locs)
 
             df = self.data_catalog.get_dataframe(
@@ -2138,11 +2137,10 @@ class SfincsModel(MeshMixin, GridModel):
             if locs_fn is not None:
                 # for csv files, we assume that coordinates are in the same crs as the model
                 gdf_locs = self.data_catalog.get_geodataframe(
-                    locs_fn, geom=self.region, crs=self.crs
+                    locs_fn, crs=self.crs
                 )
-                # set index to ID column
-                if "ID" in gdf_locs.columns:
-                    gdf_locs.set_index("ID", inplace=True)
+                # set index to ID or index column
+                gdf_locs.set_index(gdf_locs.columns.intersection(["ID", "index"]).tolist()[0], inplace=True)
                 kwargs.update(gdf_locs=gdf_locs)
 
             df = self.data_catalog.get_dataframe(
@@ -2660,10 +2658,10 @@ class SfincsModel(MeshMixin, GridModel):
 
         # combine geoms and forcing locations
         sg = self.geoms.copy()
-        for fname, gname in self._FORCING_1D.items():
-            if fname in self.forcing and gname is not None:
+        for fname, gname in self._FORCING_1D.values():
+            if fname[0] in self.forcing and gname is not None:
                 try:
-                    sg.update({gname: self._forcing[fname].vector.to_gdf()})
+                    sg.update({gname: self._forcing[fname[0]].vector.to_gdf()})
                 except ValueError:
                     self.logger.debug(f'unable to plot forcing location: "{fname}"')
 
