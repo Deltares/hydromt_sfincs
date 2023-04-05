@@ -45,8 +45,8 @@ def merge_multi_dataarrays(
     buffer_cells : int, optional
         Number of cells between datasets to ensure smooth transition of bed levels, by default 0
     interp_method : str, optional
-        Interpolation method used to fill the buffer cells , by default "linear"    
-    
+        Interpolation method used to fill the buffer cells , by default "linear"
+
     Returns
     -------
     xr.DataArray

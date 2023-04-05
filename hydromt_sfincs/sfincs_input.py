@@ -5,7 +5,7 @@ from typing import Dict
 
 class SfincsInput:
     def __init__(self):
-        """Initialize SfincsInput class with default values""" 
+        """Initialize SfincsInput class with default values"""
         self.mmax = 10
         self.nmax = 10
         self.dx = 10.0
