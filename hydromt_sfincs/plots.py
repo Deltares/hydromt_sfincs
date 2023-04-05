@@ -18,6 +18,7 @@ geom_style = {
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
     "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
     "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
+    "region": dict(ls="--", linewidth=1, color="r"),
 }
 
 
@@ -65,7 +66,8 @@ def plot_forcing(forcing: Dict, **kwargs):
                 title="index",
                 bbox_to_anchor=(1.05, 1),
                 loc="upper left",
-                ncol=2,
+                ncol=df.columns.size // 5 + 1,
+                prop={"size": 8},
             )
         axes[i].set_ylabel(f"{prefix}{longname}\n[{unit}]")
         axes[i].set_title(f"SFINCS {longname} forcing ({name})")
@@ -148,8 +150,8 @@ def plot_basemap(
 
     # create fig with geo-axis and set background
     if figsize is None:
-        ratio = ds.raster.ycoords.size / (ds.raster.xcoords.size * 1.2)
-        figsize = (10, 10 * ratio)
+        ratio = ds.raster.ycoords.size / (ds.raster.xcoords.size * 1.4)
+        figsize = (8, 8 * ratio)
     fig = plt.figure(figsize=figsize)
     ax = plt.subplot(projection=utm)
     ax.set_extent(extent, crs=utm)
@@ -161,7 +163,7 @@ def plot_basemap(
         ax.add_image(getattr(cimgt, bmap)(**bmap_kwargs), zoomlevel)
 
     # by default colorbar on lower right & legend upper right
-    kwargs0 = {"cbar_kwargs": {"shrink": 0.6, "anchor": (0, 0)}}
+    kwargs0 = {"cbar_kwargs": {"shrink": 0.5, "anchor": (0, 0)}}
     kwargs0.update(kwargs)
     # make nice cmap
     if "cmap" not in kwargs or "norm" not in kwargs:
@@ -182,7 +184,7 @@ def plot_basemap(
             )
             norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5], 3)
             kwargs0.update(norm=norm, cmap=cmap)
-            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3], shrink=0.4)
+            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3])
 
     if variable in ds:
         da = ds[variable].raster.mask_nodata()
@@ -250,7 +252,7 @@ def plot_basemap(
 
     if "region" in geoms and plot_region:
         geoms["region"].boundary.plot(
-            ax=ax, ls="-", lw=0.5, color="k", zorder=2, label="region"
+            ax=ax, zorder=2, label="region", **geom_style["region"]
         )
 
     # title, legend and labels
@@ -268,6 +270,7 @@ def plot_basemap(
             title="Legend",
             loc="upper left",
             frameon=True,
+            prop=dict(size=8),
         )
         legend_kwargs0.update(**legend_kwargs)
         ax.legend(**legend_kwargs0)

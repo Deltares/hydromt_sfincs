@@ -1,89 +1,138 @@
-import numpy as np
 import geopandas as gpd
-from scipy import ndimage
 import hydromt
 import logging
+import numpy as np
+import pyflwdir
+from typing import Tuple
+import xarray as xr
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
     "river_boundary_points",
+    "river_centerline_from_hydrography",
 ]
 
 
-def river_boundary_points(
-    da_flwdir,
-    da_uparea,
-    region=None,
-    river_upa=25.0,
-    river_len=1e3,
-    btype="inflow",
-    return_river=True,
-    logger=logger,
-):
-    """
-    Returns the locations where a river flows in (`btype='inflow'`) or out (`btype='outflow'`) of the region.
-    Rivers are based on a minimum upstream area and minimum length within the model domain.
+def river_centerline_from_hydrography(
+    da_flwdir: xr.DataArray,
+    da_uparea: xr.DataArray,
+    river_upa: float = 10,
+    river_len: float = 1e3,
+    mask: gpd.GeoDataFrame = None,
+) -> gpd.GeoDataFrame:
+    """Returns the centerline of rivers based on a flow direction
+    raster data (`da_flwdir`).
 
     Parameters
     ----------
     da_flwdir: xarray.DataArray
         D8 flow direction raster data.
-    da_uparea: xarray.DataArray
-        Upstream area raster data [km2].
-    region: geopandas.GeoDataFrame, optional
-        Polygon of region of interest. By default all valid cells in ds are used to
-        determine the region of interest.
-    river_upa: float, optional
-        Mimimum upstream area threshold [km2] to define river cells, by default 25 km2.
+    da_uparea: xarray.DataArray, optional
+        River mask raster data. Used to mask da_flwdir, by default None.
+    river_upa : float, optional
+        Minimum upstream area threshold for rivers [km2], by default 10.0
+    river_len: float, optional
+        Mimimum river length [m] within the model domain to define river cells,
+        by default 1000 m.
+    mask: geopandas.GeoDataFrame, optional
+        Polygon to clip river center lines before calculating the river length,
+        by default None.
+
+    Returns
+    -------
+    gdf_riv: geopandas.GeoDataFrame
+        River line vector data.
+    """
+    # get river network from hydrography based on upstream area mask
+    flwdir = hydromt.flw.flwdir_from_da(da_flwdir, mask=da_uparea >= river_upa)
+    gdf_riv = gpd.GeoDataFrame.from_features(flwdir.streams(), crs=da_flwdir.raster.crs)
+    # clip to mask and remove empty geometries
+    if mask is not None:
+        gdf_riv = gdf_riv.to_crs(mask.crs).clip(mask.unary_union)
+    gdf_riv = gdf_riv[~gdf_riv.is_empty]
+    # create river network from gdf to get distance from outlet 'rivlen'
+    gdf_riv["rivlen"] = gdf_riv.geometry.length
+    flwdir = pyflwdir.from_dataframe(gdf_riv.set_index("idx"), ds_col="idx_ds")
+    gdf_riv["rivlen"] = flwdir.accuflux(gdf_riv["rivlen"].values, direction="down")
+    gdf_riv = gdf_riv[gdf_riv["rivlen"] >= river_len]
+    return gdf_riv
+
+
+def river_boundary_points(
+    region: gpd.GeoDataFrame,
+    res: float,
+    gdf_riv: gpd.GeoDataFrame = None,
+    da_flwdir: xr.DataArray = None,
+    da_uparea: xr.DataArray = None,
+    river_upa: float = 10,
+    river_len: float = 1e3,
+    inflow: bool = True,
+) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    """Returns the locations where a river flows in (`inflow=True`)
+    or out (`inflow=False`) of the model region.
+
+    Rivers are based on either a river network vector data (`gdf_riv`) or
+    a flow direction raster data (`da_flwdir`).
+
+    Parameters
+    ----------
+    region: geopandas.GeoDataFrame
+        Polygon of model region of interest.
+    res: float
+        Model resolution [m].
+    gdf_riv: geopandas.GeoDataFrame, optional
+        River network vector data, by default None.
+    da_flwdir: xarray.DataArray, optional
+        D8 flow direction raster data, by default None.
+    da_uparea: xarray.DataArray, optional
+        River upstream area raster data, by default None.
+    river_upa : float, optional
+        Minimum upstream area threshold for rivers [km2], by default 10.0
     river_len: float, optional
         Mimimum river length [m] within the model domain to define river cells, by default 1000 m.
-    btype: {'inflow', 'outflow'}
-        Return inflow  (default) or outflow boundary points.
-    return_river: bool, optional
-        If True, return a vectorized river GeoDataFrame
+    inflow: bool, optional
+        If True, return inflow otherwise outflow boundary points, by default True.
 
     Returns
     -------
     gdf_src, gdf_riv: geopandas.GeoDataFrame
-        Inflow point and river line vector data.
+        In-/outflow points and river line vector data.
     """
-    src_crs = da_flwdir.raster.crs
-    if region is not None:
-        da_mask = da_flwdir.raster.geometry_mask(region)
+    if not isinstance(region, (gpd.GeoDataFrame, gpd.GeoSeries)) and np.all(
+        region.geometry.type == "Polygon"
+    ):
+        raise ValueError("Boundary must be a GeoDataFrame of LineStrings.")
+
+    if gdf_riv is None and (da_flwdir is None or da_uparea is None):
+        raise ValueError("Either gdf_riv or da_flwdir and da_uparea must be provided.")
+    elif gdf_riv is None:  # get river network from hydrography
+        gdf_riv = river_centerline_from_hydrography(
+            da_flwdir, da_uparea, river_upa, river_len, mask=region
+        )
     else:
-        da_mask = da_flwdir != da_flwdir.raster.nodata
-    da_mask_eroded = ndimage.binary_erosion(da_mask, structure=np.ones((3, 3)))
-    da_mask_edge = np.logical_xor(da_mask_eroded, da_mask)
+        # clip river to model region
+        gdf_riv = gdf_riv.to_crs(region.crs).clip(region.unary_union)
+        # filter river network based on uparea and length
+        if "uparea" in gdf_riv.columns:
+            gdf_riv = [gdf_riv["uparea"] >= river_upa]
+        if "rivlen" in gdf_riv.columns:
+            gdf_riv = gdf_riv[gdf_riv["rivlen"] > river_len]
 
-    # initialize flwdir with river cells inside region only
-    rivmsk = np.logical_and(da_uparea >= river_upa, da_mask)
-    flwdir = hydromt.flw.flwdir_from_da(da_flwdir, mask=rivmsk)
-    if river_len > 0:
-        dx_headwater = np.where(flwdir.n_upstream == 0, flwdir.distnc, 0)
-        rivlen = flwdir.fillnodata(dx_headwater, nodata=0, direction="down", how="max")
-        rivmsk = np.logical_and(rivmsk, rivlen >= river_len)
+    dx = res / 5 if inflow else -res / 5
+    # move point a bit into the model domain
+    gdf_pnt = gdf_riv.interpolate(dx).to_frame("geometry")
+    # keep points on boundary cells
+    bnd = region.boundary.buffer(res).unary_union  # NOTE should be single geom
+    gdf_pnt = gdf_pnt[gdf_pnt.within(bnd)].reset_index(drop=True)
 
-    if btype == "inflow":
-        bcells = np.logical_and.reduce((flwdir.n_upstream == 0, rivmsk, da_mask_edge))
-    elif btype == "outflow":
-        bcells = np.logical_and.reduce((flwdir.distnc == 0, rivmsk, da_mask_edge))
+    # add uparea attribute if da_uparea is provided
+    if da_uparea is not None:
+        gdf_pnt["uparea"] = da_uparea.raster.sample(gdf_pnt).values
+        gdf_pnt = gdf_pnt.sort_values("uparea").reset_index(drop=True)
+    if "rivwth" in gdf_riv.columns:
+        gdf_out = hydromt.gis_utils.nearest_merge(
+            gdf_out, gdf_riv, columns=["rivwth"], max_dist=10
+        )
 
-    # set source points at inflowing river edge cells with sufficient length in domain
-    idxs = np.where(bcells.ravel())[0]
-    gdf_src = gpd.GeoDataFrame()
-    if len(idxs) > 0:
-        # get coordinates
-        source_xy = flwdir.xy(idxs)
-        gdf_src = gpd.GeoDataFrame(geometry=gpd.points_from_xy(*source_xy), crs=src_crs)
-        # add upstream area, important to match discharge model grid later
-        gdf_src["uparea"] = da_uparea.values.flat[idxs]
-    logger.debug(f"{len(idxs)} river {btype} point locations found.")
-
-    if return_river:
-        logger.debug(f"Vectorize river.")
-        feats = flwdir.streams(mask=rivmsk)
-        gdf_riv = gpd.GeoDataFrame.from_features(feats, crs=src_crs)
-        return gdf_src, gdf_riv
-    else:
-        return gdf_src, None
+    return gdf_pnt, gdf_riv

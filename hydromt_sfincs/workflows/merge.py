@@ -45,8 +45,8 @@ def merge_multi_dataarrays(
     buffer_cells : int, optional
         Number of cells between datasets to ensure smooth transition of bed levels, by default 0
     interp_method : str, optional
-        Interpolation method used to fill the buffer cells , by default "linear"    
-    
+        Interpolation method used to fill the buffer cells , by default "linear"
+
     Returns
     -------
     xr.DataArray
@@ -109,7 +109,7 @@ def merge_multi_dataarrays(
     for i in range(1, len(da_list)):
         merge_method = da_list[i].get("merge_method", "first")
         if merge_method == "first" and not np.any(np.isnan(da1.values)):
-            break
+            continue
 
         # base reprojection method on resolution of datasets
         reproj_method = da_list[i].get("reproj_method", None)
