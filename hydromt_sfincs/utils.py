@@ -1043,6 +1043,7 @@ def downscale_floodmap(
     hmin: float = 0.05,
     gdf_mask: gpd.GeoDataFrame = None,
     floodmap_fn: Union[Path, str] = "floodmap.tif",
+    reproj_method: str = "nearest",
 ):
     """Create a downscaled floodmap for (model) region.
 
@@ -1059,10 +1060,13 @@ def downscale_floodmap(
         Note that the area outside the polygons is set to nodata.
     floodmap_fn : Union[Path, str], optional
         Name (path) of output floodmap, by default "floodmap.tif"
+    reproj_method : str, optional
+        Reprojection method for downscaling the water levels, by default "nearest". 
+        Other option is "bilinear".
     """
 
     # interpolate zsmax to dep grid
-    zsmax = zsmax.raster.reproject_like(dep, method="nearest")
+    zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
     zsmax.raster.set_nodata(np.nan)
 
     # compute hmax
