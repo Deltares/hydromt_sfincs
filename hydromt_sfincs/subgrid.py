@@ -37,15 +37,15 @@ class SubgridTableRegular:
         file = open(file_name, "rb")
 
         # File version
-        # self.version = np.fromfile(file, dtype="i4", count=1)[0]
-        self.nr_cells = np.fromfile(file, dtype="i4", count=1)[0]
-        self.nr_uv_points = np.fromfile(file, dtype="i4", count=1)[0]
-        self.nbins = np.fromfile(file, dtype="i4", count=1)[0]
+        # self.version = np.fromfile(file, dtype=np.int32, count=1)[0]
+        self.nr_cells = np.fromfile(file, dtype=np.int32, count=1)[0]
+        self.nr_uv_points = np.fromfile(file, dtype=np.int32, count=1)[0]
+        self.nbins = np.fromfile(file, dtype=np.int32, count=1)[0]
 
         # Z points
         self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        # self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.z_depth = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
@@ -71,39 +71,41 @@ class SubgridTableRegular:
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
 
-        self.z_zmin[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
-        self.z_zmax[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
-        self.z_zmean[iok[0], iok[1]] = np.fromfile(
-            file, dtype="f4", count=self.nr_cells
-        )
+        self.z_zmin[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
+        self.z_zmax[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
+        # self.z_zmean[iok[0], iok[1]] = np.fromfile(
+        #     file, dtype=np.float32, count=self.nr_cells
+        # )
         self.z_volmax[iok[0], iok[1]] = np.fromfile(
-            file, dtype="f4", count=self.nr_cells
+            file, dtype=np.float32, count=self.nr_cells
         )
         for ibin in range(self.nbins):
             self.z_depth[ibin, iok[0], iok[1]] = np.fromfile(
-                file, dtype="f4", count=self.nr_cells
+                file, dtype=np.float32, count=self.nr_cells
             )
 
-        self.u_zmin[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
-        self.u_zmax[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
+        self.u_zmin[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
+        self.u_zmax[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
+        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells) #not used
         for ibin in range(self.nbins):
             self.u_hrep[ibin, iok[0], iok[1]] = np.fromfile(
-                file, dtype="f4", count=self.nr_cells
+                file, dtype=np.float32, count=self.nr_cells
             )
         for ibin in range(self.nbins):
             self.u_navg[ibin, iok[0], iok[1]] = np.fromfile(
-                file, dtype="f4", count=self.nr_cells
+                file, dtype=np.float32, count=self.nr_cells
             )
 
-        self.v_zmin[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
-        self.v_zmax[iok[0], iok[1]] = np.fromfile(file, dtype="f4", count=self.nr_cells)
+        self.v_zmin[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
+        self.v_zmax[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
+        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells) #not used
         for ibin in range(self.nbins):
             self.v_hrep[ibin, iok[0], iok[1]] = np.fromfile(
-                file, dtype="f4", count=self.nr_cells
+                file, dtype=np.float32, count=self.nr_cells
             )
         for ibin in range(self.nbins):
             self.v_navg[ibin, iok[0], iok[1]] = np.fromfile(
-                file, dtype="f4", count=self.nr_cells
+                file, dtype=np.float32, count=self.nr_cells
             )
 
         file.close()
@@ -286,7 +288,7 @@ class SubgridTableRegular:
         # Z points
         self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        # self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.z_depth = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
 
@@ -452,7 +454,7 @@ class SubgridTableRegular:
                 (
                     self.z_zmin[sn, sm],
                     self.z_zmax[sn, sm],
-                    self.z_zmean[sn, sm],
+                    # self.z_zmean[sn, sm],
                     self.z_volmax[sn, sm],
                     self.z_depth[:, sn, sm],
                     self.u_zmin[sn, sm],
@@ -490,7 +492,7 @@ class SubgridTableRegular:
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})
         ds_sbg.attrs.update({"_FillValue": np.nan})
 
-        zlst2 = ["z_zmin", "z_zmax", "z_zmin", "z_zmean", "z_volmax"]
+        zlst2 = ["z_zmin", "z_zmax", "z_zmin", "z_volmax"] #"z_zmean",
         uvlst2 = ["u_zmin", "u_zmax", "v_zmin", "v_zmax"]
         lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]
         # 2D arrays
@@ -518,7 +520,7 @@ def process_tile(
     grid_dim = mask.shape
     z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
     z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-    z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+    # z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
     z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
     z_depth = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
 
@@ -562,7 +564,7 @@ def process_tile(
             )
             z_zmin[n, m] = zmin
             z_zmax[n, m] = zmax
-            z_zmean[n, m] = zmean
+            # z_zmean[n, m] = zmean
             z_volmax[n, m] = v[-1]
             z_depth[:, n, m] = z[1:]
 
@@ -598,7 +600,7 @@ def process_tile(
     return (
         z_zmin,
         z_zmax,
-        z_zmean,
+        # z_zmean,
         z_volmax,
         z_depth,
         u_zmin,
