@@ -127,7 +127,7 @@ class RegularGrid:
         mask: np.ndarray,
         ind_fn: Union[str, Path] = "sfincs.ind",
     ) -> None:
-        """Write indices of active cells in mask to binary file."""	
+        """Write indices of active cells in mask to binary file."""
         assert mask.shape == (self.nmax, self.mmax)
         # Add 1 because indices in SFINCS start with 1, not 0
         ind = self.ind(mask)
@@ -149,7 +149,7 @@ class RegularGrid:
         self,
         da_mask: xr.DataArray = None,
         da_dep: xr.DataArray = None,
-        gdf_region: gpd.GeoDataFrame = None,
+        gdf_mask: gpd.GeoDataFrame = None,
         gdf_include: gpd.GeoDataFrame = None,
         gdf_exclude: gpd.GeoDataFrame = None,
         zmin: float = None,
@@ -170,7 +170,7 @@ class RegularGrid:
             If not provided, mask is initialized empty.
         da_dep: xarray.DataArray, optional
             Elevation data to use for active mask.
-        gdf_region: geopandas.GeoDataFrame, optional
+        gdf_mask: geopandas.GeoDataFrame, optional
             Geometry with area to initiliaze active mask with; proceding arguments can be used to include/exclude cells
             If not given, existing mask (if present) is used, else mask is initialized empty.
         gdf_include, gdf_exclude: geopandas.GeoDataFrame, optional
@@ -204,12 +204,10 @@ class RegularGrid:
         if not reset_mask and da_mask is not None:
             # use current active mask
             da_mask0 = da_mask > 0
-        elif gdf_region is not None:
+        elif gdf_mask is not None:
             # start with active mask within provided region
             da_mask0 = (
-                self.empty_mask.raster.geometry_mask(
-                    gdf_region, all_touched=all_touched
-                )
+                self.empty_mask.raster.geometry_mask(gdf_mask, all_touched=all_touched)
                 > 0
             )
         # always intiliaze an inactive mask
@@ -309,7 +307,7 @@ class RegularGrid:
         gdf_include, gdf_exclude: geopandas.GeoDataFrame
             Geometries with areas to include/exclude from the model boundary.
         zmin, zmax : float, optional
-            Minimum and maximum elevation thresholds for boundary cells.             
+            Minimum and maximum elevation thresholds for boundary cells.
             Note that when include and exclude areas are used, the elevation range is only applied
             on cells within the include area and outside the exclude area.
         connectivity: {4, 8}
@@ -328,7 +326,7 @@ class RegularGrid:
         da_mask: xr.DataArray
             Integer SFINCS model mask with inactive (msk=0), active (msk=1), and waterlevel boundary (msk=2)
             and outflow boundary (msk=3) cells
-            
+
         """
         if not da_mask.raster.identical_grid(self.empty_mask):
             raise ValueError("da_mask does not match regular grid")
@@ -430,7 +428,7 @@ class RegularGrid:
 
     def to_vector_lines(self):
         """Return a geopandas GeoDataFrame with a geometry for each grid line."""
-        
+
         x, y = self.edges
 
         # create vertical lines

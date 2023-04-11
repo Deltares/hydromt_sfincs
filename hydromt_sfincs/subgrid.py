@@ -225,7 +225,7 @@ class SubgridTableRegular:
             Create geotiff of the merged roughness on the subgrid resolution, by default False
         highres_dir : str, optional
             Directory where high-resolution geotiffs for topobathy and manning are stored, by default None
-        """        
+        """
 
         if make_dep_tiles or make_manning_tiles:
             assert highres_dir is not None, "highres_dir must be specified"
