@@ -40,7 +40,6 @@ Overview of model setup methods
 
    * - SFINCS file
      - :ref:`model setup methods <model_methods>`
-     - :ref:`model create methods <model_create>`
      - :ref:`workflows <workflows>`
      - :ref:`low-level methods <methods>`
    * - model region
@@ -102,7 +101,6 @@ Overview of model setup methods
 
    * - SFINCS file
      - :ref:`model setup methods <model_methods>`
-     - :ref:`model create methods <model_create>`
      - :ref:`workflows <workflows>`
      - :ref:`low-level methods <methods>`
    * - bnd- & bzsfile
