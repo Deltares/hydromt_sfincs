@@ -559,6 +559,7 @@ class SfincsModel(MeshMixin, GridModel):
         self,
         datasets_dep: List[dict],
         datasets_rgh: List[dict] = [],
+        datasets_riv: List[dict] = [],
         buffer_cells: int = 0,
         nbins: int = 10,
         nr_subgrid_pixels: int = 20,
@@ -594,6 +595,11 @@ class SfincsModel(MeshMixin, GridModel):
             * (1) manning: filename (or Path) of gridded data with manning values
             * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a mapping table.
             In additon, optional merge arguments can be provided e.g.: merge_method, gdf_valid_fn
+        datasets_riv : List[dict], optional
+            List of dictionaries with river datasets. Each dictionary should at least continthe following:
+            * river: filename, Path, or line vector of river centerline with river depth ("rivdph") OR bz ("rivbed") and width ("rivwth") attributes
+            * river_mask (optional): filename, Path, or shape vector of river mask (if provided "rivwth" is not used)
+            e.g.: [{'river': river_fn, 'river_mask': river_mask_fn}, {'river': river_fn2}]
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         nbins : int, optional
@@ -630,6 +636,9 @@ class SfincsModel(MeshMixin, GridModel):
         if len(datasets_rgh) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
             datasets_rgh = self._parse_datasets_rgh(datasets_rgh)
+
+        if len(datasets_riv) > 0:
+            datasets_riv = self._parse_datasets_riv(datasets_riv)
 
         # folder where high-resolution topobathy and manning geotiffs are stored
         if make_dep_tiles or make_manning_tiles:
@@ -2824,6 +2833,40 @@ class SfincsModel(MeshMixin, GridModel):
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
                     self.logger.warning(f"Unknown key {key} in datasets_rgh. Ignoring.")
+            datasets_out.append(dd)
+
+        return datasets_out
+
+    def _parse_datasets_riv(self, datasets_riv):
+        parse_keys = ["river", "river_mask", "gdf", "gdf_mask"]
+        copy_keys = ["width", "depth", "zb", "type"]
+
+        datasets_out = []
+        for dataset in datasets_riv:
+            dd = {}
+
+            if "rivers" in dataset:
+                gdf_riv = self.data_catalog.get_geodataframe(
+                    path_or_key=dataset.get("rivers"),
+                    geom=self.mask.raster.box,
+                )
+                dd.update({"gdf": gdf_riv})
+            else:
+                raise ValueError("No 'rivers' dataset provided in datasets_riv.")
+
+            if "river_mask" in dataset:
+                gdf_riv_mask = self.data_catalog.get_geodataframe(
+                    path_or_key=dataset.get("river_mask"),
+                    geom=self.mask.raster.box,
+                )
+                dd.update({"gdf_mask": gdf_riv_mask})
+
+            # copy remaining keys
+            for key, value in dataset.items():
+                if key in copy_keys and key not in dd:
+                    dd.update({key: value})
+                elif key not in copy_keys + parse_keys:
+                    self.logger.warning(f"Unknown key {key} in datasets_riv. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out
