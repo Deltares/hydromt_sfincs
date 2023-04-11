@@ -1557,7 +1557,7 @@ class SfincsModel(MeshMixin, GridModel):
         manning_sea=0.02,
         rgh_lev_land=0,
     ):
-        """Create model manning roughness map (manningfile) from gridded manning data or a cominbation of gridded
+        """Create model manning roughness map (manningfile) from gridded manning data or a combinataion of gridded
         land-use/land-cover map and manning roughness mapping table.
 
         Parameters
@@ -1588,7 +1588,7 @@ class SfincsModel(MeshMixin, GridModel):
                 da_man0 = xr.full_like(self.mask, manning_land, dtype=np.float32)
 
             if len(datasets_rgh) > 0 and fromdep:
-                print("WARNING: nan values in manning roughness array - number of cells " + str(len(~np.isnan(da_man))))
+                print("WARNING: nan values in manning roughness array")
                 da_man = da_man.where(~np.isnan(da_man), da_man0)
             elif fromdep:
                 da_man = da_man0
@@ -3529,77 +3529,3 @@ class SfincsModel(MeshMixin, GridModel):
                 dataset.update({"gdf_valid": gdf_valid})
 
         return datasets_rgh
-
-    # Parse infiltration data     
-    def _parse_datasets_cn_inf(self, datasets_inf):
-
-        """
-        What am I going to do....
-        """    
-
-        # Get datasets ready
-        for dataset in datasets_inf:
-            NLCD            = dataset.get("NLCD", None)             # NLCD dataset with landcover
-            STATSGO2        = dataset.get("STATSGO2", None)         # STATSGO2 dataset with Hydrologic soil groups (HSGs)
-            soil_type_K     = dataset.get("soil_type_K", None)      # Soil permability dataset
-            lulc            = dataset.get("lulc", None)             # csv with lookup values from NLCD and HSG
-
-        # Read as dataframes
-        da_NLCD             = self.data_catalog.get_rasterdataset(NLCD,geom=self.mask.raster.box,buffer=10)
-        da_STATSGO2         = self.data_catalog.get_rasterdataset(STATSGO2,geom=self.mask.raster.box,buffer=10)
-
-        # Determine curve number values on NLCD resolution
-        da_list             = [{'da': da_STATSGO2}]
-        da_STATSGO2_NLCD    = da_STATSGO2.raster.reproject_like(da_NLCD, method="nearest").load()
-        df_map              = self.data_catalog.get_dataframe(lulc, index_col=0)
-
-        # Curve numbers to grid: go over NLCD classes and HSG classes
-        print('Started with curve numbers')
-        da_CN               = da_NLCD
-        da_CN               = da_CN.where(False, np.NaN)
-        for i in range(len(df_map._stat_axis)):
-            for j in range(len(df_map.columns)):
-                ind                 = ((da_NLCD == df_map._stat_axis[i]) & (da_STATSGO2_NLCD == int(df_map.columns[j]) ))
-                da_CN               = da_CN.where(~ind, df_map.values[i,j])
-
-        # Convert CN to maximum soil retention (S) model grid and interpolate
-        da_CN               = np.maximum(da_CN, 0)      # always positive
-        da_CN               = np.minimum(da_CN, 100)    # not higher than 100
-        da_s                = np.maximum(1000 / da_CN - 10, 0)
-        da_s                = da_s.fillna(0.0)          # NaN means no infiltration = 0
-        ind                 = np.isfinite(da_s)         # inf values will be set to 100
-        da_s                = da_s.where(ind, 0.0)      # also info means no infiltration
-
-        # Interpolate
-        da_list             = [{'da': da_s}]
-        da_s2               = workflows.merge_multi_dataarrays(da_list=da_list,da_like=self.mask,logger=logger)
-
-        # Smax and Seff from inch meter 
-        Smax                = da_s2 * 0.0254            # maximum
-        Sreal               = da_s2 * 0.0254 * 0.5      # starting value for SFINCS => 50%
-
-        # Interpolate Ksat to grid, define recovery as percentage
-        da_Ksat             = self.data_catalog.get_rasterdataset(soil_type_K,geom=self.mask.raster.box,buffer=10)
-        da_list             = [{'da': da_Ksat}]
-        da_Ksat2            = workflows.merge_multi_dataarrays(da_list=da_list,da_like=self.mask,interp_method="linear",logger=logger)
-        Ks                  = da_Ksat2*0.141732;    # from micrometers per second to inch/hr
-        kr                  = np.sqrt(Ks)/75;       # recovery in percentage of Smax per hour
-        kr                  = kr.fillna(0)
-
-        # Finalise
-        datasets_cn_inf     = [{"Sreal":Sreal, "Smax":Smax, "kr":kr}]
-
-        # Write it out, since I cannot figure out how to do this
-        # check with Roel
-        fn_out              = os.path.join(self.root, 'sfincs.seff')
-        utils.write_binary_map(fn_out, Sreal.values, self.mask)
-
-        fn_out              = os.path.join(self.root, 'sfincs.smax')
-        utils.write_binary_map(fn_out, Smax.values, self.mask)
-
-        fn_out              = os.path.join(self.root, 'sfincs.kr')
-        utils.write_binary_map(fn_out, kr.values, self.mask)
-
-        # Give datasets back to have them be written later
-        print('done')
-        return datasets_cn_inf
