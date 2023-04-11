@@ -1299,6 +1299,7 @@ class SfincsModel(MeshMixin, GridModel):
         else:
             datasets_rgh = []
 
+        # fromdep keeps track of whether any manning values should be based on the depth or not
         fromdep = len(datasets_rgh) == 0
         if self.grid_type == "regular":
             if len(datasets_rgh) > 0:
@@ -1367,7 +1368,7 @@ class SfincsModel(MeshMixin, GridModel):
             gdf0 = self._geoms.pop(name)
             gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
             self.logger.info(f"Adding new observation points to existing ones.")
-            
+
         self.set_geoms(gdf_obs, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
 
@@ -1962,99 +1963,6 @@ class SfincsModel(MeshMixin, GridModel):
         df_ts.index.name = "time"
         self.set_forcing(df_ts.to_xarray(), name="precip")
 
-    def create_index_tiles(
-        self,
-        path: Union[str, Path] = None,
-        region: gpd.GeoDataFrame = None,  # TODO why not use self.region?
-        zoom_range: Union[int, List[int]] = [0, 13],
-        fmt: str = "bin",
-    ):
-        """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the correct SFINCS cell.
-
-        Parameters
-        ----------
-        path : Union[str, Path]
-            Directory in which to store the index tiles, if None, the model root + tiles is used.
-            Note that the index tiles are stored in a subdirectory named index.
-        region : gpd.GeoDataFrame
-            GeoDataFrame defining the area of interest, if None, the model region is used.
-        zoom_range : Union[int, List[int]], optional
-            Range of zoom levels for which tiles are created, by default [0,13]
-        fmt : str, optional
-            Format of the index tiles, either "bin" (binary, default) or "png".
-        """
-        if path is None:
-            path = os.path.join(self.root, "tiles")
-        if region is None:
-            region = self.region
-
-        if self.grid_type == "regular":
-            self.reggrid.create_index_tiles(
-                region=region, root=path, zoom_range=zoom_range, fmt=fmt
-            )
-        elif self.grid_type == "quadtree":
-            raise NotImplementedError(
-                "Index tiles not yet implemented for quadtree grids."
-            )
-
-    def create_topobathy_tiles(
-        self,
-        path: Union[str, Path] = None,
-        region: gpd.GeoDataFrame = None,
-        datasets_dep: List[dict] = [],
-        index_path: Union[str, Path] = None,
-        zoom_range: Union[int, List[int]] = [0, 13],
-        z_range: List[int] = [-20000.0, 20000.0],
-        fmt: str = "bin",
-    ):
-        """Create webmercator tiles for merged topography and bathymetry.
-
-        Parameters
-        ----------
-        path : Union[str, Path]
-            Directory in which to store the index tiles, if None, the model root + tiles is used.
-            Note that the tiles are stored in a subdirectory named topobathy.
-        region : gpd.GeoDataFrame
-            GeoDataFrame defining the area of interest, if None, the model region is used.
-        datasets_dep : List[dict]
-            List of dict containing xarray.DataArray and metadata for each dataset.
-        index_path : Union[str, Path], optional
-            Directory where index tiles are stored. If defined, topobathy tiles are only created where index tiles are present.
-        zoom_range : Union[int, List[int]], optional
-            Range of zoom levels for which tiles are created, by default [0,13]
-        z_range : List[int], optional
-            Range of valid elevations that are included in the topobathy tiles, by default [-20000.0, 20000.0]
-        fmt : str, optional
-            Format of the topobathy tiles: "bin" (binary, default), "png" or "tif".
-        """
-
-        if path is None:
-            path = os.path.join(self.root, "tiles")
-        if region is None:
-            # if region not provided, use model region
-            region = self.region
-
-        # if no datasets provided, check if high-res subgrid geotiff is there
-        if len(datasets_dep) == 0:
-            if os.path.exists(os.path.join(self.root, "tiles", "subgrid")):
-                # check if there is a dep_subgrid.tif
-                dep = os.path.join(self.root, "tiles", "subgrid", "dep_subgrid.tif")
-                if os.path.exists(dep):
-                    da = self.data_catalog.get_rasterdataset(dep)
-                    datasets_dep.append({"da": da})
-                else:
-                    raise ValueError("No topobathy datasets provided.")
-
-        # create topobathy tiles
-        workflows.tiling.create_topobathy_tiles(
-            root=path,
-            region=region,
-            datasets_dep=datasets_dep,
-            index_path=index_path,
-            zoom_range=zoom_range,
-            z_range=z_range,
-            fmt=fmt,
-        )
 
     def setup_tiles(
         self,
@@ -2063,6 +1971,8 @@ class SfincsModel(MeshMixin, GridModel):
         datasets_dep: List[dict] = [],
         zoom_range: Union[int, List[int]] = [0, 13],
         z_range: List[int] = [-20000.0, 20000.0],
+        create_index_tiles: bool = True,
+        create_topobathy_tiles: bool = True,
         fmt: str = "bin",
     ):
         """Create both index and topobathy tiles in webmercator format.
@@ -2075,16 +1985,22 @@ class SfincsModel(MeshMixin, GridModel):
             Dictionary describing region of interest, e.g.:
             * {'bbox': [xmin, ymin, xmax, ymax]}. Note bbox should be provided in WGS 84
             * {'geom': 'path/to/polygon_geometry'}
+            If None, the model region is used.
         datasets_dep : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
             [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
             For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+            Note that subgrid/dep_subgrid.tif is automatically used if present and datasets_dep is left empty.
         zoom_range : Union[int, List[int]], optional
             Range of zoom levels for which tiles are created, by default [0,13]
         z_range : List[int], optional
             Range of valid elevations that are included in the topobathy tiles, by default [-20000.0, 20000.0]
+        create_index_tiles : bool, optional
+            If True, index tiles are created, by default True
+        create_topobathy_tiles : bool, optional
+            If True, topobathy tiles are created, by default True. 
         fmt : str, optional
-            Format of the tiles: "bin" (binary, default), "png".
+            Format of the tiles: "bin" (binary, default), or "png".
         """
         # use model root if path not provided
         if path is None:
@@ -2108,28 +2024,47 @@ class SfincsModel(MeshMixin, GridModel):
             zoom_range = [0, zoom_range]
 
         # create index tiles
-        # only binary and png are supported for index tiles so set to binary if tif
-        fmt_ind = "bin" if fmt == "tif" else fmt
+        if create_index_tiles:
+            # only binary and png are supported for index tiles so set to binary if tif
+            fmt_ind = "bin" if fmt == "tif" else fmt
 
-        self.create_index_tiles(
-            path=path, region=region, zoom_range=zoom_range, fmt=fmt_ind
-        )
-
-        # compute resolution of highest zoom level
-        # resolution of zoom level 0  on equator: 156543.03392804097
-        res = 156543.03392804097 / 2 ** zoom_range[1]
-        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+            if self.grid_type == "regular":
+                self.reggrid.create_index_tiles(
+                    region=region, root=path, zoom_range=zoom_range, fmt=fmt_ind
+                )
+            elif self.grid_type == "quadtree":
+                raise NotImplementedError(
+                    "Index tiles not yet implemented for quadtree grids."
+                )
 
         # create topobathy tiles
-        self.create_topobathy_tiles(
-            path=path,
-            region=region,
-            datasets_dep=datasets_dep,
-            index_path=os.path.join(path, "index"),
-            zoom_range=zoom_range,
-            z_range=z_range,
-            fmt=fmt,
-        )
+        if create_topobathy_tiles:
+            # compute resolution of highest zoom level
+            # resolution of zoom level 0  on equator: 156543.03392804097
+            res = 156543.03392804097 / 2 ** zoom_range[1]
+            datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+
+            # if no datasets provided, check if high-res subgrid geotiff is there
+            if len(datasets_dep) == 0:
+                if os.path.exists(os.path.join(self.root, "subgrid")):
+                    # check if there is a dep_subgrid.tif
+                    dep = os.path.join(self.root, "subgrid", "dep_subgrid.tif")
+                    if os.path.exists(dep):
+                        da = self.data_catalog.get_rasterdataset(dep)
+                        datasets_dep.append({"da": da})
+                    else:
+                        raise ValueError("No topobathy datasets provided.")
+
+            # create topobathy tiles
+            workflows.tiling.create_topobathy_tiles(
+                root=path,
+                region=region,
+                datasets_dep=datasets_dep,
+                index_path=os.path.join(path, "index"),
+                zoom_range=zoom_range,
+                z_range=z_range,
+                fmt=fmt,
+            )
 
     # Plotting
     def plot_forcing(self, fn_out="forcing.png", **kwargs):
