@@ -184,8 +184,8 @@ class SubgridTableRegular:
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
         buffer_cells: int = 0,
-        make_dep_tiles: bool = False,
-        make_manning_tiles: bool = False,
+        write_dep_tif: bool = False,
+        write_man_tif: bool = False,
         highres_dir: str = None,
         quiet=False,  # TODO replace by logger
     ):
@@ -219,15 +219,15 @@ class SubgridTableRegular:
             Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
-        make_dep_tiles : bool, optional
+        write_dep_tif : bool, optional
             Create geotiff of the merged topobathy on the subgrid resolution, by default False
-        make_rgh_tiles : bool, optional
+        write_man_tif : bool, optional
             Create geotiff of the merged roughness on the subgrid resolution, by default False
         highres_dir : str, optional
             Directory where high-resolution geotiffs for topobathy and manning are stored, by default None
         """
 
-        if make_dep_tiles or make_manning_tiles:
+        if write_dep_tif or write_man_tif:
             assert highres_dir is not None, "highres_dir must be specified"
 
         refi = nr_subgrid_pixels
@@ -243,7 +243,7 @@ class SubgridTableRegular:
             1 / nr_subgrid_pixels
         )
 
-        if make_dep_tiles:
+        if write_dep_tif:
             # create the CloudOptimizedGeotiff containing the merged topobathy data
             dep_tif = rasterio.open(
                 os.path.join(highres_dir, "dep_subgrid.tif"),
@@ -264,7 +264,7 @@ class SubgridTableRegular:
                 nodata=np.nan,
             )
 
-        if make_manning_tiles:
+        if write_man_tif:
             # create the CloudOptimizedGeotiff creating the merged manning roughness
             man_tif = rasterio.open(
                 os.path.join(highres_dir, "manning_subgrid.tif"),
@@ -417,7 +417,7 @@ class SubgridTableRegular:
 
                 # optional write tile to file
                 # NOTE tiles have overlap! da_dep[:-refi,:-refi]
-                if make_dep_tiles:
+                if write_dep_tif:
                     # write the block to the output COG
                     window = Window(
                         bm0 * nr_subgrid_pixels,
@@ -431,7 +431,7 @@ class SubgridTableRegular:
                         indexes=1,
                     )
 
-                if make_manning_tiles:
+                if write_man_tif:
                     # write the block to the output COG
                     window = Window(
                         bm0 * nr_subgrid_pixels,
@@ -481,10 +481,10 @@ class SubgridTableRegular:
                 del da_mask_block, da_dep, da_man
 
         # close the output cloud optimized geotiff
-        if make_dep_tiles:
+        if write_dep_tif:
             dep_tif.close()
 
-        if make_manning_tiles:
+        if write_man_tif:
             man_tif.close()
 
     def to_xarray(self, dims, coords):

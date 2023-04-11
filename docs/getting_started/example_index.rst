@@ -3,16 +3,8 @@
 Examples
 ========
 
-.. image:: https://mybinder.org/badge_logo.svg
-    :target: https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples
+.. include:: ../_examples/README.rst
 
-This folder contains several ipython notebook examples for **HydroMT-SFINCS**. 
-
-.. Tip::
-  To run these examples in the cloud without need for any installation on your local computer, start with clicking the **binder** badge above.
-
-.. Tip::
-  If you have installed HydroMT-SFINCS locally as explained in :ref:`Installation guide <installation_guide>`, you can find these notebooks locally, in the folder /hydromt_sfincs/examples/. 
 
 List of examples
 ----------------

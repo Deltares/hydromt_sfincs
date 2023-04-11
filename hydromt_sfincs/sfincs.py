@@ -568,8 +568,8 @@ class SfincsModel(MeshMixin, GridModel):
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
-        make_dep_tiles: bool = False,
-        make_manning_tiles: bool = False,
+        write_dep_tif: bool = False,
+        write_man_tif: bool = False,
     ):
         """Setup method for subgrid tables based on a list of
         elevation and Manning's roughness datasets.
@@ -612,9 +612,9 @@ class SfincsModel(MeshMixin, GridModel):
             Note that these values are only used when no Manning's n datasets are provided, or to fill the nodata values
         rgh_lev_land : float, optional
             Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
-        make_dep_tiles : bool, optional
+        write_dep_tif : bool, optional
             Create geotiff of the merged topobathy on the subgrid resolution, by default False
-        make_rgh_tiles : bool, optional
+        write_man_tif : bool, optional
             Create geotiff of the merged roughness on the subgrid resolution, by default False
         """
 
@@ -634,8 +634,8 @@ class SfincsModel(MeshMixin, GridModel):
             datasets_rgh = []
 
         # folder where high-resolution topobathy and manning geotiffs are stored
-        if make_dep_tiles or make_manning_tiles:
-            highres_dir = os.path.join(self.root, "tiles", "subgrid")
+        if write_dep_tif or write_man_tif:
+            highres_dir = os.path.join(self.root, "subgrid")
             if not os.path.isdir(highres_dir):
                 os.makedirs(highres_dir)
         else:
@@ -655,8 +655,8 @@ class SfincsModel(MeshMixin, GridModel):
                 manning_land=manning_land,
                 manning_sea=manning_sea,
                 rgh_lev_land=rgh_lev_land,
-                make_dep_tiles=make_dep_tiles,
-                make_manning_tiles=make_manning_tiles,
+                write_dep_tif=write_dep_tif,
+                write_man_tif=write_man_tif,
                 highres_dir=highres_dir,
             )
             self.subgrid = self.reggrid.subgrid.to_xarray(
