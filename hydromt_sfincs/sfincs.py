@@ -1335,7 +1335,7 @@ class SfincsModel(MeshMixin, GridModel):
     def setup_observation_points(
         self,
         locations: Union[str, Path, gpd.GeoDataFrame],
-        overwrite: bool = False,
+        merge: bool = True,
         **kwargs,
     ):
         """Setup model observation point locations.
@@ -1348,8 +1348,8 @@ class SfincsModel(MeshMixin, GridModel):
         ---------
         locations: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for observation point locations.
-        overwrite: bool, optional
-            If True, overwrite existing observation points instead of appending the new observation points.
+        merge: bool, optional
+            If True, merge the new observation points with the existing ones. By default True.
         """
         name = self._GEOMS["observation_points"]
 
@@ -1363,10 +1363,11 @@ class SfincsModel(MeshMixin, GridModel):
         if not gdf_obs.geometry.type.isin(["Point"]).all():
             raise ValueError("Observation points must be of type Point.")
 
-        if not overwrite and name in self.geoms:
+        if merge and name in self.geoms:
             gdf0 = self._geoms.pop(name)
             gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
             self.logger.info(f"Adding new observation points to existing ones.")
+            
         self.set_geoms(gdf_obs, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
 
@@ -1375,7 +1376,7 @@ class SfincsModel(MeshMixin, GridModel):
         structures: Union[str, Path, gpd.GeoDataFrame],
         stype: str,
         dz: float = None,
-        overwrite: bool = False,
+        merge: bool = True,
         **kwargs,
     ):
         """Setup thin dam or weir structures.
@@ -1394,9 +1395,8 @@ class SfincsModel(MeshMixin, GridModel):
             "par1" defaults to 0.6 if gdf has no "par1" column.
         stype : {'thd', 'weir'}
             Structure type.
-        overwrite: bool, optional
-            If True, overwrite existing 'stype' structures instead of appending the
-            new structures.
+        merge : bool, optional
+            If True, merge with existing'stype' structures, by default True.    
         dz: float, optional
             If provided, for weir structures the z value is calculated from
             the model elevation (dep) plus dz.
@@ -1431,7 +1431,7 @@ class SfincsModel(MeshMixin, GridModel):
         elif stype == "weir" and np.any(["z" not in s for s in structs]):
             raise ValueError("Weir structure requires z values.")
         # combine with existing structures if present
-        if not overwrite and stype in self.geoms:
+        if merge and stype in self.geoms:
             gdf0 = self._geoms.pop(stype)
             gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
             self.logger.info(f"Adding {stype} structures to existing structures.")
