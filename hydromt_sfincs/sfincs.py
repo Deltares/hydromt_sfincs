@@ -210,8 +210,8 @@ class SfincsModel(MeshMixin, GridModel):
         res: float = 100,
         crs: Union[str, int] = "utm",
         rotated: bool = False,
-        hydrography_fn: str = "merit_hydro",  # TODO: change to None
-        basin_index_fn: str = "merit_hydro_index",  # TODO: change to None
+        hydrography_fn: str = None,
+        basin_index_fn: str = None,
     ):
         """Setup a regular or quadtree grid from a region.
 
@@ -680,7 +680,7 @@ class SfincsModel(MeshMixin, GridModel):
         river_width: float = 500,
         merge: bool = False,
         first_index: int = 1,
-        keep_rivers_geom=False,
+        keep_rivers_geom: bool = False,
     ):
         """Setup discharge (src) points where a river enters the model domain.
 
