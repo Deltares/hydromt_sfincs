@@ -1,13 +1,14 @@
+"""Workflows, to estimate river bathymetry and burn these in a DEM."""
+import logging
+from typing import Tuple
+
 import geopandas as gpd
 import numpy as np
 import pyflwdir
 import xarray as xr
-from scipy import ndimage
-from typing import Union, Tuple, Optional
-import logging
-
-from hydromt.gis_utils import nearest_merge, nearest, spread2d
+from hydromt.gis_utils import nearest, nearest_merge, spread2d
 from hydromt.workflows import rivers
+from scipy import ndimage
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,9 @@
-import geopandas as gpd
-import pandas as pd
+"""Plotting functions for SFINCS model data."""
+from typing import Dict, List, Tuple
+
 import numpy as np
+import pandas as pd
 import xarray as xr
-from typing import Dict, Tuple, List
 
 from .utils import get_bounds_vector
 
@@ -37,8 +38,8 @@ def plot_forcing(forcing: Dict, **kwargs):
     fig, axes
         Model fig and ax objects
     """
-    import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
 
     n = len(forcing.keys())
     kwargs0 = dict(sharex=True, figsize=(6, n * 3))
@@ -135,10 +136,10 @@ def plot_basemap(
     fig, axes
         Model fig and ax objects
     """
+    import cartopy.crs as ccrs
+    import cartopy.io.img_tiles as cimgt
     import matplotlib.pyplot as plt
     from matplotlib import colors, patheffects
-    import cartopy.io.img_tiles as cimgt
-    import cartopy.crs as ccrs
 
     # read crs and utm zone > convert to cartopy
     wkt = ds.raster.crs.to_wkt()

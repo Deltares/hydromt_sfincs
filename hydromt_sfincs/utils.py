@@ -1,27 +1,27 @@
 """
+HydroMT-SFINCS utilities functions for reading and writing SFINCS specific input and output files,
+as well as some common data conversions.
 """
 
-import os
+import copy
+import io
+import logging
+from configparser import ConfigParser
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Tuple, Union
+
+import geopandas as gpd
+import hydromt
 import numpy as np
+import pandas as pd
 import pyproj
-from pyproj.crs.crs import CRS
 import rasterio
 import xarray as xr
-import pandas as pd
-import geopandas as gpd
-from datetime import datetime
-from configparser import ConfigParser
-from shapely.geometry import LineString, Polygon
-from typing import List, Dict, Union, Tuple, Optional
-from pathlib import Path
-import io
-import copy
-import logging
-import hydromt
 from hydromt.io import write_xy
-from scipy import ndimage
-from pyflwdir.regions import region_area
-from hydromt_sfincs.workflows import tiling
+from pyproj.crs.crs import CRS
+from shapely.geometry import LineString, Polygon
+
 
 __all__ = [
     "read_inp",
@@ -908,7 +908,7 @@ def downscale_floodmap(
     floodmap_fn : Union[Path, str], optional
         Name (path) of output floodmap, by default "floodmap.tif"
     reproj_method : str, optional
-        Reprojection method for downscaling the water levels, by default "nearest". 
+        Reprojection method for downscaling the water levels, by default "nearest".
         Other option is "bilinear".
     """
 
@@ -948,111 +948,6 @@ def downscale_floodmap(
         profile="COG",
         nodata=np.nan,
     )
-
-
-def downscale_floodmap_webmercator(
-    zsmax: Union[np.array, xr.DataArray],
-    index_path: str,
-    topobathy_path: str,
-    floodmap_path: str,
-    hmin: float = 0.05,
-    zoom_range: Union[int, List[int]] = [0, 13],
-    fmt_in: str = "bin",
-    fmt_out: str = "png",
-    merge: bool = True,
-):
-    """Create a downscaled floodmap for (model) region in webmercator tile format
-
-    Parameters
-    ----------
-    zsmax : Union[np.array, xr.DataArray]
-        DataArray with maximum water level (m) for each cell
-    index_path : str
-        Directory with index files
-    topobathy_path : str
-        Directory with topobathy files
-    floodmap_path : str
-        Directory where floodmap files will be stored
-    hmin : float, optional
-        Minimum water depth considered as "flooded", by default 0.05 m
-    zoom_range : Union[int, List[int]], optional
-        Range of zoom levels, by default [0, 13]
-    fmt_in : str, optional
-        Format of the index and topobathy tiles, by default "bin"
-    fmt_out : str, optional
-        Format of the floodmap tiles to be created, by default "png"
-    merge : bool, optional
-        Merge floodmap tiles with existing floodmap tiles (this could for example happen when there is overlap between models), by default True
-    """
-    # if zsmax is an xarray, convert to numpy array
-    if isinstance(zsmax, xr.DataArray):
-        zsmax = zsmax.values
-    zsmax = zsmax.flatten()
-
-    # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
-    if isinstance(zoom_range, int):
-        zoom_range = [0, zoom_range]
-
-    for izoom in range(zoom_range[0], zoom_range[1] + 1):
-        index_zoom_path = os.path.join(index_path, str(izoom))
-
-        if not os.path.exists(index_zoom_path):
-            continue
-
-        # list the available x-folders
-        x_folders = [f.path for f in os.scandir(index_zoom_path) if f.is_dir()]
-
-        # loop over x-folders
-        for x_folder in x_folders:
-            x = os.path.basename(x_folder)
-            # list the available y-files with fmt_in extension
-            y_files = []
-            # Iterate directory
-            for file in os.listdir(x_folder):
-                # check only text files
-                if file.endswith(fmt_in):
-                    y_files.append(file)
-
-            # loop over y-files
-            for y_file in y_files:
-                # read the index file
-                index_fn = os.path.join(x_folder, y_file)
-                if fmt_in == "bin":
-                    ind = np.fromfile(index_fn, dtype="i4")
-                elif fmt_in == "png":
-                    ind = tiling.png2int(index_fn)
-
-                # read the topobathy file
-                dep_fn = os.path.join(topobathy_path, str(izoom), x, y_file)
-                if fmt_in == "bin":
-                    dep = np.fromfile(dep_fn, dtype="f4")
-                elif fmt_in == "png":
-                    dep = tiling.png2elevation(dep_fn)
-
-                # create the floodmap
-                hmax = zsmax[ind]
-                hmax = hmax - dep
-                hmax[hmax < hmin] = np.nan
-                hmax = hmax.reshape(256, 256)
-
-                # save the floodmap
-                if np.isnan(hmax).all():
-                    # only nans in this tile
-                    continue
-
-                if not os.path.exists(os.path.join(floodmap_path, str(izoom), x)):
-                    os.makedirs(os.path.join(floodmap_path, str(izoom), x))
-
-                floodmap_fn = os.path.join(
-                    floodmap_path, str(izoom), x, y_file.replace(fmt_in, fmt_out)
-                )
-                if fmt_out == "bin":
-                    # And write indices to file
-                    fid = open(floodmap_fn, "wb")
-                    fid.write(hmax)
-                    fid.close()
-                elif fmt_out == "png":
-                    tiling.elevation2png(hmax, floodmap_fn)
 
 
 def rotated_grid(pol: Polygon, res: float) -> Tuple[float, float, int, int, float]:

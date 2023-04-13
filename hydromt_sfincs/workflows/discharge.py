@@ -1,7 +1,9 @@
+"""Workflows for discharge boundary conditions."""
+import logging
+
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-import logging
 
 logger = logging.getLogger(__name__)
 

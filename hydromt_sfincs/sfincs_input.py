@@ -1,5 +1,9 @@
-from datetime import datetime
+"""
+SfincsInput class to read and write sfincs input (inp) files.
+"""
+
 from ast import literal_eval
+from datetime import datetime
 from typing import Dict
 
 
