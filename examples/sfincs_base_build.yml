@@ -1,5 +1,5 @@
 global:
-  data_libs: []                 # add optional paths to data_catalog yml files
+  data_libs: []                # add optional paths to data_catalog yml files
 
 setup_config:
   tref: "20100201 000000"
@@ -7,20 +7,20 @@ setup_config:
   tstop: "20100202 000000"
 
 setup_grid_from_region:
-  res: 50                       # model resolution
-  crs: utm                      # model CRS (must be UTM zone)
-  rotated: True                 # allow a rotated grid
+  res: 50                      # model resolution
+  crs: utm                     # model CRS (must be UTM zone)
+  rotated: True                # allow a rotated grid
 
 setup_dep:
   datasets_dep:
-  - elevtn: merit_hydro		# 1st elevation dataset	
-    zmin: 0.001			# only use where values > 0.001
-  - elevtn: gebco		# 2nd eleveation dataset (to be merged with the first)
+  - elevtn: merit_hydro        # 1st elevation dataset
+    zmin: 0.001                # only use where values > 0.001
+  - elevtn: gebco              # 2nd eleveation dataset (to be merged with the first)
 
 setup_mask_active:
-  mask: data//region.geojson    # Note that this is local data and only valid for this example
-  zmin: -5			# set cells with an elevation <-5 to inactive	
+  mask: data//region.geojson   # Note that this is local data and only valid for this example
+  zmin: -5                     # set cells below zmin to inactive
 
 setup_mask_bounds:
-  btype: waterlevel		# Set waterlevel boundaries
-  zmax: -1			# only cells with an elevation <-1 can be waterlevel bounddaries
+  btype: waterlevel            # Set waterlevel boundaries
+  zmax: -1                     # only cells below zmax can be waterlevel bounddaries

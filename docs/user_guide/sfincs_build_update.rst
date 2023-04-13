@@ -28,7 +28,6 @@ Or to **update**  an existing SFINCS model:
     hydromt update sfincs ./sfincs_compound -o ./sfincs_compound_precip -i sfincs_update_precip.yml -vv
 
 **Configuration file:**
-
 Settings to build or update a SFINCS model are managed in a configuration file. In this file,
 every option from each :ref:`model method <model_methods>` can be changed by the user
 in its corresponding section. See the HydroMT core documentation for more info about the `model configuration .yml-file <config>`_ and check-out the example below.
@@ -69,7 +68,6 @@ Note that the order in which the components are listed in the yml-file is import
 - if discharge locations are inferred from hydrography, :py:func:`~hydromt_sfincs.SfincsModel.setup_river_inflow` should be run before :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing` or :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid`.
 
 **Data libraries:**
-
 Data sources in HydroMT are provided in one of several yaml libraries. These libraries contain required
 information on the different data sources so that HydroMT can process them for the different models. There
 are three ways for the user to select which data libraries to use:
@@ -85,7 +83,7 @@ are three ways for the user to select which data libraries to use:
   These user libraries can be added either in the command line using the **-d** option and path/to/yaml or in the **yml file**
   with the **data_libs** option in the  `global` section (see example above).
 
-See :ref:`Example: Build from CLI<build-from-cli-example>` for suggested components
+See `Example: Build from CLI <../_examples/build_from_cli.ipynb>`_ for suggested components
 and options to use for compound flooding applications.
 
 .. _sfincs_python:
@@ -123,6 +121,8 @@ Typical applications where this approach can be useful are:
 
     sf.write() # write all
 
+See `Example: Build from Script <../_examples/build_from_script.ipynb>`_ for a more detailed example.
+
 
 .. _data: https://deltares.github.io/hydromt/latest/user_guide/data_overview.html
 .. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html
@@ -132,4 +132,4 @@ Typical applications where this approach can be useful are:
     :hidden:
     
     Example: Build from CLI <../_examples/build_from_cli.ipynb>
-    Example: Build from Python <../_examples/build_from_script.ipynb>
+    Example: Build from Script <../_examples/build_from_script.ipynb>

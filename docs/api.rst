@@ -38,6 +38,8 @@ Setup components
    SfincsModel.setup_manning_roughness
    SfincsModel.setup_cn_infiltration
    SfincsModel.setup_subgrid
+   SfincsModel.setup_river_inflow
+   SfincsModel.setup_river_outflow
    SfincsModel.setup_observation_points
    SfincsModel.setup_structures
    SfincsModel.setup_waterlevel_forcing
@@ -70,7 +72,6 @@ Attributes
    SfincsModel.root
    SfincsModel.config
    SfincsModel.grid
-   SfincsModel.subgrid
    SfincsModel.geoms
    SfincsModel.forcing
    SfincsModel.states
