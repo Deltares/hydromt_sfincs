@@ -5,7 +5,6 @@ from os.path import join, isfile, abspath, dirname, basename, isabs
 import glob
 import numpy as np
 import logging
-import pyflwdir
 import geopandas as gpd
 import pandas as pd
 from pyproj import CRS
@@ -19,6 +18,7 @@ from hydromt.models.model_grid import GridModel
 from hydromt.models.model_mesh import MeshMixin
 from hydromt.vector import GeoDataset, GeoDataArray
 from hydromt.raster import RasterDataset, RasterDataArray
+from hydromt.gis_utils import nearest_merge
 
 from . import workflows, utils, plots, DATADIR
 from .regulargrid import RegularGrid
@@ -210,8 +210,8 @@ class SfincsModel(MeshMixin, GridModel):
         res: float = 100,
         crs: Union[str, int] = "utm",
         rotated: bool = False,
-        hydrography_fn: str = "merit_hydro",  # TODO: change to None
-        basin_index_fn: str = "merit_hydro_index",  # TODO: change to None
+        hydrography_fn: str = None,
+        basin_index_fn: str = None,
     ):
         """Setup a regular or quadtree grid from a region.
 
@@ -630,8 +630,6 @@ class SfincsModel(MeshMixin, GridModel):
         if len(datasets_rgh) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
             datasets_rgh = self._parse_datasets_rgh(datasets_rgh)
-        else:
-            datasets_rgh = []
 
         # folder where high-resolution topobathy and manning geotiffs are stored
         if write_dep_tif or write_man_tif:
@@ -673,553 +671,239 @@ class SfincsModel(MeshMixin, GridModel):
         if "manningfile" in self.config:
             self.config.pop("manningfile")  # remove manningfile from config
 
-    def setup_river_hydrography(self, hydrography_fn=None, adjust_dem=False, **kwargs):
-        """Setup hydrography layers for flow directions ("flwdir") and upstream area
-        ("uparea") which are required to setup the setup_river* model components.
-
-        If no hydrography data is provided (`hydrography_fn=None`) flow directions are
-        derived from the model elevation data.
-        Note that in that case the upstream area map will miss the contribution from area
-        upstream of the model domain and incoming rivers in the `setup_river_inflow`
-        cannot be detected.
-
-        If the model crs or resolution is different from the input hydrography data,
-        it is reprojected to the model grid. Note that this works best if the destination
-        resolution is roughly the same or higher (i.e. smaller cells).
-
-        Adds model layers (both not used by SFINCS!):
-
-        * **uparea** map: upstream area [km2]
-        * **flwdir** map: local D8 flow directions [-]
-
-        Updates model layer (if `adjust_dem=True`):
-
-        * **dep** map: combined elevation/bathymetry [m+ref]
-
-        Parameters
-        ----------
-        hydrography_fn : str
-            Path or data source name for hydrography raster data, by default None
-            and derived from model elevation data.
-
-            * Required variable: ['uparea']
-            * Optional variable: ['flwdir']
-        adjust_dem: bool, optional
-            Adjust the model elevation such that each downstream cell is at the
-            same or lower elevation. By default True.
-        """
-        name = "dep"
-        assert name in self.grid
-        da_elv = self.grid[name]
-
-        da_elv = (
-            da_elv.raster.clip_geom(self.region, mask=True)
-            .raster.mask_nodata()
-            .fillna(-9999)  # force nodata value to be -9999
-            .round(2)  # cm precision
-        )
-        da_elv.raster.set_nodata(-9999)
-
-        # check N->S orientation
-        if da_elv.raster.res[1] > 0:
-            da_elv = da_elv.raster.flipud()
-
-        if hydrography_fn is not None:
-            ds_hydro = self.data_catalog.get_rasterdataset(
-                hydrography_fn,
-                geom=self.grid.raster.box,
-                buffer=20,
-                single_var_as_array=False,
-            )
-            assert "uparea" in ds_hydro
-            warp = da_elv.raster.aligned_grid(ds_hydro)
-            if not warp or "flwdir" not in ds_hydro:
-                self.logger.info("Reprojecting hydrography data to destination grid.")
-                ds_out = hydromt.flw.reproject_hydrography_like(
-                    ds_hydro, da_elv, logger=self.logger, **kwargs
-                )
-            else:
-                ds_out = ds_hydro[["uparea", "flwdir"]].raster.clip_bbox(
-                    da_elv.raster.bounds
-                )
-            ds_out = ds_out.raster.mask(da_elv != da_elv.raster.nodata)
-        else:
-            self.logger.info("Getting hydrography data from model grid.")
-            da_flw = hydromt.flw.d8_from_dem(da_elv, **kwargs)
-            flwdir = hydromt.flw.flwdir_from_da(da_flw, ftype="d8")
-            da_upa = xr.DataArray(
-                dims=da_elv.raster.dims,
-                data=flwdir.upstream_area(unit="km2"),
-                name="uparea",
-            )
-            da_upa.raster.set_nodata(-9999)
-            ds_out = xr.merge([da_flw, da_upa.reset_coords(drop=True)])
-
-        self.logger.info("Saving hydrography data to grid.")
-        self.set_grid(ds_out["uparea"])
-        self.set_grid(ds_out["flwdir"])
-
-        if adjust_dem:
-            self.logger.info(f"Hydrologically adjusting {name} map.")
-            flwdir = hydromt.flw.flwdir_from_da(ds_out["flwdir"], ftype="d8")
-            da_elv.data = flwdir.dem_adjust(da_elv.values)
-            self.set_grid(da_elv.round(2), name)
-
-    def setup_river_bathymetry(
-        self,
-        river_geom_fn=None,
-        river_mask_fn=None,
-        qbankfull_fn=None,
-        rivdph_method="gvf",
-        rivwth_method="geom",
-        river_upa=25.0,
-        river_len=1000,
-        min_rivwth=50.0,
-        min_rivdph=1.0,
-        rivbank=True,
-        rivbankq=25,
-        segment_length=3e3,
-        smooth_length=10e3,
-        constrain_rivbed=True,
-        constrain_estuary=True,
-        dig_river_d4=True,
-        plot_riv_profiles=0,
-        **kwargs,  # for workflows.get_river_bathymetry method
-    ):
-        """Burn rivers into the model elevation (dep) file.
-
-        NOTE: this method is experimental and may change in the near future.
-
-        River cells are based on the `river_mask_fn` raster file if `rivwth_method='mask'`,
-        or if `rivwth_method='geom'` the rasterized segments buffered with half a river width
-        ("rivwth" [m]) if that attribute is found in `river_geom_fn`.
-
-        If a river segment geometry file `river_geom_fn` with bedlevel column ("zb" [m+REF]) or
-        a river depth ("rivdph" [m]) in combination with `rivdph_method='geom'` is provided,
-        this attribute is used directly.
-
-        Otherwise, a river depth is estimated based on bankfull discharge ("qbankfull" [m3/s])
-        attribute taken from the nearest river segment in `river_geom_fn` or `qbankfull_fn`
-        upstream river boundary points if provided.
-
-        The river depth is relative to the bankfull elevation profile if `rivbank=True` (default),
-        which is estimated as the `rivbankq` elevation percentile [0-100] of cells neighboring river cells.
-        This option requires the flow direction ("flwdir") and upstream area ("uparea") maps to be set
-        using the "setup_river_hydrography" method. If `rivbank=False` the depth is simply subtracted
-        from the elevation of river cells.
-
-        Missing river width and river depth values are filled by propagating valid values downstream and
-        using the constant minimum values `min_rivwth` and `min_rivdph` for the remaining missing values.
-
-        Updates model layer:
-
-        * **dep** map: combined elevation/bathymetry [m+ref]
-
-        Adds model layers
-
-        * **rivmsk** map: map of river cells (not used by SFINCS)
-        * **rivers** geom: geometry of rivers (not used by SFINCS)
-
-        Parameters
-        ----------
-        river_geom_fn : str, optional
-            Line geometry with river attribute data.
-
-            * Required variable for direct bed level burning: ['zb']
-            * Required variable for direct river depth burning: ['rivdph'] (only in combination with rivdph_method='geom')
-            * Variables used for river depth estimates: ['qbankfull', 'rivwth']
-
-        river_mask_fn : str, optional
-            River mask raster used to define river cells
-        qbankfull_fn: str, optional
-            Point geometry with bankfull discharge estimates
-
-            * Required variable: ['qbankfull']
-
-        rivdph_method : {'gvf', 'manning', 'powlaw'}
-            River depth estimate method, by default 'gvf'
-        rivwth_method : {'geom', 'mask'}
-            Derive the river width from either the `river_geom_fn` (geom) or
-            `river_mask_fn` (mask; default) data.
-        river_upa : float, optional
-            Minimum upstream area threshold for rivers [km2], by default 25.0
-        river_len: float, optional
-            Mimimum river length within the model domain threshhold [m], by default 1000 m.
-        min_rivwth, min_rivdph: float, optional
-            Minimum river width [m] (by default 50.0) and depth [m] (by default 1.0)
-        rivbank: bool, optional
-            If True (default), approximate the reference elevation for the river depth based
-            on the river bankfull elevation at cells neighboring river cells. Otherwise
-            use the elevation of the local river cell as reference level.
-        rivbankq : float, optional
-            quantile [1-100] for river bank estimation, by default 25
-        segment_length : float, optional
-            Approximate river segment length [m], by default 5e3
-        smooth_length : float, optional
-            Approximate smoothing length [m], by default 10e3
-        constrain_estuary : bool, optional
-            If True (default) fix the river depth in estuaries based on the upstream river depth.
-        constrain_rivbed : bool, optional
-            If True (default) correct the river bed level to be hydrologically correct,
-            i.e. sloping downward in downstream direction.
-        dig_river_d4: bool, optional
-            If True (default), dig the river out to be hydrologically connected in D4.
-        """
-        if river_mask_fn is None and rivwth_method == "mask":
-            raise ValueError(
-                '"river_mask_fn" should be provided if rivwth_method="mask".'
-            )
-        # get basemap river flwdir
-        assert "msk" in self.grid  # make sure msk is grid
-
-        if self.grid.raster.res[1] > 0:
-            ds = self.grid.raster.flipud()
-        else:
-            ds = self.grid
-
-        flwdir = None
-        if "flwdir" in ds:
-            flwdir = hydromt.flw.flwdir_from_da(ds["flwdir"], mask=False)
-
-        # read river line geometry data
-        gdf_riv = None
-        if river_geom_fn is not None:
-            gdf_riv = self.data_catalog.get_geodataframe(
-                river_geom_fn, geom=self.region
-            ).to_crs(self.crs)
-        # read river bankfull point data
-        gdf_qbf = None
-        if qbankfull_fn is not None:
-            gdf_qbf = self.data_catalog.get_geodataframe(
-                qbankfull_fn,
-                geom=self.region,
-            ).to_crs(self.crs)
-        # read river mask raster data
-        da_rivmask = None
-        if river_mask_fn is not None:
-            da_rivmask = self.data_catalog.get_rasterdataset(
-                river_mask_fn, geom=self.region
-            ).raster.reproject_like(ds, "max")
-            ds["rivmsk"] = da_rivmask.where(ds["msk"] != 0, 0) != 0
-        elif "rivmsk" in ds:
-            self.logger.info(
-                'River mask based on internal "rivmsk" layer. If this is unwanted '
-                "delete the gis/rivmsk.tif file or drop the rivmsk grid variable."
-            )
-
-        # estimate elevation bed level based on qbankfull (and other parameters)
-        if not (gdf_riv is not None and "zb" in gdf_riv):
-            if flwdir is None:
-                msg = '"flwdir" staticmap layer missing, run "setup_river_hydrography".'
-                raise ValueError(msg)
-            gdf_riv, ds["rivmsk"] = workflows.get_river_bathymetry(
-                ds,
-                flwdir=flwdir,
-                gdf_riv=gdf_riv,
-                gdf_qbf=gdf_qbf,
-                rivdph_method=rivdph_method,
-                rivwth_method=rivwth_method,
-                river_upa=river_upa,
-                river_len=river_len,
-                min_rivdph=min_rivdph,
-                min_rivwth=min_rivwth,
-                rivbank=rivbank,
-                rivbankq=rivbankq,
-                segment_length=segment_length,
-                smooth_length=smooth_length,
-                elevtn_name="dep",
-                constrain_estuary=constrain_estuary,
-                constrain_rivbed=constrain_rivbed,
-                logger=self.logger,
-                **kwargs,
-            )
-        elif "rivmsk" not in ds:
-            buffer = gdf_riv["rivwth"].values if "rivwth" in gdf_riv else 0
-            gdf_riv_buf = gdf_riv.buffer(buffer)
-            ds["rivmsk"] = ds.raster.geometry_mask(gdf_riv_buf, all_touched=True)
-
-        # set elevation bed level
-        da_elv1, ds["rivmsk"] = workflows.burn_river_zb(
-            gdf_riv=gdf_riv,
-            da_elv=ds["dep"],
-            da_msk=ds["rivmsk"],
-            flwdir=flwdir,
-            river_d4=dig_river_d4,
-            logger=self.logger,
-        )
-
-        if plot_riv_profiles > 0:
-            # TODO move to plots
-            import matplotlib.pyplot as plt
-
-            flw = pyflwdir.from_dataframe(gdf_riv.set_index("idx"))
-            upa_pit = gdf_riv.loc[flw.idxs_pit, "uparea"]
-            n = int(plot_riv_profiles)
-            idxs = flw.idxs_pit[np.argsort(upa_pit).values[::-1]][:n]
-            paths, _ = flw.path(idxs=idxs, direction="up")
-            _, axes = plt.subplots(n, 1, figsize=(7, n * 4))
-            for path, ax in zip(paths, axes):
-                g0 = gdf_riv.loc[path, :]
-                x = g0["rivdst"].values
-                ax.plot(x, g0["zs"], "--k", label="bankfull")
-                ax.plot(x, g0["elevtn"], ":k", label="original zb")
-                ax.plot(x, g0["zb"], "--g", label=f"{rivdph_method} zb (corrected)")
-                mask = da_elv1.raster.geometry_mask(g0).values
-                x1 = flwdir.distnc[mask]
-                y1 = da_elv1.data[mask]
-                s1 = np.argsort(x1)
-                ax.plot(x1[s1], y1[s1], ".b", ms=2, label="zb (burned)")
-            ax.legend()
-            if not os.path.isdir(join(self.root, "figs")):
-                os.makedirs(join(self.root, "figs"))
-            fn_fig = join(self.root, "figs", "river_bathymetry.png")
-            plt.savefig(fn_fig, dpi=225, bbox_inches="tight")
-
-        # update dep
-        self.set_grid(da_elv1.round(2), name="dep")
-        # keep river geom and rivmsk for postprocessing
-        self.set_geoms(gdf_riv, name="rivers")
-        # save rivmask as int8 map (geotif does not support bool maps)
-        da_rivmask = ds["rivmsk"].astype(np.int8).where(ds["msk"] > 0, 255)
-        da_rivmask.raster.set_nodata(255)
-        self.set_grid(da_rivmask, name="rivmsk")
-
     def setup_river_inflow(
         self,
-        hydrography_fn=None,
-        river_upa=25.0,
-        river_len=1e3,
-        river_width=2e3,
-        keep_rivers_geom=False,
-        buffer=10,
-        **kwargs,  # catch deprecated args
+        rivers: Union[str, Path, gpd.GeoDataFrame] = None,
+        hydrography: Union[str, Path, xr.Dataset] = None,
+        river_upa: float = 10.0,
+        river_len: float = 1e3,
+        river_width: float = 500,
+        merge: bool = False,
+        first_index: int = 1,
+        keep_rivers_geom: bool = False,
     ):
-        """Setup river inflow (source) points where a river enters the model domain.
+        """Setup discharge (src) points where a river enters the model domain.
 
-        NOTE: this method requires the either `hydrography_fn` or `setup_river_hydrography` to be run first.
-        NOTE: best to run after `setup_mask`
+        If `rivers` is not provided, river centerlines are extracted from the
+        `hydrography` dataset based on the `river_upa` threshold.
+
+        Waterlevel or outflow boundary cells intersecting with the river
+        are removed from the model mask.
+
+        Note: this method assumes the rivers are directed from up- to downstream.
 
         Adds model layers:
 
-        * **src** geoms: discharge boundary point locations
-        * **dis** forcing: dummy discharge timeseries
+        * **dis** forcing: discharge forcing
         * **mask** map: SFINCS mask layer (only if `river_width` > 0)
-        * **rivers_in** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)
+        * **rivers_inflow** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)
 
         Parameters
         ----------
-        hydrography_fn: str, Path, optional
-            Path or data source name for hydrography raster data, by default 'merit_hydro'.
+        rivers : str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for river centerline data.
+            If present, the 'uparea' and 'rivlen' attributes are used.
+        hydrography: str, Path, xr.Dataset optional
+            Path, data source name, or a xarray raster object for hydrography data.
 
             * Required layers: ['uparea', 'flwdir'].
         river_upa : float, optional
-            Minimum upstream area threshold for rivers [km2], by default 25.0
+            Minimum upstream area threshold for rivers [km2], by default 10.0
         river_len: float, optional
             Mimimum river length within the model domain threshhold [m], by default 1 km.
         river_width: float, optional
             Estimated constant width [m] of the inflowing river. Boundary cells within
             half the width are forced to be closed (mask = 1) to avoid instabilities with
-            nearby open or waterlevel boundary cells, by default 1 km.
+            nearby open or waterlevel boundary cells, by default 500 m.
+        merge: bool, optional
+            If True, merge rivers source points with existing points, by default False.
+        first_index: int, optional
+            First index for the river source points, by default 1.
         keep_rivers_geom: bool, optional
-            If True, keep a geometry of the rivers "rivers_in" in geoms. By default False.
+            If True, keep a geometry of the rivers "rivers_inflow" in geoms. By default False.
         buffer: int, optional
             Buffer [no. of cells] around model domain, by default 10.
         """
-        if "basemaps_fn" in kwargs:
-            self.logger.warning(
-                "'basemaps_fn' is deprecated use 'hydrography_fn' instead."
-            )
-            hydrography_fn = kwargs.pop("basemaps_fn")
-
-        if hydrography_fn is not None:
+        da_flwdir, da_uparea, gdf_riv = None, None, None
+        if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
-                hydrography_fn,
+                hydrography,
                 geom=self.region,
                 variables=["uparea", "flwdir"],
-                buffer=buffer,
+                buffer=5,
             )
+            da_flwdir = ds["flwdir"]
+            da_uparea = ds["uparea"]
+        elif rivers == "rivers_outflow" and rivers in self.geoms:
+            # reuse rivers from setup_river_in/outflow
+            gdf_riv = self.geoms[rivers]
+        elif rivers is not None:
+            gdf_riv = self.data_catalog.get_geodataframe(
+                rivers, geom=self.region
+            ).to_crs(self.crs)
         else:
-            if self.grid.raster.res[1] > 0:
-                ds = self.grid.raster.flipud()
-            else:
-                ds = self.grid
-            if "uparea" not in ds or "flwdir" not in ds:
-                raise ValueError(
-                    '"uparea" and/or "flwdir" layers missing. '
-                    "Run setup_river_hydrography first or provide hydrography_fn dataset."
-                )
+            raise ValueError("Either hydrography or rivers must be provided.")
 
-        # (re)calculate region to make sure it's accurate
-        region = self.mask.where(self.mask <= 1, 1).raster.vectorize()
         gdf_src, gdf_riv = workflows.river_boundary_points(
-            da_flwdir=ds["flwdir"],
-            da_uparea=ds["uparea"],
-            region=region,
+            region=self.region,
+            res=self.reggrid.dx,
+            gdf_riv=gdf_riv,
+            da_flwdir=da_flwdir,
+            da_uparea=da_uparea,
             river_len=river_len,
             river_upa=river_upa,
-            btype="inflow",
-            return_river=keep_rivers_geom,
-            logger=self.logger,
+            inflow=True,
         )
-        if len(gdf_src.index) == 0:
+        n = len(gdf_src.index)
+        self.logger.info(f"Found {n} river inflow points.")
+        if n == 0:
             return
 
-        # set forcing with dummy timeseries to keep valid sfincs model
-        gdf_src = gdf_src.to_crs(self.crs.to_epsg())
-        self.set_forcing_1d(gdf_locs=gdf_src, name="dis")
+        # set forcing src pnts
+        gdf_src.index = gdf_src.index + first_index
+        self.set_forcing_1d(gdf_locs=gdf_src.copy(), name="dis", merge=merge)
 
         # set river
-        if keep_rivers_geom and gdf_riv is not None:
-            gdf_riv = gdf_riv.to_crs(self.crs.to_epsg())
-            gdf_riv.index = gdf_riv.index.values + 1  # one based index
-            self.set_geoms(gdf_riv, name="rivers_in")
+        if keep_rivers_geom:
+            self.set_geoms(gdf_riv, name="rivers_inflow")
 
-        # update mask if closed_bounds_buffer > 0
-        if river_width > 0:
+        # update mask if river_width > 0
+        if "rivwth" in gdf_src.columns:
+            river_width = gdf_src["rivwth"].fillna(river_width)
+        if np.any(river_width > 0) and np.any(self.mask > 1):
             # apply buffer
-            gdf_src_buf = gpd.GeoDataFrame(
-                geometry=gdf_src.buffer(river_width / 2), crs=gdf_src.crs
-            )
+            gdf_src["geometry"] = gdf_src.buffer(river_width / 2)
             # find intersect of buffer and model grid
-            bounds = utils.mask_bounds(self.mask, gdf_mask=gdf_src_buf)
+            tmp_msk = self.reggrid.create_mask_bounds(
+                xr.where(self.mask > 0, 1, 0).astype(np.uint8), gdf_include=gdf_src
+            )
+            reset_msk = np.logical_and(tmp_msk > 1, self.mask > 1)
             # update model mask
-            n = np.count_nonzero(bounds.values)
+            n = int(np.sum(reset_msk))
             if n > 0:
-                da_mask = self.mask.where(~bounds, np.uint8(1))
+                da_mask = self.mask.where(~reset_msk, np.uint8(1))
                 self.set_grid(da_mask, "msk")
-                self.logger.debug(
-                    f"{n:d} closed (mask=1) boundary cells set around src points."
-                )
+                self.logger.info(f"Boundary cells (n={n}) updated around src points.")
 
     def setup_river_outflow(
         self,
-        hydrography_fn=None,
-        river_upa=25.0,
-        river_len=1e3,
-        river_width=2e3,
-        append_bounds=False,
-        keep_rivers_geom=False,
-        **kwargs,  # catch deprecated arguments
+        rivers: Union[str, Path, gpd.GeoDataFrame] = None,
+        hydrography: Union[str, Path, xr.Dataset] = None,
+        river_upa: float = 10.0,
+        river_len: float = 1e3,
+        river_width: float = 500,
+        keep_rivers_geom: bool = False,
+        reset_bounds: bool = False,
+        btype: str = "outflow",
     ):
-        """Setup open boundary cells (mask=3) where a river flows out of the model domain.
+        """Setup open boundary cells (mask=3) where a river flows
+        out of the model domain.
 
-        Outflow locations are based on a minimal upstream area threshold. Locations within
-        half `river_width` of a discharge source point or waterlevel boundary cells are omitted.
+        If `rivers` is not provided, river centerlines are extracted from the
+        `hydrography` dataset based on the `river_upa` threshold.
 
-        NOTE: this method requires the either `hydrography_fn` input or `setup_river_hydrography` to be run first.
-        NOTE: best to run after `setup_mask`, `setup_bounds` and `setup_river_inflow`
+        River outflows that intersect with discharge source point or waterlevel
+        boundary cells are omitted.
+
+        Note: this method assumes the rivers are directed from up- to downstream.
 
         Adds / edits model layers:
 
         * **msk** map: edited by adding outflow points (msk=3)
-        * **river_out** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)
+        * **rivers_outflow** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)
 
         Parameters
         ----------
-        hydrography_fn: str, Path, optional
-            Path or data source name for hydrography raster data, by default 'merit_hydro'.
+        rivers : str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for river centerline data.
+            If present, the 'uparea' and 'rivlen' attributes are used.
+        hydrography: str, Path, xr.Dataset optional
+            Path, data source name, or a xarray raster object for hydrography data.
+
             * Required layers: ['uparea', 'flwdir'].
-        river_width: int, optional
-            The width [m] of the open boundary cells in the SFINCS msk file.
-            By default 2km, i.e.: 1km to each side of the outflow location.
         river_upa : float, optional
-            Minimum upstream area threshold for rivers [km2], by default 25.0
+            Minimum upstream area threshold for rivers [km2], by default 10.0
         river_len: float, optional
             Mimimum river length within the model domain threshhold [m], by default 1000 m.
+        river_width: int, optional
+            The width [m] of the open boundary cells in the SFINCS msk file.
+            By default 500m, i.e.: 250m to each side of the outflow location.
         append_bounds: bool, optional
             If True, write new outflow boundary cells on top of existing. If False (default),
             first reset existing outflow boundary cells to normal active cells.
         keep_rivers_geom: bool, optional
-            If True, keep a geometry of the rivers "rivers_out" in geoms. By default False.
-        """
-        if "outflow_width" in kwargs:
-            self.logger.warning(
-                "'outflow_width' is deprecated use 'river_width' instead."
-            )
-            river_width = kwargs.pop("outflow_width")
-        if "basemaps_fn" in kwargs:
-            self.logger.warning(
-                "'basemaps_fn' is deprecated use 'hydrography_fn' instead."
-            )
-            hydrography_fn = kwargs.pop("basemaps_fn")
+            If True, keep a geometry of the rivers "rivers_outflow" in geoms. By default False.
+        reset_bounds: bool, optional
+            If True, reset existing outlfow boundary cells before setting new boundary cells,
+            by default False.
+        btype: {'waterlevel', 'outflow'}
+            Boundary type
 
-        if hydrography_fn is not None:
+        See Also
+        --------
+        setup_mask_bounds
+        """
+        da_flwdir, da_uparea, gdf_riv = None, None, None
+        if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
-                hydrography_fn,
+                hydrography,
                 geom=self.region,
                 variables=["uparea", "flwdir"],
-                buffer=10,
+                buffer=5,
             )
+            da_flwdir = ds["flwdir"]
+            da_uparea = ds["uparea"]
+        elif rivers == "rivers_inflow" and rivers in self.geoms:
+            # reuse rivers from setup_river_in/outflow
+            gdf_riv = self.geoms[rivers]
+        elif rivers is not None:
+            gdf_riv = self.data_catalog.get_geodataframe(
+                rivers, geom=self.region
+            ).to_crs(self.crs)
         else:
-            if self.grid.raster.res[1] > 0:
-                ds = self.grid.raster.flipud()
-            else:
-                ds = self.grid
-            if "uparea" not in ds or "flwdir" not in ds:
-                raise ValueError(
-                    '"uparea" and/or "flwdir" layers missing. '
-                    "Run setup_river_hydrography first or provide hydrography_fn dataset."
-                )
+            raise ValueError("Either hydrography or rivers must be provided.")
 
-        # (re)calculate region to make sure it's accurate
-        region = self.mask.where(self.mask <= 1, 1).raster.vectorize()
+        # TODO reproject region and gdf_riv to utm zone if model crs is geographic
         gdf_out, gdf_riv = workflows.river_boundary_points(
-            da_flwdir=ds["flwdir"],
-            da_uparea=ds["uparea"],
-            region=region,
+            region=self.region,
+            res=self.reggrid.dx,
+            gdf_riv=gdf_riv,
+            da_flwdir=da_flwdir,
+            da_uparea=da_uparea,
             river_len=river_len,
             river_upa=river_upa,
-            btype="outflow",
-            return_river=keep_rivers_geom,
-            logger=self.logger,
+            inflow=False,
         )
-        if len(gdf_out.index) == 0:
-            return
 
-        # apply buffer
-        gdf_out = gdf_out.to_crs(self.crs.to_epsg())  # assumes projected CRS
-        gdf_out_buf = gpd.GeoDataFrame(
-            geometry=gdf_out.buffer(river_width / 2.0), crs=gdf_out.crs
-        )
-        # remove points near waterlevel boundary cells
-        da_mask = self.mask
-        msk2 = (da_mask == 2).astype(np.int8)
-        msk_wdw = msk2.raster.zonal_stats(gdf_out_buf, stats="max")
-        bool_drop = (msk_wdw[f"{da_mask.name}_max"] == 1).values
-        if np.any(bool_drop):
-            self.logger.debug(
-                f"{int(sum(bool_drop)):d} outflow (mask=3) boundary cells near water level (mask=2) boundary cells dropped."
-            )
-            gdf_out = gdf_out[~bool_drop]
-        if len(gdf_out.index) == 0:
-            self.logger.debug(f"0 outflow (mask=3) boundary cells set.")
-            return
-        # remove outflow points near source points
-        fname = self._FORCING_1D["discharge"][0]
-        if fname in self.forcing:
-            gdf_src = self.forcing[fname].vector.to_gdf()
-            idx_drop = gpd.sjoin(gdf_out_buf, gdf_src, how="inner").index.values
-            if idx_drop.size > 0:
-                gdf_out_buf = gdf_out_buf.drop(idx_drop)
-                self.logger.debug(
-                    f"{idx_drop.size:d} outflow (mask=3) boundary cells near src points dropped."
-                )
+        if len(gdf_out) > 0:
+            if "rivwth" in gdf_out.columns:
+                river_width = gdf_out["rivwth"].fillna(river_width)
+            gdf_out["geometry"] = gdf_out.buffer(river_width / 2)
+            # remove points near waterlevel boundary cells
+            if np.any(self.mask == 2) and btype == "outflow":
+                gdf_msk2 = utils.get_bounds_vector(self.mask)
+                # NOTE: this should be a single geom
+                geom = gdf_msk2[gdf_msk2["value"] == 2].unary_union
+                gdf_out = gdf_out[~gdf_out.intersects(geom)]
+            # remove outflow points near source points
+            if "dis" in self.forcing and len(gdf_out) > 0:
+                geom = self.forcing["dis"].vector.to_gdf().unary_union
+                gdf_out = gdf_out[~gdf_out.intersects(geom)]
 
-        # find intersect of buffer and model grid
-        bounds = utils.mask_bounds(da_mask, gdf_mask=gdf_out_buf)
-        # update model mask
-        if not append_bounds:  # reset existing outflow boundary cells
-            da_mask = da_mask.where(da_mask != 3, np.uint8(1))
-        bounds = np.logical_and(bounds, da_mask == 1)  # make sure not to overwrite
-        n = np.count_nonzero(bounds.values)
+        # update mask
+        n = len(gdf_out.index)
+        self.logger.info(f"Found {n} valid river outflow points.")
         if n > 0:
-            da_mask = da_mask.where(~bounds, np.uint8(3))
-            self.set_grid(da_mask, "msk")
-            self.logger.debug(f"{n:d} outflow (mask=3) boundary cells set.")
-        if keep_rivers_geom and gdf_riv is not None:
-            gdf_riv = gdf_riv.to_crs(self.crs.to_epsg())
-            gdf_riv.index = gdf_riv.index.values + 1  # one based index
-            self.set_geoms(gdf_riv, name="rivers_out")
+            self.setup_mask_bounds(
+                btype=btype, include_mask=gdf_out, reset_bounds=reset_bounds
+            )
+        elif reset_bounds:
+            self.setup_mask_bounds(btype=btype, reset_bounds=reset_bounds)
+
+        # keep river centerlines
+        if keep_rivers_geom and len(gdf_riv) > 0:
+            self.set_geoms(gdf_riv, name="rivers_outflow")
+
 
     def setup_cn_infiltration(self, cn_fn, antecedent_moisture="avg"):
         """Setup model potential maximum soil moisture retention map (scsfile)
@@ -1637,7 +1321,7 @@ class SfincsModel(MeshMixin, GridModel):
             gdf_locs = self.data_catalog.get_geodataframe(
                 locations, geom=region, buffer=buffer, crs=self.crs
             ).to_crs(self.crs)
-        elif gdf_locs is None and "bzs" not in self.forcing:
+        elif gdf_locs is None and "bzs" in self.forcing:
             gdf_locs = self.forcing["bzs"].vector.to_gdf()
         elif gdf_locs is None:
             raise ValueError("No waterlevel boundary (bnd) points provided.")
@@ -1751,7 +1435,7 @@ class SfincsModel(MeshMixin, GridModel):
             gdf_locs = self.data_catalog.get_geodataframe(
                 locations, geom=self.region, crs=self.crs
             ).to_crs(self.crs)
-        elif gdf_locs is None and "dis" not in self.forcing:
+        elif gdf_locs is None and "dis" in self.forcing:
             gdf_locs = self.forcing["dis"].vector.to_gdf()
         elif gdf_locs is None:
             raise ValueError("No discharge boundary (src) points provided.")
@@ -2287,9 +1971,8 @@ class SfincsModel(MeshMixin, GridModel):
             self.set_grid(ds)
 
             # keep some metadata maps from gis directory
-            keep_maps = ["flwdir", "uparea", "rivmsk"]
             fns = glob.glob(join(self.root, "gis", "*.tif"))
-            fns = [fn for fn in fns if basename(fn).split(".")[0] in keep_maps]
+            fns = [fn for fn in fns if basename(fn).split(".")[0] not in self.grid.data_vars]
             if fns:
                 ds = hydromt.open_mfraster(fns).load()
                 self.set_grid(ds)
