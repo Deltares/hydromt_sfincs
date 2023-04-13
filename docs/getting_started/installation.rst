@@ -28,7 +28,7 @@ HydroMT-SFINCS is available from pypi and conda-forge. We recommend installing f
     `here <https://deltares.github.io/hydromt/latest/getting_started/installation.html#installation-guide>`_ for the difference between both.
 
 Install HydroMT-SFINCS in a new environment (recommended!)
--------------------------------------------
+----------------------------------------------------------
 You can install HydroMT-SFINCS in a new environment called `hydromt-sfincs` together with a few additional dependencies with:
 
 .. code-block:: console

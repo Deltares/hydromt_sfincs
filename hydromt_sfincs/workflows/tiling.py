@@ -9,9 +9,16 @@ import math
 from PIL import Image
 from itertools import product
 from affine import Affine
+import logging
 
 from .merge import merge_multi_dataarrays
 
+
+logger = logging.getLogger(__name__)
+
+__all__ = [
+    "create_topobathy_tiles",
+]
 
 def create_topobathy_tiles(
     root: Union[str, Path],

@@ -2,9 +2,9 @@
 
 .. _model_methods_configuration:
 
-============================
+================================
 Methods using configuration file
-============================
+================================
 
 With the HydroMT SFINCS plugin, you can easily work with SFINCS model schematizations. 
 This plugin helps you preparing or updating several model components of a SFINCS model 
@@ -45,50 +45,6 @@ Overview of model setup methods
 ===================
 
 Click on header to get a full overview or directly on a specific method see its documentation.  
-
-.. _setup_table:
-
-.. list-table:: Setup methods
-   :widths: 20 25
-   :header-rows: 1
-
-   * - SFINCS file
-     - :ref:`model setup methods <model_methods>`
-   * - model region
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_region`
-   * - sfincs.inp
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_config`
-   * - depfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_dep` :py:func:`~hydromt_sfincs.SfincsModel.setup_river_bathymetry`
-   * - mskfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_mask_active` :py:func:`~hydromt_sfincs.SfincsModel.setup_mask_bounds` :py:func:`~hydromt_sfincs.SfincsModel.setup_river_outflow`
-   * - sbgfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_subgrid`
-   * - manningfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_manning_roughness`
-   * - scsfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_cn_infiltration`
-   * - obsfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_observation_points`
-   * - thd- & weirfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_structures`
-
-.. _forcing_setup_table:
-
-.. list-table:: Forcing setup methods
-   :widths: 20 25
-   :header-rows: 1
-
-   * - SFINCS file
-     - :ref:`model setup methods <model_methods>`
-   * - bnd- & bzsfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_waterlevel_forcing`
-   * - src- & disfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing`
-   * - precipfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_p_forcing`
-   * - netamprfile
-     - :py:func:`~hydromt_sfincs.SfincsModel.setup_p_forcing_from_grid`
 
 .. _data: https://deltares.github.io/hydromt/latest/user_guide/data_overview.html
 .. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html
