@@ -1,63 +1,98 @@
-.. _sfincs_build:
+.. _sfincs_build_update:
 
-Examples to build or update a model
-==========================
+Building or updating a model
+====================================
 
-In the additional tabs under this section, multiple examples are given in iPython notebooks how to build your SFINCS model in HydroMT using either a configuration file, or the underlying Python scripts.
-For a brief overview, see the 2 options explained below.
+This plugin allows users to build or update a SFINCS model from available data. 
+For beginning users, we recommend to use the :ref:`command line interface <sfincs_cli>` to build or update a model. 
+In case you want to (locally) modify the model input data before generating a model, we recommend to use the :ref:`Python scripting <sfincs_python>`. 
 
-From configuration file - Basic
--------------------------------
+In the following sections, examples are provided in iPython notebooks how to build your SFINCS model with HydroMT using either the CLI or python scripting.
 
-This plugin allows users to **build** a complete SFINCS model from available data: 
+.. _sfincs_cli:
+
+Command Line Interface (CLI) - Basic
+-------------------------------------
+
+This plugin allows users to **build** a complete SFINCS model from available data for your area of interest. The model region_ is typically defined by a bounding box, 
+see example below, or a geometry file. Once the configuration and data libraries are set, you can build a model by using: 
 
 .. code-block:: console
 
-    hydromt build sfincs path/to/built_model "{'bbox': [xmin, ymin, xmax, ymax]}" -i sfincs_build.ini -d data_sources.yml -vv
+    hydromt build sfincs path/to/built_model -r "{'bbox': [xmin, ymin, xmax, ymax]}" -i sfincs_build.yml -d data_sources.yml -vv
 
 Or to **update**  an existing SFINCS model:
 
 .. code-block:: console
 
-    hydromt update sfincs ./sfincs_coastal -o ./sfincs_coastal_precip -i sfincs_update_precip.ini -vv
+    hydromt update sfincs ./sfincs_compound -o ./sfincs_compound_precip -i sfincs_update_precip.yml -vv
 
-.. _sfincs_config:
-
+**Configuration file:**
 
 Settings to build or update a SFINCS model are managed in a configuration file. In this file,
 every option from each :ref:`model component <model_methods>` can be changed by the user
-in its corresponding section. See the HydroMT core documentation for more info about the `model configuration .ini file <config>`_
+in its corresponding section. See the HydroMT core documentation for more info about the `model configuration .yml-file <config>`_
 
-Note that the order in which the components are listed in the ini file is important: 
+Note that the order in which the components are listed in the yml-file is important (methods are executed from top to bottom): 
 
-- ``setup_region`` and then ``setup_topobathy`` should always be run first to define the model grid
-- if discharge location are inferred from hydrography, ``setup_river_inflow`` should be run before ``setup_q_forcing`` or ``setup_q_forcing_from_grid``.
+- :py:func:`~hydromt_sfincs.SfincsModel.setup_grid` or :py:func:`~hydromt_sfincs.SfincsModel.setup_grid_from_region` should always be run first to define the model grid
+- a lot of methods need elevation data to work properly, so :py:func:`~hydromt_sfincs.SfincsModel.setup_dep` should be run before most other methods 
+- if discharge locations are inferred from hydrography, :py:func:`~hydromt_sfincs.SfincsModel.setup_river_inflow` should be run before :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing` or :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid`.
 
-See :ref:`Coastal SFINCS model schematization <sfincs_coastal>` and 
-:ref:`Riverine SFINCS model schematization <sfincs_riverine>` for suggested components
-and options to use for coastal or riverine applications.
+**Data libraries:**
 
-From Python scripts - Advanced
+Data sources in HydroMT are provided in one of several yaml libraries. These libraries contain required
+information on the different data sources so that HydroMT can process them for the different models. There
+are three ways for the user to select which data libraries to use:
+
+- If no yaml file is selected, HydroMT will use the data stored in the
+  `hydromt-artifacts <https://github.com/DirkEilander/hydromt-artifacts>`_
+  which contains an extract of global data for a small region around the Piave river in Northern Italy.
+- Another options for Deltares users is to select the deltares-data library (requires access to the Deltares
+  P-drive). In the command line interface, this is done by adding either **-dd** or **--deltares-data**
+  to the build / update command line.
+- Finally, the user can prepare its own yaml libary (or libraries) (see
+  `HydroMT documentation <https://deltares.github.io/hydromt/latest/index>`_ to check the guidelines).
+  These user libraries can be added either in the command line using the **-d** option and path/to/yaml or in the **yml file**
+  with the **data_libs** option in the  `global` section.
+
+See :ref:`Build simple SFINCS model from CLI <sfincs_compound>` for suggested components
+and options to use for compound flooding applications.
+
+.. _sfincs_python:
+
+Python scripting - Advanced
 ------------------------------
 
-A short example of how these methods can be called in a separate Python script that you can build yourself is showed below:
+Next to the command line interface, HydroMT-SFINCS also allows to setup (or interact with) a SFINCS model from Python scripting. 
+The main advantage of this approach is that you can work with in-memory datasets, e.g. datasets that you have modified, next to datasets that are defined in the data catalog.
 
-.. code-block:: console
+Typical applications where this approach can be useful are:
+- when you want to modify gridded data (e.g. elevation or manning) before creating a model
+- when you want to modify the forcing conditions (e.g. discharge or precipitation) while creating multiple scenarios 
+- when you want to remove one of the forcing locations (e.g. a river inflow point) from the model
+
+.. code-block:: python
 
     from hydromt_sfincs import SfincsModel
   
     sf = SfincsModel(data_libs=["artifact_data"], root="sfincs_compound")
 
-    sf.create_grid(grid_type="regular", **inp_dict)
+    sf.setup_grid(x0=318650, y0=5040000, dx=50.0, dy=50.0, nmax=107, mmax=250, rotation=27, epsg=32633)
+
+    # retrieve GEBCO elevation data from data catalog
+    da = sf.data_catalog.get_rasterdataset("gebco", geom=sf.region, buffer=5)
+
+    # modify elevation data by adding 1 m
+    da = da + 1
+
+    # use modifed (in-memory) elevation data to create model
+    sf.setup_dep(datasets_dep=[{"da":da}])
 
     sf.plot_basemap()
 
     sf.write() # write all
 
-Selecting data
---------------
-Data sources in HydroMT are provided in one of more yaml data catalog files. 
-Checkout the HydroMT core documentation for more info on `working with data in HydroMT <data>`_.
 
 .. _data: https://deltares.github.io/hydromt/latest/user_guide/data_overview.html
 .. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html
@@ -66,9 +101,5 @@ Checkout the HydroMT core documentation for more info on `working with data in H
 .. toctree::
     :hidden:
     
-    sfincs_compound.rst
-    Example: Build a simple compound SFINCS model from configuration file <../_examples/build_simple_compound_model.ipynb>
-
-    Example: Build a simple compound SFINCS model from Python scripts <../_examples/build_simple_compound_model_from_script.ipynb>
-    Example: Update a simple compound SFINCS model to subgrid from Python scripts <../_examples/upgrade_simple_compound_model_to_subgrid_from_script.ipynb>
-    Example: Build an advanced compound SFINCS model from configuration file <../_examples/build_advanced_subgrid_compound_model_from_script.ipynb>
+    Example: Build from CLI <../_examples/build_from_cli.ipynb>
+    Example: Build from Python <../_examples/build_from_script.ipynb>

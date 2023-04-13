@@ -29,23 +29,24 @@ Setup components
    :toctree: _generated/
 
    SfincsModel.setup_config
-   SfincsModel.setup_topobathy
-   SfincsModel.setup_merge_topobathy
-   SfincsModel.setup_mask
-   SfincsModel.setup_bounds
-   SfincsModel.setup_river_hydrography
-   SfincsModel.setup_river_bathymetry
-   SfincsModel.setup_river_inflow
-   SfincsModel.setup_river_outflow
+   SfincsModel.setup_region
+   SfincsModel.setup_grid
+   SfincsModel.setup_grid_from_region
+   SfincsModel.setup_dep
+   SfincsModel.setup_mask_active
+   SfincsModel.setup_mask_bounds
    SfincsModel.setup_manning_roughness
    SfincsModel.setup_cn_infiltration
-   SfincsModel.setup_gauges
+   SfincsModel.setup_subgrid
+   SfincsModel.setup_observation_points
    SfincsModel.setup_structures
-   SfincsModel.setup_h_forcing
-   SfincsModel.setup_q_forcing
-   SfincsModel.setup_q_forcing_from_grid
-   SfincsModel.setup_p_forcing
-   SfincsModel.setup_p_forcing_from_grid
+   SfincsModel.setup_waterlevel_forcing
+   SfincsModel.setup_waterlevel_bnd_from_mask
+   SfincsModel.setup_discharge_forcing
+   SfincsModel.setup_discharge_forcing_from_grid
+   SfincsModel.setup_precip_forcing
+   SfincsModel.setup_precip_forcing_from_grid
+   SfincsModel.setup_tiles
 
 Plot methods
 ------------
@@ -68,8 +69,9 @@ Attributes
    SfincsModel.res
    SfincsModel.root
    SfincsModel.config
-   SfincsModel.staticmaps
-   SfincsModel.staticgeoms
+   SfincsModel.grid
+   SfincsModel.subgrid
+   SfincsModel.geoms
    SfincsModel.forcing
    SfincsModel.states
    SfincsModel.results
@@ -92,6 +94,7 @@ Low level methods
 .. autosummary::
    :toctree: _generated/
 
+   SfincsModel.update_grid_from_config
    SfincsModel.update_spatial_attrs
    SfincsModel.get_spatial_attrs
    SfincsModel.set_forcing_1d
@@ -109,13 +112,16 @@ General methods
    SfincsModel.read_config
    SfincsModel.write_config
 
-   SfincsModel.set_staticmaps
-   SfincsModel.read_staticmaps
-   SfincsModel.write_staticmaps
+   SfincsModel.set_grid
+   SfincsModel.read_grid
+   SfincsModel.write_grid
 
-   SfincsModel.set_staticgeoms
-   SfincsModel.read_staticgeoms
-   SfincsModel.write_staticgeoms
+   SfincsModel.read_subgrid
+   SfincsModel.write_subgrid
+
+   SfincsModel.set_geoms
+   SfincsModel.read_geoms
+   SfincsModel.write_geoms
 
    SfincsModel.set_forcing
    SfincsModel.read_forcing
@@ -136,14 +142,17 @@ SFINCS workflows
 .. autosummary::
    :toctree: _generated/
 
-   workflows.merge_topobathy
+   workflows.merge_multi_dataarrays
+   workflows.merge_dataarrays
    workflows.get_rivbank_dz
    workflows.get_river_bathymetry
    workflows.burn_river_zb
    workflows.snap_discharge
    workflows.river_boundary_points
+   workflows.river_centerline_from_hydrography
    workflows.landuse
    workflows.cn_to_s
+   workflows.create_topobathy_tiles
 
 .. _methods:
 
@@ -156,22 +165,24 @@ Input/Output methods
 .. autosummary::
    :toctree: _generated/
 
-   read_inp
-   write_inp
-   read_binary_map
-   write_binary_map
-   read_binary_map_index
-   write_binary_map_index
-   read_ascii_map
-   write_ascii_map
-   read_timeseries
-   write_timeseries
-   read_xy
-   write_xy
-   read_structures
-   write_structures
-   read_sfincs_map_results
-   read_sfincs_his_results
+   utils.read_inp
+   utils.write_inp
+   utils.read_binary_map
+   utils.write_binary_map
+   utils.read_binary_map_index
+   utils.write_binary_map_index
+   utils.read_ascii_map
+   utils.write_ascii_map
+   utils.read_timeseries
+   utils.write_timeseries
+   utils.read_xy
+   utils.write_xy
+   utils.read_xyn
+   utils.write_xyn
+   utils.read_geoms
+   utils.write_geoms
+   utils.read_sfincs_map_results
+   utils.read_sfincs_his_results
 
 Utilities
 ---------
@@ -179,12 +190,15 @@ Utilities
 .. autosummary::
    :toctree: _generated/
 
-   utils.mask_topobathy
-   utils.mask_bounds
    utils.get_spatial_attrs
    utils.parse_datetime
-   utils.gdf2structures
-   utils.structures2gdf
+   utils.gdf2linestring
+   utils.linestring2gdf
+   utils.gdf2polygon
+   utils.polygon2gdf
+   utils.get_bounds_vector
+   utils.mask2gdf
+   utils.rotated_grid 
 
 Visualization
 -------------
@@ -194,3 +208,5 @@ Visualization
 
    plots.plot_basemap
    plots.plot_forcing
+   utils.downscale_floodmap
+   utils.downscale_floodmap_webmercator

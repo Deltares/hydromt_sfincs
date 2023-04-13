@@ -1,4 +1,4 @@
-.. _process_visualize:
+.. _sfincs_analyse:
 
 ================================
 Postprocessing and visualization
