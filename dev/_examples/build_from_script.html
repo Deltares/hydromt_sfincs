@@ -1,0 +1,1354 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Build a model from Python &#8212; HydroMT SFINCS  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_examples/build_from_script';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Running a model" href="../user_guide/sfincs_run.html" />
+    <link rel="prev" title="Build a model from CLI" href="build_from_cli.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+    
+    
+    
+    <img src="../_static/hydromt-icon.svg" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/hydromt-icon.svg" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+    <p class="title logo__title">HydroMT SFINCS</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../getting_started/intro.html">
+                        Getting started
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../user_guide/intro.html">
+                        User guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../dev_guide/intro.html">
+                        Developments
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+                    HydroMT core
+                  </a>
+                </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../getting_started/intro.html">
+                        Getting started
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../user_guide/intro.html">
+                        User guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../dev_guide/intro.html">
+                        Developments
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+                    HydroMT core
+                  </a>
+                </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../user_guide/sfincs.html">Working with the SFINCS model</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/sfincs_model_setup.html">Model components and methods</a></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../user_guide/sfincs_build_update.html">Building or updating a model</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="build_from_cli.html">Example: Build from CLI</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">Example: Build from Script</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../user_guide/sfincs_run.html">Running a model</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="run_sfincs_model.html">Example: Running a model</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/sfincs_analyse.html">Postprocessing and visualization</a><input checked class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul class="simple">
+</ul>
+</li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../user_guide/intro.html" class="nav-link">User guide</a></li>
+    
+    
+    <li class="breadcrumb-item"><i class="fa-solid fa-ellipsis"></i></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../user_guide/sfincs_build_update.html" class="nav-link">Building or updating a model</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Build a model from Python</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<div>
+    For an interactive online version click here:
+    <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/build_from_script.ipynb" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
+</div></div>
+<section id="Build-a-model-from-Python">
+<h1>Build a model from Python<a class="headerlink" href="#Build-a-model-from-Python" title="Permalink to this heading">#</a></h1>
+<p>In this example a simple <strong>SFINCS</strong> compound flood model will be made, using the underlying Python functions of <strong>HydroMT-SFINCS</strong> to build a model.</p>
+<p>The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+
+<span class="kn">from</span> <span class="nn">hydromt_sfincs</span> <span class="kn">import</span> <span class="n">SfincsModel</span>
+<span class="kn">from</span> <span class="nn">hydromt_sfincs</span> <span class="kn">import</span> <span class="n">utils</span>
+</pre></div>
+</div>
+</div>
+<p>This example shows how to build a SFINCS model containing elevation data and spatially varying roughness (together processed into subgrid tables), spatially varying infiltration and a local floodwall. In addition, multiple forcing conditions are set-up, and this is all done using Python scripting.</p>
+<p>In case you want to adjust this example to build a SFINCS model anywhere else in the world, you will have to add your own datasets to HydroMT’s data catalog. For more info on that, check-out:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/data_prepare_cat.html">Prepare data catalog</a></p></li>
+<li><p><a class="reference external" href="https://deltares.github.io/hydromt/latest/_examples/prep_data_catalog.html">Example: Prepare data catalog</a></p></li>
+<li><p><a class="reference internal" href="example_datasources.html"><span class="doc">Example: Datasources</span></a></p></li>
+</ul>
+<p><strong>Steps followed in this notebook to build your SFINCS model:</strong></p>
+<ol><li><p>Open SfincsModel class, set data library and output folder</p>
+</li><li><p>Specify characteristics of the wanted grid</p>
+</li><li><p>Load in wanted elevation datasets</p>
+</li><li><p>Make mask of active and inactive cells</p>
+</li><li><p>Update mask with water level and outflow boundary cells</p>
+</li><li><p>Add spatially varying roughness data</p>
+</li><li><p>Make subgrid derived tables</p>
+</li><li><p>Add spatially varying infiltration data</p>
+</li><li><p>Add water level time-series as forcing</p>
+</li><li><p>Add an upstream discharge time-series as forcing</p>
+</li><li><p>Add spatially varying rainfall data</p>
+</li><li><p>Add weirfile</p>
+</li><li><p>Add observation points</p>
+</li><li><p>Show model</p>
+</li><li><p>Save all files</p>
+</li></ol><p>Let’s get started!</p>
+<section id="1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:">
+<h2>1. Initialize SfincsModel class, set data library and output folder:<a class="headerlink" href="#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:" title="Permalink to this heading">#</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize SfincsModel Python class with the artifact data catalog which contains publically available data for North Italy</span>
+<span class="c1"># we overwrite (mode=&#39;w+&#39;) the existing model in the root directory if it exists</span>
+<span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;artifact_data&quot;</span><span class="p">],</span> <span class="n">root</span><span class="o">=</span><span class="s2">&quot;tmp_sfincs_compound&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w+&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:">
+<h2>2. Specify characteristics of the wanted grid and generate grid:<a class="headerlink" href="#2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:" title="Permalink to this heading">#</a></h2>
+<p>For more info about how to define a grid, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#grid-characteristics">click here</a>.</p>
+<p><em>Hint: if you only have a bounding box or geometry, you can also use ``SfincsModel.setup_grid_from_region``.</em></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Specify an input dictionary with the grid settings x0,y0,dx,dy,nmax,mmax,rotation and epsg code.</span>
+<span class="c1"># create SFINCS model with regular grid and characteristics of the input dictionary:</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_grid</span><span class="p">(</span>
+    <span class="n">x0</span><span class="o">=</span><span class="mi">318650</span><span class="p">,</span>
+    <span class="n">y0</span><span class="o">=</span><span class="mi">5040000</span><span class="p">,</span>
+    <span class="n">dx</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span>
+    <span class="n">dy</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span>
+    <span class="n">nmax</span><span class="o">=</span><span class="mi">107</span><span class="p">,</span>
+    <span class="n">mmax</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>
+    <span class="n">rotation</span><span class="o">=</span><span class="mi">27</span><span class="p">,</span>
+    <span class="n">epsg</span><span class="o">=</span><span class="mi">32633</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># the input file is automatically updated. Uncomment to displayed below:</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;mmax&#39;: 250, &#39;nmax&#39;: 107, &#39;dx&#39;: 50.0, &#39;dy&#39;: 50.0, &#39;x0&#39;: 318650, &#39;y0&#39;: 5040000, &#39;rotation&#39;: 27, &#39;latitude&#39;: 0.0, &#39;tref&#39;: datetime.datetime(2010, 2, 1, 0, 0), &#39;tstart&#39;: datetime.datetime(2010, 2, 1, 0, 0), &#39;tstop&#39;: datetime.datetime(2010, 2, 2, 0, 0), &#39;tspinup&#39;: 60.0, &#39;dtout&#39;: 3600.0, &#39;dthisout&#39;: 600.0, &#39;dtrstout&#39;: 0.0, &#39;dtmaxout&#39;: 99999.0, &#39;trstout&#39;: -999.0, &#39;dtwnd&#39;: 1800.0, &#39;alpha&#39;: 0.5, &#39;theta&#39;: 1.0, &#39;huthresh&#39;: 0.01, &#39;manning&#39;: 0.04, &#39;manning_land&#39;: 0.04, &#39;manning_sea&#39;: 0.02, &#39;rgh_lev_land&#39;: 0.0, &#39;zsini&#39;: 0.0, &#39;qinf&#39;: 0.0, &#39;rhoa&#39;: 1.25, &#39;rhow&#39;: 1024.0, &#39;dtmax&#39;: 60.0, &#39;advection&#39;: 2, &#39;baro&#39;: 0, &#39;pavbnd&#39;: 0, &#39;gapres&#39;: 101200.0, &#39;stopdepth&#39;: 100.0, &#39;crsgeo&#39;: 0, &#39;btfilter&#39;: 60.0, &#39;viscosity&#39;: 1, &#39;inputformat&#39;: &#39;bin&#39;, &#39;outputformat&#39;: &#39;net&#39;, &#39;cdnrb&#39;: 3, &#39;cdwnd&#39;: [0.0, 28.0, 50.0], &#39;cdval&#39;: [0.001, 0.0025, 0.0015], &#39;epsg&#39;: 32633}
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># show the model grid outline</span>
+<span class="c1"># sf.region.boundary.plot(figsize=(6,6))</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">plot_region</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_build_from_script_10_0.png" src="../_images/_examples_build_from_script_10_0.png" />
+</div>
+</div>
+</section>
+<section id="3.-Load-in-wanted-elevation-datasets:">
+<h2>3. Load in wanted elevation datasets:<a class="headerlink" href="#3.-Load-in-wanted-elevation-datasets:" title="Permalink to this heading">#</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># In this example we want to combine 2 elevation datasets, merit_hydro as elevation and gebco as bathymetry, in that order.</span>
+
+<span class="c1"># NOTE: from the 1st dataset (merit_hydro) only elevation above (&quot;zmin&quot;:0.001) meters is used;</span>
+<span class="c1"># the 2nd elevation dataset (gebco) is used where the 1st dataset returned nodata values</span>
+<span class="n">datasets_dep</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;elevtn&quot;</span><span class="p">:</span> <span class="s2">&quot;merit_hydro&quot;</span><span class="p">,</span> <span class="s2">&quot;zmin&quot;</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;elevtn&quot;</span><span class="p">:</span> <span class="s2">&quot;gebco&quot;</span><span class="p">}]</span>
+
+<span class="c1"># Add depth information to modelgrid based on these chosen datasets</span>
+<span class="n">dep</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">setup_dep</span><span class="p">(</span><span class="n">datasets_dep</span><span class="o">=</span><span class="n">datasets_dep</span><span class="p">)</span>
+
+<span class="c1"># Make a plot of the merged topobathy, here colour limits are set between an elevation of -5 to 5 meters</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_build_from_script_12_1.png" src="../_images/_examples_build_from_script_12_1.png" />
+</div>
+</div>
+</section>
+<section id="4.-Make-mask-of-active-and-inactive-cells:">
+<h2>4. Make mask of active and inactive cells:<a class="headerlink" href="#4.-Make-mask-of-active-and-inactive-cells:" title="Permalink to this heading">#</a></h2>
+<p>Here we generate the mask of active (msk=1) and inactive cells (msk=0), determining what cells on your grid should be used. For more info about the msk-file, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#mask-file">click here</a>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Choosing how to choose you active cells can be based on multiple criteria, here we only specify a minimum elevation of -5 meters</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_mask_active</span><span class="p">(</span><span class="n">zmin</span><span class="o">=-</span><span class="mi">5</span><span class="p">,</span> <span class="n">reset_mask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Make a plot of the mask file</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">&quot;msk&quot;</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+3 gaps outside valid elevation range &lt; 10.0 km2.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_build_from_script_14_2.png" src="../_images/_examples_build_from_script_14_2.png" />
+</div>
+</div>
+<p>NOTE: - The given output of HydroMT says “3 gaps outside valid elevation range &lt; 10 km2”. HydroMT does some smart filtering that if small groups of inactive cells are found, surrounded by active cells, these are still included as active, in this case 3 gaps. You can control the size of these gaps to filter by adding <code class="docutils literal notranslate"><span class="pre">fill_area</span> <span class="pre">=</span> <span class="pre">10</span></code> in <code class="docutils literal notranslate"><span class="pre">setup_mask_active()</span></code>. - A similar argument exists to neglect a group of active cells surrounded by inactive cells: <code class="docutils literal notranslate"><span class="pre">drop_area</span></code> - <code class="docutils literal notranslate"><span class="pre">reset_mask=True</span></code> means
+that every time you start with an ampy mask while defining your msk cells, if <code class="docutils literal notranslate"><span class="pre">reset_bounds=False</span></code> (default) you continue on the prevous time you ran that function</p>
+</section>
+<section id="5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">
+<h2>5. Update mask with water level and outflow boundary cells - including use of polygons:<a class="headerlink" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:" title="Permalink to this heading">#</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Loading a shapefile clicked by user:</span>
+<span class="n">file_name</span> <span class="o">=</span> <span class="s2">&quot;data//compound_example_outflow_boundary_polygon.geojson&quot;</span>
+<span class="n">gdf_include</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+
+<span class="c1"># Example of the same, but how to load an existing ascii .pol file with x&amp;y-coordinates, e.g. coming out of Delft Dashboard, here assumed to be in the CRS of the SFINCS model:</span>
+<span class="c1"># file_name = &quot;XX.pol&quot;</span>
+<span class="c1"># gdf_include = utils.polygon2gdf(feats=utils.read_geoms(fn=file_name), crs=sf.crs)</span>
+</pre></div>
+</div>
+</div>
+<p>In SFINCS you can specify cells where you want to force offshore water levels (msk=2), or outflow boundaries (msk=3)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we add water level cells along the coastal boundary, for cells up to an elevation of -5 meters</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_mask_bounds</span><span class="p">(</span><span class="n">btype</span><span class="o">=</span><span class="s2">&quot;waterlevel&quot;</span><span class="p">,</span> <span class="n">zmax</span><span class="o">=-</span><span class="mi">5</span><span class="p">,</span> <span class="n">reset_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Here we add outflow cells, only where clicked in shapefile along part of the lateral boundaries</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_mask_bounds</span><span class="p">(</span><span class="n">btype</span><span class="o">=</span><span class="s2">&quot;outflow&quot;</span><span class="p">,</span> <span class="n">include_mask</span><span class="o">=</span><span class="n">gdf_include</span><span class="p">,</span> <span class="n">reset_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Make a plot of the mask file</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">&quot;msk&quot;</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">gdf_include</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;GeoAxesSubplot:title={&#39;center&#39;:&#39;SFINCS msk map&#39;}, xlabel=&#39;x coordinate UTM zone 33N [m]&#39;, ylabel=&#39;y coordinate UTM zone 33N [m]&#39;&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_build_from_script_19_1.png" src="../_images/_examples_build_from_script_19_1.png" />
+</div>
+</div>
+<p>NOTE: - As you can see now, also msk=2 values (red line) have been added along the coastal boundary - As you can see now, also msk=3 values (purple line) have been added along the lateral inland boundaries within the gdf_include shapefile - <code class="docutils literal notranslate"><span class="pre">reset_bounds=True</span></code> means that you start without initial boundary cells (of the specified type), if <code class="docutils literal notranslate"><span class="pre">restet_bounds=False</span></code> (default) you build on the existing boundary cells (if available)</p>
+</section>
+<section id="6.-Add-spatially-varying-roughness-data:">
+<h2>6. Add spatially varying roughness data:<a class="headerlink" href="#6.-Add-spatially-varying-roughness-data:" title="Permalink to this heading">#</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># --&gt; this is used in making subgrid tables</span>
+
+<span class="c1"># read river shapefile and add manning value to the attributes</span>
+<span class="n">gdf</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="s2">&quot;rivers_lin2019_v1&quot;</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">region</span><span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span>
+    <span class="n">sf</span><span class="o">.</span><span class="n">crs</span>
+<span class="p">)</span>
+<span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;manning&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.03</span>
+
+<span class="c1"># rasterize the manning value of gdf to the  model grid</span>
+<span class="n">da_manning</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+<span class="c1"># uncomment to plot either the raster or the vector data</span>
+<span class="c1"># da_manning.plot(vmin=0, x=&#39;xc&#39;, y=&#39;yc&#39;, cmap=&#39;viridis&#39;)</span>
+<span class="c1"># gdf.plot()</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># use the river manning raster in combination with vito land to derive the manning roughness file</span>
+<span class="c1"># NOTE that we can combine in-memory data with data from the data catalog</span>
+<span class="n">datasets_rgh</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;manning&quot;</span><span class="p">:</span> <span class="n">da_manning</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;lulc&quot;</span><span class="p">:</span> <span class="s2">&quot;vito&quot;</span><span class="p">}]</span>
+
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_manning_roughness</span><span class="p">(</span>
+    <span class="n">datasets_rgh</span><span class="o">=</span><span class="n">datasets_rgh</span><span class="p">,</span>
+    <span class="n">manning_land</span><span class="o">=</span><span class="mf">0.04</span><span class="p">,</span>
+    <span class="n">manning_sea</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span>
+    <span class="n">rgh_lev_land</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># the minimum elevation of the land</span>
+<span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_build_from_script_23_1.png" src="../_images/_examples_build_from_script_23_1.png" />
+</div>
+</div>
+</section>
+<section id="7.-Make-subgrid-derived-tables:">
+<h2>7. Make subgrid derived tables:<a class="headerlink" href="#7.-Make-subgrid-derived-tables:" title="Permalink to this heading">#</a></h2>
+<p>You can specify multiple settings about how the subgrid derived tables should be made.</p>
+<p>Every single grid cell of the flux grid of the size inp.dx by inp.dy is defined into subgrid pixels (default nr_subgrid_pixels = 20). For every subgrid pixel the topobathy data is loaded, ideally this consists of high-resolution DEM datasets that you specify as user.</p>
+<p>In this example with dx=dy=50m, having nr_subgrid_pixels = 20 means we are loading data onto a 2.5 m subpixel grid However, the input data of Gebco and Merit_hydro is way coarser, therefore let’s set the ratio to 5 for now.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Every single grid cell of the flux grid of the size inp.dx by inp.dy is defined into subgrid pixels (default is 20, nr_subgrid_pixels = 20).</span>
+<span class="c1"># For every subgrid pixel the topobathy data is loaded, ideally this consists also of high-resolution DEM datasets that you specify as user.</span>
+
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_subgrid</span><span class="p">(</span>
+    <span class="n">datasets_dep</span><span class="o">=</span><span class="n">datasets_dep</span><span class="p">,</span>
+    <span class="n">datasets_rgh</span><span class="o">=</span><span class="n">datasets_rgh</span><span class="p">,</span>
+    <span class="n">nr_subgrid_pixels</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">write_dep_tif</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">write_man_tif</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># NOTE: we turned on that the merged topobathy of the different (high-res) datasets is written to a geotiff</span>
+
+<span class="c1"># NOTE: if you have a very large domain with 100,000s to millions of cells, and very high-resolution datasets, this step might take minutes to hours!!!</span>
+<span class="c1">#       But good news; when finished succesfully, you can very quickly run very accurate SFINCS simulations!</span>
+<span class="c1">#       The whole point of the subgrid functionality of SFINCS is that by derived subgrid tables based on high res elevation data,</span>
+<span class="c1">#       you either have more accurate results or run on a coarser grid resolution (= much faster) or both</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Number of regular cells in a block : 400
+Number of blocks in n direction    : 1
+Number of blocks in m direction    : 1
+Grid size of flux grid            : dx=49.99999999979212, dy=50.000000000080824
+Grid size of subgrid pixels       : dx=9.999999999958423, dy=10.000000000016165
+
+block 1/1 -- col 0:249 | row 0:106
+Processing block with 20839 active cells ..
+</pre></div></div>
+</div>
+<p>Now we can see what kind of subgrid-derived variables are created:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># uncomment to see the subgrid table variales</span>
+<span class="c1"># sf.subgrid</span>
+
+<span class="c1"># we can plot the 2D subgrid variables</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
+    <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;subgrid.z_zmin&quot;</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_build_from_script_28_1.png" src="../_images/_examples_build_from_script_28_1.png" />
+</div>
+</div>
+</section>
+<section id="8.-Add-spatially-varying-infiltration-data:">
+<h2>8. Add spatially varying infiltration data:<a class="headerlink" href="#8.-Add-spatially-varying-infiltration-data:" title="Permalink to this heading">#</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># independent from subgrid files</span>
+<span class="c1"># curve number infiltration based on global CN dataset</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_cn_infiltration</span><span class="p">(</span><span class="s2">&quot;gcn250&quot;</span><span class="p">,</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">)</span>
+
+<span class="c1"># check all variables in the sf.grid dataset</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data_vars</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+KeysView(Data variables:
+    dep      (y, x) float32 -12.0 -12.0 -12.0 -12.0 ... 0.3033 0.3213 0.351
+    msk      (y, x) uint8 0 0 0 0 0 0 0 0 0 0 0 0 0 ... 1 1 1 1 1 1 1 1 3 3 3 3
+    manning  (y, x) float64 0.02 0.02 0.02 0.02 0.02 ... 0.037 0.037 0.037 0.037
+    scs      (y, x) float64 dask.array&lt;chunksize=(107, 250), meta=np.ndarray&gt;)
+</pre></div></div>
+</div>
+<p>By now we have made all basic SFINCS spatial layers to make the mskfile, infiltrationfile and subgridfiles, now we’re going to add some forcing…</p>
+</section>
+<section id="9.-Add-water-level-time-series-as-forcing:">
+<h2>9. Add water level time-series as forcing:<a class="headerlink" href="#9.-Add-water-level-time-series-as-forcing:" title="Permalink to this heading">#</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Change period of model simulation time, specified in yyyymmdd HHMMSS --&gt; simulation time here is 24 hours</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_config</span><span class="p">(</span>
+    <span class="o">**</span><span class="p">{</span>
+        <span class="s2">&quot;tref&quot;</span><span class="p">:</span> <span class="s2">&quot;20100201 000000&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tstart&quot;</span><span class="p">:</span> <span class="s2">&quot;20100205 000000&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tstop&quot;</span><span class="p">:</span> <span class="s2">&quot;20100207 000000&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;mmax&#39;: 250, &#39;nmax&#39;: 107, &#39;dx&#39;: 50.0, &#39;dy&#39;: 50.0, &#39;x0&#39;: 318650, &#39;y0&#39;: 5040000, &#39;rotation&#39;: 27, &#39;latitude&#39;: 0.0, &#39;tref&#39;: &#39;20100201 000000&#39;, &#39;tstart&#39;: &#39;20100205 000000&#39;, &#39;tstop&#39;: &#39;20100207 000000&#39;, &#39;tspinup&#39;: 60.0, &#39;dtout&#39;: 3600.0, &#39;dthisout&#39;: 600.0, &#39;dtrstout&#39;: 0.0, &#39;dtmaxout&#39;: 99999.0, &#39;trstout&#39;: -999.0, &#39;dtwnd&#39;: 1800.0, &#39;alpha&#39;: 0.5, &#39;theta&#39;: 1.0, &#39;huthresh&#39;: 0.01, &#39;manning&#39;: 0.04, &#39;zsini&#39;: 0.0, &#39;rhoa&#39;: 1.25, &#39;rhow&#39;: 1024.0, &#39;dtmax&#39;: 60.0, &#39;advection&#39;: 2, &#39;baro&#39;: 0, &#39;pavbnd&#39;: 0, &#39;gapres&#39;: 101200.0, &#39;stopdepth&#39;: 100.0, &#39;crsgeo&#39;: 0, &#39;btfilter&#39;: 60.0, &#39;viscosity&#39;: 1, &#39;inputformat&#39;: &#39;bin&#39;, &#39;outputformat&#39;: &#39;net&#39;, &#39;cdnrb&#39;: 3, &#39;cdwnd&#39;: [0.0, 28.0, 50.0], &#39;cdval&#39;: [0.001, 0.0025, 0.0015], &#39;epsg&#39;: 32633, &#39;mskfile&#39;: &#39;sfincs.msk&#39;, &#39;indexfile&#39;: &#39;sfincs.ind&#39;, &#39;sbgfile&#39;: &#39;sfincs.sbg&#39;, &#39;scsfile&#39;: &#39;sfincs.scs&#39;}
+</pre></div></div>
+</div>
+<p><strong>a. Specify water level input locations:</strong></p>
+<p>For more info about what the bndfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#water-level-points">click here</a></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we specify at what x&amp;y-locations we have measured/modelled input water level data in the bndfile of SFINCS:</span>
+
+<span class="c1"># x&amp;y-locations in same coordinate reference system as the grid:</span>
+<span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="mi">319526</span><span class="p">,</span> <span class="mi">329195</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5041108</span><span class="p">,</span> <span class="mi">5046243</span><span class="p">]</span>
+
+<span class="c1"># add to Geopandas dataframe as needed by HydroMT</span>
+<span class="n">pnts</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>  <span class="c1"># NOTE that the index should start at one</span>
+<span class="n">bnd</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">pnts</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+
+<span class="c1"># show what has been created:</span>
+<span class="n">bnd</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>geometry</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>POINT (319526.000 5041108.000)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>POINT (329195.000 5046243.000)</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p><strong>b. Make up some time-series:</strong></p>
+<p>For more info about what the bzsfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#water-level-time-serie">click here</a></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we specify at what times we are providing water level input, and afterwards what the values are per input location:</span>
+
+<span class="c1"># In this case we will provide 3 values (periods=3) between the start (tstart=20100201 000000) and the end (tstop=20100201 120000) of the simulation:</span>
+<span class="n">time</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tstart&quot;</span><span class="p">]),</span>
+    <span class="n">end</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tstop&quot;</span><span class="p">]),</span>
+    <span class="n">periods</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># and the actual water levels, in this case for input location 1 a water level rising from 0 to 2 meters and back to 0:</span>
+<span class="n">bzs</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">]]</span>
+
+<span class="n">bzspd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">bzs</span><span class="p">)</span>
+<span class="n">bzspd</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1</th>
+      <th>2</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>2010-02-05</th>
+      <td>0.00</td>
+      <td>0.25</td>
+    </tr>
+    <tr>
+      <th>2010-02-06</th>
+      <td>0.75</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <th>2010-02-07</th>
+      <td>0.00</td>
+      <td>0.25</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Actually add it to the SFINCS model class:</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_waterlevel_forcing</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">bzspd</span><span class="p">,</span> <span class="n">locations</span><span class="o">=</span><span class="n">bnd</span><span class="p">)</span>
+
+<span class="c1"># NOTE: the waterlevel forcing data is now stored in the sf.forcing dictionary</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">forcing</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+dict_keys([&#39;bzs&#39;])
+</pre></div></div>
+</div>
+</section>
+<section id="10.-Add-an-upstream-discharge-time-series-as-forcing">
+<h2>10. Add an upstream discharge time-series as forcing<a class="headerlink" href="#10.-Add-an-upstream-discharge-time-series-as-forcing" title="Permalink to this heading">#</a></h2>
+<p><strong>a. specify discharge input locations: srcfile</strong></p>
+<p>For more info about what the srcfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#discharge-points">click here</a></p>
+<p><strong>b. specify discharge time-series: disfile</strong></p>
+<p>For more info about what the disfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#discharge-time-series">click here</a></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># We follow exactly the same steps as for the water level forcing, but now specify 1 location where we specify discharges in m3/s</span>
+<span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="mi">321732</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5047136</span><span class="p">]</span>
+
+<span class="c1"># add to Geopandas dataframe as needed by HydroMT</span>
+<span class="n">pnts</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># NOTE that the index should start at one</span>
+<span class="n">src</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">pnts</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+
+<span class="n">time</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tstart&quot;</span><span class="p">]),</span>
+    <span class="n">end</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tstop&quot;</span><span class="p">]),</span>
+    <span class="n">periods</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># and the actual water levels, in this case for input location 1 a water level rising from 0 to 2 meters and back to 0:</span>
+<span class="n">dis</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">2.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">5.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">]]</span>
+
+<span class="n">dispd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">dis</span><span class="p">)</span>
+
+<span class="c1"># now we call the function setup_discharge_forcing</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_discharge_forcing</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">dispd</span><span class="p">,</span> <span class="n">locations</span><span class="o">=</span><span class="n">src</span><span class="p">)</span>
+
+<span class="c1"># NOTE: the discharge forcing data is now stored in the sf.forcing dictionary</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">forcing</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+dict_keys([&#39;bzs&#39;, &#39;dis&#39;])
+</pre></div></div>
+</div>
+<p>In case you want to add other types of forcing, see the example notebook example_forcing.ipynb for other types. Or read more about this in the <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html">SFINCS manual</a></p>
+</section>
+<section id="11.-Add-spatially-varying-rainfall-data:">
+<h2>11. Add spatially varying rainfall data:<a class="headerlink" href="#11.-Add-spatially-varying-rainfall-data:" title="Permalink to this heading">#</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sf</span><span class="o">.</span><span class="n">setup_precip_forcing_from_grid</span><span class="p">(</span><span class="n">precip</span><span class="o">=</span><span class="s2">&quot;era5_hourly&quot;</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># NOTE: the precipitation forcing data is now stored in the sf.forcing dictionary</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">forcing</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+dict_keys([&#39;bzs&#39;, &#39;dis&#39;, &#39;precip&#39;])
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot combined forcing time-series:</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_forcing</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_build_from_script_44_0.png" src="../_images/_examples_build_from_script_44_0.png" />
+</div>
+</div>
+</section>
+<section id="12.-Add-weirfile:">
+<h2>12. Add weirfile:<a class="headerlink" href="#12.-Add-weirfile:" title="Permalink to this heading">#</a></h2>
+<p>In SFINCS, a weirfile is often used to explicity account for line-element features such as dikes, dunes or floodwalls. Read more about structures in the <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_structures.html">SFINCS manual</a></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># In this example specify a &#39;line&#39; style shapefile for the location of the weir to be added</span>
+<span class="c1"># NOTE: optional: dz argument - If provided, for weir structures the z value is calculated from the model elevation (dep) plus dz.</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_structures</span><span class="p">(</span>
+    <span class="n">structures</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;data/compound_example_weirfile_input.geojson&quot;</span><span class="p">,</span>
+    <span class="n">stype</span><span class="o">=</span><span class="s2">&quot;weir&quot;</span><span class="p">,</span>
+    <span class="n">dz</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># NOTE: the observation points are now stored in the sf.geoms dictionary</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">geoms</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+dict_keys([&#39;region&#39;, &#39;weir&#39;])
+</pre></div></div>
+</div>
+</section>
+<section id="13.-Add-observation-points">
+<h2>13. Add observation points<a class="headerlink" href="#13.-Add-observation-points" title="Permalink to this heading">#</a></h2>
+<p>For more info about what the obsfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#observation-points">click here</a></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Loading a point shapefile clicked by user:</span>
+<span class="c1"># NOTE: merge=True makes HydroMT merge the new observation points with already existing observation points (if present)</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">setup_observation_points</span><span class="p">(</span>
+    <span class="n">locations</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;data/compound_example_observation_points.geojson&quot;</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="c1"># NOTE: the observation points are now stored in the sf.geoms dictionary</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">geoms</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+dict_keys([&#39;region&#39;, &#39;weir&#39;, &#39;obs&#39;])
+</pre></div></div>
+</div>
+</section>
+<section id="14.-Show-model">
+<h2>14. Show model<a class="headerlink" href="#14.-Show-model" title="Permalink to this heading">#</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use predefined plotting function &#39;plot_basemap&#39; to show your full SFINCS model setup</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;basemap.png&quot;</span> <span class="p">,</span><span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_build_from_script_50_0.png" src="../_images/_examples_build_from_script_50_0.png" />
+</div>
+</div>
+</section>
+<section id="15.-Save-all-files">
+<h2>15. Save all files<a class="headerlink" href="#15.-Save-all-files" title="Permalink to this heading">#</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>  <span class="c1"># write all</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Show created files in folder:</span>
+<span class="n">dir_list</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dir_list</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;sfincs.dis&#39;, &#39;sfincs.sbg&#39;, &#39;gis&#39;, &#39;sfincs.bnd&#39;, &#39;subgrid&#39;, &#39;sfincs.scs&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.ind&#39;, &#39;precip.nc&#39;, &#39;sfincs.src&#39;, &#39;figs&#39;, &#39;sfincs.weir&#39;, &#39;sfincs.msk&#39;, &#39;hydromt.log&#39;, &#39;sfincs.bzs&#39;]
+</pre></div></div>
+</div>
+<p>Your basemap and forcing figures are saved in the folder ‘figs’, GIS files (tiff &amp; geojson) of your model setup in ‘gis’ and merged elevation and manning roughness on subgrid resolution in ‘subgrid’.</p>
+<p>Now you have made a model, you can progress to the notebook: run_sfincs_model.ipynb</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="build_from_cli.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Build a model from CLI</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../user_guide/sfincs_run.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Running a model</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:">1. Initialize SfincsModel class, set data library and output folder:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:">2. Specify characteristics of the wanted grid and generate grid:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Load-in-wanted-elevation-datasets:">3. Load in wanted elevation datasets:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Make-mask-of-active-and-inactive-cells:">4. Make mask of active and inactive cells:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">5. Update mask with water level and outflow boundary cells - including use of polygons:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#6.-Add-spatially-varying-roughness-data:">6. Add spatially varying roughness data:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#7.-Make-subgrid-derived-tables:">7. Make subgrid derived tables:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#8.-Add-spatially-varying-infiltration-data:">8. Add spatially varying infiltration data:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#9.-Add-water-level-time-series-as-forcing:">9. Add water level time-series as forcing:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#10.-Add-an-upstream-discharge-time-series-as-forcing">10. Add an upstream discharge time-series as forcing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#11.-Add-spatially-varying-rainfall-data:">11. Add spatially varying rainfall data:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#12.-Add-weirfile:">12. Add weirfile:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#13.-Add-observation-points">13. Add observation points</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#14.-Show-model">14. Show model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#15.-Save-all-files">15. Save all files</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="../_sources/_examples/build_from_script.ipynb.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright Deltares.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
