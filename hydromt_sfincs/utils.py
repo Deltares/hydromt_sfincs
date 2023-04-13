@@ -36,6 +36,8 @@ __all__ = [
     "write_ascii_map",
     "read_timeseries",
     "write_timeseries",
+    "get_bounds_vector",
+    "mask2gdf",
     "read_xy",
     "write_xy",
     "read_xyn",

@@ -13,14 +13,14 @@ setup_grid_from_region:
 
 setup_dep:
   datasets_dep:
-  - elevtn: merit_hydro
-    zmin: 0.001
-  - elevtn: gebco
+  - elevtn: merit_hydro		# 1st elevation dataset	
+    zmin: 0.001			# only use where values > 0.001
+  - elevtn: gebco		# 2nd eleveation dataset (to be merged with the first)
 
 setup_mask_active:
-  mask: data//region.geojson     # Note that this is local data and only valid for this example
-  zmin: -5
+  mask: data//region.geojson    # Note that this is local data and only valid for this example
+  zmin: -5			# set cells with an elevation <-5 to inactive	
 
 setup_mask_bounds:
-  btype: waterlevel
-  zmax: -1
+  btype: waterlevel		# Set waterlevel boundaries
+  zmax: -1			# only cells with an elevation <-1 can be waterlevel bounddaries

@@ -30,13 +30,42 @@ Or to **update**  an existing SFINCS model:
 **Configuration file:**
 
 Settings to build or update a SFINCS model are managed in a configuration file. In this file,
-every option from each :ref:`model component <model_methods>` can be changed by the user
-in its corresponding section. See the HydroMT core documentation for more info about the `model configuration .yml-file <config>`_
+every option from each :ref:`model method <model_methods>` can be changed by the user
+in its corresponding section. See the HydroMT core documentation for more info about the `model configuration .yml-file <config>`_ and check-out the example below.
+
+.. code-block:: yaml
+
+  global:
+    data_libs: []               # add optional paths to data_catalog yml files
+
+  setup_config:
+    tref: "20100201 000000"
+    tstart: "20100201 000000"
+    tstop: "20100202 000000"
+
+  setup_grid_from_region:
+    res: 50                     # model resolution
+    crs: utm                    # model CRS (must be UTM zone)
+    rotated: True               # allow a rotated grid
+
+  setup_dep:
+    datasets_dep:
+    - elevtn: merit_hydro       # 1st elevation dataset	
+      zmin: 0.001               # only use where values > 0.001
+    - elevtn: gebco             # 2nd eleveation dataset (to be merged with the first)
+
+  setup_mask_active:
+    mask: data//region.geojson  # Note that this is local data and only valid for this example
+    zmin: -5                    # set cells with an elevation <-5 to inactive	
+
+  setup_mask_bounds:
+    btype: waterlevel           # Set waterlevel boundaries
+    zmax: -1                    # only cells with an elevation <-1 can be waterlevel boundaries
 
 Note that the order in which the components are listed in the yml-file is important (methods are executed from top to bottom): 
 
-- :py:func:`~hydromt_sfincs.SfincsModel.setup_grid` or :py:func:`~hydromt_sfincs.SfincsModel.setup_grid_from_region` should always be run first to define the model grid
-- a lot of methods need elevation data to work properly, so :py:func:`~hydromt_sfincs.SfincsModel.setup_dep` should be run before most other methods 
+- :py:func:`~hydromt_sfincs.SfincsModel.setup_grid` or :py:func:`~hydromt_sfincs.SfincsModel.setup_grid_from_region` should always be run first to define the model grid.
+- a lot of methods (e.g. :py:func:`~hydromt_sfincs.SfincsModel.setup_mask_active`) need elevation data to work properly, so :py:func:`~hydromt_sfincs.SfincsModel.setup_dep` should be run before most other methods.
 - if discharge locations are inferred from hydrography, :py:func:`~hydromt_sfincs.SfincsModel.setup_river_inflow` should be run before :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing` or :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid`.
 
 **Data libraries:**
@@ -54,9 +83,9 @@ are three ways for the user to select which data libraries to use:
 - Finally, the user can prepare its own yaml libary (or libraries) (see
   `HydroMT documentation <https://deltares.github.io/hydromt/latest/index>`_ to check the guidelines).
   These user libraries can be added either in the command line using the **-d** option and path/to/yaml or in the **yml file**
-  with the **data_libs** option in the  `global` section.
+  with the **data_libs** option in the  `global` section (see example above).
 
-See :ref:`Build simple SFINCS model from CLI <sfincs_compound>` for suggested components
+See :ref:`Example: Build from CLI<build-from-cli-example>` for suggested components
 and options to use for compound flooding applications.
 
 .. _sfincs_python:
@@ -68,6 +97,7 @@ Next to the command line interface, HydroMT-SFINCS also allows to setup (or inte
 The main advantage of this approach is that you can work with in-memory datasets, e.g. datasets that you have modified, next to datasets that are defined in the data catalog.
 
 Typical applications where this approach can be useful are:
+
 - when you want to modify gridded data (e.g. elevation or manning) before creating a model
 - when you want to modify the forcing conditions (e.g. discharge or precipitation) while creating multiple scenarios 
 - when you want to remove one of the forcing locations (e.g. a river inflow point) from the model
