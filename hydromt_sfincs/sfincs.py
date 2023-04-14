@@ -329,7 +329,7 @@ class SfincsModel(GridModel):
                 da_like=self.mask,
                 buffer_cells=buffer_cells,
                 interp_method=interp_method,
-                logger=logger,
+                logger=self.logger,
             )
 
             # check if no nan data is present in the bed levels
@@ -915,7 +915,48 @@ class SfincsModel(GridModel):
         if keep_rivers_geom and len(gdf_riv) > 0:
             self.set_geoms(gdf_riv, name="rivers_outflow")
 
-    def setup_cn_infiltration(self, cn_fn, antecedent_moisture="avg"):
+    def setup_constant_infiltration(self, qinf):
+        """Setup spatially varying constant infiltration rate (qinffile).
+
+        Adds model layers:
+
+        * **qinf** map: constant infiltration rate [mm/hr]
+
+        Parameters
+        ----------
+        qinf : str, Path, or RasterDataset
+            Spatially varying infiltration rates [mm/hr]
+        """
+
+        # get infiltration data
+        da_inf = self.data_catalog.get_rasterdataset(qinf, geom=sf.region, buffer=10)
+        
+        # reproject infiltration data to model grid
+        # this workflow automatically determines the best resampling method (bilinear or average) 
+        da_inf = workflows.merge_multi_dataarrays(
+            da_list=[{"da":da_inf}],
+            da_like=sf.mask,
+            logger=self.logger,
+        )
+
+        # check on nan values
+        if np.isnan(da_inf).any():
+            self.logger.warning("NaN values found in infiltration data; filled with 0")
+            da_inf = da_inf.fillna(0)
+
+        # add to sfincs model 
+        da_inf.raster.set_nodata(-9999.0)
+
+        # set grid
+        mname = "qinf"
+        da_inf.attrs.update(**sf._ATTRS.get(mname, {}))
+        sf.set_grid(da_inf, name=mname)
+
+        # update config: remove scs infiltration values and set qinf map
+        self.config.pop("scs", None)
+        self.set_config(f"{mname}file", f"sfincs.{mname}")
+
+    def setup_cn_infiltration(self, cn, antecedent_moisture="avg"):
         """Setup model potential maximum soil moisture retention map (scsfile)
         from gridded curve number map.
 
@@ -925,7 +966,7 @@ class SfincsModel(GridModel):
 
         Parameters
         ---------
-        cn_fn: str, Path, or RasterDataset
+        cn: str, Path, or RasterDataset
             Name of gridded curve number map.
 
             * Required layers without antecedent runoff conditions: ['cn']
@@ -940,7 +981,7 @@ class SfincsModel(GridModel):
         if antecedent_moisture:
             v = f"cn_{antecedent_moisture}"
         da_org = self.data_catalog.get_rasterdataset(
-            cn_fn, geom=self.region, buffer=10, variables=[v]
+            cn, geom=self.region, buffer=10, variables=[v]
         )
         # reproject using median
         da_cn = da_org.raster.reproject_like(self.grid, method="med")
@@ -1001,7 +1042,7 @@ class SfincsModel(GridModel):
                     da_list=datasets_rgh,
                     da_like=self.mask,
                     interp_method="linear",
-                    logger=logger,
+                    logger=self.logger,
                 )
                 fromdep = np.isnan(da_man).where(self.mask > 0, False).any()
             if "dep" in self.grid and fromdep:
