@@ -33,7 +33,7 @@ For more information about each file, see the `SFINCS documentation <https://sfi
      - sfincs.inp
    * - :py:attr:`~hydromt_sfincs.SfincsModel.grid`
      - depfile, mskfile, indexfile, manningfile, qinffile, scsfile
-   * - `subgrid`
+   * - :py:attr:`~hydromt_sfincs.SfincsModel.subgrid`
      - sbgfile
    * - :py:attr:`~hydromt_sfincs.SfincsModel.geoms`
      - obsfile, thdfile, weirfile

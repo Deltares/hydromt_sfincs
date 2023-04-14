@@ -35,6 +35,11 @@ You can install HydroMT-SFINCS in a new environment called `hydromt-sfincs` toge
 
   $ mamba env create -f https://raw.githubusercontent.com/Deltares/hydromt_sfincs/main/environment.yml
 
+.. Note::
+  
+    The environment yaml-files in https://raw.githubusercontent.com/Deltares/hydromt_sfincs/envs are meant for testing and development, 
+    so please use the one mentioned above. In case you want to develop, see the :ref:`Developer installation guide <dev_env>`.
+
 Then, activate the environment (as stated by mamba/conda) to start making use of HydroMT-Wflow:
 
 .. code-block:: console

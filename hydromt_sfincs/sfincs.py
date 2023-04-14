@@ -2519,9 +2519,6 @@ class SfincsModel(GridModel):
                             f"Variable {attr}.{layer} has more than 2 dimensions: skipping."
                         )
                         continue
-                # set nodata value if not set    
-                if not da.raster.nodata:
-                    da.raster.set_nodata(np.nan)
                 # only write active cells to gis files
                 da = da.raster.clip_geom(self.region, mask=True).raster.mask_nodata()
                 if da.raster.res[1] > 0:  # make sure orientation is N->S

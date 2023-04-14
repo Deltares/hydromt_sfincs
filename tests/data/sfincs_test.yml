@@ -20,9 +20,8 @@ setup_grid_from_region:
 setup_dep:
   datasets_dep: 
     - elevtn: merit_hydro
-      zmin: 0
+      zmin: 0.001
     - elevtn: gebco
-      zmax: 0
   
 setup_mask_active:
   zmin: -5
