@@ -556,20 +556,30 @@ and combine valid values.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>da_list</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a><em>]</em>) – <p>list of dicts with xr.DataArrays and optional merge arguments.
-Possible merge arguments are:
-<a href="#id1"><span class="problematic" id="id2">*</span></a>reproj_method: str, optional</p>
-<blockquote>
-<div><p>Reprojection method, if not provided, method is based on resolution (average when resolution of destination grid is coarser then data reosltuion, else bilinear).</p>
-</div></blockquote>
-<dl class="simple">
-<dt><a href="#id3"><span class="problematic" id="id4">*</span></a>offset: xr.DataArray, float, optional</dt><dd><p>Dataset with spatially varying offset or float with uniform offset</p>
-</dd>
-<dt><a href="#id5"><span class="problematic" id="id6">*</span></a>zmin, zmax<span class="classifier">float, optional</span></dt><dd><p>Range of valid elevations for da2 -  only valid cells are not merged.
-Note: applied after offset!</p>
-</dd>
-<dt><a href="#id7"><span class="problematic" id="id8">*</span></a>gdf_valid: gpd.GeoDataFrame, optional</dt><dd><p>Geometry of the valid region for da2</p>
+Possible merge arguments are:</p>
+<ul>
+<li><dl class="simple">
+<dt>reproj_method: str, optional</dt><dd><p>Reprojection method, if not provided, method is based on resolution (average when resolution of destination grid is coarser then data reosltuion, else bilinear).</p>
 </dd>
 </dl>
+</li>
+<li><dl class="simple">
+<dt>offset: xr.DataArray, float, optional</dt><dd><p>Dataset with spatially varying offset or float with uniform offset</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>zmin, zmax<span class="classifier">float, optional</span></dt><dd><p>Range of valid elevations for da2 -  only valid cells are not merged.
+Note: applied after offset!</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>gdf_valid: gpd.GeoDataFrame, optional</dt><dd><p>Geometry of the valid region for da2</p>
+</dd>
+</dl>
+</li>
+</ul>
 </p></li>
 <li><p><strong>da_like</strong> (<em>xr.Dataarray</em><em>, </em><em>optional</em>) – Destination grid, by default None.
 If provided the output data is projected to this grid, otherwise to the first input grid.</p></li>

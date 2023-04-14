@@ -431,14 +431,15 @@ document.write(`
 <span class="sd">    da_list : List[dict]</span>
 <span class="sd">        list of dicts with xr.DataArrays and optional merge arguments.</span>
 <span class="sd">        Possible merge arguments are:</span>
-<span class="sd">        *reproj_method: str, optional</span>
+
+<span class="sd">        * reproj_method: str, optional</span>
 <span class="sd">            Reprojection method, if not provided, method is based on resolution (average when resolution of destination grid is coarser then data reosltuion, else bilinear).</span>
-<span class="sd">        *offset: xr.DataArray, float, optional</span>
+<span class="sd">        * offset: xr.DataArray, float, optional</span>
 <span class="sd">            Dataset with spatially varying offset or float with uniform offset</span>
-<span class="sd">        *zmin, zmax : float, optional</span>
+<span class="sd">        * zmin, zmax : float, optional</span>
 <span class="sd">            Range of valid elevations for da2 -  only valid cells are not merged.</span>
 <span class="sd">            Note: applied after offset!</span>
-<span class="sd">        *gdf_valid: gpd.GeoDataFrame, optional</span>
+<span class="sd">        * gdf_valid: gpd.GeoDataFrame, optional</span>
 <span class="sd">            Geometry of the valid region for da2</span>
 <span class="sd">    da_like : xr.Dataarray, optional</span>
 <span class="sd">        Destination grid, by default None.</span>

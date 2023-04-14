@@ -456,7 +456,7 @@ document.write(`
 <p>All lines in this notebook which start with <code class="docutils literal notranslate"><span class="pre">!</span></code> are executed from the command line. Within jupyter (except for jupyter lab) the logging messages are shown after completion.</p>
 <section id="Inspecting-the-batch-file-to-run-SFINCS">
 <h2>Inspecting the batch-file to run SFINCS<a class="headerlink" href="#Inspecting-the-batch-file-to-run-SFINCS" title="Permalink to this heading">#</a></h2>
-<p>On Windows, you can run SFINCS by executing a batch-file. We have already prepared this for an example model called ‘sfincs_compound’. Let’s now inspect this batch-file.</p>
+<p>On Windows, you can run SFINCS by executing a batch-file. We have already prepared this for an example model called <em>‘sfincs_compound’</em>. Let’s now inspect this batch-file.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
@@ -477,10 +477,15 @@ call &#34;c:\change_path_of_folder\sfincs.exe&#34;&gt;sfincs_log.txt
 
 </pre></div></div>
 </div>
-<p>Explanation of what is in the batch file: * ‘call’ means here that an executable has to be run. * ..:nbsphinx-math:<cite>sfincs</cite>_exe is the folder where the executable ‘sfincs.exe’ is located * The ‘&gt;sfincs_log.txt’ means that the output should be written to a log-file called ‘sfincs_log.txt’</p>
+<p><strong>Explanation of what is in the batch file:</strong></p>
+<ul class="simple">
+<li><p>‘call’ means here that an executable has to be run.</p></li>
+<li><p>..:nbsphinx-math:<cite>sfincs</cite>_exe is the folder where the executable ‘sfincs.exe’ is located</p></li>
+<li><p>The ‘&gt;sfincs_log.txt’ means that the output should be written to a log-file called ‘sfincs_log.txt’</p></li>
+</ul>
 <p>If you don’t have SFINCS yet, download SFINCS from here: <a class="reference external" href="https://download.deltares.nl/en/download/sfincs/">https://download.deltares.nl/en/download/sfincs/</a></p>
-<p>Then open the file ‘run.bat’ in any text editor, and add the folder of where you have saved the SFINCS executable ‘sfincs.exe’.</p>
-<p>e.g. to “c:<span class="math">\SFINCS</span>_download:nbsphinx-math:<cite>sfincs</cite>.exe”</p>
+<p>Then open the file <em>‘run.bat’</em> in any text editor, and add the folder of where you have saved the SFINCS executable <em>‘sfincs.exe’</em>.</p>
+<p>e.g. to *”c:<span class="math">\SFINCS</span>_download:nbsphinx-math:<cite>sfincs</cite>.exe”*</p>
 </section>
 <section id="Open-log-file">
 <h2>Open log file<a class="headerlink" href="#Open-log-file" title="Permalink to this heading">#</a></h2>
@@ -770,14 +775,17 @@ sh: 1: run.bat: not found
 [&#39;hydromt_data.yml&#39;, &#39;sfincs.dis&#39;, &#39;gis&#39;, &#39;sfincs.bnd&#39;, &#39;sfincs_map.nc&#39;, &#39;sfincs.dep&#39;, &#39;sfincs_his.nc&#39;, &#39;sfincs_log.txt&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.src&#39;, &#39;figs&#39;, &#39;run.bat&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.bzs&#39;]
 </pre></div></div>
 </div>
-<p>We see here the earlier inspected log-file ‘sfincs_log.txt’</p>
-<p>Do you additionally see the files ‘sfincs_map.nc’ and ‘sfincs_his.nc’ ?</p>
-<p>These are output files of SFINCS, containing the model results in the common Netcdf format.</p>
+<p>We see here the earlier inspected log-file <em>‘sfincs_log.txt’</em></p>
+<p>Do you additionally see the files <em>‘sfincs_map.nc’</em> and <em>‘sfincs_his.nc’</em> ?</p>
+<p>These are output files of SFINCS, containing the model results in the common NetCDF format.</p>
 </section>
-<section id="Continue">
-<h2>Continue<a class="headerlink" href="#Continue" title="Permalink to this heading">#</a></h2>
-<p>–&gt; You can now continue to the notebook: analyse_sfincs_output.ipynb</p>
-<p>or in case of running a subgrid model: analyse_sfincs_subgrid_model.ipynb</p>
+<section id="Continue-to-postprocessing-and-visualization">
+<h2>Continue to postprocessing and visualization<a class="headerlink" href="#Continue-to-postprocessing-and-visualization" title="Permalink to this heading">#</a></h2>
+<p>You can now continue to the notebook(s):</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="sfincs_results_hmax.html"><span class="doc">Example: Maximum water depth</span></a></p></li>
+<li><p><a class="reference internal" href="sfincs_results_animation.html"><span class="doc">Example: Animation</span></a></p></li>
+</ul>
 </section>
 </section>
 
@@ -833,7 +841,7 @@ sh: 1: run.bat: not found
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Now-let's-try-to-run-this-batch-file">Now let’s try to run this batch-file</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Created-log-file">Created log-file</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Created-netcdf-output-files">Created netcdf output files</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Continue">Continue</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Continue-to-postprocessing-and-visualization">Continue to postprocessing and visualization</a></li>
 </ul>
   </nav></div>
 

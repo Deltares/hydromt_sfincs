@@ -453,8 +453,9 @@ see example below, or a geometry file. Once the configuration and data libraries
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">hydromt update sfincs ./sfincs_compound -o ./sfincs_compound_precip -i sfincs_update_precip.yml -vv</span>
 </pre></div>
 </div>
-<p><strong>Configuration file:</strong>
-Settings to build or update a SFINCS model are managed in a configuration file. In this file,
+<section id="configuration-file">
+<h3>Configuration file<a class="headerlink" href="#configuration-file" title="Permalink to this heading">#</a></h3>
+<p>Settings to build or update a SFINCS model are managed in a configuration file. In this file,
 every option from each <a class="reference internal" href="sfincs_model_setup.html#model-methods"><span class="std std-ref">model method</span></a> can be changed by the user
 in its corresponding section. See the HydroMT core documentation for more info about the <a class="reference external" href="config">model configuration .yml-file</a> and check-out the example below.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global</span><span class="p">:</span>
@@ -491,8 +492,10 @@ in its corresponding section. See the HydroMT core documentation for more info a
 <li><p>a lot of methods (e.g. <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_mask_active.html#hydromt_sfincs.SfincsModel.setup_mask_active" title="hydromt_sfincs.SfincsModel.setup_mask_active"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_mask_active()</span></code></a>) need elevation data to work properly, so <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_dep.html#hydromt_sfincs.SfincsModel.setup_dep" title="hydromt_sfincs.SfincsModel.setup_dep"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_dep()</span></code></a> should be run before most other methods.</p></li>
 <li><p>if discharge locations are inferred from hydrography, <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.SfincsModel.setup_river_inflow" title="hydromt_sfincs.SfincsModel.setup_river_inflow"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_river_inflow()</span></code></a> should be run before <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_discharge_forcing()</span></code></a> or <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_discharge_forcing_from_grid()</span></code></a>.</p></li>
 </ul>
-<p><strong>Data libraries:</strong>
-Data sources in HydroMT are provided in one of several yaml libraries. These libraries contain required
+</section>
+<section id="data-libraries">
+<h3>Data libraries<a class="headerlink" href="#data-libraries" title="Permalink to this heading">#</a></h3>
+<p>Data sources in HydroMT are provided in one of several yaml libraries. These libraries contain required
 information on the different data sources so that HydroMT can process them for the different models. There
 are three ways for the user to select which data libraries to use:</p>
 <ul class="simple">
@@ -507,11 +510,14 @@ to the build / update command line.</p></li>
 These user libraries can be added either in the command line using the <strong>-d</strong> option and path/to/yaml or in the <strong>yml file</strong>
 with the <strong>data_libs</strong> option in the  <cite>global</cite> section (see example above).</p></li>
 </ul>
+</section>
+<section id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this heading">#</a></h3>
 <p>See <a class="reference internal" href="../_examples/build_from_cli.html"><span class="doc">Example: Build from CLI</span></a> for suggested components
 and options to use for compound flooding applications.</p>
 </section>
 <section id="python-scripting-advanced">
-<span id="sfincs-python"></span><h2>Python scripting - Advanced<a class="headerlink" href="#python-scripting-advanced" title="Permalink to this heading">#</a></h2>
+<span id="sfincs-python"></span><h3>Python scripting - Advanced<a class="headerlink" href="#python-scripting-advanced" title="Permalink to this heading">#</a></h3>
 <p>Next to the command line interface, HydroMT-SFINCS also allows to setup (or interact with) a SFINCS model from Python scripting.
 The main advantage of this approach is that you can work with in-memory datasets, e.g. datasets that you have modified, next to datasets that are defined in the data catalog.</p>
 <p>Typical applications where this approach can be useful are:</p>
@@ -540,9 +546,13 @@ The main advantage of this approach is that you can work with in-memory datasets
 <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">()</span> <span class="c1"># write all</span>
 </pre></div>
 </div>
+</section>
+<section id="id1">
+<h3>Example<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h3>
 <p>See <a class="reference internal" href="../_examples/build_from_script.html"><span class="doc">Example: Build from Script</span></a> for a more detailed example.</p>
 <div class="toctree-wrapper compound">
 </div>
+</section>
 </section>
 </section>
 
@@ -593,8 +603,14 @@ The main advantage of this approach is that you can work with in-memory datasets
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-interface-cli-basic">Command Line Interface (CLI) - Basic</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python-scripting-advanced">Python scripting - Advanced</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-interface-cli-basic">Command Line Interface (CLI) - Basic</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-file">Configuration file</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-libraries">Data libraries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#python-scripting-advanced">Python scripting - Advanced</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Example</a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 
