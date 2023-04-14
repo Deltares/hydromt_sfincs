@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>hydromt_sfincs.utils.write_binary_map_index &#8212; HydroMT SFINCS  documentation</title>
   
@@ -371,6 +371,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask_active.html">hydromt_sfincs.SfincsModel.setup_mask_active</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask_bounds.html">hydromt_sfincs.SfincsModel.setup_mask_bounds</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html">hydromt_sfincs.SfincsModel.setup_manning_roughness</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_constant_infiltration.html">hydromt_sfincs.SfincsModel.setup_constant_infiltration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html">hydromt_sfincs.SfincsModel.setup_cn_infiltration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_subgrid.html">hydromt_sfincs.SfincsModel.setup_subgrid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">hydromt_sfincs.SfincsModel.setup_river_inflow</a></li>
@@ -412,7 +413,6 @@ document.write(`
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.update_grid_from_config.html">hydromt_sfincs.SfincsModel.update_grid_from_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.update_spatial_attrs.html">hydromt_sfincs.SfincsModel.update_spatial_attrs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_spatial_attrs.html">hydromt_sfincs.SfincsModel.get_spatial_attrs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_forcing_1d.html">hydromt_sfincs.SfincsModel.set_forcing_1d</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_model_time.html">hydromt_sfincs.SfincsModel.get_model_time</a></li>
 </ul>
@@ -451,10 +451,9 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.create_topobathy_tiles.html">hydromt_sfincs.workflows.create_topobathy_tiles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
 </ul>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_inp.html">hydromt_sfincs.utils.read_inp</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_inp.html">hydromt_sfincs.utils.write_inp</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_binary_map.html">hydromt_sfincs.utils.read_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_binary_map.html">hydromt_sfincs.utils.write_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_binary_map_index.html">hydromt_sfincs.utils.read_binary_map_index</a></li>
@@ -473,7 +472,6 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_sfincs_his_results.html">hydromt_sfincs.utils.read_sfincs_his_results</a></li>
 </ul>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.get_spatial_attrs.html">hydromt_sfincs.utils.get_spatial_attrs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.parse_datetime.html">hydromt_sfincs.utils.parse_datetime</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.gdf2linestring.html">hydromt_sfincs.utils.gdf2linestring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.linestring2gdf.html">hydromt_sfincs.utils.linestring2gdf</a></li>
@@ -487,7 +485,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_basemap.html">hydromt_sfincs.plots.plot_basemap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_forcing.html">hydromt_sfincs.plots.plot_forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.downscale_floodmap.html">hydromt_sfincs.utils.downscale_floodmap</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.downscale_floodmap_webmercator.html">hydromt_sfincs.utils.downscale_floodmap_webmercator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
 </ul>
 </div>
 </nav></div>

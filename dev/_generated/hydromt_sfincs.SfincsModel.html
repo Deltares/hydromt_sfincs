@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>hydromt_sfincs.SfincsModel &#8212; HydroMT SFINCS  documentation</title>
   
@@ -371,6 +371,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask_active.html">hydromt_sfincs.SfincsModel.setup_mask_active</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask_bounds.html">hydromt_sfincs.SfincsModel.setup_mask_bounds</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html">hydromt_sfincs.SfincsModel.setup_manning_roughness</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_constant_infiltration.html">hydromt_sfincs.SfincsModel.setup_constant_infiltration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html">hydromt_sfincs.SfincsModel.setup_cn_infiltration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_subgrid.html">hydromt_sfincs.SfincsModel.setup_subgrid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">hydromt_sfincs.SfincsModel.setup_river_inflow</a></li>
@@ -412,7 +413,6 @@ document.write(`
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.update_grid_from_config.html">hydromt_sfincs.SfincsModel.update_grid_from_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.update_spatial_attrs.html">hydromt_sfincs.SfincsModel.update_spatial_attrs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_spatial_attrs.html">hydromt_sfincs.SfincsModel.get_spatial_attrs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_forcing_1d.html">hydromt_sfincs.SfincsModel.set_forcing_1d</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_model_time.html">hydromt_sfincs.SfincsModel.get_model_time</a></li>
 </ul>
@@ -451,10 +451,9 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.create_topobathy_tiles.html">hydromt_sfincs.workflows.create_topobathy_tiles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
 </ul>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_inp.html">hydromt_sfincs.utils.read_inp</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_inp.html">hydromt_sfincs.utils.write_inp</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_binary_map.html">hydromt_sfincs.utils.read_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_binary_map.html">hydromt_sfincs.utils.write_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_binary_map_index.html">hydromt_sfincs.utils.read_binary_map_index</a></li>
@@ -473,7 +472,6 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_sfincs_his_results.html">hydromt_sfincs.utils.read_sfincs_his_results</a></li>
 </ul>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.get_spatial_attrs.html">hydromt_sfincs.utils.get_spatial_attrs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.parse_datetime.html">hydromt_sfincs.utils.parse_datetime</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.gdf2linestring.html">hydromt_sfincs.utils.gdf2linestring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.linestring2gdf.html">hydromt_sfincs.utils.linestring2gdf</a></li>
@@ -487,7 +485,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_basemap.html">hydromt_sfincs.plots.plot_basemap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_forcing.html">hydromt_sfincs.plots.plot_forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.downscale_floodmap.html">hydromt_sfincs.utils.downscale_floodmap</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.downscale_floodmap_webmercator.html">hydromt_sfincs.utils.downscale_floodmap_webmercator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
 </ul>
 </div>
 </nav></div>
@@ -597,35 +595,29 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_model_time.html#hydromt_sfincs.SfincsModel.get_model_time" title="hydromt_sfincs.SfincsModel.get_model_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_time</span></code></a>()</p></td>
 <td><p>Return (tstart, tstop) tuple with parsed model start and end time</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_spatial_attrs.html#hydromt_sfincs.SfincsModel.get_spatial_attrs" title="hydromt_sfincs.SfincsModel.get_spatial_attrs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_spatial_attrs</span></code></a>([crs])</p></td>
-<td><p>Get geospatial <cite>config</cite> (sfincs.inp) attributes.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_basemap.html#hydromt_sfincs.SfincsModel.plot_basemap" title="hydromt_sfincs.SfincsModel.plot_basemap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_basemap</span></code></a>([fn_out, variable, shaded, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_basemap.html#hydromt_sfincs.SfincsModel.plot_basemap" title="hydromt_sfincs.SfincsModel.plot_basemap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_basemap</span></code></a>([fn_out, variable, shaded, ...])</p></td>
 <td><p>Create basemap plot.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing" title="hydromt_sfincs.SfincsModel.plot_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_forcing</span></code></a>([fn_out])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing" title="hydromt_sfincs.SfincsModel.plot_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_forcing</span></code></a>([fn_out])</p></td>
 <td><p>Plot model timeseries forcing.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read.html#hydromt_sfincs.SfincsModel.read" title="hydromt_sfincs.SfincsModel.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>([epsg])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read.html#hydromt_sfincs.SfincsModel.read" title="hydromt_sfincs.SfincsModel.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>([epsg])</p></td>
 <td><p>Read the complete model schematization and configuration from file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_config.html#hydromt_sfincs.SfincsModel.read_config" title="hydromt_sfincs.SfincsModel.read_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_config</span></code></a>([config_fn, epsg])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_config.html#hydromt_sfincs.SfincsModel.read_config" title="hydromt_sfincs.SfincsModel.read_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_config</span></code></a>([config_fn, epsg])</p></td>
 <td><p>Parse config from SFINCS input file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_forcing.html#hydromt_sfincs.SfincsModel.read_forcing" title="hydromt_sfincs.SfincsModel.read_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_forcing</span></code></a>([data_vars])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_forcing.html#hydromt_sfincs.SfincsModel.read_forcing" title="hydromt_sfincs.SfincsModel.read_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_forcing</span></code></a>([data_vars])</p></td>
 <td><p>Read forcing files and save to <cite>forcing</cite> attribute.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_geoms.html#hydromt_sfincs.SfincsModel.read_geoms" title="hydromt_sfincs.SfincsModel.read_geoms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_geoms</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_geoms.html#hydromt_sfincs.SfincsModel.read_geoms" title="hydromt_sfincs.SfincsModel.read_geoms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_geoms</span></code></a>()</p></td>
 <td><p>Read geometry files and save to <cite>geoms</cite> attribute.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_grid.html#hydromt_sfincs.SfincsModel.read_grid" title="hydromt_sfincs.SfincsModel.read_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_grid</span></code></a>([data_vars])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_grid.html#hydromt_sfincs.SfincsModel.read_grid" title="hydromt_sfincs.SfincsModel.read_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_grid</span></code></a>([data_vars])</p></td>
 <td><p>Read SFINCS binary grid files and save to <cite>grid</cite> attribute.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_maps</span></code>([fn])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_maps</span></code>([fn])</p></td>
 <td><p>Read model map at &lt;root&gt;/&lt;fn&gt; and add to maps component</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_mesh</span></code>([fn])</p></td>
-<td><p>Read model mesh data at &lt;root&gt;/&lt;fn&gt; and add to mesh property</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_results.html#hydromt_sfincs.SfincsModel.read_results" title="hydromt_sfincs.SfincsModel.read_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_results</span></code></a>([chunksize, drop, fn_map, fn_his])</p></td>
 <td><p>Read results from sfincs_map.nc and sfincs_his.nc and save to the <cite>results</cite> attribute.</p></td>
@@ -663,32 +655,32 @@ document.write(`
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_maps</span></code>(data[, name, split_dataset])</p></td>
 <td><p>Add raster data to the maps component.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_mesh</span></code>(data[, name])</p></td>
-<td><p>Add data to mesh.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_results.html#hydromt_sfincs.SfincsModel.set_results" title="hydromt_sfincs.SfincsModel.set_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_results</span></code></a>(data[, name, split_dataset])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_results.html#hydromt_sfincs.SfincsModel.set_results" title="hydromt_sfincs.SfincsModel.set_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_results</span></code></a>(data[, name, split_dataset])</p></td>
 <td><p>Add data to results attribute.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_root.html#hydromt_sfincs.SfincsModel.set_root" title="hydromt_sfincs.SfincsModel.set_root"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_root</span></code></a>(root[, mode])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_root.html#hydromt_sfincs.SfincsModel.set_root" title="hydromt_sfincs.SfincsModel.set_root"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_root</span></code></a>(root[, mode])</p></td>
 <td><p>Initialize the model root.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_states.html#hydromt_sfincs.SfincsModel.set_states" title="hydromt_sfincs.SfincsModel.set_states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_states</span></code></a>(data[, name, split_dataset])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_states.html#hydromt_sfincs.SfincsModel.set_states" title="hydromt_sfincs.SfincsModel.set_states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_states</span></code></a>(data[, name, split_dataset])</p></td>
 <td><p>Add data to states attribute.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_staticgeoms</span></code>(geom, name)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_staticgeoms</span></code>(geom, name)</p></td>
 <td><p>This method will be deprecated in future versions, use <a class="reference external" href="https://deltares.github.io/hydromt/latest/_generated/hydromt.Model.set_geoms.html#hydromt.Model.set_geoms" title="(in HydroMT v0.7.2.dev0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set_geoms()</span></code></a></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_staticmaps</span></code>(data[, name])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_staticmaps</span></code>(data[, name])</p></td>
 <td><p>This method will be deprecated in future versions.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_basemaps</span></code>(*args, **kwargs)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_basemaps</span></code>(*args, **kwargs)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration" title="hydromt_sfincs.SfincsModel.setup_cn_infiltration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_cn_infiltration</span></code></a>(cn_fn[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration" title="hydromt_sfincs.SfincsModel.setup_cn_infiltration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_cn_infiltration</span></code></a>(cn[, antecedent_moisture])</p></td>
 <td><p>Setup model potential maximum soil moisture retention map (scsfile) from gridded curve number map.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_config.html#hydromt_sfincs.SfincsModel.setup_config" title="hydromt_sfincs.SfincsModel.setup_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_config</span></code></a>(**cfdict)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_config.html#hydromt_sfincs.SfincsModel.setup_config" title="hydromt_sfincs.SfincsModel.setup_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_config</span></code></a>(**cfdict)</p></td>
 <td><p>Update config with a dictionary</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_constant_infiltration.html#hydromt_sfincs.SfincsModel.setup_constant_infiltration" title="hydromt_sfincs.SfincsModel.setup_constant_infiltration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_constant_infiltration</span></code></a>(qinf)</p></td>
+<td><p>Setup spatially varying constant infiltration rate (qinffile).</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_dep.html#hydromt_sfincs.SfincsModel.setup_dep" title="hydromt_sfincs.SfincsModel.setup_dep"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_dep</span></code></a>(datasets_dep[, buffer_cells, ...])</p></td>
 <td><p>Interpolate topobathy (dep) data to the model grid.</p></td>
@@ -719,12 +711,6 @@ document.write(`
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask_bounds.html#hydromt_sfincs.SfincsModel.setup_mask_bounds" title="hydromt_sfincs.SfincsModel.setup_mask_bounds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_mask_bounds</span></code></a>([btype, include_mask, ...])</p></td>
 <td><p>Set boundary cells in the model mask.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_mesh_from_raster</span></code>(raster_fn[, ...])</p></td>
-<td><p>This component adds data variable(s) from <code class="docutils literal notranslate"><span class="pre">raster_fn</span></code> to mesh object.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_mesh_from_raster_reclass</span></code>(raster_fn, ...)</p></td>
-<td><p>This component adds data variable(s) to mesh object by reclassifying the data in <code class="docutils literal notranslate"><span class="pre">raster_fn</span></code> based on <code class="docutils literal notranslate"><span class="pre">reclass_table_fn</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_observation_points.html#hydromt_sfincs.SfincsModel.setup_observation_points" title="hydromt_sfincs.SfincsModel.setup_observation_points"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_observation_points</span></code></a>(locations[, merge])</p></td>
 <td><p>Setup model observation point locations.</p></td>
@@ -792,25 +778,22 @@ document.write(`
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_maps</span></code>([fn])</p></td>
 <td><p>Write maps to netcdf file at &lt;root&gt;/&lt;fn&gt;</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_mesh</span></code>([fn])</p></td>
-<td><p>Write model grid data to netcdf file at &lt;root&gt;/&lt;fn&gt;</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_raster</span></code>([variables, root, driver, compress])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_raster</span></code>([variables, root, driver, compress])</p></td>
 <td><p>Write model 2D raster variables to geotiff files.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_states.html#hydromt_sfincs.SfincsModel.write_states" title="hydromt_sfincs.SfincsModel.write_states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_states</span></code></a>([fmt])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_states.html#hydromt_sfincs.SfincsModel.write_states" title="hydromt_sfincs.SfincsModel.write_states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_states</span></code></a>([fmt])</p></td>
 <td><p>Write waterlevel state (zsini)  to ascii map file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_staticgeoms</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_staticgeoms</span></code>()</p></td>
 <td><p>This method will be deprecated in future versions, use <a class="reference external" href="https://deltares.github.io/hydromt/latest/_generated/hydromt.Model.write_geoms.html#hydromt.Model.write_geoms" title="(in HydroMT v0.7.2.dev0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">write_geoms()</span></code></a></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_staticmaps</span></code>([fn])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_staticmaps</span></code>([fn])</p></td>
 <td><p>Write static model maps to netcdf file at &lt;root&gt;/&lt;fn&gt;</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_subgrid.html#hydromt_sfincs.SfincsModel.write_subgrid" title="hydromt_sfincs.SfincsModel.write_subgrid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_subgrid</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_subgrid.html#hydromt_sfincs.SfincsModel.write_subgrid" title="hydromt_sfincs.SfincsModel.write_subgrid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_subgrid</span></code></a>()</p></td>
 <td><p>Write SFINCS subgrid file.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_vector</span></code>([variables, root, gdf])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_vector</span></code>([variables, root, gdf])</p></td>
 <td><p>Write model vector (geoms) variables to geojson files.</p></td>
 </tr>
 </tbody>
@@ -854,37 +837,34 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.mask.html#hydromt_sfincs.SfincsModel.mask" title="hydromt_sfincs.SfincsModel.mask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mask</span></code></a></p></td>
 <td><p>Returns model mask</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mesh</span></code></p></td>
-<td><p>Model static mesh data.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.region.html#hydromt_sfincs.SfincsModel.region" title="hydromt_sfincs.SfincsModel.region"><code class="xref py py-obj docutils literal notranslate"><span class="pre">region</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.region.html#hydromt_sfincs.SfincsModel.region" title="hydromt_sfincs.SfincsModel.region"><code class="xref py py-obj docutils literal notranslate"><span class="pre">region</span></code></a></p></td>
 <td><p>Returns the geometry of the active model cells.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.res.html#hydromt_sfincs.SfincsModel.res" title="hydromt_sfincs.SfincsModel.res"><code class="xref py py-obj docutils literal notranslate"><span class="pre">res</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.res.html#hydromt_sfincs.SfincsModel.res" title="hydromt_sfincs.SfincsModel.res"><code class="xref py py-obj docutils literal notranslate"><span class="pre">res</span></code></a></p></td>
 <td><p>Returns the resolution of the model grid.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.results.html#hydromt_sfincs.SfincsModel.results" title="hydromt_sfincs.SfincsModel.results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">results</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.results.html#hydromt_sfincs.SfincsModel.results" title="hydromt_sfincs.SfincsModel.results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">results</span></code></a></p></td>
 <td><p>Model results.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.root.html#hydromt_sfincs.SfincsModel.root" title="hydromt_sfincs.SfincsModel.root"><code class="xref py py-obj docutils literal notranslate"><span class="pre">root</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.root.html#hydromt_sfincs.SfincsModel.root" title="hydromt_sfincs.SfincsModel.root"><code class="xref py py-obj docutils literal notranslate"><span class="pre">root</span></code></a></p></td>
 <td><p>Path to model folder.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">shape</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">shape</span></code></p></td>
 <td><p>Returns the shape of the model staticmaps.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.states.html#hydromt_sfincs.SfincsModel.states" title="hydromt_sfincs.SfincsModel.states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">states</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.states.html#hydromt_sfincs.SfincsModel.states" title="hydromt_sfincs.SfincsModel.states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">states</span></code></a></p></td>
 <td><p>Model states.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">staticgeoms</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">staticgeoms</span></code></p></td>
 <td><p>This property will be deprecated in future versions, use <code class="xref py py-meth docutils literal notranslate"><span class="pre">geom()</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">staticmaps</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">staticmaps</span></code></p></td>
 <td><p>Model static maps.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></p></td>
 <td><p>Returns spatial transform of the model grid.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">width</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">width</span></code></p></td>
 <td><p>Returns the width of the model staticmaps.</p></td>
 </tr>
 </tbody>

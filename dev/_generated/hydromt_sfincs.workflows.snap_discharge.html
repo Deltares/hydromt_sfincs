@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>hydromt_sfincs.workflows.snap_discharge &#8212; HydroMT SFINCS  documentation</title>
   
@@ -371,6 +371,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask_active.html">hydromt_sfincs.SfincsModel.setup_mask_active</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask_bounds.html">hydromt_sfincs.SfincsModel.setup_mask_bounds</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html">hydromt_sfincs.SfincsModel.setup_manning_roughness</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_constant_infiltration.html">hydromt_sfincs.SfincsModel.setup_constant_infiltration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html">hydromt_sfincs.SfincsModel.setup_cn_infiltration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_subgrid.html">hydromt_sfincs.SfincsModel.setup_subgrid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">hydromt_sfincs.SfincsModel.setup_river_inflow</a></li>
@@ -412,7 +413,6 @@ document.write(`
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.update_grid_from_config.html">hydromt_sfincs.SfincsModel.update_grid_from_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.update_spatial_attrs.html">hydromt_sfincs.SfincsModel.update_spatial_attrs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_spatial_attrs.html">hydromt_sfincs.SfincsModel.get_spatial_attrs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_forcing_1d.html">hydromt_sfincs.SfincsModel.set_forcing_1d</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_model_time.html">hydromt_sfincs.SfincsModel.get_model_time</a></li>
 </ul>
@@ -451,10 +451,9 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.create_topobathy_tiles.html">hydromt_sfincs.workflows.create_topobathy_tiles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
 </ul>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_inp.html">hydromt_sfincs.utils.read_inp</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_inp.html">hydromt_sfincs.utils.write_inp</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_binary_map.html">hydromt_sfincs.utils.read_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_binary_map.html">hydromt_sfincs.utils.write_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_binary_map_index.html">hydromt_sfincs.utils.read_binary_map_index</a></li>
@@ -473,7 +472,6 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_sfincs_his_results.html">hydromt_sfincs.utils.read_sfincs_his_results</a></li>
 </ul>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.get_spatial_attrs.html">hydromt_sfincs.utils.get_spatial_attrs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.parse_datetime.html">hydromt_sfincs.utils.parse_datetime</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.gdf2linestring.html">hydromt_sfincs.utils.gdf2linestring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.linestring2gdf.html">hydromt_sfincs.utils.linestring2gdf</a></li>
@@ -487,7 +485,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_basemap.html">hydromt_sfincs.plots.plot_basemap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_forcing.html">hydromt_sfincs.plots.plot_forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.downscale_floodmap.html">hydromt_sfincs.utils.downscale_floodmap</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.downscale_floodmap_webmercator.html">hydromt_sfincs.utils.downscale_floodmap_webmercator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
 </ul>
 </div>
 </nav></div>
@@ -549,7 +547,7 @@ document.write(`
 <h1>hydromt_sfincs.workflows.snap_discharge<a class="headerlink" href="#hydromt-sfincs-workflows-snap-discharge" title="Permalink to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="hydromt_sfincs.workflows.snap_discharge">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">snap_discharge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds:</span> <span class="pre">~xarray.core.dataset.Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf:</span> <span class="pre">~geopandas.geodataframe.GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wdw:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_error:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_error:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uparea_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'uparea'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discharge_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'discharge'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.discharge</span> <span class="pre">(WARNING)&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v2023.3.1.dev0)"><span class="pre">DataArray</span></a></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/discharge.html#snap_discharge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.snap_discharge" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">snap_discharge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds:</span> <span class="pre">~xarray.core.dataset.Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf:</span> <span class="pre">~geopandas.geodataframe.GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wdw:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_error:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_error:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uparea_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'uparea'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discharge_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'discharge'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.discharge</span> <span class="pre">(WARNING)&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v2023.4.1.dev0)"><span class="pre">DataArray</span></a></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/discharge.html#snap_discharge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.snap_discharge" title="Permalink to this definition">#</a></dt>
 <dd><p>Snaps point locations to grid cell with smallest difference in upstream area
 within <cite>wdw</cite> around the original location if the local cell does not meet the
 error criteria. Both the upstream area variable named <code class="docutils literal notranslate"><span class="pre">uparea_name</span></code> in
@@ -557,7 +555,7 @@ error criteria. Both the upstream area variable named <code class="docutils lite
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v2023.3.1.dev0)"><em>xarray.Dataset</em></a>) – Dataset with discharge and optional uparea variable.</p></li>
+<li><p><strong>ds</strong> (<a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v2023.4.1.dev0)"><em>xarray.Dataset</em></a>) – Dataset with discharge and optional uparea variable.</p></li>
 <li><p><strong>gdf</strong> (<a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.12.2)"><em>geopandas.GeoDataFrame</em></a><em>[</em><em>Points</em><em>]</em>) – Dataframe with Point geometries of locations of interest.</p></li>
 <li><p><strong>wdw</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Window size in number of cells around discharge boundary locations
 to snap to, only used if <code class="docutils literal notranslate"><span class="pre">uparea_fn</span></code> is provided. By default 1.</p></li>
@@ -573,7 +571,7 @@ the best fit grid cell, only used if “discharge” staticgeoms has a “uparea
 <dd class="field-even"><p><strong>ds</strong> – snapped dataset</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v2023.3.1.dev0)">xarray.Dataset</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v2023.4.1.dev0)">xarray.Dataset</a></p>
 </dd>
 </dl>
 </dd></dl>

@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>Build a model from Python &#8212; HydroMT SFINCS  documentation</title>
   
@@ -376,7 +376,9 @@ document.write(`
 </li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/sfincs_analyse.html">Postprocessing and visualization</a><input checked class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul class="simple">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/sfincs_analyse.html">Postprocessing and visualization</a><input checked class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="sfincs_results_hmax.html">Example: Maximum waterdepth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sfincs_results_animation.html">Example: Animation</a></li>
 </ul>
 </li>
 </ul>
@@ -616,19 +618,11 @@ No artists with labels found to put in legend.  Note that artists whose label st
 No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
 </pre></div></div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-3 gaps outside valid elevation range &lt; 10.0 km2.
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_build_from_script_14_2.png" src="../_images/_examples_build_from_script_14_2.png" />
+<img alt="../_images/_examples_build_from_script_14_1.png" src="../_images/_examples_build_from_script_14_1.png" />
 </div>
 </div>
 <p>NOTE: - The given output of HydroMT says “3 gaps outside valid elevation range &lt; 10 km2”. HydroMT does some smart filtering that if small groups of inactive cells are found, surrounded by active cells, these are still included as active, in this case 3 gaps. You can control the size of these gaps to filter by adding <code class="docutils literal notranslate"><span class="pre">fill_area</span> <span class="pre">=</span> <span class="pre">10</span></code> in <code class="docutils literal notranslate"><span class="pre">setup_mask_active()</span></code>. - A similar argument exists to neglect a group of active cells surrounded by inactive cells: <code class="docutils literal notranslate"><span class="pre">drop_area</span></code> - <code class="docutils literal notranslate"><span class="pre">reset_mask=True</span></code> means
@@ -748,7 +742,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 <p>You can specify multiple settings about how the subgrid derived tables should be made.</p>
 <p>Every single grid cell of the flux grid of the size inp.dx by inp.dy is defined into subgrid pixels (default nr_subgrid_pixels = 20). For every subgrid pixel the topobathy data is loaded, ideally this consists of high-resolution DEM datasets that you specify as user.</p>
 <p>In this example with dx=dy=50m, having nr_subgrid_pixels = 20 means we are loading data onto a 2.5 m subpixel grid However, the input data of Gebco and Merit_hydro is way coarser, therefore let’s set the ratio to 5 for now.</p>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
@@ -771,21 +765,6 @@ No artists with labels found to put in legend.  Note that artists whose label st
 <span class="c1">#       you either have more accurate results or run on a coarser grid resolution (= much faster) or both</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Number of regular cells in a block : 400
-Number of blocks in n direction    : 1
-Number of blocks in m direction    : 1
-Grid size of flux grid            : dx=49.99999999979212, dy=50.000000000080824
-Grid size of subgrid pixels       : dx=9.999999999958423, dy=10.000000000016165
-
-block 1/1 -- col 0:249 | row 0:106
-Processing block with 20839 active cells ..
-</pre></div></div>
 </div>
 <p>Now we can see what kind of subgrid-derived variables are created:</p>
 <div class="nbinput docutils container">
@@ -1195,13 +1174,74 @@ dict_keys([&#39;region&#39;, &#39;weir&#39;, &#39;obs&#39;])
 </section>
 <section id="15.-Save-all-files">
 <h2>15. Save all files<a class="headerlink" href="#15.-Save-all-files" title="Permalink to this heading">#</a></h2>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>  <span class="c1"># write all</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">ValueError</span>                                Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[24], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> <span class="ansi-yellow-bg">sf</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">write</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>  <span style="color: rgb(95,135,135)"># write all</span>
+
+File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:1972</span>, in <span class="ansi-cyan-fg">SfincsModel.write</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1970</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>logger<span style="color: rgb(98,98,98)">.</span>info(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Writing model data to </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>root<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#34;</span>)
+<span class="ansi-green-intense-fg ansi-bold">   1971</span> <span style="color: rgb(95,135,135)"># TODO - add check for subgrid &amp; quadtree &gt; give flags to self.write_grid() and self.write_config()</span>
+<span class="ansi-green-fg">-&gt; 1972</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">write_grid</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1973</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>write_subgrid()
+<span class="ansi-green-intense-fg ansi-bold">   1974</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>write_geoms()
+
+File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:2083</span>, in <span class="ansi-cyan-fg">SfincsModel.write_grid</span><span class="ansi-blue-fg">(self, data_vars)</span>
+<span class="ansi-green-intense-fg ansi-bold">   2075</span>         <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>reggrid<span style="color: rgb(98,98,98)">.</span>write_map(
+<span class="ansi-green-intense-fg ansi-bold">   2076</span>             map_fn<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>get_config(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>name<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">file</span><span style="color: rgb(175,0,0)">&#34;</span>, abs_path<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>),
+<span class="ansi-green-intense-fg ansi-bold">   2077</span>             data<span style="color: rgb(98,98,98)">=</span>ds_out[name]<span style="color: rgb(98,98,98)">.</span>values,
+<span class="ansi-green-intense-fg ansi-bold">   2078</span>             mask<span style="color: rgb(98,98,98)">=</span>mask,
+<span class="ansi-green-intense-fg ansi-bold">   2079</span>             dtype<span style="color: rgb(98,98,98)">=</span>dtypes<span style="color: rgb(98,98,98)">.</span>get(name, <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">f4</span><span style="color: rgb(175,0,0)">&#34;</span>),
+<span class="ansi-green-intense-fg ansi-bold">   2080</span>         )
+<span class="ansi-green-intense-fg ansi-bold">   2082</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_write_gis:
+<span class="ansi-green-fg">-&gt; 2083</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">write_raster</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">grid</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:2524</span>, in <span class="ansi-cyan-fg">SfincsModel.write_raster</span><span class="ansi-blue-fg">(self, variables, root, driver, compress, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">   2522</span> <span style="color: rgb(95,135,135)"># set nodata value if not set    </span>
+<span class="ansi-green-intense-fg ansi-bold">   2523</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> da<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>nodata:
+<span class="ansi-green-fg">-&gt; 2524</span>     <span class="ansi-yellow-bg">da</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">raster</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">set_nodata</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">np</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">nan</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   2525</span> <span style="color: rgb(95,135,135)"># only write active cells to gis files</span>
+<span class="ansi-green-intense-fg ansi-bold">   2526</span> da <span style="color: rgb(98,98,98)">=</span> da<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>clip_geom(<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>region, mask<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>mask_nodata()
+
+File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/raster.py:1482</span>, in <span class="ansi-cyan-fg">RasterDataArray.set_nodata</span><span class="ansi-blue-fg">(self, nodata, logger)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1480</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> np<span style="color: rgb(98,98,98)">.</span>issubdtype(<span style="color: rgb(0,135,0)">type</span>(nodata), np<span style="color: rgb(98,98,98)">.</span>number):
+<span class="ansi-green-intense-fg ansi-bold">   1481</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_obj<span style="color: rgb(98,98,98)">.</span>rio<span style="color: rgb(98,98,98)">.</span>set_nodata(nodata, inplace<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)
+<span class="ansi-green-fg">-&gt; 1482</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_obj</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">rio</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">write_nodata</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">nodata</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">inplace</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">True</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1483</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-intense-fg ansi-bold">   1484</span>     logger<span style="color: rgb(98,98,98)">.</span>warning(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">No numerical nodata value found, skipping set_nodata</span><span style="color: rgb(175,0,0)">&#34;</span>)
+
+File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/rioxarray/raster_array.py:311</span>, in <span class="ansi-cyan-fg">RasterArray.write_nodata</span><span class="ansi-blue-fg">(self, input_nodata, encoded, inplace)</span>
+<span class="ansi-green-intense-fg ansi-bold">    309</span> input_nodata <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">False</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> input_nodata <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span> input_nodata
+<span class="ansi-green-intense-fg ansi-bold">    310</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> input_nodata <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">False</span>:
+<span class="ansi-green-fg">--&gt; 311</span>     input_nodata <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">_ensure_nodata_dtype</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">input_nodata</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_obj</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">dtype</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    312</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> encoded:
+<span class="ansi-green-intense-fg ansi-bold">    313</span>         data_obj<span style="color: rgb(98,98,98)">.</span>rio<span style="color: rgb(98,98,98)">.</span>update_encoding({<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">_FillValue</span><span style="color: rgb(175,0,0)">&#34;</span>: input_nodata}, inplace<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)
+
+File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/rioxarray/raster_writer.py:130</span>, in <span class="ansi-cyan-fg">_ensure_nodata_dtype</span><span class="ansi-blue-fg">(original_nodata, new_dtype)</span>
+<span class="ansi-green-intense-fg ansi-bold">    128</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-intense-fg ansi-bold">    129</span>     original_nodata <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">float</span>(original_nodata)
+<span class="ansi-green-fg">--&gt; 130</span>     nodata <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">numpy</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">dtype</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">new_dtype</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">type</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">original_nodata</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    131</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> numpy<span style="color: rgb(98,98,98)">.</span>isnan(nodata) <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> original_nodata <span style="color: rgb(98,98,98)">!=</span> nodata:
+<span class="ansi-green-intense-fg ansi-bold">    132</span>         warnings<span style="color: rgb(98,98,98)">.</span>warn(
+<span class="ansi-green-intense-fg ansi-bold">    133</span>             <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">The nodata value (</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>original_nodata<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">) has been automatically </span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    134</span>             <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">changed to (</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>nodata<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">) to match the dtype of the data.</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    135</span>         )
+
+<span class="ansi-red-fg">ValueError</span>: cannot convert float NaN to integer
+</pre></div></div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
@@ -1218,7 +1258,7 @@ dict_keys([&#39;region&#39;, &#39;weir&#39;, &#39;obs&#39;])
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;sfincs.dis&#39;, &#39;sfincs.sbg&#39;, &#39;gis&#39;, &#39;sfincs.bnd&#39;, &#39;subgrid&#39;, &#39;sfincs.scs&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.ind&#39;, &#39;precip.nc&#39;, &#39;sfincs.src&#39;, &#39;figs&#39;, &#39;sfincs.weir&#39;, &#39;sfincs.msk&#39;, &#39;hydromt.log&#39;, &#39;sfincs.bzs&#39;]
+[&#39;gis&#39;, &#39;subgrid&#39;, &#39;sfincs.scs&#39;, &#39;sfincs.ind&#39;, &#39;figs&#39;, &#39;sfincs.msk&#39;, &#39;hydromt.log&#39;]
 </pre></div></div>
 </div>
 <p>Your basemap and forcing figures are saved in the folder ‘figs’, GIS files (tiff &amp; geojson) of your model setup in ‘gis’ and merged elevation and manning roughness on subgrid resolution in ‘subgrid’.</p>

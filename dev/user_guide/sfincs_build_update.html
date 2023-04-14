@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>Building or updating a model &#8212; HydroMT SFINCS  documentation</title>
   
@@ -373,7 +373,9 @@ document.write(`
 </li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="sfincs_analyse.html">Postprocessing and visualization</a><input checked class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul class="simple">
+<li class="toctree-l1 has-children"><a class="reference internal" href="sfincs_analyse.html">Postprocessing and visualization</a><input checked class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../_examples/sfincs_results_hmax.html">Example: Maximum waterdepth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../_examples/sfincs_results_animation.html">Example: Animation</a></li>
 </ul>
 </li>
 </ul>
@@ -516,8 +518,9 @@ with the <strong>data_libs</strong> option in the  <cite>global</cite> section (
 <p>See <a class="reference internal" href="../_examples/build_from_cli.html"><span class="doc">Example: Build from CLI</span></a> for suggested components
 and options to use for compound flooding applications.</p>
 </section>
+</section>
 <section id="python-scripting-advanced">
-<span id="sfincs-python"></span><h3>Python scripting - Advanced<a class="headerlink" href="#python-scripting-advanced" title="Permalink to this heading">#</a></h3>
+<span id="sfincs-python"></span><h2>Python scripting - Advanced<a class="headerlink" href="#python-scripting-advanced" title="Permalink to this heading">#</a></h2>
 <p>Next to the command line interface, HydroMT-SFINCS also allows to setup (or interact with) a SFINCS model from Python scripting.
 The main advantage of this approach is that you can work with in-memory datasets, e.g. datasets that you have modified, next to datasets that are defined in the data catalog.</p>
 <p>Typical applications where this approach can be useful are:</p>
@@ -546,7 +549,6 @@ The main advantage of this approach is that you can work with in-memory datasets
 <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">()</span> <span class="c1"># write all</span>
 </pre></div>
 </div>
-</section>
 <section id="id1">
 <h3>Example<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h3>
 <p>See <a class="reference internal" href="../_examples/build_from_script.html"><span class="doc">Example: Build from Script</span></a> for a more detailed example.</p>
@@ -607,7 +609,9 @@ The main advantage of this approach is that you can work with in-memory datasets
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-file">Configuration file</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-libraries">Data libraries</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#python-scripting-advanced">Python scripting - Advanced</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python-scripting-advanced">Python scripting - Advanced</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Example</a></li>
 </ul>
 </li>

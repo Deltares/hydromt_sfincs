@@ -401,12 +401,14 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for hydromt_sfincs.workflows.flwdir</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
-<span class="kn">import</span> <span class="nn">hydromt</span>
+<span></span><span class="sd">&quot;&quot;&quot;Flow direction and river network workflows for SFINCS models.&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span class="kn">import</span> <span class="nn">hydromt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pyflwdir</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -532,7 +534,7 @@ document.write(`
     <span class="c1"># add uparea attribute if da_uparea is provided</span>
     <span class="k">if</span> <span class="n">da_uparea</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">gdf_pnt</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_uparea</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">gdf_pnt</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
-        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_pnt</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;uparea&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_pnt</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="s2">&quot;rivwth&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
         <span class="n">gdf_out</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">gis_utils</span><span class="o">.</span><span class="n">nearest_merge</span><span class="p">(</span>
             <span class="n">gdf_out</span><span class="p">,</span> <span class="n">gdf_riv</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">],</span> <span class="n">max_dist</span><span class="o">=</span><span class="mi">10</span>

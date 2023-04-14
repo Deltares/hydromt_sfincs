@@ -7,9 +7,9 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>hydromt_sfincs.utils.get_spatial_attrs &#8212; HydroMT SFINCS  documentation</title>
+    <title>hydromt_sfincs.SfincsModel.setup_constant_infiltration &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../_static/sphinx_highlight.js"></script>
     <script src="../_static/design-tabs.js"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.utils.get_spatial_attrs';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.utils.parse_datetime" href="hydromt_sfincs.utils.parse_datetime.html" />
-    <link rel="prev" title="hydromt_sfincs.utils.read_sfincs_his_results" href="hydromt_sfincs.utils.read_sfincs_his_results.html" />
+    <link rel="next" title="hydromt_sfincs.SfincsModel.setup_cn_infiltration" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html" />
+    <link rel="prev" title="hydromt_sfincs.SfincsModel.setup_manning_roughness" href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -362,7 +362,7 @@ document.write(`
   <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.html">hydromt_sfincs.SfincsModel</a></li>
 </ul>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_config.html">hydromt_sfincs.SfincsModel.setup_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_region.html">hydromt_sfincs.SfincsModel.setup_region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_grid.html">hydromt_sfincs.SfincsModel.setup_grid</a></li>
@@ -371,6 +371,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask_active.html">hydromt_sfincs.SfincsModel.setup_mask_active</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask_bounds.html">hydromt_sfincs.SfincsModel.setup_mask_bounds</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html">hydromt_sfincs.SfincsModel.setup_manning_roughness</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_constant_infiltration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html">hydromt_sfincs.SfincsModel.setup_cn_infiltration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_subgrid.html">hydromt_sfincs.SfincsModel.setup_subgrid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">hydromt_sfincs.SfincsModel.setup_river_inflow</a></li>
@@ -412,7 +413,6 @@ document.write(`
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.update_grid_from_config.html">hydromt_sfincs.SfincsModel.update_grid_from_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.update_spatial_attrs.html">hydromt_sfincs.SfincsModel.update_spatial_attrs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_spatial_attrs.html">hydromt_sfincs.SfincsModel.get_spatial_attrs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_forcing_1d.html">hydromt_sfincs.SfincsModel.set_forcing_1d</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_model_time.html">hydromt_sfincs.SfincsModel.get_model_time</a></li>
 </ul>
@@ -451,10 +451,9 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.create_topobathy_tiles.html">hydromt_sfincs.workflows.create_topobathy_tiles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
 </ul>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_inp.html">hydromt_sfincs.utils.read_inp</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_inp.html">hydromt_sfincs.utils.write_inp</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_binary_map.html">hydromt_sfincs.utils.read_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_binary_map.html">hydromt_sfincs.utils.write_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_binary_map_index.html">hydromt_sfincs.utils.read_binary_map_index</a></li>
@@ -472,8 +471,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_sfincs_map_results.html">hydromt_sfincs.utils.read_sfincs_map_results</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_sfincs_his_results.html">hydromt_sfincs.utils.read_sfincs_his_results</a></li>
 </ul>
-<ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.utils.get_spatial_attrs</a></li>
+<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.parse_datetime.html">hydromt_sfincs.utils.parse_datetime</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.gdf2linestring.html">hydromt_sfincs.utils.gdf2linestring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.linestring2gdf.html">hydromt_sfincs.utils.linestring2gdf</a></li>
@@ -487,7 +485,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_basemap.html">hydromt_sfincs.plots.plot_basemap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_forcing.html">hydromt_sfincs.plots.plot_forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.downscale_floodmap.html">hydromt_sfincs.utils.downscale_floodmap</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.downscale_floodmap_webmercator.html">hydromt_sfincs.utils.downscale_floodmap_webmercator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
 </ul>
 </div>
 </nav></div>
@@ -528,7 +526,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API reference</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">hydromt_sfincs.utils.get_spatial_attrs</li>
+    <li class="breadcrumb-item active" aria-current="page">hydromt_sfincs.SfincsModel.setup_constant_infiltration</li>
   </ul>
 </nav>
 </div>
@@ -545,32 +543,19 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="hydromt-sfincs-utils-get-spatial-attrs">
-<h1>hydromt_sfincs.utils.get_spatial_attrs<a class="headerlink" href="#hydromt-sfincs-utils-get-spatial-attrs" title="Permalink to this heading">#</a></h1>
-<dl class="py function">
-<dt class="sig sig-object py" id="hydromt_sfincs.utils.get_spatial_attrs">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.utils.</span></span><span class="sig-name descname"><span class="pre">get_spatial_attrs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config:</span> <span class="pre">~typing.Dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">~pyproj.crs.crs.CRS</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.utils</span> <span class="pre">(WARNING)&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/utils.html#get_spatial_attrs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.utils.get_spatial_attrs" title="Permalink to this definition">#</a></dt>
-<dd><p>Returns geospatial attributes shape, crs and transform from config dict.</p>
-<p>The config dict should contain the following keys:</p>
+  <section id="hydromt-sfincs-sfincsmodel-setup-constant-infiltration">
+<h1>hydromt_sfincs.SfincsModel.setup_constant_infiltration<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-constant-infiltration" title="Permalink to this heading">#</a></h1>
+<dl class="py method">
+<dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_constant_infiltration">
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_constant_infiltration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qinf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_constant_infiltration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_constant_infiltration" title="Permalink to this definition">#</a></dt>
+<dd><p>Setup spatially varying constant infiltration rate (qinffile).</p>
+<p>Adds model layers:</p>
 <ul class="simple">
-<li><p>for shape: mmax, nmax</p></li>
-<li><p>for crs: epsg</p></li>
-<li><p>for transform: dx, dy, x0, y0, rotation</p></li>
+<li><p><strong>qinf</strong> map: constant infiltration rate [mm/hr]</p></li>
 </ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>config</strong> (<em>Dict</em>) – sfincs.inp configuration</p></li>
-<li><p><strong>crs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>CRS</em>) – Coordinate reference system</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>shape</strong> (<em>tuple of int</em>) – width, height</p></li>
-<li><p><strong>transform</strong> (<em>Affine.transform</em>) – Geospatial transform</p></li>
-<li><p><strong>crs</strong> (<em>pyproj.CRS, None</em>) – Coordinate reference system</p></li>
-</ul>
-</p>
+<dd class="field-odd"><p><strong>qinf</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, or </em><em>RasterDataset</em>) – Spatially varying infiltration rates [mm/hr]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -589,20 +574,20 @@ document.write(`
     <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
-       href="hydromt_sfincs.utils.read_sfincs_his_results.html"
+       href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">hydromt_sfincs.utils.read_sfincs_his_results</p>
+        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_manning_roughness</p>
       </div>
     </a>
     <a class="right-next"
-       href="hydromt_sfincs.utils.parse_datetime.html"
+       href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">hydromt_sfincs.utils.parse_datetime</p>
+        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_cn_infiltration</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -624,13 +609,13 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.utils.get_spatial_attrs"><code class="docutils literal notranslate"><span class="pre">get_spatial_attrs()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.SfincsModel.setup_constant_infiltration"><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_constant_infiltration()</span></code></a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">
-    <a href="../_sources/_generated/hydromt_sfincs.utils.get_spatial_attrs.rst.txt">
+    <a href="../_sources/_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

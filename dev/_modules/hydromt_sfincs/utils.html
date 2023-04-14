@@ -402,35 +402,31 @@ document.write(`
                   
   <h1>Source code for hydromt_sfincs.utils</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">HydroMT-SFINCS utilities functions for reading and writing SFINCS specific input and output files,</span>
+<span class="sd">as well as some common data conversions.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">configparser</span> <span class="kn">import</span> <span class="n">ConfigParser</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span class="kn">import</span> <span class="nn">hydromt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">affine</span> <span class="kn">import</span> <span class="n">Affine</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">pyproj</span>
-<span class="kn">from</span> <span class="nn">pyproj.crs.crs</span> <span class="kn">import</span> <span class="n">CRS</span>
 <span class="kn">import</span> <span class="nn">rasterio</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">from</span> <span class="nn">configparser</span> <span class="kn">import</span> <span class="n">ConfigParser</span>
-<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">LineString</span><span class="p">,</span> <span class="n">Polygon</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">import</span> <span class="nn">io</span>
-<span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">hydromt</span>
 <span class="kn">from</span> <span class="nn">hydromt.io</span> <span class="kn">import</span> <span class="n">write_xy</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span>
-<span class="kn">from</span> <span class="nn">pyflwdir.regions</span> <span class="kn">import</span> <span class="n">region_area</span>
-<span class="kn">from</span> <span class="nn">hydromt_sfincs.workflows</span> <span class="kn">import</span> <span class="n">tiling</span>
+<span class="kn">from</span> <span class="nn">pyproj.crs.crs</span> <span class="kn">import</span> <span class="n">CRS</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">LineString</span><span class="p">,</span> <span class="n">Polygon</span>
+
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;read_inp&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_inp&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;rotated_grid&quot;</span><span class="p">,</span>
     <span class="s2">&quot;read_binary_map&quot;</span><span class="p">,</span>
     <span class="s2">&quot;write_binary_map&quot;</span><span class="p">,</span>
     <span class="s2">&quot;read_binary_map_index&quot;</span><span class="p">,</span>
@@ -454,7 +450,7 @@ document.write(`
     <span class="s2">&quot;read_sfincs_map_results&quot;</span><span class="p">,</span>
     <span class="s2">&quot;read_sfincs_his_results&quot;</span><span class="p">,</span>
     <span class="s2">&quot;downscale_floodmap&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;downscale_floodmap_webmercator&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rotated_grid&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -489,132 +485,6 @@ document.write(`
             <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interpolation</span><span class="o">.</span><span class="n">before_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section_name</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
             <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:&lt;15}</span><span class="s2"> </span><span class="si">{:&lt;1}</span><span class="s2"> </span><span class="si">{:&lt;}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delimiters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value</span><span class="p">))</span>
         <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="read_inp"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_inp.html#hydromt_sfincs.utils.read_inp">[docs]</a><span class="k">def</span> <span class="nf">read_inp</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read sfincs.inp file and parse to dictionary.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">configread</span><span class="p">(</span>
-        <span class="n">fn</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cf</span><span class="o">=</span><span class="n">ConfigParserSfincs</span><span class="p">,</span> <span class="n">noheader</span><span class="o">=</span><span class="kc">True</span>
-    <span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="write_inp"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_inp.html#hydromt_sfincs.utils.write_inp">[docs]</a><span class="k">def</span> <span class="nf">write_inp</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">conf</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write sfincs.inp file from dictionary.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">configwrite</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">cf</span><span class="o">=</span><span class="n">ConfigParserSfincs</span><span class="p">,</span> <span class="n">noheader</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="get_spatial_attrs"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.get_spatial_attrs.html#hydromt_sfincs.utils.get_spatial_attrs">[docs]</a><span class="k">def</span> <span class="nf">get_spatial_attrs</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns geospatial attributes shape, crs and transform from config dict.</span>
-
-<span class="sd">    The config dict should contain the following keys:</span>
-
-<span class="sd">    * for shape: mmax, nmax</span>
-<span class="sd">    * for crs: epsg</span>
-<span class="sd">    * for transform: dx, dy, x0, y0, rotation</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    config: Dict</span>
-<span class="sd">        sfincs.inp configuration</span>
-<span class="sd">    crs: int, CRS</span>
-<span class="sd">        Coordinate reference system</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    shape: tuple of int</span>
-<span class="sd">        width, height</span>
-<span class="sd">    transform: Affine.transform</span>
-<span class="sd">        Geospatial transform</span>
-<span class="sd">    crs: pyproj.CRS, None</span>
-<span class="sd">        Coordinate reference system</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># retrieve rows and cols</span>
-    <span class="n">cols</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mmax&quot;</span><span class="p">)</span>
-    <span class="n">rows</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nmax&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">cols</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">rows</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;mmax&quot; or &quot;nmax&quot; not defined in sfincs.inp&#39;</span><span class="p">)</span>
-
-    <span class="c1"># retrieve CRS</span>
-    <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;epsg&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="n">crs</span> <span class="o">=</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;epsg&quot;</span><span class="p">)))</span>
-    <span class="k">elif</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">crs</span> <span class="o">=</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;&quot;epsg&quot; code not defined in sfincs.inp, unknown CRS.&#39;</span><span class="p">)</span>
-
-    <span class="c1"># retrieve spatial transform</span>
-    <span class="n">dx</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dx&quot;</span><span class="p">)</span>
-    <span class="n">dy</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dy&quot;</span><span class="p">)</span>
-    <span class="n">west</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x0&quot;</span><span class="p">)</span>
-    <span class="n">south</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;y0&quot;</span><span class="p">)</span>
-    <span class="n">rotation</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rotation&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># clockwise rotation [degrees]</span>
-    <span class="k">if</span> <span class="n">west</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">south</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s1">&#39;Either one of &quot;x0&quot; or &quot;y0&quot; not defined in sfincs.inp, &#39;</span>
-            <span class="s2">&quot;falling back to origin at (0, 0).&quot;</span>
-        <span class="p">)</span>
-        <span class="n">west</span><span class="p">,</span> <span class="n">south</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
-    <span class="k">if</span> <span class="n">dx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s1">&#39;Either one of &quot;dx&quot; or &quot;dy&quot; not defined in sfincs.inp, &#39;</span>
-            <span class="s2">&quot;falling back unity resolution (1, 1).&quot;</span>
-        <span class="p">)</span>
-        <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
-
-    <span class="n">transform</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">Affine</span><span class="o">.</span><span class="n">translation</span><span class="p">(</span><span class="n">west</span><span class="p">,</span> <span class="n">south</span><span class="p">)</span>
-        <span class="o">*</span> <span class="n">Affine</span><span class="o">.</span><span class="n">rotation</span><span class="p">(</span><span class="n">rotation</span><span class="p">)</span>
-        <span class="o">*</span> <span class="n">Affine</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">transform</span><span class="p">,</span> <span class="n">crs</span></div>
-
-<div class="viewcode-block" id="rotated_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.rotated_grid.html#hydromt_sfincs.utils.rotated_grid">[docs]</a><span class="k">def</span> <span class="nf">rotated_grid</span><span class="p">(</span><span class="n">pol</span><span class="p">:</span> <span class="n">Polygon</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the origin (x0, y0), shape (mmax, nmax) and rotation</span>
-<span class="sd">    of the rotated grid fitted to the minimum rotated rectangle around the</span>
-<span class="sd">    area of interest (pol). The grid shape is defined by the resolution (res).</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    pol : Polygon</span>
-<span class="sd">        Polygon of the area of interest</span>
-<span class="sd">    res : float</span>
-<span class="sd">        Resolution of the grid</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">_azimuth</span><span class="p">(</span><span class="n">point1</span><span class="p">,</span> <span class="n">point2</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;azimuth between 2 points (interval 0 - 180)&quot;&quot;&quot;</span>
-        <span class="n">angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">point2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">point1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">point2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">point1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_dist</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;distance between points&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-
-    <span class="n">mrr</span> <span class="o">=</span> <span class="n">pol</span><span class="o">.</span><span class="n">minimum_rotated_rectangle</span>
-    <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mrr</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># get coordinates of all corners</span>
-    <span class="c1"># get origin based on the corner with the smallest distance to origin</span>
-    <span class="c1"># after translation to account for possible negative coordinates</span>
-    <span class="n">ib</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">coords</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">coords</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">coords</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">coords</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
-    <span class="p">)</span>
-    <span class="n">ir</span> <span class="o">=</span> <span class="p">(</span><span class="n">ib</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">4</span>
-    <span class="n">il</span> <span class="o">=</span> <span class="p">(</span><span class="n">ib</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span> <span class="o">%</span> <span class="mi">4</span>
-    <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="n">ib</span><span class="p">,</span> <span class="p">:]</span>
-    <span class="n">az1</span> <span class="o">=</span> <span class="n">_azimuth</span><span class="p">((</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">),</span> <span class="n">coords</span><span class="p">[</span><span class="n">ir</span><span class="p">,</span> <span class="p">:])</span>
-    <span class="n">az2</span> <span class="o">=</span> <span class="n">_azimuth</span><span class="p">((</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">),</span> <span class="n">coords</span><span class="p">[</span><span class="n">il</span><span class="p">,</span> <span class="p">:])</span>
-    <span class="n">axis1</span> <span class="o">=</span> <span class="n">_dist</span><span class="p">((</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">),</span> <span class="n">coords</span><span class="p">[</span><span class="n">ir</span><span class="p">,</span> <span class="p">:])</span>
-    <span class="n">axis2</span> <span class="o">=</span> <span class="n">_dist</span><span class="p">((</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">),</span> <span class="n">coords</span><span class="p">[</span><span class="n">il</span><span class="p">,</span> <span class="p">:])</span>
-    <span class="k">if</span> <span class="n">az2</span> <span class="o">&lt;</span> <span class="n">az1</span><span class="p">:</span>
-        <span class="n">rot</span> <span class="o">=</span> <span class="n">az2</span>
-        <span class="n">mmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">axis2</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
-        <span class="n">nmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">axis1</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">rot</span> <span class="o">=</span> <span class="n">az1</span>
-        <span class="n">mmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">axis1</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
-        <span class="n">nmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">axis2</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
-
-    <span class="k">return</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">mmax</span><span class="p">,</span> <span class="n">nmax</span><span class="p">,</span> <span class="n">rot</span></div>
 
 
 <span class="c1">## BINARY MAPS: sfincs.ind, sfincs.msk, sfincs.dep etc. ##</span>
@@ -1192,8 +1062,7 @@ document.write(`
 
 <div class="viewcode-block" id="read_sfincs_map_results"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_sfincs_map_results.html#hydromt_sfincs.utils.read_sfincs_map_results">[docs]</a><span class="k">def</span> <span class="nf">read_sfincs_map_results</span><span class="p">(</span>
     <span class="n">fn_map</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
-    <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-    <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ds_like</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
     <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="n">drop</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincsgrid&quot;</span><span class="p">],</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
@@ -1202,17 +1071,12 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read sfincs_map.nc staggered grid netcdf files and parse to two</span>
 <span class="sd">    hydromt.RasterDataset objects: one with face and one with edge variables.</span>
 
-<span class="sd">    Additionally, hmax is computed from zsmax and zb if present.</span>
-
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    fn_map : str, Path</span>
 <span class="sd">        Path to sfincs_map.nc file</span>
-<span class="sd">    hmin: float, optional</span>
-<span class="sd">        Minimum water depth to consider in hmax map, i.e. cells with lower depth</span>
-<span class="sd">        get a nodata values assigned. By deafult 0.0</span>
-<span class="sd">    crs: int, CRS</span>
-<span class="sd">        Coordinate reference system</span>
+<span class="sd">    ds_like: xr.Dataset</span>
+<span class="sd">        Dataset with grid information to use for parsing.</span>
 <span class="sd">    chunksize: int, optional</span>
 <span class="sd">        chunk size along time dimension, by default 100</span>
 <span class="sd">    drop : List[str], optional</span>
@@ -1223,71 +1087,44 @@ document.write(`
 <span class="sd">    ds_face, ds_edge: hydromt.RasterDataset</span>
 <span class="sd">        Parsed SFINCS output map file</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">ds_map</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">fn_map</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">chunksize</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="n">dvars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ds_map</span><span class="o">.</span><span class="n">data_vars</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-    <span class="n">edge_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">var</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">dvars</span> <span class="k">if</span> <span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_x&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">var</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_y&quot;</span><span class="p">))]</span>
-    <span class="n">ds_map</span> <span class="o">=</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">set_coords</span><span class="p">([</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">edge_dims</span><span class="p">)</span>
-    <span class="n">crs</span> <span class="o">=</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">crs</span>
-
-    <span class="k">if</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;inp&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rotation&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Cannot parse rotated maps. Skip reading sfincs.map.nc&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(),</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
-
-    <span class="c1"># split general+face and edge vars</span>
-    <span class="n">face_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ds_map</span><span class="o">.</span><span class="n">data_vars</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-    <span class="n">edge_vars</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="n">edge</span> <span class="o">=</span> <span class="n">edge_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-        <span class="n">face_vars</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">face_vars</span> <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_m&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">drop</span>
-        <span class="p">]</span>
-        <span class="n">edge_vars</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">face_vars</span> <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_m&quot;</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">drop</span>
-        <span class="p">]</span>
-
-    <span class="c1"># read face vars</span>
-    <span class="n">face_coords</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">IndexVariable</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
-        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">IndexVariable</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">ds_map</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+    <span class="n">rm</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="s2">&quot;xc&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="s2">&quot;yc&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;corner_x&quot;</span><span class="p">:</span> <span class="s2">&quot;corner_xc&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;corner_y&quot;</span><span class="p">:</span> <span class="s2">&quot;corner_yc&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;corner_n&quot;</span><span class="p">:</span> <span class="s2">&quot;corner_y&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;corner_m&quot;</span><span class="p">:</span> <span class="s2">&quot;corner_x&quot;</span><span class="p">,</span>
     <span class="p">}</span>
-    <span class="n">ds_face</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">ds_map</span><span class="p">[</span><span class="n">face_vars</span><span class="p">]</span>
-        <span class="o">.</span><span class="n">drop_vars</span><span class="p">([</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">])</span>
-        <span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">})</span>
-        <span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">face_coords</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">)</span>
+    <span class="n">ds_map</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">fn_map</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">chunksize</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">ds_map</span> <span class="o">=</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rm</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">ds_map</span> <span class="ow">or</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">dims</span><span class="p">)}</span>
     <span class="p">)</span>
-    <span class="c1"># compute hmax</span>
-    <span class="k">if</span> <span class="s2">&quot;zsmax&quot;</span> <span class="ow">in</span> <span class="n">ds_face</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing &quot;hmax = max(zsmax) - zb&quot;&#39;</span><span class="p">)</span>
-        <span class="n">hmax</span> <span class="o">=</span> <span class="n">ds_face</span><span class="p">[</span><span class="s2">&quot;zsmax&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s2">&quot;timemax&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">ds_face</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">]</span>
-        <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hmax</span> <span class="o">&gt;</span> <span class="n">hmin</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">)</span>
-        <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="o">-</span><span class="mi">9999</span><span class="p">)</span>
-        <span class="n">ds_face</span><span class="p">[</span><span class="s2">&quot;hmax&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hmax</span>
-    <span class="c1"># set spatial attrs</span>
-    <span class="n">ds_face</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_spatial_dims</span><span class="p">(</span><span class="n">x_dim</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">y_dim</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
-    <span class="n">ds_face</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
+    <span class="n">ds_map</span> <span class="o">=</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">set_coords</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">var</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">data_vars</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="p">(</span><span class="n">var</span> <span class="ow">in</span> <span class="n">rm</span><span class="o">.</span><span class="n">values</span><span class="p">())]</span>
+    <span class="p">)</span>
 
-    <span class="c1"># get edge vars</span>
+    <span class="c1"># split face and edge variables</span>
+    <span class="n">scoords</span> <span class="o">=</span> <span class="n">ds_like</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">coords</span>
+    <span class="n">tcoords</span> <span class="o">=</span> <span class="p">{</span><span class="n">tdim</span><span class="p">:</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">tdim</span><span class="p">]</span> <span class="k">for</span> <span class="n">tdim</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">dims</span> <span class="k">if</span> <span class="n">tdim</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)}</span>
+    <span class="n">ds_face</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">scoords</span><span class="p">,</span> <span class="o">**</span><span class="n">tcoords</span><span class="p">})</span>
     <span class="n">ds_edge</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge_vars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">edge_coords</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_x&quot;</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">IndexVariable</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_x&quot;</span><span class="p">,</span> <span class="n">ds_map</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">edge_n</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
-            <span class="p">),</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_y&quot;</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">IndexVariable</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_y&quot;</span><span class="p">,</span> <span class="n">ds_map</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_y&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">edge_m</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
-            <span class="p">),</span>
-        <span class="p">}</span>
-        <span class="n">ds_edge</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">ds_map</span><span class="p">[</span><span class="n">edge_vars</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">drop_vars</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_x&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_y&quot;</span><span class="p">])</span>
-            <span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_n&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_y&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_m&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_x&quot;</span><span class="p">})</span>
-            <span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">edge_coords</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_y&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_x&quot;</span><span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_x&quot;</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">_y&quot;</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">})</span>
-        <span class="n">ds_edge</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">drop</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="s2">&quot;x&quot;</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span> <span class="ow">and</span> <span class="s2">&quot;y&quot;</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="c1"># drop to overwrite with ds_like.raster.coords</span>
+            <span class="n">ds_face</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;xc&quot;</span><span class="p">,</span> <span class="s2">&quot;yc&quot;</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">ds_face</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ds_edge</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+
+    <span class="c1"># add crs</span>
+    <span class="k">if</span> <span class="n">ds_like</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ds_face</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">ds_like</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="n">ds_edge</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">ds_like</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">ds_face</span><span class="p">,</span> <span class="n">ds_edge</span></div>
 
@@ -1337,7 +1174,7 @@ document.write(`
     <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">floodmap_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;floodmap.tif&quot;</span><span class="p">,</span>
     <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;nearest&quot;</span><span class="p">,</span>
-<span class="p">):</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a downscaled floodmap for (model) region.</span>
 
 <span class="sd">    Parameters</span>
@@ -1354,9 +1191,14 @@ document.write(`
 <span class="sd">    floodmap_fn : Union[Path, str], optional</span>
 <span class="sd">        Name (path) of output floodmap, by default &quot;floodmap.tif&quot;</span>
 <span class="sd">    reproj_method : str, optional</span>
-<span class="sd">        Reprojection method for downscaling the water levels, by default &quot;nearest&quot;. </span>
+<span class="sd">        Reprojection method for downscaling the water levels, by default &quot;nearest&quot;.</span>
 <span class="sd">        Other option is &quot;bilinear&quot;.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    hmax: xr.Dataset</span>
+<span class="sd">        Downscaled and masked floodmap.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
 
     <span class="c1"># interpolate zsmax to dep grid</span>
     <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
@@ -1378,9 +1220,6 @@ document.write(`
         <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
         <span class="n">floodmap_fn</span> <span class="o">=</span> <span class="n">floodmap_fn</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.tif&quot;</span><span class="p">,</span> <span class="s2">&quot;_mask.tif&quot;</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">floodmap_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">hmax</span>
-
     <span class="c1"># write floodmap</span>
     <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">to_raster</span><span class="p">(</span>
         <span class="n">floodmap_fn</span><span class="p">,</span>
@@ -1393,112 +1232,59 @@ document.write(`
         <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="n">profile</span><span class="o">=</span><span class="s2">&quot;COG&quot;</span><span class="p">,</span>
         <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">hmax</span></div>
 
 
-<div class="viewcode-block" id="downscale_floodmap_webmercator"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.downscale_floodmap_webmercator.html#hydromt_sfincs.utils.downscale_floodmap_webmercator">[docs]</a><span class="k">def</span> <span class="nf">downscale_floodmap_webmercator</span><span class="p">(</span>
-    <span class="n">zsmax</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
-    <span class="n">index_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">topobathy_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">floodmap_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
-    <span class="n">zoom_range</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span>
-    <span class="n">fmt_in</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span>
-    <span class="n">fmt_out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;png&quot;</span><span class="p">,</span>
-    <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a downscaled floodmap for (model) region in webmercator tile format</span>
+<div class="viewcode-block" id="rotated_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.rotated_grid.html#hydromt_sfincs.utils.rotated_grid">[docs]</a><span class="k">def</span> <span class="nf">rotated_grid</span><span class="p">(</span>
+    <span class="n">pol</span><span class="p">:</span> <span class="n">Polygon</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dec_origin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dec_rotation</span><span class="o">=</span><span class="mi">3</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the origin (x0, y0), shape (mmax, nmax) and rotation</span>
+<span class="sd">    of the rotated grid fitted to the minimum rotated rectangle around the</span>
+<span class="sd">    area of interest (pol). The grid shape is defined by the resolution (res).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    zsmax : Union[np.array, xr.DataArray]</span>
-<span class="sd">        DataArray with maximum water level (m) for each cell</span>
-<span class="sd">    index_path : str</span>
-<span class="sd">        Directory with index files</span>
-<span class="sd">    topobathy_path : str</span>
-<span class="sd">        Directory with topobathy files</span>
-<span class="sd">    floodmap_path : str</span>
-<span class="sd">        Directory where floodmap files will be stored</span>
-<span class="sd">    hmin : float, optional</span>
-<span class="sd">        Minimum water depth considered as &quot;flooded&quot;, by default 0.05 m</span>
-<span class="sd">    zoom_range : Union[int, List[int]], optional</span>
-<span class="sd">        Range of zoom levels, by default [0, 13]</span>
-<span class="sd">    fmt_in : str, optional</span>
-<span class="sd">        Format of the index and topobathy tiles, by default &quot;bin&quot;</span>
-<span class="sd">    fmt_out : str, optional</span>
-<span class="sd">        Format of the floodmap tiles to be created, by default &quot;png&quot;</span>
-<span class="sd">    merge : bool, optional</span>
-<span class="sd">        Merge floodmap tiles with existing floodmap tiles (this could for example happen when there is overlap between models), by default True</span>
+<span class="sd">    pol : Polygon</span>
+<span class="sd">        Polygon of the area of interest</span>
+<span class="sd">    res : float</span>
+<span class="sd">        Resolution of the grid</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># if zsmax is an xarray, convert to numpy array</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
-        <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">values</span>
-    <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
-    <span class="c1"># if only one zoom level is specified, create tiles up to that zoom level (inclusive)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zoom_range</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="n">zoom_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">zoom_range</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">_azimuth</span><span class="p">(</span><span class="n">point1</span><span class="p">,</span> <span class="n">point2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;azimuth between 2 points (interval 0 - 180)&quot;&quot;&quot;</span>
+        <span class="n">angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">point2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">point1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">point2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">point1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="n">dec_rotation</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">izoom</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zoom_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">zoom_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="n">index_zoom_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">_dist</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;distance between points&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">index_zoom_path</span><span class="p">):</span>
-            <span class="k">continue</span>
+    <span class="n">mrr</span> <span class="o">=</span> <span class="n">pol</span><span class="o">.</span><span class="n">minimum_rotated_rectangle</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mrr</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># get coordinates of all corners</span>
+    <span class="c1"># get origin based on the corner with the smallest distance to origin</span>
+    <span class="c1"># after translation to account for possible negative coordinates</span>
+    <span class="n">ib</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">coords</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">coords</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">coords</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">coords</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+    <span class="p">)</span>
+    <span class="n">ir</span> <span class="o">=</span> <span class="p">(</span><span class="n">ib</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">4</span>
+    <span class="n">il</span> <span class="o">=</span> <span class="p">(</span><span class="n">ib</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span> <span class="o">%</span> <span class="mi">4</span>
+    <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="n">ib</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">dec_origin</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">dec_origin</span><span class="p">)</span>
+    <span class="n">az1</span> <span class="o">=</span> <span class="n">_azimuth</span><span class="p">((</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">),</span> <span class="n">coords</span><span class="p">[</span><span class="n">ir</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="n">az2</span> <span class="o">=</span> <span class="n">_azimuth</span><span class="p">((</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">),</span> <span class="n">coords</span><span class="p">[</span><span class="n">il</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="n">axis1</span> <span class="o">=</span> <span class="n">_dist</span><span class="p">((</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">),</span> <span class="n">coords</span><span class="p">[</span><span class="n">ir</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="n">axis2</span> <span class="o">=</span> <span class="n">_dist</span><span class="p">((</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">),</span> <span class="n">coords</span><span class="p">[</span><span class="n">il</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="k">if</span> <span class="n">az2</span> <span class="o">&lt;</span> <span class="n">az1</span><span class="p">:</span>
+        <span class="n">rot</span> <span class="o">=</span> <span class="n">az2</span>
+        <span class="n">mmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">axis2</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
+        <span class="n">nmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">axis1</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rot</span> <span class="o">=</span> <span class="n">az1</span>
+        <span class="n">mmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">axis1</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
+        <span class="n">nmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">axis2</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
 
-        <span class="c1"># list the available x-folders</span>
-        <span class="n">x_folders</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">scandir</span><span class="p">(</span><span class="n">index_zoom_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()]</span>
-
-        <span class="c1"># loop over x-folders</span>
-        <span class="k">for</span> <span class="n">x_folder</span> <span class="ow">in</span> <span class="n">x_folders</span><span class="p">:</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">x_folder</span><span class="p">)</span>
-            <span class="c1"># list the available y-files with fmt_in extension</span>
-            <span class="n">y_files</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="c1"># Iterate directory</span>
-            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">x_folder</span><span class="p">):</span>
-                <span class="c1"># check only text files</span>
-                <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">fmt_in</span><span class="p">):</span>
-                    <span class="n">y_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-
-            <span class="c1"># loop over y-files</span>
-            <span class="k">for</span> <span class="n">y_file</span> <span class="ow">in</span> <span class="n">y_files</span><span class="p">:</span>
-                <span class="c1"># read the index file</span>
-                <span class="n">index_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x_folder</span><span class="p">,</span> <span class="n">y_file</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
-                    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">index_fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;i4&quot;</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
-                    <span class="n">ind</span> <span class="o">=</span> <span class="n">tiling</span><span class="o">.</span><span class="n">png2int</span><span class="p">(</span><span class="n">index_fn</span><span class="p">)</span>
-
-                <span class="c1"># read the topobathy file</span>
-                <span class="n">dep_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">topobathy_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">y_file</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
-                    <span class="n">dep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">dep_fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;f4&quot;</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
-                    <span class="n">dep</span> <span class="o">=</span> <span class="n">tiling</span><span class="o">.</span><span class="n">png2elevation</span><span class="p">(</span><span class="n">dep_fn</span><span class="p">)</span>
-
-                <span class="c1"># create the floodmap</span>
-                <span class="n">hmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
-                <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span> <span class="o">-</span> <span class="n">dep</span>
-                <span class="n">hmax</span><span class="p">[</span><span class="n">hmax</span> <span class="o">&lt;</span> <span class="n">hmin</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-                <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
-
-                <span class="c1"># save the floodmap</span>
-                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">hmax</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-                    <span class="c1"># only nans in this tile</span>
-                    <span class="k">continue</span>
-
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">floodmap_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="n">x</span><span class="p">)):</span>
-                    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">floodmap_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="n">x</span><span class="p">))</span>
-
-                <span class="n">floodmap_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                    <span class="n">floodmap_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">y_file</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">fmt_in</span><span class="p">,</span> <span class="n">fmt_out</span><span class="p">)</span>
-                <span class="p">)</span>
-                <span class="k">if</span> <span class="n">fmt_out</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
-                    <span class="c1"># And write indices to file</span>
-                    <span class="n">fid</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span>
-                    <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">hmax</span><span class="p">)</span>
-                    <span class="n">fid</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                <span class="k">elif</span> <span class="n">fmt_out</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
-                    <span class="n">tiling</span><span class="o">.</span><span class="n">elevation2png</span><span class="p">(</span><span class="n">hmax</span><span class="p">,</span> <span class="n">floodmap_fn</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">mmax</span><span class="p">,</span> <span class="n">nmax</span><span class="p">,</span> <span class="n">rot</span></div>
 </pre></div>
 
                 </article>

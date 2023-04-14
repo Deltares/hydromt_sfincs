@@ -401,23 +401,15 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for hydromt_sfincs.workflows.landuse</h1><div class="highlight"><pre>
-<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-
-<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+<span></span><span class="sd">&quot;&quot;&quot;Landuse related workflows for SFINCS.&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;landuse&quot;</span><span class="p">,</span> <span class="s2">&quot;cn_to_s&quot;</span><span class="p">]</span>
-
-
-<span class="n">RESAMPLING</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;landuse&quot;</span><span class="p">:</span> <span class="s2">&quot;nearest&quot;</span><span class="p">,</span> <span class="s2">&quot;lai&quot;</span><span class="p">:</span> <span class="s2">&quot;average&quot;</span><span class="p">}</span>
-<span class="n">DTYPES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;landuse&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">}</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;cn_to_s&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="cn_to_s"><a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.cn_to_s.html#hydromt_sfincs.workflows.cn_to_s">[docs]</a><span class="k">def</span> <span class="nf">cn_to_s</span><span class="p">(</span><span class="n">da_cn</span><span class="p">,</span> <span class="n">da_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=-</span><span class="mi">9999</span><span class="p">):</span>
@@ -430,64 +422,6 @@ document.write(`
         <span class="n">da_s</span> <span class="o">=</span> <span class="n">da_s</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>
     <span class="n">da_s</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">nodata</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">da_s</span></div>
-
-
-<div class="viewcode-block" id="landuse"><a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.landuse.html#hydromt_sfincs.workflows.landuse">[docs]</a><span class="k">def</span> <span class="nf">landuse</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">ds_like</span><span class="p">,</span> <span class="n">fn_map</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns landuse map and related parameter maps.</span>
-<span class="sd">    The parameter maps are prepared based on landuse map and</span>
-<span class="sd">    mapping table as provided in the generic data folder of hydromt.</span>
-
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    da : xarray.DataArray</span>
-<span class="sd">        DataArray containing LULC classes.</span>
-<span class="sd">    ds_like : xarray.DataArray</span>
-<span class="sd">        Dataset at model resolution.</span>
-<span class="sd">    fn_map : str, Path</span>
-<span class="sd">        path to mapping file</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    ds_out : xarray.Dataset</span>
-<span class="sd">        Dataset containing gridded landuse based maps</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># read csv with remapping values</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn_map</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;,|;&quot;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">DTYPES</span><span class="p">)</span>
-    <span class="c1"># limit dtypes to avoid gdal errors downstream</span>
-    <span class="n">ddict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;float64&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="s2">&quot;int64&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">}</span>
-    <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">ddict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span> <span class="n">df</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">}</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn_map</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;,|;&quot;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="p">)</span>
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
-    <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">p</span> <span class="o">!=</span> <span class="s2">&quot;description&quot;</span><span class="p">]</span>
-    <span class="k">elif</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)):</span>
-        <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter(s) missing in mapping file: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="c1"># setup ds out</span>
-    <span class="n">ds_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">coords</span><span class="o">=</span><span class="n">ds_like</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
-
-    <span class="c1"># setup reclass method</span>
-    <span class="k">def</span> <span class="nf">reclass</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">)(</span><span class="n">x</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>
-
-    <span class="c1"># apply for each parameter</span>
-    <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
-        <span class="n">method</span> <span class="o">=</span> <span class="n">RESAMPLING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="s2">&quot;average&quot;</span><span class="p">)</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">param</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-        <span class="n">nodata</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># NOTE values is set in last row</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">values</span><span class="p">))</span>  <span class="c1"># NOTE global param in reclass method</span>
-        <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">interpolate_na</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Deriving </span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2"> using </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> resampling (nodata=</span><span class="si">{</span><span class="n">nodata</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
-        <span class="n">da_param</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">apply_ufunc</span><span class="p">(</span>
-            <span class="n">reclass</span><span class="p">,</span> <span class="n">da</span><span class="p">,</span> <span class="n">dask</span><span class="o">=</span><span class="s2">&quot;parallelized&quot;</span><span class="p">,</span> <span class="n">output_dtypes</span><span class="o">=</span><span class="p">[</span><span class="n">values</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span>
-        <span class="p">)</span>
-        <span class="n">da_param</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_FillValue</span><span class="o">=</span><span class="n">nodata</span><span class="p">)</span>  <span class="c1"># first set new nodata values</span>
-        <span class="n">ds_out</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_param</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span>
-            <span class="n">ds_like</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span>
-        <span class="p">)</span>  <span class="c1"># then resample</span>
-
-    <span class="k">return</span> <span class="n">ds_out</span></div>
 </pre></div>
 
                 </article>

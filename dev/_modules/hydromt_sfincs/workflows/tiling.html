@@ -401,27 +401,132 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for hydromt_sfincs.workflows.tiling</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">pyproj</span> <span class="kn">import</span> <span class="n">CRS</span><span class="p">,</span> <span class="n">Transformer</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
-<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
-<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span></span><span class="sd">&quot;&quot;&quot;Tiling functions for fast visualization of the SFINCS model in- and output data.&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
 <span class="kn">from</span> <span class="nn">affine</span> <span class="kn">import</span> <span class="n">Affine</span>
-<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">from</span> <span class="nn">pyproj</span> <span class="kn">import</span> <span class="n">Transformer</span>
 
 <span class="kn">from</span> <span class="nn">.merge</span> <span class="kn">import</span> <span class="n">merge_multi_dataarrays</span>
 
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;create_topobathy_tiles&quot;</span><span class="p">,</span> <span class="s2">&quot;downscale_floodmap_webmercator&quot;</span><span class="p">]</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;create_topobathy_tiles&quot;</span><span class="p">,</span>
-<span class="p">]</span>
+<div class="viewcode-block" id="downscale_floodmap_webmercator"><a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.downscale_floodmap_webmercator.html#hydromt_sfincs.workflows.downscale_floodmap_webmercator">[docs]</a><span class="k">def</span> <span class="nf">downscale_floodmap_webmercator</span><span class="p">(</span>
+    <span class="n">zsmax</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
+    <span class="n">index_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">topobathy_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">floodmap_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+    <span class="n">zoom_range</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span>
+    <span class="n">fmt_in</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span>
+    <span class="n">fmt_out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;png&quot;</span><span class="p">,</span>
+    <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># FIXME: this is not implemented yet</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a downscaled floodmap for (model) region in webmercator tile format</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    zsmax : Union[np.array, xr.DataArray]</span>
+<span class="sd">        DataArray with maximum water level (m) for each cell</span>
+<span class="sd">    index_path : str</span>
+<span class="sd">        Directory with index files</span>
+<span class="sd">    topobathy_path : str</span>
+<span class="sd">        Directory with topobathy files</span>
+<span class="sd">    floodmap_path : str</span>
+<span class="sd">        Directory where floodmap files will be stored</span>
+<span class="sd">    hmin : float, optional</span>
+<span class="sd">        Minimum water depth considered as &quot;flooded&quot;, by default 0.05 m</span>
+<span class="sd">    zoom_range : Union[int, List[int]], optional</span>
+<span class="sd">        Range of zoom levels, by default [0, 13]</span>
+<span class="sd">    fmt_in : str, optional</span>
+<span class="sd">        Format of the index and topobathy tiles, by default &quot;bin&quot;</span>
+<span class="sd">    fmt_out : str, optional</span>
+<span class="sd">        Format of the floodmap tiles to be created, by default &quot;png&quot;</span>
+<span class="sd">    merge : bool, optional</span>
+<span class="sd">        Merge floodmap tiles with existing floodmap tiles</span>
+<span class="sd">        (this could for example happen when there is overlap between models),</span>
+<span class="sd">        by default True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># if zsmax is an xarray, convert to numpy array</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+        <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="c1"># if only one zoom level is specified, create tiles up to that zoom level (inclusive)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zoom_range</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">zoom_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">zoom_range</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">izoom</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zoom_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">zoom_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">index_zoom_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">index_zoom_path</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># list the available x-folders</span>
+        <span class="n">x_folders</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">scandir</span><span class="p">(</span><span class="n">index_zoom_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()]</span>
+
+        <span class="c1"># loop over x-folders</span>
+        <span class="k">for</span> <span class="n">x_folder</span> <span class="ow">in</span> <span class="n">x_folders</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">x_folder</span><span class="p">)</span>
+            <span class="c1"># list the available y-files with fmt_in extension</span>
+            <span class="n">y_files</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="c1"># Iterate directory</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">x_folder</span><span class="p">):</span>
+                <span class="c1"># check only text files</span>
+                <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">fmt_in</span><span class="p">):</span>
+                    <span class="n">y_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+
+            <span class="c1"># loop over y-files</span>
+            <span class="k">for</span> <span class="n">y_file</span> <span class="ow">in</span> <span class="n">y_files</span><span class="p">:</span>
+                <span class="c1"># read the index file</span>
+                <span class="n">index_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x_folder</span><span class="p">,</span> <span class="n">y_file</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
+                    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">index_fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;i4&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+                    <span class="n">ind</span> <span class="o">=</span> <span class="n">png2int</span><span class="p">(</span><span class="n">index_fn</span><span class="p">)</span>
+
+                <span class="c1"># read the topobathy file</span>
+                <span class="n">dep_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">topobathy_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">y_file</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
+                    <span class="n">dep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">dep_fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;f4&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+                    <span class="n">dep</span> <span class="o">=</span> <span class="n">png2elevation</span><span class="p">(</span><span class="n">dep_fn</span><span class="p">)</span>
+
+                <span class="c1"># create the floodmap</span>
+                <span class="n">hmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+                <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span> <span class="o">-</span> <span class="n">dep</span>
+                <span class="n">hmax</span><span class="p">[</span><span class="n">hmax</span> <span class="o">&lt;</span> <span class="n">hmin</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
+
+                <span class="c1"># save the floodmap</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">hmax</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                    <span class="c1"># only nans in this tile</span>
+                    <span class="k">continue</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">floodmap_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="n">x</span><span class="p">)):</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">floodmap_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="n">x</span><span class="p">))</span>
+
+                <span class="n">floodmap_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">floodmap_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">y_file</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">fmt_in</span><span class="p">,</span> <span class="n">fmt_out</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">fmt_out</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
+                    <span class="c1"># And write indices to file</span>
+                    <span class="n">fid</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span>
+                    <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">hmax</span><span class="p">)</span>
+                    <span class="n">fid</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">fmt_out</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+                    <span class="n">elevation2png</span><span class="p">(</span><span class="n">hmax</span><span class="p">,</span> <span class="n">floodmap_fn</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="create_topobathy_tiles"><a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.create_topobathy_tiles.html#hydromt_sfincs.workflows.create_topobathy_tiles">[docs]</a><span class="k">def</span> <span class="nf">create_topobathy_tiles</span><span class="p">(</span>
     <span class="n">root</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>

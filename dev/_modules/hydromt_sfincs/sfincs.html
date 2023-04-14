@@ -401,29 +401,30 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for hydromt_sfincs.sfincs</h1><div class="highlight"><pre>
-<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">SfincsModel class</span>
+<span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span><span class="p">,</span> <span class="n">isfile</span><span class="p">,</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">isabs</span>
+
 <span class="kn">import</span> <span class="nn">glob</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">pyproj</span> <span class="kn">import</span> <span class="n">CRS</span>
-<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">isabs</span><span class="p">,</span> <span class="n">isfile</span><span class="p">,</span> <span class="n">join</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span class="kn">import</span> <span class="nn">hydromt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+<span class="kn">from</span> <span class="nn">hydromt.models.model_grid</span> <span class="kn">import</span> <span class="n">GridModel</span>
+<span class="kn">from</span> <span class="nn">hydromt.raster</span> <span class="kn">import</span> <span class="n">RasterDataArray</span>
+<span class="kn">from</span> <span class="nn">hydromt.vector</span> <span class="kn">import</span> <span class="n">GeoDataArray</span><span class="p">,</span> <span class="n">GeoDataset</span>
+<span class="kn">from</span> <span class="nn">pyproj</span> <span class="kn">import</span> <span class="n">CRS</span>
 <span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">box</span>
 
-<span class="kn">import</span> <span class="nn">hydromt</span>
-<span class="kn">from</span> <span class="nn">hydromt.models.model_grid</span> <span class="kn">import</span> <span class="n">GridModel</span>
-<span class="kn">from</span> <span class="nn">hydromt.models.model_mesh</span> <span class="kn">import</span> <span class="n">MeshMixin</span>
-<span class="kn">from</span> <span class="nn">hydromt.vector</span> <span class="kn">import</span> <span class="n">GeoDataset</span><span class="p">,</span> <span class="n">GeoDataArray</span>
-<span class="kn">from</span> <span class="nn">hydromt.raster</span> <span class="kn">import</span> <span class="n">RasterDataset</span><span class="p">,</span> <span class="n">RasterDataArray</span>
-<span class="kn">from</span> <span class="nn">hydromt.gis_utils</span> <span class="kn">import</span> <span class="n">nearest_merge</span>
-
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">workflows</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">DATADIR</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">DATADIR</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">workflows</span>
 <span class="kn">from</span> <span class="nn">.regulargrid</span> <span class="kn">import</span> <span class="n">RegularGrid</span>
 <span class="kn">from</span> <span class="nn">.sfincs_input</span> <span class="kn">import</span> <span class="n">SfincsInput</span>
 
@@ -432,7 +433,7 @@ document.write(`
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="SfincsModel"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel">[docs]</a><span class="k">class</span> <span class="nc">SfincsModel</span><span class="p">(</span><span class="n">MeshMixin</span><span class="p">,</span> <span class="n">GridModel</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel">[docs]</a><span class="k">class</span> <span class="nc">SfincsModel</span><span class="p">(</span><span class="n">GridModel</span><span class="p">):</span>
     <span class="c1"># GLOBAL Static class variables that can be used by all methods within</span>
     <span class="c1"># SfincsModel class. Typically list of variables (e.g. _MAPS) or</span>
     <span class="c1"># dict with varname - filename pairs (e.g. thin_dams : thd)</span>
@@ -615,6 +616,8 @@ document.write(`
         <span class="n">rotated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">hydrography_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">basin_index_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dec_origin</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">dec_rotation</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup a regular or quadtree grid from a region.</span>
 
@@ -622,6 +625,7 @@ document.write(`
 <span class="sd">        ----------</span>
 <span class="sd">        region : dict</span>
 <span class="sd">            Dictionary describing region of interest, e.g.:</span>
+<span class="sd">            </span>
 <span class="sd">            * {&#39;bbox&#39;: [xmin, ymin, xmax, ymax]}</span>
 <span class="sd">            * {&#39;geom&#39;: &#39;path/to/polygon_geometry&#39;}</span>
 
@@ -643,6 +647,10 @@ document.write(`
 <span class="sd">            Name of data source with basin (bounding box) geometries associated with</span>
 <span class="sd">            the &#39;basins&#39; layer of `hydrography_fn`. Only required if the `region` is</span>
 <span class="sd">            based on a (sub)(inter)basins without a &#39;bounds&#39; argument.</span>
+<span class="sd">        dec_origin : int, optional</span>
+<span class="sd">            number of decimals to round the origin coordinates, by default 0</span>
+<span class="sd">        dec_rotation : int, optional</span>
+<span class="sd">            number of decimals to round the rotation angle, by default 3</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
@@ -665,9 +673,12 @@ document.write(`
         <span class="c1"># NOTE keyword rotated is added to still have the possibility to create unrotated grids if needed (e.g. for FEWS?)</span>
         <span class="k">if</span> <span class="n">rotated</span><span class="p">:</span>
             <span class="n">geom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="s2">&quot;region&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unary_union</span>
-            <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">mmax</span><span class="p">,</span> <span class="n">nmax</span><span class="p">,</span> <span class="n">rot</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">rotated_grid</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+            <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">mmax</span><span class="p">,</span> <span class="n">nmax</span><span class="p">,</span> <span class="n">rot</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">rotated_grid</span><span class="p">(</span>
+                <span class="n">geom</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">dec_origin</span><span class="o">=</span><span class="n">dec_origin</span><span class="p">,</span> <span class="n">dec_rotation</span><span class="o">=</span><span class="n">dec_rotation</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="s2">&quot;region&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">total_bounds</span>
+            <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">dec_origin</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">dec_origin</span><span class="p">)</span>
             <span class="n">mmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">x1</span> <span class="o">-</span> <span class="n">x0</span><span class="p">)</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
             <span class="n">nmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">y1</span> <span class="o">-</span> <span class="n">y0</span><span class="p">)</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
             <span class="n">rot</span> <span class="o">=</span> <span class="mi">0</span>
@@ -721,7 +732,7 @@ document.write(`
                 <span class="n">da_like</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
                 <span class="n">buffer_cells</span><span class="o">=</span><span class="n">buffer_cells</span><span class="p">,</span>
                 <span class="n">interp_method</span><span class="o">=</span><span class="n">interp_method</span><span class="p">,</span>
-                <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+                <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="c1"># check if no nan data is present in the bed levels</span>
@@ -853,7 +864,7 @@ document.write(`
                 <span class="n">connectivity</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span>
                 <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">,</span>
                 <span class="n">reset_mask</span><span class="o">=</span><span class="n">reset_mask</span><span class="p">,</span>
-                <span class="c1"># logger=self.logger,</span>
+                <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;msk&quot;</span><span class="p">)</span>
             <span class="c1"># update config</span>
@@ -955,6 +966,7 @@ document.write(`
                 <span class="n">connectivity</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span>
                 <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">,</span>
                 <span class="n">reset_bounds</span><span class="o">=</span><span class="n">reset_bounds</span><span class="p">,</span>
+                <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;msk&quot;</span><span class="p">)</span></div>
 
@@ -1059,6 +1071,7 @@ document.write(`
                 <span class="n">write_dep_tif</span><span class="o">=</span><span class="n">write_dep_tif</span><span class="p">,</span>
                 <span class="n">write_man_tif</span><span class="o">=</span><span class="n">write_man_tif</span><span class="p">,</span>
                 <span class="n">highres_dir</span><span class="o">=</span><span class="n">highres_dir</span><span class="p">,</span>
+                <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">subgrid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">subgrid</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">(</span>
                 <span class="n">dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">coords</span>
@@ -1307,8 +1320,48 @@ document.write(`
         <span class="k">if</span> <span class="n">keep_rivers_geom</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivers_outflow&quot;</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="SfincsModel.setup_constant_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration.html#hydromt_sfincs.SfincsModel.setup_constant_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_constant_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qinf</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup spatially varying constant infiltration rate (qinffile).</span>
 
-<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cn_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn_fn</span><span class="p">,</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">):</span>
+<span class="sd">        Adds model layers:</span>
+
+<span class="sd">        * **qinf** map: constant infiltration rate [mm/hr]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        qinf : str, Path, or RasterDataset</span>
+<span class="sd">            Spatially varying infiltration rates [mm/hr]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># get infiltration data</span>
+        <span class="n">da_inf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">qinf</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        
+        <span class="c1"># reproject infiltration data to model grid</span>
+        <span class="c1"># this workflow automatically determines the best resampling method (bilinear or average) </span>
+        <span class="n">da_inf</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">merge_multi_dataarrays</span><span class="p">(</span>
+            <span class="n">da_list</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;da&quot;</span><span class="p">:</span><span class="n">da_inf</span><span class="p">}],</span>
+            <span class="n">da_like</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
+            <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># check on nan values</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_inf</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;NaN values found in infiltration data; filled with 0&quot;</span><span class="p">)</span>
+            <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_inf</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># add to sfincs model </span>
+        <span class="n">da_inf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="o">-</span><span class="mf">9999.0</span><span class="p">)</span>
+
+        <span class="c1"># set grid</span>
+        <span class="n">mname</span> <span class="o">=</span> <span class="s2">&quot;qinf&quot;</span>
+        <span class="n">da_inf</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">sf</span><span class="o">.</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="n">sf</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">da_inf</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
+
+        <span class="c1"># update config: remove scs infiltration values and set qinf map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;scs&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cn_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">,</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup model potential maximum soil moisture retention map (scsfile)</span>
 <span class="sd">        from gridded curve number map.</span>
 
@@ -1318,7 +1371,7 @@ document.write(`
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ---------</span>
-<span class="sd">        cn_fn: str, Path, or RasterDataset</span>
+<span class="sd">        cn: str, Path, or RasterDataset</span>
 <span class="sd">            Name of gridded curve number map.</span>
 
 <span class="sd">            * Required layers without antecedent runoff conditions: [&#39;cn&#39;]</span>
@@ -1333,7 +1386,7 @@ document.write(`
         <span class="k">if</span> <span class="n">antecedent_moisture</span><span class="p">:</span>
             <span class="n">v</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;cn_</span><span class="si">{</span><span class="n">antecedent_moisture</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">da_org</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-            <span class="n">cn_fn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+            <span class="n">cn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="c1"># reproject using median</span>
         <span class="n">da_cn</span> <span class="o">=</span> <span class="n">da_org</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;med&quot;</span><span class="p">)</span>
@@ -1394,7 +1447,7 @@ document.write(`
                     <span class="n">da_list</span><span class="o">=</span><span class="n">datasets_rgh</span><span class="p">,</span>
                     <span class="n">da_like</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
                     <span class="n">interp_method</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
-                    <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+                    <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">fromdep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_man</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
             <span class="k">if</span> <span class="s2">&quot;dep&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="ow">and</span> <span class="n">fromdep</span><span class="p">:</span>
@@ -2117,7 +2170,7 @@ document.write(`
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">create_index_tiles</span><span class="p">(</span>
-                    <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">zoom_range</span><span class="o">=</span><span class="n">zoom_range</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt_ind</span>
+                    <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">zoom_range</span><span class="o">=</span><span class="n">zoom_range</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt_ind</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
@@ -2154,7 +2207,7 @@ document.write(`
             <span class="p">)</span></div>
 
     <span class="c1"># Plotting</span>
-<div class="viewcode-block" id="SfincsModel.plot_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">plot_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;forcing.png&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.plot_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">plot_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot model timeseries forcing.</span>
 
 <span class="sd">        For distributed forcing a spatial avarage is plotted.</span>
@@ -2173,8 +2226,8 @@ document.write(`
 <span class="sd">        fig, axes</span>
 <span class="sd">            Model fig and ax objects</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
         <span class="kn">import</span> <span class="nn">matplotlib.dates</span> <span class="k">as</span> <span class="nn">mdates</span>
+        <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">:</span>
             <span class="n">forcing</span> <span class="o">=</span> <span class="p">{}</span>
@@ -2375,7 +2428,11 @@ document.write(`
 
             <span class="c1"># keep some metadata maps from gis directory</span>
             <span class="n">fns</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">,</span> <span class="s2">&quot;*.tif&quot;</span><span class="p">))</span>
-            <span class="n">fns</span> <span class="o">=</span> <span class="p">[</span><span class="n">fn</span> <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">fns</span> <span class="k">if</span> <span class="n">basename</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data_vars</span><span class="p">]</span>
+            <span class="n">fns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">fn</span>
+                <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">fns</span>
+                <span class="k">if</span> <span class="n">basename</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data_vars</span>
+            <span class="p">]</span>
             <span class="k">if</span> <span class="n">fns</span><span class="p">:</span>
                 <span class="n">ds</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">open_mfraster</span><span class="p">(</span><span class="n">fns</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
@@ -2725,14 +2782,13 @@ document.write(`
             <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;inifile not found at </span><span class="si">{fn}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">return</span>
-            <span class="n">shape</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">crs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_spatial_attrs</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
             <span class="n">zsini</span> <span class="o">=</span> <span class="n">RasterDataArray</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
                 <span class="n">data</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">read_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">),</span>  <span class="c1"># orientation S-N</span>
-                <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span>
-                <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span>
+                <span class="n">transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span>
+                <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span>
                 <span class="n">nodata</span><span class="o">=-</span><span class="mi">9999</span><span class="p">,</span>  <span class="c1"># TODO: check what a good nodatavalue is</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="n">zsini</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">zsini</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The shape of &quot;inifile&quot; and maps does not match.&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="s2">&quot;msk&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span><span class="p">:</span>
                 <span class="n">zsini</span> <span class="o">=</span> <span class="n">zsini</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">)</span>
@@ -2784,8 +2840,7 @@ document.write(`
         <span class="k">if</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn_map</span><span class="p">):</span>
             <span class="n">ds_face</span><span class="p">,</span> <span class="n">ds_edge</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">read_sfincs_map_results</span><span class="p">(</span>
                 <span class="n">fn_map</span><span class="p">,</span>
-                <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span>
-                <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">,</span>
+                <span class="n">ds_like</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span>  <span class="c1"># TODO: fix for quadtree</span>
                 <span class="n">drop</span><span class="o">=</span><span class="n">drop</span><span class="p">,</span>
                 <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -2855,8 +2910,21 @@ document.write(`
                     <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Variable </span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">layer</span><span class="si">}</span><span class="s2"> not found: skipping.&quot;</span><span class="p">)</span>
                     <span class="k">continue</span>
                 <span class="n">da</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="s2">&quot;time&quot;</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
-                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="c1"># try to reduce to 2D by taking maximum over time dimension</span>
+                    <span class="k">if</span> <span class="s2">&quot;time&quot;</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+                        <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="s2">&quot;timemax&quot;</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+                        <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s2">&quot;timemax&quot;</span><span class="p">)</span>
+                    <span class="c1"># if still not 2D, skip</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Variable </span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">layer</span><span class="si">}</span><span class="s2"> has more than 2 dimensions: skipping.&quot;</span>
+                        <span class="p">)</span>
+                        <span class="k">continue</span>
+                <span class="c1"># set nodata value if not set    </span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span><span class="p">:</span>
+                    <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
                 <span class="c1"># only write active cells to gis files</span>
                 <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_geom</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># make sure orientation is N-&gt;S</span>
@@ -3011,25 +3079,6 @@ document.write(`
             <span class="k">raise</span> <span class="ow">not</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Quadtree grid not implemented yet&quot;</span><span class="p">)</span></div>
             <span class="c1"># self.quadtree = QuadtreeGrid()</span>
 
-<div class="viewcode-block" id="SfincsModel.get_spatial_attrs"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.get_spatial_attrs.html#hydromt_sfincs.SfincsModel.get_spatial_attrs">[docs]</a>    <span class="k">def</span> <span class="nf">get_spatial_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get geospatial `config` (sfincs.inp) attributes.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        crs: int, CRS</span>
-<span class="sd">            Coordinate reference system</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        shape: tuple of int</span>
-<span class="sd">            width, height</span>
-<span class="sd">        transform: Affine.transform</span>
-<span class="sd">            Geospatial transform</span>
-<span class="sd">        crs: pyproj.CRS</span>
-<span class="sd">            Coordinate reference system</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_spatial_attrs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span></div>
-
 <div class="viewcode-block" id="SfincsModel.get_model_time"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.get_model_time.html#hydromt_sfincs.SfincsModel.get_model_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_model_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return (tstart, tstop) tuple with parsed model start and end time&quot;&quot;&quot;</span>
         <span class="n">tstart</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tstart&quot;</span><span class="p">])</span>
@@ -3059,14 +3108,19 @@ document.write(`
             <span class="n">dd</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="c1"># read in depth datasets; replace dep (source name; filename or xr.DataArray)</span>
             <span class="k">if</span> <span class="s2">&quot;elevtn&quot;</span> <span class="ow">in</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="s2">&quot;da&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
-                <span class="n">da_elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;elevtn&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;da&quot;</span><span class="p">)),</span>
-                    <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span><span class="p">,</span>
-                    <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-                    <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">],</span>
-                    <span class="n">zoom_level</span><span class="o">=</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">&quot;meter&quot;</span><span class="p">),</span>
-                <span class="p">)</span>
-                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da_elv</span><span class="p">})</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">da_elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                        <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;elevtn&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;da&quot;</span><span class="p">)),</span>
+                        <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span><span class="p">,</span>
+                        <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                        <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">],</span>
+                        <span class="n">zoom_level</span><span class="o">=</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">&quot;meter&quot;</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da_elv</span><span class="p">})</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="n">data_name</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;elevtn&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_name</span><span class="si">}</span><span class="s2"> not used; probably because all the data is outside of the mask.&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span> 
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">&quot;No &#39;elevtn&#39; (topobathy) dataset provided in datasets_dep.&quot;</span>
