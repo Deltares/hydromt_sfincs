@@ -1,15 +1,12 @@
-# -*- coding: utf-8 -*-
 """
-Created on Thu Apr 21 16:25:23 2022
-
-@author: ormondt
+SubgridTableRegular class to create, read and write sfincs subgrid (sbg) files.
 """
-from hydromt import gis_utils
-from numba import njit
-import numpy as np
 import os
-import xarray as xr
+
+import numpy as np
 import rasterio
+import xarray as xr
+from numba import njit
 from rasterio.windows import Window
 
 from . import workflows
@@ -71,8 +68,12 @@ class SubgridTableRegular:
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
 
-        self.z_zmin[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
-        self.z_zmax[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
+        self.z_zmin[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
+        self.z_zmax[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
         # self.z_zmean[iok[0], iok[1]] = np.fromfile(
         #     file, dtype=np.float32, count=self.nr_cells
         # )
@@ -84,9 +85,13 @@ class SubgridTableRegular:
                 file, dtype=np.float32, count=self.nr_cells
             )
 
-        self.u_zmin[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
-        self.u_zmax[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
-        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells) #not used
+        self.u_zmin[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
+        self.u_zmax[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
+        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
         for ibin in range(self.nbins):
             self.u_hrep[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
@@ -96,9 +101,13 @@ class SubgridTableRegular:
                 file, dtype=np.float32, count=self.nr_cells
             )
 
-        self.v_zmin[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
-        self.v_zmax[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
-        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells) #not used
+        self.v_zmin[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
+        self.v_zmax[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
+        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
         for ibin in range(self.nbins):
             self.v_hrep[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
@@ -492,7 +501,7 @@ class SubgridTableRegular:
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})
         ds_sbg.attrs.update({"_FillValue": np.nan})
 
-        zlst2 = ["z_zmin", "z_zmax", "z_zmin", "z_volmax"] #"z_zmean",
+        zlst2 = ["z_zmin", "z_zmax", "z_zmin", "z_volmax"]  # "z_zmean",
         uvlst2 = ["u_zmin", "u_zmax", "v_zmin", "v_zmax"]
         lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]
         # 2D arrays

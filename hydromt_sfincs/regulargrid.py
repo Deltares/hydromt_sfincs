@@ -1,17 +1,19 @@
-from affine import Affine
-import geopandas as gpd
-import numpy as np
+"""RegularGrid class for SFINCS."""
+import logging
 import math
 import os
 from pathlib import Path
-from pyproj import CRS, Transformer
-from typing import Union, Optional, List, Dict, Tuple
-from scipy import ndimage
+from typing import List, Optional, Union
+
+import geopandas as gpd
+import numpy as np
 import xarray as xr
-import logging
+from affine import Affine
+from pyflwdir.regions import region_area
+from pyproj import CRS, Transformer
+from scipy import ndimage
 from shapely.geometry import LineString
 
-from pyflwdir.regions import region_area
 from .subgrid import SubgridTableRegular
 from .workflows.tiling import int2png, tile_window
 

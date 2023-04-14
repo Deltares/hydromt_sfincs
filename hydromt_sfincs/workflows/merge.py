@@ -1,11 +1,11 @@
-import geopandas as gpd
-from hydromt import raster
+"""Workflow to merge multiple datasets into a single dataset used for elevation and manning data."""
 import logging
-import numpy as np
-from scipy import ndimage
-from typing import Union, List, Dict, Any
-import xarray as xr
+from typing import Dict, List, Union
 
+import geopandas as gpd
+import numpy as np
+import xarray as xr
+from scipy import ndimage
 
 logger = logging.getLogger(__name__)
 

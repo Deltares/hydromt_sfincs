@@ -1,26 +1,27 @@
-# -*- coding: utf-8 -*-
+"""
+SfincsModel class
+"""
 from __future__ import annotations
-import os
-from os.path import join, isfile, abspath, dirname, basename, isabs
+
 import glob
-import numpy as np
 import logging
-import geopandas as gpd
-import pandas as pd
-from pyproj import CRS
-import xarray as xr
+import os
+from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
-from typing import Dict, Tuple, List, Union, Any
+from typing import Any, Dict, List, Tuple, Union
+
+import geopandas as gpd
+import hydromt
+import numpy as np
+import pandas as pd
+import xarray as xr
+from hydromt.models.model_grid import GridModel
+from hydromt.raster import RasterDataArray
+from hydromt.vector import GeoDataArray, GeoDataset
+from pyproj import CRS
 from shapely.geometry import box
 
-import hydromt
-from hydromt.models.model_grid import GridModel
-from hydromt.models.model_mesh import MeshMixin
-from hydromt.vector import GeoDataset, GeoDataArray
-from hydromt.raster import RasterDataset, RasterDataArray
-from hydromt.gis_utils import nearest_merge
-
-from . import workflows, utils, plots, DATADIR
+from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
 from .sfincs_input import SfincsInput
 
@@ -29,7 +30,7 @@ __all__ = ["SfincsModel"]
 logger = logging.getLogger(__name__)
 
 
-class SfincsModel(MeshMixin, GridModel):
+class SfincsModel(GridModel):
     # GLOBAL Static class variables that can be used by all methods within
     # SfincsModel class. Typically list of variables (e.g. _MAPS) or
     # dict with varname - filename pairs (e.g. thin_dams : thd)
@@ -212,6 +213,8 @@ class SfincsModel(MeshMixin, GridModel):
         rotated: bool = False,
         hydrography_fn: str = None,
         basin_index_fn: str = None,
+        dec_origin: int = 0,
+        dec_rotation: int = 3,
     ):
         """Setup a regular or quadtree grid from a region.
 
@@ -219,6 +222,7 @@ class SfincsModel(MeshMixin, GridModel):
         ----------
         region : dict
             Dictionary describing region of interest, e.g.:
+            
             * {'bbox': [xmin, ymin, xmax, ymax]}
             * {'geom': 'path/to/polygon_geometry'}
 
@@ -240,6 +244,10 @@ class SfincsModel(MeshMixin, GridModel):
             Name of data source with basin (bounding box) geometries associated with
             the 'basins' layer of `hydrography_fn`. Only required if the `region` is
             based on a (sub)(inter)basins without a 'bounds' argument.
+        dec_origin : int, optional
+            number of decimals to round the origin coordinates, by default 0
+        dec_rotation : int, optional
+            number of decimals to round the rotation angle, by default 3
 
         See Also
         --------
@@ -262,9 +270,12 @@ class SfincsModel(MeshMixin, GridModel):
         # NOTE keyword rotated is added to still have the possibility to create unrotated grids if needed (e.g. for FEWS?)
         if rotated:
             geom = self.geoms["region"].unary_union
-            x0, y0, mmax, nmax, rot = utils.rotated_grid(geom, res)
+            x0, y0, mmax, nmax, rot = utils.rotated_grid(
+                geom, res, dec_origin=dec_origin, dec_rotation=dec_rotation
+            )
         else:
             x0, y0, x1, y1 = self.geoms["region"].total_bounds
+            x0, y0 = round(x0, dec_origin), round(y0, dec_origin)
             mmax = int(np.ceil((x1 - x0) / res))
             nmax = int(np.ceil((y1 - y0) / res))
             rot = 0
@@ -903,7 +914,6 @@ class SfincsModel(MeshMixin, GridModel):
         # keep river centerlines
         if keep_rivers_geom and len(gdf_riv) > 0:
             self.set_geoms(gdf_riv, name="rivers_outflow")
-
 
     def setup_cn_infiltration(self, cn_fn, antecedent_moisture="avg"):
         """Setup model potential maximum soil moisture retention map (scsfile)
@@ -1751,7 +1761,7 @@ class SfincsModel(MeshMixin, GridModel):
             )
 
     # Plotting
-    def plot_forcing(self, fn_out="forcing.png", **kwargs):
+    def plot_forcing(self, fn_out=None, **kwargs):
         """Plot model timeseries forcing.
 
         For distributed forcing a spatial avarage is plotted.
@@ -1770,8 +1780,8 @@ class SfincsModel(MeshMixin, GridModel):
         fig, axes
             Model fig and ax objects
         """
-        import matplotlib.pyplot as plt
         import matplotlib.dates as mdates
+        import matplotlib.pyplot as plt
 
         if self.forcing:
             forcing = {}
@@ -1972,7 +1982,11 @@ class SfincsModel(MeshMixin, GridModel):
 
             # keep some metadata maps from gis directory
             fns = glob.glob(join(self.root, "gis", "*.tif"))
-            fns = [fn for fn in fns if basename(fn).split(".")[0] not in self.grid.data_vars]
+            fns = [
+                fn
+                for fn in fns
+                if basename(fn).split(".")[0] not in self.grid.data_vars
+            ]
             if fns:
                 ds = hydromt.open_mfraster(fns).load()
                 self.set_grid(ds)
@@ -2322,14 +2336,13 @@ class SfincsModel(MeshMixin, GridModel):
             if not isfile(fn):
                 self.logger.warning("inifile not found at {fn}")
                 return
-            shape, transform, crs = self.get_spatial_attrs(crs=crs)
             zsini = RasterDataArray.from_numpy(
                 data=utils.read_ascii_map(fn),  # orientation S-N
-                transform=transform,
-                crs=crs,
+                transform=self.grid.raster.transform,
+                crs=self.crs,
                 nodata=-9999,  # TODO: check what a good nodatavalue is
             )
-            if zsini.shape != shape:
+            if zsini.shape != self.grid.raster.shape:
                 raise ValueError('The shape of "inifile" and maps does not match.')
             if "msk" in self._grid:
                 zsini = zsini.where(self.mask != 0, -9999)
@@ -2381,8 +2394,7 @@ class SfincsModel(MeshMixin, GridModel):
         if isfile(fn_map):
             ds_face, ds_edge = utils.read_sfincs_map_results(
                 fn_map,
-                crs=self.crs,
-                chunksize=chunksize,
+                ds_like=self.grid,  # TODO: fix for quadtree
                 drop=drop,
                 logger=self.logger,
                 **kwargs,
@@ -2607,25 +2619,6 @@ class SfincsModel(MeshMixin, GridModel):
         else:
             raise not NotImplementedError("Quadtree grid not implemented yet")
             # self.quadtree = QuadtreeGrid()
-
-    def get_spatial_attrs(self, crs=None):
-        """Get geospatial `config` (sfincs.inp) attributes.
-
-        Parameters
-        ----------
-        crs: int, CRS
-            Coordinate reference system
-
-        Returns
-        -------
-        shape: tuple of int
-            width, height
-        transform: Affine.transform
-            Geospatial transform
-        crs: pyproj.CRS
-            Coordinate reference system
-        """
-        return utils.get_spatial_attrs(self.config, crs=crs, logger=self.logger)
 
     def get_model_time(self):
         """Return (tstart, tstop) tuple with parsed model start and end time"""

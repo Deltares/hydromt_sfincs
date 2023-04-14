@@ -1,6 +1,10 @@
 """add global fixtures"""
 
 import pytest
+from os.path import dirname, abspath, join
+
+TESTDATADIR = join(dirname(abspath(__file__)), "data")
+TESTMODELDIR = join(TESTDATADIR, "sfincs_test")
 
 
 @pytest.fixture

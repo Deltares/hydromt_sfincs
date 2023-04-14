@@ -1,33 +1,29 @@
 """
+HydroMT-SFINCS utilities functions for reading and writing SFINCS specific input and output files,
+as well as some common data conversions.
 """
 
-import os
+import copy
+import io
+import logging
+from configparser import ConfigParser
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Tuple, Union
+
+import geopandas as gpd
+import hydromt
 import numpy as np
-from affine import Affine
+import pandas as pd
 import pyproj
-from pyproj.crs.crs import CRS
 import rasterio
 import xarray as xr
-import pandas as pd
-import geopandas as gpd
-from datetime import datetime
-from configparser import ConfigParser
-from shapely.geometry import LineString, Polygon
-from typing import List, Dict, Union, Tuple, Optional
-from pathlib import Path
-import io
-import copy
-import logging
-import hydromt
 from hydromt.io import write_xy
-from scipy import ndimage
-from pyflwdir.regions import region_area
-from hydromt_sfincs.workflows import tiling
+from pyproj.crs.crs import CRS
+from shapely.geometry import LineString, Polygon
+
 
 __all__ = [
-    "read_inp",
-    "write_inp",
-    "rotated_grid",
     "read_binary_map",
     "write_binary_map",
     "read_binary_map_index",
@@ -51,7 +47,7 @@ __all__ = [
     "read_sfincs_map_results",
     "read_sfincs_his_results",
     "downscale_floodmap",
-    "downscale_floodmap_webmercator",
+    "rotated_grid",
 ]
 
 logger = logging.getLogger(__name__)
@@ -86,132 +82,6 @@ class ConfigParserSfincs(ConfigParser):
             value = self._interpolation.before_write(self, section_name, key, value)
             fp.write("{:<15} {:<1} {:<}\n".format(key, self._delimiters[0], value))
         fp.write("\n")
-
-
-def read_inp(fn: Union[str, Path]) -> Dict:
-    """Read sfincs.inp file and parse to dictionary."""
-    return hydromt.config.configread(
-        fn, abs_path=False, cf=ConfigParserSfincs, noheader=True
-    )
-
-
-def write_inp(fn: Union[str, Path], conf: Dict) -> None:
-    """Write sfincs.inp file from dictionary."""
-    return hydromt.config.configwrite(fn, conf, cf=ConfigParserSfincs, noheader=True)
-
-
-def get_spatial_attrs(config: Dict, crs: Union[int, CRS] = None, logger=logger):
-    """Returns geospatial attributes shape, crs and transform from config dict.
-
-    The config dict should contain the following keys:
-
-    * for shape: mmax, nmax
-    * for crs: epsg
-    * for transform: dx, dy, x0, y0, rotation
-
-    Parameters
-    ----------
-    config: Dict
-        sfincs.inp configuration
-    crs: int, CRS
-        Coordinate reference system
-
-    Returns
-    -------
-    shape: tuple of int
-        width, height
-    transform: Affine.transform
-        Geospatial transform
-    crs: pyproj.CRS, None
-        Coordinate reference system
-    """
-    # retrieve rows and cols
-    cols = config.get("mmax")
-    rows = config.get("nmax")
-    if cols is None or rows is None:
-        raise ValueError('"mmax" or "nmax" not defined in sfincs.inp')
-
-    # retrieve CRS
-    if crs is None and "epsg" in config:
-        crs = pyproj.CRS.from_epsg(int(config.get("epsg")))
-    elif crs is not None:
-        crs = pyproj.CRS.from_user_input(crs)
-    else:
-        logger.warning('"epsg" code not defined in sfincs.inp, unknown CRS.')
-
-    # retrieve spatial transform
-    dx = config.get("dx")
-    dy = config.get("dy")
-    west = config.get("x0")
-    south = config.get("y0")
-    rotation = config.get("rotation", 0)  # clockwise rotation [degrees]
-    if west is None or south is None:
-        logger.warning(
-            'Either one of "x0" or "y0" not defined in sfincs.inp, '
-            "falling back to origin at (0, 0)."
-        )
-        west, south = 0, 0
-    if dx is None or dy is None:
-        logger.warning(
-            'Either one of "dx" or "dy" not defined in sfincs.inp, '
-            "falling back unity resolution (1, 1)."
-        )
-        dx, dy = 1, 1
-
-    transform = (
-        Affine.translation(west, south)
-        * Affine.rotation(rotation)
-        * Affine.scale(dx, dy)
-    )
-
-    return (rows, cols), transform, crs
-
-def rotated_grid(pol: Polygon, res: float) -> Tuple[float, float, int, int, float]:
-    """Returns the origin (x0, y0), shape (mmax, nmax) and rotation
-    of the rotated grid fitted to the minimum rotated rectangle around the
-    area of interest (pol). The grid shape is defined by the resolution (res).
-
-    Parameters
-    ----------
-    pol : Polygon
-        Polygon of the area of interest
-    res : float
-        Resolution of the grid
-    """
-
-    def _azimuth(point1, point2):
-        """azimuth between 2 points (interval 0 - 180)"""
-        angle = np.arctan2(point2[1] - point1[1], point2[0] - point1[0])
-        return np.degrees(angle)
-
-    def _dist(a, b):
-        """distance between points"""
-        return np.hypot(b[0] - a[0], b[1] - a[1])
-
-    mrr = pol.minimum_rotated_rectangle
-    coords = np.asarray(mrr.exterior.coords)[:-1, :]  # get coordinates of all corners
-    # get origin based on the corner with the smallest distance to origin
-    # after translation to account for possible negative coordinates
-    ib = np.argmin(
-        np.hypot(coords[:, 0] - coords[:, 0].min(), coords[:, 1] - coords[:, 1].min())
-    )
-    ir = (ib + 1) % 4
-    il = (ib + 3) % 4
-    x0, y0 = coords[ib, :]
-    az1 = _azimuth((x0, y0), coords[ir, :])
-    az2 = _azimuth((x0, y0), coords[il, :])
-    axis1 = _dist((x0, y0), coords[ir, :])
-    axis2 = _dist((x0, y0), coords[il, :])
-    if az2 < az1:
-        rot = az2
-        mmax = int(np.ceil(axis2 / res))
-        nmax = int(np.ceil(axis1 / res))
-    else:
-        rot = az1
-        mmax = int(np.ceil(axis1 / res))
-        nmax = int(np.ceil(axis2 / res))
-
-    return x0, y0, mmax, nmax, rot
 
 
 ## BINARY MAPS: sfincs.ind, sfincs.msk, sfincs.dep etc. ##
@@ -789,8 +659,7 @@ def read_geoms(fn: Union[str, Path]) -> List[Dict]:
 
 def read_sfincs_map_results(
     fn_map: Union[str, Path],
-    hmin: float = 0.0,
-    crs: Union[int, CRS] = None,
+    ds_like: xr.Dataset,
     chunksize: int = 100,
     drop: List[str] = ["crs", "sfincsgrid"],
     logger=logger,
@@ -799,17 +668,12 @@ def read_sfincs_map_results(
     """Read sfincs_map.nc staggered grid netcdf files and parse to two
     hydromt.RasterDataset objects: one with face and one with edge variables.
 
-    Additionally, hmax is computed from zsmax and zb if present.
-
     Parameters
     ----------
     fn_map : str, Path
         Path to sfincs_map.nc file
-    hmin: float, optional
-        Minimum water depth to consider in hmax map, i.e. cells with lower depth
-        get a nodata values assigned. By deafult 0.0
-    crs: int, CRS
-        Coordinate reference system
+    ds_like: xr.Dataset
+        Dataset with grid information to use for parsing.
     chunksize: int, optional
         chunk size along time dimension, by default 100
     drop : List[str], optional
@@ -820,71 +684,44 @@ def read_sfincs_map_results(
     ds_face, ds_edge: hydromt.RasterDataset
         Parsed SFINCS output map file
     """
-
-    ds_map = xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs)
-    dvars = list(ds_map.data_vars.keys())
-    edge_dims = [var for var in dvars if (var.endswith("_x") or var.endswith("_y"))]
-    ds_map = ds_map.set_coords(["x", "y"] + edge_dims)
-    crs = ds_map["crs"].item() if ds_map["crs"].item() > 0 else crs
-
-    if ds_map["inp"].attrs.get("rotation") != 0:
-        logger.warning("Cannot parse rotated maps. Skip reading sfincs.map.nc")
-        return xr.Dataset(), xr.Dataset()
-
-    # split general+face and edge vars
-    face_vars = list(ds_map.data_vars.keys())
-    edge_vars = []
-    if len(edge_dims) == 2:
-        edge = edge_dims[0][:-2]
-        face_vars = [
-            v for v in face_vars if f"{edge}_m" not in ds_map[v].dims and v not in drop
-        ]
-        edge_vars = [
-            v for v in face_vars if f"{edge}_m" in ds_map[v].dims and v not in drop
-        ]
-
-    # read face vars
-    face_coords = {
-        "x": xr.IndexVariable("x", ds_map["x"].isel(n=0).values),
-        "y": xr.IndexVariable("y", ds_map["y"].isel(m=0).values),
+    rm = {
+        "x": "xc",
+        "y": "yc",
+        "corner_x": "corner_xc",
+        "corner_y": "corner_yc",
+        "n": "y",
+        "m": "x",
+        "corner_n": "corner_y",
+        "corner_m": "corner_x",
     }
-    ds_face = (
-        ds_map[face_vars]
-        .drop_vars(["x", "y"])
-        .rename({"n": "y", "m": "x"})
-        .assign_coords(face_coords)
-        .transpose(..., "y", "x")
+    ds_map = xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs)
+    ds_map = ds_map.rename(
+        {k: v for k, v in rm.items() if (k in ds_map or k in ds_map.dims)}
     )
-    # compute hmax
-    if "zsmax" in ds_face:
-        logger.info('Computing "hmax = max(zsmax) - zb"')
-        hmax = ds_face["zsmax"].max("timemax") - ds_face["zb"]
-        hmax = hmax.where(hmax > hmin, -9999)
-        hmax.raster.set_nodata(-9999)
-        ds_face["hmax"] = hmax
-    # set spatial attrs
-    ds_face.raster.set_spatial_dims(x_dim="x", y_dim="y")
-    ds_face.raster.set_crs(crs)
+    ds_map = ds_map.set_coords(
+        [var for var in ds_map.data_vars.keys() if (var in rm.values())]
+    )
 
-    # get edge vars
+    # split face and edge variables
+    scoords = ds_like.raster.coords
+    tcoords = {tdim: ds_map[tdim] for tdim in ds_map.dims if tdim.startswith("time")}
+    ds_face = xr.Dataset(coords={**scoords, **tcoords})
     ds_edge = xr.Dataset()
-    if len(edge_vars) > 0:
-        edge_coords = {
-            f"{edge}_x": xr.IndexVariable(
-                f"{edge}_x", ds_map[f"{edge}_x"].isel(edge_n=0).values
-            ),
-            f"{edge}_y": xr.IndexVariable(
-                f"{edge}_y", ds_map[f"{edge}_y"].isel(edge_m=0).values
-            ),
-        }
-        ds_edge = (
-            ds_map[edge_vars]
-            .drop_vars([f"{edge}_x", f"{edge}_y"])
-            .rename({f"{edge}_n": f"{edge}_y", f"{edge}_m": f"{edge}_x"})
-            .assign_coords(edge_coords)
-            .transpose(..., f"{edge}_y", f"{edge}_x")
-        ).rename({f"{edge}_x": "x", f"{edge}_y": "y"})
-        ds_edge.raster.set_crs(crs)
+    for var in ds_map.data_vars:
+        if var in drop:
+            continue
+        if "x" in ds_map[var].dims and "y" in ds_map[var].dims:
+            # drop to overwrite with ds_like.raster.coords
+            ds_face[var] = ds_map[var].drop(["xc", "yc"])
+        elif ds_map[var].ndim == 0:
+            ds_face[var] = ds_map[var]
+        else:
+            ds_edge[var] = ds_map[var]
+
+    # add crs
+    if ds_like.raster.crs is not None:
+        ds_face.raster.set_crs(ds_like.raster.crs)
+        ds_edge.raster.set_crs(ds_like.raster.crs)
 
     return ds_face, ds_edge
 
@@ -951,7 +788,7 @@ def downscale_floodmap(
     floodmap_fn : Union[Path, str], optional
         Name (path) of output floodmap, by default "floodmap.tif"
     reproj_method : str, optional
-        Reprojection method for downscaling the water levels, by default "nearest". 
+        Reprojection method for downscaling the water levels, by default "nearest".
         Other option is "bilinear".
     """
 
@@ -993,106 +830,52 @@ def downscale_floodmap(
     )
 
 
-def downscale_floodmap_webmercator(
-    zsmax: Union[np.array, xr.DataArray],
-    index_path: str,
-    topobathy_path: str,
-    floodmap_path: str,
-    hmin: float = 0.05,
-    zoom_range: Union[int, List[int]] = [0, 13],
-    fmt_in: str = "bin",
-    fmt_out: str = "png",
-    merge: bool = True,
-):
-    """Create a downscaled floodmap for (model) region in webmercator tile format
+def rotated_grid(
+    pol: Polygon, res: float, dec_origin=0, dec_rotation=3
+) -> Tuple[float, float, int, int, float]:
+    """Returns the origin (x0, y0), shape (mmax, nmax) and rotation
+    of the rotated grid fitted to the minimum rotated rectangle around the
+    area of interest (pol). The grid shape is defined by the resolution (res).
 
     Parameters
     ----------
-    zsmax : Union[np.array, xr.DataArray]
-        DataArray with maximum water level (m) for each cell
-    index_path : str
-        Directory with index files
-    topobathy_path : str
-        Directory with topobathy files
-    floodmap_path : str
-        Directory where floodmap files will be stored
-    hmin : float, optional
-        Minimum water depth considered as "flooded", by default 0.05 m
-    zoom_range : Union[int, List[int]], optional
-        Range of zoom levels, by default [0, 13]
-    fmt_in : str, optional
-        Format of the index and topobathy tiles, by default "bin"
-    fmt_out : str, optional
-        Format of the floodmap tiles to be created, by default "png"
-    merge : bool, optional
-        Merge floodmap tiles with existing floodmap tiles (this could for example happen when there is overlap between models), by default True
+    pol : Polygon
+        Polygon of the area of interest
+    res : float
+        Resolution of the grid
     """
-    # if zsmax is an xarray, convert to numpy array
-    if isinstance(zsmax, xr.DataArray):
-        zsmax = zsmax.values
-    zsmax = zsmax.flatten()
 
-    # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
-    if isinstance(zoom_range, int):
-        zoom_range = [0, zoom_range]
+    def _azimuth(point1, point2):
+        """azimuth between 2 points (interval 0 - 180)"""
+        angle = np.arctan2(point2[1] - point1[1], point2[0] - point1[0])
+        return round(np.degrees(angle), dec_rotation)
 
-    for izoom in range(zoom_range[0], zoom_range[1] + 1):
-        index_zoom_path = os.path.join(index_path, str(izoom))
+    def _dist(a, b):
+        """distance between points"""
+        return np.hypot(b[0] - a[0], b[1] - a[1])
 
-        if not os.path.exists(index_zoom_path):
-            continue
+    mrr = pol.minimum_rotated_rectangle
+    coords = np.asarray(mrr.exterior.coords)[:-1, :]  # get coordinates of all corners
+    # get origin based on the corner with the smallest distance to origin
+    # after translation to account for possible negative coordinates
+    ib = np.argmin(
+        np.hypot(coords[:, 0] - coords[:, 0].min(), coords[:, 1] - coords[:, 1].min())
+    )
+    ir = (ib + 1) % 4
+    il = (ib + 3) % 4
+    x0, y0 = coords[ib, :]
+    x0, y0 = round(x0, dec_origin), round(y0, dec_origin)
+    az1 = _azimuth((x0, y0), coords[ir, :])
+    az2 = _azimuth((x0, y0), coords[il, :])
+    axis1 = _dist((x0, y0), coords[ir, :])
+    axis2 = _dist((x0, y0), coords[il, :])
+    if az2 < az1:
+        rot = az2
+        mmax = int(np.ceil(axis2 / res))
+        nmax = int(np.ceil(axis1 / res))
+    else:
+        rot = az1
+        mmax = int(np.ceil(axis1 / res))
+        nmax = int(np.ceil(axis2 / res))
 
-        # list the available x-folders
-        x_folders = [f.path for f in os.scandir(index_zoom_path) if f.is_dir()]
-
-        # loop over x-folders
-        for x_folder in x_folders:
-            x = os.path.basename(x_folder)
-            # list the available y-files with fmt_in extension
-            y_files = []
-            # Iterate directory
-            for file in os.listdir(x_folder):
-                # check only text files
-                if file.endswith(fmt_in):
-                    y_files.append(file)
-
-            # loop over y-files
-            for y_file in y_files:
-                # read the index file
-                index_fn = os.path.join(x_folder, y_file)
-                if fmt_in == "bin":
-                    ind = np.fromfile(index_fn, dtype="i4")
-                elif fmt_in == "png":
-                    ind = tiling.png2int(index_fn)
-
-                # read the topobathy file
-                dep_fn = os.path.join(topobathy_path, str(izoom), x, y_file)
-                if fmt_in == "bin":
-                    dep = np.fromfile(dep_fn, dtype="f4")
-                elif fmt_in == "png":
-                    dep = tiling.png2elevation(dep_fn)
-
-                # create the floodmap
-                hmax = zsmax[ind]
-                hmax = hmax - dep
-                hmax[hmax < hmin] = np.nan
-                hmax = hmax.reshape(256, 256)
-
-                # save the floodmap
-                if np.isnan(hmax).all():
-                    # only nans in this tile
-                    continue
-
-                if not os.path.exists(os.path.join(floodmap_path, str(izoom), x)):
-                    os.makedirs(os.path.join(floodmap_path, str(izoom), x))
-
-                floodmap_fn = os.path.join(
-                    floodmap_path, str(izoom), x, y_file.replace(fmt_in, fmt_out)
-                )
-                if fmt_out == "bin":
-                    # And write indices to file
-                    fid = open(floodmap_fn, "wb")
-                    fid.write(hmax)
-                    fid.close()
-                elif fmt_out == "png":
-                    tiling.elevation2png(hmax, floodmap_fn)
+    return x0, y0, mmax, nmax, rot
