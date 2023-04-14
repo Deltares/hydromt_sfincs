@@ -519,103 +519,54 @@ generic models (hydromt 0.7.1):
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-04-14 20:21:13,225 - build - log - INFO - HydroMT version: 0.7.1
-2023-04-14 20:21:13,225 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base.
-2023-04-14 20:21:13,225 - build - main - INFO - User settings:
-2023-04-14 20:21:13,256 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.0.dev0).
-2023-04-14 20:21:13,257 - build - model_api - INFO - setup_grid_from_region.region: {&#39;geom&#39;: &#39;data/region.geojson&#39;}
-2023-04-14 20:21:13,257 - build - model_api - INFO - setup_grid_from_region.res: 50
-2023-04-14 20:21:13,257 - build - model_api - INFO - setup_grid_from_region.crs: utm
-2023-04-14 20:21:13,257 - build - model_api - INFO - setup_grid_from_region.rotated: True
-2023-04-14 20:21:13,257 - build - model_api - INFO - setup_grid_from_region.hydrography_fn: None
-2023-04-14 20:21:13,257 - build - model_api - INFO - setup_grid_from_region.basin_index_fn: None
-2023-04-14 20:21:13,257 - build - model_api - INFO - setup_grid_from_region.dec_origin: 0
-2023-04-14 20:21:13,257 - build - model_api - INFO - setup_grid_from_region.dec_rotation: 3
-2023-04-14 20:21:13,304 - build - model_api - INFO - setup_dep.datasets_dep: [{&#39;elevtn&#39;: &#39;merit_hydro&#39;, &#39;zmin&#39;: 0.001}, {&#39;elevtn&#39;: &#39;gebco&#39;}]
-2023-04-14 20:21:13,304 - build - model_api - INFO - setup_dep.buffer_cells: 0
-2023-04-14 20:21:13,304 - build - model_api - INFO - setup_dep.interp_method: linear
-2023-04-14 20:21:13,369 - build - data_catalog - INFO - Reading data catalog artifact_data v0.0.8 from archive
-2023-04-14 20:21:14,846 - build - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
-2023-04-14 20:21:14,915 - build - data_catalog - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/merit_hydro/{variable}.tif
-2023-04-14 20:21:14,983 - build - data_catalog - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gebco.tif
-2023-04-14 20:21:15,457 - build - sfincs - WARNING - Interpolate data at 0 cells
-2023-04-14 20:21:15,459 - build - model_api - INFO - setup_mask_active.mask: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2023-04-14 20:21:15,459 - build - model_api - INFO - setup_mask_active.include_mask: None
-2023-04-14 20:21:15,459 - build - model_api - INFO - setup_mask_active.exclude_mask: None
-2023-04-14 20:21:15,459 - build - model_api - INFO - setup_mask_active.mask_buffer: 0
-2023-04-14 20:21:15,459 - build - model_api - INFO - setup_mask_active.zmin: -5
-2023-04-14 20:21:15,459 - build - model_api - INFO - setup_mask_active.zmax: None
-2023-04-14 20:21:15,459 - build - model_api - INFO - setup_mask_active.fill_area: 10.0
-2023-04-14 20:21:15,459 - build - model_api - INFO - setup_mask_active.drop_area: 0.0
-2023-04-14 20:21:15,459 - build - model_api - INFO - setup_mask_active.connectivity: 8
-2023-04-14 20:21:15,459 - build - model_api - INFO - setup_mask_active.all_touched: True
-2023-04-14 20:21:15,459 - build - model_api - INFO - setup_mask_active.reset_mask: False
-2023-04-14 20:21:15,464 - build - data_catalog - INFO - DataCatalog: Getting region GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2023-04-14 20:21:15,467 - build - geodataframe - INFO - GeoDataFrame: Read vector data and clip to bbox (epsg:4326) [12.646, 45.490, 12.820, 45.586].
-2023-04-14 20:21:15,502 - build - regulargrid - INFO - 3 gaps outside valid elevation range &lt; 10.0 km2.
-2023-04-14 20:21:15,504 - build - sfincs - INFO - Derive region geometry based on active cells.
-2023-04-14 20:21:15,511 - build - model_api - WARNING - Replacing geom: region
-2023-04-14 20:21:15,512 - build - model_api - INFO - setup_mask_bounds.btype: waterlevel
-2023-04-14 20:21:15,512 - build - model_api - INFO - setup_mask_bounds.include_mask: None
-2023-04-14 20:21:15,512 - build - model_api - INFO - setup_mask_bounds.exclude_mask: None
-2023-04-14 20:21:15,512 - build - model_api - INFO - setup_mask_bounds.zmin: None
-2023-04-14 20:21:15,512 - build - model_api - INFO - setup_mask_bounds.zmax: -1
-2023-04-14 20:21:15,512 - build - model_api - INFO - setup_mask_bounds.connectivity: 8
-2023-04-14 20:21:15,512 - build - model_api - INFO - setup_mask_bounds.all_touched: False
-2023-04-14 20:21:15,512 - build - model_api - INFO - setup_mask_bounds.reset_bounds: False
-2023-04-14 20:21:15,540 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
-2023-04-14 20:21:15,542 - build - sfincs - INFO - Write raster file(s) for grid to &#39;gis&#39; subfolder
-2023-04-14 20:21:15,588 - build - main - ERROR - cannot convert float NaN to integer
-Traceback (most recent call last):
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/cli/main.py&#34;, line 200, in build
-    mod.build(region, opt=opt)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py&#34;, line 213, in build
-    self.write()
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 1972, in write
-    self.write_grid()
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 2083, in write_grid
-    self.write_raster(&#34;grid&#34;)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 2524, in write_raster
-    da.raster.set_nodata(np.nan)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/raster.py&#34;, line 1482, in set_nodata
-    self._obj.rio.write_nodata(nodata, inplace=True)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/rioxarray/raster_array.py&#34;, line 311, in write_nodata
-    input_nodata = _ensure_nodata_dtype(input_nodata, self._obj.dtype)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/rioxarray/raster_writer.py&#34;, line 130, in _ensure_nodata_dtype
-    nodata = numpy.dtype(new_dtype).type(original_nodata)
-ValueError: cannot convert float NaN to integer
-Traceback (most recent call last):
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/bin/hydromt&#34;, line 10, in &lt;module&gt;
-    sys.exit(main())
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/core.py&#34;, line 1130, in __call__
-    return self.main(*args, **kwargs)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/core.py&#34;, line 1055, in main
-    rv = self.invoke(ctx)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/core.py&#34;, line 1657, in invoke
-    return _process_result(sub_ctx.command.invoke(sub_ctx))
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/core.py&#34;, line 1404, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/core.py&#34;, line 760, in invoke
-    return __callback(*args, **kwargs)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/decorators.py&#34;, line 26, in new_func
-    return f(get_current_context(), *args, **kwargs)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/cli/main.py&#34;, line 200, in build
-    mod.build(region, opt=opt)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py&#34;, line 213, in build
-    self.write()
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 1972, in write
-    self.write_grid()
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 2083, in write_grid
-    self.write_raster(&#34;grid&#34;)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 2524, in write_raster
-    da.raster.set_nodata(np.nan)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/raster.py&#34;, line 1482, in set_nodata
-    self._obj.rio.write_nodata(nodata, inplace=True)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/rioxarray/raster_array.py&#34;, line 311, in write_nodata
-    input_nodata = _ensure_nodata_dtype(input_nodata, self._obj.dtype)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/rioxarray/raster_writer.py&#34;, line 130, in _ensure_nodata_dtype
-    nodata = numpy.dtype(new_dtype).type(original_nodata)
-ValueError: cannot convert float NaN to integer
+2023-04-14 21:35:49,315 - build - log - INFO - HydroMT version: 0.7.1
+2023-04-14 21:35:49,316 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base.
+2023-04-14 21:35:49,316 - build - main - INFO - User settings:
+2023-04-14 21:35:49,348 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.0.dev0).
+2023-04-14 21:35:49,348 - build - model_api - INFO - setup_grid_from_region.region: {&#39;geom&#39;: &#39;data/region.geojson&#39;}
+2023-04-14 21:35:49,348 - build - model_api - INFO - setup_grid_from_region.res: 50
+2023-04-14 21:35:49,348 - build - model_api - INFO - setup_grid_from_region.crs: utm
+2023-04-14 21:35:49,348 - build - model_api - INFO - setup_grid_from_region.rotated: True
+2023-04-14 21:35:49,348 - build - model_api - INFO - setup_grid_from_region.hydrography_fn: None
+2023-04-14 21:35:49,348 - build - model_api - INFO - setup_grid_from_region.basin_index_fn: None
+2023-04-14 21:35:49,348 - build - model_api - INFO - setup_grid_from_region.dec_origin: 0
+2023-04-14 21:35:49,348 - build - model_api - INFO - setup_grid_from_region.dec_rotation: 3
+2023-04-14 21:35:49,398 - build - model_api - INFO - setup_dep.datasets_dep: [{&#39;elevtn&#39;: &#39;merit_hydro&#39;, &#39;zmin&#39;: 0.001}, {&#39;elevtn&#39;: &#39;gebco&#39;}]
+2023-04-14 21:35:49,398 - build - model_api - INFO - setup_dep.buffer_cells: 0
+2023-04-14 21:35:49,398 - build - model_api - INFO - setup_dep.interp_method: linear
+2023-04-14 21:35:49,599 - build - data_catalog - INFO - Reading data catalog artifact_data v0.0.8 from archive
+2023-04-14 21:35:51,417 - build - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
+2023-04-14 21:35:51,485 - build - data_catalog - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/merit_hydro/{variable}.tif
+2023-04-14 21:35:51,567 - build - data_catalog - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gebco.tif
+2023-04-14 21:35:52,070 - build - sfincs - WARNING - Interpolate data at 0 cells
+2023-04-14 21:35:52,073 - build - model_api - INFO - setup_mask_active.mask: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2023-04-14 21:35:52,073 - build - model_api - INFO - setup_mask_active.include_mask: None
+2023-04-14 21:35:52,073 - build - model_api - INFO - setup_mask_active.exclude_mask: None
+2023-04-14 21:35:52,073 - build - model_api - INFO - setup_mask_active.mask_buffer: 0
+2023-04-14 21:35:52,073 - build - model_api - INFO - setup_mask_active.zmin: -5
+2023-04-14 21:35:52,073 - build - model_api - INFO - setup_mask_active.zmax: None
+2023-04-14 21:35:52,073 - build - model_api - INFO - setup_mask_active.fill_area: 10.0
+2023-04-14 21:35:52,073 - build - model_api - INFO - setup_mask_active.drop_area: 0.0
+2023-04-14 21:35:52,073 - build - model_api - INFO - setup_mask_active.connectivity: 8
+2023-04-14 21:35:52,073 - build - model_api - INFO - setup_mask_active.all_touched: True
+2023-04-14 21:35:52,073 - build - model_api - INFO - setup_mask_active.reset_mask: False
+2023-04-14 21:35:52,078 - build - data_catalog - INFO - DataCatalog: Getting region GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2023-04-14 21:35:52,081 - build - geodataframe - INFO - GeoDataFrame: Read vector data and clip to bbox (epsg:4326) [12.646, 45.490, 12.820, 45.586].
+2023-04-14 21:35:52,116 - build - regulargrid - INFO - 3 gaps outside valid elevation range &lt; 10.0 km2.
+2023-04-14 21:35:52,118 - build - sfincs - INFO - Derive region geometry based on active cells.
+2023-04-14 21:35:52,125 - build - model_api - WARNING - Replacing geom: region
+2023-04-14 21:35:52,126 - build - model_api - INFO - setup_mask_bounds.btype: waterlevel
+2023-04-14 21:35:52,126 - build - model_api - INFO - setup_mask_bounds.include_mask: None
+2023-04-14 21:35:52,126 - build - model_api - INFO - setup_mask_bounds.exclude_mask: None
+2023-04-14 21:35:52,126 - build - model_api - INFO - setup_mask_bounds.zmin: None
+2023-04-14 21:35:52,126 - build - model_api - INFO - setup_mask_bounds.zmax: -1
+2023-04-14 21:35:52,126 - build - model_api - INFO - setup_mask_bounds.connectivity: 8
+2023-04-14 21:35:52,126 - build - model_api - INFO - setup_mask_bounds.all_touched: False
+2023-04-14 21:35:52,126 - build - model_api - INFO - setup_mask_bounds.reset_bounds: False
+2023-04-14 21:35:52,154 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
+2023-04-14 21:35:52,156 - build - sfincs - INFO - Write raster file(s) for grid to &#39;gis&#39; subfolder
+2023-04-14 21:35:52,246 - build - sfincs - INFO - Write geom files
+2023-04-14 21:35:52,246 - build - sfincs - INFO - Write vector file(s) for geoms to &#39;gis&#39; subfolder
 
 </pre></div></div>
 </div>
@@ -700,7 +651,7 @@ Options:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;gis&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.msk&#39;, &#39;hydromt.log&#39;]
+[&#39;gis&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.msk&#39;, &#39;hydromt.log&#39;]
 </pre></div></div>
 </div>
 </section>
@@ -727,7 +678,7 @@ Options:
 </section>
 <section id="4.-Plot-current-base-model">
 <h2>4. Plot current base model<a class="headerlink" href="#4.-Plot-current-base-model" title="Permalink to this heading">#</a></h2>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
@@ -738,42 +689,6 @@ Options:
 <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">FileNotFoundError</span>                         Traceback (most recent call last)
-Cell <span class="ansi-green-fg">In[6], line 5</span>
-<span class="ansi-green-intense-fg ansi-bold">      3</span> <span style="color: rgb(95,135,135)"># read the model with hydromt methods</span>
-<span class="ansi-green-intense-fg ansi-bold">      4</span> sf <span style="color: rgb(98,98,98)">=</span> SfincsModel(root<span style="color: rgb(98,98,98)">=</span>root, mode<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">r</span><span style="color: rgb(175,0,0)">&#34;</span>)
-<span class="ansi-green-fg">----&gt; 5</span> <span class="ansi-yellow-bg">sf</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:1959</span>, in <span class="ansi-cyan-fg">SfincsModel.read</span><span class="ansi-blue-fg">(self, epsg)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1957</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">read</span>(<span style="color: rgb(0,135,0)">self</span>, epsg: <span style="color: rgb(0,135,0)">int</span> <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>):
-<span class="ansi-green-intense-fg ansi-bold">   1958</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;Read the complete model schematization and configuration from file.&#34;&#34;&#34;</span>
-<span class="ansi-green-fg">-&gt; 1959</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read_config</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">epsg</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">epsg</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1960</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> epsg <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">epsg</span><span style="color: rgb(175,0,0)">&#34;</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>config:
-<span class="ansi-green-intense-fg ansi-bold">   1961</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Please specify epsg to read this model</span><span style="color: rgb(175,0,0)">&#34;</span>)
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:2629</span>, in <span class="ansi-cyan-fg">SfincsModel.read_config</span><span class="ansi-blue-fg">(self, config_fn, epsg)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2627</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">SFINCS input file not found </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>config_fn<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#34;</span>)
-<span class="ansi-green-intense-fg ansi-bold">   2628</span>     <span style="color: rgb(95,135,135)"># read config_fn</span>
-<span class="ansi-green-fg">-&gt; 2629</span>     <span class="ansi-yellow-bg">inp</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">inp_fn</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2630</span> <span style="color: rgb(95,135,135)"># overwrite / initialize config attribute</span>
-<span class="ansi-green-intense-fg ansi-bold">   2631</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config <span style="color: rgb(98,98,98)">=</span> inp<span style="color: rgb(98,98,98)">.</span>to_dict()
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs_input.py:104</span>, in <span class="ansi-cyan-fg">SfincsInput.read</span><span class="ansi-blue-fg">(self, inp_fn)</span>
-<span class="ansi-green-intense-fg ansi-bold">    102</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">read</span>(<span style="color: rgb(0,135,0)">self</span>, inp_fn: <span style="color: rgb(0,135,0)">str</span>) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-intense-fg ansi-bold">    103</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;Read sfincs input file and set attributes to values in file.&#34;&#34;&#34;</span>
-<span class="ansi-green-fg">--&gt; 104</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">open</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">inp_fn</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">r</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> fid:
-<span class="ansi-green-intense-fg ansi-bold">    105</span>         lines <span style="color: rgb(98,98,98)">=</span> fid<span style="color: rgb(98,98,98)">.</span>readlines()
-<span class="ansi-green-intense-fg ansi-bold">    107</span>     inp_dict <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">dict</span>()
-
-<span class="ansi-red-fg">FileNotFoundError</span>: [Errno 2] No such file or directory: &#39;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.inp&#39;
-</pre></div></div>
 </div>
 <p>Here in the plot you see the following: - Background geoimage of the region - Spatial colourplot of the elevation (dep) - In the red line of ‘waterlevel bnd’ the boundary cells along which SFINCS will later force input water levels</p>
 <div class="nbinput docutils container">
@@ -789,56 +704,8 @@ File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/li
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">FileNotFoundError</span>                         Traceback (most recent call last)
-Cell <span class="ansi-green-fg">In[7], line 2</span>
-<span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(95,135,135)"># plot the model with satelite basemap (see hydromt_sfincs.plot_basemap for more options)</span>
-<span class="ansi-green-fg">----&gt; 2</span> _ <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">sf</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">plot_basemap</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">shaded</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">False</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">bmap</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">sat</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">zoomlevel</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">12</span><span class="ansi-yellow-bg">)</span>
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:1911</span>, in <span class="ansi-cyan-fg">SfincsModel.plot_basemap</span><span class="ansi-blue-fg">(self, fn_out, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, legend_kwargs, **kwargs)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1908</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">matplotlib</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">pyplot</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> <span class="ansi-bold" style="color: rgb(0,0,255)">plt</span>
-<span class="ansi-green-intense-fg ansi-bold">   1910</span> <span style="color: rgb(95,135,135)"># combine geoms and forcing locations</span>
-<span class="ansi-green-fg">-&gt; 1911</span> sg <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">geoms</span><span style="color: rgb(98,98,98)">.</span>copy()
-<span class="ansi-green-intense-fg ansi-bold">   1912</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> fname, gname <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_FORCING_1D<span style="color: rgb(98,98,98)">.</span>values():
-<span class="ansi-green-intense-fg ansi-bold">   1913</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> fname[<span style="color: rgb(98,98,98)">0</span>] <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>forcing <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> gname <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py:1001</span>, in <span class="ansi-cyan-fg">Model.geoms</span><span class="ansi-blue-fg">(self)</span>
-<span class="ansi-green-intense-fg ansi-bold">    998</span> <span style="color: rgb(175,0,0)">&#34;&#34;&#34;Model geometries. Returns dict of geopandas.GeoDataFrame or geopandas.GeoDataSeries</span>
-<span class="ansi-green-intense-fg ansi-bold">    999</span> <span style="color: rgb(175,0,0)">..NOTE: previously call staticgeoms.&#34;&#34;&#34;</span>
-<span class="ansi-green-intense-fg ansi-bold">   1000</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_geoms <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_read:
-<span class="ansi-green-fg">-&gt; 1001</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read_geoms</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1002</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_geoms
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:2122</span>, in <span class="ansi-cyan-fg">SfincsModel.read_geoms</span><span class="ansi-blue-fg">(self)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2120</span> <span style="color: rgb(95,135,135)"># read _GEOMS model files</span>
-<span class="ansi-green-intense-fg ansi-bold">   2121</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> gname <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_GEOMS<span style="color: rgb(98,98,98)">.</span>values():
-<span class="ansi-green-fg">-&gt; 2122</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>gname<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">file</span><span style="color: rgb(175,0,0)">&#34;</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">config</span>:
-<span class="ansi-green-intense-fg ansi-bold">   2123</span>         fn <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>get_config(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>gname<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">file</span><span style="color: rgb(175,0,0)">&#34;</span>, abs_path<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)
-<span class="ansi-green-intense-fg ansi-bold">   2124</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> fn <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py:563</span>, in <span class="ansi-cyan-fg">Model.config</span><span class="ansi-blue-fg">(self)</span>
-<span class="ansi-green-intense-fg ansi-bold">    561</span> <span style="color: rgb(95,135,135)"># initialize default config if in write-mode</span>
-<span class="ansi-green-intense-fg ansi-bold">    562</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config:
-<span class="ansi-green-fg">--&gt; 563</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read_config</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">    564</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:2629</span>, in <span class="ansi-cyan-fg">SfincsModel.read_config</span><span class="ansi-blue-fg">(self, config_fn, epsg)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2627</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">SFINCS input file not found </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>config_fn<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#34;</span>)
-<span class="ansi-green-intense-fg ansi-bold">   2628</span>     <span style="color: rgb(95,135,135)"># read config_fn</span>
-<span class="ansi-green-fg">-&gt; 2629</span>     <span class="ansi-yellow-bg">inp</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">inp_fn</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2630</span> <span style="color: rgb(95,135,135)"># overwrite / initialize config attribute</span>
-<span class="ansi-green-intense-fg ansi-bold">   2631</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config <span style="color: rgb(98,98,98)">=</span> inp<span style="color: rgb(98,98,98)">.</span>to_dict()
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs_input.py:104</span>, in <span class="ansi-cyan-fg">SfincsInput.read</span><span class="ansi-blue-fg">(self, inp_fn)</span>
-<span class="ansi-green-intense-fg ansi-bold">    102</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">read</span>(<span style="color: rgb(0,135,0)">self</span>, inp_fn: <span style="color: rgb(0,135,0)">str</span>) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-intense-fg ansi-bold">    103</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;Read sfincs input file and set attributes to values in file.&#34;&#34;&#34;</span>
-<span class="ansi-green-fg">--&gt; 104</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">open</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">inp_fn</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">r</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> fid:
-<span class="ansi-green-intense-fg ansi-bold">    105</span>         lines <span style="color: rgb(98,98,98)">=</span> fid<span style="color: rgb(98,98,98)">.</span>readlines()
-<span class="ansi-green-intense-fg ansi-bold">    107</span>     inp_dict <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">dict</span>()
-
-<span class="ansi-red-fg">FileNotFoundError</span>: [Errno 2] No such file or directory: &#39;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.inp&#39;
-</pre></div></div>
+<img alt="../_images/_examples_build_from_cli_19_0.png" src="../_images/_examples_build_from_cli_19_0.png" />
+</div>
 </div>
 </section>
 <section id="5.-Explanation-of-HydroMT's-.yml-file:">
@@ -864,9 +731,9 @@ global:
   data_libs: []                # add optional paths to data_catalog yml files
 
 setup_config:
-  tref: &#34;20100201 000000&#34;
-  tstart: &#34;20100201 000000&#34;
-  tstop: &#34;20100202 000000&#34;
+  tref: 20100201 000000
+  tstart: 20100201 000000
+  tstop: 20100202 000000
 
 setup_grid_from_region:
   res: 50                      # model resolution
@@ -947,63 +814,43 @@ setup_mask_bounds:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-04-14 20:21:22,040 - update - log - INFO - HydroMT version: 0.7.1
-2023-04-14 20:21:22,040 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base (r+).
-2023-04-14 20:21:22,040 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
-2023-04-14 20:21:22,040 - update - main - INFO - User settings:
-2023-04-14 20:21:22,071 - update - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/gis.
-2023-04-14 20:21:22,071 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.0.dev0).
-2023-04-14 20:21:22,072 - update - main - ERROR - [Errno 2] No such file or directory: &#39;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.inp&#39;
-Traceback (most recent call last):
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/cli/main.py&#34;, line 303, in update
-    mod.update(model_out=model_out, opt=opt)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py&#34;, line 266, in update
-    if self.region is None:
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 142, in region
-    if &#34;region&#34; in self.geoms:
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py&#34;, line 1001, in geoms
-    self.read_geoms()
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 2122, in read_geoms
-    if f&#34;{gname}file&#34; in self.config:
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py&#34;, line 563, in config
-    self.read_config()
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 2629, in read_config
-    inp.read(inp_fn=config_fn)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs_input.py&#34;, line 104, in read
-    with open(inp_fn, &#34;r&#34;) as fid:
-FileNotFoundError: [Errno 2] No such file or directory: &#39;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.inp&#39;
-Traceback (most recent call last):
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/bin/hydromt&#34;, line 10, in &lt;module&gt;
-    sys.exit(main())
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/core.py&#34;, line 1130, in __call__
-    return self.main(*args, **kwargs)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/core.py&#34;, line 1055, in main
-    rv = self.invoke(ctx)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/core.py&#34;, line 1657, in invoke
-    return _process_result(sub_ctx.command.invoke(sub_ctx))
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/core.py&#34;, line 1404, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/core.py&#34;, line 760, in invoke
-    return __callback(*args, **kwargs)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/click/decorators.py&#34;, line 26, in new_func
-    return f(get_current_context(), *args, **kwargs)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/cli/main.py&#34;, line 303, in update
-    mod.update(model_out=model_out, opt=opt)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py&#34;, line 266, in update
-    if self.region is None:
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 142, in region
-    if &#34;region&#34; in self.geoms:
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py&#34;, line 1001, in geoms
-    self.read_geoms()
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 2122, in read_geoms
-    if f&#34;{gname}file&#34; in self.config:
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py&#34;, line 563, in config
-    self.read_config()
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py&#34;, line 2629, in read_config
-    inp.read(inp_fn=config_fn)
-  File &#34;/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs_input.py&#34;, line 104, in read
-    with open(inp_fn, &#34;r&#34;) as fid:
-FileNotFoundError: [Errno 2] No such file or directory: &#39;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.inp&#39;
+2023-04-14 21:36:00,358 - update - log - INFO - HydroMT version: 0.7.1
+2023-04-14 21:36:00,358 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base (r+).
+2023-04-14 21:36:00,358 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
+2023-04-14 21:36:00,358 - update - main - INFO - User settings:
+2023-04-14 21:36:00,389 - update - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/gis.
+2023-04-14 21:36:00,389 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.0.dev0).
+2023-04-14 21:36:00,422 - update - model_api - INFO - setup_observation_points.locations: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
+2023-04-14 21:36:00,422 - update - model_api - INFO - setup_observation_points.merge: True
+2023-04-14 21:36:00,488 - update - data_catalog - INFO - Reading data catalog artifact_data v0.0.8 from archive
+2023-04-14 21:36:00,488 - update - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
+2023-04-14 21:36:00,557 - update - data_catalog - INFO - DataCatalog: Getting compound_example_observation_points GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
+2023-04-14 21:36:00,559 - update - geodataframe - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:32633) [316221.151, 5041336.510, 329106.596, 5050441.766].
+2023-04-14 21:36:00,571 - update - model_api - INFO - setup_waterlevel_forcing.geodataset: gtsmv3_eu_era5
+2023-04-14 21:36:00,571 - update - model_api - INFO - setup_waterlevel_forcing.timeseries: None
+2023-04-14 21:36:00,571 - update - model_api - INFO - setup_waterlevel_forcing.locations: None
+2023-04-14 21:36:00,571 - update - model_api - INFO - setup_waterlevel_forcing.offset: None
+2023-04-14 21:36:00,571 - update - model_api - INFO - setup_waterlevel_forcing.buffer: 2000
+2023-04-14 21:36:00,571 - update - model_api - INFO - setup_waterlevel_forcing.merge: True
+2023-04-14 21:36:00,588 - update - data_catalog - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gtsmv3_eu_era5.nc
+2023-04-14 21:36:00,621 - update - geodataset - INFO - GeoDataset: Read netcdf data and clip to geom (epsg:32633) [315583.508, 5039336.895, 331106.210, 5049946.562].
+2023-04-14 21:36:00,881 - update - model_api - INFO - setup_discharge_forcing.geodataset: None
+2023-04-14 21:36:00,881 - update - model_api - INFO - setup_discharge_forcing.timeseries: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
+2023-04-14 21:36:00,882 - update - model_api - INFO - setup_discharge_forcing.locations: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
+2023-04-14 21:36:00,882 - update - model_api - INFO - setup_discharge_forcing.merge: True
+2023-04-14 21:36:00,882 - update - data_catalog - INFO - DataCatalog: Getting compound_dis_timeseries DataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
+2023-04-14 21:36:00,882 - update - dataframe - INFO - DataFrame: Read csv data.
+2023-04-14 21:36:00,887 - update - data_catalog - INFO - DataCatalog: Getting compound_src_locations GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
+2023-04-14 21:36:00,888 - update - geodataframe - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:32633) [316221.151, 5041336.510, 329106.596, 5050441.766].
+2023-04-14 21:36:00,899 - update - sfincs - INFO - Setting gdf_locs index to ID
+2023-04-14 21:36:00,900 - update - sfincs - INFO - No matching index column found in gdf_locs; assuming the order is correct
+2023-04-14 21:36:00,907 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
+2023-04-14 21:36:00,910 - update - sfincs - INFO - Write raster file(s) for grid to &#39;gis&#39; subfolder
+2023-04-14 21:36:01,009 - update - sfincs - INFO - Write geom files
+2023-04-14 21:36:01,012 - update - sfincs - INFO - Write vector file(s) for geoms to &#39;gis&#39; subfolder
+2023-04-14 21:36:01,028 - update - sfincs - INFO - Write forcing files
+2023-04-14 21:36:01,038 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2023-04-14 21:36:01,070 - update - sfincs - INFO - Write vector file(s) for forcing.dis to &#39;gis&#39; subfolder
 
 </pre></div></div>
 </div>
@@ -1053,7 +900,7 @@ setup_discharge_forcing:
 </section>
 <section id="7.-Plot-model-including-forcing:">
 <h2>7. Plot model including forcing:<a class="headerlink" href="#7.-Plot-model-including-forcing:" title="Permalink to this heading">#</a></h2>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
@@ -1064,42 +911,6 @@ setup_discharge_forcing:
 <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">FileNotFoundError</span>                         Traceback (most recent call last)
-Cell <span class="ansi-green-fg">In[12], line 5</span>
-<span class="ansi-green-intense-fg ansi-bold">      3</span> <span style="color: rgb(95,135,135)"># read the model with hydromt methods</span>
-<span class="ansi-green-intense-fg ansi-bold">      4</span> sf <span style="color: rgb(98,98,98)">=</span> SfincsModel(root<span style="color: rgb(98,98,98)">=</span>root, mode<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">r</span><span style="color: rgb(175,0,0)">&#34;</span>)
-<span class="ansi-green-fg">----&gt; 5</span> <span class="ansi-yellow-bg">sf</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:1959</span>, in <span class="ansi-cyan-fg">SfincsModel.read</span><span class="ansi-blue-fg">(self, epsg)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1957</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">read</span>(<span style="color: rgb(0,135,0)">self</span>, epsg: <span style="color: rgb(0,135,0)">int</span> <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>):
-<span class="ansi-green-intense-fg ansi-bold">   1958</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;Read the complete model schematization and configuration from file.&#34;&#34;&#34;</span>
-<span class="ansi-green-fg">-&gt; 1959</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read_config</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">epsg</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">epsg</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1960</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> epsg <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">epsg</span><span style="color: rgb(175,0,0)">&#34;</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>config:
-<span class="ansi-green-intense-fg ansi-bold">   1961</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Please specify epsg to read this model</span><span style="color: rgb(175,0,0)">&#34;</span>)
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:2629</span>, in <span class="ansi-cyan-fg">SfincsModel.read_config</span><span class="ansi-blue-fg">(self, config_fn, epsg)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2627</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">SFINCS input file not found </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>config_fn<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#34;</span>)
-<span class="ansi-green-intense-fg ansi-bold">   2628</span>     <span style="color: rgb(95,135,135)"># read config_fn</span>
-<span class="ansi-green-fg">-&gt; 2629</span>     <span class="ansi-yellow-bg">inp</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">inp_fn</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2630</span> <span style="color: rgb(95,135,135)"># overwrite / initialize config attribute</span>
-<span class="ansi-green-intense-fg ansi-bold">   2631</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config <span style="color: rgb(98,98,98)">=</span> inp<span style="color: rgb(98,98,98)">.</span>to_dict()
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs_input.py:104</span>, in <span class="ansi-cyan-fg">SfincsInput.read</span><span class="ansi-blue-fg">(self, inp_fn)</span>
-<span class="ansi-green-intense-fg ansi-bold">    102</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">read</span>(<span style="color: rgb(0,135,0)">self</span>, inp_fn: <span style="color: rgb(0,135,0)">str</span>) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-intense-fg ansi-bold">    103</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;Read sfincs input file and set attributes to values in file.&#34;&#34;&#34;</span>
-<span class="ansi-green-fg">--&gt; 104</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">open</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">inp_fn</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">r</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> fid:
-<span class="ansi-green-intense-fg ansi-bold">    105</span>         lines <span style="color: rgb(98,98,98)">=</span> fid<span style="color: rgb(98,98,98)">.</span>readlines()
-<span class="ansi-green-intense-fg ansi-bold">    107</span>     inp_dict <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">dict</span>()
-
-<span class="ansi-red-fg">FileNotFoundError</span>: [Errno 2] No such file or directory: &#39;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.inp&#39;
-</pre></div></div>
 </div>
 <p><strong>In the forcing plot you see the following:</strong></p>
 <ul class="simple">
@@ -1119,55 +930,8 @@ File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/li
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">FileNotFoundError</span>                         Traceback (most recent call last)
-Cell <span class="ansi-green-fg">In[13], line 2</span>
-<span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(95,135,135)"># Plot time-series:</span>
-<span class="ansi-green-fg">----&gt; 2</span> _ <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">sf</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">plot_forcing</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:1829</span>, in <span class="ansi-cyan-fg">SfincsModel.plot_forcing</span><span class="ansi-blue-fg">(self, fn_out, **kwargs)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1826</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">matplotlib</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">dates</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> <span class="ansi-bold" style="color: rgb(0,0,255)">mdates</span>
-<span class="ansi-green-intense-fg ansi-bold">   1827</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">matplotlib</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">pyplot</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> <span class="ansi-bold" style="color: rgb(0,0,255)">plt</span>
-<span class="ansi-green-fg">-&gt; 1829</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">forcing</span>:
-<span class="ansi-green-intense-fg ansi-bold">   1830</span>     forcing <span style="color: rgb(98,98,98)">=</span> {}
-<span class="ansi-green-intense-fg ansi-bold">   1831</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> name <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>forcing:
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py:1112</span>, in <span class="ansi-cyan-fg">Model.forcing</span><span class="ansi-blue-fg">(self)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1110</span> <span style="color: rgb(175,0,0)">&#34;&#34;&#34;Model forcing. Returns dict of xarray.DataArray or xarray.Dataset&#34;&#34;&#34;</span>
-<span class="ansi-green-intense-fg ansi-bold">   1111</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_forcing <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_read:
-<span class="ansi-green-fg">-&gt; 1112</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read_forcing</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1113</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_forcing
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:2202</span>, in <span class="ansi-cyan-fg">SfincsModel.read_forcing</span><span class="ansi-blue-fg">(self, data_vars)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2200</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> data_vars <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-intense-fg ansi-bold">   2201</span>     dvars_1d <span style="color: rgb(98,98,98)">=</span> [name <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> name <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> data_vars <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> name <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> dvars_1d]
-<span class="ansi-green-fg">-&gt; 2202</span> tref <span style="color: rgb(98,98,98)">=</span> utils<span style="color: rgb(98,98,98)">.</span>parse_datetime(<span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">config</span>[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">tref</span><span style="color: rgb(175,0,0)">&#34;</span>])
-<span class="ansi-green-intense-fg ansi-bold">   2203</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> name <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> dvars_1d:
-<span class="ansi-green-intense-fg ansi-bold">   2204</span>     ts_names, xy_name <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_FORCING_1D[name]
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py:563</span>, in <span class="ansi-cyan-fg">Model.config</span><span class="ansi-blue-fg">(self)</span>
-<span class="ansi-green-intense-fg ansi-bold">    561</span> <span style="color: rgb(95,135,135)"># initialize default config if in write-mode</span>
-<span class="ansi-green-intense-fg ansi-bold">    562</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config:
-<span class="ansi-green-fg">--&gt; 563</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read_config</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">    564</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:2629</span>, in <span class="ansi-cyan-fg">SfincsModel.read_config</span><span class="ansi-blue-fg">(self, config_fn, epsg)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2627</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">SFINCS input file not found </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>config_fn<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#34;</span>)
-<span class="ansi-green-intense-fg ansi-bold">   2628</span>     <span style="color: rgb(95,135,135)"># read config_fn</span>
-<span class="ansi-green-fg">-&gt; 2629</span>     <span class="ansi-yellow-bg">inp</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">inp_fn</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2630</span> <span style="color: rgb(95,135,135)"># overwrite / initialize config attribute</span>
-<span class="ansi-green-intense-fg ansi-bold">   2631</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config <span style="color: rgb(98,98,98)">=</span> inp<span style="color: rgb(98,98,98)">.</span>to_dict()
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs_input.py:104</span>, in <span class="ansi-cyan-fg">SfincsInput.read</span><span class="ansi-blue-fg">(self, inp_fn)</span>
-<span class="ansi-green-intense-fg ansi-bold">    102</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">read</span>(<span style="color: rgb(0,135,0)">self</span>, inp_fn: <span style="color: rgb(0,135,0)">str</span>) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-intense-fg ansi-bold">    103</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;Read sfincs input file and set attributes to values in file.&#34;&#34;&#34;</span>
-<span class="ansi-green-fg">--&gt; 104</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">open</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">inp_fn</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">r</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> fid:
-<span class="ansi-green-intense-fg ansi-bold">    105</span>         lines <span style="color: rgb(98,98,98)">=</span> fid<span style="color: rgb(98,98,98)">.</span>readlines()
-<span class="ansi-green-intense-fg ansi-bold">    107</span>     inp_dict <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">dict</span>()
-
-<span class="ansi-red-fg">FileNotFoundError</span>: [Errno 2] No such file or directory: &#39;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.inp&#39;
-</pre></div></div>
+<img alt="../_images/_examples_build_from_cli_34_0.png" src="../_images/_examples_build_from_cli_34_0.png" />
+</div>
 </div>
 <p><strong>In the basemap plot you see the following:</strong></p>
 <ul class="simple">
@@ -1192,57 +956,8 @@ File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/li
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">FileNotFoundError</span>                         Traceback (most recent call last)
-Cell <span class="ansi-green-fg">In[14], line 4</span>
-<span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(95,135,135)"># plot the model basemaps</span>
-<span class="ansi-green-intense-fg ansi-bold">      2</span> <span style="color: rgb(95,135,135)"># Note the added obs and forcing points</span>
-<span class="ansi-green-fg">----&gt; 4</span> _ <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">sf</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">plot_basemap</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">bmap</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">sat</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">zoomlevel</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">12</span><span class="ansi-yellow-bg">)</span>
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:1911</span>, in <span class="ansi-cyan-fg">SfincsModel.plot_basemap</span><span class="ansi-blue-fg">(self, fn_out, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, legend_kwargs, **kwargs)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1908</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">matplotlib</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">pyplot</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> <span class="ansi-bold" style="color: rgb(0,0,255)">plt</span>
-<span class="ansi-green-intense-fg ansi-bold">   1910</span> <span style="color: rgb(95,135,135)"># combine geoms and forcing locations</span>
-<span class="ansi-green-fg">-&gt; 1911</span> sg <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">geoms</span><span style="color: rgb(98,98,98)">.</span>copy()
-<span class="ansi-green-intense-fg ansi-bold">   1912</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> fname, gname <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_FORCING_1D<span style="color: rgb(98,98,98)">.</span>values():
-<span class="ansi-green-intense-fg ansi-bold">   1913</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> fname[<span style="color: rgb(98,98,98)">0</span>] <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>forcing <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> gname <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py:1001</span>, in <span class="ansi-cyan-fg">Model.geoms</span><span class="ansi-blue-fg">(self)</span>
-<span class="ansi-green-intense-fg ansi-bold">    998</span> <span style="color: rgb(175,0,0)">&#34;&#34;&#34;Model geometries. Returns dict of geopandas.GeoDataFrame or geopandas.GeoDataSeries</span>
-<span class="ansi-green-intense-fg ansi-bold">    999</span> <span style="color: rgb(175,0,0)">..NOTE: previously call staticgeoms.&#34;&#34;&#34;</span>
-<span class="ansi-green-intense-fg ansi-bold">   1000</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_geoms <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_read:
-<span class="ansi-green-fg">-&gt; 1001</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read_geoms</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1002</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_geoms
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:2122</span>, in <span class="ansi-cyan-fg">SfincsModel.read_geoms</span><span class="ansi-blue-fg">(self)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2120</span> <span style="color: rgb(95,135,135)"># read _GEOMS model files</span>
-<span class="ansi-green-intense-fg ansi-bold">   2121</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> gname <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_GEOMS<span style="color: rgb(98,98,98)">.</span>values():
-<span class="ansi-green-fg">-&gt; 2122</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>gname<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">file</span><span style="color: rgb(175,0,0)">&#34;</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">config</span>:
-<span class="ansi-green-intense-fg ansi-bold">   2123</span>         fn <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>get_config(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>gname<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">file</span><span style="color: rgb(175,0,0)">&#34;</span>, abs_path<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)
-<span class="ansi-green-intense-fg ansi-bold">   2124</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> fn <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/models/model_api.py:563</span>, in <span class="ansi-cyan-fg">Model.config</span><span class="ansi-blue-fg">(self)</span>
-<span class="ansi-green-intense-fg ansi-bold">    561</span> <span style="color: rgb(95,135,135)"># initialize default config if in write-mode</span>
-<span class="ansi-green-intense-fg ansi-bold">    562</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config:
-<span class="ansi-green-fg">--&gt; 563</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read_config</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">    564</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs.py:2629</span>, in <span class="ansi-cyan-fg">SfincsModel.read_config</span><span class="ansi-blue-fg">(self, config_fn, epsg)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2627</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">SFINCS input file not found </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>config_fn<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#34;</span>)
-<span class="ansi-green-intense-fg ansi-bold">   2628</span>     <span style="color: rgb(95,135,135)"># read config_fn</span>
-<span class="ansi-green-fg">-&gt; 2629</span>     <span class="ansi-yellow-bg">inp</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">read</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">inp_fn</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2630</span> <span style="color: rgb(95,135,135)"># overwrite / initialize config attribute</span>
-<span class="ansi-green-intense-fg ansi-bold">   2631</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config <span style="color: rgb(98,98,98)">=</span> inp<span style="color: rgb(98,98,98)">.</span>to_dict()
-
-File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt_sfincs/sfincs_input.py:104</span>, in <span class="ansi-cyan-fg">SfincsInput.read</span><span class="ansi-blue-fg">(self, inp_fn)</span>
-<span class="ansi-green-intense-fg ansi-bold">    102</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">read</span>(<span style="color: rgb(0,135,0)">self</span>, inp_fn: <span style="color: rgb(0,135,0)">str</span>) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-intense-fg ansi-bold">    103</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;Read sfincs input file and set attributes to values in file.&#34;&#34;&#34;</span>
-<span class="ansi-green-fg">--&gt; 104</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">open</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">inp_fn</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">r</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> fid:
-<span class="ansi-green-intense-fg ansi-bold">    105</span>         lines <span style="color: rgb(98,98,98)">=</span> fid<span style="color: rgb(98,98,98)">.</span>readlines()
-<span class="ansi-green-intense-fg ansi-bold">    107</span>     inp_dict <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">dict</span>()
-
-<span class="ansi-red-fg">FileNotFoundError</span>: [Errno 2] No such file or directory: &#39;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.inp&#39;
-</pre></div></div>
+<img alt="../_images/_examples_build_from_cli_36_0.png" src="../_images/_examples_build_from_cli_36_0.png" />
+</div>
 </div>
 </section>
 <section id="8.-Check-what-additional-files-have-been-created:">
@@ -1261,7 +976,7 @@ File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/li
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;gis&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.msk&#39;, &#39;hydromt.log&#39;]
+[&#39;sfincs.dis&#39;, &#39;gis&#39;, &#39;sfincs.bnd&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.src&#39;, &#39;sfincs.msk&#39;, &#39;hydromt.log&#39;, &#39;sfincs.bzs&#39;]
 </pre></div></div>
 </div>
 <p><strong>SFINCS native input files:</strong></p>

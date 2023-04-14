@@ -523,7 +523,7 @@ document.write(`
 </section>
 <section id="Write-maximum-waterdepth-to-geotiff-file">
 <h2>Write maximum waterdepth to geotiff file<a class="headerlink" href="#Write-maximum-waterdepth-to-geotiff-file" title="Permalink to this heading">#</a></h2>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
@@ -536,6 +536,15 @@ document.write(`
 <span class="c1"># hmax.raster.to_raster(join(mod.root, &#39;gis&#39;, &#39;hmax.tif&#39;), compress=&#39;LZW&#39;)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Nodata value missing, skipping mask
+nodata value missing for /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_compound/gis/hmax.tif
+</pre></div></div>
 </div>
 </section>
 <section id="Plot-maximum-water-depth-with-surface-water-mask">
@@ -594,7 +603,7 @@ path: /home/runner/.hydromt_data/artifact_data/v0.0.8/gswo.tif
 </pre></div>
 </div>
 </div>
-<p>Here we plot the maximum water depth on top of the <code class="docutils literal notranslate"><span class="pre">plot_basemaps</span></code> method to also include the locations of discharge source points and observation gauge locations.</p>
+<p>Here we plot the maximum water depth on top of the <code class="docutils literal notranslate"><span class="pre">plot_basemap</span></code> method to also include the locations of discharge source points and observation gauge locations.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
@@ -608,7 +617,7 @@ path: /home/runner/.hydromt_data/artifact_data/v0.0.8/gswo.tif
     <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
     <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
 <span class="p">)</span>
-<span class="c1"># plot overland flooding based on gswo mask and mimum flood depth</span>
+<span class="c1"># plot overland flooding based on gswo mask and minimum flood depth</span>
 <span class="n">cbar_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
 <span class="n">cax_fld</span> <span class="o">=</span> <span class="n">da_hmax_fld</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="s2">&quot;xc&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;yc&quot;</span><span class="p">,</span>
@@ -644,7 +653,14 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
 <h2>Determine maximum water depth for a subgrid model<a class="headerlink" href="#Determine-maximum-water-depth-for-a-subgrid-model" title="Permalink to this heading">#</a></h2>
 <p>When subgrid tables are used, these are based on elevation data of a resolution higher than the resolution of the computational grid. The bed levels stored in the NetCDF output (<em>zb</em> in <em>sfincs_map.nc</em>) are the minimum bed levels from the subgrid tables of each computational cell. Therefore, to properly derive water depths, the higher resolution elevation data should be used instead of simply using the bed levels from the model output (this would result in an overestimation of flood extents).
 The process of interpolating the water levels onto the higher-resolution elevation data is called downscaling.</p>
-<p>The downscaling of the floodmap roughly includees the following steps: 1. Select your high-resolution elevation dataset 2. Retrieve the maximum water levels from your model 3. Determine if and how you want to mask your floodmap 4. Write a geotiff of your downscaled floodmap 5. Plot your downscaled floodmap here, or in QGIS</p>
+<p>The downscaling of the floodmap roughly includees the following steps:</p>
+<ol class="arabic simple">
+<li><p>Select your high-resolution elevation dataset</p></li>
+<li><p>Retrieve the maximum water levels from your model</p></li>
+<li><p>Determine if and how you want to mask your floodmap</p></li>
+<li><p>Write a geotiff of your downscaled floodmap</p></li>
+<li><p>Plot your downscaled floodmap here, or in QGIS</p></li>
+</ol>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
@@ -655,7 +671,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
 </pre></div>
 </div>
 </div>
-<p>In the example, we used GEBCO (~450m resolution) and MERIT Hydro (~90m resolution) to create a model on 50 meters resolution. In this case, including subgrid tables didnt’t add much information to the model. To still illustrate the process of downscaling, we will use the dep.tif (in the gis folder) which has 50m resolution.</p>
+<p>In the example, we used <em>GEBCO</em> (~450m resolution) and <em>MERIT Hydro</em> (~90m resolution) to create a model on 50 meters resolution. In this case, including subgrid tables didnt’t add much information to the model. To still illustrate the process of downscaling, we will use the <em>dep.tif</em> (in the gis folder) which has 50m resolution.</p>
 <p>When creating a subgrid with <code class="docutils literal notranslate"><span class="pre">setup_subgrid</span></code>, you can easily create a geotiff on the subgrid resolution with the argument `write_dep_tif.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
@@ -671,7 +687,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
@@ -686,11 +702,19 @@ The process of interpolating the water levels onto the higher-resolution elevati
 </pre></div>
 </div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+nodata value missing for /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_compound/gis/hmax.tif
+</pre></div></div>
+</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># thirdly, we determine the masking of the floodmap</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Thirdly, we determine the masking of the floodmap</span>
 
 <span class="c1"># we could use the GSWO dataset to mask permanent water in a similar way as above</span>
 <span class="c1"># NOTE: this is masking the water levels on the computational grid resolution</span>
@@ -708,7 +732,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># downscale the floodmap and save to &lt;mod.root&gt;/floodmap.tif</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fourthly, we downscale the floodmap and save to &lt;mod.root&gt;/floodmap.tif</span>
 <span class="n">floodmap_fn</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="s2">&quot;floodmap.tif&quot;</span><span class="p">)</span>
 <span class="n">hmax</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">downscale_floodmap</span><span class="p">(</span><span class="n">zsmax</span><span class="o">=</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">dep</span><span class="o">=</span><span class="n">dep</span><span class="p">,</span> <span class="n">hmin</span><span class="o">=</span><span class="n">hmin</span><span class="p">,</span> <span class="n">gdf_mask</span><span class="o">=</span><span class="n">gdf_osm</span><span class="p">,</span> <span class="n">floodmap_fn</span><span class="o">=</span><span class="n">floodmap_fn</span><span class="p">)</span>
 </pre></div>
@@ -718,7 +742,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create hmax plot and save to mod.root/figs/hmax.png</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Lastly, we create a basemap plot with hmax on top</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
     <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="c1"># no variable to plot, only basemap</span>
@@ -727,7 +751,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
     <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
     <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
 <span class="p">)</span>
-<span class="c1"># plot overland flooding based on gswo mask and mimum flood depth</span>
+
 <span class="n">cbar_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
 <span class="n">cax_fld</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="s2">&quot;xc&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;yc&quot;</span><span class="p">,</span>
