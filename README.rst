@@ -6,7 +6,7 @@ HydroMT-SFINCS: SFINCS plugin for HydroMT
 
 
 What is the HydroMT-SFINCS plugin?
----------------------------------
+-----------------------------------
 
 HydroMT_ (Hydro Model Tools) is an open-source Python package that facilitates the process of
 building and analyzing spatial geoscientific models with a focus on water system models.

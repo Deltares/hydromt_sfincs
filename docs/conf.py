@@ -46,7 +46,7 @@ author = "Dirk Eilander"
 # The short version which is displayed
 version = hydromt_sfincs.__version__
 
-# # -- Copy notebooks to include in docs -------
+# -- Copy notebooks to include in docs -------
 if os.path.isdir("_examples"):
     remove_dir_content("_examples")
 os.makedirs("_examples")

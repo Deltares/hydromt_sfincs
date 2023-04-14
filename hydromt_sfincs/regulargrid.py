@@ -35,21 +35,6 @@ class RegularGrid:
         self.subgrid = SubgridTableRegular()
         # self.data = xr.Dataset()
 
-        # cosrot = math.cos(rotation * math.pi / 180)
-        # sinrot = math.sin(rotation * math.pi / 180)
-
-        # xx = np.linspace(
-        #     0.5 * self.dx, self.mmax * self.dx - 0.5 * self.dx, num=self.mmax
-        # )
-        # yy = np.linspace(
-        #     0.5 * self.dy, self.nmax * self.dy - 0.5 * self.dy, num=self.nmax
-        # )
-
-        # xg0, yg0 = np.meshgrid(xx, yy)
-        # xg = self.x0 + xg0 * cosrot - yg0 * sinrot
-        # yg = self.y0 + xg0 * sinrot + yg0 * cosrot
-        # self.xz = xg
-        # self.yz = yg
 
     @property
     def transform(self):

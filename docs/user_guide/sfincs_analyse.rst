@@ -1,4 +1,4 @@
-.. _process_visualize:
+.. _sfincs_analyse:
 
 ================================
 Postprocessing and visualization
@@ -9,5 +9,4 @@ The Hydromt SFINCS plugin provides several possibilities to postprocess and visu
 .. toctree::
     :hidden:
 
-    Example: Analyse regular grid type SFINCS model - TO ADD
-    Example: Analyse subgrid type SFINCS model - TO ADD  
+    Example: Analyse SFINCS model - TO ADD
