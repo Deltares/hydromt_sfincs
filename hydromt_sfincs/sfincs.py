@@ -461,7 +461,7 @@ class SfincsModel(GridModel):
                 connectivity=connectivity,
                 all_touched=all_touched,
                 reset_mask=reset_mask,
-                # logger=self.logger,
+                logger=self.logger,
             )
             self.set_grid(da_mask, name="msk")
             # update config
@@ -563,6 +563,7 @@ class SfincsModel(GridModel):
                 connectivity=connectivity,
                 all_touched=all_touched,
                 reset_bounds=reset_bounds,
+                logger=self.logger,
             )
             self.set_grid(da_mask, name="msk")
 
@@ -667,6 +668,7 @@ class SfincsModel(GridModel):
                 write_dep_tif=write_dep_tif,
                 write_man_tif=write_man_tif,
                 highres_dir=highres_dir,
+                logger=self.logger,
             )
             self.subgrid = self.reggrid.subgrid.to_xarray(
                 dims=self.mask.raster.dims, coords=self.mask.raster.coords
@@ -1765,7 +1767,7 @@ class SfincsModel(GridModel):
 
             if self.grid_type == "regular":
                 self.reggrid.create_index_tiles(
-                    region=region, root=path, zoom_range=zoom_range, fmt=fmt_ind
+                    region=region, root=path, zoom_range=zoom_range, fmt=fmt_ind, logger=self.logger,
                 )
             elif self.grid_type == "quadtree":
                 raise NotImplementedError(

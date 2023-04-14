@@ -146,6 +146,7 @@ class RegularGrid:
         connectivity: int = 8,
         all_touched: bool = True,
         reset_mask: bool = False,
+        logger: logging.Logger = logger,
     ) -> xr.DataArray:
         """Create an integer mask with inactive (msk=0) and active (msk=1) cells, optionally bounded
         by several criteria.
@@ -233,7 +234,7 @@ class RegularGrid:
             # TODO check if region_area works for rotated grids!
             lbls, areas = region_area(regions, self.transform, latlon)
             n = int(sum(areas / 1e6 < fill_area))
-            print(f"{n} gaps outside valid elevation range < {fill_area} km2.")
+            logger.info(f"{n} gaps outside valid elevation range < {fill_area} km2.")
             da_mask = np.logical_or(
                 da_mask, np.isin(regions, lbls[areas / 1e6 < fill_area])
             )
@@ -242,7 +243,7 @@ class RegularGrid:
             lbls, areas = region_area(regions, self.transform, latlon)
             _msk = np.isin(regions, lbls[areas / 1e6 >= drop_area])
             n = int(sum(areas / 1e6 < drop_area))
-            print(f"{n} regions < {drop_area} km2 dropped.")
+            logger.info(f"{n} regions < {drop_area} km2 dropped.")
             da_mask = np.logical_and(da_mask, _msk)
 
         if gdf_include is not None:
@@ -252,7 +253,7 @@ class RegularGrid:
                 )
                 da_mask = np.logical_or(da_mask, _msk)  # NOTE logical OR statement
             except:
-                print(f"No mask cells found within include polygon!")
+                logger.debug(f"No mask cells found within include polygon!")
         if gdf_exclude is not None:
             try:
                 _msk = da_mask.raster.geometry_mask(
@@ -260,7 +261,7 @@ class RegularGrid:
                 )
                 da_mask = np.logical_and(da_mask, ~_msk)
             except:
-                print(f"No mask cells found within exclude polygon!")
+                logger.debug(f"No mask cells found within exclude polygon!")
 
         # update sfincs mask name, nodata value and crs
         da_mask = da_mask.where(da_mask, 0).astype(np.uint8).rename("mask")
@@ -281,6 +282,7 @@ class RegularGrid:
         connectivity: int = 8,
         all_touched=False,
         reset_bounds=False,
+        logger: logging.Logger = logger,
     ) -> xr.DataArray:
         """Returns an integer SFINCS model mask with inactive (msk=0), active (msk=1), and waterlevel boundary (msk=2)
             and outflow boundary (msk=3) cells.  Boundary cells are defined by cells at the edge of active model domain.
@@ -331,7 +333,7 @@ class RegularGrid:
         bvalue = bvalues[btype]
 
         if reset_bounds:  # reset existing boundary cells
-            # self.logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
+            logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
             da_mask = da_mask.where(da_mask != np.uint8(bvalue), np.uint8(1))
             if (
                 zmin is None
@@ -441,6 +443,7 @@ class RegularGrid:
         region: gpd.GeoDataFrame,
         zoom_range: Union[int, List[int]] = [0, 13],
         fmt: str = "bin",
+        logger: logging.Logger = logger,
     ):
         """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the corresponding SFINCS cell.
 
@@ -495,7 +498,7 @@ class RegularGrid:
             )
 
         for izoom in range(zoom_range[0], zoom_range[1] + 1):
-            print("Processing zoom level " + str(izoom))
+            logger.debug("Processing zoom level " + str(izoom))
 
             zoom_path = os.path.join(index_path, str(izoom))
 

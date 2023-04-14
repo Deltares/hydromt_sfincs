@@ -4,12 +4,15 @@ SubgridTableRegular class to create, read and write sfincs subgrid (sbg) files.
 import os
 
 import numpy as np
+import logging
 import rasterio
 import xarray as xr
 from numba import njit
 from rasterio.windows import Window
 
 from . import workflows
+
+logger = logging.getLogger(__name__)
 
 
 class SubgridTableRegular:
@@ -196,7 +199,7 @@ class SubgridTableRegular:
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
         highres_dir: str = None,
-        quiet=False,  # TODO replace by logger
+        logger=logger,
     ):
         """Create subgrid tables for regular grid based on a list of depth and Manning's n datasets.
 
@@ -332,15 +335,12 @@ class SubgridTableRegular:
             nrbn -= 1
             merge_last_row = True
 
-        # TODO add to logger
-        if not quiet:
-            print("Number of regular cells in a block : " + str(nrcb))
-            print("Number of blocks in n direction    : " + str(nrbn))
-            print("Number of blocks in m direction    : " + str(nrbm))
+        logger.info("Number of regular cells in a block : " + str(nrcb))
+        logger.info("Number of blocks in n direction    : " + str(nrbn))
+        logger.info("Number of blocks in m direction    : " + str(nrbm))
 
-        if not quiet:
-            print(f"Grid size of flux grid            : dx={dx}, dy={dy}")
-            print(f"Grid size of subgrid pixels       : dx={dxp}, dy={dyp}")
+        logger.info(f"Grid size of flux grid            : dx={dx}, dy={dy}")
+        logger.info(f"Grid size of subgrid pixels       : dx={dxp}, dy={dyp}")
 
         ## Loop through blocks
         ib = -1
@@ -358,11 +358,10 @@ class SubgridTableRegular:
 
                 # Count
                 ib += 1
-                if not quiet:
-                    print(
-                        f"\nblock {ib + 1}/{nrbn * nrbm} -- "
-                        f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
-                    )
+                logger.debug(
+                    f"\nblock {ib + 1}/{nrbn * nrbm} -- "
+                    f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
+                )
 
                 # calculate transform and shape of block at cell and subgrid level
                 da_mask_block = da_mask.isel(
@@ -372,9 +371,9 @@ class SubgridTableRegular:
                     [s > 1 for s in da_mask_block.shape]
                 ), f"unexpected block shape {da_mask_block.shape}"
                 if np.all(da_mask_block == 0):  # not active cells in block
-                    print("Skip block - No active cells")
+                    logger.info("Skip block - No active cells")
                     continue
-                print(
+                logger.info(
                     f"Processing block with {np.sum(da_mask_block.values):d} active cells .."
                 )
 
@@ -400,7 +399,7 @@ class SubgridTableRegular:
                 # TODO what to do with remaining cell with nan values
                 # NOTE: this is still open for discussion, but for now we interpolate
                 if np.any(np.isnan(da_dep.values)) > 0:
-                    print(
+                    logger.warning(
                         f"WARNING: Interpolate data at {int(np.sum(np.isnan(da_dep.values)))} cells"
                     )
                     da_dep = da_dep.raster.interpolate_na(method="rio_idw")
@@ -415,7 +414,7 @@ class SubgridTableRegular:
                         buffer_cells=buffer_cells,
                     ).load()
                     if np.isnan(da_man).any():
-                        print("WARNING: nan values in manning roughness array")
+                        logger.warning("WARNING: nan values in manning roughness array")
                         da_man0 = xr.where(
                             da_dep >= rgh_lev_land, manning_land, manning_sea
                         )
