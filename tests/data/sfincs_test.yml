@@ -34,12 +34,11 @@ setup_mask_bounds:
 setup_subgrid:
   datasets_dep:
     - elevtn: merit_hydro
-      zmin: 0
+      zmin: 0.001
     - elevtn: gebco
-      zmax: 0
   datasets_rgh:
     - lulc: vito
-  make_dep_tiles: true
+  write_dep_tif: True
   nr_subgrid_pixels: 5
   nbins: 8
 
@@ -65,5 +64,5 @@ setup_waterlevel_forcing:
 
 setup_precip_forcing_from_grid:
   precip: era5_hourly
-  aggregate: false
+  aggregate: False
 
