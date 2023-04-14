@@ -213,6 +213,8 @@ class SfincsModel(GridModel):
         rotated: bool = False,
         hydrography_fn: str = "merit_hydro",  # TODO: change to None
         basin_index_fn: str = "merit_hydro_index",  # TODO: change to None
+        dec_origin: int = 0,
+        dec_rotation: int = 5,
     ):
         """Setup a regular or quadtree grid from a region.
 
@@ -241,6 +243,10 @@ class SfincsModel(GridModel):
             Name of data source with basin (bounding box) geometries associated with
             the 'basins' layer of `hydrography_fn`. Only required if the `region` is
             based on a (sub)(inter)basins without a 'bounds' argument.
+        dec_origin : int, optional
+            number of decimals to round the origin coordinates, by default 0
+        dec_rotation : int, optional
+            number of decimals to round the rotation angle, by default 3
 
         See Also
         --------
@@ -263,9 +269,12 @@ class SfincsModel(GridModel):
         # NOTE keyword rotated is added to still have the possibility to create unrotated grids if needed (e.g. for FEWS?)
         if rotated:
             geom = self.geoms["region"].unary_union
-            x0, y0, mmax, nmax, rot = utils.rotated_grid(geom, res)
+            x0, y0, mmax, nmax, rot = utils.rotated_grid(
+                geom, res, dec_origin=dec_origin, dec_rotation=dec_rotation
+            )
         else:
             x0, y0, x1, y1 = self.geoms["region"].total_bounds
+            x0, y0 = round(x0, dec_origin), round(y0, dec_origin)
             mmax = int(np.ceil((x1 - x0) / res))
             nmax = int(np.ceil((y1 - y0) / res))
             rot = 0
@@ -2391,14 +2400,13 @@ class SfincsModel(GridModel):
             if not isfile(fn):
                 self.logger.warning("inifile not found at {fn}")
                 return
-            shape, transform, crs = self.get_spatial_attrs(crs=crs)
             zsini = RasterDataArray.from_numpy(
                 data=utils.read_ascii_map(fn),  # orientation S-N
-                transform=transform,
-                crs=crs,
+                transform=self.grid.raster.transform,
+                crs=self.crs,
                 nodata=-9999,  # TODO: check what a good nodatavalue is
             )
-            if zsini.shape != shape:
+            if zsini.shape != self.grid.raster.shape:
                 raise ValueError('The shape of "inifile" and maps does not match.')
             if "msk" in self._grid:
                 zsini = zsini.where(self.mask != 0, -9999)
@@ -2450,8 +2458,7 @@ class SfincsModel(GridModel):
         if isfile(fn_map):
             ds_face, ds_edge = utils.read_sfincs_map_results(
                 fn_map,
-                crs=self.crs,
-                chunksize=chunksize,
+                ds_like=self.grid,  # TODO: fix for quadtree
                 drop=drop,
                 logger=self.logger,
                 **kwargs,
@@ -2676,25 +2683,6 @@ class SfincsModel(GridModel):
         else:
             raise not NotImplementedError("Quadtree grid not implemented yet")
             # self.quadtree = QuadtreeGrid()
-
-    def get_spatial_attrs(self, crs=None):
-        """Get geospatial `config` (sfincs.inp) attributes.
-
-        Parameters
-        ----------
-        crs: int, CRS
-            Coordinate reference system
-
-        Returns
-        -------
-        shape: tuple of int
-            width, height
-        transform: Affine.transform
-            Geospatial transform
-        crs: pyproj.CRS
-            Coordinate reference system
-        """
-        return utils.get_spatial_attrs(self.config, crs=crs, logger=self.logger)
 
     def get_model_time(self):
         """Return (tstart, tstop) tuple with parsed model start and end time"""

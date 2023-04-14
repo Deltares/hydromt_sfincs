@@ -9,14 +9,10 @@ import geopandas as gpd
 import numpy as np
 import xarray as xr
 from affine import Affine
+from PIL import Image
 from pyproj import Transformer
 
 from .merge import merge_multi_dataarrays
-
-try:
-    from PIL import Image
-except:
-    raise ImportError("The pillow is required for tiling")
 
 __all__ = ["create_topobathy_tiles", "downscale_floodmap_webmercator"]
 
