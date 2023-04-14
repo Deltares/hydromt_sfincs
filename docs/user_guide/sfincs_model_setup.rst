@@ -33,7 +33,7 @@ For more information about each file, see the `SFINCS documentation <https://sfi
      - sfincs.inp
    * - :py:attr:`~hydromt_sfincs.SfincsModel.grid`
      - depfile, mskfile, indexfile, manningfile, qinffile, scsfile
-   * - :py:attr:`~hydromt_sfincs.SfincsModel.subgrid`
+   * - `subgrid`
      - sbgfile
    * - :py:attr:`~hydromt_sfincs.SfincsModel.geoms`
      - obsfile, thdfile, weirfile
@@ -97,8 +97,12 @@ Grid setup methods
      - This component generates a mask (mskfile) defining which part of the model grid is active.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_mask_bounds`
      - This component adds boundary cells in the model mask (mskfile).
+   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_river_outflow`
+     - This component adds open boundary cells (mask=3) where a river flows out of the model domain.   
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_manning_roughness`
      - This component adds a manning roughness map (manningfile) to the model grid from gridded manning data or a combinataion of gridded land-use/land-cover map and manning roughness mapping table.
+   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_constant_infiltration`
+     - This component adds a spatially varying constant infiltration rate map (qinffile) to the model grid.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_cn_infiltration`
      - This component adds a potential maximum soil moisture retention map (scsfile) to the model grid based on a gridded curve number map.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_subgrid`
@@ -140,9 +144,7 @@ Forcing setup methods
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid`
      - Setup discharge forcing (srcfile, disfile) based on a gridded discharge dataset.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_river_inflow`
-     - Setup discharge (srcfile) points where a river enters the model domain.
-   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_river_outflow`
-     - Setup open boundary cells (mask=3) where a river flows out of the model domain.      
+     - Setup discharge (srcfile) points where a river enters the model domain.   
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_precip_forcing`
      - Setup spatially uniform precipitation forcing (precipfile).
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid`

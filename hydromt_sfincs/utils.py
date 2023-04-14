@@ -771,7 +771,7 @@ def downscale_floodmap(
     gdf_mask: gpd.GeoDataFrame = None,
     floodmap_fn: Union[Path, str] = "floodmap.tif",
     reproj_method: str = "nearest",
-):
+) -> xr.Dataset:
     """Create a downscaled floodmap for (model) region.
 
     Parameters
@@ -790,7 +790,12 @@ def downscale_floodmap(
     reproj_method : str, optional
         Reprojection method for downscaling the water levels, by default "nearest".
         Other option is "bilinear".
-    """
+
+    Returns
+    -------
+    hmax: xr.Dataset
+        Downscaled and masked floodmap.
+    """    
 
     # interpolate zsmax to dep grid
     zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
@@ -812,9 +817,6 @@ def downscale_floodmap(
         hmax = hmax.where(mask)
         floodmap_fn = floodmap_fn.replace(".tif", "_mask.tif")
 
-    if floodmap_fn is None:
-        return hmax
-
     # write floodmap
     hmax.raster.to_raster(
         floodmap_fn,
@@ -828,6 +830,7 @@ def downscale_floodmap(
         profile="COG",
         nodata=np.nan,
     )
+    return hmax
 
 
 def rotated_grid(

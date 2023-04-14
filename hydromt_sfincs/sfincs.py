@@ -2505,8 +2505,21 @@ class SfincsModel(GridModel):
                     self.logger.warning(f"Variable {attr}.{layer} not found: skipping.")
                     continue
                 da = obj[layer]
-                if len(da.dims) != 2 or "time" in da.dims:
-                    continue
+                if len(da.dims) != 2:
+                    # try to reduce to 2D by taking maximum over time dimension
+                    if "time" in da.dims:
+                        da = da.max("time")
+                    elif "timemax" in da.dims:
+                        da = da.max("timemax")
+                    # if still not 2D, skip
+                    if len(da.dims) != 2:
+                        self.logger.warning(
+                            f"Variable {attr}.{layer} has more than 2 dimensions: skipping."
+                        )
+                        continue
+                # set nodata value if not set    
+                if not da.raster.nodata:
+                    da.raster.set_nodata(np.nan)
                 # only write active cells to gis files
                 da = da.raster.clip_geom(self.region, mask=True).raster.mask_nodata()
                 if da.raster.res[1] > 0:  # make sure orientation is N->S

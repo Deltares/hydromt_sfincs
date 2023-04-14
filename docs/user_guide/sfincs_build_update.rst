@@ -97,7 +97,7 @@ and options to use for compound flooding applications.
 .. _sfincs_python:
 
 Python scripting - Advanced
-------------------------------
+===========================
 
 Next to the command line interface, HydroMT-SFINCS also allows to setup (or interact with) a SFINCS model from Python scripting. 
 The main advantage of this approach is that you can work with in-memory datasets, e.g. datasets that you have modified, next to datasets that are defined in the data catalog.

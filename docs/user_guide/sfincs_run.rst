@@ -9,7 +9,7 @@ The simplest way is to run SFINCS on Windows using a batch-file, which is shown 
 The example consists of a simple compound flood model that has been created with **HydroMT-SFINCS**. 
 The model is situated in **Northern Italy** and is forced with waterlevel and discharge boundaries.
 
-If you want to read more about running SFINCS on different platforms, please read the [SFINCS manual](https://sfincs.readthedocs.io/en/latest/running.html).
+If you want to read more about running SFINCS on different platforms, please read the `SFINCS manual <https://sfincs.readthedocs.io/en/latest/example.html#running-sfincs>`_.
 
 .. toctree::
     :hidden:

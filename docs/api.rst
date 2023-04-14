@@ -36,6 +36,7 @@ Setup components
    SfincsModel.setup_mask_active
    SfincsModel.setup_mask_bounds
    SfincsModel.setup_manning_roughness
+   SfincsModel.setup_constant_infiltration
    SfincsModel.setup_cn_infiltration
    SfincsModel.setup_subgrid
    SfincsModel.setup_river_inflow
@@ -97,7 +98,6 @@ Low level methods
 
    SfincsModel.update_grid_from_config
    SfincsModel.update_spatial_attrs
-   SfincsModel.get_spatial_attrs
    SfincsModel.set_forcing_1d
    SfincsModel.get_model_time
 
@@ -154,6 +154,7 @@ SFINCS workflows
    workflows.landuse
    workflows.cn_to_s
    workflows.create_topobathy_tiles
+   workflows.downscale_floodmap_webmercator
 
 .. _methods:
 
@@ -166,8 +167,6 @@ Input/Output methods
 .. autosummary::
    :toctree: _generated/
 
-   utils.read_inp
-   utils.write_inp
    utils.read_binary_map
    utils.write_binary_map
    utils.read_binary_map_index
@@ -191,7 +190,6 @@ Utilities
 .. autosummary::
    :toctree: _generated/
 
-   utils.get_spatial_attrs
    utils.parse_datetime
    utils.gdf2linestring
    utils.linestring2gdf
@@ -210,4 +208,4 @@ Visualization
    plots.plot_basemap
    plots.plot_forcing
    utils.downscale_floodmap
-   utils.downscale_floodmap_webmercator
+   workflows.downscale_floodmap_webmercator
