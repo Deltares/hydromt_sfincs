@@ -214,7 +214,7 @@ class SfincsModel(GridModel):
         hydrography_fn: str = None,
         basin_index_fn: str = None,
         dec_origin: int = 0,
-        dec_rotation: int = 5,
+        dec_rotation: int = 3,
     ):
         """Setup a regular or quadtree grid from a region.
 
@@ -222,6 +222,7 @@ class SfincsModel(GridModel):
         ----------
         region : dict
             Dictionary describing region of interest, e.g.:
+            
             * {'bbox': [xmin, ymin, xmax, ymax]}
             * {'geom': 'path/to/polygon_geometry'}
 
