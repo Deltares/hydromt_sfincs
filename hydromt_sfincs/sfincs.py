@@ -2973,14 +2973,19 @@ class SfincsModel(MeshMixin, GridModel):
             dd = {}
             # read in depth datasets; replace dep (source name; filename or xr.DataArray)
             if "elevtn" in dataset or "da" in dataset:
-                da_elv = self.data_catalog.get_rasterdataset(
-                    dataset.get("elevtn", dataset.get("da")),
-                    geom=self.mask.raster.box,
-                    buffer=10,
-                    variables=["elevtn"],
-                    zoom_level=(res, "meter"),
-                )
-                dd.update({"da": da_elv})
+                try:
+                    da_elv = self.data_catalog.get_rasterdataset(
+                        dataset.get("elevtn", dataset.get("da")),
+                        geom=self.mask.raster.box,
+                        buffer=10,
+                        variables=["elevtn"],
+                        zoom_level=(res, "meter"),
+                    )
+                    dd.update({"da": da_elv})
+                except:
+                    data_name = dataset.get("elevtn")
+                    self.logger.warning(f"{data_name} not used; probably because all the data is outside of the mask.")
+                    continue 
             else:
                 raise ValueError(
                     "No 'elevtn' (topobathy) dataset provided in datasets_dep."
