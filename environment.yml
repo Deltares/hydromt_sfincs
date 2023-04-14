@@ -10,7 +10,7 @@ dependencies:
   - descartes # to run examples
   - ffmpeg  # to run examples (animation)
   # - git
-  - hydromt>=0.7.0
+  - hydromt>=0.7.1
   - hydromt_sfincs
   - jupyterlab # to run examples
   - matplotlib==3.5.* # to run examples / https://github.com/SciTools/cartopy/issues/2086

@@ -1,18 +1,22 @@
 # Environment with minimal dependencies to test the released pypi wheel in the publish workflow.
-# Thi should match the dependencies in pyproject.toml
+# This should match the dependencies in pyproject.toml
 name: hydromt-sfincs-min
 
 channels:
   - conda-forge
 
 dependencies:
-  - flit>=3.2
+  - flit>=3.4
   - geopandas>=0.8
-  - hydromt>=0.4.5
+  - hydromt>=0.7.1
+  - numba
   - numpy
   - pandas
+  - pillow
   - pyflwdir>=0.5.5
-  - python>=3.8
+  - pyproj
+  - python>=3.9
   - rasterio
   - scipy
+  - shapely
   - xarray
