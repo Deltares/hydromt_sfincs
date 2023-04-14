@@ -59,9 +59,12 @@ An overview of the available SFINCS model setup methods is provided in the table
 When using HydroMT from the command line, only the setup methods are exposed. Click on
 a specific method see its documentation.
 
+General setup methods
+---------------------
+
 .. _general_setup_table:
 
-.. list-table:: General setup methods
+.. list-table::
    :widths: 20 55
    :header-rows: 1
    :stub-columns: 1
@@ -77,10 +80,11 @@ a specific method see its documentation.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_grid_from_region`
      - This component automatically generates a model grid covering the region of interest with a given res(olution).
 
-|
+Grid setup methods
+------------------
 
 .. _grid_setup_table:
-.. list-table:: Grid setup methods
+.. list-table:: 
    :widths: 20 55
    :header-rows: 1
    :stub-columns: 1
@@ -100,10 +104,11 @@ a specific method see its documentation.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_subgrid`
      - This component generates subgrid tables (sbgfile) for the model grid based on a list of elevation and Manning's roughness datasets
 
-|
+Geoms setup methods
+-------------------
 
 .. _geoms_setup_table:
-.. list-table:: Geoms setup methods
+.. list-table:: 
    :widths: 20 55
    :header-rows: 1
    :stub-columns: 1         
@@ -115,10 +120,11 @@ a specific method see its documentation.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_structures`
      - This component adds structures to the model (thdfile, weirfile).
 
-|
+Forcing setup methods
+---------------------
 
 .. _forcing_setup_table:
-.. list-table:: Forcing setup methods
+.. list-table::
    :widths: 20 55
    :header-rows: 1
    :stub-columns: 1    
@@ -142,10 +148,11 @@ a specific method see its documentation.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid`
      - Setup precipitation forcing from a gridded spatially varying data source (netamprfile).
 
-|
+Other setup methods
+-------------------
 
 .. _other_setup_table:
-.. list-table:: Other setup methods
+.. list-table:: 
    :widths: 20 55
    :header-rows: 1
    :stub-columns: 1         

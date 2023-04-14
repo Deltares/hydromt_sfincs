@@ -21,9 +21,10 @@ For a static (non-interactive) view of the examples follow one of the links belo
 
 **Run a SFINCS model:**
 
-*   `Run a SFINCS model<../_examples/run_sfincs_model.ipynb>`_
+*   `Run a SFINCS model <../_examples/run_sfincs_model.ipynb>`_
 
 **Postprocessing and visualization**
 
-*   `SFINCS results: Analyse regular grid type SFINCS model - TO ADD`_
+*   `SFINCS results: Maximum water depth <../_examples/sfincs_results_hmax.ipynb>`_
+*   `SFINCS results: Animation <../_examples/sfincs_results_animation.ipynb>`_
 

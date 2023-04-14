@@ -1,7 +1,8 @@
 .. _sfincs_build_update:
 
+=============================
 Building or updating a model
-====================================
+=============================
 
 This plugin allows users to build or update a SFINCS model from available data. 
 For beginning users, we recommend to use the :ref:`command line interface <sfincs_cli>` to build or update a model. 
@@ -12,7 +13,7 @@ In the following sections, examples are provided in iPython notebooks how to bui
 .. _sfincs_cli:
 
 Command Line Interface (CLI) - Basic
--------------------------------------
+=====================================
 
 This plugin allows users to **build** a complete SFINCS model from available data for your area of interest. The model region_ is typically defined by a bounding box, 
 see example below, or a geometry file. Once the configuration and data libraries are set, you can build a model by using: 
@@ -27,7 +28,9 @@ Or to **update**  an existing SFINCS model:
 
     hydromt update sfincs ./sfincs_compound -o ./sfincs_compound_precip -i sfincs_update_precip.yml -vv
 
-**Configuration file:**
+Configuration file
+-------------------
+
 Settings to build or update a SFINCS model are managed in a configuration file. In this file,
 every option from each :ref:`model method <model_methods>` can be changed by the user
 in its corresponding section. See the HydroMT core documentation for more info about the `model configuration .yml-file <config>`_ and check-out the example below.
@@ -67,7 +70,9 @@ Note that the order in which the components are listed in the yml-file is import
 - a lot of methods (e.g. :py:func:`~hydromt_sfincs.SfincsModel.setup_mask_active`) need elevation data to work properly, so :py:func:`~hydromt_sfincs.SfincsModel.setup_dep` should be run before most other methods.
 - if discharge locations are inferred from hydrography, :py:func:`~hydromt_sfincs.SfincsModel.setup_river_inflow` should be run before :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing` or :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid`.
 
-**Data libraries:**
+Data libraries
+----------------
+
 Data sources in HydroMT are provided in one of several yaml libraries. These libraries contain required
 information on the different data sources so that HydroMT can process them for the different models. There
 are three ways for the user to select which data libraries to use:
@@ -82,6 +87,9 @@ are three ways for the user to select which data libraries to use:
   `HydroMT documentation <https://deltares.github.io/hydromt/latest/index>`_ to check the guidelines).
   These user libraries can be added either in the command line using the **-d** option and path/to/yaml or in the **yml file**
   with the **data_libs** option in the  `global` section (see example above).
+
+Example
+--------
 
 See `Example: Build from CLI <../_examples/build_from_cli.ipynb>`_ for suggested components
 and options to use for compound flooding applications.
@@ -120,6 +128,9 @@ Typical applications where this approach can be useful are:
     sf.plot_basemap()
 
     sf.write() # write all
+
+Example
+--------
 
 See `Example: Build from Script <../_examples/build_from_script.ipynb>`_ for a more detailed example.
 
