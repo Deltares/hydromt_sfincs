@@ -54,6 +54,32 @@ def test_states(tmpdir):
     assert np.allclose(mod1.states["zsini"], mod.states["zsini"])
 
 
+def test_infiltration(tmpdir):
+    # FIXME: very shallow test, add more specific tests
+    root = TESTMODELDIR
+    mod = SfincsModel(root=root, mode="r")
+    mod.read()
+    mod.set_root(str(tmpdir.join("infiltration_test")), mode="w")
+
+    # set constant infiltration
+    qinf = xr.where(mod.grid["dep"] < -0.5, -9999, 0.1)
+    qinf.raster.set_nodata(-9999.0)
+    qinf.raster.set_crs(mod.crs)
+    mod.setup_constant_infiltration(qinf, reproj_method="nearest")
+    assert "qinf" not in mod.config  # qinf removed from config
+    assert "qinffile" in mod.config
+    assert "qinf" in mod.grid
+
+    # set cn infiltration
+    cn = xr.where(mod.grid["dep"] < -0.5, 0, 50)
+    cn.raster.set_nodata(-1)
+    cn.raster.set_crs(mod.crs)
+    mod.setup_cn_infiltration(cn, reproj_method="nearest")
+    assert "scsfile" in mod.config
+    assert "scs" in mod.grid
+    assert (mod.grid["scs"].where(mod.mask > 0)).min() == 10
+
+
 def test_structs(tmpdir):
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r+")
