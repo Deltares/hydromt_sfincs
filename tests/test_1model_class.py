@@ -37,11 +37,11 @@ def test_states(tmpdir):
     mod = SfincsModel(root=root, mode="r+")
     mod.read()
     # create dummy state and set to states
-    mask = mod.grid['dep'] < -0.5
+    mask = mod.grid["dep"] < -0.5
     zsini = xr.where(mask, 0.5, -9999.0)
     zsini.raster.set_nodata(-9999.0)
     zsini.raster.set_crs(mod.crs)
-    mod.set_states(zsini, "zsini") 
+    mod.set_states(zsini, "zsini")
 
     tmp_root = str(tmpdir.join("restart_test"))
     mod.set_root(tmp_root, mode="w")

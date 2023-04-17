@@ -2373,7 +2373,7 @@ class SfincsModel(GridModel):
 
         """
         self._assert_read_mode
-        
+
         # read index file
         ind_fn = self.get_config("indexfile", fallback="sfincs.ind", abs_path=True)
         if not isfile(ind_fn):
@@ -2386,7 +2386,9 @@ class SfincsModel(GridModel):
                 if not isfile(fn):
                     self.logger.warning("inifile not found at {fn}")
                     return
-                zsini = self.reggrid.read_map(fn, ind, dtype="f4", mv=-9999.0, name="zsini")
+                zsini = self.reggrid.read_map(
+                    fn, ind, dtype="f4", mv=-9999.0, name="zsini"
+                )
 
                 if self.crs is not None:
                     zsini.raster.set_crs(self.crs)
@@ -2422,13 +2424,13 @@ class SfincsModel(GridModel):
             da = self.states[name]
             if da.raster.res[1] < 0:
                 da = da.raster.flipud()
-                
+
             self.logger.debug("Write binary water level state inifile")
             self.reggrid.write_map(
                 map_fn=fn,
                 data=da.values,
                 mask=mask,
-                dtype= "f4",
+                dtype="f4",
             )
 
         if self._write_gis:
