@@ -795,7 +795,7 @@ def downscale_floodmap(
     -------
     hmax: xr.Dataset
         Downscaled and masked floodmap.
-    """    
+    """
 
     # interpolate zsmax to dep grid
     zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)

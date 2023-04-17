@@ -222,7 +222,7 @@ class SfincsModel(GridModel):
         ----------
         region : dict
             Dictionary describing region of interest, e.g.:
-            
+
             * {'bbox': [xmin, ymin, xmax, ymax]}
             * {'geom': 'path/to/polygon_geometry'}
 
@@ -932,11 +932,11 @@ class SfincsModel(GridModel):
 
         # get infiltration data
         da_inf = self.data_catalog.get_rasterdataset(qinf, geom=sf.region, buffer=10)
-        
+
         # reproject infiltration data to model grid
-        # this workflow automatically determines the best resampling method (bilinear or average) 
+        # this workflow automatically determines the best resampling method (bilinear or average)
         da_inf = workflows.merge_multi_dataarrays(
-            da_list=[{"da":da_inf}],
+            da_list=[{"da": da_inf}],
             da_like=sf.mask,
             logger=self.logger,
         )
@@ -946,7 +946,7 @@ class SfincsModel(GridModel):
             self.logger.warning("NaN values found in infiltration data; filled with 0")
             da_inf = da_inf.fillna(0)
 
-        # add to sfincs model 
+        # add to sfincs model
         da_inf.raster.set_nodata(-9999.0)
 
         # set grid
@@ -1134,7 +1134,7 @@ class SfincsModel(GridModel):
         stype : {'thd', 'weir'}
             Structure type.
         merge : bool, optional
-            If True, merge with existing'stype' structures, by default True.    
+            If True, merge with existing'stype' structures, by default True.
         dz: float, optional
             If provided, for weir structures the z value is calculated from
             the model elevation (dep) plus dz.
@@ -1700,7 +1700,6 @@ class SfincsModel(GridModel):
         df_ts.index.name = "time"
         self.set_forcing(df_ts.to_xarray(), name="precip")
 
-
     def setup_tiles(
         self,
         path: Union[str, Path] = None,
@@ -1735,7 +1734,7 @@ class SfincsModel(GridModel):
         create_index_tiles : bool, optional
             If True, index tiles are created, by default True
         create_topobathy_tiles : bool, optional
-            If True, topobathy tiles are created, by default True. 
+            If True, topobathy tiles are created, by default True.
         fmt : str, optional
             Format of the tiles: "bin" (binary, default), or "png".
         """
@@ -1767,7 +1766,11 @@ class SfincsModel(GridModel):
 
             if self.grid_type == "regular":
                 self.reggrid.create_index_tiles(
-                    region=region, root=path, zoom_range=zoom_range, fmt=fmt_ind, logger=self.logger,
+                    region=region,
+                    root=path,
+                    zoom_range=zoom_range,
+                    fmt=fmt_ind,
+                    logger=self.logger,
                 )
             elif self.grid_type == "quadtree":
                 raise NotImplementedError(
@@ -2713,8 +2716,10 @@ class SfincsModel(GridModel):
                     dd.update({"da": da_elv})
                 except:
                     data_name = dataset.get("elevtn")
-                    self.logger.warning(f"{data_name} not used; probably because all the data is outside of the mask.")
-                    continue 
+                    self.logger.warning(
+                        f"{data_name} not used; probably because all the data is outside of the mask."
+                    )
+                    continue
             else:
                 raise ValueError(
                     "No 'elevtn' (topobathy) dataset provided in datasets_dep."

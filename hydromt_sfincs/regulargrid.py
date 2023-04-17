@@ -35,7 +35,6 @@ class RegularGrid:
         self.subgrid = SubgridTableRegular()
         # self.data = xr.Dataset()
 
-
     @property
     def transform(self):
         """Return the affine transform of the regular grid."""
