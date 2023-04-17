@@ -2411,12 +2411,19 @@ class SfincsModel(GridModel):
                 ds_out = ds_out.raster.flipud()
             mask = ds_out["msk"].values
 
+            self.logger.debug("Write binary map indices based on mask.")
+            # write index file
+            ind_fn = self.get_config("indexfile", abs_path=True)
+            self.reggrid.write_ind(ind_fn=ind_fn, mask=mask)
+
             if f"inifile" not in self.config:
                 self.set_config(f"inifile", f"sfincs.{name}")
             fn = self.get_config("inifile", abs_path=True)
             da = self.states[name]
             if da.raster.res[1] < 0:
                 da = da.raster.flipud()
+                
+            self.logger.debug("Write binary water level state inifile")
             self.reggrid.write_map(
                 map_fn=fn,
                 data=da.values,
