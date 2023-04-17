@@ -625,7 +625,7 @@ document.write(`
 <span class="sd">        ----------</span>
 <span class="sd">        region : dict</span>
 <span class="sd">            Dictionary describing region of interest, e.g.:</span>
-<span class="sd">            </span>
+
 <span class="sd">            * {&#39;bbox&#39;: [xmin, ymin, xmax, ymax]}</span>
 <span class="sd">            * {&#39;geom&#39;: &#39;path/to/polygon_geometry&#39;}</span>
 
@@ -1335,11 +1335,11 @@ document.write(`
 
         <span class="c1"># get infiltration data</span>
         <span class="n">da_inf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">qinf</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-        
+
         <span class="c1"># reproject infiltration data to model grid</span>
-        <span class="c1"># this workflow automatically determines the best resampling method (bilinear or average) </span>
+        <span class="c1"># this workflow automatically determines the best resampling method (bilinear or average)</span>
         <span class="n">da_inf</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">merge_multi_dataarrays</span><span class="p">(</span>
-            <span class="n">da_list</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;da&quot;</span><span class="p">:</span><span class="n">da_inf</span><span class="p">}],</span>
+            <span class="n">da_list</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da_inf</span><span class="p">}],</span>
             <span class="n">da_like</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
             <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
         <span class="p">)</span>
@@ -1349,7 +1349,7 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;NaN values found in infiltration data; filled with 0&quot;</span><span class="p">)</span>
             <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_inf</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="c1"># add to sfincs model </span>
+        <span class="c1"># add to sfincs model</span>
         <span class="n">da_inf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="o">-</span><span class="mf">9999.0</span><span class="p">)</span>
 
         <span class="c1"># set grid</span>
@@ -1537,7 +1537,7 @@ document.write(`
 <span class="sd">        stype : {&#39;thd&#39;, &#39;weir&#39;}</span>
 <span class="sd">            Structure type.</span>
 <span class="sd">        merge : bool, optional</span>
-<span class="sd">            If True, merge with existing&#39;stype&#39; structures, by default True.    </span>
+<span class="sd">            If True, merge with existing&#39;stype&#39; structures, by default True.</span>
 <span class="sd">        dz: float, optional</span>
 <span class="sd">            If provided, for weir structures the z value is calculated from</span>
 <span class="sd">            the model elevation (dep) plus dz.</span>
@@ -2103,7 +2103,6 @@ document.write(`
         <span class="n">df_ts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">df_ts</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;precip&quot;</span><span class="p">)</span></div>
 
-
 <div class="viewcode-block" id="SfincsModel.setup_tiles"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_tiles.html#hydromt_sfincs.SfincsModel.setup_tiles">[docs]</a>    <span class="k">def</span> <span class="nf">setup_tiles</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2138,7 +2137,7 @@ document.write(`
 <span class="sd">        create_index_tiles : bool, optional</span>
 <span class="sd">            If True, index tiles are created, by default True</span>
 <span class="sd">        create_topobathy_tiles : bool, optional</span>
-<span class="sd">            If True, topobathy tiles are created, by default True. </span>
+<span class="sd">            If True, topobathy tiles are created, by default True.</span>
 <span class="sd">        fmt : str, optional</span>
 <span class="sd">            Format of the tiles: &quot;bin&quot; (binary, default), or &quot;png&quot;.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -2170,7 +2169,11 @@ document.write(`
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">create_index_tiles</span><span class="p">(</span>
-                    <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">zoom_range</span><span class="o">=</span><span class="n">zoom_range</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt_ind</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+                    <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span>
+                    <span class="n">root</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">zoom_range</span><span class="o">=</span><span class="n">zoom_range</span><span class="p">,</span>
+                    <span class="n">fmt</span><span class="o">=</span><span class="n">fmt_ind</span><span class="p">,</span>
+                    <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
@@ -3116,8 +3119,10 @@ document.write(`
                     <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da_elv</span><span class="p">})</span>
                 <span class="k">except</span><span class="p">:</span>
                     <span class="n">data_name</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;elevtn&quot;</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_name</span><span class="si">}</span><span class="s2"> not used; probably because all the data is outside of the mask.&quot;</span><span class="p">)</span>
-                    <span class="k">continue</span> 
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_name</span><span class="si">}</span><span class="s2"> not used; probably because all the data is outside of the mask.&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">continue</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">&quot;No &#39;elevtn&#39; (topobathy) dataset provided in datasets_dep.&quot;</span>
