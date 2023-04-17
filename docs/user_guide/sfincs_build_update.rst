@@ -144,3 +144,4 @@ See `Example: Build from Script <../_examples/build_from_script.ipynb>`_ for a m
     
     Example: Build from CLI <../_examples/build_from_cli.ipynb>
     Example: Build from Script <../_examples/build_from_script.ipynb>
+    Example: Working with data <../_examples/example_datasources.ipynb>
