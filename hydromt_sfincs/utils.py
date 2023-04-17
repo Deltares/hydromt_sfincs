@@ -776,10 +776,10 @@ def downscale_floodmap(
     timedim = set(zsmax.dims) - set(zsmax.raster.dims)
     if timedim:
         zsmax = zsmax.max(timedim)
-    
+
     # interpolate zsmax to dep grid
     zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
-    zsmax = zsmax.raster.mask_nodata() # make sure nodata is nan
+    zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
 
     # get flood depth
     hmax = (zsmax - dep).astype("float32")
@@ -793,8 +793,7 @@ def downscale_floodmap(
 
     # write floodmap
     if floodmap_fn is not None:
-
-        if not kwargs: # write COG by default
+        if not kwargs:  # write COG by default
             kwargs = dict(
                 driver="GTiff",
                 tiled=True,
@@ -804,9 +803,7 @@ def downscale_floodmap(
                 predictor=2,
                 profile="COG",
             )
-        hmax.raster.to_raster(
-            floodmap_fn, **kwargs
-        )
+        hmax.raster.to_raster(floodmap_fn, **kwargs)
     return hmax
 
 
