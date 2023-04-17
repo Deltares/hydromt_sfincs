@@ -27,6 +27,7 @@ dependencies:
   - pyproj
   - python>=3.9
   - pytest # tests
+  - pytest-cov # tests
   - rasterio
   - scipy
   - shapely
