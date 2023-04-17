@@ -12,6 +12,7 @@ This plugin assists the SFINCS modeller in:
 - Quickly setting up a base SFINCS model and default parameter values.
 - Making maximum use of the best available global or local data.
 - Adjusting and updating components of a SFINCS model and their associated parameters in a consistent way.
+- Connecting SFINCS to other models (input from e.g. Wflow, output towards e.g. Delft-FIAT)
 - Visualizing SFINCS models.
 - Converting SFINCS schematizations to GIS formats.
 - Analysing SFINCS model outputs.
@@ -21,5 +22,4 @@ This plugin assists the SFINCS modeller in:
    :hidden:
 
    sfincs.rst
-   sfincs_build_update.rst
-   process_analyze.rst
+   sfincs_analyse.rst

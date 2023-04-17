@@ -1,8 +1,11 @@
-import geopandas as gpd
-import pandas as pd
+"""Plotting functions for SFINCS model data."""
+from typing import Dict, List, Tuple
+
 import numpy as np
+import pandas as pd
 import xarray as xr
-from typing import Dict, Tuple, List
+
+from .utils import get_bounds_vector
 
 __all__ = ["plot_forcing", "plot_basemap"]
 
@@ -11,11 +14,12 @@ geom_style = {
     "rivers_out": dict(linestyle="-", linewidth=1.0, color="darkgreen"),
     "msk2": dict(linestyle="-", linewidth=1.5, color="r"),
     "msk3": dict(linestyle="-", linewidth=1.5, color="m"),
-    "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=True),
-    "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=True),
+    "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=False),
+    "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=False),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
     "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
     "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
+    "region": dict(ls="--", linewidth=1, color="r"),
 }
 
 
@@ -34,8 +38,8 @@ def plot_forcing(forcing: Dict, **kwargs):
     fig, axes
         Model fig and ax objects
     """
-    import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
 
     n = len(forcing.keys())
     kwargs0 = dict(sharex=True, figsize=(6, n * 3))
@@ -43,7 +47,7 @@ def plot_forcing(forcing: Dict, **kwargs):
     fig, axes = plt.subplots(n, 1, **kwargs0)
     axes = [axes] if n == 1 else axes
     for i, name in enumerate(forcing):
-        da = forcing[name]
+        da = forcing[name].transpose("time", ...)
         longname = da.attrs.get("standard_name", "")
         unit = da.attrs.get("unit", "")
         prefix = ""
@@ -51,19 +55,20 @@ def plot_forcing(forcing: Dict, **kwargs):
             da = da.mean(dim=[da.raster.x_dim, da.raster.y_dim])
             prefix = "mean "
         # convert to Single index dataframe (bar plots don't work with xarray)
-        df = da.squeeze().to_series()
+        df = da.to_pandas()
         if isinstance(df.index, pd.MultiIndex):
             df = df.unstack(0)
         # convert dates a-priori as automatic conversion doesn't always work
         df.index = mdates.date2num(df.index)
-        if longname == "precipitation":
+        if name.startswith("precip"):
             axes[i].bar(df.index, df.values, facecolor="darkblue")
         else:
             df.plot.line(ax=axes[i]).legend(
                 title="index",
                 bbox_to_anchor=(1.05, 1),
                 loc="upper left",
-                ncol=2,
+                ncol=df.columns.size // 5 + 1,
+                prop={"size": 8},
             )
         axes[i].set_ylabel(f"{prefix}{longname}\n[{unit}]")
         axes[i].set_title(f"SFINCS {longname} forcing ({name})")
@@ -78,17 +83,17 @@ def plot_forcing(forcing: Dict, **kwargs):
 
 
 def plot_basemap(
-    staticmaps: xr.Dataset,
-    staticgeoms: Dict,
+    ds: xr.Dataset,
+    geoms: Dict,
     variable: str = "dep",
-    shaded: bool = True,
+    shaded: bool = False,
     plot_bounds: bool = True,
     plot_region: bool = False,
     plot_geoms: bool = True,
-    bmap: str = "sat",
+    bmap: str = None,
     zoomlevel: int = 11,
     figsize: Tuple[int] = None,
-    geoms: List[str] = None,
+    geom_names: List[str] = None,
     geom_kwargs: Dict = {},
     legend_kwargs: Dict = {},
     bmap_kwargs: Dict = {},
@@ -98,14 +103,14 @@ def plot_basemap(
 
     Parameters
     ----------
-    staticmaps : xr.Dataset
+    ds : xr.Dataset
         Dataset with model maps
-    staticgeoms : Dict of geopandas.GeoDataFrame
+    geoms : Dict of geopandas.GeoDataFrame
         Model geometries
     variable : str, optional
-        Map name to plot, by default 'dep'
+        Map of variable in ds to plot, by default 'dep'
     shaded : bool, optional
-        Add shade to variable (only for variable = 'dep'), by default True
+        Add shade to variable (only for variable = 'dep'), by default False
     plot_bounds : bool, optional
         Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
     plot_region : bool, optional
@@ -118,35 +123,36 @@ def plot_basemap(
         zoomlevel, by default 11
     figsize : Tuple[int], optional
         figure size, by default None
-    geoms : List[str], optional
+    geom_names : List[str], optional
         list of model geometries to plot, by default all model geometries
     geom_kwargs : Dict of Dict, optional
         Model geometry styling per geometry, passed to geopandas.GeoDataFrame.plot method.
         For instance: {'src': {'markersize': 30}}.
     legend_kwargs : Dict, optional
         Legend kwargs, passed to ax.legend method.
+
     Returns
     -------
     fig, axes
         Model fig and ax objects
     """
+    import cartopy.crs as ccrs
+    import cartopy.io.img_tiles as cimgt
     import matplotlib.pyplot as plt
     from matplotlib import colors, patheffects
-    import cartopy.io.img_tiles as cimgt
-    import cartopy.crs as ccrs
 
     # read crs and utm zone > convert to cartopy
-    wkt = staticmaps.raster.crs.to_wkt()
+    wkt = ds.raster.crs.to_wkt()
     if "UTM zone " not in wkt:
         raise ValueError("Model CRS UTM zone not found.")
-    utm_zone = staticmaps.raster.crs.to_wkt().split("UTM zone ")[1][:3]
+    utm_zone = ds.raster.crs.to_wkt().split("UTM zone ")[1][:3]
     utm = ccrs.UTM(int(utm_zone[:2]), "S" in utm_zone)
-    extent = np.array(staticmaps.raster.box.buffer(2e3).total_bounds)[[0, 2, 1, 3]]
+    extent = np.array(ds.raster.box.buffer(1e2).total_bounds)[[0, 2, 1, 3]]
 
     # create fig with geo-axis and set background
     if figsize is None:
-        ratio = staticmaps.raster.ycoords.size / (staticmaps.raster.xcoords.size * 1.2)
-        figsize = (10, 10 * ratio)
+        ratio = ds.raster.ycoords.size / (ds.raster.xcoords.size * 1.4)
+        figsize = (8, 8 * ratio)
     fig = plt.figure(figsize=figsize)
     ax = plt.subplot(projection=utm)
     ax.set_extent(extent, crs=utm)
@@ -154,15 +160,16 @@ def plot_basemap(
         ax.add_image(cimgt.QuadtreeTiles(**bmap_kwargs), zoomlevel)
     elif bmap == "osm":
         ax.add_image(cimgt.OSM(**bmap_kwargs), zoomlevel)
-    elif hasattr(cimgt, bmap):
+    elif bmap is not None and hasattr(cimgt, bmap):
         ax.add_image(getattr(cimgt, bmap)(**bmap_kwargs), zoomlevel)
 
+    # by default colorbar on lower right & legend upper right
+    kwargs0 = {"cbar_kwargs": {"shrink": 0.5, "anchor": (0, 0)}}
+    kwargs0.update(kwargs)
     # make nice cmap
     if "cmap" not in kwargs or "norm" not in kwargs:
-        if variable == "dep":
-            vmin, vmax = (
-                staticmaps["dep"].raster.mask_nodata().quantile([0.0, 0.98]).values
-            )
+        if variable == "dep" and "dep" in ds:
+            vmin, vmax = ds["dep"].raster.mask_nodata().quantile([0.0, 0.98]).values
             vmin, vmax = int(kwargs.pop("vmin", vmin)), int(kwargs.pop("vmax", vmax))
             c_dem = plt.cm.terrain(np.linspace(0.25, 1, vmax))
             if vmin < 0:
@@ -171,15 +178,24 @@ def plot_basemap(
             cmap = colors.LinearSegmentedColormap.from_list("dem", c_dem)
             norm = colors.Normalize(vmin=vmin, vmax=vmax)
             cmap, norm = kwargs.pop("cmap", cmap), kwargs.pop("norm", norm)
-            kwargs.update(norm=norm, cmap=cmap)
+            kwargs0.update(norm=norm, cmap=cmap)
+        elif variable == "msk" and "msk" in ds:
+            cmap = colors.LinearSegmentedColormap.from_list(
+                "Set1", ["grey", "r", "m"], N=4
+            )
+            norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5], 3)
+            kwargs0.update(norm=norm, cmap=cmap)
+            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3])
 
-    if variable in staticmaps:
-        da = staticmaps[variable].raster.mask_nodata()
-        # by default colorbar on lower right & legend upper right
-        kwargs0 = {"cbar_kwargs": {"shrink": 0.6, "anchor": (0, 0)}}
-        kwargs0.update(kwargs)
-        da.plot(transform=utm, ax=ax, zorder=1, **kwargs0)
-        if shaded and variable == "dep":
+    if variable in ds:
+        da = ds[variable].raster.mask_nodata()
+        if np.any(ds["msk"] > 0):
+            da = da.where(ds["msk"] > 0)
+        if da.raster.rotation != 0 and "xc" in da.coords and "yc" in da.coords:
+            da.plot(transform=utm, x="xc", y="yc", ax=ax, zorder=1, **kwargs0)
+        else:
+            da.plot.imshow(transform=utm, ax=ax, zorder=1, **kwargs0)
+        if shaded and variable == "dep" and da.raster.rotation == 0:
             ls = colors.LightSource(azdeg=315, altdeg=45)
             dx, dy = da.raster.res
             _rgb = ls.shade(
@@ -210,21 +226,8 @@ def plot_basemap(
         ],
     )
     # plot mask boundaries
-    if plot_bounds:
-        gdf_msk = staticmaps["msk"].raster.vectorize()
-        region = (
-            (staticmaps["msk"] >= 1)
-            .astype("int16")
-            .raster.vectorize()
-            .drop(columns="value")
-        )
-        gdf_msk = gdf_msk[gdf_msk["value"] != 1]
-        gdf_msk["geometry"] = gdf_msk.boundary
-        region["geometry"] = region.boundary
-        gdf_msk = gpd.overlay(
-            gdf_msk, region, "intersection", keep_geom_type=False
-        ).explode()
-        gdf_msk = gdf_msk[gdf_msk.length > 0]
+    if plot_bounds and (ds["msk"] >= 1).any():
+        gdf_msk = get_bounds_vector(ds["msk"])
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
         gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
         if gdf_msk2.index.size > 0:
@@ -234,22 +237,24 @@ def plot_basemap(
 
     # plot static geoms
     if plot_geoms:
-        geoms = geoms if isinstance(geoms, list) else list(staticgeoms.keys())
-        for name in geoms:
-            gdf = staticgeoms.get(name, None)
+        geom_names = geom_names if isinstance(geom_names, list) else list(geoms.keys())
+        for name in geom_names:
+            gdf = geoms.get(name, None)
             if gdf is None or name in ["region", "bbox"]:
                 continue
             # copy is important to keep annotate working if repeated
             kwargs = geom_style.get(name, {}).copy()
             annotate = kwargs.pop("annotate", False)
             gdf.plot(ax=ax, zorder=3, label=name, **kwargs)
-            if annotate:
+            if annotate and np.all(gdf.geometry.type == "Point"):
                 for label, row in gdf.iterrows():
                     x, y = row.geometry.x, row.geometry.y
                     ax.annotate(label, xy=(x, y), **ann_kwargs)
 
-    if "region" in staticgeoms and plot_region:
-        staticgeoms["region"].boundary.plot(ax=ax, ls="-", lw=0.5, color="k", zorder=2)
+    if "region" in geoms and plot_region:
+        geoms["region"].boundary.plot(
+            ax=ax, zorder=2, label="region", **geom_style["region"]
+        )
 
     # title, legend and labels
     ax.xaxis.set_visible(True)
@@ -260,12 +265,13 @@ def plot_basemap(
     ax.set_title(f"SFINCS {variable} map")
     # NOTE without defined loc it takes forever to find a 'best' location
     # by default outside plot
-    if geoms or plot_bounds:
+    if geom_names or plot_bounds:
         legend_kwargs0 = dict(
             bbox_to_anchor=(1.05, 1),
             title="Legend",
             loc="upper left",
             frameon=True,
+            prop=dict(size=8),
         )
         legend_kwargs0.update(**legend_kwargs)
         ax.legend(**legend_kwargs0)

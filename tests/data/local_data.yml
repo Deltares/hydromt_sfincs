@@ -1,0 +1,18 @@
+observations:
+  crs: 4326
+  data_type: GeoDataFrame
+  driver: csv
+  path: local_data/observations.csv
+
+discharge:
+  data_type: DataFrame
+  driver: csv
+  kwargs:
+    index_col: 0
+    parse_dates: true
+  path: local_data/discharge.csv
+
+weir:
+  data_type: GeoDataFrame
+  driver: vector
+  path: local_data/weir.geojson

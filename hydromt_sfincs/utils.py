@@ -1,27 +1,29 @@
-from warnings import catch_warnings
+"""
+HydroMT-SFINCS utilities functions for reading and writing SFINCS specific input and output files,
+as well as some common data conversions.
+"""
+
+import copy
+import io
+import logging
+from configparser import ConfigParser
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Tuple, Union
+
+import geopandas as gpd
+import hydromt
 import numpy as np
+import pandas as pd
 import pyproj
-from pyproj.crs.crs import CRS
 import rasterio
 import xarray as xr
-import pandas as pd
-import geopandas as gpd
-from datetime import datetime
-from configparser import ConfigParser
-from shapely.geometry import LineString
-from typing import List, Dict, Union, Tuple, Optional
-from pathlib import Path
-import io
-import copy
-import logging
-import hydromt
 from hydromt.io import write_xy
-from scipy import ndimage
-from pyflwdir.regions import region_area
+from pyproj.crs.crs import CRS
+from shapely.geometry import LineString, Polygon
+
 
 __all__ = [
-    "read_inp",
-    "write_inp",
     "read_binary_map",
     "write_binary_map",
     "read_binary_map_index",
@@ -30,136 +32,25 @@ __all__ = [
     "write_ascii_map",
     "read_timeseries",
     "write_timeseries",
+    "get_bounds_vector",
+    "mask2gdf",
     "read_xy",
     "write_xy",
-    "read_structures",
-    "write_structures",
+    "read_xyn",
+    "write_xyn",
+    "read_geoms",
+    "write_geoms",
+    "gdf2linestring",
+    "gdf2polygon",
+    "linestring2gdf",
+    "polygon2gdf",
     "read_sfincs_map_results",
     "read_sfincs_his_results",
-    "mask_bounds",
-    "mask_topobathy",
+    "downscale_floodmap",
+    "rotated_grid",
 ]
 
 logger = logging.getLogger(__name__)
-
-
-## CONFIG: sfincs.inp ##
-
-
-class ConfigParserSfincs(ConfigParser):
-    def __init__(self, **kwargs):
-        defaults = dict(
-            comment_prefixes=("!", "/", "#"),
-            inline_comment_prefixes=("!"),
-            allow_no_value=True,
-            delimiters=("="),
-        )
-        defaults.update(**kwargs)
-        super(ConfigParserSfincs, self).__init__(**defaults)
-
-    def read_file(self, f, **kwargs):
-        def add_header(f, header_name="dummy"):
-            """add header"""
-            yield "[{}]\n".format(header_name)
-            for line in f:
-                yield line
-
-        super(ConfigParserSfincs, self).read_file(add_header(f), **kwargs)
-
-    def _write_section(self, fp, section_name, section_items, delimiter):
-        """Write a single section to the specified `fp'."""
-        for key, value in section_items:
-            value = self._interpolation.before_write(self, section_name, key, value)
-            fp.write("{:<15} {:<1} {:<}\n".format(key, self._delimiters[0], value))
-        fp.write("\n")
-
-
-def read_inp(fn: Union[str, Path]) -> Dict:
-    """Read sfincs.inp file and parse to dictionary."""
-    return hydromt.config.configread(
-        fn, abs_path=False, cf=ConfigParserSfincs, noheader=True
-    )
-
-
-def write_inp(fn: Union[str, Path], conf: Dict) -> None:
-    """Write sfincs.inp file from dictionary."""
-    return hydromt.config.configwrite(fn, conf, cf=ConfigParserSfincs, noheader=True)
-
-
-def get_spatial_attrs(config: Dict, crs: Union[int, CRS] = None, logger=logger):
-    """Returns geospatial attributes shape, crs and transform from config dict.
-
-    The config dict should contain the following keys:
-
-    * for shape: mmax, nmax
-    * for crs: epsg
-    * for transform: dx, dy, x0, y0, (rotation)
-
-    NOTE: Rotation != 0 is not yet supported.
-
-    Parameters
-    ----------
-    config: Dict
-        sfincs.inp configuration
-    crs: int, CRS
-        Coordinate reference system
-
-    Returns
-    -------
-    shape: tuple of int
-        width, height
-    transform: Affine.transform
-        Geospatial transform
-    crs: pyproj.CRS, None
-        Coordinate reference system
-    """
-    # retrieve rows and cols
-    cols = config.get("mmax")
-    rows = config.get("nmax")
-    if cols is None or rows is None:
-        raise ValueError('"mmax" or "nmax" not defined in sfincs.inp')
-
-    # retrieve CRS
-    if crs is None and "epsg" in config:
-        crs = pyproj.CRS.from_epsg(int(config.get("epsg")))
-    elif crs is not None:
-        crs = pyproj.CRS.from_user_input(crs)
-    else:
-        logger.warning('"epsg" code not defined in sfincs.inp, unknown CRS.')
-
-    # retrieve spatial transform
-    dx = config.get("dx")
-    dy = config.get("dy")
-    west = config.get("x0")
-    south = config.get("y0")
-    rotdeg = config.get("rotation", 0)  # clockwise rotation [degrees]
-    if west is None or south is None:
-        logger.warning(
-            'Either one of "x0" or "y0" not defined in sfincs.inp, '
-            "falling back to origin at (0, 0)."
-        )
-        west, south = 0, 0
-    if dx is None or dy is None:
-        logger.warning(
-            'Either one of "dx" or "dy" not defined in sfincs.inp, '
-            "falling back unity resolution (1, 1)."
-        )
-        dx, dy = 1, 1
-    if rotdeg != 0:
-        raise NotImplementedError("Rotated grids cannot be parsed yet.")
-        # TODO: extend to use rotated grids with rotated affine
-        # # code below generates a 2D coordinate grids.
-        # xx = np.linspace(0, dx * (cols - 1), cols)
-        # yy = np.linspace(0, dy * (rows - 1), rows)
-        # xi, yi = np.meshgrid(xx, yy)
-        # rot = rotdeg * np.pi / 180
-        # # xgrid and ygrid not used for now
-        # xgrid = x0 + np.cos(rot) * xi - np.sin(rot) * yi
-        # ygrid = y0 + np.sin(rot) * xi + np.cos(rot) * yi
-        # ...
-    transform = rasterio.transform.from_origin(west, south, dx, -dy)
-
-    return (rows, cols), transform, crs
 
 
 ## BINARY MAPS: sfincs.ind, sfincs.msk, sfincs.dep etc. ##
@@ -324,6 +215,36 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
     return gdf
 
 
+def read_xyn(fn: str, crs: int = None):
+    df = pd.read_csv(fn, index_col=False, header=None, delim_whitespace=True).rename(
+        columns={0: "x", 1: "y"}
+    )
+    if len(df.columns) > 2:
+        df = df.rename(columns={2: "name"})
+    else:
+        df["name"] = df.index
+
+    points = gpd.points_from_xy(df["x"], df["y"])
+    gdf = gpd.GeoDataFrame(df.drop(columns=["x", "y"]), geometry=points, crs=crs)
+
+    return gdf
+
+
+def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, crs: int = None):
+    with open(fn, "w") as fid:
+        for point in gdf.iterfeatures():
+            x, y = point["geometry"]["coordinates"]
+            try:
+                name = point["properties"]["name"]
+            except:
+                name = "obs" + str(point["id"])
+            if crs.is_geographic:
+                string = f'{x:12.6f}{y:12.6f}  "{name}"\n'
+            else:
+                string = f'{x:12.1f}{y:12.1f}  "{name}"\n'
+            fid.write(string)
+
+
 ## ASCII TIMESERIES: bzs / dis / precip ##
 
 
@@ -364,7 +285,7 @@ def read_timeseries(fn: Union[str, Path], tref: Union[str, datetime]) -> pd.Data
 
 def write_timeseries(
     fn: Union[str, Path],
-    df: pd.DataFrame,
+    df: Union[pd.DataFrame, pd.Series],
     tref: Union[str, datetime],
     fmt: str = "%7.2f",
 ) -> None:
@@ -383,6 +304,10 @@ def write_timeseries(
     fmt: str, optional
         Output value format, by default "%7.2f".
     """
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
+    elif not isinstance(df, pd.DataFrame):
+        raise ValueError(f"Unknown type for df: {type(df)})")
     tref = parse_datetime(tref)
     if df.index.size == 0:
         raise ValueError("df does not contain data.")
@@ -400,164 +325,80 @@ def write_timeseries(
 ## MASK
 
 
-def mask_topobathy(
-    da_elv: xr.DataArray,
-    gdf_mask: Optional[gpd.GeoDataFrame] = None,
-    gdf_include: Optional[gpd.GeoDataFrame] = None,
-    gdf_exclude: Optional[gpd.GeoDataFrame] = None,
-    elv_min: Optional[float] = None,
-    elv_max: Optional[float] = None,
-    fill_area: float = 10,
-    drop_area: float = 0,
-    connectivity: int = 8,
-    all_touched=True,
-    logger=logger,
-) -> xr.DataArray:
-    """Returns a boolean mask of valid (non nondata) elevation cells, optionally bounded
-    by several criteria.
+def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
+    """Get bounds of vectorized mask as GeoDataFrame.
 
     Parameters
     ----------
-    da_elv: xr.DataArray
-        Model elevation
-    gdf_mask: geopandas.GeoDataFrame, optional
-        Geometry describing the initial region with active model cells.
-        If not given, the initial active model cells are based on valid elevation cells.
-    gdf_include, gdf_exclude: geopandas.GeoDataFrame, optional
-        Geometries with areas to include/exclude from the active model cells.
-        Note that exclude (second last) and include (last) areas are processed after other critera,
-        i.e. `elv_min`, `elv_max` and `drop_area`, and thus overrule these criteria for active model cells.
-    elv_min, elv_max : float, optional
-        Minimum and maximum elevation thresholds for active model cells.
-    fill_area : float, optional
-        Maximum area [km2] of contiguous cells below `elv_min` or above `elv_max` but surrounded
-        by cells within the valid elevation range to be kept as active cells, by default 10 km2.
-    drop_area : float, optional
-        Maximum area [km2] of contiguous cells to be set as inactive cells, by default 0 km2.
-    connectivity: {4, 8}
-        The connectivity used to define contiguous cells, if 4 only horizontal and vertical
-        connections are used, if 8 (default) also diagonal connections.
-    all_touched: bool, optional
-        if True (default) include (or exclude) a cell in the mask if it touches any of the
-        include (or exclude) geometries. If False, include a cell only if its center is
-        within one of the shapes, or if it is selected by Bresenham's line algorithm.
+    da_msk: xr.DataArray
+        Mask as DataArray with values 0 (inactive), 1 (active),
+        and boundary cells 2 (waterlevels) and 3 (outflow).
 
     Returns
     -------
-    xr.DataArray
-        model elevation mask
+    gdf_msk: gpd.GeoDataFrame
+        GeoDataFrame with line geometries of mask boundaries.
     """
-    da_mask = da_elv != da_elv.raster.nodata
-    if gdf_mask is not None:
-        try:
-            _msk = da_mask.raster.geometry_mask(gdf_mask, all_touched=all_touched)
-            da_mask = np.logical_and(da_mask, _msk)
-        except:
-            logger.debug(f"No mask cells found within mask polygon!")
-    transform, latlon = da_elv.raster.transform, da_elv.raster.crs.is_geographic
-    s = None if connectivity == 4 else np.ones((3, 3), int)
-    if elv_min is not None or elv_max is not None:
-        _msk = da_elv != da_elv.raster.nodata
-        if elv_min is not None:
-            _msk = np.logical_and(_msk, da_elv >= elv_min)
-        if elv_max is not None:
-            _msk = np.logical_and(_msk, da_elv <= elv_max)
-        if fill_area > 0:
-            _msk1 = np.logical_xor(_msk, ndimage.binary_fill_holes(_msk, structure=s))
-            regions = ndimage.measurements.label(_msk1, structure=s)[0]
-            lbls, areas = region_area(regions, transform, latlon)
-            _msk = np.logical_or(_msk, np.isin(regions, lbls[areas / 1e6 < fill_area]))
-            n = int(sum(areas / 1e6 < fill_area))
-            logger.debug(f"{n} gaps outside valid elevation range < {fill_area} km2.")
-        da_mask = np.logical_and(da_mask, _msk)
-    if drop_area > 0:
-        regions = ndimage.measurements.label(da_mask.values, structure=s)[0]
-        lbls, areas = region_area(regions, transform, latlon)
-        _msk = np.isin(regions, lbls[areas / 1e6 >= drop_area])
-        n = int(sum(areas / 1e6 < drop_area))
-        logger.debug(f"{n} regions < {drop_area} km2 dropped.")
-        da_mask = np.logical_and(da_mask, _msk)
-    if gdf_exclude is not None:
-        try:
-            _msk = da_mask.raster.geometry_mask(gdf_exclude, all_touched=all_touched)
-            da_mask = np.logical_and(da_mask, ~_msk)
-        except:
-            logger.debug(f"No mask cells found within exclude polygon!")
-    if gdf_include is not None:  # should be last to include all include areas
-        try:
-            _msk = da_mask.raster.geometry_mask(gdf_include, all_touched=all_touched)
-            da_mask = np.logical_or(da_mask, _msk)  # NOTE logical OR statement
-        except:
-            logger.debug(f"No mask cells found within include polygon!")
-    return da_mask
+    gdf_msk = da_msk.raster.vectorize()
+    gdf_msk["geometry"] = gdf_msk.buffer(1)  # small buffer for rounding errors
+    region = (da_msk >= 1).astype("int16").raster.vectorize()
+    region = region[region["value"] == 1].drop(columns="value")
+    region["geometry"] = region.boundary
+    gdf_msk = gdf_msk[gdf_msk["value"] != 1]
+    gdf_msk = gpd.overlay(
+        region, gdf_msk, "intersection", keep_geom_type=False
+    ).explode()
+    gdf_msk = gdf_msk[gdf_msk.length > 0]
+    return gdf_msk
 
 
-def mask_bounds(
-    da_msk: xr.DataArray,
-    da_elv: Optional[xr.DataArray] = None,
-    gdf_mask: Optional[gpd.GeoDataFrame] = None,
-    gdf_include: Optional[gpd.GeoDataFrame] = None,
-    gdf_exclude: Optional[gpd.GeoDataFrame] = None,
-    elv_min: Optional[float] = None,
-    elv_max: Optional[float] = None,
-    connectivity: int = 8,
-    all_touched=False,
-) -> xr.DataArray:
-    """Returns a boolean mask model boundary cells, optionally bounded by several
-    criteria. Boundary cells are defined by cells at the edge of active model domain.
+def mask2gdf(
+    da_mask: xr.DataArray,
+    option: str = "all",
+) -> gpd.GeoDataFrame:
+    """Convert a boolean mask to a GeoDataFrame of polygons.
 
     Parameters
     ----------
-    da_msk, da_elv: xr.DataArray
-        Model mask and elevation data.
-    gdf_mask: geopandas.GeoDataFrame, optional
-        Geometry describing the initial region constraining model boundary cells.
-    gdf_include, gdf_exclude: geopandas.GeoDataFrame
-        Geometries with areas to include/exclude from the model boundary.
-        Note that exclude (second last) and include (last) areas are processed after other critera,
-        i.e. `elv_min`, `elv_max`, and thus overrule these criteria for model boundary cells.
-    elv_min, elv_max : float, optional
-        Minimum and maximum elevation thresholds for boundary cells.
-    connectivity: {4, 8}
-        The connectivity used to detect the model edge, if 4 only horizontal and vertical
-        connections are used, if 8 (default) also diagonal connections.
-    all_touched: bool, optional
-        if True (default) include (or exclude) a cell in the mask if it touches any of the
-        include (or exclude) geometries. If False, include a cell only if its center is
-        within one of the shapes, or if it is selected by Bresenham's line algorithm.
+    da_mask: xr.DataArray
+        Mask with integer values.
+    option: {"all", "active", "wlev", "outflow"}
 
     Returns
     -------
-    bounds: xr.DataArray
-        Boolean mask of model boundary cells.
+    gdf: geopandas.GeoDataFrame
+        GeoDataFrame of Points.
     """
-    assert (
-        elv_min is None and elv_max is None
-    ) or da_elv is not None, "da_elv required"
-    s = None if connectivity == 4 else np.ones((3, 3), int)
-    da_mask = da_msk != da_msk.raster.nodata
-    bounds0 = np.logical_xor(da_mask, ndimage.binary_erosion(da_mask, structure=s))
-    bounds = bounds0.copy()
-    if gdf_mask is not None:
-        _msk = da_mask.raster.geometry_mask(gdf_mask, all_touched=all_touched)
-        bounds = np.logical_and(bounds, _msk)
-    if elv_min is not None:
-        bounds = np.logical_and(bounds, da_elv >= elv_min)
-    if elv_max is not None:
-        bounds = np.logical_and(bounds, da_elv <= elv_max)
-    if gdf_exclude is not None:
-        da_exclude = da_mask.raster.geometry_mask(gdf_exclude, all_touched=all_touched)
-        bounds = np.logical_and(bounds, ~da_exclude)
-    if gdf_include is not None:
-        da_include = da_mask.raster.geometry_mask(gdf_include, all_touched=all_touched)
-        bounds = np.logical_or(bounds, np.logical_and(bounds0, da_include))
-    return bounds
+    if option == "all":
+        da_mask = da_mask != da_mask.raster.nodata
+    elif option == "active":
+        da_mask = da_mask == 1
+    elif option == "wlev":
+        da_mask = da_mask == 2
+    elif option == "outflow":
+        da_mask = da_mask == 3
+
+    indices = np.stack(np.where(da_mask), axis=-1)
+
+    if "x" in da_mask.coords:
+        x = da_mask.coords["x"].values[indices[:, 1]]
+        y = da_mask.coords["y"].values[indices[:, 0]]
+    else:
+        x = da_mask.coords["xc"].values[indices[:, 0], indices[:, 1]]
+        y = da_mask.coords["yc"].values[indices[:, 0], indices[:, 1]]
+
+    points = gpd.GeoDataFrame(geometry=gpd.points_from_xy(x, y), crs=da_mask.raster.crs)
+
+    if len(points) > 0:
+        return gpd.GeoDataFrame(points, crs=da_mask.raster.crs)
+    else:
+        return None
 
 
 ## STRUCTURES: thd / weir ##
 
 
-def gdf2structures(gdf: gpd.GeoDataFrame) -> List[Dict]:
+def gdf2linestring(gdf: gpd.GeoDataFrame) -> List[Dict]:
     """Convert GeoDataFrame[LineString] to list of structure dictionaries
 
     The x,y are taken from the geometry.
@@ -593,7 +434,37 @@ def gdf2structures(gdf: gpd.GeoDataFrame) -> List[Dict]:
     return feats
 
 
-def structures2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDataFrame:
+def gdf2polygon(gdf: gpd.GeoDataFrame) -> List[Dict]:
+    """Convert GeoDataFrame[Polygon] to list of structure dictionaries
+
+    The x,y are taken from the geometry.
+
+    Parameters
+    ----------
+    gdf: geopandas.GeoDataFrame with LineStrings geometries
+        GeoDataFrame structures.
+
+    Returns
+    -------
+    feats: list of dict
+        List of dictionaries describing structures.
+    """
+    feats = []
+    for _, item in gdf.iterrows():
+        feat = item.drop("geometry").dropna().to_dict()
+        # check geom
+        poly = item.geometry
+        if poly.type == "MultiPolygon" and len(poly.geoms) == 1:
+            poly = poly.geoms[0]
+        if poly.type != "Polygon":
+            raise ValueError("Invalid geometry type, only Polygon is accepted.")
+        x, y = poly.exterior.coords.xy
+        feat["x"], feat["y"] = list(x), list(y)
+        feats.append(feat)
+    return feats
+
+
+def linestring2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDataFrame:
     """Convert list of structure dictionaries to GeoDataFrame[LineString]
 
     Parameters
@@ -622,7 +493,41 @@ def structures2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDat
     return gdf
 
 
-def write_structures(
+def polygon2gdf(
+    feats: List[Dict],
+    crs: Union[int, CRS] = None,
+    zmin: float = None,
+    zmax: float = None,
+) -> gpd.GeoDataFrame:
+    """Convert list of structure dictionaries to GeoDataFrame[Polygon]
+
+    Parameters
+    ----------
+    feats: list of dict
+        List of dictionaries describing polygons.
+    crs: int, CRS
+        Coordinate reference system
+
+    Returns
+    -------
+    gdf: geopandas.GeoDataFrame
+        GeoDataFrame structures
+    """
+    records = []
+    for f in feats:
+        feat = copy.deepcopy(f)
+        xy = [feat.pop("x"), feat.pop("y")]
+        feat.update({"geometry": Polygon(list(zip(*xy)))})
+        records.append(feat)
+    gdf = gpd.GeoDataFrame.from_records(records)
+    gdf["zmin"] = zmin
+    gdf["zmax"] = zmax
+    if crs is not None:
+        gdf.set_crs(crs, inplace=True)
+    return gdf
+
+
+def write_geoms(
     fn: Union[str, Path], feats: List[Dict], stype: str = "thd", fmt="%.1f"
 ) -> None:
     """Write list of structure dictionaries to file
@@ -633,10 +538,10 @@ def write_structures(
         Path to output structure file.
     feats: list of dict
         List of dictionaries describing structures.
-        For thd files "x" and "y" are required, "name" is optional.
+        For pli, pol and thd files "x" and "y" are required, "name" is optional.
         For weir files "x", "y" and "z" are required, "name" and "par1" are optional.
-    stype: {'thd', 'weir'}
-        Structure type thin dams (thd) or weirs (weir).
+    stype: {'pli', 'pol', 'thd', 'weir'}
+        Geom type polylines (pli), polygons (pol) thin dams (thd) or weirs (weir).
     fmt: str
         format for "z" and "par1" fields.
 
@@ -660,7 +565,7 @@ def write_structures(
         ]
     >>> write_structures('sfincs.weir', feats, stype='weir')
     """
-    cols = {"thd": 2, "weir": 4}[stype.lower()]
+    cols = {"pli": 2, "pol": 2, "thd": 2, "weir": 4}[stype.lower()]
     fmt = ["%.0f", "%.0f"] + [fmt for _ in range(cols - 2)]
     if stype.lower() == "weir" and np.any(["z" not in f for f in feats]):
         raise ValueError('"z" value missing for weir files.')
@@ -683,7 +588,7 @@ def write_structures(
             f.write(s.getvalue().decode())
 
 
-def read_structures(fn: Union[str, Path]) -> List[Dict]:
+def read_geoms(fn: Union[str, Path]) -> List[Dict]:
     """Read structure files to list of dictionaries.
 
     Parameters
@@ -723,8 +628,7 @@ def read_structures(fn: Union[str, Path]) -> List[Dict]:
 
 def read_sfincs_map_results(
     fn_map: Union[str, Path],
-    hmin: float = 0.0,
-    crs: Union[int, CRS] = None,
+    ds_like: xr.Dataset,
     chunksize: int = 100,
     drop: List[str] = ["crs", "sfincsgrid"],
     logger=logger,
@@ -733,17 +637,12 @@ def read_sfincs_map_results(
     """Read sfincs_map.nc staggered grid netcdf files and parse to two
     hydromt.RasterDataset objects: one with face and one with edge variables.
 
-    Additionally, hmax is computed from zsmax and zb if present.
-
     Parameters
     ----------
     fn_map : str, Path
         Path to sfincs_map.nc file
-    hmin: float, optional
-        Minimum water depth to consider in hmax map, i.e. cells with lower depth
-        get a nodata values assigned. By deafult 0.0
-    crs: int, CRS
-        Coordinate reference system
+    ds_like: xr.Dataset
+        Dataset with grid information to use for parsing.
     chunksize: int, optional
         chunk size along time dimension, by default 100
     drop : List[str], optional
@@ -754,71 +653,44 @@ def read_sfincs_map_results(
     ds_face, ds_edge: hydromt.RasterDataset
         Parsed SFINCS output map file
     """
-
-    ds_map = xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs)
-    dvars = list(ds_map.data_vars.keys())
-    edge_dims = [var for var in dvars if (var.endswith("_x") or var.endswith("_y"))]
-    ds_map = ds_map.set_coords(["x", "y"] + edge_dims)
-    crs = ds_map["crs"].item() if ds_map["crs"].item() > 0 else crs
-
-    if ds_map["inp"].attrs.get("rotation") != 0:
-        logger.warning("Cannot parse rotated maps. Skip reading sfincs.map.nc")
-        return xr.Dataset(), xr.Dataset()
-
-    # split general+face and edge vars
-    face_vars = list(ds_map.data_vars.keys())
-    edge_vars = []
-    if len(edge_dims) == 2:
-        edge = edge_dims[0][:-2]
-        face_vars = [
-            v for v in face_vars if f"{edge}_m" not in ds_map[v].dims and v not in drop
-        ]
-        edge_vars = [
-            v for v in face_vars if f"{edge}_m" in ds_map[v].dims and v not in drop
-        ]
-
-    # read face vars
-    face_coords = {
-        "x": xr.IndexVariable("x", ds_map["x"].isel(n=0).values),
-        "y": xr.IndexVariable("y", ds_map["y"].isel(m=0).values),
+    rm = {
+        "x": "xc",
+        "y": "yc",
+        "corner_x": "corner_xc",
+        "corner_y": "corner_yc",
+        "n": "y",
+        "m": "x",
+        "corner_n": "corner_y",
+        "corner_m": "corner_x",
     }
-    ds_face = (
-        ds_map[face_vars]
-        .drop_vars(["x", "y"])
-        .rename({"n": "y", "m": "x"})
-        .assign_coords(face_coords)
-        .transpose(..., "y", "x")
+    ds_map = xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs)
+    ds_map = ds_map.rename(
+        {k: v for k, v in rm.items() if (k in ds_map or k in ds_map.dims)}
     )
-    # compute hmax
-    if "zsmax" in ds_face:
-        logger.info('Computing "hmax = max(zsmax) - zb"')
-        hmax = ds_face["zsmax"].max("timemax") - ds_face["zb"]
-        hmax = hmax.where(hmax > hmin, -9999)
-        hmax.raster.set_nodata(-9999)
-        ds_face["hmax"] = hmax
-    # set spatial attrs
-    ds_face.raster.set_spatial_dims(x_dim="x", y_dim="y")
-    ds_face.raster.set_crs(crs)
+    ds_map = ds_map.set_coords(
+        [var for var in ds_map.data_vars.keys() if (var in rm.values())]
+    )
 
-    # get edge vars
+    # split face and edge variables
+    scoords = ds_like.raster.coords
+    tcoords = {tdim: ds_map[tdim] for tdim in ds_map.dims if tdim.startswith("time")}
+    ds_face = xr.Dataset(coords={**scoords, **tcoords})
     ds_edge = xr.Dataset()
-    if len(edge_vars) > 0:
-        edge_coords = {
-            f"{edge}_x": xr.IndexVariable(
-                f"{edge}_x", ds_map[f"{edge}_x"].isel(edge_n=0).values
-            ),
-            f"{edge}_y": xr.IndexVariable(
-                f"{edge}_y", ds_map[f"{edge}_y"].isel(edge_m=0).values
-            ),
-        }
-        ds_edge = (
-            ds_map[edge_vars]
-            .drop_vars([f"{edge}_x", f"{edge}_y"])
-            .rename({f"{edge}_n": f"{edge}_y", f"{edge}_m": f"{edge}_x"})
-            .assign_coords(edge_coords)
-            .transpose(..., f"{edge}_y", f"{edge}_x")
-        ).rename({f"{edge}_x": "x", f"{edge}_y": "y"})
-        ds_edge.raster.set_crs(crs)
+    for var in ds_map.data_vars:
+        if var in drop:
+            continue
+        if "x" in ds_map[var].dims and "y" in ds_map[var].dims:
+            # drop to overwrite with ds_like.raster.coords
+            ds_face[var] = ds_map[var].drop(["xc", "yc"])
+        elif ds_map[var].ndim == 0:
+            ds_face[var] = ds_map[var]
+        else:
+            ds_edge[var] = ds_map[var]
+
+    # add crs
+    if ds_like.raster.crs is not None:
+        ds_face.raster.set_crs(ds_like.raster.crs)
+        ds_edge.raster.set_crs(ds_like.raster.crs)
 
     return ds_face, ds_edge
 
@@ -853,9 +725,134 @@ def read_sfincs_his_results(
     cvars = ["id", "name", "x", "y"]
     ds_his = ds_his.set_coords([v for v in dvars if v.split("_")[-1] in cvars])
     ds_his.vector.set_spatial_dims(
-        x_dim="station_x", y_dim="station_y", index_dim="stations"
+        x_name="station_x", y_name="station_y", index_dim="stations"
     )
     # set crs
     ds_his.vector.set_crs(crs)
 
     return ds_his
+
+
+def downscale_floodmap(
+    zsmax: xr.DataArray,
+    dep: xr.DataArray,
+    hmin: float = 0.05,
+    gdf_mask: gpd.GeoDataFrame = None,
+    floodmap_fn: Union[Path, str] = None,
+    reproj_method: str = "nearest",
+    **kwargs,
+) -> xr.Dataset:
+    """Create a downscaled floodmap for (model) region.
+
+    Parameters
+    ----------
+    zsmax : xr.DataArray
+        Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
+    dep : xr.DataArray
+        High-resolution DEM (m) of model region.
+    hmin : float, optional
+        Minimum water depth (m) to be considered as "flooded", by default 0.05
+    gdf_mask : gpd.GeoDataFrame, optional
+        Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
+        Note that the area outside the polygons is set to nodata.
+    floodmap_fn : Union[Path, str], optional
+        Name (path) of output floodmap, by default None. If provided, the floodmap is written to disk.
+    reproj_method : str, optional
+        Reprojection method for downscaling the water levels, by default "nearest".
+        Other option is "bilinear".
+    kwargs : dict, optional
+        Additional keyword arguments passed to `RasterDataArray.to_raster`.
+
+    Returns
+    -------
+    hmax: xr.Dataset
+        Downscaled and masked floodmap.
+
+    See Also
+    --------
+    hydromt.raster.RasterDataArray.to_raster
+    """
+    # get maximum water level
+    timedim = set(zsmax.dims) - set(zsmax.raster.dims)
+    if timedim:
+        zsmax = zsmax.max(timedim)
+
+    # interpolate zsmax to dep grid
+    zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
+    zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
+
+    # get flood depth
+    hmax = (zsmax - dep).astype("float32")
+    hmax.raster.set_nodata(np.nan)
+
+    # mask floodmap
+    hmax = hmax.where(hmax > hmin)
+    if gdf_mask is not None:
+        mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
+        hmax = hmax.where(mask)
+
+    # write floodmap
+    if floodmap_fn is not None:
+        if not kwargs:  # write COG by default
+            kwargs = dict(
+                driver="GTiff",
+                tiled=True,
+                blockxsize=256,
+                blockysize=256,
+                compress="deflate",
+                predictor=2,
+                profile="COG",
+            )
+        hmax.raster.to_raster(floodmap_fn, **kwargs)
+    return hmax
+
+
+def rotated_grid(
+    pol: Polygon, res: float, dec_origin=0, dec_rotation=3
+) -> Tuple[float, float, int, int, float]:
+    """Returns the origin (x0, y0), shape (mmax, nmax) and rotation
+    of the rotated grid fitted to the minimum rotated rectangle around the
+    area of interest (pol). The grid shape is defined by the resolution (res).
+
+    Parameters
+    ----------
+    pol : Polygon
+        Polygon of the area of interest
+    res : float
+        Resolution of the grid
+    """
+
+    def _azimuth(point1, point2):
+        """azimuth between 2 points (interval 0 - 180)"""
+        angle = np.arctan2(point2[1] - point1[1], point2[0] - point1[0])
+        return round(np.degrees(angle), dec_rotation)
+
+    def _dist(a, b):
+        """distance between points"""
+        return np.hypot(b[0] - a[0], b[1] - a[1])
+
+    mrr = pol.minimum_rotated_rectangle
+    coords = np.asarray(mrr.exterior.coords)[:-1, :]  # get coordinates of all corners
+    # get origin based on the corner with the smallest distance to origin
+    # after translation to account for possible negative coordinates
+    ib = np.argmin(
+        np.hypot(coords[:, 0] - coords[:, 0].min(), coords[:, 1] - coords[:, 1].min())
+    )
+    ir = (ib + 1) % 4
+    il = (ib + 3) % 4
+    x0, y0 = coords[ib, :]
+    x0, y0 = round(x0, dec_origin), round(y0, dec_origin)
+    az1 = _azimuth((x0, y0), coords[ir, :])
+    az2 = _azimuth((x0, y0), coords[il, :])
+    axis1 = _dist((x0, y0), coords[ir, :])
+    axis2 = _dist((x0, y0), coords[il, :])
+    if az2 < az1:
+        rot = az2
+        mmax = int(np.ceil(axis2 / res))
+        nmax = int(np.ceil(axis1 / res))
+    else:
+        rot = az1
+        mmax = int(np.ceil(axis1 / res))
+        nmax = int(np.ceil(axis2 / res))
+
+    return x0, y0, mmax, nmax, rot

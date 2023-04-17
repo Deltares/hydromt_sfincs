@@ -27,12 +27,12 @@ jobs:
       - name: Setup environment
         uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: "3.9"
+          python-version: "3.10"
           mamba-version: "*"
           channels: conda-forge,defaults
           channel-priority: true
-          environment-file: envs/hydromt-sfincs.yml
-          activate-environment: hydromt-sfincs
+          environment-file: envs/hydromt-sfincs-dev.yml
+          activate-environment: hydromt-sfincs-dev
 
       - name: Install hydromt-sfincs
         run: flit install

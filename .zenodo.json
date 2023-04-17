@@ -1,8 +1,12 @@
 {
-    "title": "hydroMT-sfincs",
-    "description": "SFINCS plugin for hydroMT.",
+    "title": "HydroMT-SFINCS",
+    "description": "SFINCS plugin for HydroMT.",
     "upload_type": "software",
     "creators": [
+        {
+            "affiliation":"Deltares",
+            "name": "de Goede, Roel"
+        },
         {
             "affiliation": "Deltares",
             "name": "Eilander, Dirk",
@@ -17,8 +21,12 @@
             "affiliation": "Deltares",
             "name": "Winsemius, Hessel C.",
             "orcid": "0000-0001-5471-172X"
+        },
+        {
+            "affiliation": "Deltares-USA",
+            "name": "van Ormondt, Maarten"
         }
     ],
     "access_right": "open",
-    "license": "MIT"
+    "license": "GPLv3"
 }

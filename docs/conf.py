@@ -46,7 +46,7 @@ author = "Dirk Eilander"
 # The short version which is displayed
 version = hydromt_sfincs.__version__
 
-# # -- Copy notebooks to include in docs -------
+# -- Copy notebooks to include in docs -------
 if os.path.isdir("_examples"):
     remove_dir_content("_examples")
 os.makedirs("_examples")
@@ -125,7 +125,7 @@ autoclass_content = "both"
 html_static_path = ["_static"]
 html_css_files = ["theme-deltares.css"]
 html_theme_options = {
-    "show_nav_level": 2,
+    "show_nav_level": 3,
     "navbar_align": "content",
     "icon_links": [
         {
@@ -183,6 +183,7 @@ remove_from_toctrees = ["_generated/*"]
 #     ]
 # }
 
+nbsphinx_allow_errors = True
 
 # -- Options for HTMLHelp output ------------------------------------------
 
