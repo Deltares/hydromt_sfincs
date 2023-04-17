@@ -622,8 +622,8 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_results.html#hydromt_sfincs.SfincsModel.read_results" title="hydromt_sfincs.SfincsModel.read_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_results</span></code></a>([chunksize, drop, fn_map, fn_his])</p></td>
 <td><p>Read results from sfincs_map.nc and sfincs_his.nc and save to the <cite>results</cite> attribute.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_states.html#hydromt_sfincs.SfincsModel.read_states" title="hydromt_sfincs.SfincsModel.read_states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_states</span></code></a>([crs])</p></td>
-<td><p>Read waterlevel state (zsini) from ascii file and save to <cite>states</cite> attribute.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_states.html#hydromt_sfincs.SfincsModel.read_states" title="hydromt_sfincs.SfincsModel.read_states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_states</span></code></a>()</p></td>
+<td><p>Read waterlevel state (zsini) from binary file and save to <cite>states</cite> attribute.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_staticgeoms</span></code>()</p></td>
 <td><p>This method will be deprecated in future versions, use <a class="reference external" href="https://deltares.github.io/hydromt/latest/_generated/hydromt.Model.read_geoms.html#hydromt.Model.read_geoms" title="(in HydroMT v0.7.2.dev0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">read_geoms()</span></code></a></p></td>
@@ -781,8 +781,8 @@ document.write(`
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_raster</span></code>([variables, root, driver, compress])</p></td>
 <td><p>Write model 2D raster variables to geotiff files.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_states.html#hydromt_sfincs.SfincsModel.write_states" title="hydromt_sfincs.SfincsModel.write_states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_states</span></code></a>([fmt])</p></td>
-<td><p>Write waterlevel state (zsini)  to ascii map file.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_states.html#hydromt_sfincs.SfincsModel.write_states" title="hydromt_sfincs.SfincsModel.write_states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_states</span></code></a>()</p></td>
+<td><p>Write waterlevel state (zsini) to binary map file.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_staticgeoms</span></code>()</p></td>
 <td><p>This method will be deprecated in future versions, use <a class="reference external" href="https://deltares.github.io/hydromt/latest/_generated/hydromt.Model.write_geoms.html#hydromt.Model.write_geoms" title="(in HydroMT v0.7.2.dev0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">write_geoms()</span></code></a></p></td>
