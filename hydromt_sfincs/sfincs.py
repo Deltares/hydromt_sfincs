@@ -703,6 +703,9 @@ class SfincsModel(GridModel):
         Waterlevel or outflow boundary cells intersecting with the river
         are removed from the model mask.
 
+        Discharge is set to zero at these points, but can be updated
+        using the `setup_discharge_forcing` or `setup_discharge_forcing_from_grid` methods.
+
         Note: this method assumes the rivers are directed from up- to downstream.
 
         Adds model layers:
@@ -736,6 +739,11 @@ class SfincsModel(GridModel):
             If True, keep a geometry of the rivers "rivers_inflow" in geoms. By default False.
         buffer: int, optional
             Buffer [no. of cells] around model domain, by default 10.
+
+        See Also
+        --------
+        setup_discharge_forcing
+        setup_discharge_forcing_from_grid
         """
         da_flwdir, da_uparea, gdf_riv = None, None, None
         if hydrography is not None:
@@ -917,7 +925,7 @@ class SfincsModel(GridModel):
         if keep_rivers_geom and len(gdf_riv) > 0:
             self.set_geoms(gdf_riv, name="rivers_outflow")
 
-    def setup_constant_infiltration(self, qinf):
+    def setup_constant_infiltration(self, qinf, reproj_method="average"):
         """Setup spatially varying constant infiltration rate (qinffile).
 
         Adds model layers:
@@ -928,37 +936,34 @@ class SfincsModel(GridModel):
         ----------
         qinf : str, Path, or RasterDataset
             Spatially varying infiltration rates [mm/hr]
+        reproj_method : str, optional
+            Resampling method for reprojecting the infiltration data to the model grid.
+            By default 'average'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
         """
 
         # get infiltration data
-        da_inf = self.data_catalog.get_rasterdataset(qinf, geom=sf.region, buffer=10)
+        da_inf = self.data_catalog.get_rasterdataset(qinf, geom=self.region, buffer=10)
+        da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
 
         # reproject infiltration data to model grid
-        # this workflow automatically determines the best resampling method (bilinear or average)
-        da_inf = workflows.merge_multi_dataarrays(
-            da_list=[{"da": da_inf}],
-            da_like=sf.mask,
-            logger=self.logger,
-        )
+        da_inf = da_inf.raster.reproject_like(self.mask, method=reproj_method)
 
         # check on nan values
-        if np.isnan(da_inf).any():
+        if np.logical_and(np.isnan(da_inf), self.mask >= 1).any():
             self.logger.warning("NaN values found in infiltration data; filled with 0")
             da_inf = da_inf.fillna(0)
-
-        # add to sfincs model
         da_inf.raster.set_nodata(-9999.0)
 
         # set grid
         mname = "qinf"
-        da_inf.attrs.update(**sf._ATTRS.get(mname, {}))
-        sf.set_grid(da_inf, name=mname)
+        da_inf.attrs.update(**self._ATTRS.get(mname, {}))
+        self.set_grid(da_inf, name=mname)
 
-        # update config: remove scs infiltration values and set qinf map
-        self.config.pop("scs", None)
+        # update config: remove default inf and set qinf map
         self.set_config(f"{mname}file", f"sfincs.{mname}")
+        self.config.pop("qinf", None)
 
-    def setup_cn_infiltration(self, cn, antecedent_moisture="avg"):
+    def setup_cn_infiltration(self, cn, antecedent_moisture="avg", reproj_method="med"):
         """Setup model potential maximum soil moisture retention map (scsfile)
         from gridded curve number map.
 
@@ -977,24 +982,27 @@ class SfincsModel(GridModel):
             Antecedent runoff conditions.
             None if data has no antecedent runoff conditions.
             By default `avg`
+        reproj_method : str, optional
+            Resampling method for reprojecting the curve number data to the model grid.
+            By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
         """
         # get data
+        da_org = self.data_catalog.get_rasterdataset(cn, geom=self.region, buffer=10)
+        # read variable
         v = "cn"
         if antecedent_moisture:
             v = f"cn_{antecedent_moisture}"
-        da_org = self.data_catalog.get_rasterdataset(
-            cn, geom=self.region, buffer=10, variables=[v]
-        )
+        if isinstance(da_org, xr.Dataset) and v in da_org.data_vars:
+            da_org = da_org[v]
+        elif not isinstance(da_org, xr.DataArray):
+            raise ValueError(f"Could not find variable {v} in {cn}")
+
         # reproject using median
-        da_cn = da_org.raster.reproject_like(self.grid, method="med")
-        # CN=100 based on water mask
-        if "rivmsk" in self.grid:
-            self.logger.info(
-                'Updating CN map based on "rivmsk" from setup_river_hydrography method.'
-            )
-            da_cn = da_cn.where(self.grid["rivmsk"] == 0, 100)
+        da_cn = da_org.raster.reproject_like(self.grid, method=reproj_method)
+
         # convert to potential maximum soil moisture retention S (1000/CN - 10) [inch]
         da_scs = workflows.cn_to_s(da_cn, self.mask > 0).round(3)
+
         # set grid
         mname = "scs"
         da_scs.attrs.update(**self._ATTRS.get(mname, {}))
@@ -1405,6 +1413,12 @@ class SfincsModel(GridModel):
     ):
         """Setup waterlevel boundary (bnd) points along model waterlevel boundary (msk=2).
 
+        The waterlevel boundary (msk=2) should be set before calling this method,
+        e.g.: with `setup_mask_bounds`
+
+        Waterlevels (bzs) are set to zero at these points, but can be updated
+        with `setup_waterlevel_forcing`.
+
         Parameters
         ----------
         distance: float, optional
@@ -1412,6 +1426,11 @@ class SfincsModel(GridModel):
             by default 10 km.
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
+
+        See Also
+        --------
+        setup_waterlevel_forcing
+        setup_mask_bounds
         """
         # get waterlevel boundary vector based on mask
         gdf_msk = utils.get_bounds_vector(self.mask)
@@ -1440,7 +1459,8 @@ class SfincsModel(GridModel):
         or a tabular `timeseries` dataframe. At least one of these must be provided.
 
         The tabular timeseries data is combined with `locations` if provided,
-        or with existing 'src' locations if previously set.
+        or with existing 'src' locations if previously set, e.g., with the
+        `setup_river_inflow` method.
 
         Adds model layers:
 
@@ -1456,6 +1476,10 @@ class SfincsModel(GridModel):
             Path, data source name, or geopandas object for bnd point locations.
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
+
+        See Also
+        --------
+        setup_river_inflow
         """
         gdf_locs, df_ts = None, None
         tstart, tstop = self.get_model_time()  # model time
@@ -1548,7 +1572,7 @@ class SfincsModel(GridModel):
 
         See Also
         --------
-        hydromt_sfincs.SfincsModel.setup_river_inflow
+        setup_river_inflow
         """
         if locations is not None:
             gdf = self.data_catalog.get_geodataframe(

@@ -53,37 +53,6 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-## CONFIG: sfincs.inp ##
-
-
-class ConfigParserSfincs(ConfigParser):
-    def __init__(self, **kwargs):
-        defaults = dict(
-            comment_prefixes=("!", "/", "#"),
-            inline_comment_prefixes=("!"),
-            allow_no_value=True,
-            delimiters=("="),
-        )
-        defaults.update(**kwargs)
-        super(ConfigParserSfincs, self).__init__(**defaults)
-
-    def read_file(self, f, **kwargs):
-        def add_header(f, header_name="dummy"):
-            """add header"""
-            yield "[{}]\n".format(header_name)
-            for line in f:
-                yield line
-
-        super(ConfigParserSfincs, self).read_file(add_header(f), **kwargs)
-
-    def _write_section(self, fp, section_name, section_items, delimiter):
-        """Write a single section to the specified `fp'."""
-        for key, value in section_items:
-            value = self._interpolation.before_write(self, section_name, key, value)
-            fp.write("{:<15} {:<1} {:<}\n".format(key, self._delimiters[0], value))
-        fp.write("\n")
-
-
 ## BINARY MAPS: sfincs.ind, sfincs.msk, sfincs.dep etc. ##
 
 
@@ -769,8 +738,9 @@ def downscale_floodmap(
     dep: xr.DataArray,
     hmin: float = 0.05,
     gdf_mask: gpd.GeoDataFrame = None,
-    floodmap_fn: Union[Path, str] = "floodmap.tif",
+    floodmap_fn: Union[Path, str] = None,
     reproj_method: str = "nearest",
+    **kwargs,
 ) -> xr.Dataset:
     """Create a downscaled floodmap for (model) region.
 
@@ -786,50 +756,54 @@ def downscale_floodmap(
         Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
         Note that the area outside the polygons is set to nodata.
     floodmap_fn : Union[Path, str], optional
-        Name (path) of output floodmap, by default "floodmap.tif"
+        Name (path) of output floodmap, by default None. If provided, the floodmap is written to disk.
     reproj_method : str, optional
         Reprojection method for downscaling the water levels, by default "nearest".
         Other option is "bilinear".
+    kwargs : dict, optional
+        Additional keyword arguments passed to `RasterDataArray.to_raster`.
 
     Returns
     -------
     hmax: xr.Dataset
         Downscaled and masked floodmap.
+
+    See Also
+    --------
+    hydromt.raster.RasterDataArray.to_raster
     """
+    # get maximum water level
+    timedim = set(zsmax.dims) - set(zsmax.raster.dims)
+    if timedim:
+        zsmax = zsmax.max(timedim)
 
     # interpolate zsmax to dep grid
     zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
-    zsmax.raster.set_nodata(np.nan)
+    zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
 
-    # compute hmax
-    if "timemax" in zsmax.dims:
-        hmax = zsmax.max("timemax") - dep
-    elif "time" in zsmax.dims:
-        hmax = zsmax.max("time") - dep
-    else:
-        hmax = zsmax - dep
+    # get flood depth
+    hmax = (zsmax - dep).astype("float32")
+    hmax.raster.set_nodata(np.nan)
 
-    # remove flood-depths below threshold
-    hmax = hmax.where(hmax > hmin, np.nan)
-
+    # mask floodmap
+    hmax = hmax.where(hmax > hmin)
     if gdf_mask is not None:
         mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
         hmax = hmax.where(mask)
-        floodmap_fn = floodmap_fn.replace(".tif", "_mask.tif")
 
     # write floodmap
-    hmax.raster.to_raster(
-        floodmap_fn,
-        driver="GTiff",
-        dtype=np.float32,
-        tiled=True,
-        blockxsize=256,
-        blockysize=256,
-        compress="deflate",
-        predictor=2,
-        profile="COG",
-        nodata=np.nan,
-    )
+    if floodmap_fn is not None:
+        if not kwargs:  # write COG by default
+            kwargs = dict(
+                driver="GTiff",
+                tiled=True,
+                blockxsize=256,
+                blockysize=256,
+                compress="deflate",
+                predictor=2,
+                profile="COG",
+            )
+        hmax.raster.to_raster(floodmap_fn, **kwargs)
     return hmax
 
 

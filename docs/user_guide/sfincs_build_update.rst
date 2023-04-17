@@ -4,11 +4,11 @@
 Building or updating a model
 =============================
 
-This plugin allows users to build or update a SFINCS model from available data. 
-For beginning users, we recommend to use the :ref:`command line interface <sfincs_cli>` to build or update a model. 
-In case you want to (locally) modify the model input data before generating a model, we recommend to use the :ref:`Python scripting <sfincs_python>`. 
+This plugin allows users to build or update a SFINCS model from available data using 
+the :ref:`command line interface <sfincs_cli>` or :ref:`Python scripting <sfincs_python>`. 
+For a brief overview of the differences, see :ref:`Working with the SFINCS model <working_with_sfincs>`.
 
-In the following sections, examples are provided in iPython notebooks how to build your SFINCS model with HydroMT using either the CLI or python scripting.
+In the following sections, examples are provided how to build your SFINCS model with HydroMT using either the CLI or Python scripting.
 
 .. _sfincs_cli:
 
@@ -67,26 +67,28 @@ in its corresponding section. See the HydroMT core documentation for more info a
 Note that the order in which the components are listed in the yml-file is important (methods are executed from top to bottom): 
 
 - :py:func:`~hydromt_sfincs.SfincsModel.setup_grid` or :py:func:`~hydromt_sfincs.SfincsModel.setup_grid_from_region` should always be run first to define the model grid.
-- a lot of methods (e.g. :py:func:`~hydromt_sfincs.SfincsModel.setup_mask_active`) need elevation data to work properly, so :py:func:`~hydromt_sfincs.SfincsModel.setup_dep` should be run before most other methods.
-- if discharge locations are inferred from hydrography, :py:func:`~hydromt_sfincs.SfincsModel.setup_river_inflow` should be run before :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing` or :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid`.
+- Many methods (e.g., :py:func:`~hydromt_sfincs.SfincsModel.setup_mask_active`) need elevation data to work properly, hence :py:func:`~hydromt_sfincs.SfincsModel.setup_dep` should be run before most other methods.
+- If discharge locations are inferred from hydrography, :py:func:`~hydromt_sfincs.SfincsModel.setup_river_inflow` should be run before :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing` or :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid`.
+- If water level bounary points are inferred from the water level mask cells,  :py:func:`~hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask` should be run before :py:func:`~hydromt_sfincs.SfincsModel.setup_waterlevel_forcing`.
 
-Data libraries
-----------------
+Data Catalogs
+-------------
 
-Data sources in HydroMT are provided in one of several yaml libraries. These libraries contain required
-information on the different data sources so that HydroMT can process them for the different models. There
-are three ways for the user to select which data libraries to use:
+Data sources are provided to HydroMT in one or more user-definfed data catalog (yaml) files 
+or from pre-defined data catalogs. These data catalogs contain required information on the 
+different data sources so that HydroMT can process them for the different models. 
+There are three ways for the user to select which data catalog to use:
 
-- If no yaml file is selected, HydroMT will use the data stored in the
-  `hydromt-artifacts <https://github.com/DirkEilander/hydromt-artifacts>`_
-  which contains an extract of global data for a small region around the Piave river in Northern Italy.
-- Another options for Deltares users is to select the deltares-data library (requires access to the Deltares
-  P-drive). In the command line interface, this is done by adding either **-dd** or **--deltares-data**
-  to the build / update command line.
-- Finally, the user can prepare its own yaml libary (or libraries) (see
+- There are several `pre-defined data catalog <https://deltares.github.io/hydromt/latest/user_guide/data_existing_cat.html>`_ 
+  Amongst other, these include the `deltares_data` data catalog for Deltares users which requires access to the Deltares P-drive. 
+  More pre-defined data catalogs will be added in the future.
+- Furthermore, the user can prepare its own yaml libary (or libraries) (see
   `HydroMT documentation <https://deltares.github.io/hydromt/latest/index>`_ to check the guidelines).
   These user libraries can be added either in the command line using the **-d** option and path/to/yaml or in the **yml file**
   with the **data_libs** option in the  `global` section (see example above).
+- Finally, if no catalog is provided, HydroMT will use the data stored in the
+  `hydromt-artifacts <https://github.com/DirkEilander/hydromt-artifacts>`_
+  which contains an extract of global data for a small region around the Piave river in Northern Italy.
 
 Example
 --------

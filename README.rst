@@ -41,7 +41,7 @@ from conda-forge in a clean environment, see `installation guide. <docs_install>
 
 How to cite?
 ------------
-To reference the software please use the the DOI provided in the Zenodo badge |doi| that points to the latest release.
+To reference the software please use the the DOI provided in the Zenodo badge that points to the latest release |doi|.
 
 The following paper presents a real-world application of HydroMT-SFINCS:
 
