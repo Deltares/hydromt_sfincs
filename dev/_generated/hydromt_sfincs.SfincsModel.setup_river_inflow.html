@@ -553,6 +553,8 @@ document.write(`
 <cite>hydrography</cite> dataset based on the <cite>river_upa</cite> threshold.</p>
 <p>Waterlevel or outflow boundary cells intersecting with the river
 are removed from the model mask.</p>
+<p>Discharge is set to zero at these points, but can be updated
+using the <cite>setup_discharge_forcing</cite> or <cite>setup_discharge_forcing_from_grid</cite> methods.</p>
 <p>Note: this method assumes the rivers are directed from up- to downstream.</p>
 <p>Adds model layers:</p>
 <ul class="simple">
@@ -582,6 +584,10 @@ nearby open or waterlevel boundary cells, by default 500 m.</p></li>
 </ul>
 </dd>
 </dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_discharge_forcing.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_discharge_forcing</span></code></a>, <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_discharge_forcing_from_grid</span></code></a></p>
+</div>
 </dd></dl>
 
 </section>

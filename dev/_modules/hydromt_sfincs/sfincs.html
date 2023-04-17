@@ -1106,6 +1106,9 @@ document.write(`
 <span class="sd">        Waterlevel or outflow boundary cells intersecting with the river</span>
 <span class="sd">        are removed from the model mask.</span>
 
+<span class="sd">        Discharge is set to zero at these points, but can be updated</span>
+<span class="sd">        using the `setup_discharge_forcing` or `setup_discharge_forcing_from_grid` methods.</span>
+
 <span class="sd">        Note: this method assumes the rivers are directed from up- to downstream.</span>
 
 <span class="sd">        Adds model layers:</span>
@@ -1139,6 +1142,11 @@ document.write(`
 <span class="sd">            If True, keep a geometry of the rivers &quot;rivers_inflow&quot; in geoms. By default False.</span>
 <span class="sd">        buffer: int, optional</span>
 <span class="sd">            Buffer [no. of cells] around model domain, by default 10.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        setup_discharge_forcing</span>
+<span class="sd">        setup_discharge_forcing_from_grid</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">da_flwdir</span><span class="p">,</span> <span class="n">da_uparea</span><span class="p">,</span> <span class="n">gdf_riv</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1320,7 +1328,7 @@ document.write(`
         <span class="k">if</span> <span class="n">keep_rivers_geom</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivers_outflow&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_constant_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration.html#hydromt_sfincs.SfincsModel.setup_constant_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_constant_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qinf</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.setup_constant_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration.html#hydromt_sfincs.SfincsModel.setup_constant_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_constant_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qinf</span><span class="p">,</span> <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;average&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup spatially varying constant infiltration rate (qinffile).</span>
 
 <span class="sd">        Adds model layers:</span>
@@ -1331,37 +1339,34 @@ document.write(`
 <span class="sd">        ----------</span>
 <span class="sd">        qinf : str, Path, or RasterDataset</span>
 <span class="sd">            Spatially varying infiltration rates [mm/hr]</span>
+<span class="sd">        reproj_method : str, optional</span>
+<span class="sd">            Resampling method for reprojecting the infiltration data to the model grid.</span>
+<span class="sd">            By default &#39;average&#39;. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># get infiltration data</span>
-        <span class="n">da_inf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">qinf</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">da_inf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">qinf</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_inf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>  <span class="c1"># set nodata to nan</span>
 
         <span class="c1"># reproject infiltration data to model grid</span>
-        <span class="c1"># this workflow automatically determines the best resampling method (bilinear or average)</span>
-        <span class="n">da_inf</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">merge_multi_dataarrays</span><span class="p">(</span>
-            <span class="n">da_list</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da_inf</span><span class="p">}],</span>
-            <span class="n">da_like</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
-            <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_inf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
 
         <span class="c1"># check on nan values</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_inf</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_inf</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;NaN values found in infiltration data; filled with 0&quot;</span><span class="p">)</span>
             <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_inf</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-
-        <span class="c1"># add to sfincs model</span>
         <span class="n">da_inf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="o">-</span><span class="mf">9999.0</span><span class="p">)</span>
 
         <span class="c1"># set grid</span>
         <span class="n">mname</span> <span class="o">=</span> <span class="s2">&quot;qinf&quot;</span>
-        <span class="n">da_inf</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">sf</span><span class="o">.</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
-        <span class="n">sf</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">da_inf</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
+        <span class="n">da_inf</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">da_inf</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
 
-        <span class="c1"># update config: remove scs infiltration values and set qinf map</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;scs&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="c1"># update config: remove default inf and set qinf map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cn_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">,</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cn_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">,</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span> <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;med&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup model potential maximum soil moisture retention map (scsfile)</span>
 <span class="sd">        from gridded curve number map.</span>
 
@@ -1380,24 +1385,27 @@ document.write(`
 <span class="sd">            Antecedent runoff conditions.</span>
 <span class="sd">            None if data has no antecedent runoff conditions.</span>
 <span class="sd">            By default `avg`</span>
+<span class="sd">        reproj_method : str, optional</span>
+<span class="sd">            Resampling method for reprojecting the curve number data to the model grid.</span>
+<span class="sd">            By default &#39;med&#39;. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># get data</span>
+        <span class="n">da_org</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">cn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="c1"># read variable</span>
         <span class="n">v</span> <span class="o">=</span> <span class="s2">&quot;cn&quot;</span>
         <span class="k">if</span> <span class="n">antecedent_moisture</span><span class="p">:</span>
             <span class="n">v</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;cn_</span><span class="si">{</span><span class="n">antecedent_moisture</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="n">da_org</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-            <span class="n">cn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">da_org</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">da_org</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
+            <span class="n">da_org</span> <span class="o">=</span> <span class="n">da_org</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">da_org</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not find variable </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">cn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
         <span class="c1"># reproject using median</span>
-        <span class="n">da_cn</span> <span class="o">=</span> <span class="n">da_org</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;med&quot;</span><span class="p">)</span>
-        <span class="c1"># CN=100 based on water mask</span>
-        <span class="k">if</span> <span class="s2">&quot;rivmsk&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s1">&#39;Updating CN map based on &quot;rivmsk&quot; from setup_river_hydrography method.&#39;</span>
-            <span class="p">)</span>
-            <span class="n">da_cn</span> <span class="o">=</span> <span class="n">da_cn</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s2">&quot;rivmsk&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="n">da_cn</span> <span class="o">=</span> <span class="n">da_org</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
+
         <span class="c1"># convert to potential maximum soil moisture retention S (1000/CN - 10) [inch]</span>
         <span class="n">da_scs</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">cn_to_s</span><span class="p">(</span><span class="n">da_cn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
         <span class="c1"># set grid</span>
         <span class="n">mname</span> <span class="o">=</span> <span class="s2">&quot;scs&quot;</span>
         <span class="n">da_scs</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
@@ -1808,6 +1816,12 @@ document.write(`
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup waterlevel boundary (bnd) points along model waterlevel boundary (msk=2).</span>
 
+<span class="sd">        The waterlevel boundary (msk=2) should be set before calling this method,</span>
+<span class="sd">        e.g.: with `setup_mask_bounds`</span>
+
+<span class="sd">        Waterlevels (bzs) are set to zero at these points, but can be updated</span>
+<span class="sd">        with `setup_waterlevel_forcing`.</span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        distance: float, optional</span>
@@ -1815,6 +1829,11 @@ document.write(`
 <span class="sd">            by default 10 km.</span>
 <span class="sd">        merge : bool, optional</span>
 <span class="sd">            If True, merge with existing forcing data, by default True.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        setup_waterlevel_forcing</span>
+<span class="sd">        setup_mask_bounds</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># get waterlevel boundary vector based on mask</span>
         <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_bounds_vector</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span>
@@ -1843,7 +1862,8 @@ document.write(`
 <span class="sd">        or a tabular `timeseries` dataframe. At least one of these must be provided.</span>
 
 <span class="sd">        The tabular timeseries data is combined with `locations` if provided,</span>
-<span class="sd">        or with existing &#39;src&#39; locations if previously set.</span>
+<span class="sd">        or with existing &#39;src&#39; locations if previously set, e.g., with the</span>
+<span class="sd">        `setup_river_inflow` method.</span>
 
 <span class="sd">        Adds model layers:</span>
 
@@ -1859,6 +1879,10 @@ document.write(`
 <span class="sd">            Path, data source name, or geopandas object for bnd point locations.</span>
 <span class="sd">        merge : bool, optional</span>
 <span class="sd">            If True, merge with existing forcing data, by default True.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        setup_river_inflow</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">gdf_locs</span><span class="p">,</span> <span class="n">df_ts</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
         <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">()</span>  <span class="c1"># model time</span>
@@ -1951,7 +1975,7 @@ document.write(`
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
-<span class="sd">        hydromt_sfincs.SfincsModel.setup_river_inflow</span>
+<span class="sd">        setup_river_inflow</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">locations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>

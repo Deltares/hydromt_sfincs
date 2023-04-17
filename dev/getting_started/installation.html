@@ -427,8 +427,13 @@ document.write(`
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading">#</a></h2>
 <p>For more information about the prerequisites for an installation of the HydroMT package and related dependencies, please visit the
 documentation of <a class="reference external" href="https://deltares.github.io/hydromt/latest/getting_started/installation.html#installation-guide">HydroMT core</a></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We recommend using the <cite>mamba</cite> package manager. However, in the commands below you can exchange <cite>mamba</cite> for <cite>conda</cite>, see
+<a class="reference external" href="https://deltares.github.io/hydromt/latest/getting_started/installation.html#installation-guide">here</a> for the difference between both.</p>
+</div>
 <p>If you already have a python &amp; conda installation but do not yet have mamba installed,
-we recommend installing it into your <em>base</em> environment using:</p>
+you can install it into your <em>base</em> environment using:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>conda<span class="w"> </span>install<span class="w"> </span>mamba<span class="w"> </span>-n<span class="w"> </span>base<span class="w"> </span>-c<span class="w"> </span>conda-forge
 </pre></div>
 </div>
@@ -436,21 +441,13 @@ we recommend installing it into your <em>base</em> environment using:</p>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h2>
 <p>HydroMT-SFINCS is available from pypi and conda-forge. We recommend installing from conda-forge in a new conda environment.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>In the commands below you can exchange <cite>mamba</cite> for <cite>conda</cite>, see
-<a class="reference external" href="https://deltares.github.io/hydromt/latest/getting_started/installation.html#installation-guide">here</a> for the difference between both.</p>
-</div>
 <section id="install-hydromt-sfincs-in-a-new-environment-recommended">
 <h3>Install HydroMT-SFINCS in a new environment (recommended!)<a class="headerlink" href="#install-hydromt-sfincs-in-a-new-environment-recommended" title="Permalink to this heading">#</a></h3>
-<p>You can install HydroMT-SFINCS in a new environment called <cite>hydromt-sfincs</cite> together with a few additional dependencies with:</p>
+<p>You can install HydroMT-SFINCS in a new environment called <cite>hydromt-sfincs</cite> together with a few additional dependencies
+which are required for the HydroMT-SFINCS examples. To do so, create a new environment from the <cite>environment.yml</cite> file
+in the repository root with the following command:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mamba<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>https://raw.githubusercontent.com/Deltares/hydromt_sfincs/main/environment.yml
 </pre></div>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The environment yaml-files in <a class="reference external" href="https://raw.githubusercontent.com/Deltares/hydromt_sfincs/envs">https://raw.githubusercontent.com/Deltares/hydromt_sfincs/envs</a> are meant for testing and development,
-so please use the one mentioned above. In case you want to develop, see the <a class="reference internal" href="../dev_guide/dev_install.html#dev-env"><span class="std std-ref">Developer installation guide</span></a>.</p>
 </div>
 <p>Then, activate the environment (as stated by mamba/conda) to start making use of HydroMT-Wflow:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda activate hydromt-sfincs</span>
@@ -462,12 +459,18 @@ so please use the one mentioned above. In case you want to develop, see the <a c
 <cite>conda env remove -n hydromt-sfincs</cite> <strong>or</strong> set a new name for the environment
 by adding <cite>-n &lt;name&gt;</cite> to the line above.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The environment yaml-files in <cite>envs</cite> folder are meant for testing and development,
+so please use the <cite>environment.yml</cite> file in the repository root for normal usage.
+In case you want to develop, see the <a class="reference internal" href="../dev_guide/dev_install.html#dev-env"><span class="std std-ref">Developer installation guide</span></a>.</p>
+</div>
 </section>
 <section id="install-hydromt-sfincs-in-an-existing-environment">
 <h3>Install HydroMT-SFINCS in an existing environment<a class="headerlink" href="#install-hydromt-sfincs-in-an-existing-environment" title="Permalink to this heading">#</a></h3>
 <p>To install HydroMT-SFINCS in an existing environment execute the command below
 where you replace <cite>&lt;environment_name&gt;</cite> with the name of the existing environment.
-Note that if some dependencies are not installed from conda-forge but from other
+Note that if some dependencies are not installed from conda-forge but from pip or other
 channels the installation may fail.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mamba<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>hydrom_sfincs<span class="w"> </span>-n<span class="w"> </span>&lt;environment_name&gt;
 </pre></div>

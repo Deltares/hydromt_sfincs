@@ -524,28 +524,14 @@ document.write(`
 </section>
 <section id="Write-maximum-waterdepth-to-geotiff-file">
 <h2>Write maximum waterdepth to geotiff file<a class="headerlink" href="#Write-maximum-waterdepth-to-geotiff-file" title="Permalink to this heading">#</a></h2>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># write hmax to &lt;mod.root&gt;/gis/hmax.tif</span>
-<span class="n">mod</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span><span class="s2">&quot;results.hmax&quot;</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;LZW&quot;</span><span class="p">)</span>
-
-<span class="c1"># this is identical to the following:</span>
-<span class="c1"># hmax = mod.results[&#39;hmax&#39;]</span>
-<span class="c1"># hmax = hmax.reindex(y=list(reversed(hmax[&#39;y&#39;].values))) # change orientation to N -&gt; S</span>
-<span class="c1"># hmax.raster.to_raster(join(mod.root, &#39;gis&#39;, &#39;hmax.tif&#39;), compress=&#39;LZW&#39;)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># uncomment to write hmax to &lt;mod.root&gt;/gis/hmax.tif</span>
+<span class="c1"># mod.write_raster(&quot;results.hmax&quot;, compress=&quot;LZW&quot;)</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-Nodata value missing, skipping mask
-nodata value missing for /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_compound/gis/hmax.tif
-</pre></div></div>
 </div>
 </section>
 <section id="Plot-maximum-water-depth-with-surface-water-mask">
@@ -673,7 +659,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
 </div>
 </div>
 <p>In the example, we used <em>GEBCO</em> (~450m resolution) and <em>MERIT Hydro</em> (~90m resolution) to create a model on 50 meters resolution. In this case, including subgrid tables didnt’t add much information to the model. To still illustrate the process of downscaling, we will use the <em>dep.tif</em> (in the gis folder) which has 50m resolution.</p>
-<p>When creating a subgrid with <code class="docutils literal notranslate"><span class="pre">setup_subgrid</span></code>, you can easily create a geotiff on the subgrid resolution with the argument `write_dep_tif.</p>
+<p>When creating a subgrid with <code class="docutils literal notranslate"><span class="pre">setup_subgrid</span></code>, you can easily create a geotiff on the subgrid resolution in the <code class="docutils literal notranslate"><span class="pre">subgrid</span></code> folder with the argument <code class="docutils literal notranslate"><span class="pre">write_dep_tif=True</span></code>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
@@ -688,7 +674,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
 </pre></div>
 </div>
 </div>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
@@ -702,14 +688,6 @@ The process of interpolating the water levels onto the higher-resolution elevati
 <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;timemax&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-nodata value missing for /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_compound/gis/hmax.tif
-</pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
@@ -733,9 +711,14 @@ nodata value missing for /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_e
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fourthly, we downscale the floodmap and save to &lt;mod.root&gt;/floodmap.tif</span>
-<span class="n">floodmap_fn</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="s2">&quot;floodmap.tif&quot;</span><span class="p">)</span>
-<span class="n">hmax</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">downscale_floodmap</span><span class="p">(</span><span class="n">zsmax</span><span class="o">=</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">dep</span><span class="o">=</span><span class="n">dep</span><span class="p">,</span> <span class="n">hmin</span><span class="o">=</span><span class="n">hmin</span><span class="p">,</span> <span class="n">gdf_mask</span><span class="o">=</span><span class="n">gdf_osm</span><span class="p">,</span> <span class="n">floodmap_fn</span><span class="o">=</span><span class="n">floodmap_fn</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fourthly, we downscale the floodmap</span>
+<span class="n">hmax</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">downscale_floodmap</span><span class="p">(</span>
+    <span class="n">zsmax</span><span class="o">=</span><span class="n">zsmax</span><span class="p">,</span>
+    <span class="n">dep</span><span class="o">=</span><span class="n">dep</span><span class="p">,</span>
+    <span class="n">hmin</span><span class="o">=</span><span class="n">hmin</span><span class="p">,</span>
+    <span class="n">gdf_mask</span><span class="o">=</span><span class="n">gdf_osm</span><span class="p">,</span>
+    <span class="c1"># floodmap_fn=join(sfincs_root, &quot;floodmap.tif&quot;) # uncomment to save to &lt;mod.root&gt;/floodmap.tif</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>

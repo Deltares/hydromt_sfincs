@@ -549,6 +549,10 @@ document.write(`
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask">
 <span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_waterlevel_bnd_from_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_waterlevel_bnd_from_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask" title="Permalink to this definition">#</a></dt>
 <dd><p>Setup waterlevel boundary (bnd) points along model waterlevel boundary (msk=2).</p>
+<p>The waterlevel boundary (msk=2) should be set before calling this method,
+e.g.: with <cite>setup_mask_bounds</cite></p>
+<p>Waterlevels (bzs) are set to zero at these points, but can be updated
+with <cite>setup_waterlevel_forcing</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -558,6 +562,10 @@ by default 10 km.</p></li>
 </ul>
 </dd>
 </dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html#hydromt_sfincs.SfincsModel.setup_waterlevel_forcing" title="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_waterlevel_forcing</span></code></a>, <a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_mask_bounds.html#hydromt_sfincs.SfincsModel.setup_mask_bounds" title="hydromt_sfincs.SfincsModel.setup_mask_bounds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_mask_bounds</span></code></a></p>
+</div>
 </dd></dl>
 
 </section>

@@ -513,14 +513,11 @@ a specific method see its documentation.</p>
 <tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_config.html#hydromt_sfincs.SfincsModel.setup_config" title="hydromt_sfincs.SfincsModel.setup_config"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_config()</span></code></a></p></th>
 <td><p>Update SFINCS config (sfincs.inp) with a dictionary.</p></td>
 </tr>
-<tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_region.html#hydromt_sfincs.SfincsModel.setup_region" title="hydromt_sfincs.SfincsModel.setup_region"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_region()</span></code></a></p></th>
-<td><p>This component sets the region of interest and res of the model.</p></td>
+<tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_grid.html#hydromt_sfincs.SfincsModel.setup_grid" title="hydromt_sfincs.SfincsModel.setup_grid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_grid()</span></code></a></p></th>
+<td><p>This component generates a user-defined model grid.</p></td>
 </tr>
-<tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_grid.html#hydromt_sfincs.SfincsModel.setup_grid" title="hydromt_sfincs.SfincsModel.setup_grid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_grid()</span></code></a></p></th>
-<td><p>This component generates a user-defined grid.</p></td>
-</tr>
-<tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_grid_from_region.html#hydromt_sfincs.SfincsModel.setup_grid_from_region" title="hydromt_sfincs.SfincsModel.setup_grid_from_region"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_grid_from_region()</span></code></a></p></th>
-<td><p>This component automatically generates a model grid covering the region of interest with a given res(olution).</p></td>
+<tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_grid_from_region.html#hydromt_sfincs.SfincsModel.setup_grid_from_region" title="hydromt_sfincs.SfincsModel.setup_grid_from_region"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_grid_from_region()</span></code></a></p></th>
+<td><p>This component automatically generates a model grid covering the region of interest with a given resolution.</p></td>
 </tr>
 </tbody>
 </table>
@@ -542,16 +539,16 @@ a specific method see its documentation.</p>
 <td><p>This component interpolates topobathy (depfile) data to the model grid.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_mask_active.html#hydromt_sfincs.SfincsModel.setup_mask_active" title="hydromt_sfincs.SfincsModel.setup_mask_active"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_mask_active()</span></code></a></p></th>
-<td><p>This component generates a mask (mskfile) defining which part of the model grid is active.</p></td>
+<td><p>This component generates a mask (mskfile) defining which part of the model grid is active based on elevation criteria and/or polygons.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_mask_bounds.html#hydromt_sfincs.SfincsModel.setup_mask_bounds" title="hydromt_sfincs.SfincsModel.setup_mask_bounds"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_mask_bounds()</span></code></a></p></th>
-<td><p>This component adds boundary cells in the model mask (mskfile).</p></td>
+<td><p>This component adds boundary cells in the model mask (mskfile) based on elevation criteria and/or polygons.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_river_outflow.html#hydromt_sfincs.SfincsModel.setup_river_outflow" title="hydromt_sfincs.SfincsModel.setup_river_outflow"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_river_outflow()</span></code></a></p></th>
-<td><p>This component adds open boundary cells (mask=3) where a river flows out of the model domain.</p></td>
+<td><p>This component adds boundary cells in the model mask (mskfile) where a river flows out of the model domain.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_manning_roughness.html#hydromt_sfincs.SfincsModel.setup_manning_roughness" title="hydromt_sfincs.SfincsModel.setup_manning_roughness"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_manning_roughness()</span></code></a></p></th>
-<td><p>This component adds a manning roughness map (manningfile) to the model grid from gridded manning data or a combinataion of gridded land-use/land-cover map and manning roughness mapping table.</p></td>
+<td><p>This component adds a Manning roughness map (manningfile) to the model grid based on gridded Manning roughness data or a combinataion of gridded land-use/land-cover map and a Manning roughness mapping table.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration.html#hydromt_sfincs.SfincsModel.setup_constant_infiltration" title="hydromt_sfincs.SfincsModel.setup_constant_infiltration"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_constant_infiltration()</span></code></a></p></th>
 <td><p>This component adds a spatially varying constant infiltration rate map (qinffile) to the model grid.</p></td>
@@ -560,7 +557,7 @@ a specific method see its documentation.</p>
 <td><p>This component adds a potential maximum soil moisture retention map (scsfile) to the model grid based on a gridded curve number map.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_subgrid.html#hydromt_sfincs.SfincsModel.setup_subgrid" title="hydromt_sfincs.SfincsModel.setup_subgrid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_subgrid()</span></code></a></p></th>
-<td><p>This component generates subgrid tables (sbgfile) for the model grid based on a list of elevation and Manning’s roughness datasets</p></td>
+<td><p>This component generates subgrid tables (sbgfile) for the model grid based on a list of elevation and Manning roughness datasets</p></td>
 </tr>
 </tbody>
 </table>
@@ -582,7 +579,7 @@ a specific method see its documentation.</p>
 <td><p>This component adds observation points to the model (obsfile).</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures" title="hydromt_sfincs.SfincsModel.setup_structures"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_structures()</span></code></a></p></th>
-<td><p>This component adds structures to the model (thdfile, weirfile).</p></td>
+<td><p>This component adds line element structures to the model (thdfile, weirfile).</p></td>
 </tr>
 </tbody>
 </table>
@@ -600,26 +597,26 @@ a specific method see its documentation.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html#hydromt_sfincs.SfincsModel.setup_waterlevel_forcing" title="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_waterlevel_forcing()</span></code></a></p></th>
-<td><p>Setup waterlevel forcing (bndfile, bzsfile) from a <cite>geodataset</cite> (geospatial point timeseries) or a tabular <cite>timeseries</cite> dataframe</p></td>
+<tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask.html#hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask" title="hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_waterlevel_bnd_from_mask()</span></code></a></p></th>
+<td><p>This component adds waterlevel boundary points (bndfile) along model waterlevel boundary (msk=2).</p></td>
 </tr>
-<tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask.html#hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask" title="hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_waterlevel_bnd_from_mask()</span></code></a></p></th>
-<td><p>Setup waterlevel boundary (bndfile) points along model waterlevel boundary (msk=2).</p></td>
-</tr>
-<tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_discharge_forcing()</span></code></a></p></th>
-<td><p>Setup discharge forcing (srcfile, disfile) from a <cite>geodataset</cite> (geospatial point timeseries) or a tabular <cite>timeseries</cite> dataframe)</p></td>
-</tr>
-<tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_discharge_forcing_from_grid()</span></code></a></p></th>
-<td><p>Setup discharge forcing (srcfile, disfile) based on a gridded discharge dataset.</p></td>
+<tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html#hydromt_sfincs.SfincsModel.setup_waterlevel_forcing" title="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_waterlevel_forcing()</span></code></a></p></th>
+<td><p>This component adds waterlevel forcing (bndfile, bzsfile) from a <cite>geodataset</cite> (geospatial point timeseries) or a tabular <cite>timeseries</cite> dataframe.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.SfincsModel.setup_river_inflow" title="hydromt_sfincs.SfincsModel.setup_river_inflow"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_river_inflow()</span></code></a></p></th>
-<td><p>Setup discharge (srcfile) points where a river enters the model domain.</p></td>
+<td><p>This component adds discharge points (srcfile) where a river enters the model domain.</p></td>
+</tr>
+<tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_discharge_forcing()</span></code></a></p></th>
+<td><p>This component adds discharge forcing (srcfile, disfile) from a <cite>geodataset</cite> (geospatial point timeseries) or a tabular <cite>timeseries</cite> dataframe.</p></td>
+</tr>
+<tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_discharge_forcing_from_grid()</span></code></a></p></th>
+<td><p>This component adds discharge forcing (srcfile, disfile) based on a gridded discharge dataset.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing.html#hydromt_sfincs.SfincsModel.setup_precip_forcing" title="hydromt_sfincs.SfincsModel.setup_precip_forcing"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_precip_forcing()</span></code></a></p></th>
-<td><p>Setup spatially uniform precipitation forcing (precipfile).</p></td>
+<td><p>This component adds spatially uniform precipitation forcing (precipfile).</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_precip_forcing_from_grid()</span></code></a></p></th>
-<td><p>Setup precipitation forcing from a gridded spatially varying data source (netamprfile).</p></td>
+<td><p>This component adds precipitation forcing from a gridded spatially varying data source (netamprfile).</p></td>
 </tr>
 </tbody>
 </table>
@@ -638,7 +635,7 @@ a specific method see its documentation.</p>
 </thead>
 <tbody>
 <tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_tiles.html#hydromt_sfincs.SfincsModel.setup_tiles" title="hydromt_sfincs.SfincsModel.setup_tiles"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_tiles()</span></code></a></p></th>
-<td><p>This component generates webmercator index and topobathy tiles for the SFINCS model.</p></td>
+<td><p>This component generates webmercator index and topobathy tiles for visualization of the SFINCS model.</p></td>
 </tr>
 </tbody>
 </table>

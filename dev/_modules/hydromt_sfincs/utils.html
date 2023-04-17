@@ -456,37 +456,6 @@ document.write(`
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<span class="c1">## CONFIG: sfincs.inp ##</span>
-
-
-<span class="k">class</span> <span class="nc">ConfigParserSfincs</span><span class="p">(</span><span class="n">ConfigParser</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">defaults</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="n">comment_prefixes</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;#&quot;</span><span class="p">),</span>
-            <span class="n">inline_comment_prefixes</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">),</span>
-            <span class="n">allow_no_value</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">delimiters</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">ConfigParserSfincs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">defaults</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">read_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">def</span> <span class="nf">add_header</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">header_name</span><span class="o">=</span><span class="s2">&quot;dummy&quot;</span><span class="p">):</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;add header&quot;&quot;&quot;</span>
-            <span class="k">yield</span> <span class="s2">&quot;[</span><span class="si">{}</span><span class="s2">]</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">header_name</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">line</span>
-
-        <span class="nb">super</span><span class="p">(</span><span class="n">ConfigParserSfincs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">add_header</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_write_section</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">section_name</span><span class="p">,</span> <span class="n">section_items</span><span class="p">,</span> <span class="n">delimiter</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write a single section to the specified `fp&#39;.&quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">section_items</span><span class="p">:</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interpolation</span><span class="o">.</span><span class="n">before_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section_name</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:&lt;15}</span><span class="s2"> </span><span class="si">{:&lt;1}</span><span class="s2"> </span><span class="si">{:&lt;}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delimiters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value</span><span class="p">))</span>
-        <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-
 <span class="c1">## BINARY MAPS: sfincs.ind, sfincs.msk, sfincs.dep etc. ##</span>
 
 
@@ -1172,8 +1141,9 @@ document.write(`
     <span class="n">dep</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
     <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">floodmap_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;floodmap.tif&quot;</span><span class="p">,</span>
+    <span class="n">floodmap_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;nearest&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a downscaled floodmap for (model) region.</span>
 
@@ -1189,50 +1159,54 @@ document.write(`
 <span class="sd">        Geodataframe with polygons to mask floodmap, example containing the landarea, by default None</span>
 <span class="sd">        Note that the area outside the polygons is set to nodata.</span>
 <span class="sd">    floodmap_fn : Union[Path, str], optional</span>
-<span class="sd">        Name (path) of output floodmap, by default &quot;floodmap.tif&quot;</span>
+<span class="sd">        Name (path) of output floodmap, by default None. If provided, the floodmap is written to disk.</span>
 <span class="sd">    reproj_method : str, optional</span>
 <span class="sd">        Reprojection method for downscaling the water levels, by default &quot;nearest&quot;.</span>
 <span class="sd">        Other option is &quot;bilinear&quot;.</span>
+<span class="sd">    kwargs : dict, optional</span>
+<span class="sd">        Additional keyword arguments passed to `RasterDataArray.to_raster`.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    hmax: xr.Dataset</span>
 <span class="sd">        Downscaled and masked floodmap.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    hydromt.raster.RasterDataArray.to_raster</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># get maximum water level</span>
+    <span class="n">timedim</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">zsmax</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">zsmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">timedim</span><span class="p">:</span>
+        <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">timedim</span><span class="p">)</span>
 
     <span class="c1"># interpolate zsmax to dep grid</span>
     <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
-    <span class="n">zsmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>  <span class="c1"># make sure nodata is nan</span>
 
-    <span class="c1"># compute hmax</span>
-    <span class="k">if</span> <span class="s2">&quot;timemax&quot;</span> <span class="ow">in</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
-        <span class="n">hmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s2">&quot;timemax&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">dep</span>
-    <span class="k">elif</span> <span class="s2">&quot;time&quot;</span> <span class="ow">in</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
-        <span class="n">hmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">dep</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">hmax</span> <span class="o">=</span> <span class="n">zsmax</span> <span class="o">-</span> <span class="n">dep</span>
+    <span class="c1"># get flood depth</span>
+    <span class="n">hmax</span> <span class="o">=</span> <span class="p">(</span><span class="n">zsmax</span> <span class="o">-</span> <span class="n">dep</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+    <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
-    <span class="c1"># remove flood-depths below threshold</span>
-    <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hmax</span> <span class="o">&gt;</span> <span class="n">hmin</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
-
+    <span class="c1"># mask floodmap</span>
+    <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hmax</span> <span class="o">&gt;</span> <span class="n">hmin</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">gdf_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_mask</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
-        <span class="n">floodmap_fn</span> <span class="o">=</span> <span class="n">floodmap_fn</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.tif&quot;</span><span class="p">,</span> <span class="s2">&quot;_mask.tif&quot;</span><span class="p">)</span>
 
     <span class="c1"># write floodmap</span>
-    <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">to_raster</span><span class="p">(</span>
-        <span class="n">floodmap_fn</span><span class="p">,</span>
-        <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;GTiff&quot;</span><span class="p">,</span>
-        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
-        <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-        <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-        <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span>
-        <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="n">profile</span><span class="o">=</span><span class="s2">&quot;COG&quot;</span><span class="p">,</span>
-        <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">floodmap_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">:</span>  <span class="c1"># write COG by default</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;GTiff&quot;</span><span class="p">,</span>
+                <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span>
+                <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="n">profile</span><span class="o">=</span><span class="s2">&quot;COG&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">to_raster</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">hmax</span></div>
 
 

@@ -547,7 +547,7 @@ document.write(`
 <h1>hydromt_sfincs.SfincsModel.setup_cn_infiltration<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-cn-infiltration" title="Permalink to this heading">#</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_cn_infiltration">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_cn_infiltration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">antecedent_moisture</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'avg'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_cn_infiltration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_cn_infiltration" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_cn_infiltration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">antecedent_moisture</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'avg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reproj_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'med'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_cn_infiltration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_cn_infiltration" title="Permalink to this definition">#</a></dt>
 <dd><p>Setup model potential maximum soil moisture retention map (scsfile)
 from gridded curve number map.</p>
 <p>Adds model layers:</p>
@@ -566,6 +566,8 @@ from gridded curve number map.</p>
 <li><p><strong>antecedent_moisture</strong> (<em>{'dry'</em><em>, </em><em>'avg'</em><em>, </em><em>'wet'}</em><em>, </em><em>optional</em>) – Antecedent runoff conditions.
 None if data has no antecedent runoff conditions.
 By default <cite>avg</cite></p></li>
+<li><p><strong>reproj_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – Resampling method for reprojecting the curve number data to the model grid.
+By default ‘med’. For more information see, <code class="xref py py-meth docutils literal notranslate"><span class="pre">hydromt.raster.RasterDataArray.reproject_like()</span></code></p></li>
 </ul>
 </dd>
 </dl>
