@@ -125,7 +125,7 @@ autoclass_content = "both"
 html_static_path = ["_static"]
 html_css_files = ["theme-deltares.css"]
 html_theme_options = {
-    "show_nav_level": 2,
+    "show_nav_level": 3,
     "navbar_align": "content",
     "icon_links": [
         {

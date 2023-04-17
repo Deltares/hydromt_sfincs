@@ -2077,7 +2077,7 @@ class SfincsModel(GridModel):
         self._assert_write_mode
 
         dtypes = {"msk": "u1"}  # default to f4
-        if self.reggrid and len(self._grid.data_vars) > 0 and "msk" in self.grid:
+        if self.reggrid and len(self.grid.data_vars) > 0 and "msk" in self.grid:
             # make sure orientation is S->N
             ds_out = self.grid
             if ds_out.raster.res[1] < 0:
@@ -2391,48 +2391,72 @@ class SfincsModel(GridModel):
                 else:
                     ds.to_netcdf(fn, encoding=encoding)
 
-    def read_states(self, crs=None):
-        """Read waterlevel state (zsini) from ascii file and save to `states` attribute.
+    def read_states(self):
+        """Read waterlevel state (zsini) from binary file and save to `states` attribute.
         The inifile if mentioned in the sfincs.inp configuration file is read.
 
-        Parameters
-        ----------
-        crs: int, CRS
-            Coordinate reference system, if provided use instead of epsg code from sfincs.inp
         """
         self._assert_read_mode
-        if "inifile" in self.config:
-            fn = self.get_config("inifile", abs_path=True)
-            if not isfile(fn):
-                self.logger.warning("inifile not found at {fn}")
-                return
-            zsini = RasterDataArray.from_numpy(
-                data=utils.read_ascii_map(fn),  # orientation S-N
-                transform=self.grid.raster.transform,
-                crs=self.crs,
-                nodata=-9999,  # TODO: check what a good nodatavalue is
-            )
-            if zsini.shape != self.grid.raster.shape:
-                raise ValueError('The shape of "inifile" and maps does not match.')
-            if "msk" in self._grid:
-                zsini = zsini.where(self.mask != 0, -9999)
-            self.set_states(zsini, "zsini")
 
-    def write_states(self, fmt="%8.3f"):
-        """Write waterlevel state (zsini)  to ascii map file.
+        # read index file
+        ind_fn = self.get_config("indexfile", fallback="sfincs.ind", abs_path=True)
+        if not isfile(ind_fn):
+            raise IOError(f".ind path {ind_fn} does not exist")
+
+        if self.reggrid is not None:
+            ind = self.reggrid.read_ind(ind_fn=ind_fn)
+            if "inifile" in self.config:
+                fn = self.get_config("inifile", abs_path=True)
+                if not isfile(fn):
+                    self.logger.warning("inifile not found at {fn}")
+                    return
+                zsini = self.reggrid.read_map(
+                    fn, ind, dtype="f4", mv=-9999.0, name="zsini"
+                )
+
+                if self.crs is not None:
+                    zsini.raster.set_crs(self.crs)
+                self.set_states(zsini, "zsini")
+
+    def write_states(self):
+        """Write waterlevel state (zsini) to binary map file.
         The filenames is based on the `config` attribute.
         """
         self._assert_write_mode
 
-        assert len(self._states) <= 1
-        for name in self._states:
+        name = "zsini"
+
+        if name not in self.states:
+            self.logger.warning(f"{name} not in states, skipping")
+            return
+
+        if self.reggrid and "msk" in self.grid:
+            # make sure orientation is S->N
+            ds_out = self.grid
+            if ds_out.raster.res[1] < 0:
+                ds_out = ds_out.raster.flipud()
+            mask = ds_out["msk"].values
+
+            self.logger.debug("Write binary map indices based on mask.")
+            # write index file
+            ind_fn = self.get_config("indexfile", abs_path=True)
+            self.reggrid.write_ind(ind_fn=ind_fn, mask=mask)
+
             if f"inifile" not in self.config:
                 self.set_config(f"inifile", f"sfincs.{name}")
             fn = self.get_config("inifile", abs_path=True)
-            da = self._states[name].fillna(0)  # TODO check proper nodata value
-            if da.raster.res[1] < 0:  # orientation is S->N
+            da = self.states[name]
+            if da.raster.res[1] < 0:
                 da = da.raster.flipud()
-            utils.write_ascii_map(fn, da.values, fmt=fmt)
+
+            self.logger.debug("Write binary water level state inifile")
+            self.reggrid.write_map(
+                map_fn=fn,
+                data=da.values,
+                mask=mask,
+                dtype="f4",
+            )
+
         if self._write_gis:
             self.write_raster("states")
 

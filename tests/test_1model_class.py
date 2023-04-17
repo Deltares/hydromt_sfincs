@@ -31,23 +31,27 @@ def test_model_class(case):
     # pass
 
 
-# FIXME
-# def test_states(tmpdir):
-#     root = join(TESTDATADIR, _cases["riverine"]["example"])
-#     fn = "sfincs.restart"
-#     mod = SfincsModel(root=root, mode="r+")
-#     mod.set_config("inifile", fn)
-#     # read and check if DataArray
-#     assert isinstance(mod.states["zsini"], xr.DataArray)
-#     tmp_root = str(tmpdir.join("restart_test"))
-#     mod.set_root(tmp_root, mode="w")
-#     # write and check if isfile
-#     mod.write_states()
-#     mod.write_config()
-#     assert isfile(join(mod.root, fn))
-#     # read and check if identical
-#     mod1 = SfincsModel(root=tmp_root, mode="r")
-#     assert np.allclose(mod1.states["zsini"], mod.states["zsini"])
+def test_states(tmpdir):
+    root = TESTMODELDIR
+    fn = "sfincs.zsini"
+    mod = SfincsModel(root=root, mode="r+")
+    mod.read()
+    # create dummy state and set to states
+    mask = mod.grid["dep"] < -0.5
+    zsini = xr.where(mask, 0.5, -9999.0)
+    zsini.raster.set_nodata(-9999.0)
+    zsini.raster.set_crs(mod.crs)
+    mod.set_states(zsini, "zsini")
+
+    tmp_root = str(tmpdir.join("restart_test"))
+    mod.set_root(tmp_root, mode="w")
+    # write and check if isfile
+    mod.write_states()
+    mod.write_config()
+    assert isfile(join(mod.root, fn))
+    # read and check if identical
+    mod1 = SfincsModel(root=tmp_root, mode="r")
+    assert np.allclose(mod1.states["zsini"], mod.states["zsini"])
 
 
 def test_structs(tmpdir):

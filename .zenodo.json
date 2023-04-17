@@ -9,6 +9,10 @@
             "orcid": "0000-0002-0951-8418"
         },
         {
+            "affiliation":"Deltares",
+            "name": "de Goede, Roel"
+        }
+        {
             "affiliation": "Deltares",
             "name": "Leijnse, Tim",
             "orcid": "0000-0003-1873-3387"
@@ -20,5 +24,5 @@
         }
     ],
     "access_right": "open",
-    "license": "MIT"
+    "license": "GPL-3.0",
 }
