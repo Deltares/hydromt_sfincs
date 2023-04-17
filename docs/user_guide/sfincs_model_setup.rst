@@ -73,12 +73,10 @@ General setup methods
      - Explanation
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_config`     
      - Update SFINCS config (sfincs.inp) with a dictionary.
-   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_region`
-     - This component sets the region of interest and res of the model.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_grid`
-     - This component generates a user-defined grid.
+     - This component generates a user-defined model grid.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_grid_from_region`
-     - This component automatically generates a model grid covering the region of interest with a given res(olution).
+     - This component automatically generates a model grid covering the region of interest with a given resolution.
 
 Grid setup methods
 ------------------
@@ -94,19 +92,19 @@ Grid setup methods
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_dep`
      - This component interpolates topobathy (depfile) data to the model grid.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_mask_active`
-     - This component generates a mask (mskfile) defining which part of the model grid is active.
+     - This component generates a mask (mskfile) defining which part of the model grid is active based on elevation criteria and/or polygons.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_mask_bounds`
-     - This component adds boundary cells in the model mask (mskfile).
+     - This component adds boundary cells in the model mask (mskfile) based on elevation criteria and/or polygons.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_river_outflow`
-     - This component adds open boundary cells (mask=3) where a river flows out of the model domain.   
+     - This component adds boundary cells in the model mask (mskfile) where a river flows out of the model domain.   
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_manning_roughness`
-     - This component adds a manning roughness map (manningfile) to the model grid from gridded manning data or a combinataion of gridded land-use/land-cover map and manning roughness mapping table.
+     - This component adds a Manning roughness map (manningfile) to the model grid based on gridded Manning roughness data or a combinataion of gridded land-use/land-cover map and a Manning roughness mapping table.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_constant_infiltration`
      - This component adds a spatially varying constant infiltration rate map (qinffile) to the model grid.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_cn_infiltration`
      - This component adds a potential maximum soil moisture retention map (scsfile) to the model grid based on a gridded curve number map.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_subgrid`
-     - This component generates subgrid tables (sbgfile) for the model grid based on a list of elevation and Manning's roughness datasets
+     - This component generates subgrid tables (sbgfile) for the model grid based on a list of elevation and Manning roughness datasets
 
 Geoms setup methods
 -------------------
@@ -122,7 +120,7 @@ Geoms setup methods
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_observation_points`
      - This component adds observation points to the model (obsfile). 
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_structures`
-     - This component adds structures to the model (thdfile, weirfile).
+     - This component adds line element structures to the model (thdfile, weirfile).
 
 Forcing setup methods
 ---------------------
@@ -135,20 +133,20 @@ Forcing setup methods
 
    * - :py:class:`~hydromt_sfincs.SfincsModel` Method
      - Explanation     
-   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_waterlevel_forcing`
-     - Setup waterlevel forcing (bndfile, bzsfile) from a `geodataset` (geospatial point timeseries) or a tabular `timeseries` dataframe
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask`
-     - Setup waterlevel boundary (bndfile) points along model waterlevel boundary (msk=2).
-   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing`   
-     - Setup discharge forcing (srcfile, disfile) from a `geodataset` (geospatial point timeseries) or a tabular `timeseries` dataframe)            
-   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid`
-     - Setup discharge forcing (srcfile, disfile) based on a gridded discharge dataset.
+     - This component adds waterlevel boundary points (bndfile) along model waterlevel boundary (msk=2).
+   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_waterlevel_forcing`
+     - This component adds waterlevel forcing (bndfile, bzsfile) from a `geodataset` (geospatial point timeseries) or a tabular `timeseries` dataframe.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_river_inflow`
-     - Setup discharge (srcfile) points where a river enters the model domain.   
+     - This component adds discharge points (srcfile) where a river enters the model domain.   
+   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing`   
+     - This component adds discharge forcing (srcfile, disfile) from a `geodataset` (geospatial point timeseries) or a tabular `timeseries` dataframe.            
+   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid`
+     - This component adds discharge forcing (srcfile, disfile) based on a gridded discharge dataset.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_precip_forcing`
-     - Setup spatially uniform precipitation forcing (precipfile).
+     - This component adds spatially uniform precipitation forcing (precipfile).
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid`
-     - Setup precipitation forcing from a gridded spatially varying data source (netamprfile).
+     - This component adds precipitation forcing from a gridded spatially varying data source (netamprfile).
 
 Other setup methods
 -------------------
@@ -162,6 +160,6 @@ Other setup methods
    * - :py:class:`~hydromt_sfincs.SfincsModel` Method
      - Explanation  
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_tiles`
-     - This component generates webmercator index and topobathy tiles for the SFINCS model. 
+     - This component generates webmercator index and topobathy tiles for visualization of the SFINCS model. 
 
 .. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html

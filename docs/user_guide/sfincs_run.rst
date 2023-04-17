@@ -11,6 +11,12 @@ The model is situated in **Northern Italy** and is forced with waterlevel and di
 
 If you want to read more about running SFINCS on different platforms, please read the `SFINCS manual <https://sfincs.readthedocs.io/en/latest/example.html#running-sfincs>`_.
 
+.. Note:: 
+    HydroMT-SFINCS does **not** contain the SFINCS kernel itself.
+    For more information on how to obtain and install the SFINCS kernel, 
+    please read the `SFINCS manual <https://sfincs.readthedocs.io/en/latest/example.html#executable>`_.
+
+
 .. toctree::
     :hidden:
 
