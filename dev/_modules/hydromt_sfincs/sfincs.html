@@ -2776,7 +2776,7 @@ document.write(`
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_assert_read_mode</span>
-        
+
         <span class="c1"># read index file</span>
         <span class="n">ind_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;indexfile&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">&quot;sfincs.ind&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">ind_fn</span><span class="p">):</span>
@@ -2789,7 +2789,9 @@ document.write(`
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;inifile not found at </span><span class="si">{fn}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="k">return</span>
-                <span class="n">zsini</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">read_map</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;f4&quot;</span><span class="p">,</span> <span class="n">mv</span><span class="o">=-</span><span class="mf">9999.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;zsini&quot;</span><span class="p">)</span>
+                <span class="n">zsini</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">read_map</span><span class="p">(</span>
+                    <span class="n">fn</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;f4&quot;</span><span class="p">,</span> <span class="n">mv</span><span class="o">=-</span><span class="mf">9999.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;zsini&quot;</span>
+                <span class="p">)</span>
 
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">zsini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
@@ -2825,13 +2827,13 @@ document.write(`
             <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">flipud</span><span class="p">()</span>
-                
+
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Write binary water level state inifile&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">write_map</span><span class="p">(</span>
                 <span class="n">map_fn</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span>
                 <span class="n">data</span><span class="o">=</span><span class="n">da</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
                 <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
-                <span class="n">dtype</span><span class="o">=</span> <span class="s2">&quot;f4&quot;</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;f4&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>
