@@ -37,7 +37,7 @@ in the repository root with the following command:
 
   $ mamba env create -f https://raw.githubusercontent.com/Deltares/hydromt_sfincs/main/environment.yml
 
-Then, activate the environment (as stated by mamba/conda) to start making use of HydroMT-Wflow:
+Then, activate the environment (as stated by mamba/conda) to start making use of HydroMT-SFINCS:
 
 .. code-block:: console
 
@@ -66,7 +66,7 @@ channels the installation may fail.
 
 .. code-block:: console
 
-   $ mamba install -c conda-forge hydrom_sfincs -n <environment_name>
+   $ mamba install -c conda-forge hydromt_sfincs -n <environment_name>
 
 Developer install
 ==================
