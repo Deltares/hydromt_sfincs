@@ -520,55 +520,55 @@ generic models (hydromt 0.7.1):
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-04-17 16:56:05,938 - build - log - INFO - HydroMT version: 0.7.1
-2023-04-17 16:56:05,938 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base.
-2023-04-17 16:56:05,938 - build - main - INFO - User settings:
-2023-04-17 16:56:05,970 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.1.dev0).
-2023-04-17 16:56:05,971 - build - model_api - INFO - setup_grid_from_region.region: {&#39;geom&#39;: &#39;data/region.geojson&#39;}
-2023-04-17 16:56:05,971 - build - model_api - INFO - setup_grid_from_region.res: 50
-2023-04-17 16:56:05,971 - build - model_api - INFO - setup_grid_from_region.crs: utm
-2023-04-17 16:56:05,971 - build - model_api - INFO - setup_grid_from_region.rotated: True
-2023-04-17 16:56:05,971 - build - model_api - INFO - setup_grid_from_region.hydrography_fn: None
-2023-04-17 16:56:05,971 - build - model_api - INFO - setup_grid_from_region.basin_index_fn: None
-2023-04-17 16:56:05,971 - build - model_api - INFO - setup_grid_from_region.dec_origin: 0
-2023-04-17 16:56:05,971 - build - model_api - INFO - setup_grid_from_region.dec_rotation: 3
-2023-04-17 16:56:06,020 - build - model_api - INFO - setup_dep.datasets_dep: [{&#39;elevtn&#39;: &#39;merit_hydro&#39;, &#39;zmin&#39;: 0.001}, {&#39;elevtn&#39;: &#39;gebco&#39;}]
-2023-04-17 16:56:06,020 - build - model_api - INFO - setup_dep.buffer_cells: 0
-2023-04-17 16:56:06,020 - build - model_api - INFO - setup_dep.interp_method: linear
-2023-04-17 16:56:06,067 - build - data_catalog - INFO - Reading data catalog artifact_data v0.0.8 from archive
-2023-04-17 16:56:07,318 - build - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
-2023-04-17 16:56:07,385 - build - data_catalog - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/merit_hydro/{variable}.tif
-2023-04-17 16:56:07,456 - build - data_catalog - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gebco.tif
-2023-04-17 16:56:07,969 - build - sfincs - WARNING - Interpolate data at 0 cells
-2023-04-17 16:56:07,972 - build - model_api - INFO - setup_mask_active.mask: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2023-04-17 16:56:07,972 - build - model_api - INFO - setup_mask_active.include_mask: None
-2023-04-17 16:56:07,972 - build - model_api - INFO - setup_mask_active.exclude_mask: None
-2023-04-17 16:56:07,972 - build - model_api - INFO - setup_mask_active.mask_buffer: 0
-2023-04-17 16:56:07,972 - build - model_api - INFO - setup_mask_active.zmin: -5
-2023-04-17 16:56:07,972 - build - model_api - INFO - setup_mask_active.zmax: None
-2023-04-17 16:56:07,972 - build - model_api - INFO - setup_mask_active.fill_area: 10.0
-2023-04-17 16:56:07,972 - build - model_api - INFO - setup_mask_active.drop_area: 0.0
-2023-04-17 16:56:07,972 - build - model_api - INFO - setup_mask_active.connectivity: 8
-2023-04-17 16:56:07,972 - build - model_api - INFO - setup_mask_active.all_touched: True
-2023-04-17 16:56:07,972 - build - model_api - INFO - setup_mask_active.reset_mask: False
-2023-04-17 16:56:07,977 - build - data_catalog - INFO - DataCatalog: Getting region GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2023-04-17 16:56:07,982 - build - geodataframe - INFO - GeoDataFrame: Read vector data and clip to bbox (epsg:4326) [12.646, 45.490, 12.820, 45.586].
-2023-04-17 16:56:08,016 - build - regulargrid - INFO - 3 gaps outside valid elevation range &lt; 10.0 km2.
-2023-04-17 16:56:08,018 - build - sfincs - INFO - Derive region geometry based on active cells.
-2023-04-17 16:56:08,025 - build - model_api - WARNING - Replacing geom: region
-2023-04-17 16:56:08,025 - build - model_api - INFO - setup_mask_bounds.btype: waterlevel
-2023-04-17 16:56:08,025 - build - model_api - INFO - setup_mask_bounds.include_mask: None
-2023-04-17 16:56:08,026 - build - model_api - INFO - setup_mask_bounds.exclude_mask: None
-2023-04-17 16:56:08,026 - build - model_api - INFO - setup_mask_bounds.zmin: None
-2023-04-17 16:56:08,026 - build - model_api - INFO - setup_mask_bounds.zmax: -1
-2023-04-17 16:56:08,026 - build - model_api - INFO - setup_mask_bounds.connectivity: 8
-2023-04-17 16:56:08,026 - build - model_api - INFO - setup_mask_bounds.all_touched: False
-2023-04-17 16:56:08,026 - build - model_api - INFO - setup_mask_bounds.reset_bounds: False
-2023-04-17 16:56:08,053 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
-2023-04-17 16:56:08,055 - build - sfincs - INFO - Write raster file(s) for grid to &#39;gis&#39; subfolder
-2023-04-17 16:56:08,144 - build - sfincs - INFO - Write geom files
-2023-04-17 16:56:08,144 - build - sfincs - INFO - Write vector file(s) for geoms to &#39;gis&#39; subfolder
-2023-04-17 16:56:08,153 - build - sfincs - WARNING - zsini not in states, skipping
+2023-04-19 08:07:32,371 - build - log - INFO - HydroMT version: 0.7.1
+2023-04-19 08:07:32,371 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base.
+2023-04-19 08:07:32,371 - build - main - INFO - User settings:
+2023-04-19 08:07:32,402 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.1.dev0).
+2023-04-19 08:07:32,403 - build - model_api - INFO - setup_grid_from_region.region: {&#39;geom&#39;: &#39;data/region.geojson&#39;}
+2023-04-19 08:07:32,403 - build - model_api - INFO - setup_grid_from_region.res: 50
+2023-04-19 08:07:32,403 - build - model_api - INFO - setup_grid_from_region.crs: utm
+2023-04-19 08:07:32,403 - build - model_api - INFO - setup_grid_from_region.rotated: True
+2023-04-19 08:07:32,403 - build - model_api - INFO - setup_grid_from_region.hydrography_fn: None
+2023-04-19 08:07:32,403 - build - model_api - INFO - setup_grid_from_region.basin_index_fn: None
+2023-04-19 08:07:32,403 - build - model_api - INFO - setup_grid_from_region.dec_origin: 0
+2023-04-19 08:07:32,403 - build - model_api - INFO - setup_grid_from_region.dec_rotation: 3
+2023-04-19 08:07:32,448 - build - model_api - INFO - setup_dep.datasets_dep: [{&#39;elevtn&#39;: &#39;merit_hydro&#39;, &#39;zmin&#39;: 0.001}, {&#39;elevtn&#39;: &#39;gebco&#39;}]
+2023-04-19 08:07:32,448 - build - model_api - INFO - setup_dep.buffer_cells: 0
+2023-04-19 08:07:32,448 - build - model_api - INFO - setup_dep.interp_method: linear
+2023-04-19 08:07:32,504 - build - data_catalog - INFO - Reading data catalog artifact_data v0.0.8 from archive
+2023-04-19 08:07:33,699 - build - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
+2023-04-19 08:07:33,769 - build - data_catalog - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/merit_hydro/{variable}.tif
+2023-04-19 08:07:33,848 - build - data_catalog - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gebco.tif
+2023-04-19 08:07:34,343 - build - sfincs - WARNING - Interpolate data at 0 cells
+2023-04-19 08:07:34,345 - build - model_api - INFO - setup_mask_active.mask: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2023-04-19 08:07:34,345 - build - model_api - INFO - setup_mask_active.include_mask: None
+2023-04-19 08:07:34,345 - build - model_api - INFO - setup_mask_active.exclude_mask: None
+2023-04-19 08:07:34,345 - build - model_api - INFO - setup_mask_active.mask_buffer: 0
+2023-04-19 08:07:34,345 - build - model_api - INFO - setup_mask_active.zmin: -5
+2023-04-19 08:07:34,345 - build - model_api - INFO - setup_mask_active.zmax: None
+2023-04-19 08:07:34,345 - build - model_api - INFO - setup_mask_active.fill_area: 10.0
+2023-04-19 08:07:34,345 - build - model_api - INFO - setup_mask_active.drop_area: 0.0
+2023-04-19 08:07:34,345 - build - model_api - INFO - setup_mask_active.connectivity: 8
+2023-04-19 08:07:34,345 - build - model_api - INFO - setup_mask_active.all_touched: True
+2023-04-19 08:07:34,345 - build - model_api - INFO - setup_mask_active.reset_mask: False
+2023-04-19 08:07:34,350 - build - data_catalog - INFO - DataCatalog: Getting region GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2023-04-19 08:07:34,353 - build - geodataframe - INFO - GeoDataFrame: Read vector data and clip to bbox (epsg:4326) [12.646, 45.490, 12.820, 45.586].
+2023-04-19 08:07:34,388 - build - regulargrid - INFO - 3 gaps outside valid elevation range &lt; 10.0 km2.
+2023-04-19 08:07:34,390 - build - sfincs - INFO - Derive region geometry based on active cells.
+2023-04-19 08:07:34,397 - build - model_api - WARNING - Replacing geom: region
+2023-04-19 08:07:34,397 - build - model_api - INFO - setup_mask_bounds.btype: waterlevel
+2023-04-19 08:07:34,397 - build - model_api - INFO - setup_mask_bounds.include_mask: None
+2023-04-19 08:07:34,397 - build - model_api - INFO - setup_mask_bounds.exclude_mask: None
+2023-04-19 08:07:34,397 - build - model_api - INFO - setup_mask_bounds.zmin: None
+2023-04-19 08:07:34,397 - build - model_api - INFO - setup_mask_bounds.zmax: -1
+2023-04-19 08:07:34,397 - build - model_api - INFO - setup_mask_bounds.connectivity: 8
+2023-04-19 08:07:34,397 - build - model_api - INFO - setup_mask_bounds.all_touched: False
+2023-04-19 08:07:34,398 - build - model_api - INFO - setup_mask_bounds.reset_bounds: False
+2023-04-19 08:07:34,425 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
+2023-04-19 08:07:34,427 - build - sfincs - INFO - Write raster file(s) for grid to &#39;gis&#39; subfolder
+2023-04-19 08:07:34,511 - build - sfincs - INFO - Write geom files
+2023-04-19 08:07:34,512 - build - sfincs - INFO - Write vector file(s) for geoms to &#39;gis&#39; subfolder
+2023-04-19 08:07:34,520 - build - sfincs - WARNING - zsini not in states, skipping
 
 </pre></div></div>
 </div>
@@ -816,44 +816,44 @@ setup_mask_bounds:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-04-17 16:56:16,382 - update - log - INFO - HydroMT version: 0.7.1
-2023-04-17 16:56:16,382 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base (r+).
-2023-04-17 16:56:16,382 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
-2023-04-17 16:56:16,382 - update - main - INFO - User settings:
-2023-04-17 16:56:16,413 - update - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/gis.
-2023-04-17 16:56:16,413 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.1.dev0).
-2023-04-17 16:56:16,445 - update - model_api - INFO - setup_observation_points.locations: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
-2023-04-17 16:56:16,445 - update - model_api - INFO - setup_observation_points.merge: True
-2023-04-17 16:56:16,474 - update - data_catalog - INFO - Reading data catalog artifact_data v0.0.8 from archive
-2023-04-17 16:56:16,475 - update - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
-2023-04-17 16:56:16,541 - update - data_catalog - INFO - DataCatalog: Getting compound_example_observation_points GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
-2023-04-17 16:56:16,542 - update - geodataframe - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:32633) [316221.151, 5041336.510, 329106.596, 5050441.766].
-2023-04-17 16:56:16,554 - update - model_api - INFO - setup_waterlevel_forcing.geodataset: gtsmv3_eu_era5
-2023-04-17 16:56:16,554 - update - model_api - INFO - setup_waterlevel_forcing.timeseries: None
-2023-04-17 16:56:16,554 - update - model_api - INFO - setup_waterlevel_forcing.locations: None
-2023-04-17 16:56:16,555 - update - model_api - INFO - setup_waterlevel_forcing.offset: None
-2023-04-17 16:56:16,555 - update - model_api - INFO - setup_waterlevel_forcing.buffer: 2000
-2023-04-17 16:56:16,555 - update - model_api - INFO - setup_waterlevel_forcing.merge: True
-2023-04-17 16:56:16,571 - update - data_catalog - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gtsmv3_eu_era5.nc
-2023-04-17 16:56:16,604 - update - geodataset - INFO - GeoDataset: Read netcdf data and clip to geom (epsg:32633) [315583.508, 5039336.895, 331106.210, 5049946.562].
-2023-04-17 16:56:16,884 - update - model_api - INFO - setup_discharge_forcing.geodataset: None
-2023-04-17 16:56:16,884 - update - model_api - INFO - setup_discharge_forcing.timeseries: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
-2023-04-17 16:56:16,884 - update - model_api - INFO - setup_discharge_forcing.locations: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
-2023-04-17 16:56:16,884 - update - model_api - INFO - setup_discharge_forcing.merge: True
-2023-04-17 16:56:16,884 - update - data_catalog - INFO - DataCatalog: Getting compound_dis_timeseries DataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
-2023-04-17 16:56:16,885 - update - dataframe - INFO - DataFrame: Read csv data.
-2023-04-17 16:56:16,889 - update - data_catalog - INFO - DataCatalog: Getting compound_src_locations GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
-2023-04-17 16:56:16,890 - update - geodataframe - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:32633) [316221.151, 5041336.510, 329106.596, 5050441.766].
-2023-04-17 16:56:16,902 - update - sfincs - INFO - Setting gdf_locs index to ID
-2023-04-17 16:56:16,903 - update - sfincs - INFO - No matching index column found in gdf_locs; assuming the order is correct
-2023-04-17 16:56:16,909 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
-2023-04-17 16:56:16,912 - update - sfincs - INFO - Write raster file(s) for grid to &#39;gis&#39; subfolder
-2023-04-17 16:56:17,012 - update - sfincs - INFO - Write geom files
-2023-04-17 16:56:17,015 - update - sfincs - INFO - Write vector file(s) for geoms to &#39;gis&#39; subfolder
-2023-04-17 16:56:17,031 - update - sfincs - INFO - Write forcing files
-2023-04-17 16:56:17,041 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
-2023-04-17 16:56:17,075 - update - sfincs - INFO - Write vector file(s) for forcing.dis to &#39;gis&#39; subfolder
-2023-04-17 16:56:17,102 - update - sfincs - WARNING - zsini not in states, skipping
+2023-04-19 08:07:43,529 - update - log - INFO - HydroMT version: 0.7.1
+2023-04-19 08:07:43,529 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base (r+).
+2023-04-19 08:07:43,529 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
+2023-04-19 08:07:43,529 - update - main - INFO - User settings:
+2023-04-19 08:07:43,559 - update - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/gis.
+2023-04-19 08:07:43,560 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.1.dev0).
+2023-04-19 08:07:43,591 - update - model_api - INFO - setup_observation_points.locations: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
+2023-04-19 08:07:43,592 - update - model_api - INFO - setup_observation_points.merge: True
+2023-04-19 08:07:43,632 - update - data_catalog - INFO - Reading data catalog artifact_data v0.0.8 from archive
+2023-04-19 08:07:43,633 - update - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
+2023-04-19 08:07:43,703 - update - data_catalog - INFO - DataCatalog: Getting compound_example_observation_points GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
+2023-04-19 08:07:43,704 - update - geodataframe - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:32633) [316221.151, 5041336.510, 329106.596, 5050441.766].
+2023-04-19 08:07:43,716 - update - model_api - INFO - setup_waterlevel_forcing.geodataset: gtsmv3_eu_era5
+2023-04-19 08:07:43,716 - update - model_api - INFO - setup_waterlevel_forcing.timeseries: None
+2023-04-19 08:07:43,716 - update - model_api - INFO - setup_waterlevel_forcing.locations: None
+2023-04-19 08:07:43,716 - update - model_api - INFO - setup_waterlevel_forcing.offset: None
+2023-04-19 08:07:43,716 - update - model_api - INFO - setup_waterlevel_forcing.buffer: 2000
+2023-04-19 08:07:43,716 - update - model_api - INFO - setup_waterlevel_forcing.merge: True
+2023-04-19 08:07:43,732 - update - data_catalog - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gtsmv3_eu_era5.nc
+2023-04-19 08:07:43,764 - update - geodataset - INFO - GeoDataset: Read netcdf data and clip to geom (epsg:32633) [315583.508, 5039336.895, 331106.210, 5049946.562].
+2023-04-19 08:07:44,041 - update - model_api - INFO - setup_discharge_forcing.geodataset: None
+2023-04-19 08:07:44,041 - update - model_api - INFO - setup_discharge_forcing.timeseries: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
+2023-04-19 08:07:44,041 - update - model_api - INFO - setup_discharge_forcing.locations: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
+2023-04-19 08:07:44,041 - update - model_api - INFO - setup_discharge_forcing.merge: True
+2023-04-19 08:07:44,041 - update - data_catalog - INFO - DataCatalog: Getting compound_dis_timeseries DataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
+2023-04-19 08:07:44,041 - update - dataframe - INFO - DataFrame: Read csv data.
+2023-04-19 08:07:44,046 - update - data_catalog - INFO - DataCatalog: Getting compound_src_locations GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
+2023-04-19 08:07:44,047 - update - geodataframe - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:32633) [316221.151, 5041336.510, 329106.596, 5050441.766].
+2023-04-19 08:07:44,057 - update - sfincs - INFO - Setting gdf_locs index to ID
+2023-04-19 08:07:44,058 - update - sfincs - INFO - No matching index column found in gdf_locs; assuming the order is correct
+2023-04-19 08:07:44,064 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
+2023-04-19 08:07:44,066 - update - sfincs - INFO - Write raster file(s) for grid to &#39;gis&#39; subfolder
+2023-04-19 08:07:44,162 - update - sfincs - INFO - Write geom files
+2023-04-19 08:07:44,165 - update - sfincs - INFO - Write vector file(s) for geoms to &#39;gis&#39; subfolder
+2023-04-19 08:07:44,181 - update - sfincs - INFO - Write forcing files
+2023-04-19 08:07:44,191 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2023-04-19 08:07:44,222 - update - sfincs - INFO - Write vector file(s) for forcing.dis to &#39;gis&#39; subfolder
+2023-04-19 08:07:44,246 - update - sfincs - WARNING - zsini not in states, skipping
 
 </pre></div></div>
 </div>
