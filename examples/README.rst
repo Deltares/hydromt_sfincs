@@ -1,5 +1,5 @@
 .. image:: https://mybinder.org/badge_logo.svg
-    :target: https://mybinder.org/v2/gh/Deltares/hydromt_wflow/main?urlpath=lab/tree/examples
+    :target: https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples
 
 This folder contains several iPython notebook examples for **HydroMT-SFINCS**. 
 
@@ -13,7 +13,7 @@ To run these examples on your local machine you need a copy of the examples fold
 of the repository and an installation of HydroMT-SFINCS including some additional 
 packages required to run the notebooks. 
 
-1 - Install HydroMT-wflow 
+1 - Install HydroMT-SFINCS 
 *************************
 
 The first step is to install HydroMT-SFINCS and the other Python dependencies in a separate environment, 
