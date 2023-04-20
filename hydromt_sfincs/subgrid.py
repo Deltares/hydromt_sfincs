@@ -196,6 +196,7 @@ class SubgridTableRegular:
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
         buffer_cells: int = 0,
+        extrapolate_values: bool = False,
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
         highres_dir: str = None,
@@ -403,7 +404,16 @@ class SubgridTableRegular:
                         f"WARNING: Interpolate data at {int(np.sum(np.isnan(da_dep.values)))} cells"
                     )
                     da_dep = da_dep.raster.interpolate_na(method="rio_idw")
-                assert np.all(~np.isnan(da_dep))
+
+                # Extrapolate option
+                if extrapolate_values == True:
+                    # Extrapolate this
+                    da_dep = da_dep.raster.interpolate_na(fill_value="extrapolate", extrapolate=True)
+                    print(f"WARNING: Extrapolated data ")
+
+                else:
+                    # Assertion error 
+                    assert np.all(~np.isnan(da_dep))
 
                 # get subgrid manning roughness tile
                 if len(datasets_rgh) > 0:

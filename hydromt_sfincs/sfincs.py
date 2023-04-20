@@ -58,7 +58,7 @@ class SfincsModel(GridModel):
         "wind": ("netamuamv", {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
-    _MAPS = ["msk", "dep", "scs", "manning", "qinf"]
+    _MAPS = ["msk", "dep", "scs", "manning", "qinf", 'kr']
     _STATES = ["rst", "ini"]
     _FOLDERS = []
     _CLI_ARGS = {"region": "setup_grid_from_region", "res": "setup_grid_from_region"}
@@ -580,6 +580,7 @@ class SfincsModel(GridModel):
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
+        extrapolate_values: bool = False,
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
     ):
@@ -667,6 +668,7 @@ class SfincsModel(GridModel):
                 rgh_lev_land=rgh_lev_land,
                 write_dep_tif=write_dep_tif,
                 write_man_tif=write_man_tif,
+                extrapolate_values=extrapolate_values,
                 highres_dir=highres_dir,
                 logger=self.logger,
             )
@@ -924,6 +926,28 @@ class SfincsModel(GridModel):
         # keep river centerlines
         if keep_rivers_geom and len(gdf_riv) > 0:
             self.set_geoms(gdf_riv, name="rivers_outflow")
+
+    #         
+    def setup_curvenumber_infiltration_withrecovery(self, qinf, reproj_method="average"):
+
+        # Read the data
+        # landuse, soil and mapping
+        da_inf  = self.data_catalog.get_rasterdataset(qinf, geom=self.region, buffer=10)     # landuse
+        da_soil = self.data_catalog.get_rasterdataset(qinf, geom=self.region, buffer=10)     # soil
+                                                                                             # read the mapping
+
+        # Call the workflow thing
+        [da_smax da_kr] = xx
+
+        # set grid
+        mname = "kr"
+        da_kr.attrs.update(**self._ATTRS.get("kr", {}))       # give metadata to the layer
+        self.set_grid(da_kr, name="kr")
+
+        # update config: remove default inf and set qinf map
+        self.set_config(f"krfile", f"sfincs.kr")
+        self.config.pop("qinf", None)
+
 
     def setup_constant_infiltration(self, qinf, reproj_method="average"):
         """Setup spatially varying constant infiltration rate (qinffile).
