@@ -2374,7 +2374,7 @@ class SfincsModel(GridModel):
                     continue  # timeseries + xy file already written
                 fname, rename = self._FORCING_NET[name]
                 # combine variables and rename to output names
-                rename = {v: k for k, v in rename.items() if v in ds}
+                rename = {v: k for k, v in rename.items() if v in self.forcing}
                 if len(rename) == 0:
                     continue
                 ds = xr.merge([self.forcing[v] for v in rename.keys()]).rename(rename)
