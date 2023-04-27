@@ -1030,6 +1030,48 @@ class SfincsModel(GridModel):
         reclass_table   : mapping table that related landuse and HSG to each other (matrix; not list)
         effective       : float, estimate of percentage effective soil, e.g. 0.50 for 50%
         """
+
+        # Call the workflow
+        da_smax             = self.grid.dep
+        da_smax             = da_smax.where(da_smax != da_smax, np.nan)
+        da_kr               = da_smax
+        [da_smax, da_kr]    = workflows.merge.curvenumber_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_smax, da_kr)
+
+        # Define the blocks 
+        nrmax               = 500
+        nmax                = np.shape(self.mask)[0]
+        mmax                = np.shape(self.mask)[1]               
+        grid_dim            = (nmax, mmax)
+        dx                  = self.config['dx']
+        refi                = dx/100
+        nrcb                = int(np.floor(nrmax / refi))    # nr of regular cells in a block
+        nrbn                = int(np.ceil(nmax / nrcb))       # nr of blocks in n direction
+        nrbm                = int(np.ceil(mmax / nrcb))       # nr of blocks in m direction
+
+        ## Loop through blocks
+        ib = -1
+        for ii in range(nrbm):
+            bm0 = ii * nrcb  # Index of first m in block
+            bm1 = min(bm0 + nrcb, m1)  # last m in block
+            if merge_last_col and ii == (nrbm - 1):
+                bm1 += 1
+
+            for jj in range(nrbn):
+                bn0 = jj * nrcb  # Index of first n in block
+                bn1 = min(bn0 + nrcb, n1)  # last n in block
+                if merge_last_row and jj == (nrbn - 1):
+                    bn1 += 1
+
+                # Count
+                ib += 1
+
+                # Get some prints => no idea how to get the logger info
+                print(  f"\nblock {ib + 1}/{nrbn * nrbm} -- "
+                        f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}")
+
+                # Get coordinates
+
+
                 
         # Read the datafiles
         da_landuse          = self.data_catalog.get_rasterdataset(dataset_landuse, geom=self.region, buffer=10)      # landuse
@@ -1037,11 +1079,6 @@ class SfincsModel(GridModel):
         da_Ksat             = self.data_catalog.get_rasterdataset(dataset_Ksat,geom=self.region,buffer=10)           # Ksat
         df_map              = self.data_catalog.get_dataframe(reclass_table, index_col=0)                            # mapping
 
-        # Call the workflow
-        da_smax             = self.grid.dep
-        da_smax             = da_smax.where(da_smax != da_smax, np.nan)
-        da_kr               = da_smax
-        [da_smax, da_kr]    = workflows.merge.curvenumber_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_smax, da_kr)
 
         # Specify the effective soil retention (seff)
         da_seff             = da_smax
