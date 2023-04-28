@@ -20,6 +20,7 @@ from hydromt.raster import RasterDataArray
 from hydromt.vector import GeoDataArray, GeoDataset
 from pyproj import CRS
 from shapely.geometry import box
+from shapely.geometry import Polygon
 
 from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
@@ -1017,7 +1018,7 @@ class SfincsModel(GridModel):
         self.set_config(f"{mname}file", f"sfincs.{mname}")
    
     # Function to create curve number for SFINCS including recovery term (Kr)
-    def setup_curvenumber_infiltration_withrecovery(self, dataset_landuse, dataset_HSG, dataset_Ksat, reclass_table, effective):
+    def setup_curvenumber_infiltration_withrecovery(self, dataset_landuse, dataset_HSG, dataset_Ksat, reclass_table, effective, block_size=2000):
 
         """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
         including recovery term based on the soil saturation 
@@ -1029,23 +1030,93 @@ class SfincsModel(GridModel):
         dataset_Ksat    : filename (or Path) of gridded data with saturated hydraulic conductivity (Ksat)
         reclass_table   : mapping table that related landuse and HSG to each other (matrix; not list)
         effective       : float, estimate of percentage effective soil, e.g. 0.50 for 50%
+        block_size      : float, maximum block size - use larger values will get more data in memory but can be faster, default=500
         """
-                
-        # Read the datafiles
-        da_landuse          = self.data_catalog.get_rasterdataset(dataset_landuse, geom=self.region, buffer=10)      # landuse
-        da_HSG              = self.data_catalog.get_rasterdataset(dataset_HSG, geom=self.region, buffer=10)          # HSG
-        da_Ksat             = self.data_catalog.get_rasterdataset(dataset_Ksat,geom=self.region,buffer=10)           # Ksat
-        df_map              = self.data_catalog.get_dataframe(reclass_table, index_col=0)                            # mapping
 
         # Call the workflow
-        da_smax             = self.grid.dep
-        da_smax             = da_smax.where(da_smax != da_smax, np.nan)
-        da_kr               = da_smax
-        [da_smax, da_kr]    = workflows.merge.curvenumber_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_smax, da_kr)
+        da_smax             = xr.full_like(self.mask, -9999, dtype=np.float32)
+        da_kr               = xr.full_like(self.mask, -9999, dtype=np.float32)
+
+        # Define the blocks 
+        nrmax               = block_size
+        nmax                = np.shape(self.mask)[0]
+        mmax                = np.shape(self.mask)[1]               
+        grid_dim            = (nmax, mmax)
+        dx                  = self.config['dx']
+        refi                = dx/30                           # finest resolution of NLCD is ~30m  
+        nrcb                = int(np.floor(nrmax / refi))     # nr of regular cells in a block
+        nrbn                = int(np.ceil(nmax / nrcb))       # nr of blocks in n direction
+        nrbm                = int(np.ceil(mmax / nrcb))       # nr of blocks in m direction
+        x_dim, y_dim        = self.mask.raster.x_dim, self.mask.raster.y_dim
+
+        # avoid blocks with width or height of 1
+        merge_last_col = False
+        merge_last_row = False
+        if mmax % nrcb == 1:
+            nrbm -= 1
+            merge_last_col = True
+        if nmax % nrcb == 1:
+            nrbn -= 1
+            merge_last_row = True
+
+        ## Loop through blocks
+        ib = -1
+        for ii in range(nrbm):
+            bm0 = ii * nrcb  # Index of first m in block
+            bm1 = min(bm0 + nrcb, mmax)  # last m in block
+            if merge_last_col and ii == (nrbm - 1):
+                bm1 += 1
+
+            for jj in range(nrbn):
+                bn0 = jj * nrcb  # Index of first n in block
+                bn1 = min(bn0 + nrcb, nmax)  # last n in block
+                if merge_last_row and jj == (nrbn - 1):
+                    bn1 += 1
+
+                # Count
+                ib += 1
+
+                # Get some prints => no idea how to get the logger info
+                print(  f"\nblock {ib + 1}/{nrbn * nrbm} -- "f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}")
+
+                # calculate transform and shape of block at cell and subgrid level
+                da_mask_block       = self.mask.isel({x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}).load()
+
+                # Get extent of my block
+                try:
+                    # Simply getting x and y - min and max
+                    x_min, y_min, x_max, y_max = da_mask_block.xc.min().item(), da_mask_block.yc.min().item(), da_mask_block.xc.max().item(), da_mask_block.yc.max().item()
+                except AttributeError:
+                    # For some reason; sometimes da_mask has axis with xc and otherwise with just x
+                    # TODO: Check with Dirk and Roel what the situation is
+                    x_min, y_min, x_max, y_max = da_mask_block.x.min().item(), da_mask_block.y.min().item(), da_mask_block.x.max().item(), da_mask_block.y.max().item()
+                
+                # Make polygon
+                poly_subset         = Polygon([(x_min, y_min), (x_min, y_max), (x_max, y_max), (x_max, y_min)])    
+                gdf_subset          = gpd.GeoDataFrame(geometry=[poly_subset])
+                gdf_subset          = gdf_subset.set_crs(self.crs)
+
+                # Read the datafiles
+                da_landuse          = self.data_catalog.get_rasterdataset(dataset_landuse, geom=gdf_subset, buffer=10)      # landuse
+                da_HSG              = self.data_catalog.get_rasterdataset(dataset_HSG, geom=gdf_subset, buffer=10)          # HSG
+                da_Ksat             = self.data_catalog.get_rasterdataset(dataset_Ksat,geom=gdf_subset,buffer=10)           # Ksat
+                df_map              = self.data_catalog.get_dataframe(reclass_table, index_col=0)                           # mapping
+
+                # Call workflow
+                [da_smax_block, da_kr_block]    = workflows.merge.curvenumber_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_mask_block)
+
+                # New place in the overall matrix
+                sn, sm              = slice(bn0, bn1), slice(bm0, bm1)
+                da_smax[sn, sm]     = da_smax_block
+                da_kr[sn, sm]       = da_kr_block
+
+        # Done
+        print(' done with determination of values (in blocks)')
 
         # Specify the effective soil retention (seff)
         da_seff             = da_smax
         da_seff             = da_seff * effective
+        da_seff.attrs.update({'_FillValue': da_smax._FillValue})
 
         # set grids for seff, smax and kr
         names = {"smax", "seff", "kr"}
@@ -1056,10 +1127,10 @@ class SfincsModel(GridModel):
 
             # Do something with the name variable
             eval(var_name).attrs.update(**self._ATTRS.get(name, {}))             # give metadata to the layer
-            self.set_grid(eval(var_name), name=name)
+            self.set_grid(eval(var_name), name=name)                             # not sure what this is anymore
 
             # update config: set maps
-            self.set_config(f"{name}file", f"sfincs.{name}")
+            self.set_config(f"{name}file", f"sfincs.{name}")                     # give it to SFINCS  
         
         # Remove qinf variable in sfincs
         self.config.pop("qinf", None)

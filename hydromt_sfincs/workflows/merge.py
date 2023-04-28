@@ -257,7 +257,7 @@ def merge_dataarrays(
 
 
 # Merge data for Curvenumber
-def curvenumber_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_smax, da_kr):
+def curvenumber_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_mask_block):
 
     """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files.
     More information see http://new.streamstech.com/wp-content/uploads/2018/07/SWMM-Reference-Manual-Part-I-Hydrology-1.pdf
@@ -270,14 +270,15 @@ def curvenumber_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_s
     reclass_table   : mapping table that related landuse and HSG to each other (matrix; not list)
     """
     # Started
-    print(' working on curve numbers')
+    print(' processing curve numbers')
+    da_smax             = xr.full_like(da_mask_block, -9999, dtype=np.float32)
+    da_kr               = xr.full_like(da_mask_block, -9999, dtype=np.float32)
 
     # Interpolate soil type to landuse
     da_HSG_to_landuse   = da_HSG.raster.reproject_like(da_landuse, method="nearest").load()
 
     # Curve numbers to grid: go over NLCD classes and HSG classes
-    da_CN               = da_landuse
-    da_CN               = da_CN.where(False, np.NaN)
+    da_CN               = xr.full_like(da_landuse, np.NaN, dtype=np.float32)
     for i in range(len(df_map._stat_axis)):
         for j in range(len(df_map.columns)):
             ind                 = ((da_landuse == df_map._stat_axis[i]) & (da_HSG_to_landuse == int(df_map.columns[j]) ))
