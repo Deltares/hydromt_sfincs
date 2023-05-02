@@ -19,7 +19,7 @@ from hydromt.models.model_grid import GridModel
 from hydromt.raster import RasterDataArray
 from hydromt.vector import GeoDataArray, GeoDataset
 from pyproj import CRS
-from shapely.geometry import box
+from shapely.geometry import box, LineString, MultiLineString
 
 from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
@@ -39,6 +39,7 @@ class SfincsModel(GridModel):
         "observation_points": "obs",
         "weirs": "weir",
         "thin_dams": "thd",
+        "drainage_structures": "drn",
     }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
         # timeseries (can be multiple), locations tuple
@@ -1186,6 +1187,97 @@ class SfincsModel(GridModel):
         self.set_geoms(gdf, stype)
         self.set_config(f"{stype}file", f"sfincs.{stype}")
 
+    def setup_drainage_structures(
+        self,
+        structures: Union[str, Path, gpd.GeoDataFrame],
+        stype: str = "pump",
+        discharge: float = 0.0,
+        merge: bool = True,
+        **kwargs,
+    ):
+        """Setup drainage structures.
+
+        Adds model layer:
+        * **drn** geom: drainage pump or culver
+
+        Parameters
+        ----------
+        structures : str, Path
+            Path, data source name, or geopandas object to structure line (with 2 points per line!) geometry file.
+            The "type" (1 for pump and 2 for culvert), "par1" ("discharge" also accepted) variables are optional.
+            If "type" or "par1" are not provided, they are based on stype or discharge arguments.
+        stype : {'pump', 'culvert'}, optional
+            Structure type, by default "pump". stype is converted to integer "type" to match with SFINCS expectations.
+        discharge : float, optional
+            Discharge of the structure, by default 0.0. For culverts, this is the maximum discharge,
+            since actual discharge depends on waterlevel gradient
+        merge : bool, optional
+            If True, merge with existing drainage structures, by default True.
+        """
+
+        stype = stype.lower()
+        svalues = {"pump": 1, "culvert": 2}
+        if stype not in svalues:
+            raise ValueError('stype must be one of "pump", "culvert"')
+        svalue = svalues[stype]
+
+        # read, clip and reproject
+        gdf_structures = self.data_catalog.get_geodataframe(
+            structures, geom=self.region, **kwargs
+        ).to_crs(self.crs)
+
+        # check if type (int) is present in gdf, else overwrite from args
+        # TODO also add check if type is interger?
+        if "type" not in gdf_structures:
+            gdf_structures["type"] = svalue
+        # if discharge is provided, rename to par1
+        if "discharge" in gdf_structures:
+            gdf_structures["par1"] = gdf_structures["discharge"]
+            gdf_structures = gdf_structures.drop(columns=["discharge"])
+
+        # add par1, par2, par3, par4, par5 if not present
+        # NOTE only par1 is used in the model
+        if "par1" not in gdf_structures:
+            gdf_structures["par1"] = discharge
+        if "par2" not in gdf_structures:
+            gdf_structures["par2"] = 0
+        if "par3" not in gdf_structures:
+            gdf_structures["par3"] = 0
+        if "par4" not in gdf_structures:
+            gdf_structures["par4"] = 0
+        if "par5" not in gdf_structures:
+            gdf_structures["par5"] = 0
+
+        # check if (multi)linestrings only have 2 points, else drop
+        for i, row in gdf_structures.iterrows():
+            if isinstance(row.geometry, MultiLineString):
+                for ls in row.geometry.geoms:
+                    if len(ls.coords) != 2:
+                        self.logger.debug(
+                            f"Row {i} contains a MultiLineString with a LineString that has {len(ls.coords)} points."
+                        )
+                        gdf_structures = gdf_structures.drop(index=i)
+                    else:
+                        # convert Multilinestring to LineString
+                        gdf_structures.loc[i, "geometry"] = LineString(ls.coords)
+            elif isinstance(row.geometry, LineString) and len(row.geometry.coords) != 2:
+                self.logger.debug(
+                    f"Row {i} contains a LineString with {len(row.geometry.coords)} points."
+                )
+                gdf_structures = gdf_structures.drop(index=i)
+
+        # combine with existing structures if present
+        if merge and "drn" in self.geoms:
+            gdf0 = self._geoms.pop("drn")
+            gdf_structures = gpd.GeoDataFrame(
+                pd.concat([gdf_structures, gdf0], ignore_index=True)
+            )
+            self.logger.info(f"Adding {stype} structures to existing structures.")
+
+        # set structures
+        self.set_geoms(gdf_structures, "drn")
+        self.set_config("drnfile", f"sfincs.drn")
+
     ### FORCING
     def set_forcing_1d(
         self,
@@ -2139,7 +2231,7 @@ class SfincsModel(GridModel):
     def read_geoms(self):
         """Read geometry files and save to `geoms` attribute.
         Known geometry files mentioned in the sfincs.inp configuration file are read,
-        including: bnd/src/obs xy files and thd/weir structure files.
+        including: bnd/src/obs xy(n) files, thd/weir structure files and drn drainage structure files.
 
         If other geojson files are present in a "gis" subfolder folder, those are read as well.
         """
@@ -2158,6 +2250,8 @@ class SfincsModel(GridModel):
                     gdf = utils.linestring2gdf(struct, crs=self.crs)
                 elif gname == "obs":
                     gdf = utils.read_xyn(fn, crs=self.crs)
+                elif gname == "drn":
+                    gdf = utils.read_drn(fn, crs=self.crs)
                 else:
                     gdf = utils.read_xy(fn, crs=self.crs)
                 self.set_geoms(gdf, name=gname)
@@ -2201,6 +2295,8 @@ class SfincsModel(GridModel):
                         utils.write_geoms(fn, struct, stype=gname)
                     elif gname == "obs":
                         utils.write_xyn(fn, gdf, crs=self.crs)
+                    elif gname == "drn":
+                        utils.write_drn(fn, gdf)
                     else:
                         utils.write_xy(fn, gdf, fmt="%8.2f")
 
