@@ -43,6 +43,7 @@ Setup components
    SfincsModel.setup_river_outflow
    SfincsModel.setup_observation_points
    SfincsModel.setup_structures
+   SfincsModel.setup_drainage_structures
    SfincsModel.setup_waterlevel_forcing
    SfincsModel.setup_waterlevel_bnd_from_mask
    SfincsModel.setup_discharge_forcing
@@ -181,6 +182,8 @@ Input/Output methods
    utils.write_xyn
    utils.read_geoms
    utils.write_geoms
+   utils.read_drn
+   utils.write_drn
    utils.read_sfincs_map_results
    utils.read_sfincs_his_results
 

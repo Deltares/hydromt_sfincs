@@ -12,6 +12,10 @@ Bugfix
 ------
 - bugfix in **write_forcing** to ensure all NetCDF files are written instead of only the first one.
 
+New
+---
+- **setup_drainage_structures** to setup drainage structures (pumps,culverts) from a geodataframe.
+
 v1.0 (17 April 2023)
 ====================
 
