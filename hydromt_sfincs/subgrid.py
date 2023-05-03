@@ -221,7 +221,7 @@ class SubgridTableRegular:
             Maximum number of cells per subgrid-block, by default 2000
             These blocks are used to prevent memory issues while working with large datasets
         max_gradient : float, optional
-            If slope in hypsometry exceeds this value, then smoothing is applied, to prevent numerical stability problems, by default 5.0 
+            If slope in hypsometry exceeds this value, then smoothing is applied, to prevent numerical stability problems, by default 5.0
         z_minimum : float, optional
             Minimum depth in the subgrid tables, by default -99999.0
         manning_land, manning_sea : float, optional
