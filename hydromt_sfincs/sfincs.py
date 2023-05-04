@@ -1107,7 +1107,7 @@ class SfincsModel(GridModel):
             var_name = f"da_{name}"
 
             # Give metadata to the layer
-            eval(var_name).attrs.update( **self._ATTRS.get(name, {})
+            eval(var_name).attrs.update( **self._ATTRS.get(name, {}))
             self.set_grid(eval(var_name), name=name)  # not sure what this is anymore
 
             # update config: set maps
