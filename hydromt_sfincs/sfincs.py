@@ -1026,12 +1026,18 @@ class SfincsModel(GridModel):
         """
 
         # Read the datafiles
-        data_catalog    = hydromt.DataCatalog(data_libs=data_catalog)
-        da_landuse      = data_catalog.get_rasterdataset(name_files[0], geom=self.region, buffer=10)  # landcover
-        da_HSG          = data_catalog.get_rasterdataset(name_files[1], geom=self.region, buffer=10)  # HSG
-        da_Ksat         = data_catalog.get_rasterdataset(name_files[2], geom=self.region, buffer=10)  # Ksat
-        df_map          = self.data_catalog.get_dataframe(reclass_table, index_col=0)
-        
+        data_catalog = hydromt.DataCatalog(data_libs=data_catalog)
+        da_landuse = data_catalog.get_rasterdataset(
+            name_files[0], geom=self.region, buffer=10
+        )  # landcover
+        da_HSG = data_catalog.get_rasterdataset(
+            name_files[1], geom=self.region, buffer=10
+        )  # HSG
+        da_Ksat = data_catalog.get_rasterdataset(
+            name_files[2], geom=self.region, buffer=10
+        )  # Ksat
+        df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
+
         # Define outputs
         da_smax = xr.full_like(self.mask, -9999, dtype=np.float32)
         da_kr = xr.full_like(self.mask, -9999, dtype=np.float32)
@@ -1081,10 +1087,17 @@ class SfincsModel(GridModel):
                 )
 
                 # calculate transform and shape of block at cell and subgrid level
-                da_mask_block = self.mask.isel({x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}).load()
+                da_mask_block = self.mask.isel(
+                    {x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}
+                ).load()
 
                 # Call workflow
-                [da_smax_block,da_kr_block] = workflows.merge.curvenumber_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_mask_block)
+                [
+                    da_smax_block,
+                    da_kr_block,
+                ] = workflows.merge.curvenumber_recovery_determination(
+                    da_landuse, da_HSG, da_Ksat, df_map, da_mask_block
+                )
 
                 # New place in the overall matrix
                 sn, sm = slice(bn0, bn1), slice(bm0, bm1)
@@ -1107,7 +1120,7 @@ class SfincsModel(GridModel):
             var_name = f"da_{name}"
 
             # Give metadata to the layer
-            eval(var_name).attrs.update( **self._ATTRS.get(name, {}))
+            eval(var_name).attrs.update(**self._ATTRS.get(name, {}))
             self.set_grid(eval(var_name), name=name)  # not sure what this is anymore
 
             # update config: set maps

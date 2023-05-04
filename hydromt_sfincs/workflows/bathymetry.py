@@ -360,9 +360,7 @@ def burn_river_zb(
         logger.debug("Correct for D4 connectivity bed level")
         elevtn = flwdir.dem_dig_d4(da_elv1.values, rivmsk=da_msk.values, nodata=nodata)
         da_elv1 = xr.DataArray(
-            data=elevtn,
-            coords=da_elv.raster.coords,
-            dims=da_elv.raster.dims,
+            data=elevtn, coords=da_elv.raster.coords, dims=da_elv.raster.dims,
         )
         da_msk = np.logical_or(da_msk, da_elv1 < da_elv)
 
