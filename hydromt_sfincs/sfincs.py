@@ -1031,7 +1031,7 @@ class SfincsModel(GridModel):
         da_HSG          = data_catalog.get_rasterdataset(name_files[1], geom=self.region, buffer=10)  # HSG
         da_Ksat         = data_catalog.get_rasterdataset(name_files[2], geom=self.region, buffer=10)  # Ksat
         df_map          = self.data_catalog.get_dataframe(reclass_table, index_col=0)
-
+        
         # Define outputs
         da_smax = xr.full_like(self.mask, -9999, dtype=np.float32)
         da_kr = xr.full_like(self.mask, -9999, dtype=np.float32)
@@ -1074,7 +1074,6 @@ class SfincsModel(GridModel):
 
                 # Count
                 ib += 1
-
                 # Get some prints => no idea how to get the logger info
                 print(
                     f"\nblock {ib + 1}/{nrbn * nrbm} -- "
@@ -1107,10 +1106,8 @@ class SfincsModel(GridModel):
             # Dynamically create the variable name
             var_name = f"da_{name}"
 
-            # Do something with the name variable
-            eval(var_name).attrs.update(
-                **self._ATTRS.get(name, {})
-            )  # give metadata to the layer
+            # Give metadata to the layer
+            eval(var_name).attrs.update( **self._ATTRS.get(name, {})
             self.set_grid(eval(var_name), name=name)  # not sure what this is anymore
 
             # update config: set maps

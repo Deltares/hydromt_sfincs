@@ -408,11 +408,13 @@ class SubgridTableRegular:
                 # Extrapolate option
                 if extrapolate_values == True:
                     # Extrapolate this
-                    da_dep = da_dep.raster.interpolate_na(fill_value="extrapolate", extrapolate=True)
+                    da_dep = da_dep.raster.interpolate_na(
+                        fill_value="extrapolate", extrapolate=True
+                    )
                     print(f"WARNING: Extrapolated data ")
 
                 else:
-                    # Assertion error 
+                    # Assertion error
                     assert np.all(~np.isnan(da_dep))
 
                 # get subgrid manning roughness tile
