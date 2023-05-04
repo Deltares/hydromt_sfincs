@@ -59,7 +59,7 @@ class SfincsModel(GridModel):
         "wind": ("netamuamv", {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
-    _MAPS = ["msk", "dep", "scs", "manning", "qinf", 'smax', 'seff', 'kr']
+    _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "kr"]
     _STATES = ["rst", "ini"]
     _FOLDERS = []
     _CLI_ARGS = {"region": "setup_grid_from_region", "res": "setup_grid_from_region"}
@@ -256,9 +256,7 @@ class SfincsModel(GridModel):
         """
         # setup `region` of interest of the model.
         self.setup_region(
-            region=region,
-            hydrography_fn=hydrography_fn,
-            basin_index_fn=basin_index_fn,
+            region=region, hydrography_fn=hydrography_fn, basin_index_fn=basin_index_fn,
         )
         # get pyproj crs of best UTM zone if crs=utm
         pyproj_crs = hydromt.gis_utils.parse_crs(
@@ -751,10 +749,7 @@ class SfincsModel(GridModel):
         da_flwdir, da_uparea, gdf_riv = None, None, None
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
-                hydrography,
-                geom=self.region,
-                variables=["uparea", "flwdir"],
-                buffer=5,
+                hydrography, geom=self.region, variables=["uparea", "flwdir"], buffer=5,
             )
             da_flwdir = ds["flwdir"]
             da_uparea = ds["uparea"]
@@ -870,10 +865,7 @@ class SfincsModel(GridModel):
         da_flwdir, da_uparea, gdf_riv = None, None, None
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
-                hydrography,
-                geom=self.region,
-                variables=["uparea", "flwdir"],
-                buffer=5,
+                hydrography, geom=self.region, variables=["uparea", "flwdir"], buffer=5,
             )
             da_flwdir = ds["flwdir"]
             da_uparea = ds["uparea"]
@@ -928,7 +920,6 @@ class SfincsModel(GridModel):
         if keep_rivers_geom and len(gdf_riv) > 0:
             self.set_geoms(gdf_riv, name="rivers_outflow")
 
-
     # Function to create constant spatially varying infiltration
     def setup_constant_infiltration(self, qinf, reproj_method="average"):
         """Setup spatially varying constant infiltration rate (qinffile).
@@ -968,7 +959,7 @@ class SfincsModel(GridModel):
         self.set_config(f"{mname}file", f"sfincs.{mname}")
         self.config.pop("qinf", None)
 
-    # 
+    #
     def setup_cn_infiltration(self, cn, antecedent_moisture="avg", reproj_method="med"):
         """Setup model potential maximum soil moisture retention map (scsfile)
         from gridded curve number map.
@@ -1016,38 +1007,46 @@ class SfincsModel(GridModel):
         # update config: remove default infiltration values and set scs map
         self.config.pop("qinf", None)
         self.set_config(f"{mname}file", f"sfincs.{mname}")
-   
+
     # Function to create curve number for SFINCS including recovery term (Kr)
-    def setup_curvenumber_infiltration_withrecovery(self, dataset_landuse, dataset_HSG, dataset_Ksat, reclass_table, effective, block_size=2000):
+    def setup_curvenumber_infiltration_withrecovery(
+        self, data_catalog, name_files, reclass_table, effective, block_size=2000
+    ):
 
         """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
         including recovery term based on the soil saturation 
 
         Parameters
         ---------
-        dataset_landuse : filename (or Path) of gridded data with land use classes (e.g. NLCD)
-        dataset_HSG     : filename (or Path) of gridded data with hydrologic soil group classes (HSG)
-        dataset_Ksat    : filename (or Path) of gridded data with saturated hydraulic conductivity (Ksat)
-        reclass_table   : mapping table that related landuse and HSG to each other (matrix; not list)
+        data_catalog    : data catalog used in the analysis
+        name_files      : list with name of the landcover, hydrologic soil group (HSG) and Saturated Hydraulic Conductivity (Ksat)   
+        reclass_table   : reclass table to relate landcover with soiltype
         effective       : float, estimate of percentage effective soil, e.g. 0.50 for 50%
         block_size      : float, maximum block size - use larger values will get more data in memory but can be faster, default=500
         """
 
-        # Call the workflow
-        da_smax             = xr.full_like(self.mask, -9999, dtype=np.float32)
-        da_kr               = xr.full_like(self.mask, -9999, dtype=np.float32)
+        # Read the datafiles
+        data_catalog    = hydromt.DataCatalog(data_libs=data_catalog)
+        da_landuse      = data_catalog.get_rasterdataset(name_files[0], geom=self.region, buffer=10)  # landcover
+        da_HSG          = data_catalog.get_rasterdataset(name_files[1], geom=self.region, buffer=10)  # HSG
+        da_Ksat         = data_catalog.get_rasterdataset(name_files[2], geom=self.region, buffer=10)  # Ksat
+        df_map          = self.data_catalog.get_dataframe(reclass_table, index_col=0)
 
-        # Define the blocks 
-        nrmax               = block_size
-        nmax                = np.shape(self.mask)[0]
-        mmax                = np.shape(self.mask)[1]               
-        grid_dim            = (nmax, mmax)
-        dx                  = self.config['dx']
-        refi                = dx/30                           # finest resolution of NLCD is ~30m  
-        nrcb                = int(np.floor(nrmax / refi))     # nr of regular cells in a block
-        nrbn                = int(np.ceil(nmax / nrcb))       # nr of blocks in n direction
-        nrbm                = int(np.ceil(mmax / nrcb))       # nr of blocks in m direction
-        x_dim, y_dim        = self.mask.raster.x_dim, self.mask.raster.y_dim
+        # Define outputs
+        da_smax = xr.full_like(self.mask, -9999, dtype=np.float32)
+        da_kr = xr.full_like(self.mask, -9999, dtype=np.float32)
+
+        # Define the blocks
+        nrmax = block_size
+        nmax = np.shape(self.mask)[0]
+        mmax = np.shape(self.mask)[1]
+        grid_dim = (nmax, mmax)
+        dx = self.config["dx"]
+        refi = dx / 30  # finest resolution of NLCD is ~30m
+        nrcb = int(np.floor(nrmax / refi))  # nr of regular cells in a block
+        nrbn = int(np.ceil(nmax / nrcb))  # nr of blocks in n direction
+        nrbm = int(np.ceil(mmax / nrcb))  # nr of blocks in m direction
+        x_dim, y_dim = self.mask.raster.x_dim, self.mask.raster.y_dim
 
         # avoid blocks with width or height of 1
         merge_last_col = False
@@ -1077,46 +1076,29 @@ class SfincsModel(GridModel):
                 ib += 1
 
                 # Get some prints => no idea how to get the logger info
-                print(  f"\nblock {ib + 1}/{nrbn * nrbm} -- "f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}")
+                print(
+                    f"\nblock {ib + 1}/{nrbn * nrbm} -- "
+                    f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
+                )
 
                 # calculate transform and shape of block at cell and subgrid level
-                da_mask_block       = self.mask.isel({x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}).load()
-
-                # Get extent of my block
-                try:
-                    # Simply getting x and y - min and max
-                    x_min, y_min, x_max, y_max = da_mask_block.xc.min().item(), da_mask_block.yc.min().item(), da_mask_block.xc.max().item(), da_mask_block.yc.max().item()
-                except AttributeError:
-                    # For some reason; sometimes da_mask has axis with xc and otherwise with just x
-                    # TODO: Check with Dirk and Roel what the situation is
-                    x_min, y_min, x_max, y_max = da_mask_block.x.min().item(), da_mask_block.y.min().item(), da_mask_block.x.max().item(), da_mask_block.y.max().item()
-                
-                # Make polygon
-                poly_subset         = Polygon([(x_min, y_min), (x_min, y_max), (x_max, y_max), (x_max, y_min)])    
-                gdf_subset          = gpd.GeoDataFrame(geometry=[poly_subset])
-                gdf_subset          = gdf_subset.set_crs(self.crs)
-
-                # Read the datafiles
-                da_landuse          = self.data_catalog.get_rasterdataset(dataset_landuse, geom=gdf_subset, buffer=10)      # landuse
-                da_HSG              = self.data_catalog.get_rasterdataset(dataset_HSG, geom=gdf_subset, buffer=10)          # HSG
-                da_Ksat             = self.data_catalog.get_rasterdataset(dataset_Ksat,geom=gdf_subset,buffer=10)           # Ksat
-                df_map              = self.data_catalog.get_dataframe(reclass_table, index_col=0)                           # mapping
+                da_mask_block = self.mask.isel({x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}).load()
 
                 # Call workflow
-                [da_smax_block, da_kr_block]    = workflows.merge.curvenumber_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_mask_block)
+                [da_smax_block,da_kr_block] = workflows.merge.curvenumber_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_mask_block)
 
                 # New place in the overall matrix
-                sn, sm              = slice(bn0, bn1), slice(bm0, bm1)
-                da_smax[sn, sm]     = da_smax_block
-                da_kr[sn, sm]       = da_kr_block
+                sn, sm = slice(bn0, bn1), slice(bm0, bm1)
+                da_smax[sn, sm] = da_smax_block
+                da_kr[sn, sm] = da_kr_block
 
         # Done
-        print(' done with determination of values (in blocks)')
+        print(" done with determination of values (in blocks)")
 
         # Specify the effective soil retention (seff)
-        da_seff             = da_smax
-        da_seff             = da_seff * effective
-        da_seff.attrs.update({'_FillValue': da_smax._FillValue})
+        da_seff = da_smax
+        da_seff = da_seff * effective
+        da_seff.attrs.update({"_FillValue": da_smax._FillValue})
 
         # set grids for seff, smax and kr
         names = {"smax", "seff", "kr"}
@@ -1126,15 +1108,16 @@ class SfincsModel(GridModel):
             var_name = f"da_{name}"
 
             # Do something with the name variable
-            eval(var_name).attrs.update(**self._ATTRS.get(name, {}))             # give metadata to the layer
-            self.set_grid(eval(var_name), name=name)                             # not sure what this is anymore
+            eval(var_name).attrs.update(
+                **self._ATTRS.get(name, {})
+            )  # give metadata to the layer
+            self.set_grid(eval(var_name), name=name)  # not sure what this is anymore
 
             # update config: set maps
-            self.set_config(f"{name}file", f"sfincs.{name}")                     # give it to SFINCS  
-        
+            self.set_config(f"{name}file", f"sfincs.{name}")  # give it to SFINCS
+
         # Remove qinf variable in sfincs
         self.config.pop("qinf", None)
-
 
     # Roughness
     def setup_manning_roughness(
@@ -1533,9 +1516,7 @@ class SfincsModel(GridModel):
         self.set_forcing_1d(df_ts, gdf_locs, name="bzs", merge=merge)
 
     def setup_waterlevel_bnd_from_mask(
-        self,
-        distance: float = 1e4,
-        merge: bool = True,
+        self, distance: float = 1e4, merge: bool = True,
     ):
         """Setup waterlevel boundary (bnd) points along model waterlevel boundary (msk=2).
 
@@ -2577,10 +2558,7 @@ class SfincsModel(GridModel):
 
             self.logger.debug("Write binary water level state inifile")
             self.reggrid.write_map(
-                map_fn=fn,
-                data=da.values,
-                mask=mask,
-                dtype="f4",
+                map_fn=fn, data=da.values, mask=mask, dtype="f4",
             )
 
         if self._write_gis:
@@ -2856,7 +2834,6 @@ class SfincsModel(GridModel):
         tstop = utils.parse_datetime(self.config["tstop"])
         return tstart, tstop
 
-
     ## helper method
     def _parse_datasets_dep(self, datasets_dep, res):
         """Parse filenames or paths of Datasets in list of dictionaries datasets_dep into xr.DataArray and gdf.GeoDataFrames:
@@ -2903,17 +2880,14 @@ class SfincsModel(GridModel):
             # NOTE offsets can be xr.DataArrays and floats
             if "offset" in dataset and not isinstance(dataset["offset"], (float, int)):
                 da_offset = self.data_catalog.get_rasterdataset(
-                    dataset.get("offset"),
-                    geom=self.mask.raster.box,
-                    buffer=20,
+                    dataset.get("offset"), geom=self.mask.raster.box, buffer=20,
                 )
                 dd.update({"offset": da_offset})
 
             # read geodataframes describing valid areas
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
-                    path_or_key=dataset.get("mask"),
-                    geom=self.mask.raster.box,
+                    path_or_key=dataset.get("mask"), geom=self.mask.raster.box,
                 )
                 dd.update({"gdf_valid": gdf_valid})
 
@@ -2978,8 +2952,7 @@ class SfincsModel(GridModel):
             # read geodataframes describing valid areas
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
-                    path_or_key=dataset.get("mask"),
-                    geom=self.mask.raster.box,
+                    path_or_key=dataset.get("mask"), geom=self.mask.raster.box,
                 )
                 dd.update({"gdf_valid": gdf_valid})
 
