@@ -260,7 +260,6 @@ def merge_dataarrays(
 def curvenumber_recovery_determination(
     da_landuse, da_HSG, da_Ksat, df_map, da_mask_block
 ):
-
     """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files.
     More information see http://new.streamstech.com/wp-content/uploads/2018/07/SWMM-Reference-Manual-Part-I-Hydrology-1.pdf
 

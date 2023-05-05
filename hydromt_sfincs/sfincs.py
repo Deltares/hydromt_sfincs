@@ -256,7 +256,9 @@ class SfincsModel(GridModel):
         """
         # setup `region` of interest of the model.
         self.setup_region(
-            region=region, hydrography_fn=hydrography_fn, basin_index_fn=basin_index_fn,
+            region=region,
+            hydrography_fn=hydrography_fn,
+            basin_index_fn=basin_index_fn,
         )
         # get pyproj crs of best UTM zone if crs=utm
         pyproj_crs = hydromt.gis_utils.parse_crs(
@@ -749,7 +751,10 @@ class SfincsModel(GridModel):
         da_flwdir, da_uparea, gdf_riv = None, None, None
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
-                hydrography, geom=self.region, variables=["uparea", "flwdir"], buffer=5,
+                hydrography,
+                geom=self.region,
+                variables=["uparea", "flwdir"],
+                buffer=5,
             )
             da_flwdir = ds["flwdir"]
             da_uparea = ds["uparea"]
@@ -865,7 +870,10 @@ class SfincsModel(GridModel):
         da_flwdir, da_uparea, gdf_riv = None, None, None
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
-                hydrography, geom=self.region, variables=["uparea", "flwdir"], buffer=5,
+                hydrography,
+                geom=self.region,
+                variables=["uparea", "flwdir"],
+                buffer=5,
             )
             da_flwdir = ds["flwdir"]
             da_uparea = ds["uparea"]
@@ -1012,14 +1020,13 @@ class SfincsModel(GridModel):
     def setup_curvenumber_infiltration_withrecovery(
         self, data_catalog, name_files, reclass_table, effective, block_size=2000
     ):
-
         """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
-        including recovery term based on the soil saturation 
+        including recovery term based on the soil saturation
 
         Parameters
         ---------
         data_catalog    : data catalog used in the analysis
-        name_files      : list with name of the landcover, hydrologic soil group (HSG) and Saturated Hydraulic Conductivity (Ksat)   
+        name_files      : list with name of the landcover, hydrologic soil group (HSG) and Saturated Hydraulic Conductivity (Ksat)
         reclass_table   : reclass table to relate landcover with soiltype
         effective       : float, estimate of percentage effective soil, e.g. 0.50 for 50%
         block_size      : float, maximum block size - use larger values will get more data in memory but can be faster, default=500
@@ -1115,7 +1122,6 @@ class SfincsModel(GridModel):
         # set grids for seff, smax and kr
         names = {"smax", "seff", "kr"}
         for name in names:
-
             # Dynamically create the variable name
             var_name = f"da_{name}"
 
@@ -1526,7 +1532,9 @@ class SfincsModel(GridModel):
         self.set_forcing_1d(df_ts, gdf_locs, name="bzs", merge=merge)
 
     def setup_waterlevel_bnd_from_mask(
-        self, distance: float = 1e4, merge: bool = True,
+        self,
+        distance: float = 1e4,
+        merge: bool = True,
     ):
         """Setup waterlevel boundary (bnd) points along model waterlevel boundary (msk=2).
 
@@ -2568,7 +2576,10 @@ class SfincsModel(GridModel):
 
             self.logger.debug("Write binary water level state inifile")
             self.reggrid.write_map(
-                map_fn=fn, data=da.values, mask=mask, dtype="f4",
+                map_fn=fn,
+                data=da.values,
+                mask=mask,
+                dtype="f4",
             )
 
         if self._write_gis:
@@ -2890,14 +2901,17 @@ class SfincsModel(GridModel):
             # NOTE offsets can be xr.DataArrays and floats
             if "offset" in dataset and not isinstance(dataset["offset"], (float, int)):
                 da_offset = self.data_catalog.get_rasterdataset(
-                    dataset.get("offset"), geom=self.mask.raster.box, buffer=20,
+                    dataset.get("offset"),
+                    geom=self.mask.raster.box,
+                    buffer=20,
                 )
                 dd.update({"offset": da_offset})
 
             # read geodataframes describing valid areas
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
-                    path_or_key=dataset.get("mask"), geom=self.mask.raster.box,
+                    path_or_key=dataset.get("mask"),
+                    geom=self.mask.raster.box,
                 )
                 dd.update({"gdf_valid": gdf_valid})
 
@@ -2962,7 +2976,8 @@ class SfincsModel(GridModel):
             # read geodataframes describing valid areas
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
-                    path_or_key=dataset.get("mask"), geom=self.mask.raster.box,
+                    path_or_key=dataset.get("mask"),
+                    geom=self.mask.raster.box,
                 )
                 dd.update({"gdf_valid": gdf_valid})
 
