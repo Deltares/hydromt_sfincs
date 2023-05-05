@@ -1099,10 +1099,7 @@ class SfincsModel(GridModel):
                 ).load()
 
                 # Call workflow
-                [
-                    da_smax_block,
-                    da_kr_block,
-                ] = workflows.merge.curvenumber_recovery_determination(
+                da_smax_block, da_kr_block = workflows.merge.curvenumber_recovery_determination(
                     da_landuse, da_HSG, da_Ksat, df_map, da_mask_block
                 )
 
