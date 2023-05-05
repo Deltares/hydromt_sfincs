@@ -1120,14 +1120,12 @@ class SfincsModel(GridModel):
         da_seff.attrs.update({"_FillValue": da_smax._FillValue})
 
         # set grids for seff, smax and kr
-        names = {"smax", "seff", "kr"}
-        for name in names:
-            # Dynamically create the variable name
-            var_name = f"da_{name}"
-
-            # Give metadata to the layer
-            eval(var_name).attrs.update(**self._ATTRS.get(name, {}))
-            self.set_grid(eval(var_name), name=name)  # not sure what this is anymore
+        names = ["smax", "seff", "kr"]
+        data = [da_smax, da_seff, da_kr]
+        for name, da in zip(names, data):
+            # Give metadata to the layer and set grid
+            da.attrs.update(**self._ATTRS.get(name, {}))
+            self.set_grid(da, name=name)
 
             # update config: set maps
             self.set_config(f"{name}file", f"sfincs.{name}")  # give it to SFINCS
