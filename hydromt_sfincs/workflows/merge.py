@@ -271,7 +271,6 @@ def curvenumber_recovery_determination(
     reclass_table   : mapping table that related landuse and HSG to each other (matrix; not list)
     """
     # Started
-    print(" processing curve numbers")
     da_smax = xr.full_like(da_mask_block, -9999, dtype=np.float32)
     da_kr = xr.full_like(da_mask_block, -9999, dtype=np.float32)
 
@@ -282,8 +281,8 @@ def curvenumber_recovery_determination(
 
     # Curve numbers to grid: go over NLCD classes and HSG classes
     da_CN = xr.full_like(da_landuse, np.NaN, dtype=np.float32)
-    for i in range(len(df_map._stat_axis)):
-        for j in range(len(df_map.columns)):
+    for i in range(df_map.index.size):
+        for j in range(df_map.columns.size):
             ind = (da_landuse == df_map._stat_axis[i]) & (
                 da_HSG_to_landuse == int(df_map.columns[j])
             )

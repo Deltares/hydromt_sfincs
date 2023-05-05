@@ -1018,15 +1018,16 @@ class SfincsModel(GridModel):
 
     # Function to create curve number for SFINCS including recovery term (Kr)
     def setup_curvenumber_infiltration_withrecovery(
-        self, data_catalog, name_files, reclass_table, effective, block_size=2000
+        self, landcover, hsg, Ksat, reclass_table, effective, block_size=2000
     ):
         """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
         including recovery term based on the soil saturation
 
         Parameters
         ---------
-        data_catalog    : data catalog used in the analysis
-        name_files      : list with name of the landcover, hydrologic soil group (HSG) and Saturated Hydraulic Conductivity (Ksat)
+        landcover       : str, Path, or RasterDataset - Land cover data set
+        hsg             : str, Path, or RasterDataset - HSG (Hydrological Similarity Group)
+        Ksat            : str, Path, or RasterDataset - Ksat (saturated hydraulic conductivity)
         reclass_table   : reclass table to relate landcover with soiltype
         effective       : float, estimate of percentage effective soil, e.g. 0.50 for 50%
         block_size      : float, maximum block size - use larger values will get more data in memory but can be faster, default=500
@@ -1049,13 +1050,16 @@ class SfincsModel(GridModel):
         da_smax = xr.full_like(self.mask, -9999, dtype=np.float32)
         da_kr = xr.full_like(self.mask, -9999, dtype=np.float32)
 
+        # Compute resolution land use (we are assuming that is the finest)
+        dres_degrees        = np.sqrt((np.diff(da_landuse["x"].values).mean())**2  + (np.diff(da_landuse["y"].values).mean())**2)
+        resolution_landuse  = dres_degrees*111*1000 # assume 1 degree is 111km
+
         # Define the blocks
         nrmax = block_size
         nmax = np.shape(self.mask)[0]
         mmax = np.shape(self.mask)[1]
         grid_dim = (nmax, mmax)
-        dx = self.config["dx"]
-        refi = dx / 30  # finest resolution of NLCD is ~30m
+        refi = self.config["dx"] / resolution_landuse  # finest resolution of landuse
         nrcb = int(np.floor(nrmax / refi))  # nr of regular cells in a block
         nrbn = int(np.ceil(nmax / nrcb))  # nr of blocks in n direction
         nrbm = int(np.ceil(mmax / nrcb))  # nr of blocks in m direction
@@ -1087,8 +1091,7 @@ class SfincsModel(GridModel):
 
                 # Count
                 ib += 1
-                # Get some prints => no idea how to get the logger info
-                print(
+                logger.debug(
                     f"\nblock {ib + 1}/{nrbn * nrbm} -- "
                     f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
                 )
@@ -1109,7 +1112,7 @@ class SfincsModel(GridModel):
                 da_kr[sn, sm] = da_kr_block
 
         # Done
-        print(" done with determination of values (in blocks)")
+        self.logger.info(f"Done with determination of values (in blocks).")
 
         # Specify the effective soil retention (seff)
         da_seff = da_smax
