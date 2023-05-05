@@ -9,7 +9,7 @@ There are 2 main ways to use HydroMT to build your SFINCS model:
 **1. Command Line Interface (basic user)**: 
       Provide some information about the model configuration in a .yml-file and quickly build the model using the Command Line Interface (CLI).
       The .yml-file provides a way to create a reproducible model setup recipe, which can be easily be shared with others.
-      Addtionally, no Python knowledge is required to use the CLI.
+      Additionally, no Python knowledge is required to use the CLI.
 
 **2. Python scripting (advanced user)**: 
       Dive into the underlying Python functions and use those to build your model from scratch in a Python script. 
