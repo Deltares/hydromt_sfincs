@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Sfincs results: maximum water depth &#8212; HydroMT SFINCS  documentation</title>
+    <title>SFINCS results: determine maximum water depth &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -425,7 +425,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="../user_guide/sfincs_analyse.html" class="nav-link">Postprocessing and visualization</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">Sfincs results: maximum water depth</li>
+    <li class="breadcrumb-item active" aria-current="page">SFINCS results: determine maximum water depth</li>
   </ul>
 </nav>
 </div>
@@ -448,9 +448,14 @@ document.write(`
     For an interactive online version click here:
     <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/sfincs_results_hmax.ipynb" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
 </div></div>
-<section id="Sfincs-results:-maximum-water-depth">
-<h1>Sfincs results: maximum water depth<a class="headerlink" href="#Sfincs-results:-maximum-water-depth" title="Permalink to this heading">#</a></h1>
-<p>The example used in this notebook is based on a regular SFINCS model, i.e. no subgrid tables are used. In the absence of the subgrid tables, SFINCS computes the water depth by simply substracting the bed levels from the water levels. The (maximum) water depth <strong>h(max)</strong> is stored in the NetCDF output (<em>sfincs_map.nc</em>).</p>
+<section id="SFINCS-results:-determine-maximum-water-depth">
+<h1>SFINCS results: determine maximum water depth<a class="headerlink" href="#SFINCS-results:-determine-maximum-water-depth" title="Permalink to this heading">#</a></h1>
+<p>This notebook contains 2 examples, one for a standard regular SFINCS model, and one for a subgrid SFINCS model.</p>
+<p>IMPORTANT NOTE, the methods for producing a flood depth map for the regular vs subgrid versions of SFINCS are <strong>NOT</strong> the same, and <strong>NOT</strong> interchangeable!</p>
+<p>Contents: 1. Determine maximum water depth for a regular model 2. Determine maximum water depth for a subgrid model</p>
+<section id="1.-Determine-maximum-water-depth-for-a-regular-model">
+<h2>1. Determine maximum water depth for a regular model<a class="headerlink" href="#1.-Determine-maximum-water-depth-for-a-regular-model" title="Permalink to this heading">#</a></h2>
+<p>The first example used in this notebook is based on a regular SFINCS model, i.e. no subgrid tables are used. In the absence of the subgrid tables, SFINCS computes the water depth by simply substracting the bed levels from the water levels. The (maximum) water depth <strong>h(max)</strong> is stored in the NetCDF output (<em>sfincs_map.nc</em>).</p>
 <p>How to derive maximum water depths for a model including subgrid tables is explained <a class="reference external" href="#Determine-maximum-water-depth-for-a-subgrid-model">later</a> in this notebook.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -462,9 +467,10 @@ document.write(`
 </pre></div>
 </div>
 </div>
+</section>
 <section id="Read-model-results">
 <h2>Read model results<a class="headerlink" href="#Read-model-results" title="Permalink to this heading">#</a></h2>
-<p>The model results in sfincs_map.nc are saved as in a staggered grid format, see <a class="reference external" href="https://publicwiki.deltares.nl/display/NETCDF/Deltares+proposal+for+Staggered+Grid+data+model+(SGRID)">SGRID convention</a>. Here we show how to retrieve the face values and translate the dimensions from node indices (m, n) to (x, y) coordinates in order to plot the results on a map.</p>
+<p>The model results in sfincs_map.nc are saved as in a staggered grid format, see <a class="reference external" href="http://sgrid.github.io/sgrid/">SGRID convention</a>. Here we show how to retrieve the face values and translate the dimensions from node indices (m, n) to (x, y) coordinates in order to plot the results on a map.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -518,7 +524,7 @@ document.write(`
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_sfincs_results_hmax_7_0.png" src="../_images/_examples_sfincs_results_hmax_7_0.png" />
+<img alt="../_images/_examples_sfincs_results_hmax_9_0.png" src="../_images/_examples_sfincs_results_hmax_9_0.png" />
 </div>
 </div>
 </section>
@@ -632,12 +638,12 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_sfincs_results_hmax_15_1.png" src="../_images/_examples_sfincs_results_hmax_15_1.png" />
+<img alt="../_images/_examples_sfincs_results_hmax_17_1.png" src="../_images/_examples_sfincs_results_hmax_17_1.png" />
 </div>
 </div>
 </section>
-<section id="Determine-maximum-water-depth-for-a-subgrid-model">
-<h2>Determine maximum water depth for a subgrid model<a class="headerlink" href="#Determine-maximum-water-depth-for-a-subgrid-model" title="Permalink to this heading">#</a></h2>
+<section id="2.-Determine-maximum-water-depth-for-a-subgrid-model">
+<h2>2. Determine maximum water depth for a subgrid model<a class="headerlink" href="#2.-Determine-maximum-water-depth-for-a-subgrid-model" title="Permalink to this heading">#</a></h2>
 <p>When subgrid tables are used, these are based on elevation data of a resolution higher than the resolution of the computational grid. The bed levels stored in the NetCDF output (<em>zb</em> in <em>sfincs_map.nc</em>) are the minimum bed levels from the subgrid tables of each computational cell. Therefore, to properly derive water depths, the higher resolution elevation data should be used instead of simply using the bed levels from the model output (this would result in an overestimation of flood extents).
 The process of interpolating the water levels onto the higher-resolution elevation data is called downscaling.</p>
 <p>The downscaling of the floodmap roughly includees the following steps:</p>
@@ -658,7 +664,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
 </pre></div>
 </div>
 </div>
-<p>In the example, we used <em>GEBCO</em> (~450m resolution) and <em>MERIT Hydro</em> (~90m resolution) to create a model on 50 meters resolution. In this case, including subgrid tables didnt’t add much information to the model. To still illustrate the process of downscaling, we will use the <em>dep.tif</em> (in the gis folder) which has 50m resolution.</p>
+<p>In the example, we used <em>GEBCO</em> (~450m resolution) and <em>MERIT Hydro</em> (~90m resolution) to create a model on 50 meters resolution. In this case, including subgrid tables didn’t add much information to the model. To still illustrate the process of downscaling, we will use the <em>dep.tif</em> (in the gis folder) which has 50m resolution.</p>
 <p>When creating a subgrid with <code class="docutils literal notranslate"><span class="pre">setup_subgrid</span></code>, you can easily create a geotiff on the subgrid resolution in the <code class="docutils literal notranslate"><span class="pre">subgrid</span></code> folder with the argument <code class="docutils literal notranslate"><span class="pre">write_dep_tif=True</span></code>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
@@ -693,7 +699,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Thirdly, we determine the masking of the floodmap</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># thirdly, we determine the masking of the floodmap</span>
 
 <span class="c1"># we could use the GSWO dataset to mask permanent water in a similar way as above</span>
 <span class="c1"># NOTE: this is masking the water levels on the computational grid resolution</span>
@@ -763,7 +769,7 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_sfincs_results_hmax_24_1.png" src="../_images/_examples_sfincs_results_hmax_24_1.png" />
+<img alt="../_images/_examples_sfincs_results_hmax_26_1.png" src="../_images/_examples_sfincs_results_hmax_26_1.png" />
 </div>
 </div>
 </section>
@@ -816,10 +822,11 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#1.-Determine-maximum-water-depth-for-a-regular-model">1. Determine maximum water depth for a regular model</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Read-model-results">Read model results</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Write-maximum-waterdepth-to-geotiff-file">Write maximum waterdepth to geotiff file</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Plot-maximum-water-depth-with-surface-water-mask">Plot maximum water depth with surface water mask</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Determine-maximum-water-depth-for-a-subgrid-model">Determine maximum water depth for a subgrid model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Determine-maximum-water-depth-for-a-subgrid-model">2. Determine maximum water depth for a subgrid model</a></li>
 </ul>
   </nav></div>
 
