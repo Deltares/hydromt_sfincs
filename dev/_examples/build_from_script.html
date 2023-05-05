@@ -457,7 +457,7 @@ document.write(`
 <h1>Build a model from Python<a class="headerlink" href="#Build-a-model-from-Python" title="Permalink to this heading">#</a></h1>
 <p>In this example a simple <strong>SFINCS</strong> compound flood model will be made, using the underlying Python functions of <strong>HydroMT-SFINCS</strong> to build a model.</p>
 <p>The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
@@ -470,21 +470,6 @@ document.write(`
 <span class="kn">from</span> <span class="nn">hydromt_sfincs</span> <span class="kn">import</span> <span class="n">utils</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-C:\Users\leijnse\AppData\Local\Temp\ipykernel_24964\186700442.py:4: UserWarning: Shapely 2.0 is installed, but because PyGEOS is also installed, GeoPandas will still use PyGEOS by default for now. To force to use and test Shapely 2.0, you have to set the environment variable USE_PYGEOS=0. You can do this before starting the Python process, or in your code before importing geopandas:
-
-import os
-os.environ[&#39;USE_PYGEOS&#39;] = &#39;0&#39;
-import geopandas
-
-In a future release, GeoPandas will switch to using Shapely by default. If you are using PyGEOS directly (calling PyGEOS functions on geometries from GeoPandas), this will then stop working and you are encouraged to migrate from PyGEOS to Shapely 2.0 (https://shapely.readthedocs.io/en/latest/migration_pygeos.html).
-  import geopandas as gpd
-</pre></div></div>
 </div>
 <p>This example shows how to build a SFINCS model containing elevation data and spatially varying roughness (together processed into subgrid tables), spatially varying infiltration and a local floodwall. In addition, multiple forcing conditions are set-up, and this is all done using Python scripting.</p>
 <p>In case you want to adjust this example to build a SFINCS model anywhere else in the world, you will have to add your own datasets to HydroMT’s data catalog. For more info on that, check-out:</p>
@@ -528,7 +513,7 @@ In a future release, GeoPandas will switch to using Shapely by default. If you a
 <p>For more info about how to define a grid, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#grid-characteristics">click here</a>.</p>
 <p><em>Hint: if you only have a bounding box or geometry, you can also use ``SfincsModel.setup_grid_from_region``.</em></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Specify an input dictionary with the grid settings x0,y0,dx,dy,nmax,mmax,rotation and epsg code.</span>
@@ -558,7 +543,7 @@ In a future release, GeoPandas will switch to using Shapely by default. If you a
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># show the model grid outline</span>
@@ -578,7 +563,7 @@ In a future release, GeoPandas will switch to using Shapely by default. If you a
 <section id="3.-Load-in-wanted-elevation-datasets:">
 <h2>3. Load in wanted elevation datasets:<a class="headerlink" href="#3.-Load-in-wanted-elevation-datasets:" title="Permalink to this heading">#</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># In this example we want to combine 2 elevation datasets, merit_hydro as elevation and gebco as bathymetry, in that order.</span>
@@ -615,7 +600,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 <h2>4. Make mask of active and inactive cells:<a class="headerlink" href="#4.-Make-mask-of-active-and-inactive-cells:" title="Permalink to this heading">#</a></h2>
 <p>Here we generate the mask of active (msk=1) and inactive cells (msk=0), determining what cells on your grid should be used. For more info about the msk-file, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#mask-file">click here</a>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Choosing how to choose you active cells can be based on multiple criteria, here we only specify a minimum elevation of -5 meters</span>
@@ -647,7 +632,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 <section id="5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">
 <h2>5. Update mask with water level and outflow boundary cells - including use of polygons:<a class="headerlink" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:" title="Permalink to this heading">#</a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Loading a shapefile clicked by user:</span>
@@ -662,7 +647,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 </div>
 <p>In SFINCS you can specify cells where you want to force offshore water levels (msk=2), or outflow boundaries (msk=3)</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we add water level cells along the coastal boundary, for cells up to an elevation of -5 meters</span>
@@ -678,7 +663,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -698,7 +683,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 <section id="6.-Add-spatially-varying-roughness-data:">
 <h2>6. Add spatially varying roughness data:<a class="headerlink" href="#6.-Add-spatially-varying-roughness-data:" title="Permalink to this heading">#</a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># --&gt; this is used in making subgrid tables</span>
@@ -723,7 +708,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># use the river manning raster in combination with vito land to derive the manning roughness file</span>
@@ -763,7 +748,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 <p>Every single grid cell of the flux grid of the size inp.dx by inp.dy is defined into subgrid pixels (default nr_subgrid_pixels = 20). For every subgrid pixel the topobathy data is loaded, ideally this consists of high-resolution DEM datasets that you specify as user.</p>
 <p>In this example with dx=dy=50m, having nr_subgrid_pixels = 20 means we are loading data onto a 2.5 m subpixel grid However, the input data of Gebco and Merit_hydro is way coarser, therefore let’s set the ratio to 5 for now.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Every single grid cell of the flux grid of the size inp.dx by inp.dy is defined into subgrid pixels (default is 20, nr_subgrid_pixels = 20).</span>
@@ -788,7 +773,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 </div>
 <p>Now we can see what kind of subgrid-derived variables are created:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># uncomment to see the subgrid table variales</span>
@@ -820,7 +805,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 <section id="8.-Add-spatially-varying-infiltration-data:">
 <h2>8. Add spatially varying infiltration data:<a class="headerlink" href="#8.-Add-spatially-varying-infiltration-data:" title="Permalink to this heading">#</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># independent from subgrid files</span>
@@ -833,7 +818,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -850,7 +835,7 @@ KeysView(Data variables:
 <section id="9.-Add-water-level-time-series-as-forcing:">
 <h2>9. Add water level time-series as forcing:<a class="headerlink" href="#9.-Add-water-level-time-series-as-forcing:" title="Permalink to this heading">#</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Change period of model simulation time, specified in yyyymmdd HHMMSS --&gt; simulation time here is 24 hours</span>
@@ -877,7 +862,7 @@ KeysView(Data variables:
 <p><strong>a. Specify water level input locations:</strong></p>
 <p>For more info about what the bndfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#water-level-points">click here</a></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we specify at what x&amp;y-locations we have measured/modelled input water level data in the bndfile of SFINCS:</span>
@@ -937,7 +922,7 @@ KeysView(Data variables:
 <p><strong>b. Make up some time-series:</strong></p>
 <p>For more info about what the bzsfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#water-level-time-serie">click here</a></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we specify at what times we are providing water level input, and afterwards what the values are per input location:</span>
@@ -1004,7 +989,7 @@ KeysView(Data variables:
 </div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Actually add it to the SFINCS model class:</span>
@@ -1016,7 +1001,7 @@ KeysView(Data variables:
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1025,14 +1010,14 @@ dict_keys([&#39;bzs&#39;])
 </pre></div></div>
 </div>
 </section>
-<section id="10.-Add-an-upstream-discharge-time-series-as-forcing">
-<h2>10. Add an upstream discharge time-series as forcing<a class="headerlink" href="#10.-Add-an-upstream-discharge-time-series-as-forcing" title="Permalink to this heading">#</a></h2>
+<section id="10.-Add-an-upstream-discharge-time-series-as-forcing:">
+<h2>10. Add an upstream discharge time-series as forcing:<a class="headerlink" href="#10.-Add-an-upstream-discharge-time-series-as-forcing:" title="Permalink to this heading">#</a></h2>
 <p><strong>a. specify discharge input locations: srcfile</strong></p>
 <p>For more info about what the srcfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#discharge-points">click here</a></p>
 <p><strong>b. specify discharge time-series: disfile</strong></p>
 <p>For more info about what the disfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#discharge-time-series">click here</a></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># We follow exactly the same steps as for the water level forcing, but now specify 1 location where we specify discharges in m3/s</span>
@@ -1064,7 +1049,7 @@ dict_keys([&#39;bzs&#39;])
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1077,7 +1062,7 @@ dict_keys([&#39;bzs&#39;, &#39;dis&#39;])
 <section id="11.-Add-spatially-varying-rainfall-data:">
 <h2>11. Add spatially varying rainfall data:<a class="headerlink" href="#11.-Add-spatially-varying-rainfall-data:" title="Permalink to this heading">#</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># hourly rainfall rates of ECMWF&#39; ERA5 data for the specific area and period have been made available for this period in the artefact data</span>
@@ -1089,7 +1074,7 @@ dict_keys([&#39;bzs&#39;, &#39;dis&#39;])
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1098,7 +1083,7 @@ dict_keys([&#39;bzs&#39;, &#39;dis&#39;, &#39;precip&#39;])
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot combined forcing time-series:</span>
@@ -1118,7 +1103,7 @@ dict_keys([&#39;bzs&#39;, &#39;dis&#39;, &#39;precip&#39;])
 <h2>12. Add weirfile:<a class="headerlink" href="#12.-Add-weirfile:" title="Permalink to this heading">#</a></h2>
 <p>In SFINCS, a weirfile is often used to explicity account for line-element features such as dikes, dunes or floodwalls. Read more about structures in the <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_structures.html">SFINCS manual</a></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># In this example specify a &#39;line&#39; style shapefile for the location of the weir to be added</span>
@@ -1135,7 +1120,7 @@ dict_keys([&#39;bzs&#39;, &#39;dis&#39;, &#39;precip&#39;])
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1144,11 +1129,11 @@ dict_keys([&#39;region&#39;, &#39;weir&#39;])
 </pre></div></div>
 </div>
 </section>
-<section id="13.-Add-observation-points">
-<h2>13. Add observation points<a class="headerlink" href="#13.-Add-observation-points" title="Permalink to this heading">#</a></h2>
+<section id="13.-Add-observation-points:">
+<h2>13. Add observation points:<a class="headerlink" href="#13.-Add-observation-points:" title="Permalink to this heading">#</a></h2>
 <p>For more info about what the obsfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#observation-points">click here</a></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Loading a point shapefile clicked by user:</span>
@@ -1163,7 +1148,7 @@ dict_keys([&#39;region&#39;, &#39;weir&#39;])
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1172,10 +1157,10 @@ dict_keys([&#39;region&#39;, &#39;weir&#39;, &#39;obs&#39;])
 </pre></div></div>
 </div>
 </section>
-<section id="14.-Show-model">
-<h2>14. Show model<a class="headerlink" href="#14.-Show-model" title="Permalink to this heading">#</a></h2>
+<section id="14.-Show-model:">
+<h2>14. Show model:<a class="headerlink" href="#14.-Show-model:" title="Permalink to this heading">#</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use predefined plotting function &#39;plot_basemap&#39; to show your full SFINCS model setup</span>
@@ -1194,7 +1179,7 @@ dict_keys([&#39;region&#39;, &#39;weir&#39;, &#39;obs&#39;])
 <section id="15.-Save-all-files">
 <h2>15. Save all files<a class="headerlink" href="#15.-Save-all-files" title="Permalink to this heading">#</a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>  <span class="c1"># write all</span>
@@ -1202,7 +1187,7 @@ dict_keys([&#39;region&#39;, &#39;weir&#39;, &#39;obs&#39;])
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Show created files in folder:</span>
@@ -1216,7 +1201,7 @@ dict_keys([&#39;region&#39;, &#39;weir&#39;, &#39;obs&#39;])
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;figs&#39;, &#39;gis&#39;, &#39;hydromt.log&#39;, &#39;precip.nc&#39;, &#39;sfincs.bnd&#39;, &#39;sfincs.bzs&#39;, &#39;sfincs.dis&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.sbg&#39;, &#39;sfincs.scs&#39;, &#39;sfincs.src&#39;, &#39;sfincs.weir&#39;, &#39;subgrid&#39;]
+[&#39;precip.nc&#39;, &#39;sfincs.weir&#39;, &#39;sfincs.bnd&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.obs&#39;, &#39;subgrid&#39;, &#39;sfincs.bzs&#39;, &#39;sfincs.ind&#39;, &#39;figs&#39;, &#39;hydromt.log&#39;, &#39;gis&#39;, &#39;sfincs.dis&#39;, &#39;sfincs.sbg&#39;, &#39;sfincs.src&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.scs&#39;]
 </pre></div></div>
 </div>
 <p>Your basemap and forcing figures are saved in the folder ‘figs’, GIS files (tiff &amp; geojson) of your model setup in ‘gis’ and merged elevation and manning roughness on subgrid resolution in ‘subgrid’.</p>
@@ -1280,11 +1265,11 @@ dict_keys([&#39;region&#39;, &#39;weir&#39;, &#39;obs&#39;])
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#7.-Make-subgrid-derived-tables:">7. Make subgrid derived tables:</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#8.-Add-spatially-varying-infiltration-data:">8. Add spatially varying infiltration data:</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#9.-Add-water-level-time-series-as-forcing:">9. Add water level time-series as forcing:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#10.-Add-an-upstream-discharge-time-series-as-forcing">10. Add an upstream discharge time-series as forcing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#10.-Add-an-upstream-discharge-time-series-as-forcing:">10. Add an upstream discharge time-series as forcing:</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#11.-Add-spatially-varying-rainfall-data:">11. Add spatially varying rainfall data:</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#12.-Add-weirfile:">12. Add weirfile:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#13.-Add-observation-points">13. Add observation points</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#14.-Show-model">14. Show model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#13.-Add-observation-points:">13. Add observation points:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#14.-Show-model:">14. Show model:</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#15.-Save-all-files">15. Save all files</a></li>
 </ul>
   </nav></div>
