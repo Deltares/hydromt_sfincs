@@ -23,4 +23,4 @@ setup_mask_active:
 
 setup_mask_bounds:
   btype: waterlevel            # Set waterlevel boundaries
-  zmax: -1                     # only cells below zmax can be waterlevel bounddaries
+  zmax: -1                     # only cells below zmax can be waterlevel boundaries
