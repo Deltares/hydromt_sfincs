@@ -55,14 +55,14 @@ def plot_forcing(forcing: Dict, **kwargs):
             da = da.mean(dim=[da.raster.x_dim, da.raster.y_dim])
             prefix = "mean "
         # convert to Single index dataframe (bar plots don't work with xarray)
-        df = da.to_pandas()
+        df = da.to_pandas()da
         if isinstance(df.index, pd.MultiIndex):
             df = df.unstack(0)
         # convert dates a-priori as automatic conversion doesn't always work
         df.index = mdates.date2num(df.index)
-        if name.startswith("precip") or name.startswith("wind"):
+        if name.startswith("precip"):
             axes[i].bar(df.index, df.values, facecolor="darkblue")
-        elif name.startswith("press"):
+        elif name.startswith("press") or name.startswith("wind_u") or name.startswith("wind_v"):
             df.plot.line(ax=axes[i])          
         else:
             df.plot.line(ax=axes[i]).legend(

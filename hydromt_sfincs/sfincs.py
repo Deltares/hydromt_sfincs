@@ -46,7 +46,7 @@ class SfincsModel(GridModel):
         "waves": (["bzi"], "bnd"),
         "discharge": (["dis"], "src"),
         "precip_1D": (["precip"], None),
-        "wind_1D": (["wind"], None),
+        "wind_1D": (["wnd"], None),
         "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),
         "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
     }
@@ -1857,10 +1857,10 @@ class SfincsModel(GridModel):
             parse_dates=True,
             index_col=0,
         )
-        if isinstance(df_ts, pd.DataFrame):
-            df_ts = df_ts.squeeze()
-        if not isinstance(df_ts, pd.Series):
-            raise ValueError("df_ts must be a pandas.Series")
+        # if isinstance(df_ts, pd.DataFrame):
+        #     df_ts = df_ts.squeeze()
+        # if not isinstance(df_ts, pd.Series):
+        #     raise ValueError("df_ts must be a pandas.Series")
         df_ts.name = "wind_1D"
         df_ts.index.name = "time"
         self.set_forcing(df_ts.to_xarray(), name="wind_1D")
