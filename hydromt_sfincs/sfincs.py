@@ -1681,17 +1681,151 @@ class SfincsModel(GridModel):
             ).fillna(0)
 
             # resample in time
-            precip_out = hydromt.workflows.resample_time(
-                precip_out,
-                freq=pd.to_timedelta("1H"),
-                conserve_mass=True,
-                upsampling="bfill",
-                downsampling="sum",
-                logger=self.logger,
-            ).rename("precip")
+            # precip_out = hydromt.workflows.resample_time(
+            #     precip_out,
+            #     freq=pd.to_timedelta("1H"),
+            #     conserve_mass=True,
+            #     upsampling="bfill",
+            #     downsampling="sum",
+            #     logger=self.logger,
+            # ).rename("precip")
 
             # add to forcing
             self.set_forcing(precip_out, name="precip")
+
+    def setup_pressure_forcing_from_grid(
+        self, press=None, dst_res=None, **kwargs
+    ):
+        """Setup pressure forcing from a gridded spatially varying data source.
+
+        Adds one model layer:
+
+        * **netampfile** forcing: distributed barometric pressure [...]
+
+        Parameters
+        ----------
+        press, str, Path, xr.Dataset, xr.DataArray
+            Path to pressure rasterdataset netcdf file or xarray dataset.
+
+            * Required variables: ['barometric_pressure' (...)]
+            * Required coordinates: ['time', 'y', 'x']
+
+        dst_res: float
+            output resolution (m), by default None and computed from source data.
+            Only used in combination with aggregate=False
+        """
+        # get data for model domain and config time range
+        press = self.data_catalog.get_rasterdataset(
+            press,
+            geom=self.region,
+            buffer=2,
+            time_tuple=self.get_model_time(),
+            variables=["press"],
+        )
+
+        # reproject to model utm crs
+        # NOTE: currently SFINCS errors (stack overflow) on large files,
+        # downscaling to model grid is not recommended
+        kwargs0 = dict(align=dst_res is not None, method="nearest_index")
+        kwargs0.update(kwargs)
+        meth = kwargs0["method"]
+        self.logger.debug(f"Resample precip using {meth}.")
+        press_out = press.raster.reproject(
+            dst_crs=self.crs, dst_res=dst_res, **kwargs
+        ).fillna(0)
+
+        # resample in time
+        # press_out = hydromt.workflows.resample_time(
+        #     press_out,
+        #     freq=pd.to_timedelta("1H"),
+        #     conserve_mass=True,
+        #     upsampling="bfill",
+        #     downsampling="sum",
+        #     logger=self.logger,
+        # ).rename("press")
+
+        # add to forcing
+        self.set_forcing(press_out, name="press")
+
+    def setup_wind_forcing_from_grid(
+        self, wind_u=None, wind_v=None, dst_res=None, **kwargs
+    ):
+        """Setup pressure forcing from a gridded spatially varying data source.
+
+        Adds one model layer:
+
+        * **netamuamv** forcing: distributed wind [m/s]
+
+        Parameters
+        ----------
+        wind_u, str, Path, xr.Dataset, xr.DataArray
+            Path to eastward wind rasterdataset netcdf file or xarray dataset.
+
+            * Required variables: ['wind_u' (m/s)]
+            * Required coordinates: ['time', 'y', 'x']
+
+        wind_v, str, Path, xr.Dataset, xr.DataArray
+            Path to northward wind rasterdataset netcdf file or xarray dataset.
+
+            * Required variables: ['wind_v' (m/s)]
+            * Required coordinates: ['time', 'y', 'x']
+
+        dst_res: float
+            output resolution (m), by default None and computed from source data.
+            Only used in combination with aggregate=False
+        """
+        # get data for model domain and config time range
+        wind_u = self.data_catalog.get_rasterdataset(
+            wind_u,
+            geom=self.region,
+            buffer=2,
+            time_tuple=self.get_model_time(),
+            variables=["press"],
+        )
+
+        wind_v = self.data_catalog.get_rasterdataset(
+            wind_v,
+            geom=self.region,
+            buffer=2,
+            time_tuple=self.get_model_time(),
+            variables=["press"],
+        )
+
+        # reproject to model utm crs
+        # NOTE: currently SFINCS errors (stack overflow) on large files,
+        # downscaling to model grid is not recommended
+        kwargs0 = dict(align=dst_res is not None, method="nearest_index")
+        kwargs0.update(kwargs)
+        meth = kwargs0["method"]
+        self.logger.debug(f"Resample precip using {meth}.")
+        wind_u_out = wind_u.raster.reproject(
+            dst_crs=self.crs, dst_res=dst_res, **kwargs
+        ).fillna(0)
+        wind_v_out = wind_v.raster.reproject(
+            dst_crs=self.crs, dst_res=dst_res, **kwargs
+        ).fillna(0)
+
+        # resample in time
+        # wind_u_out = hydromt.workflows.resample_time(
+        #     wind_u_out,
+        #     freq=pd.to_timedelta("1H"),
+        #     conserve_mass=True,
+        #     upsampling="bfill",
+        #     downsampling="sum",
+        #     logger=self.logger,
+        # ).rename("press")
+        # wind_v_out = hydromt.workflows.resample_time(
+        #     wind_v_out,
+        #     freq=pd.to_timedelta("1H"),
+        #     conserve_mass=True,
+        #     upsampling="bfill",
+        #     downsampling="sum",
+        #     logger=self.logger,
+        # ).rename("press")
+
+        # add to forcing
+        self.set_forcing(wind_u_out, name="wind_u")    
+        self.set_forcing(wind_v_out, name="wind_v")
 
     def setup_precip_forcing(self, timeseries):
         """Setup spatially uniform precipitation forcing (precip).
