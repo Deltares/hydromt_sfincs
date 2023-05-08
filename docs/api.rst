@@ -50,6 +50,7 @@ Setup components
    SfincsModel.setup_precip_forcing
    SfincsModel.setup_precip_forcing_from_grid
    SfincsModel.setup_tiles
+   SfincsModel.setup_curvenumber_infiltration_withrecovery
 
 Plot methods
 ------------
