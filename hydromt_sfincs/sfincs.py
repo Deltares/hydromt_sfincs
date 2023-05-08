@@ -45,7 +45,8 @@ class SfincsModel(GridModel):
         "waterlevel": (["bzs"], "bnd"),
         "waves": (["bzi"], "bnd"),
         "discharge": (["dis"], "src"),
-        "precip": (["precip"], None),
+        "precip_1D": (["precip"], None),
+        "wind_1D": (["wind"], None),
         "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),
         "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
     }
@@ -77,6 +78,9 @@ class SfincsModel(GridModel):
         "bzi": {"standard_name": "wave height", "unit": "m"},
         "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
         "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
+        "press": {"standard_name": "barometric pressure", "unit": "Pa"},
+        "wind_u": {"standard_name": "eastward wind", "unit": "m/s"},
+        "wind_v": {"standard_name": "northward wind", "unit": "m/s"}
     }
 
     def __init__(
@@ -1681,20 +1685,20 @@ class SfincsModel(GridModel):
             ).fillna(0)
 
             # resample in time
-            # precip_out = hydromt.workflows.resample_time(
-            #     precip_out,
-            #     freq=pd.to_timedelta("1H"),
-            #     conserve_mass=True,
-            #     upsampling="bfill",
-            #     downsampling="sum",
-            #     logger=self.logger,
-            # ).rename("precip")
+            precip_out = hydromt.workflows.resample_time(
+                precip_out,
+                freq=pd.to_timedelta("1H"),
+                conserve_mass=True,
+                upsampling="bfill",
+                downsampling="sum",
+                logger=self.logger,
+            ).rename("precip")
 
             # add to forcing
             self.set_forcing(precip_out, name="precip")
 
     def setup_pressure_forcing_from_grid(
-        self, press=None, dst_res=None, **kwargs
+        self, press=None, dst_res=None, fill_value=101325, **kwargs
     ):
         """Setup pressure forcing from a gridded spatially varying data source.
 
@@ -1712,7 +1716,10 @@ class SfincsModel(GridModel):
 
         dst_res: float
             output resolution (m), by default None and computed from source data.
-            Only used in combination with aggregate=False
+        
+        fill_value: float
+            value to use when no data is available. 
+            Standard atmospheric pressure (101325 Pa) is used if no value is given.
         """
         # get data for model domain and config time range
         press = self.data_catalog.get_rasterdataset(
@@ -1732,17 +1739,17 @@ class SfincsModel(GridModel):
         self.logger.debug(f"Resample precip using {meth}.")
         press_out = press.raster.reproject(
             dst_crs=self.crs, dst_res=dst_res, **kwargs
-        ).fillna(0)
+        ).fillna(fill_value)
 
         # resample in time
-        # press_out = hydromt.workflows.resample_time(
-        #     press_out,
-        #     freq=pd.to_timedelta("1H"),
-        #     conserve_mass=True,
-        #     upsampling="bfill",
-        #     downsampling="sum",
-        #     logger=self.logger,
-        # ).rename("press")
+        press_out = hydromt.workflows.resample_time(
+            press_out,
+            freq=pd.to_timedelta("1H"),
+            conserve_mass=False,
+            upsampling="interpolate",
+            downsampling="interpolate",
+            logger=self.logger,
+        ).rename("press")
 
         # add to forcing
         self.set_forcing(press_out, name="press")
@@ -1780,7 +1787,7 @@ class SfincsModel(GridModel):
             geom=self.region,
             buffer=2,
             time_tuple=self.get_model_time(),
-            variables=["press"],
+            variables=["wind_u"],
         )
 
         wind_v = self.data_catalog.get_rasterdataset(
@@ -1788,7 +1795,7 @@ class SfincsModel(GridModel):
             geom=self.region,
             buffer=2,
             time_tuple=self.get_model_time(),
-            variables=["press"],
+            variables=["wind_v"],
         )
 
         # reproject to model utm crs
@@ -1806,26 +1813,57 @@ class SfincsModel(GridModel):
         ).fillna(0)
 
         # resample in time
-        # wind_u_out = hydromt.workflows.resample_time(
-        #     wind_u_out,
-        #     freq=pd.to_timedelta("1H"),
-        #     conserve_mass=True,
-        #     upsampling="bfill",
-        #     downsampling="sum",
-        #     logger=self.logger,
-        # ).rename("press")
-        # wind_v_out = hydromt.workflows.resample_time(
-        #     wind_v_out,
-        #     freq=pd.to_timedelta("1H"),
-        #     conserve_mass=True,
-        #     upsampling="bfill",
-        #     downsampling="sum",
-        #     logger=self.logger,
-        # ).rename("press")
+        wind_u_out = hydromt.workflows.resample_time(
+            wind_u_out,
+            freq=pd.to_timedelta("1H"),
+            conserve_mass=False,
+            upsampling="interpolate",
+            downsampling="interpolate",
+            logger=self.logger,
+        ).rename("wind_u")
+        wind_v_out = hydromt.workflows.resample_time(
+            wind_v_out,
+            freq=pd.to_timedelta("1H"),
+            conserve_mass=False,
+            upsampling="interpolate",
+            downsampling="interpolate",
+            logger=self.logger,
+        ).rename("wind_v")
 
         # add to forcing
         self.set_forcing(wind_u_out, name="wind_u")    
         self.set_forcing(wind_v_out, name="wind_v")
+
+    def setup_wind_forcing(self, timeseries):
+        """Setup spatially uniform wind forcing (wind).
+
+        Adds model layers:
+
+        * **windfile** forcing: uniform wind magnitude [m/s] and direction [deg]
+
+        Parameters
+        ----------
+        timeseries, str, Path
+            Path to tabulated timeseries csv file with time index in first column,
+            magnitude in second column and direction in third column
+            see :py:meth:`hydromt.open_timeseries_from_table`, for details.
+            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
+        """
+        tstart, tstop = self.get_model_time()
+        df_ts = self.data_catalog.get_dataframe(
+            timeseries,
+            time_tuple=(tstart, tstop),
+            # kwargs below only applied if timeseries not in data catalog
+            parse_dates=True,
+            index_col=0,
+        )
+        if isinstance(df_ts, pd.DataFrame):
+            df_ts = df_ts.squeeze()
+        if not isinstance(df_ts, pd.Series):
+            raise ValueError("df_ts must be a pandas.Series")
+        df_ts.name = "wind_1D"
+        df_ts.index.name = "time"
+        self.set_forcing(df_ts.to_xarray(), name="wind_1D")
 
     def setup_precip_forcing(self, timeseries):
         """Setup spatially uniform precipitation forcing (precip).
@@ -1854,9 +1892,9 @@ class SfincsModel(GridModel):
             df_ts = df_ts.squeeze()
         if not isinstance(df_ts, pd.Series):
             raise ValueError("df_ts must be a pandas.Series")
-        df_ts.name = "precip"
+        df_ts.name = "precip_1D"
         df_ts.index.name = "time"
-        self.set_forcing(df_ts.to_xarray(), name="precip")
+        self.set_forcing(df_ts.to_xarray(), name="precip_1D")
 
     def setup_tiles(
         self,

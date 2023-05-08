@@ -60,8 +60,10 @@ def plot_forcing(forcing: Dict, **kwargs):
             df = df.unstack(0)
         # convert dates a-priori as automatic conversion doesn't always work
         df.index = mdates.date2num(df.index)
-        if name.startswith("precip"):
+        if name.startswith("precip") or name.startswith("wind"):
             axes[i].bar(df.index, df.values, facecolor="darkblue")
+        elif name.startswith("press"):
+            df.plot.line(ax=axes[i])          
         else:
             df.plot.line(ax=axes[i]).legend(
                 title="index",
