@@ -1865,7 +1865,7 @@ class SfincsModel(GridModel):
         self.set_forcing(wind_u_out, name="wind_u")    
         self.set_forcing(wind_v_out, name="wind_v")
 
-    def setup_wind_forcing(self, timeseries):
+    def setup_wind_forcing(self, timeseries=None, const_mag=None, const_dir=None):
         """Setup spatially uniform wind forcing (wind).
 
         Adds model layers:
@@ -1881,13 +1881,21 @@ class SfincsModel(GridModel):
             Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
         """
         tstart, tstop = self.get_model_time()
-        df_ts = self.data_catalog.get_dataframe(
-            timeseries,
-            time_tuple=(tstart, tstop),
-            # kwargs below only applied if timeseries not in data catalog
-            parse_dates=True,
-            index_col=0,
-        )
+        if timeseries is not None:
+            df_ts = self.data_catalog.get_dataframe(
+                timeseries,
+                time_tuple=(tstart, tstop),
+                # kwargs below only applied if timeseries not in data catalog
+                parse_dates=True,
+                index_col=0,
+            )
+        elif const_mag is not None and const_dir is not None:
+            df_ts = pd.DataFrame(
+                index=pd.date_range(*self.get_model_time(), periods=2),
+                data=np.array([[const_mag,const_dir],[const_mag,const_dir]]),
+                columns=['mag', 'dir'],
+            )
+
         df_ts.name = "wnd"
         df_ts.index.name = "time"
         df_ts.columns.name = "index"
