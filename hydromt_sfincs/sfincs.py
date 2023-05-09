@@ -1697,7 +1697,7 @@ class SfincsModel(GridModel):
             # add to forcing
             self.set_forcing(precip_out, name="precip")
 
-    def setup_precip_forcing(self, timeseries):
+    def setup_precip_forcing(self, timeseries=None, const_precip=None):
         """Setup spatially uniform precipitation forcing (precip).
 
         Adds model layers:
@@ -1713,13 +1713,20 @@ class SfincsModel(GridModel):
             Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
         """
         tstart, tstop = self.get_model_time()
-        df_ts = self.data_catalog.get_dataframe(
-            timeseries,
-            time_tuple=(tstart, tstop),
-            # kwargs below only applied if timeseries not in data catalog
-            parse_dates=True,
-            index_col=0,
-        )
+        if timeseries is not None:
+            df_ts = self.data_catalog.get_dataframe(
+                timeseries,
+                time_tuple=(tstart, tstop),
+                # kwargs below only applied if timeseries not in data catalog
+                parse_dates=True,
+                index_col=0,
+            )
+        elif const_precip is not None:
+            times = pd.date_range(*self.get_model_time(), freq="10T")
+            df_ts = pd.DataFrame(
+                index=times,
+                data=np.full((len(times), 1), 3)
+            )
         if isinstance(df_ts, pd.DataFrame):
             df_ts = df_ts.squeeze()
         if not isinstance(df_ts, pd.Series):
