@@ -1863,7 +1863,9 @@ class SfincsModel(GridModel):
         #     raise ValueError("df_ts must be a pandas.Series")
         df_ts.name = "wind_1D"
         df_ts.index.name = "time"
-        self.set_forcing(df_ts.to_xarray(), name="wind_1D")
+        df_ts.columns.name = "index"
+        da = xr.DataArray(df_ts.values, dims=('time', 'index'), coords={'time': df_ts.index, 'index': ['mag', 'dir']})
+        self.set_forcing(da, name="wind_1D")
 
     def setup_precip_forcing(self, timeseries):
         """Setup spatially uniform precipitation forcing (precip).

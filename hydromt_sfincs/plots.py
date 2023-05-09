@@ -55,7 +55,7 @@ def plot_forcing(forcing: Dict, **kwargs):
             da = da.mean(dim=[da.raster.x_dim, da.raster.y_dim])
             prefix = "mean "
         # convert to Single index dataframe (bar plots don't work with xarray)
-        df = da.to_pandas()da
+        df = da.to_pandas()
         if isinstance(df.index, pd.MultiIndex):
             df = df.unstack(0)
         # convert dates a-priori as automatic conversion doesn't always work
