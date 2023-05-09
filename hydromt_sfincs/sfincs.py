@@ -45,8 +45,8 @@ class SfincsModel(GridModel):
         "waterlevel": (["bzs"], "bnd"),
         "waves": (["bzi"], "bnd"),
         "discharge": (["dis"], "src"),
-        "precip_1D": (["precip"], None),
-        "wind_1D": (["wnd"], None),
+        "precip_1d": (["precip"], None),
+        "wind_1d": (["wnd"], None),
         "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),
         "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
     }
@@ -1861,11 +1861,11 @@ class SfincsModel(GridModel):
         #     df_ts = df_ts.squeeze()
         # if not isinstance(df_ts, pd.Series):
         #     raise ValueError("df_ts must be a pandas.Series")
-        df_ts.name = "wind_1D"
+        df_ts.name = "wnd"
         df_ts.index.name = "time"
         df_ts.columns.name = "index"
-        da = xr.DataArray(df_ts.values, dims=('time', 'index'), coords={'time': df_ts.index, 'index': ['mag', 'dir']})
-        self.set_forcing(da, name="wind_1D")
+        da = xr.DataArray(df_ts.values, dims=('time', 'index'), coords={'time': df_ts.index, 'index': ['mag', 'dir']}) #TODO: make variable instead of fixed magnitude and direction titles?
+        self.set_forcing(da, name="wnd")
 
     def setup_precip_forcing(self, timeseries):
         """Setup spatially uniform precipitation forcing (precip).
@@ -1894,9 +1894,9 @@ class SfincsModel(GridModel):
             df_ts = df_ts.squeeze()
         if not isinstance(df_ts, pd.Series):
             raise ValueError("df_ts must be a pandas.Series")
-        df_ts.name = "precip_1D"
+        df_ts.name = "precip"
         df_ts.index.name = "time"
-        self.set_forcing(df_ts.to_xarray(), name="precip_1D")
+        self.set_forcing(df_ts.to_xarray(), name="precip")
 
     def setup_tiles(
         self,
