@@ -1697,6 +1697,37 @@ class SfincsModel(GridModel):
             # add to forcing
             self.set_forcing(precip_out, name="precip")
 
+    def setup_precip_forcing(self, timeseries):
+        """Setup spatially uniform precipitation forcing (precip).
+
+        Adds model layers:
+
+        * **precipfile** forcing: uniform precipitation [mm/hr]
+
+        Parameters
+        ----------
+        timeseries, str, Path
+            Path to tabulated timeseries csv file with time index in first column
+            and location IDs in the first row,
+            see :py:meth:`hydromt.open_timeseries_from_table`, for details.
+            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
+        """
+        tstart, tstop = self.get_model_time()
+        df_ts = self.data_catalog.get_dataframe(
+            timeseries,
+            time_tuple=(tstart, tstop),
+            # kwargs below only applied if timeseries not in data catalog
+            parse_dates=True,
+            index_col=0,
+        )
+        if isinstance(df_ts, pd.DataFrame):
+            df_ts = df_ts.squeeze()
+        if not isinstance(df_ts, pd.Series):
+            raise ValueError("df_ts must be a pandas.Series")
+        df_ts.name = "precip"
+        df_ts.index.name = "time"
+        self.set_forcing(df_ts.to_xarray(), name="precip")
+
     def setup_pressure_forcing_from_grid(
         self, press=None, dst_res=None, fill_value=101325, **kwargs
     ):
@@ -1857,46 +1888,11 @@ class SfincsModel(GridModel):
             parse_dates=True,
             index_col=0,
         )
-        # if isinstance(df_ts, pd.DataFrame):
-        #     df_ts = df_ts.squeeze()
-        # if not isinstance(df_ts, pd.Series):
-        #     raise ValueError("df_ts must be a pandas.Series")
         df_ts.name = "wnd"
         df_ts.index.name = "time"
         df_ts.columns.name = "index"
         da = xr.DataArray(df_ts.values, dims=('time', 'index'), coords={'time': df_ts.index, 'index': ['mag', 'dir']}) #TODO: make variable instead of fixed magnitude and direction titles?
         self.set_forcing(da, name="wnd")
-
-    def setup_precip_forcing(self, timeseries):
-        """Setup spatially uniform precipitation forcing (precip).
-
-        Adds model layers:
-
-        * **precipfile** forcing: uniform precipitation [mm/hr]
-
-        Parameters
-        ----------
-        timeseries, str, Path
-            Path to tabulated timeseries csv file with time index in first column
-            and location IDs in the first row,
-            see :py:meth:`hydromt.open_timeseries_from_table`, for details.
-            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
-        """
-        tstart, tstop = self.get_model_time()
-        df_ts = self.data_catalog.get_dataframe(
-            timeseries,
-            time_tuple=(tstart, tstop),
-            # kwargs below only applied if timeseries not in data catalog
-            parse_dates=True,
-            index_col=0,
-        )
-        if isinstance(df_ts, pd.DataFrame):
-            df_ts = df_ts.squeeze()
-        if not isinstance(df_ts, pd.Series):
-            raise ValueError("df_ts must be a pandas.Series")
-        df_ts.name = "precip"
-        df_ts.index.name = "time"
-        self.set_forcing(df_ts.to_xarray(), name="precip")
 
     def setup_tiles(
         self,
