@@ -45,8 +45,8 @@ class SfincsModel(GridModel):
         "waterlevel": (["bzs"], "bnd"),
         "waves": (["bzi"], "bnd"),
         "discharge": (["dis"], "src"),
-        "precip_1d": (["precip"], None),
-        "wind_1d": (["wnd"], None),
+        "precip": (["precip"], None),
+        "wind": (["wnd"], None),
         "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),
         "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
     }
@@ -54,7 +54,7 @@ class SfincsModel(GridModel):
         # 2D forcing sfincs name, rename tuple
         "waterlevel": ("netbndbzsbzi", {"zs": "bzs", "zi": "bzi"}),
         "discharge": ("netsrcdis", {"discharge": "dis"}),
-        "precip": ("netampr", {"Precipitation": "precip"}),
+        "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
         "press": ("netamp", {"barometric_pressure": "press"}),
         "wind": ("netamuamv", {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
     }
@@ -78,6 +78,7 @@ class SfincsModel(GridModel):
         "bzi": {"standard_name": "wave height", "unit": "m"},
         "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
         "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
+        "precip_2d": {"standard_name": "precipitation", "unit": "mm.hr-1"},
         "press": {"standard_name": "barometric pressure", "unit": "Pa"},
         "wind_u": {"standard_name": "eastward wind", "unit": "m/s"},
         "wind_v": {"standard_name": "northward wind", "unit": "m/s"}
@@ -1692,10 +1693,10 @@ class SfincsModel(GridModel):
                 upsampling="bfill",
                 downsampling="sum",
                 logger=self.logger,
-            ).rename("precip")
+            ).rename("precip_2d")
 
             # add to forcing
-            self.set_forcing(precip_out, name="precip")
+            self.set_forcing(precip_out, name="precip_2d")
 
     def setup_precip_forcing(self, timeseries=None, const_precip=None):
         """Setup spatially uniform precipitation forcing (precip).
