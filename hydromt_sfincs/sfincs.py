@@ -81,7 +81,8 @@ class SfincsModel(GridModel):
         "precip_2d": {"standard_name": "precipitation", "unit": "mm.hr-1"},
         "press": {"standard_name": "barometric pressure", "unit": "Pa"},
         "wind_u": {"standard_name": "eastward wind", "unit": "m/s"},
-        "wind_v": {"standard_name": "northward wind", "unit": "m/s"}
+        "wind_v": {"standard_name": "northward wind", "unit": "m/s"},
+        "wnd": {"standard_name": "wind properties", "unit": ""}
     }
 
     def __init__(
