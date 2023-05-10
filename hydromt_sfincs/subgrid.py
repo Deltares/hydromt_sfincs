@@ -275,6 +275,7 @@ class SubgridTableRegular:
                 predictor=2,
                 profile="COG",
                 nodata=np.nan,
+                BIGTIFF="YES",  # Add the BIGTIFF option here
             )
 
         if write_man_tif:
@@ -296,6 +297,7 @@ class SubgridTableRegular:
                 predictor=2,
                 profile="COG",
                 nodata=np.nan,
+                BIGTIFF="YES",  # Add the BIGTIFF option here
             )
 
         # Z points
