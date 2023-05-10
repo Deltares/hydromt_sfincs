@@ -11,6 +11,12 @@ v1.0.1
 Bugfix
 ------
 - bugfix in **write_forcing** to ensure all NetCDF files are written instead of only the first one.
+- bugfix in **setup_subgrid to ensure that a 'big geotiff' will be written by default when 'write_dep_tif' or 'write_man_tif' are True
+
+New methods
+-----------
+- `setup_cn_infiltration_with_k` to setup three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr)
+
 
 v1.0 (17 April 2023)
 ====================

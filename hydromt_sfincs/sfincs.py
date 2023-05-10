@@ -1017,7 +1017,7 @@ class SfincsModel(GridModel):
         self.set_config(f"{mname}file", f"sfincs.{mname}")
 
     # Function to create curve number for SFINCS including recovery term (Kr)
-    def setup_curvenumber_infiltration_withrecovery(
+    def setup_cn_infiltration_with_k(
         self, landcover, hsg, Ksat, reclass_table, effective, block_size=2000
     ):
         """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
@@ -1040,16 +1040,11 @@ class SfincsModel(GridModel):
         """
 
         # Read the datafiles
-        data_catalog = hydromt.DataCatalog(data_libs=data_catalog)
-        da_landuse = data_catalog.get_rasterdataset(
-            name_files[0], geom=self.region, buffer=10
-        )  # landcover
-        da_HSG = data_catalog.get_rasterdataset(
-            name_files[1], geom=self.region, buffer=10
-        )  # HSG
-        da_Ksat = data_catalog.get_rasterdataset(
-            name_files[2], geom=self.region, buffer=10
-        )  # Ksat
+        da_landuse = self.data_catalog.get_rasterdataset(
+            landcover, geom=self.region, buffer=10
+        )
+        da_HSG = self.data_catalog.get_rasterdataset(hsg, geom=self.region, buffer=10)
+        da_Ksat = self.data_catalog.get_rasterdataset(Ksat, geom=self.region, buffer=10)
         df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
 
         # Define outputs
@@ -1114,7 +1109,7 @@ class SfincsModel(GridModel):
                 (
                     da_smax_block,
                     da_kr_block,
-                ) = workflows.merge.curvenumber_recovery_determination(
+                ) = workflows.curvenumber.scs_recovery_determination(
                     da_landuse, da_HSG, da_Ksat, df_map, da_mask_block
                 )
 
