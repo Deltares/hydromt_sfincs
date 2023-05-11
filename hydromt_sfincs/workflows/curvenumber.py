@@ -35,7 +35,7 @@ def scs_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_mask_bloc
     da_CN = xr.full_like(da_landuse, np.NaN, dtype=np.float32)
     for i in range(df_map.index.size):
         for j in range(df_map.columns.size):
-            ind = (da_landuse == df_map._stat_axis[i]) & (
+            ind = (da_landuse == df_map.index[i]) & (
                 da_HSG_to_landuse == int(df_map.columns[j])
             )
             da_CN = da_CN.where(~ind, df_map.values[i, j])

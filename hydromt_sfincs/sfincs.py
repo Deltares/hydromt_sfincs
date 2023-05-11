@@ -1025,18 +1025,18 @@ class SfincsModel(GridModel):
 
         Parameters
         ---------
-        landcover       : str, Path, or RasterDataset
+        landcover : str, Path, or RasterDataset
             Land cover data set
-        hsg             : str, Path, or RasterDataset
-            HSG (Hydrological Similarity Group)
-        Ksat            : str, Path, or RasterDataset
-            Ksat (saturated hydraulic conductivity)
-        reclass_table   : str, Path, or RasterDataset
+        hsg : str, Path, or RasterDataset
+            HSG (Hydrological Similarity Group) in integers
+        Ksat : str, Path, or RasterDataset
+            Ksat (saturated hydraulic conductivity) [µm/s]
+        reclass_table : str, Path, or RasterDataset
             reclass table to relate landcover with soiltype
-        effective       : float,
+        effective : float
             estimate of percentage effective soil, e.g. 0.50 for 50%
-        block_size      : float,
-            maximum block size - use larger values will get more data in memory but can be faster, default=500
+        block_size : float
+            maximum block size - use larger values will get more data in memory but can be faster, default=2000
         """
 
         # Read the datafiles
@@ -1052,17 +1052,18 @@ class SfincsModel(GridModel):
         da_kr = xr.full_like(self.mask, -9999, dtype=np.float32)
 
         # Compute resolution land use (we are assuming that is the finest)
-        dres_degrees = np.sqrt(
-            (np.diff(da_landuse["x"].values).mean()) ** 2
-            + (np.diff(da_landuse["y"].values).mean()) ** 2
+        resolution_landuse = np.mean(
+            [abs(da_landuse.raster.res[0]), abs(da_landuse.raster.res[1])]
         )
-        resolution_landuse = dres_degrees * 111 * 1000  # assume 1 degree is 111km
+        if da_landuse.raster.crs.is_geographic:
+            resolution_landuse = (
+                resolution_landuse * 111111.0
+            )  # assume 1 degree is 111km
 
         # Define the blocks
         nrmax = block_size
         nmax = np.shape(self.mask)[0]
         mmax = np.shape(self.mask)[1]
-        grid_dim = (nmax, mmax)
         refi = self.config["dx"] / resolution_landuse  # finest resolution of landuse
         nrcb = int(np.floor(nrmax / refi))  # nr of regular cells in a block
         nrbn = int(np.ceil(nmax / nrcb))  # nr of blocks in n direction
@@ -1095,7 +1096,7 @@ class SfincsModel(GridModel):
 
                 # Count
                 ib += 1
-                logger.debug(
+                self.logger.debug(
                     f"\nblock {ib + 1}/{nrbn * nrbm} -- "
                     f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
                 )
@@ -1124,7 +1125,7 @@ class SfincsModel(GridModel):
         # Specify the effective soil retention (seff)
         da_seff = da_smax
         da_seff = da_seff * effective
-        da_seff.attrs.update({"_FillValue": da_smax._FillValue})
+        da_seff.raster.set_nodata(da_smax.raster.nodata)
 
         # set grids for seff, smax and kr
         names = ["smax", "seff", "kr"]
