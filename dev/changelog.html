@@ -433,12 +433,13 @@ document.write(`
 <p>The format is based on <a class="reference external" href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to
 <a class="reference external" href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 </section>
-<section id="v1-0-1">
-<h1>v1.0.1<a class="headerlink" href="#v1-0-1" title="Permalink to this heading">#</a></h1>
+<section id="v1-0-1-unreleased">
+<h1>v1.0.1 (unreleased)<a class="headerlink" href="#v1-0-1-unreleased" title="Permalink to this heading">#</a></h1>
 <section id="bugfix">
 <h2>Bugfix<a class="headerlink" href="#bugfix" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
-<li><p>bugfix in <strong>write_forcing</strong> to ensure all NetCDF files are written instead of only the first one.</p></li>
+<li><p>bugfix in <cite>SfincsModel.write_forcing</cite> to ensure all NetCDF files are written instead of only the first one. PR #86</p></li>
+<li><p>bugfix in <cite>SfincsModel.read_config</cite> &amp; <cite>SfincsInput.read</cite> for relative paths in inp file. PR #88</p></li>
 </ul>
 </section>
 </section>
@@ -696,7 +697,7 @@ The model domain is also determined on-the-fly, thus it is not required to run s
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">What’s new</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-1">v1.0.1</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-1-unreleased">v1.0.1 (unreleased)</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bugfix">Bugfix</a></li>
 </ul>
 </li>
