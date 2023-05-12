@@ -55,8 +55,8 @@ class SfincsModel(GridModel):
         "waterlevel": ("netbndbzsbzi", {"zs": "bzs", "zi": "bzi"}),
         "discharge": ("netsrcdis", {"discharge": "dis"}),
         "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
-        "press": ("netamp", {"barometric_pressure": "press"}),
-        "wind": ("netamuamv", {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
+        "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
+        "wind_2d": ("netamuamv", {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["msk", "dep", "scs", "manning", "qinf"]
@@ -79,10 +79,10 @@ class SfincsModel(GridModel):
         "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
         "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
         "precip_2d": {"standard_name": "precipitation", "unit": "mm.hr-1"},
-        "press": {"standard_name": "barometric pressure", "unit": "Pa"},
+        "press_2d": {"standard_name": "barometric pressure", "unit": "Pa"},
         "wind_u": {"standard_name": "eastward wind", "unit": "m/s"},
         "wind_v": {"standard_name": "northward wind", "unit": "m/s"},
-        "wnd": {"standard_name": "wind properties", "unit": ""}
+        "wnd": {"standard_name": "wind", "unit": "m/s"}
     }
 
     def __init__(
@@ -1627,7 +1627,7 @@ class SfincsModel(GridModel):
         self.set_geoms(ds_snapped.vector.to_gdf(), "src_snapped")
 
     def setup_precip_forcing_from_grid(
-        self, precip=None, dst_res=None, aggregate=False, **kwargs
+        self, precip, dst_res=None, aggregate=False, **kwargs
     ):
         """Setup precipitation forcing from a gridded spatially varying data source.
 
@@ -1686,20 +1686,22 @@ class SfincsModel(GridModel):
                 dst_crs=self.crs, dst_res=dst_res, **kwargs
             ).fillna(0)
 
-            # resample in time
-            precip_out = hydromt.workflows.resample_time(
-                precip_out,
-                freq=pd.to_timedelta("1H"),
-                conserve_mass=True,
-                upsampling="bfill",
-                downsampling="sum",
-                logger=self.logger,
-            ).rename("precip_2d")
-
+            # only resample in time if freq < 1H, else keep input values
+            if hydromt.workflows.forcing.da_to_timedelta(precip_out) < pd.to_timedelta("1H"):
+                precip_out = hydromt.workflows.resample_time(
+                    precip_out,
+                    freq=pd.to_timedelta("1H"),
+                    conserve_mass=True,
+                    upsampling="bfill",
+                    downsampling="sum",
+                    logger=self.logger,
+                )
+            precip_out = precip_out.rename("precip_2d")
+                
             # add to forcing
             self.set_forcing(precip_out, name="precip_2d")
 
-    def setup_precip_forcing(self, timeseries=None, const_precip=None):
+    def setup_precip_forcing(self, timeseries=None, magnitude=None):
         """Setup spatially uniform precipitation forcing (precip).
 
         Adds model layers:
@@ -1713,6 +1715,8 @@ class SfincsModel(GridModel):
             and location IDs in the first row,
             see :py:meth:`hydromt.open_timeseries_from_table`, for details.
             Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
+        magnitude: float
+            Precipitation magnitude [mm/hr] to use if no timeseries is provided.
         """
         tstart, tstop = self.get_model_time()
         if timeseries is not None:
@@ -1723,12 +1727,15 @@ class SfincsModel(GridModel):
                 parse_dates=True,
                 index_col=0,
             )
-        elif const_precip is not None:
+        elif magnitude is not None:
             times = pd.date_range(*self.get_model_time(), freq="10T")
             df_ts = pd.DataFrame(
                 index=times,
-                data=np.full((len(times), 1), 3)
+                data=np.full((len(times), 1), magnitude, dtype=float)
             )
+        else:
+            raise ValueError("Either timeseries or magnitude must be provided")
+
         if isinstance(df_ts, pd.DataFrame):
             df_ts = df_ts.squeeze()
         if not isinstance(df_ts, pd.Series):
@@ -1738,7 +1745,7 @@ class SfincsModel(GridModel):
         self.set_forcing(df_ts.to_xarray(), name="precip")
 
     def setup_pressure_forcing_from_grid(
-        self, press=None, dst_res=None, fill_value=101325, **kwargs
+        self, press, dst_res=None, fill_value=101325, **kwargs
     ):
         """Setup pressure forcing from a gridded spatially varying data source.
 
@@ -1751,7 +1758,7 @@ class SfincsModel(GridModel):
         press, str, Path, xr.Dataset, xr.DataArray
             Path to pressure rasterdataset netcdf file or xarray dataset.
 
-            * Required variables: ['barometric_pressure' (...)]
+            * Required variables: ['press' (...)]
             * Required coordinates: ['time', 'y', 'x']
 
         dst_res: float
@@ -1781,21 +1788,24 @@ class SfincsModel(GridModel):
             dst_crs=self.crs, dst_res=dst_res, **kwargs
         ).fillna(fill_value)
 
-        # resample in time
-        press_out = hydromt.workflows.resample_time(
-            press_out,
-            freq=pd.to_timedelta("1H"),
-            conserve_mass=False,
-            upsampling="interpolate",
-            downsampling="interpolate",
-            logger=self.logger,
-        ).rename("press")
+        # only resample in time if freq < 1H, else keep input values
+        if hydromt.workflows.forcing.da_to_timedelta(press_out) < pd.to_timedelta("1H"):
+            press_out = hydromt.workflows.resample_time(
+                press_out,
+                freq=pd.to_timedelta("1H"),
+                conserve_mass=False,
+                upsampling="interpolate",
+                downsampling="interpolate",
+                logger=self.logger,
+            )
+
+        press_out = press_out.rename("press_2d")
 
         # add to forcing
-        self.set_forcing(press_out, name="press")
+        self.set_forcing(press_out, name="press_2d")
 
     def setup_wind_forcing_from_grid(
-        self, wind_u=None, wind_v=None, dst_res=None, **kwargs
+        self, wind, dst_res=None, **kwargs
     ):
         """Setup pressure forcing from a gridded spatially varying data source.
 
@@ -1805,16 +1815,10 @@ class SfincsModel(GridModel):
 
         Parameters
         ----------
-        wind_u, str, Path, xr.Dataset, xr.DataArray
-            Path to eastward wind rasterdataset netcdf file or xarray dataset.
+        wind, str, Path, xr.Dataset
+            Path to wind rasterdataset (including eastward and northward components) netcdf file or xarray dataset.
 
-            * Required variables: ['wind_u' (m/s)]
-            * Required coordinates: ['time', 'y', 'x']
-
-        wind_v, str, Path, xr.Dataset, xr.DataArray
-            Path to northward wind rasterdataset netcdf file or xarray dataset.
-
-            * Required variables: ['wind_v' (m/s)]
+            * Required variables: ['wind_u' (m/s), 'wind_v' (m/s)]
             * Required coordinates: ['time', 'y', 'x']
 
         dst_res: float
@@ -1822,20 +1826,12 @@ class SfincsModel(GridModel):
             Only used in combination with aggregate=False
         """
         # get data for model domain and config time range
-        wind_u = self.data_catalog.get_rasterdataset(
-            wind_u,
+        wind = self.data_catalog.get_rasterdataset(
+            wind,
             geom=self.region,
             buffer=2,
             time_tuple=self.get_model_time(),
-            variables=["wind_u"],
-        )
-
-        wind_v = self.data_catalog.get_rasterdataset(
-            wind_v,
-            geom=self.region,
-            buffer=2,
-            time_tuple=self.get_model_time(),
-            variables=["wind_v"],
+            variables=["wind_u", "wind_v"],
         )
 
         # reproject to model utm crs
@@ -1845,36 +1841,31 @@ class SfincsModel(GridModel):
         kwargs0.update(kwargs)
         meth = kwargs0["method"]
         self.logger.debug(f"Resample precip using {meth}.")
-        wind_u_out = wind_u.raster.reproject(
-            dst_crs=self.crs, dst_res=dst_res, **kwargs
-        ).fillna(0)
-        wind_v_out = wind_v.raster.reproject(
+
+        wind = wind.raster.reproject(
             dst_crs=self.crs, dst_res=dst_res, **kwargs
         ).fillna(0)
 
-        # resample in time
-        wind_u_out = hydromt.workflows.resample_time(
-            wind_u_out,
-            freq=pd.to_timedelta("1H"),
-            conserve_mass=False,
-            upsampling="interpolate",
-            downsampling="interpolate",
-            logger=self.logger,
-        ).rename("wind_u")
-        wind_v_out = hydromt.workflows.resample_time(
-            wind_v_out,
-            freq=pd.to_timedelta("1H"),
-            conserve_mass=False,
-            upsampling="interpolate",
-            downsampling="interpolate",
-            logger=self.logger,
-        ).rename("wind_v")
+        # only resample in time if freq < 1H, else keep input values
+        if hydromt.workflows.forcing.da_to_timedelta(wind) < pd.to_timedelta("1H"):
+            wind_out = xr.Dataset()
+            # resample in time
+            for var in wind.data_vars:
+                wind_out[var] = hydromt.workflows.resample_time(
+                    wind[var],
+                    freq=pd.to_timedelta("1H"),
+                    conserve_mass=False,
+                    upsampling="interpolate",
+                    downsampling="interpolate",
+                    logger=self.logger,
+                )
+        else:
+            wind_out = wind
 
         # add to forcing
-        self.set_forcing(wind_u_out, name="wind_u")    
-        self.set_forcing(wind_v_out, name="wind_v")
+        self.set_forcing(wind_out, name="wind_2d")
 
-    def setup_wind_forcing(self, timeseries=None, const_mag=None, const_dir=None):
+    def setup_wind_forcing(self, timeseries=None, magnitude=None, direction=None):
         """Setup spatially uniform wind forcing (wind).
 
         Adds model layers:
@@ -1888,6 +1879,10 @@ class SfincsModel(GridModel):
             magnitude in second column and direction in third column
             see :py:meth:`hydromt.open_timeseries_from_table`, for details.
             Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
+        magnitude: float
+            Magnitude of the wind [m/s]
+        direction: float
+            Direction where the wind is coming from [deg], e.g. 0 is north, 90 is east, etc.
         """
         tstart, tstop = self.get_model_time()
         if timeseries is not None:
@@ -1898,17 +1893,19 @@ class SfincsModel(GridModel):
                 parse_dates=True,
                 index_col=0,
             )
-        elif const_mag is not None and const_dir is not None:
+        elif magnitude is not None and direction is not None:
             df_ts = pd.DataFrame(
                 index=pd.date_range(*self.get_model_time(), periods=2),
-                data=np.array([[const_mag,const_dir],[const_mag,const_dir]]),
+                data=np.array([[magnitude,direction],[magnitude,direction]]),
                 columns=['mag', 'dir'],
             )
+        else:
+            raise ValueError("Either timeseries or magnitude and direction must be provided")
 
         df_ts.name = "wnd"
         df_ts.index.name = "time"
         df_ts.columns.name = "index"
-        da = xr.DataArray(df_ts.values, dims=('time', 'index'), coords={'time': df_ts.index, 'index': ['mag', 'dir']}) #TODO: make variable instead of fixed magnitude and direction titles?
+        da = xr.DataArray(df_ts.values, dims=('time', 'index'), coords={'time': df_ts.index, 'index': ['mag', 'dir']})
         self.set_forcing(da, name="wnd")
 
     def setup_tiles(
@@ -2021,7 +2018,7 @@ class SfincsModel(GridModel):
     def plot_forcing(self, fn_out=None, **kwargs):
         """Plot model timeseries forcing.
 
-        For distributed forcing a spatial avarage is plotted.
+        For distributed forcing a spatial avarage, minimum or maximum is plotted.
 
         Parameters
         ----------
