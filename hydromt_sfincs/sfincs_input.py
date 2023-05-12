@@ -1,6 +1,10 @@
-from datetime import datetime
+"""
+SfincsInput class to read and write sfincs input (inp) files.
+"""
+
 from ast import literal_eval
-from typing import Dict
+from datetime import datetime
+from typing import Dict, Any
 
 
 class SfincsInput:
@@ -120,7 +124,7 @@ class SfincsInput:
             else:
                 try:
                     val = literal_eval(val)
-                except ValueError:  # normal string
+                except Exception:  # normal string
                     pass
             if name == "crs":
                 name = "epsg"
@@ -164,6 +168,31 @@ class SfincsInput:
                 setattr(inp, name, None)
         return inp
 
+    @staticmethod
+    def from_file(inp_fn: str) -> None:
+        """Create SfincsInput object from input file."""
+        inp = SfincsInput()
+        inp.read(inp_fn)
+        return inp
+
     def to_dict(self) -> Dict:
         """Return dictionary of attributes."""
         return {k: v for k, v in self.__dict__.items() if v is not None}
+
+    def __getitem__(self, name: str) -> Any:
+        """Return attribute value."""
+        return getattr(self, name)
+
+    def __setitem__(self, name: str, value: Any) -> None:
+        """Set attribute value."""
+        setattr(self, name, value)
+
+    def __repr__(self) -> str:
+        """Return string representation of object."""
+        return f"{self.__class__.__name__}({self.to_dict()})"
+
+    def __eq__(self, __value: object) -> bool:
+        """Return True if objects are equal."""
+        if isinstance(__value, self.__class__):
+            return self.__dict__ == __value.__dict__
+        return False

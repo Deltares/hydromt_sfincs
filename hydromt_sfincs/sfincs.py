@@ -1,26 +1,27 @@
-# -*- coding: utf-8 -*-
+"""
+SfincsModel class
+"""
 from __future__ import annotations
-import os
-from os.path import join, isfile, abspath, dirname, basename, isabs
+
 import glob
-import numpy as np
 import logging
-import geopandas as gpd
-import pandas as pd
-from pyproj import CRS
-import xarray as xr
+import os
+from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
-from typing import Dict, Tuple, List, Union, Any
+from typing import Any, Dict, List, Tuple, Union
+
+import geopandas as gpd
+import hydromt
+import numpy as np
+import pandas as pd
+import xarray as xr
+from hydromt.models.model_grid import GridModel
+from hydromt.raster import RasterDataArray
+from hydromt.vector import GeoDataArray, GeoDataset
+from pyproj import CRS
 from shapely.geometry import box
 
-import hydromt
-from hydromt.models.model_grid import GridModel
-from hydromt.models.model_mesh import MeshMixin
-from hydromt.vector import GeoDataset, GeoDataArray
-from hydromt.raster import RasterDataset, RasterDataArray
-from hydromt.gis_utils import nearest_merge
-
-from . import workflows, utils, plots, DATADIR
+from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
 from .sfincs_input import SfincsInput
 
@@ -29,7 +30,7 @@ __all__ = ["SfincsModel"]
 logger = logging.getLogger(__name__)
 
 
-class SfincsModel(MeshMixin, GridModel):
+class SfincsModel(GridModel):
     # GLOBAL Static class variables that can be used by all methods within
     # SfincsModel class. Typically list of variables (e.g. _MAPS) or
     # dict with varname - filename pairs (e.g. thin_dams : thd)
@@ -210,8 +211,10 @@ class SfincsModel(MeshMixin, GridModel):
         res: float = 100,
         crs: Union[str, int] = "utm",
         rotated: bool = False,
-        hydrography_fn: str = "merit_hydro",  # TODO: change to None
-        basin_index_fn: str = "merit_hydro_index",  # TODO: change to None
+        hydrography_fn: str = None,
+        basin_index_fn: str = None,
+        dec_origin: int = 0,
+        dec_rotation: int = 3,
     ):
         """Setup a regular or quadtree grid from a region.
 
@@ -219,6 +222,7 @@ class SfincsModel(MeshMixin, GridModel):
         ----------
         region : dict
             Dictionary describing region of interest, e.g.:
+
             * {'bbox': [xmin, ymin, xmax, ymax]}
             * {'geom': 'path/to/polygon_geometry'}
 
@@ -240,6 +244,10 @@ class SfincsModel(MeshMixin, GridModel):
             Name of data source with basin (bounding box) geometries associated with
             the 'basins' layer of `hydrography_fn`. Only required if the `region` is
             based on a (sub)(inter)basins without a 'bounds' argument.
+        dec_origin : int, optional
+            number of decimals to round the origin coordinates, by default 0
+        dec_rotation : int, optional
+            number of decimals to round the rotation angle, by default 3
 
         See Also
         --------
@@ -262,9 +270,12 @@ class SfincsModel(MeshMixin, GridModel):
         # NOTE keyword rotated is added to still have the possibility to create unrotated grids if needed (e.g. for FEWS?)
         if rotated:
             geom = self.geoms["region"].unary_union
-            x0, y0, mmax, nmax, rot = utils.rotated_grid(geom, res)
+            x0, y0, mmax, nmax, rot = utils.rotated_grid(
+                geom, res, dec_origin=dec_origin, dec_rotation=dec_rotation
+            )
         else:
             x0, y0, x1, y1 = self.geoms["region"].total_bounds
+            x0, y0 = round(x0, dec_origin), round(y0, dec_origin)
             mmax = int(np.ceil((x1 - x0) / res))
             nmax = int(np.ceil((y1 - y0) / res))
             rot = 0
@@ -318,7 +329,7 @@ class SfincsModel(MeshMixin, GridModel):
                 da_like=self.mask,
                 buffer_cells=buffer_cells,
                 interp_method=interp_method,
-                logger=logger,
+                logger=self.logger,
             )
 
             # check if no nan data is present in the bed levels
@@ -450,7 +461,7 @@ class SfincsModel(MeshMixin, GridModel):
                 connectivity=connectivity,
                 all_touched=all_touched,
                 reset_mask=reset_mask,
-                # logger=self.logger,
+                logger=self.logger,
             )
             self.set_grid(da_mask, name="msk")
             # update config
@@ -552,6 +563,7 @@ class SfincsModel(MeshMixin, GridModel):
                 connectivity=connectivity,
                 all_touched=all_touched,
                 reset_bounds=reset_bounds,
+                logger=self.logger,
             )
             self.set_grid(da_mask, name="msk")
 
@@ -569,8 +581,8 @@ class SfincsModel(MeshMixin, GridModel):
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
-        make_dep_tiles: bool = False,
-        make_manning_tiles: bool = False,
+        write_dep_tif: bool = False,
+        write_man_tif: bool = False,
     ):
         """Setup method for subgrid tables based on a list of
         elevation and Manning's roughness datasets.
@@ -603,14 +615,14 @@ class SfincsModel(MeshMixin, GridModel):
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         nbins : int, optional
-            Number of bins in the subgrid tables, by default 10
+            Number of bins in which hypsometry is subdivided, by default 10
         nr_subgrid_pixels : int, optional
             Number of subgrid pixels per computational cell, by default 20
         nrmax : int, optional
             Maximum number of cells per subgrid-block, by default 2000
             These blocks are used to prevent memory issues while working with large datasets
         max_gradient : float, optional
-            Maximum gradient in the subgrid tables, by default 5.0
+            If slope in hypsometry exceeds this value, then smoothing is applied, to prevent numerical stability problems, by default 5.0
         z_minimum : float, optional
             Minimum depth in the subgrid tables, by default -99999.0
         manning_land, manning_sea : float, optional
@@ -618,9 +630,9 @@ class SfincsModel(MeshMixin, GridModel):
             Note that these values are only used when no Manning's n datasets are provided, or to fill the nodata values
         rgh_lev_land : float, optional
             Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
-        make_dep_tiles : bool, optional
+        write_dep_tif : bool, optional
             Create geotiff of the merged topobathy on the subgrid resolution, by default False
-        make_rgh_tiles : bool, optional
+        write_man_tif : bool, optional
             Create geotiff of the merged roughness on the subgrid resolution, by default False
         """
 
@@ -641,8 +653,8 @@ class SfincsModel(MeshMixin, GridModel):
             datasets_riv = self._parse_datasets_riv(datasets_riv)
 
         # folder where high-resolution topobathy and manning geotiffs are stored
-        if make_dep_tiles or make_manning_tiles:
-            highres_dir = os.path.join(self.root, "tiles", "subgrid")
+        if write_dep_tif or write_man_tif:
+            highres_dir = os.path.join(self.root, "subgrid")
             if not os.path.isdir(highres_dir):
                 os.makedirs(highres_dir)
         else:
@@ -662,9 +674,10 @@ class SfincsModel(MeshMixin, GridModel):
                 manning_land=manning_land,
                 manning_sea=manning_sea,
                 rgh_lev_land=rgh_lev_land,
-                make_dep_tiles=make_dep_tiles,
-                make_manning_tiles=make_manning_tiles,
+                write_dep_tif=write_dep_tif,
+                write_man_tif=write_man_tif,
                 highres_dir=highres_dir,
+                logger=self.logger,
             )
             self.subgrid = self.reggrid.subgrid.to_xarray(
                 dims=self.mask.raster.dims, coords=self.mask.raster.coords
@@ -689,7 +702,7 @@ class SfincsModel(MeshMixin, GridModel):
         river_width: float = 500,
         merge: bool = False,
         first_index: int = 1,
-        keep_rivers_geom=False,
+        keep_rivers_geom: bool = False,
     ):
         """Setup discharge (src) points where a river enters the model domain.
 
@@ -698,6 +711,9 @@ class SfincsModel(MeshMixin, GridModel):
 
         Waterlevel or outflow boundary cells intersecting with the river
         are removed from the model mask.
+
+        Discharge is set to zero at these points, but can be updated
+        using the `setup_discharge_forcing` or `setup_discharge_forcing_from_grid` methods.
 
         Note: this method assumes the rivers are directed from up- to downstream.
 
@@ -732,6 +748,11 @@ class SfincsModel(MeshMixin, GridModel):
             If True, keep a geometry of the rivers "rivers_inflow" in geoms. By default False.
         buffer: int, optional
             Buffer [no. of cells] around model domain, by default 10.
+
+        See Also
+        --------
+        setup_discharge_forcing
+        setup_discharge_forcing_from_grid
         """
         da_flwdir, da_uparea, gdf_riv = None, None, None
         if hydrography is not None:
@@ -913,8 +934,45 @@ class SfincsModel(MeshMixin, GridModel):
         if keep_rivers_geom and len(gdf_riv) > 0:
             self.set_geoms(gdf_riv, name="rivers_outflow")
 
+    def setup_constant_infiltration(self, qinf, reproj_method="average"):
+        """Setup spatially varying constant infiltration rate (qinffile).
 
-    def setup_cn_infiltration(self, cn_fn, antecedent_moisture="avg"):
+        Adds model layers:
+
+        * **qinf** map: constant infiltration rate [mm/hr]
+
+        Parameters
+        ----------
+        qinf : str, Path, or RasterDataset
+            Spatially varying infiltration rates [mm/hr]
+        reproj_method : str, optional
+            Resampling method for reprojecting the infiltration data to the model grid.
+            By default 'average'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
+        """
+
+        # get infiltration data
+        da_inf = self.data_catalog.get_rasterdataset(qinf, geom=self.region, buffer=10)
+        da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
+
+        # reproject infiltration data to model grid
+        da_inf = da_inf.raster.reproject_like(self.mask, method=reproj_method)
+
+        # check on nan values
+        if np.logical_and(np.isnan(da_inf), self.mask >= 1).any():
+            self.logger.warning("NaN values found in infiltration data; filled with 0")
+            da_inf = da_inf.fillna(0)
+        da_inf.raster.set_nodata(-9999.0)
+
+        # set grid
+        mname = "qinf"
+        da_inf.attrs.update(**self._ATTRS.get(mname, {}))
+        self.set_grid(da_inf, name=mname)
+
+        # update config: remove default inf and set qinf map
+        self.set_config(f"{mname}file", f"sfincs.{mname}")
+        self.config.pop("qinf", None)
+
+    def setup_cn_infiltration(self, cn, antecedent_moisture="avg", reproj_method="med"):
         """Setup model potential maximum soil moisture retention map (scsfile)
         from gridded curve number map.
 
@@ -924,7 +982,7 @@ class SfincsModel(MeshMixin, GridModel):
 
         Parameters
         ---------
-        cn_fn: str, Path, or RasterDataset
+        cn: str, Path, or RasterDataset
             Name of gridded curve number map.
 
             * Required layers without antecedent runoff conditions: ['cn']
@@ -933,24 +991,27 @@ class SfincsModel(MeshMixin, GridModel):
             Antecedent runoff conditions.
             None if data has no antecedent runoff conditions.
             By default `avg`
+        reproj_method : str, optional
+            Resampling method for reprojecting the curve number data to the model grid.
+            By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
         """
         # get data
+        da_org = self.data_catalog.get_rasterdataset(cn, geom=self.region, buffer=10)
+        # read variable
         v = "cn"
         if antecedent_moisture:
             v = f"cn_{antecedent_moisture}"
-        da_org = self.data_catalog.get_rasterdataset(
-            cn_fn, geom=self.region, buffer=10, variables=[v]
-        )
+        if isinstance(da_org, xr.Dataset) and v in da_org.data_vars:
+            da_org = da_org[v]
+        elif not isinstance(da_org, xr.DataArray):
+            raise ValueError(f"Could not find variable {v} in {cn}")
+
         # reproject using median
-        da_cn = da_org.raster.reproject_like(self.grid, method="med")
-        # CN=100 based on water mask
-        if "rivmsk" in self.grid:
-            self.logger.info(
-                'Updating CN map based on "rivmsk" from setup_river_hydrography method.'
-            )
-            da_cn = da_cn.where(self.grid["rivmsk"] == 0, 100)
+        da_cn = da_org.raster.reproject_like(self.grid, method=reproj_method)
+
         # convert to potential maximum soil moisture retention S (1000/CN - 10) [inch]
         da_scs = workflows.cn_to_s(da_cn, self.mask > 0).round(3)
+
         # set grid
         mname = "scs"
         da_scs.attrs.update(**self._ATTRS.get(mname, {}))
@@ -992,6 +1053,7 @@ class SfincsModel(MeshMixin, GridModel):
         else:
             datasets_rgh = []
 
+        # fromdep keeps track of whether any manning values should be based on the depth or not
         fromdep = len(datasets_rgh) == 0
         if self.grid_type == "regular":
             if len(datasets_rgh) > 0:
@@ -999,7 +1061,7 @@ class SfincsModel(MeshMixin, GridModel):
                     da_list=datasets_rgh,
                     da_like=self.mask,
                     interp_method="linear",
-                    logger=logger,
+                    logger=self.logger,
                 )
                 fromdep = np.isnan(da_man).where(self.mask > 0, False).any()
             if "dep" in self.grid and fromdep:
@@ -1028,7 +1090,7 @@ class SfincsModel(MeshMixin, GridModel):
     def setup_observation_points(
         self,
         locations: Union[str, Path, gpd.GeoDataFrame],
-        overwrite: bool = False,
+        merge: bool = True,
         **kwargs,
     ):
         """Setup model observation point locations.
@@ -1041,8 +1103,8 @@ class SfincsModel(MeshMixin, GridModel):
         ---------
         locations: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for observation point locations.
-        overwrite: bool, optional
-            If True, overwrite existing observation points instead of appending the new observation points.
+        merge: bool, optional
+            If True, merge the new observation points with the existing ones. By default True.
         """
         name = self._GEOMS["observation_points"]
 
@@ -1056,10 +1118,11 @@ class SfincsModel(MeshMixin, GridModel):
         if not gdf_obs.geometry.type.isin(["Point"]).all():
             raise ValueError("Observation points must be of type Point.")
 
-        if not overwrite and name in self.geoms:
+        if merge and name in self.geoms:
             gdf0 = self._geoms.pop(name)
             gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
             self.logger.info(f"Adding new observation points to existing ones.")
+
         self.set_geoms(gdf_obs, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
 
@@ -1068,7 +1131,7 @@ class SfincsModel(MeshMixin, GridModel):
         structures: Union[str, Path, gpd.GeoDataFrame],
         stype: str,
         dz: float = None,
-        overwrite: bool = False,
+        merge: bool = True,
         **kwargs,
     ):
         """Setup thin dam or weir structures.
@@ -1087,9 +1150,8 @@ class SfincsModel(MeshMixin, GridModel):
             "par1" defaults to 0.6 if gdf has no "par1" column.
         stype : {'thd', 'weir'}
             Structure type.
-        overwrite: bool, optional
-            If True, overwrite existing 'stype' structures instead of appending the
-            new structures.
+        merge : bool, optional
+            If True, merge with existing'stype' structures, by default True.
         dz: float, optional
             If provided, for weir structures the z value is calculated from
             the model elevation (dep) plus dz.
@@ -1124,7 +1186,7 @@ class SfincsModel(MeshMixin, GridModel):
         elif stype == "weir" and np.any(["z" not in s for s in structs]):
             raise ValueError("Weir structure requires z values.")
         # combine with existing structures if present
-        if not overwrite and stype in self.geoms:
+        if merge and stype in self.geoms:
             gdf0 = self._geoms.pop(stype)
             gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
             self.logger.info(f"Adding {stype} structures to existing structures.")
@@ -1360,6 +1422,12 @@ class SfincsModel(MeshMixin, GridModel):
     ):
         """Setup waterlevel boundary (bnd) points along model waterlevel boundary (msk=2).
 
+        The waterlevel boundary (msk=2) should be set before calling this method,
+        e.g.: with `setup_mask_bounds`
+
+        Waterlevels (bzs) are set to zero at these points, but can be updated
+        with `setup_waterlevel_forcing`.
+
         Parameters
         ----------
         distance: float, optional
@@ -1367,6 +1435,11 @@ class SfincsModel(MeshMixin, GridModel):
             by default 10 km.
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
+
+        See Also
+        --------
+        setup_waterlevel_forcing
+        setup_mask_bounds
         """
         # get waterlevel boundary vector based on mask
         gdf_msk = utils.get_bounds_vector(self.mask)
@@ -1395,7 +1468,8 @@ class SfincsModel(MeshMixin, GridModel):
         or a tabular `timeseries` dataframe. At least one of these must be provided.
 
         The tabular timeseries data is combined with `locations` if provided,
-        or with existing 'src' locations if previously set.
+        or with existing 'src' locations if previously set, e.g., with the
+        `setup_river_inflow` method.
 
         Adds model layers:
 
@@ -1411,6 +1485,10 @@ class SfincsModel(MeshMixin, GridModel):
             Path, data source name, or geopandas object for bnd point locations.
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
+
+        See Also
+        --------
+        setup_river_inflow
         """
         gdf_locs, df_ts = None, None
         tstart, tstop = self.get_model_time()  # model time
@@ -1503,7 +1581,7 @@ class SfincsModel(MeshMixin, GridModel):
 
         See Also
         --------
-        hydromt_sfincs.SfincsModel.setup_river_inflow
+        setup_river_inflow
         """
         if locations is not None:
             gdf = self.data_catalog.get_geodataframe(
@@ -1655,100 +1733,6 @@ class SfincsModel(MeshMixin, GridModel):
         df_ts.index.name = "time"
         self.set_forcing(df_ts.to_xarray(), name="precip")
 
-    def create_index_tiles(
-        self,
-        path: Union[str, Path] = None,
-        region: gpd.GeoDataFrame = None,  # TODO why not use self.region?
-        zoom_range: Union[int, List[int]] = [0, 13],
-        fmt: str = "bin",
-    ):
-        """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the correct SFINCS cell.
-
-        Parameters
-        ----------
-        path : Union[str, Path]
-            Directory in which to store the index tiles, if None, the model root + tiles is used.
-            Note that the index tiles are stored in a subdirectory named index.
-        region : gpd.GeoDataFrame
-            GeoDataFrame defining the area of interest, if None, the model region is used.
-        zoom_range : Union[int, List[int]], optional
-            Range of zoom levels for which tiles are created, by default [0,13]
-        fmt : str, optional
-            Format of the index tiles, either "bin" (binary, default) or "png".
-        """
-        if path is None:
-            path = os.path.join(self.root, "tiles")
-        if region is None:
-            region = self.region
-
-        if self.grid_type == "regular":
-            self.reggrid.create_index_tiles(
-                region=region, root=path, zoom_range=zoom_range, fmt=fmt
-            )
-        elif self.grid_type == "quadtree":
-            raise NotImplementedError(
-                "Index tiles not yet implemented for quadtree grids."
-            )
-
-    def create_topobathy_tiles(
-        self,
-        path: Union[str, Path] = None,
-        region: gpd.GeoDataFrame = None,
-        datasets_dep: List[dict] = [],
-        index_path: Union[str, Path] = None,
-        zoom_range: Union[int, List[int]] = [0, 13],
-        z_range: List[int] = [-20000.0, 20000.0],
-        fmt: str = "bin",
-    ):
-        """Create webmercator tiles for merged topography and bathymetry.
-
-        Parameters
-        ----------
-        path : Union[str, Path]
-            Directory in which to store the index tiles, if None, the model root + tiles is used.
-            Note that the tiles are stored in a subdirectory named topobathy.
-        region : gpd.GeoDataFrame
-            GeoDataFrame defining the area of interest, if None, the model region is used.
-        datasets_dep : List[dict]
-            List of dict containing xarray.DataArray and metadata for each dataset.
-        index_path : Union[str, Path], optional
-            Directory where index tiles are stored. If defined, topobathy tiles are only created where index tiles are present.
-        zoom_range : Union[int, List[int]], optional
-            Range of zoom levels for which tiles are created, by default [0,13]
-        z_range : List[int], optional
-            Range of valid elevations that are included in the topobathy tiles, by default [-20000.0, 20000.0]
-        fmt : str, optional
-            Format of the topobathy tiles: "bin" (binary, default), "png" or "tif".
-        """
-
-        if path is None:
-            path = os.path.join(self.root, "tiles")
-        if region is None:
-            # if region not provided, use model region
-            region = self.region
-
-        # if no datasets provided, check if high-res subgrid geotiff is there
-        if len(datasets_dep) == 0:
-            if os.path.exists(os.path.join(self.root, "tiles", "subgrid")):
-                # check if there is a dep_subgrid.tif
-                dep = os.path.join(self.root, "tiles", "subgrid", "dep_subgrid.tif")
-                if os.path.exists(dep):
-                    da = self.data_catalog.get_rasterdataset(dep)
-                    datasets_dep.append({"da": da})
-                else:
-                    raise ValueError("No topobathy datasets provided.")
-
-        # create topobathy tiles
-        workflows.tiling.create_topobathy_tiles(
-            root=path,
-            region=region,
-            datasets_dep=datasets_dep,
-            index_path=index_path,
-            zoom_range=zoom_range,
-            z_range=z_range,
-            fmt=fmt,
-        )
-
     def setup_tiles(
         self,
         path: Union[str, Path] = None,
@@ -1756,6 +1740,8 @@ class SfincsModel(MeshMixin, GridModel):
         datasets_dep: List[dict] = [],
         zoom_range: Union[int, List[int]] = [0, 13],
         z_range: List[int] = [-20000.0, 20000.0],
+        create_index_tiles: bool = True,
+        create_topobathy_tiles: bool = True,
         fmt: str = "bin",
     ):
         """Create both index and topobathy tiles in webmercator format.
@@ -1768,16 +1754,22 @@ class SfincsModel(MeshMixin, GridModel):
             Dictionary describing region of interest, e.g.:
             * {'bbox': [xmin, ymin, xmax, ymax]}. Note bbox should be provided in WGS 84
             * {'geom': 'path/to/polygon_geometry'}
+            If None, the model region is used.
         datasets_dep : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
             [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
             For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+            Note that subgrid/dep_subgrid.tif is automatically used if present and datasets_dep is left empty.
         zoom_range : Union[int, List[int]], optional
             Range of zoom levels for which tiles are created, by default [0,13]
         z_range : List[int], optional
             Range of valid elevations that are included in the topobathy tiles, by default [-20000.0, 20000.0]
+        create_index_tiles : bool, optional
+            If True, index tiles are created, by default True
+        create_topobathy_tiles : bool, optional
+            If True, topobathy tiles are created, by default True.
         fmt : str, optional
-            Format of the tiles: "bin" (binary, default), "png".
+            Format of the tiles: "bin" (binary, default), or "png".
         """
         # use model root if path not provided
         if path is None:
@@ -1801,31 +1793,54 @@ class SfincsModel(MeshMixin, GridModel):
             zoom_range = [0, zoom_range]
 
         # create index tiles
-        # only binary and png are supported for index tiles so set to binary if tif
-        fmt_ind = "bin" if fmt == "tif" else fmt
+        if create_index_tiles:
+            # only binary and png are supported for index tiles so set to binary if tif
+            fmt_ind = "bin" if fmt == "tif" else fmt
 
-        self.create_index_tiles(
-            path=path, region=region, zoom_range=zoom_range, fmt=fmt_ind
-        )
-
-        # compute resolution of highest zoom level
-        # resolution of zoom level 0  on equator: 156543.03392804097
-        res = 156543.03392804097 / 2 ** zoom_range[1]
-        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+            if self.grid_type == "regular":
+                self.reggrid.create_index_tiles(
+                    region=region,
+                    root=path,
+                    zoom_range=zoom_range,
+                    fmt=fmt_ind,
+                    logger=self.logger,
+                )
+            elif self.grid_type == "quadtree":
+                raise NotImplementedError(
+                    "Index tiles not yet implemented for quadtree grids."
+                )
 
         # create topobathy tiles
-        self.create_topobathy_tiles(
-            path=path,
-            region=region,
-            datasets_dep=datasets_dep,
-            index_path=os.path.join(path, "index"),
-            zoom_range=zoom_range,
-            z_range=z_range,
-            fmt=fmt,
-        )
+        if create_topobathy_tiles:
+            # compute resolution of highest zoom level
+            # resolution of zoom level 0  on equator: 156543.03392804097
+            res = 156543.03392804097 / 2 ** zoom_range[1]
+            datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+
+            # if no datasets provided, check if high-res subgrid geotiff is there
+            if len(datasets_dep) == 0:
+                if os.path.exists(os.path.join(self.root, "subgrid")):
+                    # check if there is a dep_subgrid.tif
+                    dep = os.path.join(self.root, "subgrid", "dep_subgrid.tif")
+                    if os.path.exists(dep):
+                        da = self.data_catalog.get_rasterdataset(dep)
+                        datasets_dep.append({"da": da})
+                    else:
+                        raise ValueError("No topobathy datasets provided.")
+
+            # create topobathy tiles
+            workflows.tiling.create_topobathy_tiles(
+                root=path,
+                region=region,
+                datasets_dep=datasets_dep,
+                index_path=os.path.join(path, "index"),
+                zoom_range=zoom_range,
+                z_range=z_range,
+                fmt=fmt,
+            )
 
     # Plotting
-    def plot_forcing(self, fn_out="forcing.png", **kwargs):
+    def plot_forcing(self, fn_out=None, **kwargs):
         """Plot model timeseries forcing.
 
         For distributed forcing a spatial avarage is plotted.
@@ -1844,8 +1859,8 @@ class SfincsModel(MeshMixin, GridModel):
         fig, axes
             Model fig and ax objects
         """
-        import matplotlib.pyplot as plt
         import matplotlib.dates as mdates
+        import matplotlib.pyplot as plt
 
         if self.forcing:
             forcing = {}
@@ -2046,7 +2061,11 @@ class SfincsModel(MeshMixin, GridModel):
 
             # keep some metadata maps from gis directory
             fns = glob.glob(join(self.root, "gis", "*.tif"))
-            fns = [fn for fn in fns if basename(fn).split(".")[0] not in self.grid.data_vars]
+            fns = [
+                fn
+                for fn in fns
+                if basename(fn).split(".")[0] not in self.grid.data_vars
+            ]
             if fns:
                 ds = hydromt.open_mfraster(fns).load()
                 self.set_grid(ds)
@@ -2067,7 +2086,7 @@ class SfincsModel(MeshMixin, GridModel):
         self._assert_write_mode
 
         dtypes = {"msk": "u1"}  # default to f4
-        if self.reggrid and len(self._grid.data_vars) > 0 and "msk" in self.grid:
+        if self.reggrid and len(self.grid.data_vars) > 0 and "msk" in self.grid:
             # make sure orientation is S->N
             ds_out = self.grid
             if ds_out.raster.res[1] < 0:
@@ -2364,7 +2383,7 @@ class SfincsModel(MeshMixin, GridModel):
                     continue  # timeseries + xy file already written
                 fname, rename = self._FORCING_NET[name]
                 # combine variables and rename to output names
-                rename = {v: k for k, v in rename.items() if v in ds}
+                rename = {v: k for k, v in rename.items() if v in self.forcing}
                 if len(rename) == 0:
                     continue
                 ds = xr.merge([self.forcing[v] for v in rename.keys()]).rename(rename)
@@ -2381,49 +2400,72 @@ class SfincsModel(MeshMixin, GridModel):
                 else:
                     ds.to_netcdf(fn, encoding=encoding)
 
-    def read_states(self, crs=None):
-        """Read waterlevel state (zsini) from ascii file and save to `states` attribute.
+    def read_states(self):
+        """Read waterlevel state (zsini) from binary file and save to `states` attribute.
         The inifile if mentioned in the sfincs.inp configuration file is read.
 
-        Parameters
-        ----------
-        crs: int, CRS
-            Coordinate reference system, if provided use instead of epsg code from sfincs.inp
         """
         self._assert_read_mode
-        if "inifile" in self.config:
-            fn = self.get_config("inifile", abs_path=True)
-            if not isfile(fn):
-                self.logger.warning("inifile not found at {fn}")
-                return
-            shape, transform, crs = self.get_spatial_attrs(crs=crs)
-            zsini = RasterDataArray.from_numpy(
-                data=utils.read_ascii_map(fn),  # orientation S-N
-                transform=transform,
-                crs=crs,
-                nodata=-9999,  # TODO: check what a good nodatavalue is
-            )
-            if zsini.shape != shape:
-                raise ValueError('The shape of "inifile" and maps does not match.')
-            if "msk" in self._grid:
-                zsini = zsini.where(self.mask != 0, -9999)
-            self.set_states(zsini, "zsini")
 
-    def write_states(self, fmt="%8.3f"):
-        """Write waterlevel state (zsini)  to ascii map file.
+        # read index file
+        ind_fn = self.get_config("indexfile", fallback="sfincs.ind", abs_path=True)
+        if not isfile(ind_fn):
+            raise IOError(f".ind path {ind_fn} does not exist")
+
+        if self.reggrid is not None:
+            ind = self.reggrid.read_ind(ind_fn=ind_fn)
+            if "inifile" in self.config:
+                fn = self.get_config("inifile", abs_path=True)
+                if not isfile(fn):
+                    self.logger.warning("inifile not found at {fn}")
+                    return
+                zsini = self.reggrid.read_map(
+                    fn, ind, dtype="f4", mv=-9999.0, name="zsini"
+                )
+
+                if self.crs is not None:
+                    zsini.raster.set_crs(self.crs)
+                self.set_states(zsini, "zsini")
+
+    def write_states(self):
+        """Write waterlevel state (zsini) to binary map file.
         The filenames is based on the `config` attribute.
         """
         self._assert_write_mode
 
-        assert len(self._states) <= 1
-        for name in self._states:
+        name = "zsini"
+
+        if name not in self.states:
+            self.logger.warning(f"{name} not in states, skipping")
+            return
+
+        if self.reggrid and "msk" in self.grid:
+            # make sure orientation is S->N
+            ds_out = self.grid
+            if ds_out.raster.res[1] < 0:
+                ds_out = ds_out.raster.flipud()
+            mask = ds_out["msk"].values
+
+            self.logger.debug("Write binary map indices based on mask.")
+            # write index file
+            ind_fn = self.get_config("indexfile", abs_path=True)
+            self.reggrid.write_ind(ind_fn=ind_fn, mask=mask)
+
             if f"inifile" not in self.config:
                 self.set_config(f"inifile", f"sfincs.{name}")
             fn = self.get_config("inifile", abs_path=True)
-            da = self._states[name].fillna(0)  # TODO check proper nodata value
-            if da.raster.res[1] < 0:  # orientation is S->N
+            da = self.states[name]
+            if da.raster.res[1] < 0:
                 da = da.raster.flipud()
-            utils.write_ascii_map(fn, da.values, fmt=fmt)
+
+            self.logger.debug("Write binary water level state inifile")
+            self.reggrid.write_map(
+                map_fn=fn,
+                data=da.values,
+                mask=mask,
+                dtype="f4",
+            )
+
         if self._write_gis:
             self.write_raster("states")
 
@@ -2455,8 +2497,7 @@ class SfincsModel(MeshMixin, GridModel):
         if isfile(fn_map):
             ds_face, ds_edge = utils.read_sfincs_map_results(
                 fn_map,
-                crs=self.crs,
-                chunksize=chunksize,
+                ds_like=self.grid,  # TODO: fix for quadtree
                 drop=drop,
                 logger=self.logger,
                 **kwargs,
@@ -2526,8 +2567,18 @@ class SfincsModel(MeshMixin, GridModel):
                     self.logger.warning(f"Variable {attr}.{layer} not found: skipping.")
                     continue
                 da = obj[layer]
-                if len(da.dims) != 2 or "time" in da.dims:
-                    continue
+                if len(da.dims) != 2:
+                    # try to reduce to 2D by taking maximum over time dimension
+                    if "time" in da.dims:
+                        da = da.max("time")
+                    elif "timemax" in da.dims:
+                        da = da.max("timemax")
+                    # if still not 2D, skip
+                    if len(da.dims) != 2:
+                        self.logger.warning(
+                            f"Variable {attr}.{layer} has more than 2 dimensions: skipping."
+                        )
+                        continue
                 # only write active cells to gis files
                 da = da.raster.clip_geom(self.region, mask=True).raster.mask_nodata()
                 if da.raster.res[1] > 0:  # make sure orientation is N->S
@@ -2682,25 +2733,6 @@ class SfincsModel(MeshMixin, GridModel):
             raise not NotImplementedError("Quadtree grid not implemented yet")
             # self.quadtree = QuadtreeGrid()
 
-    def get_spatial_attrs(self, crs=None):
-        """Get geospatial `config` (sfincs.inp) attributes.
-
-        Parameters
-        ----------
-        crs: int, CRS
-            Coordinate reference system
-
-        Returns
-        -------
-        shape: tuple of int
-            width, height
-        transform: Affine.transform
-            Geospatial transform
-        crs: pyproj.CRS
-            Coordinate reference system
-        """
-        return utils.get_spatial_attrs(self.config, crs=crs, logger=self.logger)
-
     def get_model_time(self):
         """Return (tstart, tstop) tuple with parsed model start and end time"""
         tstart = utils.parse_datetime(self.config["tstart"])
@@ -2730,14 +2762,21 @@ class SfincsModel(MeshMixin, GridModel):
             dd = {}
             # read in depth datasets; replace dep (source name; filename or xr.DataArray)
             if "elevtn" in dataset or "da" in dataset:
-                da_elv = self.data_catalog.get_rasterdataset(
-                    dataset.get("elevtn", dataset.get("da")),
-                    geom=self.mask.raster.box,
-                    buffer=10,
-                    variables=["elevtn"],
-                    zoom_level=(res, "meter"),
-                )
-                dd.update({"da": da_elv})
+                try:
+                    da_elv = self.data_catalog.get_rasterdataset(
+                        dataset.get("elevtn", dataset.get("da")),
+                        geom=self.mask.raster.box,
+                        buffer=10,
+                        variables=["elevtn"],
+                        zoom_level=(res, "meter"),
+                    )
+                    dd.update({"da": da_elv})
+                except:
+                    data_name = dataset.get("elevtn")
+                    self.logger.warning(
+                        f"{data_name} not used; probably because all the data is outside of the mask."
+                    )
+                    continue
             else:
                 raise ValueError(
                     "No 'elevtn' (topobathy) dataset provided in datasets_dep."

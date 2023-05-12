@@ -19,7 +19,7 @@ file contained in the repository:
 
 .. code-block:: console
 
-    $ conda env create -f envs/hydromt-sfincs.yml
+    $ conda env create -f envs/hydromt-sfincs-dev.yml
     $ conda activate hydromt-sfincs
 
 Finally, to make changes in hydromt_sfincs, you should make an editable install of HydroMT.
@@ -27,3 +27,11 @@ Finally, to make changes in hydromt_sfincs, you should make an editable install 
 .. code-block:: console
 
     $ pip install -e .
+
+.. Note::
+
+    The ``-e`` flag makes the install editable, meaning that any changes you make to the code will be
+    immediately available in the environment.
+
+    The ``.`` at the end of the command tells pip to install the package in the current directory. If you
+    are not yet in the directory of hydromt_sfincs, you can specify your local path to the package instead.

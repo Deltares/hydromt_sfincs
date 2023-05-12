@@ -1,9 +1,11 @@
+"""Flow direction and river network workflows for SFINCS models."""
+import logging
+from typing import Tuple
+
 import geopandas as gpd
 import hydromt
-import logging
 import numpy as np
 import pyflwdir
-from typing import Tuple
 import xarray as xr
 
 logger = logging.getLogger(__name__)
@@ -129,7 +131,7 @@ def river_boundary_points(
     # add uparea attribute if da_uparea is provided
     if da_uparea is not None:
         gdf_pnt["uparea"] = da_uparea.raster.sample(gdf_pnt).values
-        gdf_pnt = gdf_pnt.sort_values("uparea").reset_index(drop=True)
+        gdf_pnt = gdf_pnt.sort_values("uparea", ascending=False).reset_index(drop=True)
     if "rivwth" in gdf_riv.columns:
         gdf_out = hydromt.gis_utils.nearest_merge(
             gdf_out, gdf_riv, columns=["rivwth"], max_dist=10

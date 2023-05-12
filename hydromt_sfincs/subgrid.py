@@ -1,18 +1,18 @@
-# -*- coding: utf-8 -*-
 """
-Created on Thu Apr 21 16:25:23 2022
-
-@author: ormondt
+SubgridTableRegular class to create, read and write sfincs subgrid (sbg) files.
 """
-from hydromt import gis_utils
-from numba import njit
-import numpy as np
 import os
-import xarray as xr
+
+import numpy as np
+import logging
 import rasterio
+import xarray as xr
+from numba import njit
 from rasterio.windows import Window
 
 from . import workflows
+
+logger = logging.getLogger(__name__)
 
 
 class SubgridTableRegular:
@@ -71,8 +71,12 @@ class SubgridTableRegular:
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
 
-        self.z_zmin[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
-        self.z_zmax[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
+        self.z_zmin[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
+        self.z_zmax[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
         # self.z_zmean[iok[0], iok[1]] = np.fromfile(
         #     file, dtype=np.float32, count=self.nr_cells
         # )
@@ -84,9 +88,13 @@ class SubgridTableRegular:
                 file, dtype=np.float32, count=self.nr_cells
             )
 
-        self.u_zmin[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
-        self.u_zmax[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
-        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells) #not used
+        self.u_zmin[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
+        self.u_zmax[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
+        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
         for ibin in range(self.nbins):
             self.u_hrep[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
@@ -96,9 +104,13 @@ class SubgridTableRegular:
                 file, dtype=np.float32, count=self.nr_cells
             )
 
-        self.v_zmin[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
-        self.v_zmax[iok[0], iok[1]] = np.fromfile(file, dtype=np.float32, count=self.nr_cells)
-        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells) #not used
+        self.v_zmin[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
+        self.v_zmax[iok[0], iok[1]] = np.fromfile(
+            file, dtype=np.float32, count=self.nr_cells
+        )
+        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
         for ibin in range(self.nbins):
             self.v_hrep[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
@@ -184,10 +196,10 @@ class SubgridTableRegular:
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
         buffer_cells: int = 0,
-        make_dep_tiles: bool = False,
-        make_manning_tiles: bool = False,
+        write_dep_tif: bool = False,
+        write_man_tif: bool = False,
         highres_dir: str = None,
-        quiet=False,  # TODO replace by logger
+        logger=logger,
     ):
         """Create subgrid tables for regular grid based on a list of depth and Manning's n datasets.
 
@@ -202,14 +214,14 @@ class SubgridTableRegular:
         datsets_rgh : List[dict], optional
             List of dictionaries with Manning's n data, each containing an xarray.DataSet with manning values and optional merge arguments
         nbins : int, optional
-            Number of bins in the subgrid tables, by default 10
+            Number of bins in which hypsometry is subdivided, by default 10
         nr_subgrid_pixels : int, optional
             Number of subgrid pixels per computational cell, by default 20
         nrmax : int, optional
             Maximum number of cells per subgrid-block, by default 2000
             These blocks are used to prevent memory issues while working with large datasets
         max_gradient : float, optional
-            Maximum gradient in the subgrid tables, by default 5.0
+            If slope in hypsometry exceeds this value, then smoothing is applied, to prevent numerical stability problems, by default 5.0
         z_minimum : float, optional
             Minimum depth in the subgrid tables, by default -99999.0
         manning_land, manning_sea : float, optional
@@ -219,15 +231,15 @@ class SubgridTableRegular:
             Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
-        make_dep_tiles : bool, optional
+        write_dep_tif : bool, optional
             Create geotiff of the merged topobathy on the subgrid resolution, by default False
-        make_rgh_tiles : bool, optional
+        write_man_tif : bool, optional
             Create geotiff of the merged roughness on the subgrid resolution, by default False
         highres_dir : str, optional
             Directory where high-resolution geotiffs for topobathy and manning are stored, by default None
         """
 
-        if make_dep_tiles or make_manning_tiles:
+        if write_dep_tif or write_man_tif:
             assert highres_dir is not None, "highres_dir must be specified"
 
         refi = nr_subgrid_pixels
@@ -243,7 +255,7 @@ class SubgridTableRegular:
             1 / nr_subgrid_pixels
         )
 
-        if make_dep_tiles:
+        if write_dep_tif:
             # create the CloudOptimizedGeotiff containing the merged topobathy data
             dep_tif = rasterio.open(
                 os.path.join(highres_dir, "dep_subgrid.tif"),
@@ -264,7 +276,7 @@ class SubgridTableRegular:
                 nodata=np.nan,
             )
 
-        if make_manning_tiles:
+        if write_man_tif:
             # create the CloudOptimizedGeotiff creating the merged manning roughness
             man_tif = rasterio.open(
                 os.path.join(highres_dir, "manning_subgrid.tif"),
@@ -323,15 +335,12 @@ class SubgridTableRegular:
             nrbn -= 1
             merge_last_row = True
 
-        # TODO add to logger
-        if not quiet:
-            print("Number of regular cells in a block : " + str(nrcb))
-            print("Number of blocks in n direction    : " + str(nrbn))
-            print("Number of blocks in m direction    : " + str(nrbm))
+        logger.info("Number of regular cells in a block : " + str(nrcb))
+        logger.info("Number of blocks in n direction    : " + str(nrbn))
+        logger.info("Number of blocks in m direction    : " + str(nrbm))
 
-        if not quiet:
-            print(f"Grid size of flux grid            : dx={dx}, dy={dy}")
-            print(f"Grid size of subgrid pixels       : dx={dxp}, dy={dyp}")
+        logger.info(f"Grid size of flux grid            : dx={dx}, dy={dy}")
+        logger.info(f"Grid size of subgrid pixels       : dx={dxp}, dy={dyp}")
 
         ## Loop through blocks
         ib = -1
@@ -349,11 +358,10 @@ class SubgridTableRegular:
 
                 # Count
                 ib += 1
-                if not quiet:
-                    print(
-                        f"\nblock {ib + 1}/{nrbn * nrbm} -- "
-                        f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
-                    )
+                logger.debug(
+                    f"\nblock {ib + 1}/{nrbn * nrbm} -- "
+                    f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
+                )
 
                 # calculate transform and shape of block at cell and subgrid level
                 da_mask_block = da_mask.isel(
@@ -363,9 +371,9 @@ class SubgridTableRegular:
                     [s > 1 for s in da_mask_block.shape]
                 ), f"unexpected block shape {da_mask_block.shape}"
                 if np.all(da_mask_block == 0):  # not active cells in block
-                    print("Skip block - No active cells")
+                    logger.info("Skip block - No active cells")
                     continue
-                print(
+                logger.info(
                     f"Processing block with {np.sum(da_mask_block.values):d} active cells .."
                 )
 
@@ -391,7 +399,7 @@ class SubgridTableRegular:
                 # TODO what to do with remaining cell with nan values
                 # NOTE: this is still open for discussion, but for now we interpolate
                 if np.any(np.isnan(da_dep.values)) > 0:
-                    print(
+                    logger.warning(
                         f"WARNING: Interpolate data at {int(np.sum(np.isnan(da_dep.values)))} cells"
                     )
                     da_dep = da_dep.raster.interpolate_na(method="rio_idw")
@@ -406,7 +414,7 @@ class SubgridTableRegular:
                         buffer_cells=buffer_cells,
                     ).load()
                     if np.isnan(da_man).any():
-                        print("WARNING: nan values in manning roughness array")
+                        logger.warning("WARNING: nan values in manning roughness array")
                         da_man0 = xr.where(
                             da_dep >= rgh_lev_land, manning_land, manning_sea
                         )
@@ -417,7 +425,7 @@ class SubgridTableRegular:
 
                 # optional write tile to file
                 # NOTE tiles have overlap! da_dep[:-refi,:-refi]
-                if make_dep_tiles:
+                if write_dep_tif:
                     # write the block to the output COG
                     window = Window(
                         bm0 * nr_subgrid_pixels,
@@ -431,7 +439,7 @@ class SubgridTableRegular:
                         indexes=1,
                     )
 
-                if make_manning_tiles:
+                if write_man_tif:
                     # write the block to the output COG
                     window = Window(
                         bm0 * nr_subgrid_pixels,
@@ -481,10 +489,10 @@ class SubgridTableRegular:
                 del da_mask_block, da_dep, da_man
 
         # close the output cloud optimized geotiff
-        if make_dep_tiles:
+        if write_dep_tif:
             dep_tif.close()
 
-        if make_manning_tiles:
+        if write_man_tif:
             man_tif.close()
 
     def to_xarray(self, dims, coords):
@@ -492,7 +500,7 @@ class SubgridTableRegular:
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})
         ds_sbg.attrs.update({"_FillValue": np.nan})
 
-        zlst2 = ["z_zmin", "z_zmax", "z_zmin", "z_volmax"] #"z_zmean",
+        zlst2 = ["z_zmin", "z_zmax", "z_zmin", "z_volmax"]  # "z_zmean",
         uvlst2 = ["u_zmin", "u_zmax", "v_zmin", "v_zmax"]
         lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]
         # 2D arrays

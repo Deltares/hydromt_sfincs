@@ -1,16 +1,17 @@
-import geopandas as gpd
+"""Workflows, to estimate river bathymetry and burn these in a DEM."""
 import logging
+from typing import Tuple
+
+import geopandas as gpd
 import numpy as np
 import pyflwdir
-from shapely.ops import linemerge
+import xarray as xr
+from hydromt.gis_utils import nearest, nearest_merge, parse_crs, spread2d
+from hydromt.raster import full_like
+from hydromt.workflows import rivers
 from scipy import ndimage
 from scipy.interpolate import interp1d
-from typing import Union, Tuple
-import xarray as xr
-
-from hydromt.gis_utils import nearest_merge, nearest, spread2d, parse_crs
-from hydromt.workflows import rivers
-from hydromt.raster import full_like
+from shapely.ops import linemerge
 
 logger = logging.getLogger(__name__)
 

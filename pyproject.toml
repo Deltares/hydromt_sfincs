@@ -11,19 +11,19 @@ authors = [
     {name = "Tim Leijnse", email = "tim.leijnse@deltares.nl"},
 ]
 dependencies = [
-    "geopandas >=0.8",
-    "hydromt>=0.7.0",
+    "affine",
+    "geopandas>=0.8",
+    "hydromt>=0.7.1",
+    "numba",
     "numpy",
     "pandas",
     "pillow",
     "pyflwdir>=0.5.5",
-    "pygeos",
     "pyproj",
     "rasterio",
-    "shapely",
     "scipy",
+    "shapely",
     "xarray",
-    "xugrid",
 ]
 requires-python = ">=3.8" # fix tests to support older versions
 readme = "README.rst"
@@ -40,19 +40,22 @@ dynamic = ['version', 'description']
 
 [project.optional-dependencies]
 test = [
-	"testpath",
-	"responses",
+	"black",
 	"pytest>=2.7.3",
 	"pytest-cov",
-	"black",
 ]
 doc = [
+    "nbsphinx",
+	"pydata-sphinx-theme",
 	"sphinx",
-	"sphinx_rtd_theme",
 ]
 full = [
-    "matplotlib",
     "cartopy",
+    "descartes",
+    "ffmpeg",
+    "jupyterlab",
+    "matplotlib",
+    "pillow",
 ]
 
 [project.urls]

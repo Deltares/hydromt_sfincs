@@ -5,19 +5,76 @@ All notable changes to this project will be documented in this page.
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
-Unreleased
-----------
+v1.0.1 (unreleased)
+===================
 
-Changed
-^^^^^^^
-- **setup_q_forcing_from_grid** also saves the snapped gauge locations.
-- **snap_discharge** method checks for valid (nonnull) discharge cells
+Bugfix
+------
+- bugfix in `SfincsModel.write_forcing` to ensure all NetCDF files are written instead of only the first one. PR #86
+- bugfix in `SfincsModel.read_config` & `SfincsInput.read` for relative paths in inp file. PR #88
+
+v1.0 (17 April 2023)
+====================
+
+This release is a major update of the SfincsModel interface. It contains many new features, 
+such as support for *rotated grids*, *subgrid* and improved support for *building models from Python* scripts.
+The documentation and exmaples have been updated to reflect these changes.
+
+The release however also contains several breaking changes as we have tried to improve the 
+consistency of the interface and match it more closely to the SFINCS model itself.
+Please carefully check the API reference for the new methods and arguments.
+
+Main differences
+----------------
+- `setup_region` has been replaced by `setup_grid_from_region` and  `setup_grid`. 
+  This method actually creates an empty regular grid based on a region of interest or user-defined coordinates, shape, rotation, etc..
+- `setup_dep` has replaced `setup_topobathy` and `setup_merge_topobathy`. 
+  This method can now also be used to setup a bathymetry map from multiple sources at once.
+- `setup_mask_active` has replaced `setup_mask`. 
+- `setup_mask_bounds` has replaced `setup_bounds`	
+- `setup_waterlevel_forcing` has replaced `setup_h_forcing` and now supports merging fording from several data sources 
+- `setup_discharge_forcing` has replaced `setup_q_forcing` and now supports merging fording from several data sources
+- `setup_discharge_forcing_from_grid` has replaces `setup_q_forcing_from_grid` 
+- `setup_precip_forcing` has replaced `setup_p_forcing` 
+- `setup_precip_forcing_from_grid` has replaced `setup_p_forcing_from_grid`
+- `setup_observation_points` has replace `setup_gauges`
+
+New methods
+-----------
+- `setup_grid` to setup a user-defined regular grid based coordinates, shape, rotation, etc.
+- `setup_subgrid` to setup subgrid tables (sbgfile) based on one ore more elevation and Manning roughness datasets
+- `setup_constant_infiltration` to setup a constant infiltration rate maps (qinffile)
+- `setup_waterlevel_bnd_from_mask` to setup water level boundary points (bndfile) based on the SFINCS model mask (mskfile)
+- `setup_tiles` to create tiles of the model for fast visualization
+
+Changed methods
+---------------
+- `setup_river_inflow` and `setup_river_outflow` are now based river centerline data (which can be derivded from hydrography data).
+  This is more robust compared to the previous method which was based on reprojected flow direction data.
+
+Removed methods (not replaced)
+------------------------------
+- `setup_basemaps` This method was already deprecated in v0.2.1 and has now been removed.
+- `setup_river_hydrography` This method was removed as reprojection of the hydrography data is no longer required for river inflow/outflow.
+- `setup_river_bathymetry` This method was removed as river bathymetry should ideally be burned in the subgrid data of the model rather 
+  than the dep file itself to be able to include rivers with widths smaller than the model grid cell size. A new option to burn rivers 
+  in the subgrid data will be added in to `setup_subgrid` a future release.
+
+
+New low-level classes
+---------------------
+These classes are not intended to be used directly by the user, but are used internally by the SfincsModel class.
+
+- The `SfincsInput` class contains methods to generate, read and write SFINCS input files
+- The `RegularGrid` class contains methods to create and manipulate regular grids
+- The `SubgridTableRegular` class contains methods to create and manipulate subgrid tables for regular grids
+
 
 v0.2.1 (23 February 2022)
--------------------------
+=========================
 
 Deprecated
-^^^^^^^^^^
+----------
 - **setup_basemaps** has been replaced by **setup_topobathy**
 - In **setup_mask**, the "active_mask_fn" argument has been renamed to "mask_fn" for consistency
 - In **setup_river_inflow** and **setup_river_outflow** the "basemaps_fn" argument has been renamed to "hydrography_fn" for consistency
@@ -25,13 +82,13 @@ Deprecated
 - **setup_q_forcing_from_grid** and **workflows.snap_discharge** have a "rel_error" and "abs_error" argument instead of a single "max_error" argument.
 
 Bugfix
-^^^^^^
+------
 - bugfix **setup_p_forcing** to ensure the data is 1D when passed to set_forcing_1d method
 - bugfix **setup_p_forcing_from_grid** when aggregating with a multi polygon region.
 - bugfix **read_results** with new corner_x/y instead of edge_x/y dimensions in sfincs_map.nc
 
 New
-^^^
+---
 - **setup_region** method to set the (hydrological) model region of interest (before part of **setup_basemaps**).
 - **setup_river_hydrography** allows to derive hydrography data ['flwdir', 'uparea'] from the model elevation or reproject it from a global dataset.
   Derived 'uparea' and 'flwdir' maps are saved in the GIS folder and can be reused later (if kept together with the model)
@@ -39,7 +96,7 @@ New
 - Added parameter mapping file for ESA Worldcover dataset
 
 Changed
-^^^^^^^
+-------
 - **setup_mask** and **setup_bounds** both have a "mask_fn", "include_mask_fn" and "exclude_mask_fn" polygon and "min_elv" and "max_elv" elevation arguments to determine valid / boundary cells. 
 - **setup_mask** and **setup_bounds** have a "reset_mask" and "reset_bounds" option respectively to start with a clean mask or remove previously set boundary cells.
 - **setup_mask** takes a new "drop_area" argument to drop regions of contiguous cells smaller than this maximum area threshold, useful to remove (spurious) small islands.
@@ -62,15 +119,15 @@ Changed
 
 
 v0.2.0 (2 August 2021)
-----------------------
+======================
 
 Bugfix
-^^^^^^
+------
 - scsfile variable changed to maximum soil moisture retention [inch]; was curve number [-]
 - fix setting delimited text based geodatasets for h and q forcing.
 
 Changed
-^^^^^^^
+-------
 - Bumped minimal hydromt version to 0.4.2
 - splitted ``setup_topobathy`` into multiple smaller methods: ``setup_merge_topobathy``, ``setup_mask`` and ``setup_bounds``
 - separated many low-level methods into utils.py and plots.py
@@ -80,7 +137,7 @@ Changed
 
 
 Added
-^^^^^
+-----
 support for SFINCS files:
 
 - structures: sfincs.thd & sfincs.weir
@@ -106,31 +163,31 @@ new workflows:
 - ``river_inflow_points`` & ``river_outflow_points`` 
 
 Documentation
-^^^^^^^^^^^^^
+-------------
 - build from python example
 - overviews with SfincsModel setup components & SfincsModel data
 
 Deprecated
-^^^^^^^^^^^
+-----------
 - ``setup_p_gridded``
 
 v0.1.0 (18 May 2021)
---------------------
+====================
 Noticeable changes are a new ``setup_river_inflow`` and ``setup_river_outflow`` methods
 
 Added
-^^^^^
+-----
 
 - setup_river_outflow method to set ouflow (msk=3) boundary at river outflow points
 
 Changed
-^^^^^^^
+-------
 
 - Updated to hydromt v0.4.1
 
 
 Documentation
-^^^^^^^^^^^^^
+-------------
 
 - Now **latest** and **stable** versions.
 - Updated build instructions

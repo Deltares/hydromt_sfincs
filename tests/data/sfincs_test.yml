@@ -1,0 +1,67 @@
+global:
+  data_libs:
+    - artifact_data
+    - local_data.yml
+
+setup_config:
+  tref: 20100201 000000
+  tstart: 20100205 000000
+  tstop: 20100207 000000
+  dtout: 86400
+  dthisout: 86400
+
+setup_grid_from_region:
+  region:
+    geom: region.geojson
+  res: 150                       # model resolution
+  crs: utm                       # model CRS (must be UTM zone)
+  rotated: True                  # allow a rotated grid
+
+setup_dep:
+  datasets_dep: 
+    - elevtn: merit_hydro
+      zmin: 0.001
+    - elevtn: gebco
+  
+setup_mask_active:
+  zmin: -5
+
+setup_mask_bounds:
+  btype: waterlevel
+  zmax: -1
+
+setup_subgrid:
+  datasets_dep:
+    - elevtn: merit_hydro
+      zmin: 0.001
+    - elevtn: gebco
+  datasets_rgh:
+    - lulc: vito
+  write_dep_tif: True
+  nr_subgrid_pixels: 5
+  nbins: 8
+
+setup_observation_points:
+  locations: observations
+
+setup_structures:
+  structures: weir
+  stype: thd
+
+setup_river_inflow:
+  hydrography: merit_hydro
+  river_upa: 10
+  river_len: 1000
+  keep_rivers_geom: True
+
+setup_discharge_forcing:
+  timeseries: discharge
+
+setup_waterlevel_forcing:
+  geodataset: gtsmv3_eu_era5
+  buffer: 2000                                                     # m: find points within 2 km of waterlevel boundary
+
+setup_precip_forcing_from_grid:
+  precip: era5_hourly
+  aggregate: False
+

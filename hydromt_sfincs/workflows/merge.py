@@ -1,10 +1,11 @@
-import geopandas as gpd
-from hydromt import raster
+"""Workflow to merge multiple datasets into a single dataset used for elevation and manning data."""
 import logging
+from typing import Dict, List, Union
+
+import geopandas as gpd
 import numpy as np
-from scipy import ndimage
-from typing import Union, List, Dict, Any
 import xarray as xr
+from scipy import ndimage
 
 from .bathymetry import burn_river_rect
 
@@ -30,14 +31,15 @@ def merge_multi_dataarrays(
     da_list : List[dict]
         list of dicts with xr.DataArrays and optional merge arguments.
         Possible merge arguments are:
-        *reproj_method: str, optional
+
+        * reproj_method: str, optional
             Reprojection method, if not provided, method is based on resolution (average when resolution of destination grid is coarser then data reosltuion, else bilinear).
-        *offset: xr.DataArray, float, optional
+        * offset: xr.DataArray, float, optional
             Dataset with spatially varying offset or float with uniform offset
-        *zmin, zmax : float, optional
+        * zmin, zmax : float, optional
             Range of valid elevations for da2 -  only valid cells are not merged.
             Note: applied after offset!
-        *gdf_valid: gpd.GeoDataFrame, optional
+        * gdf_valid: gpd.GeoDataFrame, optional
             Geometry of the valid region for da2
     da_like : xr.Dataarray, optional
         Destination grid, by default None.

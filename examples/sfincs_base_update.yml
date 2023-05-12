@@ -1,0 +1,10 @@
+setup_observation_points:
+  locations: data//compound_example_observation_points.geojson       # Note that this is local data and only valid for this example
+
+setup_waterlevel_forcing:
+  geodataset: gtsmv3_eu_era5
+  buffer: 2000                                                        # [m] find points within 2 km of waterlevel boundary
+
+setup_discharge_forcing:
+  timeseries: data/compound_dis_timeseries.csv
+  locations: data/compound_src_locations.geojson                     # Note that this is local data and only valid for this example

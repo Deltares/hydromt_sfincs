@@ -9,21 +9,12 @@ from hydromt.cli.cli_utils import parse_config
 from hydromt.log import setuplog
 from hydromt_sfincs.sfincs import SfincsModel
 
-TESTDATADIR = join(dirname(abspath(__file__)), "data")
-EXAMPLEDIR = join(dirname(abspath(__file__)), "..", "examples")
+from .conftest import TESTDATADIR, TESTMODELDIR
 
 _cases = {
-    "coastal": {
-        "ini": "sfincs_coastal.ini",
-        "region": {"bbox": [12.05, 45.30, 12.85, 45.65]},
-        "res": 150,
-        "example": "sfincs_coastal",
-    },
-    "riverine": {
-        "ini": "sfincs_riverine.ini",
-        "region": {"bbox": [11.97, 45.78, 12.28, 45.94]},
-        "res": 50,
-        "example": "sfincs_riverine",
+    "test1": {
+        "ini": "sfincs_test.yml",
+        "example": "sfincs_test",
     },
 }
 
@@ -31,7 +22,7 @@ _cases = {
 @pytest.mark.parametrize("case", list(_cases.keys()))
 def test_model_class(case):
     # read model in examples folder
-    root = join(EXAMPLEDIR, _cases[case]["example"])
+    root = join(TESTDATADIR, _cases[case]["example"])
     mod = SfincsModel(root=root, mode="r")
     mod.read()
     # run test_model_api() method
@@ -41,12 +32,17 @@ def test_model_class(case):
 
 
 def test_states(tmpdir):
-    root = join(EXAMPLEDIR, _cases["riverine"]["example"])
-    fn = "sfincs.restart"
+    root = TESTMODELDIR
+    fn = "sfincs.zsini"
     mod = SfincsModel(root=root, mode="r+")
-    mod.set_config("inifile", fn)
-    # read and check if DataArray
-    assert isinstance(mod.states["zsini"], xr.DataArray)
+    mod.read()
+    # create dummy state and set to states
+    mask = mod.grid["dep"] < -0.5
+    zsini = xr.where(mask, 0.5, -9999.0)
+    zsini.raster.set_nodata(-9999.0)
+    zsini.raster.set_crs(mod.crs)
+    mod.set_states(zsini, "zsini")
+
     tmp_root = str(tmpdir.join("restart_test"))
     mod.set_root(tmp_root, mode="w")
     # write and check if isfile
@@ -58,8 +54,34 @@ def test_states(tmpdir):
     assert np.allclose(mod1.states["zsini"], mod.states["zsini"])
 
 
+def test_infiltration(tmpdir):
+    # FIXME: very shallow test, add more specific tests
+    root = TESTMODELDIR
+    mod = SfincsModel(root=root, mode="r")
+    mod.read()
+    mod.set_root(str(tmpdir.join("infiltration_test")), mode="w")
+
+    # set constant infiltration
+    qinf = xr.where(mod.grid["dep"] < -0.5, -9999, 0.1)
+    qinf.raster.set_nodata(-9999.0)
+    qinf.raster.set_crs(mod.crs)
+    mod.setup_constant_infiltration(qinf, reproj_method="nearest")
+    assert "qinf" not in mod.config  # qinf removed from config
+    assert "qinffile" in mod.config
+    assert "qinf" in mod.grid
+
+    # set cn infiltration
+    cn = xr.where(mod.grid["dep"] < -0.5, 0, 50)
+    cn.raster.set_nodata(-1)
+    cn.raster.set_crs(mod.crs)
+    mod.setup_cn_infiltration(cn, reproj_method="nearest")
+    assert "scsfile" in mod.config
+    assert "scs" in mod.grid
+    assert (mod.grid["scs"].where(mod.mask > 0)).min() == 10
+
+
 def test_structs(tmpdir):
-    root = join(EXAMPLEDIR, _cases["riverine"]["example"])
+    root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r+")
     # read
     mod.set_config("thdfile", "sfincs.thd")
@@ -88,19 +110,19 @@ def test_structs(tmpdir):
 
 
 def test_results():
-    root = join(EXAMPLEDIR, _cases["riverine"]["example"])
+    root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
-    assert np.all([v in mod.results for v in ["zs", "zsmax", "hmax", "inp"]])
+    assert all([v in mod.results for v in ["zs", "zsmax", "inp"]])
 
 
 def test_plots(tmpdir):
-    root = join(EXAMPLEDIR, _cases["riverine"]["example"])
+    root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
     mod.read()
     mod.set_root(str(tmpdir.join("plots_test")))
-    mod.plot_forcing()
+    mod.plot_forcing(fn_out="forcing.png")
     assert isfile(join(mod.root, "figs", "forcing.png"))
-    mod.plot_basemap()
+    mod.plot_basemap(fn_out="basemap.png")
     assert isfile(join(mod.root, "figs", "basemap.png"))
 
 
@@ -108,16 +130,14 @@ def test_plots(tmpdir):
 def test_model_build(tmpdir, case):
     # compare results with model from examples folder
     root = str(tmpdir.join(case))
-    root0 = join(EXAMPLEDIR, _cases[case]["example"])
+    root0 = TESTMODELDIR
 
     # Build model
-    ini_fn = join(EXAMPLEDIR, _cases[case]["ini"])
-    region = _cases[case]["region"]
-    res = _cases[case]["res"]
+    ini_fn = join(TESTDATADIR, _cases[case]["ini"])
     opt = parse_config(ini_fn)
     logger = setuplog(path=join(root, "hydromt.log"), log_level=10)
     mod1 = SfincsModel(root=root, mode="w", logger=logger, **opt.pop("global", {}))
-    mod1.build(region=region, res=res, opt=opt)
+    mod1.build(opt=opt)
     # Check if model is api compliant
     non_compliant_list = mod1.test_model_api()
     assert len(non_compliant_list) == 0

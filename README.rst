@@ -6,7 +6,7 @@ HydroMT-SFINCS: SFINCS plugin for HydroMT
 
 
 What is the HydroMT-SFINCS plugin?
----------------------------------
+-----------------------------------
 
 HydroMT_ (Hydro Model Tools) is an open-source Python package that facilitates the process of
 building and analyzing spatial geoscientific models with a focus on water system models.
@@ -35,13 +35,13 @@ How to use HydroMT-SFINCS?
 --------------------------
 The HydroMT-SFINCS plugin can be used as a **command line + configuration file** application, which provides commands to *build*,
 *update* the SFINCS model with a single line, or **from python** to exploit its rich interface.
-You can learn more about how to use HydroMT-SFINCS in its `online documentation. <docs_getting_started>`_
+You can learn more about how to use HydroMT-SFINCS in its `online documentation. <https://deltares.github.io/hydromt_sfincs/latest/getting_started/intro>`_
 For a smooth installing experience we recommend installing HydroMT-SFINCS and its dependencies
-from conda-forge in a clean environment, see `installation guide. <docs_install>`_
+from conda-forge in a clean environment, see `installation guide. <https://deltares.github.io/hydromt_sfincs/latest/getting_started/installation>`_
 
 How to cite?
 ------------
-To reference the software please use the the DOI provided in the Zenodo badge |doi| that points to the latest release.
+To reference the software please use the the DOI provided in the Zenodo badge that points to the latest release |doi|.
 
 The following paper presents a real-world application of HydroMT-SFINCS:
 
@@ -58,8 +58,6 @@ So far, it has been developed and tested with a range of `Deltares <https://www.
 we believe it is applicable to a much wider set of geoscientific models and are
 happy to discuss how it can be implemented for your model.
 
-.. _docs_getting_started: https://deltares.github.io/hydromt_sfincs/latest/getting_started/intro
-.. _docs_install: https://deltares.github.io/hydromt_sfincs/latest/getting_started/installation
 .. _Hydromt: https://deltares.github.io/hydromt/latest/
 .. _SFINCS: https://sfincs.readthedocs.io/en/latest/
 
