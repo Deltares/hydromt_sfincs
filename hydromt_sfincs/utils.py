@@ -673,11 +673,7 @@ def read_sfincs_map_results(
 
     # support for older sfincs_map.nc files
     # check if x,y dimensions are in the order y,x
-    if ds_map.xc.dims[0] != "y":
-        ds_map = ds_map.transpose(..., "y", "x")
-    # check if corner_x,corner_y dimensions are in the order corner_y,corner_x
-    if ds_map.corner_xc.dims[0] != "corner_y":
-        ds_map = ds_map.transpose(..., "corner_y", "corner_x")
+    ds_map = ds_map.transpose(..., "y", "x", "corner_y", "corner_x")
 
     # split face and edge variables
     scoords = ds_like.raster.coords
