@@ -103,11 +103,10 @@ Grid setup methods
      - This component adds a spatially varying constant infiltration rate map (qinffile) to the model grid.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_cn_infiltration`
      - This component adds a potential maximum soil moisture retention map (scsfile) to the model grid based on a gridded curve number map.
-   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_subgrid`
-     - This component generates subgrid tables (sbgfile) for the model grid based on a list of elevation and Manning roughness datasets
-   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_k`
+   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr`
      - This component adds a three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr) to the model grid based on landcover, Hydrological Similarity Group and saturated hydraulic conductivity (Ksat).
-     
+   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_subgrid`
+     - This component generates subgrid tables (sbgfile) for the model grid based on a list of elevation and Manning roughness datasets     
 Geoms setup methods
 -------------------
 

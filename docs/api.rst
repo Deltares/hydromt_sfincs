@@ -38,6 +38,7 @@ Setup components
    SfincsModel.setup_manning_roughness
    SfincsModel.setup_constant_infiltration
    SfincsModel.setup_cn_infiltration
+   SfincsModel.setup_cn_infiltration_with_kr
    SfincsModel.setup_subgrid
    SfincsModel.setup_river_inflow
    SfincsModel.setup_river_outflow
@@ -50,7 +51,6 @@ Setup components
    SfincsModel.setup_precip_forcing
    SfincsModel.setup_precip_forcing_from_grid
    SfincsModel.setup_tiles
-   SfincsModel.setup_curvenumber_infiltration_withrecovery
 
 Plot methods
 ------------
