@@ -124,7 +124,7 @@ class SfincsInput:
             else:
                 try:
                     val = literal_eval(val)
-                except ValueError:  # normal string
+                except Exception:  # normal string
                     pass
             if name == "crs":
                 name = "epsg"
