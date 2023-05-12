@@ -410,8 +410,12 @@ class SubgridTableRegular:
                 # Extrapolate option
                 if extrapolate_values == True:
                     # Extrapolate this
-                    da_dep = da_dep.raster.interpolate_na(
-                        fill_value="extrapolate", extrapolate=True
+                    da_dep = da_dep.interpolate_na(
+                        dim=da_dep.raster.x_dim,
+                        fill_value="extrapolate",
+                    ).interpolate_na(
+                        dim=da_dep.raster.y_dim,
+                        fill_value="extrapolate",
                     )
                     logger.warning(f"WARNING: Extrapolated data")
 
