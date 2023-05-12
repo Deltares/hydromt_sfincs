@@ -1012,14 +1012,14 @@ document.write(`
 <span class="sd">        buffer_cells : int, optional</span>
 <span class="sd">            Number of cells between datasets to ensure smooth transition of bed levels, by default 0</span>
 <span class="sd">        nbins : int, optional</span>
-<span class="sd">            Number of bins in the subgrid tables, by default 10</span>
+<span class="sd">            Number of bins in which hypsometry is subdivided, by default 10</span>
 <span class="sd">        nr_subgrid_pixels : int, optional</span>
 <span class="sd">            Number of subgrid pixels per computational cell, by default 20</span>
 <span class="sd">        nrmax : int, optional</span>
 <span class="sd">            Maximum number of cells per subgrid-block, by default 2000</span>
 <span class="sd">            These blocks are used to prevent memory issues while working with large datasets</span>
 <span class="sd">        max_gradient : float, optional</span>
-<span class="sd">            Maximum gradient in the subgrid tables, by default 5.0</span>
+<span class="sd">            If slope in hypsometry exceeds this value, then smoothing is applied, to prevent numerical stability problems, by default 5.0</span>
 <span class="sd">        z_minimum : float, optional</span>
 <span class="sd">            Minimum depth in the subgrid tables, by default -99999.0</span>
 <span class="sd">        manning_land, manning_sea : float, optional</span>
