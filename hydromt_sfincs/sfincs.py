@@ -18,6 +18,7 @@ import xarray as xr
 from hydromt.models.model_grid import GridModel
 from hydromt.raster import RasterDataArray
 from hydromt.vector import GeoDataArray, GeoDataset
+from hydromt.workflows.forcing import da_to_timedelta
 from pyproj import CRS
 from shapely.geometry import box
 
@@ -56,7 +57,10 @@ class SfincsModel(GridModel):
         "discharge": ("netsrcdis", {"discharge": "dis"}),
         "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
         "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
-        "wind_2d": ("netamuamv", {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
+        "wind_2d": (
+            "netamuamv",
+            {"eastward_wind": "wind_u", "northward_wind": "wind_v"},
+        ),
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["msk", "dep", "scs", "manning", "qinf"]
@@ -82,7 +86,7 @@ class SfincsModel(GridModel):
         "press_2d": {"standard_name": "barometric pressure", "unit": "Pa"},
         "wind_u": {"standard_name": "eastward wind", "unit": "m/s"},
         "wind_v": {"standard_name": "northward wind", "unit": "m/s"},
-        "wnd": {"standard_name": "wind", "unit": "m/s"}
+        "wnd": {"standard_name": "wind", "unit": "m/s"},
     }
 
     def __init__(
@@ -1687,7 +1691,7 @@ class SfincsModel(GridModel):
             ).fillna(0)
 
             # only resample in time if freq < 1H, else keep input values
-            if hydromt.workflows.forcing.da_to_timedelta(precip_out) < pd.to_timedelta("1H"):
+            if da_to_timedelta(precip_out) < pd.to_timedelta("1H"):
                 precip_out = hydromt.workflows.resample_time(
                     precip_out,
                     freq=pd.to_timedelta("1H"),
@@ -1697,7 +1701,7 @@ class SfincsModel(GridModel):
                     logger=self.logger,
                 )
             precip_out = precip_out.rename("precip_2d")
-                
+
             # add to forcing
             self.set_forcing(precip_out, name="precip_2d")
 
@@ -1730,8 +1734,7 @@ class SfincsModel(GridModel):
         elif magnitude is not None:
             times = pd.date_range(*self.get_model_time(), freq="10T")
             df_ts = pd.DataFrame(
-                index=times,
-                data=np.full((len(times), 1), magnitude, dtype=float)
+                index=times, data=np.full((len(times), 1), magnitude, dtype=float)
             )
         else:
             raise ValueError("Either timeseries or magnitude must be provided")
@@ -1763,9 +1766,9 @@ class SfincsModel(GridModel):
 
         dst_res: float
             output resolution (m), by default None and computed from source data.
-        
+
         fill_value: float
-            value to use when no data is available. 
+            value to use when no data is available.
             Standard atmospheric pressure (101325 Pa) is used if no value is given.
         """
         # get data for model domain and config time range
@@ -1789,7 +1792,7 @@ class SfincsModel(GridModel):
         ).fillna(fill_value)
 
         # only resample in time if freq < 1H, else keep input values
-        if hydromt.workflows.forcing.da_to_timedelta(press_out) < pd.to_timedelta("1H"):
+        if da_to_timedelta(press_out) < pd.to_timedelta("1H"):
             press_out = hydromt.workflows.resample_time(
                 press_out,
                 freq=pd.to_timedelta("1H"),
@@ -1804,9 +1807,7 @@ class SfincsModel(GridModel):
         # add to forcing
         self.set_forcing(press_out, name="press_2d")
 
-    def setup_wind_forcing_from_grid(
-        self, wind, dst_res=None, **kwargs
-    ):
+    def setup_wind_forcing_from_grid(self, wind, dst_res=None, **kwargs):
         """Setup pressure forcing from a gridded spatially varying data source.
 
         Adds one model layer:
@@ -1847,7 +1848,7 @@ class SfincsModel(GridModel):
         ).fillna(0)
 
         # only resample in time if freq < 1H, else keep input values
-        if hydromt.workflows.forcing.da_to_timedelta(wind) < pd.to_timedelta("1H"):
+        if da_to_timedelta(wind) < pd.to_timedelta("1H"):
             wind_out = xr.Dataset()
             # resample in time
             for var in wind.data_vars:
@@ -1896,16 +1897,22 @@ class SfincsModel(GridModel):
         elif magnitude is not None and direction is not None:
             df_ts = pd.DataFrame(
                 index=pd.date_range(*self.get_model_time(), periods=2),
-                data=np.array([[magnitude,direction],[magnitude,direction]]),
-                columns=['mag', 'dir'],
+                data=np.array([[magnitude, direction], [magnitude, direction]]),
+                columns=["mag", "dir"],
             )
         else:
-            raise ValueError("Either timeseries or magnitude and direction must be provided")
+            raise ValueError(
+                "Either timeseries or magnitude and direction must be provided"
+            )
 
         df_ts.name = "wnd"
         df_ts.index.name = "time"
         df_ts.columns.name = "index"
-        da = xr.DataArray(df_ts.values, dims=('time', 'index'), coords={'time': df_ts.index, 'index': ['mag', 'dir']})
+        da = xr.DataArray(
+            df_ts.values,
+            dims=("time", "index"),
+            coords={"time": df_ts.index, "index": ["mag", "dir"]},
+        )
         self.set_forcing(da, name="wnd")
 
     def setup_tiles(

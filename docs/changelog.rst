@@ -13,6 +13,10 @@ Bugfix
 - bugfix in `SfincsModel.write_forcing` to ensure all NetCDF files are written instead of only the first one. PR #86
 - bugfix in `SfincsModel.read_config` & `SfincsInput.read` for relative paths in inp file. PR #88
 
+New
+---
+- Added `SfincsModel.setup_wind_forcing`, `SfincsModel.setup_wind_forcing_from_grid` and `SfincsModel.setup_pressure_forcing_from_grid` methods to easily add wind and pressure forcing.  PR #92
+
 v1.0 (17 April 2023)
 ====================
 

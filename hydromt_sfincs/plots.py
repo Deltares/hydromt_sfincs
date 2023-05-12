@@ -69,13 +69,19 @@ def plot_forcing(forcing: Dict, **kwargs):
         df.index = mdates.date2num(df.index)
         if name.startswith("precip"):
             axes[i].bar(df.index, df.values, facecolor="darkblue")
-        elif name.startswith("press") or name.startswith("wind_u") or name.startswith("wind_v"):
+        elif (
+            name.startswith("press")
+            or name.startswith("wind_u")
+            or name.startswith("wind_v")
+        ):
             df.plot.line(ax=axes[i])
         elif name.startswith("wnd"):
             df.plot(ax=axes[i], kind="line", secondary_y="dir", legend=False)
-            axes[i].tick_params(axis='y', labelcolor="C0")  # set tick color for y-axis of variable 1
-            axes[i].right_ax.set_ylabel('Wind direction [degrees]')
-            axes[i].right_ax.tick_params(axis='y', labelcolor="C1")  # set tick color for y-axis of variable 2
+            # set tick color for y-axis of variable 1
+            axes[i].tick_params(axis="y", labelcolor="C0")
+            axes[i].right_ax.set_ylabel("Wind direction [degrees]")
+            # set tick color and label for y-axis of variable 2
+            axes[i].right_ax.tick_params(axis="y", labelcolor="C1")
 
         else:
             df.plot.line(ax=axes[i]).legend(

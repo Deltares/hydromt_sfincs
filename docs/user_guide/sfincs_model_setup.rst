@@ -144,9 +144,15 @@ Forcing setup methods
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid`
      - This component adds discharge forcing (srcfile, disfile) based on a gridded discharge dataset.
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_precip_forcing`
-     - This component adds spatially uniform precipitation forcing (precipfile).
+     - This component adds spatially uniform precipitation forcing from timeseries/constants (precipfile).
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid`
      - This component adds precipitation forcing from a gridded spatially varying data source (netamprfile).
+   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid`
+     - This component adds pressure forcing from a gridded spatially varying data source (netampfile).
+   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_wind_forcing`
+     - This component adds spatially uniform wind forcing from timeseries/constants (wndfile).
+   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid`
+     - This component adds wind forcing from a gridded spatially varying data source (netamuamvfile).               
 
 Other setup methods
 -------------------
