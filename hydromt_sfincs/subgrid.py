@@ -413,7 +413,7 @@ class SubgridTableRegular:
                     da_dep = da_dep.raster.interpolate_na(
                         fill_value="extrapolate", extrapolate=True
                     )
-                    print(f"WARNING: Extrapolated data ")
+                    logger.warning(f"WARNING: Extrapolated data")
 
                 else:
                     # Assertion error
