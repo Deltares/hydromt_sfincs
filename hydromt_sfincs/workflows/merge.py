@@ -256,6 +256,7 @@ def merge_dataarrays(
     return da_out
 
 
+## Helper functions
 def _add_offset_mask_invalid(
     da,
     offset=None,
