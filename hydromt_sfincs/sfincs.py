@@ -19,7 +19,7 @@ from hydromt.models.model_grid import GridModel
 from hydromt.raster import RasterDataArray
 from hydromt.vector import GeoDataArray, GeoDataset
 from pyproj import CRS
-from shapely.geometry import box, LineString, MultiLineString
+from shapely.geometry import box, LineString, MultiLineString, Polygon
 
 from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
@@ -59,7 +59,7 @@ class SfincsModel(GridModel):
         "wind": ("netamuamv", {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
-    _MAPS = ["msk", "dep", "scs", "manning", "qinf"]
+    _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "kr"]
     _STATES = ["rst", "ini"]
     _FOLDERS = []
     _CLI_ARGS = {"region": "setup_grid_from_region", "res": "setup_grid_from_region"}
@@ -581,6 +581,7 @@ class SfincsModel(GridModel):
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
+        extrapolate_values: bool = False,
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
     ):
@@ -610,14 +611,14 @@ class SfincsModel(GridModel):
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         nbins : int, optional
-            Number of bins in the subgrid tables, by default 10
+            Number of bins in which hypsometry is subdivided, by default 10
         nr_subgrid_pixels : int, optional
             Number of subgrid pixels per computational cell, by default 20
         nrmax : int, optional
             Maximum number of cells per subgrid-block, by default 2000
             These blocks are used to prevent memory issues while working with large datasets
         max_gradient : float, optional
-            Maximum gradient in the subgrid tables, by default 5.0
+            If slope in hypsometry exceeds this value, then smoothing is applied, to prevent numerical stability problems, by default 5.0
         z_minimum : float, optional
             Minimum depth in the subgrid tables, by default -99999.0
         manning_land, manning_sea : float, optional
@@ -668,6 +669,7 @@ class SfincsModel(GridModel):
                 rgh_lev_land=rgh_lev_land,
                 write_dep_tif=write_dep_tif,
                 write_man_tif=write_man_tif,
+                extrapolate_values=extrapolate_values,
                 highres_dir=highres_dir,
                 logger=self.logger,
             )
@@ -926,6 +928,7 @@ class SfincsModel(GridModel):
         if keep_rivers_geom and len(gdf_riv) > 0:
             self.set_geoms(gdf_riv, name="rivers_outflow")
 
+    # Function to create constant spatially varying infiltration
     def setup_constant_infiltration(self, qinf, reproj_method="average"):
         """Setup spatially varying constant infiltration rate (qinffile).
 
@@ -964,6 +967,7 @@ class SfincsModel(GridModel):
         self.set_config(f"{mname}file", f"sfincs.{mname}")
         self.config.pop("qinf", None)
 
+    # Function to create curve number for SFINCS
     def setup_cn_infiltration(self, cn, antecedent_moisture="avg", reproj_method="med"):
         """Setup model potential maximum soil moisture retention map (scsfile)
         from gridded curve number map.
@@ -1012,6 +1016,132 @@ class SfincsModel(GridModel):
         self.config.pop("qinf", None)
         self.set_config(f"{mname}file", f"sfincs.{mname}")
 
+    # Function to create curve number for SFINCS including recovery term (Kr)
+    def setup_cn_infiltration_with_kr(
+        self, lulc, hsg, ksat, reclass_table, effective, block_size=2000
+    ):
+        """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
+        including recovery term based on the soil saturation
+
+        Parameters
+        ---------
+        lulc : str, Path, or RasterDataset
+            Landuse/landcover data set
+        hsg : str, Path, or RasterDataset
+            HSG (Hydrological Similarity Group) in integers
+        ksat : str, Path, or RasterDataset
+            Ksat (saturated hydraulic conductivity) [µm/s]
+        reclass_table : str, Path, or RasterDataset
+            reclass table to relate landcover with soiltype
+        effective : float
+            estimate of percentage effective soil, e.g. 0.50 for 50%
+        block_size : float
+            maximum block size - use larger values will get more data in memory but can be faster, default=2000
+        """
+
+        # Read the datafiles
+        da_landuse = self.data_catalog.get_rasterdataset(
+            lulc, geom=self.region, buffer=10
+        )
+        da_HSG = self.data_catalog.get_rasterdataset(hsg, geom=self.region, buffer=10)
+        da_Ksat = self.data_catalog.get_rasterdataset(ksat, geom=self.region, buffer=10)
+        df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
+
+        # Define outputs
+        da_smax = xr.full_like(self.mask, -9999, dtype=np.float32)
+        da_kr = xr.full_like(self.mask, -9999, dtype=np.float32)
+
+        # Compute resolution land use (we are assuming that is the finest)
+        resolution_landuse = np.mean(
+            [abs(da_landuse.raster.res[0]), abs(da_landuse.raster.res[1])]
+        )
+        if da_landuse.raster.crs.is_geographic:
+            resolution_landuse = (
+                resolution_landuse * 111111.0
+            )  # assume 1 degree is 111km
+
+        # Define the blocks
+        nrmax = block_size
+        nmax = np.shape(self.mask)[0]
+        mmax = np.shape(self.mask)[1]
+        refi = self.config["dx"] / resolution_landuse  # finest resolution of landuse
+        nrcb = int(np.floor(nrmax / refi))  # nr of regular cells in a block
+        nrbn = int(np.ceil(nmax / nrcb))  # nr of blocks in n direction
+        nrbm = int(np.ceil(mmax / nrcb))  # nr of blocks in m direction
+        x_dim, y_dim = self.mask.raster.x_dim, self.mask.raster.y_dim
+
+        # avoid blocks with width or height of 1
+        merge_last_col = False
+        merge_last_row = False
+        if mmax % nrcb == 1:
+            nrbm -= 1
+            merge_last_col = True
+        if nmax % nrcb == 1:
+            nrbn -= 1
+            merge_last_row = True
+
+        ## Loop through blocks
+        ib = -1
+        for ii in range(nrbm):
+            bm0 = ii * nrcb  # Index of first m in block
+            bm1 = min(bm0 + nrcb, mmax)  # last m in block
+            if merge_last_col and ii == (nrbm - 1):
+                bm1 += 1
+
+            for jj in range(nrbn):
+                bn0 = jj * nrcb  # Index of first n in block
+                bn1 = min(bn0 + nrcb, nmax)  # last n in block
+                if merge_last_row and jj == (nrbn - 1):
+                    bn1 += 1
+
+                # Count
+                ib += 1
+                self.logger.debug(
+                    f"\nblock {ib + 1}/{nrbn * nrbm} -- "
+                    f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
+                )
+
+                # calculate transform and shape of block at cell and subgrid level
+                da_mask_block = self.mask.isel(
+                    {x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}
+                ).load()
+
+                # Call workflow
+                (
+                    da_smax_block,
+                    da_kr_block,
+                ) = workflows.curvenumber.scs_recovery_determination(
+                    da_landuse, da_HSG, da_Ksat, df_map, da_mask_block
+                )
+
+                # New place in the overall matrix
+                sn, sm = slice(bn0, bn1), slice(bm0, bm1)
+                da_smax[sn, sm] = da_smax_block
+                da_kr[sn, sm] = da_kr_block
+
+        # Done
+        self.logger.info(f"Done with determination of values (in blocks).")
+
+        # Specify the effective soil retention (seff)
+        da_seff = da_smax
+        da_seff = da_seff * effective
+        da_seff.raster.set_nodata(da_smax.raster.nodata)
+
+        # set grids for seff, smax and kr
+        names = ["smax", "seff", "kr"]
+        data = [da_smax, da_seff, da_kr]
+        for name, da in zip(names, data):
+            # Give metadata to the layer and set grid
+            da.attrs.update(**self._ATTRS.get(name, {}))
+            self.set_grid(da, name=name)
+
+            # update config: set maps
+            self.set_config(f"{name}file", f"sfincs.{name}")  # give it to SFINCS
+
+        # Remove qinf variable in sfincs
+        self.config.pop("qinf", None)
+
+    # Roughness
     def setup_manning_roughness(
         self,
         datasets_rgh: List[dict] = [],
@@ -2826,7 +2956,6 @@ class SfincsModel(GridModel):
         return tstart, tstop
 
     ## helper method
-
     def _parse_datasets_dep(self, datasets_dep, res):
         """Parse filenames or paths of Datasets in list of dictionaries datasets_dep into xr.DataArray and gdf.GeoDataFrames:
         * "elevtn" is parsed into da (xr.DataArray)

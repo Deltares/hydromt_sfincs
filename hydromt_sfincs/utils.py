@@ -765,6 +765,10 @@ def read_sfincs_map_results(
         [var for var in ds_map.data_vars.keys() if (var in rm.values())]
     )
 
+    # support for older sfincs_map.nc files
+    # check if x,y dimensions are in the order y,x
+    ds_map = ds_map.transpose(..., "y", "x", "corner_y", "corner_x")
+
     # split face and edge variables
     scoords = ds_like.raster.coords
     tcoords = {tdim: ds_map[tdim] for tdim in ds_map.dims if tdim.startswith("time")}
@@ -813,7 +817,7 @@ def read_sfincs_his_results(
     """
 
     ds_his = xr.open_dataset(fn_his, chunks={"time": chunksize}, **kwargs)
-    crs = ds_his["crs"].item() if ds_his["crs"].item() != 0 else crs
+    crs = ds_his["crs"].item() if ds_his["crs"].item() > 0 else crs
     dvars = list(ds_his.data_vars.keys())
     # set coordinates & spatial dims
     cvars = ["id", "name", "x", "y"]
