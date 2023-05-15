@@ -423,6 +423,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">hydromt.vector</span> <span class="kn">import</span> <span class="n">GeoDataArray</span><span class="p">,</span> <span class="n">GeoDataset</span>
 <span class="kn">from</span> <span class="nn">pyproj</span> <span class="kn">import</span> <span class="n">CRS</span>
 <span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">box</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">Polygon</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">DATADIR</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">workflows</span>
 <span class="kn">from</span> <span class="nn">.regulargrid</span> <span class="kn">import</span> <span class="n">RegularGrid</span>
@@ -461,7 +462,7 @@ document.write(`
         <span class="s2">&quot;wind&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;netamuamv&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;eastward_wind&quot;</span><span class="p">:</span> <span class="s2">&quot;wind_u&quot;</span><span class="p">,</span> <span class="s2">&quot;northward_wind&quot;</span><span class="p">:</span> <span class="s2">&quot;wind_v&quot;</span><span class="p">}),</span>
     <span class="p">}</span>
     <span class="n">_FORCING_SPW</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;spiderweb&quot;</span><span class="p">:</span> <span class="s2">&quot;spw&quot;</span><span class="p">}</span>  <span class="c1"># TODO add read and write functions</span>
-    <span class="n">_MAPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">,</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="s2">&quot;scs&quot;</span><span class="p">,</span> <span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="s2">&quot;qinf&quot;</span><span class="p">]</span>
+    <span class="n">_MAPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">,</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="s2">&quot;scs&quot;</span><span class="p">,</span> <span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="s2">&quot;smax&quot;</span><span class="p">,</span> <span class="s2">&quot;seff&quot;</span><span class="p">,</span> <span class="s2">&quot;kr&quot;</span><span class="p">]</span>
     <span class="n">_STATES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;rst&quot;</span><span class="p">,</span> <span class="s2">&quot;ini&quot;</span><span class="p">]</span>
     <span class="n">_FOLDERS</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">_CLI_ARGS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;setup_grid_from_region&quot;</span><span class="p">,</span> <span class="s2">&quot;res&quot;</span><span class="p">:</span> <span class="s2">&quot;setup_grid_from_region&quot;</span><span class="p">}</span>
@@ -983,6 +984,7 @@ document.write(`
         <span class="n">manning_land</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.04</span><span class="p">,</span>
         <span class="n">manning_sea</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
         <span class="n">rgh_lev_land</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">extrapolate_values</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">write_dep_tif</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">write_man_tif</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
@@ -1070,6 +1072,7 @@ document.write(`
                 <span class="n">rgh_lev_land</span><span class="o">=</span><span class="n">rgh_lev_land</span><span class="p">,</span>
                 <span class="n">write_dep_tif</span><span class="o">=</span><span class="n">write_dep_tif</span><span class="p">,</span>
                 <span class="n">write_man_tif</span><span class="o">=</span><span class="n">write_man_tif</span><span class="p">,</span>
+                <span class="n">extrapolate_values</span><span class="o">=</span><span class="n">extrapolate_values</span><span class="p">,</span>
                 <span class="n">highres_dir</span><span class="o">=</span><span class="n">highres_dir</span><span class="p">,</span>
                 <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
             <span class="p">)</span>
@@ -1328,6 +1331,7 @@ document.write(`
         <span class="k">if</span> <span class="n">keep_rivers_geom</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivers_outflow&quot;</span><span class="p">)</span></div>
 
+    <span class="c1"># Function to create constant spatially varying infiltration</span>
 <div class="viewcode-block" id="SfincsModel.setup_constant_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration.html#hydromt_sfincs.SfincsModel.setup_constant_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_constant_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qinf</span><span class="p">,</span> <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;average&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup spatially varying constant infiltration rate (qinffile).</span>
 
@@ -1366,6 +1370,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
+    <span class="c1"># Function to create curve number for SFINCS</span>
 <div class="viewcode-block" id="SfincsModel.setup_cn_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cn_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">,</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span> <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;med&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup model potential maximum soil moisture retention map (scsfile)</span>
 <span class="sd">        from gridded curve number map.</span>
@@ -1414,6 +1419,132 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
+    <span class="c1"># Function to create curve number for SFINCS including recovery term (Kr)</span>
+<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration_with_kr"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cn_infiltration_with_kr</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lulc</span><span class="p">,</span> <span class="n">hsg</span><span class="p">,</span> <span class="n">ksat</span><span class="p">,</span> <span class="n">reclass_table</span><span class="p">,</span> <span class="n">effective</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">2000</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS</span>
+<span class="sd">        including recovery term based on the soil saturation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ---------</span>
+<span class="sd">        lulc : str, Path, or RasterDataset</span>
+<span class="sd">            Landuse/landcover data set</span>
+<span class="sd">        hsg : str, Path, or RasterDataset</span>
+<span class="sd">            HSG (Hydrological Similarity Group) in integers</span>
+<span class="sd">        ksat : str, Path, or RasterDataset</span>
+<span class="sd">            Ksat (saturated hydraulic conductivity) [µm/s]</span>
+<span class="sd">        reclass_table : str, Path, or RasterDataset</span>
+<span class="sd">            reclass table to relate landcover with soiltype</span>
+<span class="sd">        effective : float</span>
+<span class="sd">            estimate of percentage effective soil, e.g. 0.50 for 50%</span>
+<span class="sd">        block_size : float</span>
+<span class="sd">            maximum block size - use larger values will get more data in memory but can be faster, default=2000</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Read the datafiles</span>
+        <span class="n">da_landuse</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">lulc</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span>
+        <span class="p">)</span>
+        <span class="n">da_HSG</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">hsg</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">da_Ksat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">ksat</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">df_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span><span class="n">reclass_table</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Define outputs</span>
+        <span class="n">da_smax</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">da_kr</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+        <span class="c1"># Compute resolution land use (we are assuming that is the finest)</span>
+        <span class="n">resolution_landuse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">da_landuse</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">da_landuse</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">da_landuse</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
+            <span class="n">resolution_landuse</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">resolution_landuse</span> <span class="o">*</span> <span class="mf">111111.0</span>
+            <span class="p">)</span>  <span class="c1"># assume 1 degree is 111km</span>
+
+        <span class="c1"># Define the blocks</span>
+        <span class="n">nrmax</span> <span class="o">=</span> <span class="n">block_size</span>
+        <span class="n">nmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">mmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">refi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;dx&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">resolution_landuse</span>  <span class="c1"># finest resolution of landuse</span>
+        <span class="n">nrcb</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">nrmax</span> <span class="o">/</span> <span class="n">refi</span><span class="p">))</span>  <span class="c1"># nr of regular cells in a block</span>
+        <span class="n">nrbn</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">nmax</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>  <span class="c1"># nr of blocks in n direction</span>
+        <span class="n">nrbm</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">mmax</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>  <span class="c1"># nr of blocks in m direction</span>
+        <span class="n">x_dim</span><span class="p">,</span> <span class="n">y_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">x_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">y_dim</span>
+
+        <span class="c1"># avoid blocks with width or height of 1</span>
+        <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">mmax</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">nrbm</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">nmax</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">nrbn</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1">## Loop through blocks</span>
+        <span class="n">ib</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbm</span><span class="p">):</span>
+            <span class="n">bm0</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">*</span> <span class="n">nrcb</span>  <span class="c1"># Index of first m in block</span>
+            <span class="n">bm1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bm0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">mmax</span><span class="p">)</span>  <span class="c1"># last m in block</span>
+            <span class="k">if</span> <span class="n">merge_last_col</span> <span class="ow">and</span> <span class="n">ii</span> <span class="o">==</span> <span class="p">(</span><span class="n">nrbm</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">bm1</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbn</span><span class="p">):</span>
+                <span class="n">bn0</span> <span class="o">=</span> <span class="n">jj</span> <span class="o">*</span> <span class="n">nrcb</span>  <span class="c1"># Index of first n in block</span>
+                <span class="n">bn1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bn0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">nmax</span><span class="p">)</span>  <span class="c1"># last n in block</span>
+                <span class="k">if</span> <span class="n">merge_last_row</span> <span class="ow">and</span> <span class="n">jj</span> <span class="o">==</span> <span class="p">(</span><span class="n">nrbn</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">bn1</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="c1"># Count</span>
+                <span class="n">ib</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">block </span><span class="si">{</span><span class="n">ib</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">nrbn</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nrbm</span><span class="si">}</span><span class="s2"> -- &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;col </span><span class="si">{</span><span class="n">bm0</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">bm1</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2"> | row </span><span class="si">{</span><span class="n">bn0</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">bn1</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+                <span class="c1"># calculate transform and shape of block at cell and subgrid level</span>
+                <span class="n">da_mask_block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">x_dim</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">),</span> <span class="n">y_dim</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">)}</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+
+                <span class="c1"># Call workflow</span>
+                <span class="p">(</span>
+                    <span class="n">da_smax_block</span><span class="p">,</span>
+                    <span class="n">da_kr_block</span><span class="p">,</span>
+                <span class="p">)</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">curvenumber</span><span class="o">.</span><span class="n">scs_recovery_determination</span><span class="p">(</span>
+                    <span class="n">da_landuse</span><span class="p">,</span> <span class="n">da_HSG</span><span class="p">,</span> <span class="n">da_Ksat</span><span class="p">,</span> <span class="n">df_map</span><span class="p">,</span> <span class="n">da_mask_block</span>
+                <span class="p">)</span>
+
+                <span class="c1"># New place in the overall matrix</span>
+                <span class="n">sn</span><span class="p">,</span> <span class="n">sm</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">)</span>
+                <span class="n">da_smax</span><span class="p">[</span><span class="n">sn</span><span class="p">,</span> <span class="n">sm</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_smax_block</span>
+                <span class="n">da_kr</span><span class="p">[</span><span class="n">sn</span><span class="p">,</span> <span class="n">sm</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_kr_block</span>
+
+        <span class="c1"># Done</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Done with determination of values (in blocks).&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Specify the effective soil retention (seff)</span>
+        <span class="n">da_seff</span> <span class="o">=</span> <span class="n">da_smax</span>
+        <span class="n">da_seff</span> <span class="o">=</span> <span class="n">da_seff</span> <span class="o">*</span> <span class="n">effective</span>
+        <span class="n">da_seff</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">da_smax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span><span class="p">)</span>
+
+        <span class="c1"># set grids for seff, smax and kr</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;smax&quot;</span><span class="p">,</span> <span class="s2">&quot;seff&quot;</span><span class="p">,</span> <span class="s2">&quot;kr&quot;</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">da_smax</span><span class="p">,</span> <span class="n">da_seff</span><span class="p">,</span> <span class="n">da_kr</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">da</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+            <span class="c1"># Give metadata to the layer and set grid</span>
+            <span class="n">da</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{}))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="c1"># update config: set maps</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># give it to SFINCS</span>
+
+        <span class="c1"># Remove qinf variable in sfincs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+    <span class="c1"># Roughness</span>
 <div class="viewcode-block" id="SfincsModel.setup_manning_roughness"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_manning_roughness.html#hydromt_sfincs.SfincsModel.setup_manning_roughness">[docs]</a>    <span class="k">def</span> <span class="nf">setup_manning_roughness</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">datasets_rgh</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
@@ -3134,7 +3265,6 @@ document.write(`
         <span class="k">return</span> <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span></div>
 
     <span class="c1">## helper method</span>
-
     <span class="k">def</span> <span class="nf">_parse_datasets_dep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets_dep</span><span class="p">,</span> <span class="n">res</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse filenames or paths of Datasets in list of dictionaries datasets_dep into xr.DataArray and gdf.GeoDataFrames:</span>
 <span class="sd">        * &quot;elevtn&quot; is parsed into da (xr.DataArray)</span>

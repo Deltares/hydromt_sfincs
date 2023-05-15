@@ -469,7 +469,7 @@ and <a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel
 <td><p>sfincs.inp</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.grid.html#hydromt_sfincs.SfincsModel.grid" title="hydromt_sfincs.SfincsModel.grid"><code class="xref py py-attr docutils literal notranslate"><span class="pre">grid</span></code></a></p></td>
-<td><p>depfile, mskfile, indexfile, manningfile, qinffile, scsfile</p></td>
+<td><p>depfile, mskfile, indexfile, manningfile, qinffile, scsfile, smaxfile, sefffile, krfile</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">subgrid</span></code></p></td>
 <td><p>sbgfile</p></td>
@@ -556,7 +556,10 @@ a specific method see its documentation.</p>
 <tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration" title="hydromt_sfincs.SfincsModel.setup_cn_infiltration"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_cn_infiltration()</span></code></a></p></th>
 <td><p>This component adds a potential maximum soil moisture retention map (scsfile) to the model grid based on a gridded curve number map.</p></td>
 </tr>
-<tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_subgrid.html#hydromt_sfincs.SfincsModel.setup_subgrid" title="hydromt_sfincs.SfincsModel.setup_subgrid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_subgrid()</span></code></a></p></th>
+<tr class="row-odd"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr" title="hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_cn_infiltration_with_kr()</span></code></a></p></th>
+<td><p>This component adds a three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr) to the model grid based on landcover, Hydrological Similarity Group and saturated hydraulic conductivity (Ksat).</p></td>
+</tr>
+<tr class="row-even"><th class="stub"><p><a class="reference internal" href="../_generated/hydromt_sfincs.SfincsModel.setup_subgrid.html#hydromt_sfincs.SfincsModel.setup_subgrid" title="hydromt_sfincs.SfincsModel.setup_subgrid"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_subgrid()</span></code></a></p></th>
 <td><p>This component generates subgrid tables (sbgfile) for the model grid based on a list of elevation and Manning roughness datasets</p></td>
 </tr>
 </tbody>

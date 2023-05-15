@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>hydromt_sfincs.SfincsModel.results &#8212; HydroMT SFINCS  documentation</title>
+    <title>hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../_static/sphinx_highlight.js"></script>
     <script src="../_static/design-tabs.js"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.SfincsModel.results';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.SfincsModel.read" href="hydromt_sfincs.SfincsModel.read.html" />
-    <link rel="prev" title="hydromt_sfincs.SfincsModel.states" href="hydromt_sfincs.SfincsModel.states.html" />
+    <link rel="next" title="hydromt_sfincs.SfincsModel.setup_subgrid" href="hydromt_sfincs.SfincsModel.setup_subgrid.html" />
+    <link rel="prev" title="hydromt_sfincs.SfincsModel.setup_cn_infiltration" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -362,7 +362,7 @@ document.write(`
   <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.html">hydromt_sfincs.SfincsModel</a></li>
 </ul>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_config.html">hydromt_sfincs.SfincsModel.setup_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_region.html">hydromt_sfincs.SfincsModel.setup_region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_grid.html">hydromt_sfincs.SfincsModel.setup_grid</a></li>
@@ -373,7 +373,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html">hydromt_sfincs.SfincsModel.setup_manning_roughness</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_constant_infiltration.html">hydromt_sfincs.SfincsModel.setup_constant_infiltration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html">hydromt_sfincs.SfincsModel.setup_cn_infiltration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr.html">hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_subgrid.html">hydromt_sfincs.SfincsModel.setup_subgrid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">hydromt_sfincs.SfincsModel.setup_river_inflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_outflow.html">hydromt_sfincs.SfincsModel.setup_river_outflow</a></li>
@@ -391,7 +391,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_basemap.html">hydromt_sfincs.SfincsModel.plot_basemap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_forcing.html">hydromt_sfincs.SfincsModel.plot_forcing</a></li>
 </ul>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.region.html">hydromt_sfincs.SfincsModel.region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.mask.html">hydromt_sfincs.SfincsModel.mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.crs.html">hydromt_sfincs.SfincsModel.crs</a></li>
@@ -402,7 +402,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.geoms.html">hydromt_sfincs.SfincsModel.geoms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.forcing.html">hydromt_sfincs.SfincsModel.forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.states.html">hydromt_sfincs.SfincsModel.states</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.results.html">hydromt_sfincs.SfincsModel.results</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read.html">hydromt_sfincs.SfincsModel.read</a></li>
@@ -527,7 +527,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API reference</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">hydromt_sfincs.SfincsModel.results</li>
+    <li class="breadcrumb-item active" aria-current="page">hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr</li>
   </ul>
 </nav>
 </div>
@@ -544,12 +544,25 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="hydromt-sfincs-sfincsmodel-results">
-<h1>hydromt_sfincs.SfincsModel.results<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-results" title="Permalink to this heading">#</a></h1>
-<dl class="py property">
-<dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.results">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">results</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.11)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v2023.4.3.dev0)"><span class="pre">DataArray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v2023.4.3.dev0)"><span class="pre">Dataset</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hydromt_sfincs.SfincsModel.results" title="Permalink to this definition">#</a></dt>
-<dd><p>Model results.  Returns dict of xarray.DataArray or xarray.Dataset</p>
+  <section id="hydromt-sfincs-sfincsmodel-setup-cn-infiltration-with-kr">
+<h1>hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-cn-infiltration-with-kr" title="Permalink to this heading">#</a></h1>
+<dl class="py method">
+<dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr">
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_cn_infiltration_with_kr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lulc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hsg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ksat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reclass_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">effective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_cn_infiltration_with_kr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr" title="Permalink to this definition">#</a></dt>
+<dd><p>Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
+including recovery term based on the soil saturation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lulc</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, or </em><em>RasterDataset</em>) – Landuse/landcover data set</p></li>
+<li><p><strong>hsg</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, or </em><em>RasterDataset</em>) – HSG (Hydrological Similarity Group) in integers</p></li>
+<li><p><strong>ksat</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, or </em><em>RasterDataset</em>) – Ksat (saturated hydraulic conductivity) [µm/s]</p></li>
+<li><p><strong>reclass_table</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, or </em><em>RasterDataset</em>) – reclass table to relate landcover with soiltype</p></li>
+<li><p><strong>effective</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – estimate of percentage effective soil, e.g. 0.50 for 50%</p></li>
+<li><p><strong>block_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – maximum block size - use larger values will get more data in memory but can be faster, default=2000</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -566,20 +579,20 @@ document.write(`
     <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
-       href="hydromt_sfincs.SfincsModel.states.html"
+       href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">hydromt_sfincs.SfincsModel.states</p>
+        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_cn_infiltration</p>
       </div>
     </a>
     <a class="right-next"
-       href="hydromt_sfincs.SfincsModel.read.html"
+       href="hydromt_sfincs.SfincsModel.setup_subgrid.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">hydromt_sfincs.SfincsModel.read</p>
+        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_subgrid</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -601,13 +614,13 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.SfincsModel.results"><code class="docutils literal notranslate"><span class="pre">SfincsModel.results</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr"><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_cn_infiltration_with_kr()</span></code></a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">
-    <a href="../_sources/_generated/hydromt_sfincs.SfincsModel.results.rst.txt">
+    <a href="../_sources/_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

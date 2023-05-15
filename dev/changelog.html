@@ -440,6 +440,13 @@ document.write(`
 <ul class="simple">
 <li><p>bugfix in <cite>SfincsModel.write_forcing</cite> to ensure all NetCDF files are written instead of only the first one. PR #86</p></li>
 <li><p>bugfix in <cite>SfincsModel.read_config</cite> &amp; <cite>SfincsInput.read</cite> for relative paths in inp file. PR #88</p></li>
+<li><p>bugfix in <cite>SfincsModel.setup_subgrid</cite> to ensure that a ‘big geotiff’ will be written by default when ‘write_dep_tif’ or ‘write_man_tif’ are True</p></li>
+</ul>
+</section>
+<section id="new">
+<h2>New<a class="headerlink" href="#new" title="Permalink to this heading">#</a></h2>
+<ul class="simple">
+<li><p><cite>SfincsModel.setup_cn_infiltration_with_kr</cite> to setup three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr)</p></li>
 </ul>
 </section>
 </section>
@@ -525,8 +532,8 @@ in the subgrid data will be added in to <cite>setup_subgrid</cite> a future rele
 <li><p>bugfix <strong>read_results</strong> with new corner_x/y instead of edge_x/y dimensions in sfincs_map.nc</p></li>
 </ul>
 </section>
-<section id="new">
-<h2>New<a class="headerlink" href="#new" title="Permalink to this heading">#</a></h2>
+<section id="id2">
+<h2>New<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p><strong>setup_region</strong> method to set the (hydrological) model region of interest (before part of <strong>setup_basemaps</strong>).</p></li>
 <li><p><strong>setup_river_hydrography</strong> allows to derive hydrography data [‘flwdir’, ‘uparea’] from the model elevation or reproject it from a global dataset.
@@ -565,15 +572,15 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 </section>
 <section id="v0-2-0-2-august-2021">
 <h1>v0.2.0 (2 August 2021)<a class="headerlink" href="#v0-2-0-2-august-2021" title="Permalink to this heading">#</a></h1>
-<section id="id2">
-<h2>Bugfix<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h2>
+<section id="id3">
+<h2>Bugfix<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>scsfile variable changed to maximum soil moisture retention [inch]; was curve number [-]</p></li>
 <li><p>fix setting delimited text based geodatasets for h and q forcing.</p></li>
 </ul>
 </section>
-<section id="id3">
-<h2>Changed<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h2>
+<section id="id4">
+<h2>Changed<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Bumped minimal hydromt version to 0.4.2</p></li>
 <li><p>splitted <code class="docutils literal notranslate"><span class="pre">setup_topobathy</span></code> into multiple smaller methods: <code class="docutils literal notranslate"><span class="pre">setup_merge_topobathy</span></code>, <code class="docutils literal notranslate"><span class="pre">setup_mask</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_bounds</span></code></p></li>
@@ -617,8 +624,8 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <li><p>overviews with SfincsModel setup components &amp; SfincsModel data</p></li>
 </ul>
 </section>
-<section id="id4">
-<h2>Deprecated<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h2>
+<section id="id5">
+<h2>Deprecated<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">setup_p_gridded</span></code></p></li>
 </ul>
@@ -627,20 +634,20 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <section id="v0-1-0-18-may-2021">
 <h1>v0.1.0 (18 May 2021)<a class="headerlink" href="#v0-1-0-18-may-2021" title="Permalink to this heading">#</a></h1>
 <p>Noticeable changes are a new <code class="docutils literal notranslate"><span class="pre">setup_river_inflow</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_river_outflow</span></code> methods</p>
-<section id="id5">
-<h2>Added<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h2>
+<section id="id6">
+<h2>Added<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>setup_river_outflow method to set ouflow (msk=3) boundary at river outflow points</p></li>
 </ul>
 </section>
-<section id="id6">
-<h2>Changed<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h2>
+<section id="id7">
+<h2>Changed<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Updated to hydromt v0.4.1</p></li>
 </ul>
 </section>
-<section id="id7">
-<h2>Documentation<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h2>
+<section id="id8">
+<h2>Documentation<a class="headerlink" href="#id8" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Now <strong>latest</strong> and <strong>stable</strong> versions.</p></li>
 <li><p>Updated build instructions</p></li>
@@ -699,6 +706,7 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">What’s new</a></li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-1-unreleased">v1.0.1 (unreleased)</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bugfix">Bugfix</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#new">New</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-17-april-2023">v1.0 (17 April 2023)</a><ul class="visible nav section-nav flex-column">
@@ -712,22 +720,22 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-2-1-23-february-2022">v0.2.1 (23 February 2022)</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deprecated">Deprecated</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Bugfix</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#new">New</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">New</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#changed">Changed</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-2-0-2-august-2021">v0.2.0 (2 August 2021)</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Bugfix</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Changed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Bugfix</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Changed</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#added">Added</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Deprecated</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Deprecated</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-1-0-18-may-2021">v0.1.0 (18 May 2021)</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Added</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Changed</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">Documentation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Added</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">Changed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Documentation</a></li>
 </ul>
 </li>
 </ul>
