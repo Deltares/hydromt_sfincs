@@ -654,10 +654,11 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.4f") 
 
     gdf = copy.deepcopy(gdf_drainage)
     # get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc
-    gdf["xsnk"] = [ls.coords[0][0] for ls in gdf.geometry]
-    gdf["ysnk"] = [ls.coords[0][1] for ls in gdf.geometry]
-    gdf["xsrc"] = [ls.coords[1][0] for ls in gdf.geometry]
-    gdf["ysrc"] = [ls.coords[1][1] for ls in gdf.geometry]
+    endpoints = gdf.boundary.explode().unstack()
+    gdf["xsnk"] = endpoints[0].x
+    gdf["ysnk"] = endpoints[0].y
+    gdf["xsrc"] = endpoints[1].x
+    gdf["ysrc"] = endpoints[1].y
     gdf.drop(["geometry"], axis=1, inplace=True)
 
     # reorder columns based on col_names
