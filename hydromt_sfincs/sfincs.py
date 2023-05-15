@@ -1333,7 +1333,8 @@ class SfincsModel(GridModel):
         Parameters
         ----------
         structures : str, Path
-            Path, data source name, or geopandas object to structure line (with 2 points per line!) geometry file.
+            Path, data source name, or geopandas object to structure line geometry file.
+            The line should consist of only 2 points (else first and last points are used), ordered from up to downstream.
             The "type" (1 for pump and 2 for culvert), "par1" ("discharge" also accepted) variables are optional.
             If "type" or "par1" are not provided, they are based on stype or discharge arguments.
         stype : {'pump', 'culvert'}, optional
@@ -1377,23 +1378,14 @@ class SfincsModel(GridModel):
         if "par5" not in gdf_structures:
             gdf_structures["par5"] = 0
 
-        # check if (multi)linestrings only have 2 points, else drop
-        for i, row in gdf_structures.iterrows():
-            if isinstance(row.geometry, MultiLineString):
-                for ls in row.geometry.geoms:
-                    if len(ls.coords) != 2:
-                        self.logger.debug(
-                            f"Row {i} contains a MultiLineString with a LineString that has {len(ls.coords)} points."
-                        )
-                        gdf_structures = gdf_structures.drop(index=i)
-                    else:
-                        # convert Multilinestring to LineString
-                        gdf_structures.loc[i, "geometry"] = LineString(ls.coords)
-            elif isinstance(row.geometry, LineString) and len(row.geometry.coords) != 2:
-                self.logger.debug(
-                    f"Row {i} contains a LineString with {len(row.geometry.coords)} points."
-                )
-                gdf_structures = gdf_structures.drop(index=i)
+        # multi to single lines
+        lines = gdf_structures.explode(column="geometry").reset_index(drop=True)
+        # get start [0] and end [1] points
+        endpoints = lines.boundary.explode().unstack()
+        # merge start and end points into a single linestring
+        gdf_structures["geometry"] = endpoints.apply(
+            lambda x: LineString(x.values.tolist()), axis=1
+        )
 
         # combine with existing structures if present
         if merge and "drn" in self.geoms:
