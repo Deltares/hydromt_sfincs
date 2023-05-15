@@ -1198,7 +1198,7 @@ class SfincsModel(GridModel):
         """Setup drainage structures.
 
         Adds model layer:
-        * **drn** geom: drainage pump or culver
+        * **drn** geom: drainage pump or culvert
 
         Parameters
         ----------
