@@ -14,7 +14,7 @@ Bugfix
 
 New
 ---
-- **setup_drainage_structures** to setup drainage structures (pumps,culverts) from a geodataframe.
+- **setup_drainage_structures** to setup drainage structures (pumps,culverts) from a geodataframe. PR#90
 
 v1.0 (17 April 2023)
 ====================
