@@ -1232,8 +1232,7 @@ class SfincsModel(GridModel):
             gdf_structures["type"] = svalue
         # if discharge is provided, rename to par1
         if "discharge" in gdf_structures:
-            gdf_structures["par1"] = gdf_structures["discharge"]
-            gdf_structures = gdf_structures.drop(columns=["discharge"])
+            gdf_structures = gdf_structures.rename(columns={"discharge": "par1"})
 
         # add par1, par2, par3, par4, par5 if not present
         # NOTE only par1 is used in the model
