@@ -752,7 +752,7 @@ class SfincsModel(GridModel):
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
-                geom=self.region,
+                bbox=self.grid.raster.box.to_crs(4326).total_bounds,
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
@@ -871,7 +871,7 @@ class SfincsModel(GridModel):
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
-                geom=self.region,
+                bbox=self.grid.raster.box.to_crs(4326).total_bounds,
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
@@ -946,7 +946,9 @@ class SfincsModel(GridModel):
         """
 
         # get infiltration data
-        da_inf = self.data_catalog.get_rasterdataset(qinf, geom=self.region, buffer=10)
+        da_inf = self.data_catalog.get_rasterdataset(
+            qinf, bbox=self.grid.raster.box.to_crs(4326).total_bounds, buffer=10
+        )
         da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
 
         # reproject infiltration data to model grid
@@ -992,7 +994,9 @@ class SfincsModel(GridModel):
             By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
         """
         # get data
-        da_org = self.data_catalog.get_rasterdataset(cn, geom=self.region, buffer=10)
+        da_org = self.data_catalog.get_rasterdataset(
+            cn, bbox=self.grid.raster.box.to_crs(4326).total_bounds, buffer=10
+        )
         # read variable
         v = "cn"
         if antecedent_moisture:
@@ -1041,10 +1045,14 @@ class SfincsModel(GridModel):
 
         # Read the datafiles
         da_landuse = self.data_catalog.get_rasterdataset(
-            lulc, geom=self.region, buffer=10
+            lulc, bbox=self.grid.raster.box.to_crs(4326).total_bounds, buffer=10
         )
-        da_HSG = self.data_catalog.get_rasterdataset(hsg, geom=self.region, buffer=10)
-        da_Ksat = self.data_catalog.get_rasterdataset(ksat, geom=self.region, buffer=10)
+        da_HSG = self.data_catalog.get_rasterdataset(
+            hsg, bbox=self.grid.raster.box.to_crs(4326).total_bounds, buffer=10
+        )
+        da_Ksat = self.data_catalog.get_rasterdataset(
+            ksat, bbox=self.grid.raster.box.to_crs(4326).total_bounds, buffer=10
+        )
         df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
 
         # Define outputs
@@ -1524,7 +1532,9 @@ class SfincsModel(GridModel):
                 df_ts += offset
             else:
                 da_offset = self.data_catalog.get_rasterdataset(
-                    offset, geom=self.region, buffer=5
+                    offset,
+                    bbox=self.grid.raster.box.to_crs(4326).total_bounds,
+                    buffer=5,
                 )
                 offset_pnts = da_offset.raster.sample(gdf_locs)
                 df_offset = offset_pnts.to_pandas().reindex(df_ts.columns).fillna(0)
@@ -1619,7 +1629,7 @@ class SfincsModel(GridModel):
             # read and clip data in time & space
             da = self.data_catalog.get_geodataset(
                 geodataset,
-                geom=self.region,
+                bbox=self.grid.raster.box.to_crs(4326).total_bounds,
                 variables=["discharge"],
                 time_tuple=(tstart, tstop),
                 crs=self.crs,
@@ -1717,7 +1727,7 @@ class SfincsModel(GridModel):
         # read data
         ds = self.data_catalog.get_rasterdataset(
             discharge,
-            geom=self.region,
+            bbox=self.grid.raster.box.to_crs(4326).total_bounds,
             buffer=2,
             time_tuple=self.get_model_time(),  # model time
             variables=["discharge"],
@@ -1725,7 +1735,10 @@ class SfincsModel(GridModel):
         )
         if uparea is not None and "uparea" in gdf.columns:
             da_upa = self.data_catalog.get_rasterdataset(
-                uparea, geom=self.region, buffer=2, variables=["uparea"]
+                uparea,
+                bbox=self.grid.raster.box.to_crs(4326).total_bounds,
+                buffer=2,
+                variables=["uparea"],
             )
             # make sure ds and da_upa align
             ds["uparea"] = da_upa.raster.reproject_like(ds, method="nearest")
@@ -1785,7 +1798,7 @@ class SfincsModel(GridModel):
         # get data for model domain and config time range
         precip = self.data_catalog.get_rasterdataset(
             precip,
-            geom=self.region,
+            bbox=self.grid.raster.box.to_crs(4326).total_bounds,
             buffer=2,
             time_tuple=self.get_model_time(),
             variables=["precip"],
@@ -2886,7 +2899,7 @@ class SfincsModel(GridModel):
                 try:
                     da_elv = self.data_catalog.get_rasterdataset(
                         dataset.get("elevtn", dataset.get("da")),
-                        geom=self.mask.raster.box,
+                        bbox=self.grid.raster.box.to_crs(4326).total_bounds,
                         buffer=10,
                         variables=["elevtn"],
                         zoom_level=(res, "meter"),
@@ -2908,7 +2921,7 @@ class SfincsModel(GridModel):
             if "offset" in dataset and not isinstance(dataset["offset"], (float, int)):
                 da_offset = self.data_catalog.get_rasterdataset(
                     dataset.get("offset"),
-                    geom=self.mask.raster.box,
+                    bbox=self.grid.raster.box.to_crs(4326).total_bounds,
                     buffer=20,
                 )
                 dd.update({"offset": da_offset})
@@ -2917,7 +2930,7 @@ class SfincsModel(GridModel):
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
                     path_or_key=dataset.get("mask"),
-                    geom=self.mask.raster.box,
+                    bbox=self.grid.raster.box.to_crs(4326).total_bounds,
                 )
                 dd.update({"gdf_valid": gdf_valid})
 
@@ -2955,7 +2968,7 @@ class SfincsModel(GridModel):
             if "manning" in dataset or "da" in dataset:
                 da_man = self.data_catalog.get_rasterdataset(
                     dataset.get("manning", dataset.get("da")),
-                    geom=self.mask.raster.box,
+                    bbox=self.grid.raster.box.to_crs(4326).total_bounds,
                     buffer=10,
                 )
                 dd.update({"da": da_man})
@@ -2970,7 +2983,10 @@ class SfincsModel(GridModel):
                         f"Manning roughness mapping file not found: {reclass_table}"
                     )
                 da_lulc = self.data_catalog.get_rasterdataset(
-                    lulc, geom=self.mask.raster.box, buffer=10, variables=["lulc"]
+                    lulc,
+                    bbox=self.grid.raster.box.to_crs(4326).total_bounds,
+                    buffer=10,
+                    variables=["lulc"],
                 )
                 df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
                 # reclassify
@@ -2983,7 +2999,7 @@ class SfincsModel(GridModel):
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
                     path_or_key=dataset.get("mask"),
-                    geom=self.mask.raster.box,
+                    bbox=self.grid.raster.box.to_crs(4326).total_bounds,
                 )
                 dd.update({"gdf_valid": gdf_valid})
 
