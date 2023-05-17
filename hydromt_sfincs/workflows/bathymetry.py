@@ -457,7 +457,7 @@ def interp_along_line_to_grid(
             cc0["z"] = interp1d(x0, z0, kind="linear", fill_value="extrapolate")(x1)
         return cc0
 
-    cc = cc.groupby("idx0").apply(_interp)
+    cc = cc.groupby("idx0").apply(_interp)[["z", "geometry"]]
 
     return da.copy().where(~mask, da.raster.rasterize(cc, "z", nodata=0))
 
