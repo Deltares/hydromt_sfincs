@@ -389,10 +389,12 @@ class SubgridTableRegular:
                     dst_height=(da_mask_block.raster.height + 1) * refi,
                 )
 
+                da_like = da_mask_block.raster.reproject(method="bilinear", **reproj_kwargs).load()
+
                 # get subgrid bathymetry tile
                 da_dep = workflows.merge_multi_dataarrays(
                     da_list=datasets_dep,
-                    reproj_kwargs=reproj_kwargs,
+                    da_like=da_like,
                     interp_method="linear",
                     buffer_cells=buffer_cells,
                 ).load()
@@ -427,7 +429,7 @@ class SubgridTableRegular:
                 if len(datasets_rgh) > 0:
                     da_man = workflows.merge_multi_dataarrays(
                         da_list=datasets_rgh,
-                        reproj_kwargs=reproj_kwargs,
+                        da_like=da_like,
                         interp_method="linear",
                         buffer_cells=buffer_cells,
                     ).load()

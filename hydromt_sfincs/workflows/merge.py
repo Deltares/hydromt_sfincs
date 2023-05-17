@@ -88,9 +88,18 @@ def merge_multi_dataarrays(
         method = "bilinear"
 
     if da_like is not None:  # reproject first raster to destination grid
-        da1 = da1.raster.reproject_like(da_like, method=method).load()
+        da1 = da1.raster.clip_bbox(da_like.raster.box.to_crs(4326).total_bounds, buffer=10)
+        if np.any(np.array(da1.shape)<=2):
+            #no data in da1 so use an empty array like da_like
+            logger.debug("No data da1, start with nan array")
+            da1 = xr.full_like(da_like, np.nan)
+        else:
+            da1 = da1.load()
+            da1 = da1.raster.reproject_like(da_like)
     elif reproj_kwargs:
-        da1 = da1.raster.reproject(method=method, **reproj_kwargs).load()
+        da1 = da1.raster.clip_bbox(da_like.raster.box.to_crs(4326).total_bounds, buffer=10)
+        da1 = da1.load()
+        da1 = da1.raster.reproject(method=method, **reproj_kwargs)
     logger.debug(f"Reprojection method of first dataset is: {method}")
 
     # set nodata to np.nan, Note this might change the dtype to float
@@ -115,6 +124,11 @@ def merge_multi_dataarrays(
         # base reprojection method on resolution of datasets
         reproj_method = da_list[i].get("reproj_method", None)
         da2 = da_list[i].get("da")
+        da2 = da2.raster.clip_bbox(da_like.raster.box.to_crs(4326).total_bounds, buffer=10)
+        if np.any(np.array(da2.shape) <= 2):
+            print(f"No data for this tile")
+            continue
+
         if reproj_method is None:
             dx_2 = (
                 np.abs(da2.raster.res[0])
@@ -209,11 +223,9 @@ def merge_dataarrays(
         da1 = da1.raster.mask_nodata()
     ## reproject da2 and reset nodata value to match da1 nodata
     try:
-        da2 = (
-            da2.raster.reproject_like(da1, method=reproj_method)
-            .raster.mask_nodata()
-            .load()
-        )
+        da2 = da2.load()
+        da2 = da2.raster.reproject_like(da1, method=reproj_method)
+        da2 = da2.raster.mask_nodata()
     except:
         print("No data for this tile")
 
