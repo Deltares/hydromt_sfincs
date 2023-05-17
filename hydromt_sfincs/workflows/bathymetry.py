@@ -393,11 +393,11 @@ def get_river_bathymetry(
 def interp_along_line_to_grid(
     da: xr.DataArray,
     gdf_lines: gpd.GeoDataFrame,
-    gdf_z: gpd.GeoDataFrame,
+    gdf_zb: gpd.GeoDataFrame,
     gdf_mask: gpd.GeoDataFrame = None,
     fill_value: float = np.nan,
 ) -> xr.DataArray:
-    """Interpolate "z" values from `gdf_z` along
+    """Interpolate "z" values from `gdf_zb` along
     lines from `gdf_lines` to grid cells from `da`.
 
     Parameters
@@ -406,7 +406,7 @@ def interp_along_line_to_grid(
         grid to interpolate to
     gdf_lines : gpd.GeoDataFrame
         river center lines
-    gdf_z : gpd.GeoDataFrame
+    gdf_zb : gpd.GeoDataFrame
         point locations with z values to interpolate in "z" column
     gdf_mask : gpd.GeoDataFrame, optional
         mask in which to interpolate z values,
@@ -430,29 +430,29 @@ def interp_along_line_to_grid(
     cc = gpd.GeoDataFrame(geometry=gpd.points_from_xy(xs, ys), crs=da.raster.crs)
 
     # limit z points to mask if provided
-    gdf_z = gdf_z.copy()
+    gdf_zb = gdf_zb.copy()
     if gdf_mask is not None:
-        gdf_z = gdf_z[gdf_z.intersects(gdf_mask.unary_union)]
+        gdf_zb = gdf_zb[gdf_zb.intersects(gdf_mask.unary_union)]
     # find nearest line and calculate relative distance along line for all z points
-    gdf_z["idx0"], gdf_z["dist"] = nearest(gdf_z, gdf_lines)
-    gdf_z["x"] = gdf_lines.loc[gdf_z["idx0"], "geometry"].values.project(
-        gdf_z["geometry"]
+    gdf_zb["idx0"], gdf_zb["dist"] = nearest(gdf_zb, gdf_lines)
+    gdf_zb["x"] = gdf_lines.loc[gdf_zb["idx0"], "geometry"].values.project(
+        gdf_zb["geometry"]
     )
-    gdf_z.set_index("idx0", inplace=True)
+    gdf_zb.set_index("idx0", inplace=True)
 
     # find nearest line and calculate relative distance along line for all cell centers
     cc["idx0"], cc["dist"] = nearest(cc, gdf_lines)
     cc["x"] = gdf_lines.loc[cc["idx0"], "geometry"].values.project(cc["geometry"])
 
     # interpolate z values per line
-    def _interp(cc0, gdf_z=gdf_z):
+    def _interp(cc0, gdf_zb=gdf_zb):
         idx0 = cc0["idx0"].values[0]
-        if gdf_z.loc[idx0].shape[0] == 0:
+        if gdf_zb.loc[idx0].shape[0] == 0:
             cc0["z"] = fill_value
-        elif gdf_z.loc[idx0].shape[0] == 1:
-            cc0["z"] = gdf_z.loc[idx0, "z"].values[0]
+        elif gdf_zb.loc[idx0].shape[0] == 1:
+            cc0["z"] = gdf_zb.loc[idx0, "z"].values[0]
         else:
-            x0, z0 = gdf_z.loc[idx0, ["x", "z"]].values.T
+            x0, z0 = gdf_zb.loc[idx0, ["x", "z"]].values.T
             x1 = cc0["x"].values
             cc0["z"] = interp1d(x0, z0, kind="linear", fill_value="extrapolate")(x1)
         return cc0
@@ -465,63 +465,91 @@ def interp_along_line_to_grid(
 def burn_river_rect(
     da_elv: xr.DataArray,
     gdf_riv: gpd.GeoDataFrame,
+    gdf_zb: gpd.GeoDataFrame = None,
     gdf_riv_mask: gpd.GeoDataFrame = None,
     rivwth_name: str = "rivwth",
     rivdph_name: str = "rivdph",
     rivbed_name: str = "rivbed",
+    smooth_dist=0.1,
     fill_value: float = np.nan,
 ):
-    """Burn river depth into DEM.
+    """Burn rivers with a rectangular cross profile into a DEM.
+
+    The river width [m] can be provided in the 'rivwth' column of `gdf_riv`,
+    or as a polygon in the 'geometry' column of `gdf_riv_mask`.
+
+    River depth [m] can be provided in the 'rivdph' column of `gdf_riv` as a depth
+    relative to the river bank level, or in the 'rivbed' column of `gdf_riv` as
+    an absolute river bed level [m+REF]. If both columns are provided, 'rivbed' is used.
+    Alternativly, the river bed level can be provided `gdf_zb` which should
+    contain point locations along the river center line.
+
+    Depths or bed levels are interpolated along the river center line of the same
+    stream order ('strord') to grid cells within the river mask.
+
 
     Parameters
     ----------
     da_elv : xr.DataArray
         DEM to burn river depth into
     gdf_riv : gpd.GeoDataFrame
-        river center lines
+        River center lines.
+        Should contain a 'rivwth' column with river width [m] if no river mask `gdf_riv_mask` is provided.
+        Should contain a 'rivdph' or 'rivbed' column with river depth [m] or bed level [m+REF] if no point elevation locations `gdf_zb` are provided.
+        May contain a 'strord' column with stream order to limit interpolation to same stream order.
+    gdf_zb : gpd.GeoDataFrame, optional
+        Point locations with a 'rivbed' river bed level [m+REF] column, by defualt None
     gdf_riv_mask : gpd.GeoDataFrame, optional
-        mask in which to interpolate z values,
-        by default None (only along line)
+        Mask in which to interpolate z values, by default None.
+        If provided, 'rivwth' column is not required in `gdf_riv`.
     rivwth_name, rivdph_name,  rivbed_name: str, optional
-        river width, depth, and bed level column names in gdf_riv,
+        river width [m], depth [m], and bed level [m+REF] column names in gdf_riv,
         by default "rivwth", "rivdph", "rivbed"
     fill_value : float, optional
         fill value for lines without z point locations,
         by default np.nan
+    smooth_dist: float, optional
+        Part of line over which to smooth the river depth or bedlevel between
+        river center line segments. By default 0.1
 
     """
-    # check inputs
-    col = gdf_riv.columns.isin([rivbed_name, rivdph_name]).tolist()
+    # reproject to utm if geographic
+    if gdf_riv.crs.is_geographic:
+        dst_crs = parse_crs("utm", gdf_riv.to_crs(4326).total_bounds)
+        gdf_riv = gdf_riv.to_crs(dst_crs)
+    # check river mask
+    if gdf_riv_mask is None:
+        if rivwth_name in gdf_riv.columns:  # create mask based on river width
+            gdf_riv_mask = gdf_riv.assign(
+                geometry=gdf_riv.geometry.buffer(gdf_riv[rivwth_name] / 2),
+            )
+        else:
+            raise ValueError(
+                f"Either gdf_riv_mask must be provided or {rivwth_name} must be in gdf_riv"
+            )
+
+    if gdf_zb is None:
+        # get z points along line length to interpolate river depth between segments
+        xnorm = np.unique([min(smooth_dist, 0.5), 1 - min(smooth_dist, 0.5)])
+        func = lambda x: x.interpolate(xnorm, normalized=True)
+        gdf_zb = gpd.GeoDataFrame(
+            gdf_riv.assign(geometry=gdf_riv.geometry.apply(func))
+            .explode()
+            .reset_index(drop=True),
+            crs=gdf_riv.crs,
+        )
+    # check rivdph vs rivbed inputs
+    col = gdf_zb.columns.intersection([rivbed_name, rivdph_name]).tolist()
     if len(col) == 0:
         raise ValueError(f"Either {rivbed_name} or {rivdph_name} must be in gdf_riv")
     col = col[0]
-    # check river mask
-    if gdf_riv_mask is None:  # create mask based on river width
-        gdf_riv_mask = gdf_riv.assign(
-            geometry=gdf_riv.geometry.buffer(gdf_riv[rivwth_name] / 2),
-        )
-    elif rivwth_name not in gdf_riv.columns:
-        raise ValueError(
-            f"Either gdf_riv_mask must be provided or {rivwth_name} must be in gdf_riv"
-        )
-
-    # get z points at 10% and 90% of line length to interpolate river depth between segments
-    func = lambda x: x.interpolate([0.1, 0.9], normalized=True)
-    gdf_z = (
-        gdf_riv.assign(geometry=gdf_riv.geometry.apply(func))
-        .explode()
-        .reset_index(drop=True)
-    )
-    gdf_z = gdf_z.rename(columns={col: "z"})
 
     # merge river lines of same order
     # z points are interpolated along merged line
     if "strord" in gdf_riv.columns:
-        # TODO remove lines of tributaries within width 
+        # TODO remove lines of tributaries within width
         # of main river at confluences
-        gdf_riv = gdf_riv.groupby("strord").apply(
-            lambda x: linemerge(x.unary_union)
-        )
+        gdf_riv = gdf_riv.groupby("strord").apply(lambda x: linemerge(x.unary_union))
     else:
         gdf_riv = gpd.GeoDataFrame(
             geometry=[linemerge(gdf_riv.unary_union)], crs=gdf_riv.crs
@@ -531,9 +559,9 @@ def burn_river_rect(
     # interpolate river depth along river center line
     da0 = interp_along_line_to_grid(
         # NOTE: da0 fillvalue is always nan
-        da=full_like(da_elv, np.nan, dtype="float32"),
+        da=xr.full_like(da_elv, fill_value=np.nan),
         gdf_lines=gdf_riv,
-        gdf_z=gdf_z,
+        gdf_zb=gdf_zb.rename(columns={col: "z"})[["geometry", "z"]],
         gdf_mask=gdf_riv_mask,
         fill_value=fill_value,
     )
@@ -544,14 +572,23 @@ def burn_river_rect(
         # replace elevations with river bottom elevations
         da_elv1 = da_elv.where(np.isnan(da0), da0)
     else:
-        # subtract river depth from river bank elevation
-        # set nan where da0 non-nan and interpolate to get river bank elevation
-        da_elv1 = da_elv.where(np.isnan(da0), np.nan)
+        # replace values whitin river mask with np.nan
+        da_elv1 = da_elv.raster.mask_nodata()
+        da_mask = ~np.isnan(da_elv1)
+        da_elv1 = da_elv1.where(np.isnan(da0), np.nan)
         da_elv1.raster.set_nodata(np.nan)
-        da_elv1 = da_elv1.raster.interpolate_na(method="rio_idw")
+        # interpolate river bank elevation to river cells
+        # subtract river depth from interpolated river bank elevation
+        # TODO this can be improved (more robust) by calculating the river bank elevation
+        # based on a percentile elevation per segment, but not sure how to do create the segments yet
+        # NOTE extrapolate=True requires hydromt>0.7.1 (not yet released),
+        # however this argumetn also doesn't break anything
+        da_elv1 = da_elv1.raster.interpolate_na(method="linear", extrapolate=True)
         da_elv1 = da_elv1 - da0.fillna(0)
+        # reset original nodata values
+        da_elv1 = da_elv1.where(da_mask).fillna(nodata)
     # river bed elevation must be lower than original elevation
-    da_elv = np.minumum(da_elv1, da_elv)
+    da_elv = np.minimum(da_elv1, da_elv)
     da_elv.raster.set_nodata(nodata)
     da_elv.raster.set_crs(crs)
     return da_elv

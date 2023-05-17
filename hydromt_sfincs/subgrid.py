@@ -187,6 +187,7 @@ class SubgridTableRegular:
         da_mask: xr.DataArray,
         datasets_dep: list[dict],
         datasets_rgh: list[dict] = [],
+        datasets_riv: list[dict] = [],
         nbins=10,
         nr_subgrid_pixels=20,
         nrmax=2000,
@@ -213,6 +214,11 @@ class SubgridTableRegular:
             For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
         datsets_rgh : List[dict], optional
             List of dictionaries with Manning's n data, each containing an xarray.DataSet with manning values and optional merge arguments
+        datasets_riv : List[dict], optional
+            List of dictionaries with river datasets. Each dictionary should at least continthe following:
+            * river: filename, Path, or line vector of river centerline with river depth ("rivdph") [m] OR bed level ("rivbed") [m+REF] and width ("rivwth") attributes [m]
+            * river_mask (optional): filename, Path, or shape vector of river mask (if provided "rivwth" in river is not used and can be omitted)
+            e.g.: [{'river': river_fn, 'river_mask': river_mask_fn}, {'river': river_fn2}]
         nbins : int, optional
             Number of bins in which hypsometry is subdivided, by default 10
         nr_subgrid_pixels : int, optional
@@ -404,6 +410,13 @@ class SubgridTableRegular:
                     )
                     da_dep = da_dep.raster.interpolate_na(method="rio_idw")
                 assert np.all(~np.isnan(da_dep))
+
+                # burn rivers in bathymetry
+                if len(datasets_riv) > 0:
+                    for riv_kwargs in datasets_riv:
+                        da_dep = workflows.bathymetry.burn_river_rect(
+                            da_elv=da_dep, **riv_kwargs
+                        )
 
                 # get subgrid manning roughness tile
                 if len(datasets_rgh) > 0:

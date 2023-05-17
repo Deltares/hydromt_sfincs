@@ -609,9 +609,9 @@ class SfincsModel(GridModel):
             In additon, optional merge arguments can be provided e.g.: merge_method, gdf_valid_fn
         datasets_riv : List[dict], optional
             List of dictionaries with river datasets. Each dictionary should at least continthe following:
-            * river: filename, Path, or line vector of river centerline with river depth ("rivdph") OR bz ("rivbed") and width ("rivwth") attributes
-            * river_mask (optional): filename, Path, or shape vector of river mask (if provided "rivwth" is not used)
-            e.g.: [{'river': river_fn, 'river_mask': river_mask_fn}, {'river': river_fn2}]
+            * river: filename, Path, or line vector of river centerline with river depth ("rivdph") [m] OR bz ("rivbed") [m+REF] and width ("rivwth") attributes [m]
+            * river_mask (optional): filename, Path, or shape vector of river mask (if provided "rivwth" in river is not used and can be omitted)
+            e.g.: [{'rivers': river_fn, 'river_mask': river_mask_fn}, {'river': river_fn2}]
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         nbins : int, optional
@@ -665,6 +665,7 @@ class SfincsModel(GridModel):
                 da_mask=self.mask,
                 datasets_dep=datasets_dep,
                 datasets_rgh=datasets_rgh,
+                datasets_riv=datasets_riv,
                 buffer_cells=buffer_cells,
                 nbins=nbins,
                 nr_subgrid_pixels=nr_subgrid_pixels,
@@ -2877,8 +2878,16 @@ class SfincsModel(GridModel):
         return datasets_out
 
     def _parse_datasets_riv(self, datasets_riv):
-        parse_keys = ["river", "river_mask", "gdf", "gdf_mask"]
-        copy_keys = ["width", "depth", "zb", "type"]
+        parse_keys = [
+            "rivers",
+            "river_mask",
+            "river_zb",
+            "gdf_riv",
+            "gdf_riv_mask",
+            "gdf_zb",
+        ]
+        copy_keys = []
+        attrs = ["rivwth", "rivdph", "rivbed"]
 
         datasets_out = []
         for dataset in datasets_riv:
@@ -2886,19 +2895,29 @@ class SfincsModel(GridModel):
 
             if "rivers" in dataset:
                 gdf_riv = self.data_catalog.get_geodataframe(
-                    path_or_key=dataset.get("rivers"),
+                    dataset.get("rivers"),
                     geom=self.mask.raster.box,
                 )
-                dd.update({"gdf": gdf_riv})
+                for key in attrs:
+                    if key in dataset:
+                        gdf_riv[key] = dataset.pop(key)
+                dd.update({"gdf_riv": gdf_riv})
             else:
                 raise ValueError("No 'rivers' dataset provided in datasets_riv.")
 
             if "river_mask" in dataset:
                 gdf_riv_mask = self.data_catalog.get_geodataframe(
-                    path_or_key=dataset.get("river_mask"),
+                    dataset.get("river_mask"),
                     geom=self.mask.raster.box,
                 )
-                dd.update({"gdf_mask": gdf_riv_mask})
+                dd.update({"gdf_riv_mask": gdf_riv_mask})
+
+            if "river_zb" in dataset:
+                gdf_zb = self.data_catalog.get_geodataframe(
+                    dataset.get("river_zb"),
+                    geom=self.mask.raster.box,
+                )
+                dd.update({"gdf_zb": gdf_zb})
 
             # copy remaining keys
             for key, value in dataset.items():

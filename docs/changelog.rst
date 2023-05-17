@@ -8,6 +8,10 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 v1.0.1 (unreleased)
 ===================
 
+Added
+-----
+- **setup_subgrid** now supports the 'riv_datasets' to burn in river bathymetry into the subgrid. PR #84
+
 Bugfix
 ------
 - bugfix in `SfincsModel.write_forcing` to ensure all NetCDF files are written instead of only the first one. PR #86
