@@ -46,7 +46,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="hydromt_sfincs.utils.read_sfincs_his_results" href="hydromt_sfincs.utils.read_sfincs_his_results.html" />
-    <link rel="prev" title="hydromt_sfincs.utils.write_geoms" href="hydromt_sfincs.utils.write_geoms.html" />
+    <link rel="prev" title="hydromt_sfincs.utils.write_drn" href="hydromt_sfincs.utils.write_drn.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -379,6 +379,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_outflow.html">hydromt_sfincs.SfincsModel.setup_river_outflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_observation_points.html">hydromt_sfincs.SfincsModel.setup_observation_points</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_structures.html">hydromt_sfincs.SfincsModel.setup_structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_drainage_structures.html">hydromt_sfincs.SfincsModel.setup_drainage_structures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html">hydromt_sfincs.SfincsModel.setup_waterlevel_forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask.html">hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_discharge_forcing.html">hydromt_sfincs.SfincsModel.setup_discharge_forcing</a></li>
@@ -469,6 +470,8 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_xyn.html">hydromt_sfincs.utils.write_xyn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_geoms.html">hydromt_sfincs.utils.read_geoms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_geoms.html">hydromt_sfincs.utils.write_geoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_drn.html">hydromt_sfincs.utils.read_drn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_drn.html">hydromt_sfincs.utils.write_drn</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.utils.read_sfincs_map_results</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_sfincs_his_results.html">hydromt_sfincs.utils.read_sfincs_his_results</a></li>
 </ul>
@@ -548,7 +551,7 @@ document.write(`
 <h1>hydromt_sfincs.utils.read_sfincs_map_results<a class="headerlink" href="#hydromt-sfincs-utils-read-sfincs-map-results" title="Permalink to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="hydromt_sfincs.utils.read_sfincs_map_results">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.utils.</span></span><span class="sig-name descname"><span class="pre">read_sfincs_map_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">fn_map:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~pathlib.Path,</span> <span class="pre">ds_like:</span> <span class="pre">~xarray.core.dataset.Dataset,</span> <span class="pre">chunksize:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">100,</span> <span class="pre">drop:</span> <span class="pre">~typing.List[str]</span> <span class="pre">=</span> <span class="pre">['crs',</span> <span class="pre">'sfincsgrid'],</span> <span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.utils</span> <span class="pre">(WARNING)&gt;,</span> <span class="pre">**kwargs</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><span class="pre">Tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v2023.4.3.dev0)"><span class="pre">Dataset</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/utils.html#read_sfincs_map_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.utils.read_sfincs_map_results" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.utils.</span></span><span class="sig-name descname"><span class="pre">read_sfincs_map_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">fn_map:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~pathlib.Path,</span> <span class="pre">ds_like:</span> <span class="pre">~xarray.core.dataset.Dataset,</span> <span class="pre">chunksize:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">100,</span> <span class="pre">drop:</span> <span class="pre">~typing.List[str]</span> <span class="pre">=</span> <span class="pre">['crs',</span> <span class="pre">'sfincsgrid'],</span> <span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.utils</span> <span class="pre">(WARNING)&gt;,</span> <span class="pre">**kwargs</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><span class="pre">Tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v2023.5.1.dev0)"><span class="pre">Dataset</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/utils.html#read_sfincs_map_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.utils.read_sfincs_map_results" title="Permalink to this definition">#</a></dt>
 <dd><p>Read sfincs_map.nc staggered grid netcdf files and parse to two
 hydromt.RasterDataset objects: one with face and one with edge variables.</p>
 <dl class="field-list simple">
@@ -583,12 +586,12 @@ hydromt.RasterDataset objects: one with face and one with edge variables.</p>
     <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
-       href="hydromt_sfincs.utils.write_geoms.html"
+       href="hydromt_sfincs.utils.write_drn.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">hydromt_sfincs.utils.write_geoms</p>
+        <p class="prev-next-title">hydromt_sfincs.utils.write_drn</p>
       </div>
     </a>
     <a class="right-next"

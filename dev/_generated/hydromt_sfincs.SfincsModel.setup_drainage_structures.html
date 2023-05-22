@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>hydromt_sfincs.SfincsModel.read_grid &#8212; HydroMT SFINCS  documentation</title>
+    <title>hydromt_sfincs.SfincsModel.setup_drainage_structures &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../_static/sphinx_highlight.js"></script>
     <script src="../_static/design-tabs.js"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.SfincsModel.read_grid';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.SfincsModel.setup_drainage_structures';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.SfincsModel.write_grid" href="hydromt_sfincs.SfincsModel.write_grid.html" />
-    <link rel="prev" title="hydromt_sfincs.SfincsModel.set_grid" href="hydromt_sfincs.SfincsModel.set_grid.html" />
+    <link rel="next" title="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing" href="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html" />
+    <link rel="prev" title="hydromt_sfincs.SfincsModel.setup_structures" href="hydromt_sfincs.SfincsModel.setup_structures.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -362,7 +362,7 @@ document.write(`
   <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.html">hydromt_sfincs.SfincsModel</a></li>
 </ul>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_config.html">hydromt_sfincs.SfincsModel.setup_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_region.html">hydromt_sfincs.SfincsModel.setup_region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_grid.html">hydromt_sfincs.SfincsModel.setup_grid</a></li>
@@ -379,7 +379,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_outflow.html">hydromt_sfincs.SfincsModel.setup_river_outflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_observation_points.html">hydromt_sfincs.SfincsModel.setup_observation_points</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_structures.html">hydromt_sfincs.SfincsModel.setup_structures</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_drainage_structures.html">hydromt_sfincs.SfincsModel.setup_drainage_structures</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_drainage_structures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html">hydromt_sfincs.SfincsModel.setup_waterlevel_forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask.html">hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_discharge_forcing.html">hydromt_sfincs.SfincsModel.setup_discharge_forcing</a></li>
@@ -418,14 +418,14 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_forcing_1d.html">hydromt_sfincs.SfincsModel.set_forcing_1d</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_model_time.html">hydromt_sfincs.SfincsModel.get_model_time</a></li>
 </ul>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_config.html">hydromt_sfincs.SfincsModel.setup_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.get_config.html">hydromt_sfincs.SfincsModel.get_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_config.html">hydromt_sfincs.SfincsModel.set_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_config.html">hydromt_sfincs.SfincsModel.read_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_config.html">hydromt_sfincs.SfincsModel.write_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_grid.html">hydromt_sfincs.SfincsModel.set_grid</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.read_grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_grid.html">hydromt_sfincs.SfincsModel.read_grid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_grid.html">hydromt_sfincs.SfincsModel.write_grid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_subgrid.html">hydromt_sfincs.SfincsModel.read_subgrid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_subgrid.html">hydromt_sfincs.SfincsModel.write_subgrid</a></li>
@@ -530,7 +530,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API reference</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">hydromt_sfincs.SfincsModel.read_grid</li>
+    <li class="breadcrumb-item active" aria-current="page">hydromt_sfincs.SfincsModel.setup_drainage_structures</li>
   </ul>
 </nav>
 </div>
@@ -547,16 +547,26 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="hydromt-sfincs-sfincsmodel-read-grid">
-<h1>hydromt_sfincs.SfincsModel.read_grid<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-read-grid" title="Permalink to this heading">#</a></h1>
+  <section id="hydromt-sfincs-sfincsmodel-setup-drainage-structures">
+<h1>hydromt_sfincs.SfincsModel.setup_drainage_structures<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-drainage-structures" title="Permalink to this heading">#</a></h1>
 <dl class="py method">
-<dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.read_grid">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">read_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.read_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.read_grid" title="Permalink to this definition">#</a></dt>
-<dd><p>Read SFINCS binary grid files and save to <cite>grid</cite> attribute.
-Filenames are taken from the <cite>config</cite> attribute (i.e. input file).</p>
+<dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_drainage_structures">
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_drainage_structures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">structures</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.11)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.13.0)"><span class="pre">GeoDataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">stype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'pump'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discharge</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_drainage_structures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_drainage_structures" title="Permalink to this definition">#</a></dt>
+<dd><p>Setup drainage structures.</p>
+<p>Adds model layer:
+* <strong>drn</strong> geom: drainage pump or culvert</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data_vars</strong> (<em>Union</em><em>[</em><em>List</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>]</em><em>, </em><em>optional</em>) – List of data variables to read, by default None (all)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>structures</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em>) – Path, data source name, or geopandas object to structure line geometry file.
+The line should consist of only 2 points (else first and last points are used), ordered from up to downstream.
+The “type” (1 for pump and 2 for culvert), “par1” (“discharge” also accepted) variables are optional.
+If “type” or “par1” are not provided, they are based on stype or discharge arguments.</p></li>
+<li><p><strong>stype</strong> (<em>{'pump'</em><em>, </em><em>'culvert'}</em><em>, </em><em>optional</em>) – Structure type, by default “pump”. stype is converted to integer “type” to match with SFINCS expectations.</p></li>
+<li><p><strong>discharge</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Discharge of the structure, by default 0.0. For culverts, this is the maximum discharge,
+since actual discharge depends on waterlevel gradient</p></li>
+<li><p><strong>merge</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, merge with existing drainage structures, by default True.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -575,20 +585,20 @@ Filenames are taken from the <cite>config</cite> attribute (i.e. input file).</p
     <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
-       href="hydromt_sfincs.SfincsModel.set_grid.html"
+       href="hydromt_sfincs.SfincsModel.setup_structures.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">hydromt_sfincs.SfincsModel.set_grid</p>
+        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_structures</p>
       </div>
     </a>
     <a class="right-next"
-       href="hydromt_sfincs.SfincsModel.write_grid.html"
+       href="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">hydromt_sfincs.SfincsModel.write_grid</p>
+        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_waterlevel_forcing</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -610,13 +620,13 @@ Filenames are taken from the <cite>config</cite> attribute (i.e. input file).</p
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.SfincsModel.read_grid"><code class="docutils literal notranslate"><span class="pre">SfincsModel.read_grid()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.SfincsModel.setup_drainage_structures"><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_drainage_structures()</span></code></a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">
-    <a href="../_sources/_generated/hydromt_sfincs.SfincsModel.read_grid.rst.txt">
+    <a href="../_sources/_generated/hydromt_sfincs.SfincsModel.setup_drainage_structures.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

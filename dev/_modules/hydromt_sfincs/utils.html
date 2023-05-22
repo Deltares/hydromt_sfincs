@@ -443,6 +443,8 @@ document.write(`
     <span class="s2">&quot;write_xyn&quot;</span><span class="p">,</span>
     <span class="s2">&quot;read_geoms&quot;</span><span class="p">,</span>
     <span class="s2">&quot;write_geoms&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;read_drn&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;write_drn&quot;</span><span class="p">,</span>
     <span class="s2">&quot;gdf2linestring&quot;</span><span class="p">,</span>
     <span class="s2">&quot;gdf2polygon&quot;</span><span class="p">,</span>
     <span class="s2">&quot;linestring2gdf&quot;</span><span class="p">,</span>
@@ -1024,6 +1026,98 @@ document.write(`
                         <span class="n">feat</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="p">[</span><span class="n">c</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">feats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">feats</span></div>
+
+
+<div class="viewcode-block" id="write_drn"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_drn.html#hydromt_sfincs.utils.write_drn">[docs]</a><span class="k">def</span> <span class="nf">write_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">gdf_drainage</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.4f</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write structure files from list of dictionaries.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn : str, Path</span>
+<span class="sd">        Path to structure file.</span>
+<span class="sd">    drainage : gpd.GeoDataFrame</span>
+<span class="sd">        Dataframe with drainage structure parameters and geometry.</span>
+<span class="sd">    fmt : str</span>
+<span class="sd">        Format for float values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># expected columns for drainage structures</span>
+    <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;xsnk&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ysnk&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;xsrc&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ysrc&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;par1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;par2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;par3&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;par4&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;par5&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">gdf_drainage</span><span class="p">)</span>
+    <span class="c1"># get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc</span>
+    <span class="n">endpoints</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">explode</span><span class="p">()</span><span class="o">.</span><span class="n">unstack</span><span class="p">()</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;xsnk&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;ysnk&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;xsrc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;ysrc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;geometry&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># reorder columns based on col_names</span>
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="n">col_names</span><span class="p">]</span>
+
+    <span class="c1"># write to file</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">float_format</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="read_drn"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_drn.html#hydromt_sfincs.utils.read_drn">[docs]</a><span class="k">def</span> <span class="nf">read_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read drainage structure files to geodataframe.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn : str, Path</span>
+<span class="sd">        Path to drainge structure file.</span>
+<span class="sd">    crs : int</span>
+<span class="sd">        EPSG code for coordinate reference system.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gpd.GeoDataFrame</span>
+<span class="sd">        Dataframe with drainage structure parameters and geometry.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># expected columns for drainage structures</span>
+    <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;xsnk&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ysnk&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;xsrc&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ysrc&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;par1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;par2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;par3&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;par4&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;par5&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="c1"># read structure file</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">s+&quot;</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">col_names</span><span class="p">)</span>
+
+    <span class="c1"># get geometry linestring</span>
+    <span class="n">geom</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">LineString</span><span class="p">([(</span><span class="n">xsnk</span><span class="p">,</span> <span class="n">ysnk</span><span class="p">),</span> <span class="p">(</span><span class="n">xsrc</span><span class="p">,</span> <span class="n">ysrc</span><span class="p">)])</span>
+        <span class="k">for</span> <span class="n">xsnk</span><span class="p">,</span> <span class="n">ysnk</span><span class="p">,</span> <span class="n">xsrc</span><span class="p">,</span> <span class="n">ysrc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">&quot;xsnk&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;ysnk&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;xsrc&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;ysrc&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;xsnk&quot;</span><span class="p">,</span> <span class="s2">&quot;ysnk&quot;</span><span class="p">,</span> <span class="s2">&quot;xsrc&quot;</span><span class="p">,</span> <span class="s2">&quot;ysrc&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># convert to geodataframe</span>
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geom</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">gdf</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gdf</span></div>
 
 
 <span class="c1">## OUTPUT: sfincs_map.nc, sfincs_his.nc ##</span>

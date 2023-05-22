@@ -379,6 +379,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_river_outflow.html">hydromt_sfincs.SfincsModel.setup_river_outflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_observation_points.html">hydromt_sfincs.SfincsModel.setup_observation_points</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_structures.html">hydromt_sfincs.SfincsModel.setup_structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_drainage_structures.html">hydromt_sfincs.SfincsModel.setup_drainage_structures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html">hydromt_sfincs.SfincsModel.setup_waterlevel_forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask.html">hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing.html">hydromt_sfincs.SfincsModel.setup_discharge_forcing</a></li>
@@ -469,6 +470,8 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.utils.write_xyn.html">hydromt_sfincs.utils.write_xyn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.utils.read_geoms.html">hydromt_sfincs.utils.read_geoms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.utils.write_geoms.html">hydromt_sfincs.utils.write_geoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.utils.read_drn.html">hydromt_sfincs.utils.read_drn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.utils.write_drn.html">hydromt_sfincs.utils.write_drn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.utils.read_sfincs_map_results.html">hydromt_sfincs.utils.read_sfincs_map_results</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/hydromt_sfincs.utils.read_sfincs_his_results.html">hydromt_sfincs.utils.read_sfincs_his_results</a></li>
 </ul>
@@ -607,25 +610,28 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures" title="hydromt_sfincs.SfincsModel.setup_structures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_structures</span></code></a>(structures, stype)</p></td>
 <td><p>Setup thin dam or weir structures.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html#hydromt_sfincs.SfincsModel.setup_waterlevel_forcing" title="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_waterlevel_forcing</span></code></a>([...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_drainage_structures.html#hydromt_sfincs.SfincsModel.setup_drainage_structures" title="hydromt_sfincs.SfincsModel.setup_drainage_structures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_drainage_structures</span></code></a>(structures)</p></td>
+<td><p>Setup drainage structures.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html#hydromt_sfincs.SfincsModel.setup_waterlevel_forcing" title="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_waterlevel_forcing</span></code></a>([...])</p></td>
 <td><p>Setup waterlevel forcing.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask.html#hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask" title="hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_waterlevel_bnd_from_mask</span></code></a>([...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask.html#hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask" title="hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_waterlevel_bnd_from_mask</span></code></a>([...])</p></td>
 <td><p>Setup waterlevel boundary (bnd) points along model waterlevel boundary (msk=2).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_discharge_forcing</span></code></a>([...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_discharge_forcing</span></code></a>([...])</p></td>
 <td><p>Setup discharge forcing.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_discharge_forcing_from_grid</span></code></a>(...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_discharge_forcing_from_grid</span></code></a>(...)</p></td>
 <td><p>Setup discharge forcing based on a gridded discharge dataset.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing.html#hydromt_sfincs.SfincsModel.setup_precip_forcing" title="hydromt_sfincs.SfincsModel.setup_precip_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_precip_forcing</span></code></a>(timeseries)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing.html#hydromt_sfincs.SfincsModel.setup_precip_forcing" title="hydromt_sfincs.SfincsModel.setup_precip_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_precip_forcing</span></code></a>(timeseries)</p></td>
 <td><p>Setup spatially uniform precipitation forcing (precip).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_precip_forcing_from_grid</span></code></a>([...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid" title="hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_precip_forcing_from_grid</span></code></a>([...])</p></td>
 <td><p>Setup precipitation forcing from a gridded spatially varying data source.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_tiles.html#hydromt_sfincs.SfincsModel.setup_tiles" title="hydromt_sfincs.SfincsModel.setup_tiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_tiles</span></code></a>([path, region, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_tiles.html#hydromt_sfincs.SfincsModel.setup_tiles" title="hydromt_sfincs.SfincsModel.setup_tiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_tiles</span></code></a>([path, region, ...])</p></td>
 <td><p>Create both index and topobathy tiles in webmercator format.</p></td>
 </tr>
 </tbody>
@@ -886,6 +892,12 @@ document.write(`
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.utils.write_geoms.html#hydromt_sfincs.utils.write_geoms" title="hydromt_sfincs.utils.write_geoms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_geoms</span></code></a>(fn, feats[, stype, fmt])</p></td>
 <td><p>Write list of structure dictionaries to file</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.utils.read_drn.html#hydromt_sfincs.utils.read_drn" title="hydromt_sfincs.utils.read_drn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_drn</span></code></a>(fn[, crs])</p></td>
+<td><p>Read drainage structure files to geodataframe.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.utils.write_drn.html#hydromt_sfincs.utils.write_drn" title="hydromt_sfincs.utils.write_drn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_drn</span></code></a>(fn, gdf_drainage[, fmt])</p></td>
+<td><p>Write structure files from list of dictionaries.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.utils.read_sfincs_map_results.html#hydromt_sfincs.utils.read_sfincs_map_results" title="hydromt_sfincs.utils.read_sfincs_map_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_sfincs_map_results</span></code></a>(fn_map, ds_like)</p></td>
 <td><p>Read sfincs_map.nc staggered grid netcdf files and parse to two hydromt.RasterDataset objects: one with face and one with edge variables.</p></td>
