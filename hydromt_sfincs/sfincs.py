@@ -19,8 +19,7 @@ from hydromt.models.model_grid import GridModel
 from hydromt.raster import RasterDataArray
 from hydromt.vector import GeoDataArray, GeoDataset
 from pyproj import CRS
-from shapely.geometry import box
-from shapely.geometry import Polygon
+from shapely.geometry import box, LineString, MultiLineString, Polygon
 
 from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
@@ -40,6 +39,7 @@ class SfincsModel(GridModel):
         "observation_points": "obs",
         "weirs": "weir",
         "thin_dams": "thd",
+        "drainage_structures": "drn",
     }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
         # timeseries (can be multiple), locations tuple
@@ -1317,6 +1317,88 @@ class SfincsModel(GridModel):
         self.set_geoms(gdf, stype)
         self.set_config(f"{stype}file", f"sfincs.{stype}")
 
+    def setup_drainage_structures(
+        self,
+        structures: Union[str, Path, gpd.GeoDataFrame],
+        stype: str = "pump",
+        discharge: float = 0.0,
+        merge: bool = True,
+        **kwargs,
+    ):
+        """Setup drainage structures.
+
+        Adds model layer:
+        * **drn** geom: drainage pump or culvert
+
+        Parameters
+        ----------
+        structures : str, Path
+            Path, data source name, or geopandas object to structure line geometry file.
+            The line should consist of only 2 points (else first and last points are used), ordered from up to downstream.
+            The "type" (1 for pump and 2 for culvert), "par1" ("discharge" also accepted) variables are optional.
+            If "type" or "par1" are not provided, they are based on stype or discharge arguments.
+        stype : {'pump', 'culvert'}, optional
+            Structure type, by default "pump". stype is converted to integer "type" to match with SFINCS expectations.
+        discharge : float, optional
+            Discharge of the structure, by default 0.0. For culverts, this is the maximum discharge,
+            since actual discharge depends on waterlevel gradient
+        merge : bool, optional
+            If True, merge with existing drainage structures, by default True.
+        """
+
+        stype = stype.lower()
+        svalues = {"pump": 1, "culvert": 2}
+        if stype not in svalues:
+            raise ValueError('stype must be one of "pump", "culvert"')
+        svalue = svalues[stype]
+
+        # read, clip and reproject
+        gdf_structures = self.data_catalog.get_geodataframe(
+            structures, geom=self.region, **kwargs
+        ).to_crs(self.crs)
+
+        # check if type (int) is present in gdf, else overwrite from args
+        # TODO also add check if type is interger?
+        if "type" not in gdf_structures:
+            gdf_structures["type"] = svalue
+        # if discharge is provided, rename to par1
+        if "discharge" in gdf_structures:
+            gdf_structures = gdf_structures.rename(columns={"discharge": "par1"})
+
+        # add par1, par2, par3, par4, par5 if not present
+        # NOTE only par1 is used in the model
+        if "par1" not in gdf_structures:
+            gdf_structures["par1"] = discharge
+        if "par2" not in gdf_structures:
+            gdf_structures["par2"] = 0
+        if "par3" not in gdf_structures:
+            gdf_structures["par3"] = 0
+        if "par4" not in gdf_structures:
+            gdf_structures["par4"] = 0
+        if "par5" not in gdf_structures:
+            gdf_structures["par5"] = 0
+
+        # multi to single lines
+        lines = gdf_structures.explode(column="geometry").reset_index(drop=True)
+        # get start [0] and end [1] points
+        endpoints = lines.boundary.explode().unstack()
+        # merge start and end points into a single linestring
+        gdf_structures["geometry"] = endpoints.apply(
+            lambda x: LineString(x.values.tolist()), axis=1
+        )
+
+        # combine with existing structures if present
+        if merge and "drn" in self.geoms:
+            gdf0 = self._geoms.pop("drn")
+            gdf_structures = gpd.GeoDataFrame(
+                pd.concat([gdf_structures, gdf0], ignore_index=True)
+            )
+            self.logger.info(f"Adding {stype} structures to existing structures.")
+
+        # set structures
+        self.set_geoms(gdf_structures, "drn")
+        self.set_config("drnfile", f"sfincs.drn")
+
     ### FORCING
     def set_forcing_1d(
         self,
@@ -2270,7 +2352,7 @@ class SfincsModel(GridModel):
     def read_geoms(self):
         """Read geometry files and save to `geoms` attribute.
         Known geometry files mentioned in the sfincs.inp configuration file are read,
-        including: bnd/src/obs xy files and thd/weir structure files.
+        including: bnd/src/obs xy(n) files, thd/weir structure files and drn drainage structure files.
 
         If other geojson files are present in a "gis" subfolder folder, those are read as well.
         """
@@ -2289,6 +2371,8 @@ class SfincsModel(GridModel):
                     gdf = utils.linestring2gdf(struct, crs=self.crs)
                 elif gname == "obs":
                     gdf = utils.read_xyn(fn, crs=self.crs)
+                elif gname == "drn":
+                    gdf = utils.read_drn(fn, crs=self.crs)
                 else:
                     gdf = utils.read_xy(fn, crs=self.crs)
                 self.set_geoms(gdf, name=gname)
@@ -2332,6 +2416,8 @@ class SfincsModel(GridModel):
                         utils.write_geoms(fn, struct, stype=gname)
                     elif gname == "obs":
                         utils.write_xyn(fn, gdf, crs=self.crs)
+                    elif gname == "drn":
+                        utils.write_drn(fn, gdf)
                     else:
                         utils.write_xy(fn, gdf, fmt="%8.2f")
 

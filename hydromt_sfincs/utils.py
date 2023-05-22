@@ -40,6 +40,8 @@ __all__ = [
     "write_xyn",
     "read_geoms",
     "write_geoms",
+    "read_drn",
+    "write_drn",
     "gdf2linestring",
     "gdf2polygon",
     "linestring2gdf",
@@ -621,6 +623,98 @@ def read_geoms(fn: Union[str, Path]) -> List[Dict]:
                         feat[c] = feat[c][0]
             feats.append(feat)
     return feats
+
+
+def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.4f") -> None:
+    """Write structure files from list of dictionaries.
+
+    Parameters
+    ----------
+    fn : str, Path
+        Path to structure file.
+    drainage : gpd.GeoDataFrame
+        Dataframe with drainage structure parameters and geometry.
+    fmt : str
+        Format for float values.
+    """
+
+    # expected columns for drainage structures
+    col_names = [
+        "xsnk",
+        "ysnk",
+        "xsrc",
+        "ysrc",
+        "type",
+        "par1",
+        "par2",
+        "par3",
+        "par4",
+        "par5",
+    ]
+
+    gdf = copy.deepcopy(gdf_drainage)
+    # get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc
+    endpoints = gdf.boundary.explode().unstack()
+    gdf["xsnk"] = endpoints[0].x
+    gdf["ysnk"] = endpoints[0].y
+    gdf["xsrc"] = endpoints[1].x
+    gdf["ysrc"] = endpoints[1].y
+    gdf.drop(["geometry"], axis=1, inplace=True)
+
+    # reorder columns based on col_names
+    gdf = gdf[col_names]
+
+    # write to file
+    gdf.to_csv(fn, sep=" ", index=False, header=False, float_format=fmt)
+
+
+def read_drn(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:
+    """Read drainage structure files to geodataframe.
+
+    Parameters
+    ----------
+    fn : str, Path
+        Path to drainge structure file.
+    crs : int
+        EPSG code for coordinate reference system.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        Dataframe with drainage structure parameters and geometry.
+    """
+
+    # expected columns for drainage structures
+    col_names = [
+        "xsnk",
+        "ysnk",
+        "xsrc",
+        "ysrc",
+        "type",
+        "par1",
+        "par2",
+        "par3",
+        "par4",
+        "par5",
+    ]
+
+    # read structure file
+    df = pd.read_csv(fn, sep="\\s+", names=col_names)
+
+    # get geometry linestring
+    geom = [
+        LineString([(xsnk, ysnk), (xsrc, ysrc)])
+        for xsnk, ysnk, xsrc, ysrc in zip(
+            df["xsnk"], df["ysnk"], df["xsrc"], df["ysrc"]
+        )
+    ]
+    df.drop(["xsnk", "ysnk", "xsrc", "ysrc"], axis=1, inplace=True)
+
+    # convert to geodataframe
+    gdf = gpd.GeoDataFrame(df, geometry=geom)
+    if crs is not None:
+        gdf.set_crs(crs, inplace=True)
+    return gdf
 
 
 ## OUTPUT: sfincs_map.nc, sfincs_his.nc ##

@@ -36,7 +36,7 @@ For more information about each file, see the `SFINCS documentation <https://sfi
    * - :py:attr:`~hydromt_sfincs.SfincsModel.subgrid`
      - sbgfile
    * - :py:attr:`~hydromt_sfincs.SfincsModel.geoms`
-     - obsfile, thdfile, weirfile
+     - obsfile, thdfile, weirfile, drnfile
    * - :py:attr:`~hydromt_sfincs.SfincsModel.forcing`
      - bndfile, bzsfile, srcfile, disfile, precipfile, netbndbzsbzifile, netsrcdisfile, netamprfile, netampfile, netamuamvfile
    * - :py:attr:`~hydromt_sfincs.SfincsModel.states`
@@ -122,6 +122,8 @@ Geoms setup methods
      - This component adds observation points to the model (obsfile). 
    * - :py:func:`~hydromt_sfincs.SfincsModel.setup_structures`
      - This component adds line element structures to the model (thdfile, weirfile).
+   * - :py:func:`~hydromt_sfincs.SfincsModel.setup_drainage_structures`
+     - This component adds drainage structures (pump, culvert) to the model (drnfile).     
 
 Forcing setup methods
 ---------------------
