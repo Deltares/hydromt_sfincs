@@ -99,11 +99,9 @@ def merge_multi_dataarrays(
             da1 = da1.load()
             da1 = da1.raster.reproject_like(da_like)
     elif reproj_kwargs:
-        da1 = da1.raster.clip_bbox(
-            da_like.raster.box.to_crs(da1.raster.crs.to_epsg()).total_bounds, buffer=10
-        )
-        da1 = da1.load()
+        #TODO also clip to bbox?
         da1 = da1.raster.reproject(method=method, **reproj_kwargs)
+        da1 = da1.load()
     logger.debug(f"Reprojection method of first dataset is: {method}")
 
     # set nodata to np.nan, Note this might change the dtype to float
@@ -129,7 +127,7 @@ def merge_multi_dataarrays(
         reproj_method = da_list[i].get("reproj_method", None)
         da2 = da_list[i].get("da")
         da2 = da2.raster.clip_bbox(
-            da_like.raster.box.to_crs(da1.raster.crs.to_epsg()).total_bounds, buffer=10
+            da1.raster.box.to_crs(da2.raster.crs.to_epsg()).total_bounds, buffer=10
         )
         if np.any(np.array(da2.shape) <= 2):
             print(f"No data for this tile")
