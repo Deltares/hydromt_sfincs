@@ -4,6 +4,7 @@ import pytest
 from os.path import join, dirname, abspath, isfile
 import numpy as np
 import xarray as xr
+import pandas as pd
 
 from hydromt.cli.cli_utils import parse_config
 from hydromt.log import setuplog
@@ -79,6 +80,34 @@ def test_infiltration(tmpdir):
     assert "scs" in mod.grid
     assert (mod.grid["scs"].where(mod.mask > 0)).min() == 10
 
+    # set cn infiltration with recovery
+    lulc = xr.where(mod.grid["dep"] < -0.5, 70, 30)
+    hsg = xr.where(mod.grid["dep"] < 2, 1, 3)
+    ksat = xr.where(mod.grid["dep"] < 1, 0.01, 0.2)
+    # create pandas reclass table for lulc and hsg to cn
+    reclass_table = pd.DataFrame([[0, 35], [0, 56]], index=[70, 30], columns=[1, 3])
+    effective = 0.5
+    mod.setup_cn_infiltration_with_kr(
+        lulc=lulc, hsg=hsg, ksat=ksat, reclass_table=reclass_table, effective=effective
+    )
+
+    assert "smax" in mod.grid
+    assert "seff" in mod.grid
+    assert "kr" in mod.grid
+
+    mod.write_grid()
+    mod.write_config()
+
+    # read and check if identical
+    mod1 = SfincsModel(root=mod.root, mode="r")
+
+    # assure the sum of smax is close to earlier calculated value
+    assert np.isclose(mod1.grid["smax"].where(mod.mask > 0).sum(), 32.929287)
+    assert np.isclose(
+        mod1.grid["seff"].where(mod.mask > 0).sum(), 32.929287 * effective
+    )
+    assert np.isclose(mod1.grid["kr"].where(mod.mask > 0).sum(), 1.7879527)
+
 
 def test_structs(tmpdir):
     root = TESTMODELDIR
@@ -107,6 +136,28 @@ def test_structs(tmpdir):
     assert "weirfile" in mod.config
     mod.write_geoms()
     assert isfile(join(mod.root, "sfincs.weir"))
+
+
+def test_drainage_structures(tmpdir):
+    root = TESTMODELDIR
+    mod = SfincsModel(root=root, mode="r+")
+    # read
+    mod.set_config("drnfile", "sfincs.drn")
+    mod.read_grid()
+    mod.read_geoms()
+    assert "drn" in mod.geoms
+    nr_drainage_structures = len(mod.geoms["drn"].index)
+    # write drn file only
+    tmp_root = str(tmpdir.join("drainage_struct_test"))
+    mod.set_root(tmp_root, mode="w")
+    mod.write_geoms(data_vars=["drn"])
+    assert isfile(join(mod.root, "sfincs.drn"))
+    assert not isfile(join(mod.root, "sfincs.obs"))
+    fn_drn_gis = join(mod.root, "gis", "drn.geojson")
+    assert isfile(fn_drn_gis)
+    # add more drainage structures
+    mod.setup_drainage_structures(fn_drn_gis, merge=True)
+    assert len(mod.geoms["drn"].index) == nr_drainage_structures * 2
 
 
 def test_results():

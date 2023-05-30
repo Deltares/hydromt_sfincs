@@ -1,0 +1,16 @@
+NLCD,description,landuse,N
+11,Open water,11,0.023
+21,Developed - open space,21,0.070
+22,Developed - low density,22,0.100
+23,Developed - medium density,23,0.120
+24,Developed - high density,24,0.140
+31,Barren Land,31,0.070
+41,Deciduous Forest,41,0.120
+42,Evergreen Forest,42,0.150
+43,Mixed Forest,43,0.120
+54,To do,54,0.050
+71,Grassland/Herbaceous,71,0.034
+81,Pasture/Hay,81,0.030
+82,Cultivated Crops,82,0.035
+90,Woody Wetlands,90,0.100
+95,Woody Wetlands,95,0.035

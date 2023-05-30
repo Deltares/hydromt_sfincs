@@ -196,6 +196,7 @@ class SubgridTableRegular:
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
         buffer_cells: int = 0,
+        extrapolate_values: bool = False,
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
         highres_dir: str = None,
@@ -214,14 +215,14 @@ class SubgridTableRegular:
         datsets_rgh : List[dict], optional
             List of dictionaries with Manning's n data, each containing an xarray.DataSet with manning values and optional merge arguments
         nbins : int, optional
-            Number of bins in the subgrid tables, by default 10
+            Number of bins in which hypsometry is subdivided, by default 10
         nr_subgrid_pixels : int, optional
             Number of subgrid pixels per computational cell, by default 20
         nrmax : int, optional
             Maximum number of cells per subgrid-block, by default 2000
             These blocks are used to prevent memory issues while working with large datasets
         max_gradient : float, optional
-            Maximum gradient in the subgrid tables, by default 5.0
+            If slope in hypsometry exceeds this value, then smoothing is applied, to prevent numerical stability problems, by default 5.0
         z_minimum : float, optional
             Minimum depth in the subgrid tables, by default -99999.0
         manning_land, manning_sea : float, optional
@@ -274,6 +275,7 @@ class SubgridTableRegular:
                 predictor=2,
                 profile="COG",
                 nodata=np.nan,
+                BIGTIFF="YES",  # Add the BIGTIFF option here
             )
 
         if write_man_tif:
@@ -295,6 +297,7 @@ class SubgridTableRegular:
                 predictor=2,
                 profile="COG",
                 nodata=np.nan,
+                BIGTIFF="YES",  # Add the BIGTIFF option here
             )
 
         # Z points
@@ -403,7 +406,22 @@ class SubgridTableRegular:
                         f"WARNING: Interpolate data at {int(np.sum(np.isnan(da_dep.values)))} cells"
                     )
                     da_dep = da_dep.raster.interpolate_na(method="rio_idw")
-                assert np.all(~np.isnan(da_dep))
+
+                # Extrapolate option
+                if extrapolate_values == True:
+                    # Extrapolate this
+                    da_dep = da_dep.interpolate_na(
+                        dim=da_dep.raster.x_dim,
+                        fill_value="extrapolate",
+                    ).interpolate_na(
+                        dim=da_dep.raster.y_dim,
+                        fill_value="extrapolate",
+                    )
+                    logger.warning(f"WARNING: Extrapolated data")
+
+                else:
+                    # Assertion error
+                    assert np.all(~np.isnan(da_dep))
 
                 # get subgrid manning roughness tile
                 if len(datasets_rgh) > 0:
