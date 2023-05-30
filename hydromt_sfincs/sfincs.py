@@ -1754,14 +1754,14 @@ class SfincsModel(GridModel):
 
         Adds one model layer:
 
-        * **netampfile** forcing: distributed barometric pressure [...]
+        * **netampfile** forcing: distributed barometric pressure [Pa]
 
         Parameters
         ----------
         press, str, Path, xr.Dataset, xr.DataArray
             Path to pressure rasterdataset netcdf file or xarray dataset.
 
-            * Required variables: ['press' (...)]
+            * Required variables: ['press' (Pa)]
             * Required coordinates: ['time', 'y', 'x']
 
         dst_res: float
@@ -1786,7 +1786,7 @@ class SfincsModel(GridModel):
         kwargs0 = dict(align=dst_res is not None, method="nearest_index")
         kwargs0.update(kwargs)
         meth = kwargs0["method"]
-        self.logger.debug(f"Resample precip using {meth}.")
+        self.logger.debug(f"Resample pressure using {meth}.")
         press_out = press.raster.reproject(
             dst_crs=self.crs, dst_res=dst_res, **kwargs
         ).fillna(fill_value)
@@ -1824,7 +1824,6 @@ class SfincsModel(GridModel):
 
         dst_res: float
             output resolution (m), by default None and computed from source data.
-            Only used in combination with aggregate=False
         """
         # get data for model domain and config time range
         wind = self.data_catalog.get_rasterdataset(
@@ -1841,7 +1840,7 @@ class SfincsModel(GridModel):
         kwargs0 = dict(align=dst_res is not None, method="nearest_index")
         kwargs0.update(kwargs)
         meth = kwargs0["method"]
-        self.logger.debug(f"Resample precip using {meth}.")
+        self.logger.debug(f"Resample wind using {meth}.")
 
         wind = wind.raster.reproject(
             dst_crs=self.crs, dst_res=dst_res, **kwargs
