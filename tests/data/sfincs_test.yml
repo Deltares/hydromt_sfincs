@@ -48,6 +48,9 @@ setup_structures:
   structures: weir
   stype: thd
 
+setup_drainage_structures:
+  structures: drainage
+
 setup_river_inflow:
   hydrography: merit_hydro
   river_upa: 10
