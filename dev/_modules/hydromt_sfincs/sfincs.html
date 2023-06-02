@@ -421,6 +421,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">hydromt.models.model_grid</span> <span class="kn">import</span> <span class="n">GridModel</span>
 <span class="kn">from</span> <span class="nn">hydromt.raster</span> <span class="kn">import</span> <span class="n">RasterDataArray</span>
 <span class="kn">from</span> <span class="nn">hydromt.vector</span> <span class="kn">import</span> <span class="n">GeoDataArray</span><span class="p">,</span> <span class="n">GeoDataset</span>
+<span class="kn">from</span> <span class="nn">hydromt.workflows.forcing</span> <span class="kn">import</span> <span class="n">da_to_timedelta</span>
 <span class="kn">from</span> <span class="nn">pyproj</span> <span class="kn">import</span> <span class="n">CRS</span>
 <span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">box</span><span class="p">,</span> <span class="n">LineString</span><span class="p">,</span> <span class="n">MultiLineString</span><span class="p">,</span> <span class="n">Polygon</span>
 
@@ -450,6 +451,7 @@ document.write(`
         <span class="s2">&quot;waves&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;bzi&quot;</span><span class="p">],</span> <span class="s2">&quot;bnd&quot;</span><span class="p">),</span>
         <span class="s2">&quot;discharge&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;dis&quot;</span><span class="p">],</span> <span class="s2">&quot;src&quot;</span><span class="p">),</span>
         <span class="s2">&quot;precip&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;precip&quot;</span><span class="p">],</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="s2">&quot;wind&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;wnd&quot;</span><span class="p">],</span> <span class="kc">None</span><span class="p">),</span>
         <span class="s2">&quot;wavespectra&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;bhs&quot;</span><span class="p">,</span> <span class="s2">&quot;btp&quot;</span><span class="p">,</span> <span class="s2">&quot;bwd&quot;</span><span class="p">,</span> <span class="s2">&quot;bds&quot;</span><span class="p">],</span> <span class="s2">&quot;bwv&quot;</span><span class="p">),</span>
         <span class="s2">&quot;wavemaker&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;whi&quot;</span><span class="p">,</span> <span class="s2">&quot;wti&quot;</span><span class="p">,</span> <span class="s2">&quot;wst&quot;</span><span class="p">],</span> <span class="s2">&quot;wvp&quot;</span><span class="p">),</span>  <span class="c1"># TODO check names and test</span>
     <span class="p">}</span>
@@ -457,9 +459,12 @@ document.write(`
         <span class="c1"># 2D forcing sfincs name, rename tuple</span>
         <span class="s2">&quot;waterlevel&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;netbndbzsbzi&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;zs&quot;</span><span class="p">:</span> <span class="s2">&quot;bzs&quot;</span><span class="p">,</span> <span class="s2">&quot;zi&quot;</span><span class="p">:</span> <span class="s2">&quot;bzi&quot;</span><span class="p">}),</span>
         <span class="s2">&quot;discharge&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;netsrcdis&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;discharge&quot;</span><span class="p">:</span> <span class="s2">&quot;dis&quot;</span><span class="p">}),</span>
-        <span class="s2">&quot;precip&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;netampr&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;Precipitation&quot;</span><span class="p">:</span> <span class="s2">&quot;precip&quot;</span><span class="p">}),</span>
-        <span class="s2">&quot;press&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;netamp&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;barometric_pressure&quot;</span><span class="p">:</span> <span class="s2">&quot;press&quot;</span><span class="p">}),</span>
-        <span class="s2">&quot;wind&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;netamuamv&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;eastward_wind&quot;</span><span class="p">:</span> <span class="s2">&quot;wind_u&quot;</span><span class="p">,</span> <span class="s2">&quot;northward_wind&quot;</span><span class="p">:</span> <span class="s2">&quot;wind_v&quot;</span><span class="p">}),</span>
+        <span class="s2">&quot;precip_2d&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;netampr&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;Precipitation&quot;</span><span class="p">:</span> <span class="s2">&quot;precip_2d&quot;</span><span class="p">}),</span>
+        <span class="s2">&quot;press_2d&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;netamp&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;barometric_pressure&quot;</span><span class="p">:</span> <span class="s2">&quot;press_2d&quot;</span><span class="p">}),</span>
+        <span class="s2">&quot;wind_2d&quot;</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">&quot;netamuamv&quot;</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">&quot;eastward_wind&quot;</span><span class="p">:</span> <span class="s2">&quot;wind_u&quot;</span><span class="p">,</span> <span class="s2">&quot;northward_wind&quot;</span><span class="p">:</span> <span class="s2">&quot;wind_v&quot;</span><span class="p">},</span>
+        <span class="p">),</span>
     <span class="p">}</span>
     <span class="n">_FORCING_SPW</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;spiderweb&quot;</span><span class="p">:</span> <span class="s2">&quot;spw&quot;</span><span class="p">}</span>  <span class="c1"># TODO add read and write functions</span>
     <span class="n">_MAPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">,</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="s2">&quot;scs&quot;</span><span class="p">,</span> <span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="s2">&quot;smax&quot;</span><span class="p">,</span> <span class="s2">&quot;seff&quot;</span><span class="p">,</span> <span class="s2">&quot;kr&quot;</span><span class="p">]</span>
@@ -481,6 +486,11 @@ document.write(`
         <span class="s2">&quot;bzi&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;wave height&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m&quot;</span><span class="p">},</span>
         <span class="s2">&quot;dis&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;discharge&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m3.s-1&quot;</span><span class="p">},</span>
         <span class="s2">&quot;precip&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;precipitation&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;mm.hr-1&quot;</span><span class="p">},</span>
+        <span class="s2">&quot;precip_2d&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;precipitation&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;mm.hr-1&quot;</span><span class="p">},</span>
+        <span class="s2">&quot;press_2d&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;barometric pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;Pa&quot;</span><span class="p">},</span>
+        <span class="s2">&quot;wind_u&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;eastward wind&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">},</span>
+        <span class="s2">&quot;wind_v&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;northward wind&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">},</span>
+        <span class="s2">&quot;wnd&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;wind&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">},</span>
     <span class="p">}</span>
 
 <div class="viewcode-block" id="SfincsModel.__init__"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -2237,7 +2247,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">ds_snapped</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">(),</span> <span class="s2">&quot;src_snapped&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SfincsModel.setup_precip_forcing_from_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_precip_forcing_from_grid</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">precip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">precip</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup precipitation forcing from a gridded spatially varying data source.</span>
 
@@ -2296,20 +2306,22 @@ document.write(`
                 <span class="n">dst_crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="n">dst_res</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
             <span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-            <span class="c1"># resample in time</span>
-            <span class="n">precip_out</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">workflows</span><span class="o">.</span><span class="n">resample_time</span><span class="p">(</span>
-                <span class="n">precip_out</span><span class="p">,</span>
-                <span class="n">freq</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">),</span>
-                <span class="n">conserve_mass</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">upsampling</span><span class="o">=</span><span class="s2">&quot;bfill&quot;</span><span class="p">,</span>
-                <span class="n">downsampling</span><span class="o">=</span><span class="s2">&quot;sum&quot;</span><span class="p">,</span>
-                <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;precip&quot;</span><span class="p">)</span>
+            <span class="c1"># only resample in time if freq &lt; 1H, else keep input values</span>
+            <span class="k">if</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">precip_out</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">):</span>
+                <span class="n">precip_out</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">workflows</span><span class="o">.</span><span class="n">resample_time</span><span class="p">(</span>
+                    <span class="n">precip_out</span><span class="p">,</span>
+                    <span class="n">freq</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">),</span>
+                    <span class="n">conserve_mass</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">upsampling</span><span class="o">=</span><span class="s2">&quot;bfill&quot;</span><span class="p">,</span>
+                    <span class="n">downsampling</span><span class="o">=</span><span class="s2">&quot;sum&quot;</span><span class="p">,</span>
+                    <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">precip_out</span> <span class="o">=</span> <span class="n">precip_out</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;precip_2d&quot;</span><span class="p">)</span>
 
             <span class="c1"># add to forcing</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">precip_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;precip&quot;</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">precip_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;precip_2d&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_precip_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing.html#hydromt_sfincs.SfincsModel.setup_precip_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_precip_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeseries</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.setup_precip_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing.html#hydromt_sfincs.SfincsModel.setup_precip_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_precip_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeseries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">magnitude</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup spatially uniform precipitation forcing (precip).</span>
 
 <span class="sd">        Adds model layers:</span>
@@ -2323,15 +2335,26 @@ document.write(`
 <span class="sd">            and location IDs in the first row,</span>
 <span class="sd">            see :py:meth:`hydromt.open_timeseries_from_table`, for details.</span>
 <span class="sd">            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.</span>
+<span class="sd">        magnitude: float</span>
+<span class="sd">            Precipitation magnitude [mm/hr] to use if no timeseries is provided.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">()</span>
-        <span class="n">df_ts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
-            <span class="n">timeseries</span><span class="p">,</span>
-            <span class="n">time_tuple</span><span class="o">=</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">),</span>
-            <span class="c1"># kwargs below only applied if timeseries not in data catalog</span>
-            <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">timeseries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_ts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
+                <span class="n">timeseries</span><span class="p">,</span>
+                <span class="n">time_tuple</span><span class="o">=</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">),</span>
+                <span class="c1"># kwargs below only applied if timeseries not in data catalog</span>
+                <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">magnitude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">times</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;10T&quot;</span><span class="p">)</span>
+            <span class="n">df_ts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="n">magnitude</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either timeseries or magnitude must be provided&quot;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
             <span class="n">df_ts</span> <span class="o">=</span> <span class="n">df_ts</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
@@ -2339,6 +2362,173 @@ document.write(`
         <span class="n">df_ts</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;precip&quot;</span>
         <span class="n">df_ts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">df_ts</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;precip&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SfincsModel.setup_pressure_forcing_from_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_pressure_forcing_from_grid</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">press</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">101325</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup pressure forcing from a gridded spatially varying data source.</span>
+
+<span class="sd">        Adds one model layer:</span>
+
+<span class="sd">        * **netampfile** forcing: distributed barometric pressure [Pa]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        press, str, Path, xr.Dataset, xr.DataArray</span>
+<span class="sd">            Path to pressure rasterdataset netcdf file or xarray dataset.</span>
+
+<span class="sd">            * Required variables: [&#39;press&#39; (Pa)]</span>
+<span class="sd">            * Required coordinates: [&#39;time&#39;, &#39;y&#39;, &#39;x&#39;]</span>
+
+<span class="sd">        dst_res: float</span>
+<span class="sd">            output resolution (m), by default None and computed from source data.</span>
+
+<span class="sd">        fill_value: float</span>
+<span class="sd">            value to use when no data is available.</span>
+<span class="sd">            Standard atmospheric pressure (101325 Pa) is used if no value is given.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get data for model domain and config time range</span>
+        <span class="n">press</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">press</span><span class="p">,</span>
+            <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">time_tuple</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>
+            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;press&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="c1"># reproject to model utm crs</span>
+        <span class="c1"># NOTE: currently SFINCS errors (stack overflow) on large files,</span>
+        <span class="c1"># downscaling to model grid is not recommended</span>
+        <span class="n">kwargs0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="n">dst_res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest_index&quot;</span><span class="p">)</span>
+        <span class="n">kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">meth</span> <span class="o">=</span> <span class="n">kwargs0</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Resample pressure using </span><span class="si">{</span><span class="n">meth</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">press_out</span> <span class="o">=</span> <span class="n">press</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
+            <span class="n">dst_crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="n">dst_res</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">fill_value</span><span class="p">)</span>
+
+        <span class="c1"># only resample in time if freq &lt; 1H, else keep input values</span>
+        <span class="k">if</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">press_out</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">):</span>
+            <span class="n">press_out</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">workflows</span><span class="o">.</span><span class="n">resample_time</span><span class="p">(</span>
+                <span class="n">press_out</span><span class="p">,</span>
+                <span class="n">freq</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">),</span>
+                <span class="n">conserve_mass</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">upsampling</span><span class="o">=</span><span class="s2">&quot;interpolate&quot;</span><span class="p">,</span>
+                <span class="n">downsampling</span><span class="o">=</span><span class="s2">&quot;interpolate&quot;</span><span class="p">,</span>
+                <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">press_out</span> <span class="o">=</span> <span class="n">press_out</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;press_2d&quot;</span><span class="p">)</span>
+
+        <span class="c1"># add to forcing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">press_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;press_2d&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SfincsModel.setup_wind_forcing_from_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_wind_forcing_from_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wind</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup pressure forcing from a gridded spatially varying data source.</span>
+
+<span class="sd">        Adds one model layer:</span>
+
+<span class="sd">        * **netamuamv** forcing: distributed wind [m/s]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        wind, str, Path, xr.Dataset</span>
+<span class="sd">            Path to wind rasterdataset (including eastward and northward components) netcdf file or xarray dataset.</span>
+
+<span class="sd">            * Required variables: [&#39;wind_u&#39; (m/s), &#39;wind_v&#39; (m/s)]</span>
+<span class="sd">            * Required coordinates: [&#39;time&#39;, &#39;y&#39;, &#39;x&#39;]</span>
+
+<span class="sd">        dst_res: float</span>
+<span class="sd">            output resolution (m), by default None and computed from source data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get data for model domain and config time range</span>
+        <span class="n">wind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">wind</span><span class="p">,</span>
+            <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">time_tuple</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>
+            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;wind_u&quot;</span><span class="p">,</span> <span class="s2">&quot;wind_v&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="c1"># reproject to model utm crs</span>
+        <span class="c1"># NOTE: currently SFINCS errors (stack overflow) on large files,</span>
+        <span class="c1"># downscaling to model grid is not recommended</span>
+        <span class="n">kwargs0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="n">dst_res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest_index&quot;</span><span class="p">)</span>
+        <span class="n">kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">meth</span> <span class="o">=</span> <span class="n">kwargs0</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Resample wind using </span><span class="si">{</span><span class="n">meth</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="n">wind</span> <span class="o">=</span> <span class="n">wind</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
+            <span class="n">dst_crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="n">dst_res</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># only resample in time if freq &lt; 1H, else keep input values</span>
+        <span class="k">if</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">wind</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">):</span>
+            <span class="n">wind_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
+            <span class="c1"># resample in time</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">wind</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
+                <span class="n">wind_out</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">workflows</span><span class="o">.</span><span class="n">resample_time</span><span class="p">(</span>
+                    <span class="n">wind</span><span class="p">[</span><span class="n">var</span><span class="p">],</span>
+                    <span class="n">freq</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">),</span>
+                    <span class="n">conserve_mass</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">upsampling</span><span class="o">=</span><span class="s2">&quot;interpolate&quot;</span><span class="p">,</span>
+                    <span class="n">downsampling</span><span class="o">=</span><span class="s2">&quot;interpolate&quot;</span><span class="p">,</span>
+                    <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">wind_out</span> <span class="o">=</span> <span class="n">wind</span>
+
+        <span class="c1"># add to forcing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">wind_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;wind_2d&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SfincsModel.setup_wind_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_wind_forcing.html#hydromt_sfincs.SfincsModel.setup_wind_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_wind_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeseries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">magnitude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup spatially uniform wind forcing (wind).</span>
+
+<span class="sd">        Adds model layers:</span>
+
+<span class="sd">        * **windfile** forcing: uniform wind magnitude [m/s] and direction [deg]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        timeseries, str, Path</span>
+<span class="sd">            Path to tabulated timeseries csv file with time index in first column,</span>
+<span class="sd">            magnitude in second column and direction in third column</span>
+<span class="sd">            see :py:meth:`hydromt.open_timeseries_from_table`, for details.</span>
+<span class="sd">            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.</span>
+<span class="sd">        magnitude: float</span>
+<span class="sd">            Magnitude of the wind [m/s]</span>
+<span class="sd">        direction: float</span>
+<span class="sd">            Direction where the wind is coming from [deg], e.g. 0 is north, 90 is east, etc.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">timeseries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_ts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
+                <span class="n">timeseries</span><span class="p">,</span>
+                <span class="n">time_tuple</span><span class="o">=</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">),</span>
+                <span class="c1"># kwargs below only applied if timeseries not in data catalog</span>
+                <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">magnitude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_ts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span> <span class="n">periods</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">magnitude</span><span class="p">,</span> <span class="n">direction</span><span class="p">],</span> <span class="p">[</span><span class="n">magnitude</span><span class="p">,</span> <span class="n">direction</span><span class="p">]]),</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Either timeseries or magnitude and direction must be provided&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">df_ts</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;wnd&quot;</span>
+        <span class="n">df_ts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
+        <span class="n">df_ts</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;index&quot;</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+            <span class="n">df_ts</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">),</span>
+            <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">df_ts</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">]},</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;wnd&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SfincsModel.setup_tiles"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_tiles.html#hydromt_sfincs.SfincsModel.setup_tiles">[docs]</a>    <span class="k">def</span> <span class="nf">setup_tiles</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -2450,7 +2640,7 @@ document.write(`
 <div class="viewcode-block" id="SfincsModel.plot_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">plot_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot model timeseries forcing.</span>
 
-<span class="sd">        For distributed forcing a spatial avarage is plotted.</span>
+<span class="sd">        For distributed forcing a spatial avarage, minimum or maximum is plotted.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>

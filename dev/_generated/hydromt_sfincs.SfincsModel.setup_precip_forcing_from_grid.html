@@ -45,7 +45,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.SfincsModel.setup_tiles" href="hydromt_sfincs.SfincsModel.setup_tiles.html" />
+    <link rel="next" title="hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid" href="hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid.html" />
     <link rel="prev" title="hydromt_sfincs.SfincsModel.setup_precip_forcing" href="hydromt_sfincs.SfincsModel.setup_precip_forcing.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -386,6 +386,9 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html">hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_precip_forcing.html">hydromt_sfincs.SfincsModel.setup_precip_forcing</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid.html">hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_wind_forcing.html">hydromt_sfincs.SfincsModel.setup_wind_forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid.html">hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_tiles.html">hydromt_sfincs.SfincsModel.setup_tiles</a></li>
 </ul>
 <ul class="nav bd-sidenav">
@@ -551,7 +554,7 @@ document.write(`
 <h1>hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-precip-forcing-from-grid" title="Permalink to this heading">#</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_precip_forcing_from_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">precip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst_res</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_precip_forcing_from_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_precip_forcing_from_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">precip</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst_res</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_precip_forcing_from_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid" title="Permalink to this definition">#</a></dt>
 <dd><p>Setup precipitation forcing from a gridded spatially varying data source.</p>
 <p>If aggregate is True, spatially uniform precipitation forcing is added to
 the model based on the mean precipitation over the model domain.
@@ -616,11 +619,11 @@ spatially distributed precipitation is returned.</p></li>
       </div>
     </a>
     <a class="right-next"
-       href="hydromt_sfincs.SfincsModel.setup_tiles.html"
+       href="hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_tiles</p>
+        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

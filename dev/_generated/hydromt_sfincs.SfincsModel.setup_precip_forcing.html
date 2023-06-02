@@ -386,6 +386,9 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html">hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_precip_forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid.html">hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid.html">hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_wind_forcing.html">hydromt_sfincs.SfincsModel.setup_wind_forcing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid.html">hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_tiles.html">hydromt_sfincs.SfincsModel.setup_tiles</a></li>
 </ul>
 <ul class="nav bd-sidenav">
@@ -551,7 +554,7 @@ document.write(`
 <h1>hydromt_sfincs.SfincsModel.setup_precip_forcing<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-precip-forcing" title="Permalink to this heading">#</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_precip_forcing">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_precip_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeseries</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_precip_forcing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_precip_forcing" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_precip_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeseries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_precip_forcing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_precip_forcing" title="Permalink to this definition">#</a></dt>
 <dd><p>Setup spatially uniform precipitation forcing (precip).</p>
 <p>Adds model layers:</p>
 <ul class="simple">
@@ -572,6 +575,7 @@ Note: tabulated timeseries files cannot yet be set through the data_catalog yml 
 and location IDs in the first row,
 see <code class="xref py py-meth docutils literal notranslate"><span class="pre">hydromt.open_timeseries_from_table()</span></code>, for details.
 Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.</p></li>
+<li><p><strong>magnitude</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Precipitation magnitude [mm/hr] to use if no timeseries is provided.</p></li>
 </ul>
 </dd>
 </dl>
