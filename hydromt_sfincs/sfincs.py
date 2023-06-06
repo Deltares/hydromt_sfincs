@@ -334,7 +334,7 @@ class SfincsModel(GridModel):
             )
 
             # check if no nan data is present in the bed levels
-            if not np.isnan(da_dep).any():
+            if np.isnan(da_dep).any():
                 self.logger.warning(
                     f"Interpolate data at {int(np.sum(np.isnan(da_dep.values)))} cells"
                 )
