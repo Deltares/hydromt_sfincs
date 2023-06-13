@@ -367,10 +367,10 @@ class SubgridTableRegular:
 
                 # Count
                 ib += 1
-                logger.debug(
+                logger.warning(
                     f"\nblock {ib + 1}/{nrbn * nrbm} -- "
                     f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
-                )
+                ) #Should be logger.debug
 
                 # calculate transform and shape of block at cell and subgrid level
                 da_mask_block = da_mask.isel(
@@ -432,9 +432,13 @@ class SubgridTableRegular:
                 # burn rivers in bathymetry
                 if len(datasets_riv) > 0:
                     for riv_kwargs in datasets_riv:
-                        da_dep = workflows.bathymetry.burn_river_rect(
-                            da_elv=da_dep, **riv_kwargs
-                        )
+                        try:
+                            da_dep = workflows.bathymetry.burn_river_rect(
+                                da_elv=da_dep, **riv_kwargs
+                            )
+                        except:
+                            logger.warning(f"WARNING: Something went wrong with burning in the river (probably river was outside the subgrid tile).")
+
 
                 # get subgrid manning roughness tile
                 if len(datasets_rgh) > 0:
