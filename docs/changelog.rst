@@ -13,12 +13,15 @@ Added
 - `setup_subgrid`` now supports the 'riv_datasets' to burn in river bathymetry into the subgrid. PR #84
 - `SfincsModel.setup_cn_infiltration_with_kr` to setup three layers related to the curve number 
   (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr) PR #87
+- `SfincsModel.setup_cn_infiltration_with_kr` to setup three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr). PR#87
+- `SfincsModelsetup_drainage_structures` to setup drainage structures (pumps,culverts) from a geodataframe. PR#90
+- Added `SfincsModel.setup_wind_forcing`, `SfincsModel.setup_wind_forcing_from_grid` and `SfincsModel.setup_pressure_forcing_from_grid` methods to easily add wind and pressure forcing.  PR #92
 
 Bugfix
 ------
 - bugfix in `SfincsModel.write_forcing` to ensure all NetCDF files are written instead of only the first one. PR #86
 - bugfix in `SfincsModel.read_config` & `SfincsInput.read` for relative paths in inp file. PR #88
-- bugfix in `SfincsModel.setup_subgrid` to ensure that a 'big geotiff' will be written by default when 'write_dep_tif' or 'write_man_tif' are True PR #87
+- bugfix in `SfincsModel.setup_subgrid` to ensure that a 'big geotiff' will be written by default when 'write_dep_tif' or 'write_man_tif' are True
 
 
 v1.0 (17 April 2023)

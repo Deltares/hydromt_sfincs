@@ -44,12 +44,16 @@ Setup components
    SfincsModel.setup_river_outflow
    SfincsModel.setup_observation_points
    SfincsModel.setup_structures
+   SfincsModel.setup_drainage_structures
    SfincsModel.setup_waterlevel_forcing
    SfincsModel.setup_waterlevel_bnd_from_mask
    SfincsModel.setup_discharge_forcing
    SfincsModel.setup_discharge_forcing_from_grid
    SfincsModel.setup_precip_forcing
    SfincsModel.setup_precip_forcing_from_grid
+   SfincsModel.setup_pressure_forcing_from_grid
+   SfincsModel.setup_wind_forcing
+   SfincsModel.setup_wind_forcing_from_grid
    SfincsModel.setup_tiles
 
 Plot methods
@@ -182,6 +186,8 @@ Input/Output methods
    utils.write_xyn
    utils.read_geoms
    utils.write_geoms
+   utils.read_drn
+   utils.write_drn
    utils.read_sfincs_map_results
    utils.read_sfincs_his_results
 

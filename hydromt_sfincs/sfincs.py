@@ -18,9 +18,9 @@ import xarray as xr
 from hydromt.models.model_grid import GridModel
 from hydromt.raster import RasterDataArray
 from hydromt.vector import GeoDataArray, GeoDataset
+from hydromt.workflows.forcing import da_to_timedelta
 from pyproj import CRS
-from shapely.geometry import box
-from shapely.geometry import Polygon
+from shapely.geometry import box, LineString, MultiLineString, Polygon
 
 from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
@@ -40,6 +40,7 @@ class SfincsModel(GridModel):
         "observation_points": "obs",
         "weirs": "weir",
         "thin_dams": "thd",
+        "drainage_structures": "drn",
     }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
         # timeseries (can be multiple), locations tuple
@@ -47,6 +48,7 @@ class SfincsModel(GridModel):
         "waves": (["bzi"], "bnd"),
         "discharge": (["dis"], "src"),
         "precip": (["precip"], None),
+        "wind": (["wnd"], None),
         "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),
         "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
     }
@@ -54,9 +56,12 @@ class SfincsModel(GridModel):
         # 2D forcing sfincs name, rename tuple
         "waterlevel": ("netbndbzsbzi", {"zs": "bzs", "zi": "bzi"}),
         "discharge": ("netsrcdis", {"discharge": "dis"}),
-        "precip": ("netampr", {"Precipitation": "precip"}),
-        "press": ("netamp", {"barometric_pressure": "press"}),
-        "wind": ("netamuamv", {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
+        "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
+        "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
+        "wind_2d": (
+            "netamuamv",
+            {"eastward_wind": "wind_u", "northward_wind": "wind_v"},
+        ),
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "kr"]
@@ -78,6 +83,11 @@ class SfincsModel(GridModel):
         "bzi": {"standard_name": "wave height", "unit": "m"},
         "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
         "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
+        "precip_2d": {"standard_name": "precipitation", "unit": "mm.hr-1"},
+        "press_2d": {"standard_name": "barometric pressure", "unit": "Pa"},
+        "wind_u": {"standard_name": "eastward wind", "unit": "m/s"},
+        "wind_v": {"standard_name": "northward wind", "unit": "m/s"},
+        "wnd": {"standard_name": "wind", "unit": "m/s"},
     }
 
     def __init__(
@@ -1327,6 +1337,88 @@ class SfincsModel(GridModel):
         self.set_geoms(gdf, stype)
         self.set_config(f"{stype}file", f"sfincs.{stype}")
 
+    def setup_drainage_structures(
+        self,
+        structures: Union[str, Path, gpd.GeoDataFrame],
+        stype: str = "pump",
+        discharge: float = 0.0,
+        merge: bool = True,
+        **kwargs,
+    ):
+        """Setup drainage structures.
+
+        Adds model layer:
+        * **drn** geom: drainage pump or culvert
+
+        Parameters
+        ----------
+        structures : str, Path
+            Path, data source name, or geopandas object to structure line geometry file.
+            The line should consist of only 2 points (else first and last points are used), ordered from up to downstream.
+            The "type" (1 for pump and 2 for culvert), "par1" ("discharge" also accepted) variables are optional.
+            If "type" or "par1" are not provided, they are based on stype or discharge arguments.
+        stype : {'pump', 'culvert'}, optional
+            Structure type, by default "pump". stype is converted to integer "type" to match with SFINCS expectations.
+        discharge : float, optional
+            Discharge of the structure, by default 0.0. For culverts, this is the maximum discharge,
+            since actual discharge depends on waterlevel gradient
+        merge : bool, optional
+            If True, merge with existing drainage structures, by default True.
+        """
+
+        stype = stype.lower()
+        svalues = {"pump": 1, "culvert": 2}
+        if stype not in svalues:
+            raise ValueError('stype must be one of "pump", "culvert"')
+        svalue = svalues[stype]
+
+        # read, clip and reproject
+        gdf_structures = self.data_catalog.get_geodataframe(
+            structures, geom=self.region, **kwargs
+        ).to_crs(self.crs)
+
+        # check if type (int) is present in gdf, else overwrite from args
+        # TODO also add check if type is interger?
+        if "type" not in gdf_structures:
+            gdf_structures["type"] = svalue
+        # if discharge is provided, rename to par1
+        if "discharge" in gdf_structures:
+            gdf_structures = gdf_structures.rename(columns={"discharge": "par1"})
+
+        # add par1, par2, par3, par4, par5 if not present
+        # NOTE only par1 is used in the model
+        if "par1" not in gdf_structures:
+            gdf_structures["par1"] = discharge
+        if "par2" not in gdf_structures:
+            gdf_structures["par2"] = 0
+        if "par3" not in gdf_structures:
+            gdf_structures["par3"] = 0
+        if "par4" not in gdf_structures:
+            gdf_structures["par4"] = 0
+        if "par5" not in gdf_structures:
+            gdf_structures["par5"] = 0
+
+        # multi to single lines
+        lines = gdf_structures.explode(column="geometry").reset_index(drop=True)
+        # get start [0] and end [1] points
+        endpoints = lines.boundary.explode().unstack()
+        # merge start and end points into a single linestring
+        gdf_structures["geometry"] = endpoints.apply(
+            lambda x: LineString(x.values.tolist()), axis=1
+        )
+
+        # combine with existing structures if present
+        if merge and "drn" in self.geoms:
+            gdf0 = self._geoms.pop("drn")
+            gdf_structures = gpd.GeoDataFrame(
+                pd.concat([gdf_structures, gdf0], ignore_index=True)
+            )
+            self.logger.info(f"Adding {stype} structures to existing structures.")
+
+        # set structures
+        self.set_geoms(gdf_structures, "drn")
+        self.set_config("drnfile", f"sfincs.drn")
+
     ### FORCING
     def set_forcing_1d(
         self,
@@ -1762,7 +1854,7 @@ class SfincsModel(GridModel):
         self.set_geoms(ds_snapped.vector.to_gdf(), "src_snapped")
 
     def setup_precip_forcing_from_grid(
-        self, precip=None, dst_res=None, aggregate=False, **kwargs
+        self, precip, dst_res=None, aggregate=False, **kwargs
     ):
         """Setup precipitation forcing from a gridded spatially varying data source.
 
@@ -1821,20 +1913,22 @@ class SfincsModel(GridModel):
                 dst_crs=self.crs, dst_res=dst_res, **kwargs
             ).fillna(0)
 
-            # resample in time
-            precip_out = hydromt.workflows.resample_time(
-                precip_out,
-                freq=pd.to_timedelta("1H"),
-                conserve_mass=True,
-                upsampling="bfill",
-                downsampling="sum",
-                logger=self.logger,
-            ).rename("precip")
+            # only resample in time if freq < 1H, else keep input values
+            if da_to_timedelta(precip_out) < pd.to_timedelta("1H"):
+                precip_out = hydromt.workflows.resample_time(
+                    precip_out,
+                    freq=pd.to_timedelta("1H"),
+                    conserve_mass=True,
+                    upsampling="bfill",
+                    downsampling="sum",
+                    logger=self.logger,
+                )
+            precip_out = precip_out.rename("precip_2d")
 
             # add to forcing
-            self.set_forcing(precip_out, name="precip")
+            self.set_forcing(precip_out, name="precip_2d")
 
-    def setup_precip_forcing(self, timeseries):
+    def setup_precip_forcing(self, timeseries=None, magnitude=None):
         """Setup spatially uniform precipitation forcing (precip).
 
         Adds model layers:
@@ -1848,15 +1942,26 @@ class SfincsModel(GridModel):
             and location IDs in the first row,
             see :py:meth:`hydromt.open_timeseries_from_table`, for details.
             Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
+        magnitude: float
+            Precipitation magnitude [mm/hr] to use if no timeseries is provided.
         """
         tstart, tstop = self.get_model_time()
-        df_ts = self.data_catalog.get_dataframe(
-            timeseries,
-            time_tuple=(tstart, tstop),
-            # kwargs below only applied if timeseries not in data catalog
-            parse_dates=True,
-            index_col=0,
-        )
+        if timeseries is not None:
+            df_ts = self.data_catalog.get_dataframe(
+                timeseries,
+                time_tuple=(tstart, tstop),
+                # kwargs below only applied if timeseries not in data catalog
+                parse_dates=True,
+                index_col=0,
+            )
+        elif magnitude is not None:
+            times = pd.date_range(*self.get_model_time(), freq="10T")
+            df_ts = pd.DataFrame(
+                index=times, data=np.full((len(times), 1), magnitude, dtype=float)
+            )
+        else:
+            raise ValueError("Either timeseries or magnitude must be provided")
+
         if isinstance(df_ts, pd.DataFrame):
             df_ts = df_ts.squeeze()
         if not isinstance(df_ts, pd.Series):
@@ -1864,6 +1969,173 @@ class SfincsModel(GridModel):
         df_ts.name = "precip"
         df_ts.index.name = "time"
         self.set_forcing(df_ts.to_xarray(), name="precip")
+
+    def setup_pressure_forcing_from_grid(
+        self, press, dst_res=None, fill_value=101325, **kwargs
+    ):
+        """Setup pressure forcing from a gridded spatially varying data source.
+
+        Adds one model layer:
+
+        * **netampfile** forcing: distributed barometric pressure [Pa]
+
+        Parameters
+        ----------
+        press, str, Path, xr.Dataset, xr.DataArray
+            Path to pressure rasterdataset netcdf file or xarray dataset.
+
+            * Required variables: ['press' (Pa)]
+            * Required coordinates: ['time', 'y', 'x']
+
+        dst_res: float
+            output resolution (m), by default None and computed from source data.
+
+        fill_value: float
+            value to use when no data is available.
+            Standard atmospheric pressure (101325 Pa) is used if no value is given.
+        """
+        # get data for model domain and config time range
+        press = self.data_catalog.get_rasterdataset(
+            press,
+            geom=self.region,
+            buffer=2,
+            time_tuple=self.get_model_time(),
+            variables=["press"],
+        )
+
+        # reproject to model utm crs
+        # NOTE: currently SFINCS errors (stack overflow) on large files,
+        # downscaling to model grid is not recommended
+        kwargs0 = dict(align=dst_res is not None, method="nearest_index")
+        kwargs0.update(kwargs)
+        meth = kwargs0["method"]
+        self.logger.debug(f"Resample pressure using {meth}.")
+        press_out = press.raster.reproject(
+            dst_crs=self.crs, dst_res=dst_res, **kwargs
+        ).fillna(fill_value)
+
+        # only resample in time if freq < 1H, else keep input values
+        if da_to_timedelta(press_out) < pd.to_timedelta("1H"):
+            press_out = hydromt.workflows.resample_time(
+                press_out,
+                freq=pd.to_timedelta("1H"),
+                conserve_mass=False,
+                upsampling="interpolate",
+                downsampling="interpolate",
+                logger=self.logger,
+            )
+
+        press_out = press_out.rename("press_2d")
+
+        # add to forcing
+        self.set_forcing(press_out, name="press_2d")
+
+    def setup_wind_forcing_from_grid(self, wind, dst_res=None, **kwargs):
+        """Setup pressure forcing from a gridded spatially varying data source.
+
+        Adds one model layer:
+
+        * **netamuamv** forcing: distributed wind [m/s]
+
+        Parameters
+        ----------
+        wind, str, Path, xr.Dataset
+            Path to wind rasterdataset (including eastward and northward components) netcdf file or xarray dataset.
+
+            * Required variables: ['wind_u' (m/s), 'wind_v' (m/s)]
+            * Required coordinates: ['time', 'y', 'x']
+
+        dst_res: float
+            output resolution (m), by default None and computed from source data.
+        """
+        # get data for model domain and config time range
+        wind = self.data_catalog.get_rasterdataset(
+            wind,
+            geom=self.region,
+            buffer=2,
+            time_tuple=self.get_model_time(),
+            variables=["wind_u", "wind_v"],
+        )
+
+        # reproject to model utm crs
+        # NOTE: currently SFINCS errors (stack overflow) on large files,
+        # downscaling to model grid is not recommended
+        kwargs0 = dict(align=dst_res is not None, method="nearest_index")
+        kwargs0.update(kwargs)
+        meth = kwargs0["method"]
+        self.logger.debug(f"Resample wind using {meth}.")
+
+        wind = wind.raster.reproject(
+            dst_crs=self.crs, dst_res=dst_res, **kwargs
+        ).fillna(0)
+
+        # only resample in time if freq < 1H, else keep input values
+        if da_to_timedelta(wind) < pd.to_timedelta("1H"):
+            wind_out = xr.Dataset()
+            # resample in time
+            for var in wind.data_vars:
+                wind_out[var] = hydromt.workflows.resample_time(
+                    wind[var],
+                    freq=pd.to_timedelta("1H"),
+                    conserve_mass=False,
+                    upsampling="interpolate",
+                    downsampling="interpolate",
+                    logger=self.logger,
+                )
+        else:
+            wind_out = wind
+
+        # add to forcing
+        self.set_forcing(wind_out, name="wind_2d")
+
+    def setup_wind_forcing(self, timeseries=None, magnitude=None, direction=None):
+        """Setup spatially uniform wind forcing (wind).
+
+        Adds model layers:
+
+        * **windfile** forcing: uniform wind magnitude [m/s] and direction [deg]
+
+        Parameters
+        ----------
+        timeseries, str, Path
+            Path to tabulated timeseries csv file with time index in first column,
+            magnitude in second column and direction in third column
+            see :py:meth:`hydromt.open_timeseries_from_table`, for details.
+            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
+        magnitude: float
+            Magnitude of the wind [m/s]
+        direction: float
+            Direction where the wind is coming from [deg], e.g. 0 is north, 90 is east, etc.
+        """
+        tstart, tstop = self.get_model_time()
+        if timeseries is not None:
+            df_ts = self.data_catalog.get_dataframe(
+                timeseries,
+                time_tuple=(tstart, tstop),
+                # kwargs below only applied if timeseries not in data catalog
+                parse_dates=True,
+                index_col=0,
+            )
+        elif magnitude is not None and direction is not None:
+            df_ts = pd.DataFrame(
+                index=pd.date_range(*self.get_model_time(), periods=2),
+                data=np.array([[magnitude, direction], [magnitude, direction]]),
+                columns=["mag", "dir"],
+            )
+        else:
+            raise ValueError(
+                "Either timeseries or magnitude and direction must be provided"
+            )
+
+        df_ts.name = "wnd"
+        df_ts.index.name = "time"
+        df_ts.columns.name = "index"
+        da = xr.DataArray(
+            df_ts.values,
+            dims=("time", "index"),
+            coords={"time": df_ts.index, "index": ["mag", "dir"]},
+        )
+        self.set_forcing(da, name="wnd")
 
     def setup_tiles(
         self,
@@ -1975,7 +2247,7 @@ class SfincsModel(GridModel):
     def plot_forcing(self, fn_out=None, **kwargs):
         """Plot model timeseries forcing.
 
-        For distributed forcing a spatial avarage is plotted.
+        For distributed forcing a spatial avarage, minimum or maximum is plotted.
 
         Parameters
         ----------
@@ -2280,7 +2552,7 @@ class SfincsModel(GridModel):
     def read_geoms(self):
         """Read geometry files and save to `geoms` attribute.
         Known geometry files mentioned in the sfincs.inp configuration file are read,
-        including: bnd/src/obs xy files and thd/weir structure files.
+        including: bnd/src/obs xy(n) files, thd/weir structure files and drn drainage structure files.
 
         If other geojson files are present in a "gis" subfolder folder, those are read as well.
         """
@@ -2299,6 +2571,8 @@ class SfincsModel(GridModel):
                     gdf = utils.linestring2gdf(struct, crs=self.crs)
                 elif gname == "obs":
                     gdf = utils.read_xyn(fn, crs=self.crs)
+                elif gname == "drn":
+                    gdf = utils.read_drn(fn, crs=self.crs)
                 else:
                     gdf = utils.read_xy(fn, crs=self.crs)
                 self.set_geoms(gdf, name=gname)
@@ -2342,6 +2616,8 @@ class SfincsModel(GridModel):
                         utils.write_geoms(fn, struct, stype=gname)
                     elif gname == "obs":
                         utils.write_xyn(fn, gdf, crs=self.crs)
+                    elif gname == "drn":
+                        utils.write_drn(fn, gdf)
                     else:
                         utils.write_xy(fn, gdf, fmt="%8.2f")
 

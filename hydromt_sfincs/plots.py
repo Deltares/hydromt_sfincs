@@ -52,8 +52,15 @@ def plot_forcing(forcing: Dict, **kwargs):
         unit = da.attrs.get("unit", "")
         prefix = ""
         if da.ndim == 3:
-            da = da.mean(dim=[da.raster.x_dim, da.raster.y_dim])
-            prefix = "mean "
+            if name.startswith("press"):
+                da = da.min(dim=[da.raster.x_dim, da.raster.y_dim])
+                prefix = "min "
+            elif name.startswith("wind_u") or name.startswith("wind_v"):
+                da = da.max(dim=[da.raster.x_dim, da.raster.y_dim])
+                prefix = "max "
+            else:
+                da = da.mean(dim=[da.raster.x_dim, da.raster.y_dim])
+                prefix = "mean "
         # convert to Single index dataframe (bar plots don't work with xarray)
         df = da.to_pandas()
         if isinstance(df.index, pd.MultiIndex):
@@ -62,6 +69,20 @@ def plot_forcing(forcing: Dict, **kwargs):
         df.index = mdates.date2num(df.index)
         if name.startswith("precip"):
             axes[i].bar(df.index, df.values, facecolor="darkblue")
+        elif (
+            name.startswith("press")
+            or name.startswith("wind_u")
+            or name.startswith("wind_v")
+        ):
+            df.plot.line(ax=axes[i])
+        elif name.startswith("wnd"):
+            df.plot(ax=axes[i], kind="line", secondary_y="dir", legend=False)
+            # set tick color for y-axis of variable 1
+            axes[i].tick_params(axis="y", labelcolor="C0")
+            axes[i].right_ax.set_ylabel("Wind direction [degrees]")
+            # set tick color and label for y-axis of variable 2
+            axes[i].right_ax.tick_params(axis="y", labelcolor="C1")
+
         else:
             df.plot.line(ax=axes[i]).legend(
                 title="index",
