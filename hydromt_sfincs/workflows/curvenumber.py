@@ -61,8 +61,8 @@ def scs_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_mask_bloc
     # high 		    10 - 100        Sand        33 µm/s     4.74 inch/hr    2.9%
     # very high 	100 - Inf
     da_kr = da_Ksat.raster.reproject_like(da_kr, method="average").load()
-    da_kr = np.minimum(da_kr, 100)      # not higher than 100
-    da_kr = da_kr * 3.6                 # from micrometers per second to mm/hr    (constant)
+    da_kr = np.minimum(da_kr, 100)  # not higher than 100
+    da_kr = da_kr * 3.6  # from micrometers per second to mm/hr    (constant)
 
     # Ensure no NaNs
     da_smax = da_smax.fillna(0)
