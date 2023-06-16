@@ -138,6 +138,28 @@ def test_structs(tmpdir):
     assert isfile(join(mod.root, "sfincs.weir"))
 
 
+def test_drainage_structures(tmpdir):
+    root = TESTMODELDIR
+    mod = SfincsModel(root=root, mode="r+")
+    # read
+    mod.set_config("drnfile", "sfincs.drn")
+    mod.read_grid()
+    mod.read_geoms()
+    assert "drn" in mod.geoms
+    nr_drainage_structures = len(mod.geoms["drn"].index)
+    # write drn file only
+    tmp_root = str(tmpdir.join("drainage_struct_test"))
+    mod.set_root(tmp_root, mode="w")
+    mod.write_geoms(data_vars=["drn"])
+    assert isfile(join(mod.root, "sfincs.drn"))
+    assert not isfile(join(mod.root, "sfincs.obs"))
+    fn_drn_gis = join(mod.root, "gis", "drn.geojson")
+    assert isfile(fn_drn_gis)
+    # add more drainage structures
+    mod.setup_drainage_structures(fn_drn_gis, merge=True)
+    assert len(mod.geoms["drn"].index) == nr_drainage_structures * 2
+
+
 def test_results():
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
