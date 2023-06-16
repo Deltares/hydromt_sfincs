@@ -62,10 +62,7 @@ def scs_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_mask_bloc
     # very high 	100 - Inf
     da_kr = da_Ksat.raster.reproject_like(da_kr, method="average").load()
     da_kr = np.minimum(da_kr, 100)  # not higher than 100
-    da_kr = da_kr * 0.141732
-    # from micrometers per second to inch/hr    (constant)
-    da_kr = np.sqrt(da_kr) / 75
-    # recovery in percentage of Smax per hour   (Eq. 4.36)
+    da_kr = da_kr * 3.6  # from micrometers per second to mm/hr    (constant)
 
     # Ensure no NaNs
     da_smax = da_smax.fillna(0)
