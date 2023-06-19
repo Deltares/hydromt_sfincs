@@ -1789,7 +1789,7 @@ class SfincsModel(GridModel):
             Window size in number of cells around discharge boundary locations
             to snap to, only used if ``uparea`` is provided. By default 1.
         rel_error, abs_error: float, optional
-            Maximum relative error (default 0.05) and absolute error (default 50 km2)
+            Maximum relative error (default 0.05) and absolute error (default 100 km2)
             between the discharge boundary location upstream area and the upstream area of
             the best fit grid cell, only used if "discharge" geoms has a "uparea" column.
 
@@ -2661,17 +2661,22 @@ class SfincsModel(GridModel):
                         self.logger.warning(f"{xy_name}file not found at {xy_fn}")
                 else:
                     gdf = utils.read_xy(xy_fn, crs=self.crs)
-                    # read attribute data from gis files
+                    # read attribute data from gis files; merge based on index
                     gis_fn = join(self.root, "gis", f"{xy_name}.geojson")
                     if isfile(gis_fn):
                         gdf1 = gpd.read_file(gis_fn)
                         if "index" in gdf1.columns:
                             gdf1 = gdf1.set_index("index")
-                            gdf.index = gdf1.index.values
-                            ds = ds.assign_coords(index=gdf1.index.values)
-                        if np.any(gdf1.columns != "geometry"):
-                            gdf = gpd.sjoin(gdf, gdf1, how="left")[gdf1.columns]
-                    # set locations as coordinates dataset
+                        if not np.all(np.isin(gdf.index, gdf1.index)):
+                            self.logger.warning(
+                                f"Index in {xy_name}file does not match {gis_fn}"
+                            )
+                        else:
+                            for col in gdf1.columns:
+                                if col not in gdf.columns:
+                                    gdf[col] = gdf1.loc[gdf.index, col]
+                    # set locations and attributes as coordinates of dataset
+                    ds = ds.assign_coords(index=gdf.index.values)
                     ds = GeoDataset.from_gdf(gdf, ds, index_dim="index")
             # save in self.forcing
             if len(ds) > 1:

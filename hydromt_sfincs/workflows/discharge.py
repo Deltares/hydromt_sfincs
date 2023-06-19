@@ -17,7 +17,7 @@ def snap_discharge(
     gdf: gpd.GeoDataFrame,
     wdw: int = 1,
     rel_error: float = 0.05,
-    abs_error: float = 50,
+    abs_error: float = 100,
     uparea_name: str = "uparea",
     discharge_name: str = "discharge",
     logger=logger,
@@ -61,10 +61,9 @@ def snap_discharge(
         upa_check = np.logical_or((upa_dff / upa0) <= rel_error, upa_dff <= abs_error)
         valid = np.logical_and(valid, upa_check)
         # combine valid local cells with best matching windows cells if local cell invalid
-        # i_loc = int((1 + 2 * wdw) ** 2 / 2)  # center cell
-        # i_wdw = upa_dff.argmin("wdw").where(~valid.isel(wdw=i_loc), i_loc).load()
-        # find best matching uparea cell in window
-        i_wdw = upa_dff.argmin("wdw").load()
+        i_loc = int((1 + 2 * wdw) ** 2 / 2)  # center cell
+        upa_dff = upa_dff.fillna(np.inf).where(valid, np.inf)
+        i_wdw = upa_dff.argmin("wdw").where(valid.any("wdw"), i_loc).load()
     else:
         logger.debug(
             f"No {uparea_name} variable found in ds or gdf; "
