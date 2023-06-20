@@ -1409,6 +1409,115 @@ class SfincsModel(GridModel):
         self.set_geoms(gdf_structures, "drn")
         self.set_config("drnfile", f"sfincs.drn")
 
+    def setup_storage_volume(
+        self,
+        storage_locs: Union[str, Path, gpd.GeoDataFrame],
+        volume: Union[float,List[float]] = None,
+        height: Union[float,List[float]] = None,
+        merge: bool = True,
+    ):
+        """Setup storage volume.
+
+        Adds model layer:
+        * **vol** map: storage volume for green infrastructure 
+
+        Parameters
+        ----------
+        storage_locs : str, Path
+            Path, data source name, or geopandas object to storage location polygon or point geometry file.
+            Optional "volume" or "height" attributes can be provided to set the storage volume.
+        volume : float, optional
+            Storage volume [m3], by default None
+        height : float, optional
+            Storage height [m], by default None
+        merge : bool, optional
+            If True, merge with existing storage volumes, by default True.
+
+        """
+
+        # read, clip and reproject
+        gdf = self.data_catalog.get_geodataframe(
+            storage_locs, geom=self.region, buffer=10,
+        ).to_crs(self.crs)
+
+        if self.grid_type == "regular":
+            # if merge, add new storage volumes to existing ones
+            if merge and "vol" in self.grid:
+                da_vol = self.grid["vol"]
+            else:
+                da_vol = xr.full_like(self.mask, 0, dtype=np.float64)
+
+            # loop over the gdf rows and rasterize each geometry
+            for i, row in gdf.iterrows():
+                # create a gdf with only the current row
+                single_gdf = gpd.GeoDataFrame(gdf.loc[[i]]).reset_index(drop=True)
+
+                single_vol = single_gdf.get("volume")
+                single_height = single_gdf.get("height")
+                
+                # check if volume or height is provided in the gdf or as input
+                if single_vol is None or np.isnan(single_vol).any(): # volume not provided or nan
+                    if single_height is None or np.isnan(single_height).any(): # height not provided or nan
+                        if volume is not None: # volume provided as input (list)
+                            single_vol = volume if not isinstance(volume, list) else volume[i]
+                        elif height is not None: # height provided as input (list)
+                            single_height = height if not isinstance(height, list) else height[i]
+                        else: # no volume or height provided
+                            self.logger.warning(f"No volume or height provided for storage location {i}")
+                            continue
+                    else: # height provided in gdf
+                        single_height = single_height[0]
+                else: # volume provided in gdf
+                    single_vol = single_vol[0]
+
+                #check if gdf has point or polyhon geometry
+                if single_gdf.geometry.type[0] == 'Point':
+                    # get x and y coordinate of the point in crs of the grid
+                    x,y = single_gdf.geometry.iloc[0].coords[0]
+                    
+                    # check if the grid is rotated
+                    if da_vol.raster.rotation != 0:
+                        # calculate the distance of each point to the target
+                        distances = np.sqrt((da_vol.xc - x)**2 + (da_vol.yc - y)**2)
+                        # find the index of the minimal distance
+                        min_coord = np.unravel_index(distances.argmin(), distances.shape)
+
+                        # add the volume to the grid cell
+                        if single_vol is not None and not np.isnan(single_vol).any():
+                            da_vol.isel(x=min_coord[1], y=min_coord[0]).values += single_vol
+                        else:
+                            self.logger.warning(f"No volume provided for storage location of type Point")
+                    else: 
+                        # select the grid cell nearest to the point
+                        closest_point = da_vol.sel(x=x,y=y, method="nearest")
+
+                        # add the volume to the grid cell
+                        if single_vol is not None and not np.isnan(single_vol).any():
+                            da_vol.loc[dict(x=closest_point.x.item(), y=closest_point.y.item())] += single_vol
+                        else:
+                            self.logger.warning(f"No volume provided for storage location of type Point")
+
+                elif single_gdf.geometry.type[0] == 'Polygon':       
+                    # rasterize the geometry
+                    area = da_vol.raster.rasterize_geometry(single_gdf, method="area")
+                    total_area = area.sum().values
+
+                    # calculate the volume per cell and add it to the grid
+                    if single_vol is not None and not np.isnan(single_vol).any():
+                        da_vol += area/total_area * single_vol
+                    elif single_height is not None and not np.isnan(single_height).any():
+                        da_vol += area*row['height']
+                    else:
+                        self.logger.warning(f"No volume or height provided for storage location of type Polygon")
+
+            # set grid
+            mname = "vol"
+            da_vol.attrs.update(**self._ATTRS.get(mname, {}))
+            self.set_grid(da_vol, name=mname)
+            # update config
+            self.set_config(f"{mname}file", f"sfincs.{mname[:3]}")
+
+
     ### FORCING
     def set_forcing_1d(
         self,
