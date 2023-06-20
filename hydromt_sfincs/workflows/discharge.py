@@ -54,34 +54,35 @@ def snap_discharge(
         logger.debug(
             f"Snapping {discharge_name} points to best matching uparea cell within wdw (size={wdw})."
         )
+        # find cells in window with smallest difference in uparea
         upa0 = xr.DataArray(gdf[uparea_name], dims=("index"))
         upa_dff = np.abs(
             ds_wdw[uparea_name].where(ds_wdw[uparea_name] > 0).load() - upa0
         )
+        i_wdw = upa_dff.fillna(np.inf).argmin("wdw")
+        # find valid cells based on error criteria
         upa_check = np.logical_or((upa_dff / upa0) <= rel_error, upa_dff <= abs_error)
         valid = np.logical_and(valid, upa_check)
-        # combine valid local cells with best matching windows cells if local cell invalid
-        i_loc = int((1 + 2 * wdw) ** 2 / 2)  # center cell
-        upa_dff = upa_dff.fillna(np.inf).where(valid, np.inf)
-        i_wdw = upa_dff.argmin("wdw").where(valid.any("wdw"), i_loc).load()
     else:
         logger.debug(
             f"No {uparea_name} variable found in ds or gdf; "
             f"sampling {discharge_name} points from nearest grid cell."
         )
-        # add distance (measured in cells)
+        # calculate distance to center cell (measured in cells)
         ar_wdw = np.abs(np.arange(-wdw, wdw + 1))
         dist = np.hypot(**np.meshgrid(ar_wdw, ar_wdw)).ravel()
         ds_wdw["dist"] = xr.Variable(
             ("index", "wdw"), np.tile(dist, (ds_wdw["index"].size, 1))
         )
+        # find nearest valid cell in window
         i_wdw = ds_wdw["dist"].where(valid, np.inf).argmin("wdw").load()
+    # filter valid cells
     idx_valid = np.where(valid.isel(wdw=i_wdw).values)[0]
     if idx_valid.size < gdf.index.size:
         logger.warning(
             f"{idx_valid.size}/{gdf.index.size} {discharge_name} points successfully snapped."
         )
     i_wdw = i_wdw.isel(index=idx_valid)
+    # return discharge at valid cells
     ds_out = ds_wdw.isel(wdw=i_wdw.load(), index=idx_valid)
-
-    return ds_out  # .reset_coords()[discharge_name]
+    return ds_out
