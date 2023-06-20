@@ -99,7 +99,7 @@ def merge_multi_dataarrays(
             da1 = da1.load()
             da1 = da1.raster.reproject_like(da_like)
     elif reproj_kwargs:
-        #TODO also clip to bbox?
+        # TODO also clip to bbox?
         da1 = da1.raster.reproject(method=method, **reproj_kwargs)
         da1 = da1.load()
     logger.debug(f"Reprojection method of first dataset is: {method}")

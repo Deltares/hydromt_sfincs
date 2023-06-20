@@ -2905,15 +2905,18 @@ class SfincsModel(GridModel):
                         zoom_level=(res, "meter"),
                     )
 
-                    #TODO properly fix this in hydromt core ?
+                    # TODO properly fix this in hydromt core ?
                     # check if CRS contains multiple sub CRSs (horizontal and vertical)
                     if da_elv.raster.crs.is_compound:
                         da_elv.raster.set_crs(da_elv.raster.crs.sub_crs_list[0])
-                    
+
                     # cropping went wrong for very large datasets with crs != 4326 due to cropping with geom
                     da_elv = da_elv.raster.clip_bbox(
-                        self.mask.raster.box.to_crs(da_elv.raster.crs.to_epsg()).total_bounds, buffer=10
-                        )
+                        self.mask.raster.box.to_crs(
+                            da_elv.raster.crs.to_epsg()
+                        ).total_bounds,
+                        buffer=10,
+                    )
 
                     dd.update({"da": da_elv})
                 except:
@@ -2989,7 +2992,10 @@ class SfincsModel(GridModel):
                 reclass_table = dataset.get("reclass_table", None)
                 if reclass_table is None and isinstance(lulc, str):
                     reclass_table = join(DATADIR, "lulc", f"{lulc}_mapping.csv")
-                if not os.path.isfile(reclass_table) and reclass_table not in self.data_catalog:
+                if (
+                    not os.path.isfile(reclass_table)
+                    and reclass_table not in self.data_catalog
+                ):
                     raise IOError(
                         f"Manning roughness mapping file not found: {reclass_table}"
                     )
