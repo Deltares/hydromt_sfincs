@@ -441,6 +441,8 @@ document.write(`
 <li><p>bugfix in <cite>SfincsModel.write_forcing</cite> to ensure all NetCDF files are written instead of only the first one. PR #86</p></li>
 <li><p>bugfix in <cite>SfincsModel.read_config</cite> &amp; <cite>SfincsInput.read</cite> for relative paths in inp file. PR #88</p></li>
 <li><p>bugfix in <cite>SfincsModel.setup_subgrid</cite> to ensure that a ‘big geotiff’ will be written by default when ‘write_dep_tif’ or ‘write_man_tif’ are True</p></li>
+<li><p>bugfix in <cite>Sfincs.read_forcing</cite> when combining attributes from the locations stored in the gis folder with the actual forcing locations. PR #99</p></li>
+<li><p>bugfix in <cite>SfincsModel.setup_discharge_from_grid</cite> when snapping based on upstream area in case a src points is outside of the uparea grid domain. PR #99</p></li>
 </ul>
 </section>
 <section id="new">
