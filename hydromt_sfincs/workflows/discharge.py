@@ -17,7 +17,7 @@ def snap_discharge(
     gdf: gpd.GeoDataFrame,
     wdw: int = 1,
     rel_error: float = 0.05,
-    abs_error: float = 100,
+    abs_error: float = 50,
     uparea_name: str = "uparea",
     discharge_name: str = "discharge",
     logger=logger,

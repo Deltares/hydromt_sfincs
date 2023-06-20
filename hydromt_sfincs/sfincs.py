@@ -1789,7 +1789,7 @@ class SfincsModel(GridModel):
             Window size in number of cells around discharge boundary locations
             to snap to, only used if ``uparea`` is provided. By default 1.
         rel_error, abs_error: float, optional
-            Maximum relative error (default 0.05) and absolute error (default 100 km2)
+            Maximum relative error (default 0.05) and absolute error (default 50 km2)
             between the discharge boundary location upstream area and the upstream area of
             the best fit grid cell, only used if "discharge" geoms has a "uparea" column.
 
