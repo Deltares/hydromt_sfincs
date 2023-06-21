@@ -13,12 +13,14 @@ Bugfix
 - bugfix in `SfincsModel.write_forcing` to ensure all NetCDF files are written instead of only the first one. PR #86
 - bugfix in `SfincsModel.read_config` & `SfincsInput.read` for relative paths in inp file. PR #88
 - bugfix in `SfincsModel.setup_subgrid` to ensure that a 'big geotiff' will be written by default when 'write_dep_tif' or 'write_man_tif' are True
+- bugfix in `Sfincs.read_forcing` when combining attributes from the locations stored in the gis folder with the actual forcing locations. PR #99
+- bugfix in `SfincsModel.setup_discharge_from_grid` when snapping based on upstream area in case a src points is outside of the uparea grid domain. PR #99
 
 New
 -----------
 - `SfincsModel.setup_cn_infiltration_with_kr` to setup three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr). PR#87
 - `SfincsModelsetup_drainage_structures` to setup drainage structures (pumps,culverts) from a geodataframe. PR#90
-
+- Added `SfincsModel.setup_wind_forcing`, `SfincsModel.setup_wind_forcing_from_grid` and `SfincsModel.setup_pressure_forcing_from_grid` methods to easily add wind and pressure forcing.  PR #92
 
 v1.0 (17 April 2023)
 ====================

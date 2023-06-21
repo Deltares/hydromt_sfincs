@@ -51,6 +51,9 @@ Setup components
    SfincsModel.setup_discharge_forcing_from_grid
    SfincsModel.setup_precip_forcing
    SfincsModel.setup_precip_forcing_from_grid
+   SfincsModel.setup_pressure_forcing_from_grid
+   SfincsModel.setup_wind_forcing
+   SfincsModel.setup_wind_forcing_from_grid
    SfincsModel.setup_tiles
 
 Plot methods
