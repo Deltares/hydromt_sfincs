@@ -3070,7 +3070,7 @@ class SfincsModel(GridModel):
         """
         inp = SfincsInput()  # initialize with defaults
         if self._read:  # in read-only or append mode, try reading config_fn
-            if not isfile(config_fn) and not isabs(config_fn) and self._root:
+            if not isabs(config_fn) and self._root:
                 # path relative to self.root
                 config_fn = abspath(join(self.root, config_fn))
             elif isfile(config_fn) and abspath(dirname(config_fn)) != self._root:
@@ -3083,7 +3083,7 @@ class SfincsModel(GridModel):
                 root = abspath(dirname(config_fn))
                 self.logger.warning(f"updating the model root to: {root}")
                 self.set_root(root=root, mode=mode)
-            else:
+            if not isfile(config_fn):
                 raise IOError(f"SFINCS input file not found {config_fn}")
             # read config_fn
             inp.read(inp_fn=config_fn)
