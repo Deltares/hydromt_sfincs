@@ -2,6 +2,7 @@
 SubgridTableRegular class to create, read and write sfincs subgrid (sbg) files.
 """
 import os
+import gc
 
 import numpy as np
 import logging
@@ -399,7 +400,7 @@ class SubgridTableRegular:
                     da_like=da_like,
                     interp_method="linear",
                     buffer_cells=buffer_cells,
-                ).load()
+                )
 
                 # set minimum depth
                 da_dep = np.maximum(da_dep, z_minimum)
@@ -434,7 +435,7 @@ class SubgridTableRegular:
                         da_like=da_like,
                         interp_method="linear",
                         buffer_cells=buffer_cells,
-                    ).load()
+                    )
                     if np.isnan(da_man).any():
                         logger.warning("WARNING: nan values in manning roughness array")
                         da_man0 = xr.where(
@@ -509,6 +510,7 @@ class SubgridTableRegular:
                 )
 
                 del da_mask_block, da_dep, da_man
+                gc.collect()
 
         # close the output cloud optimized geotiff
         if write_dep_tif:

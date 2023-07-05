@@ -364,7 +364,7 @@ class SfincsModel(GridModel):
         drop_area: float = 0.0,
         connectivity: int = 8,
         all_touched: bool = True,
-        reset_mask: bool = False,
+        reset_mask: bool = True,
     ):
         """Setup active model cells.
 
@@ -408,7 +408,7 @@ class SfincsModel(GridModel):
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
         reset_mask: bool, optional
-            If True, reset existing mask layer. If False (default) updating existing mask.
+            If True  (default), reset existing mask layer. If False updating existing mask.
         """
         # read geometries
         gdf_mask, gdf_include, gdf_exclude = None, None, None
@@ -471,9 +471,15 @@ class SfincsModel(GridModel):
             if "indexfile" not in self.config:
                 self.config.update({"indexfile": "sfincs.ind"})
             # update region
-            self.logger.info("Derive region geometry based on active cells.")
-            region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
-            self.set_geoms(region, "region")
+            if np.any(da_mask >= 1):
+                self.logger.info("Derive region geometry based on active cells.")
+                # make mask with ones and zeros only -> vectorize ones
+                region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
+                if region.empty:
+                    raise ValueError("No region found.")
+                self.set_geoms(region, "region")
+            else:
+                self.logger.warning("No active cells found.")
 
     def setup_mask_bounds(
         self,
@@ -507,11 +513,12 @@ class SfincsModel(GridModel):
         btype: {'waterlevel', 'outflow'}
             Boundary type
         include_mask, exclude_mask: str, Path, gpd.GeoDataFrame, optional
-            Path or data source name for geometries with areas to include/exclude from the model boundary.
+            Path or data source name for geometries with areas to include/exclude from
+            the model boundary.
         zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for boundary cells.
-            Note that when include and exclude areas are used, the elevation range is only applied
-            on cells within the include area and outside the exclude area.
+            Note that when include and exclude areas are used, the elevation range is
+            only applied on cells within the include area and outside the exclude area.
         reset_bounds: bool, optional
             If True, reset existing boundary cells of the selected boundary
             type (`btype`) before setting new boundary cells, by default False.
@@ -526,7 +533,7 @@ class SfincsModel(GridModel):
 
         # get include / exclude geometries
         gdf_include, gdf_exclude = None, None
-        bbox = self.region.to_crs(4326).total_bounds
+        bbox = self.mask.raster.transform_bounds(4326)
         if include_mask is not None:
             if not isinstance(include_mask, gpd.GeoDataFrame) and str(
                 include_mask
@@ -752,7 +759,7 @@ class SfincsModel(GridModel):
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
-                bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+                bbox=self.mask.raster.transform_bounds(4326),
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
@@ -871,7 +878,7 @@ class SfincsModel(GridModel):
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
-                bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+                bbox=self.mask.raster.transform_bounds(4326),
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
@@ -947,7 +954,7 @@ class SfincsModel(GridModel):
 
         # get infiltration data
         da_inf = self.data_catalog.get_rasterdataset(
-            qinf, bbox=self.mask.raster.box.to_crs(4326).total_bounds, buffer=10
+            qinf, bbox=self.mask.raster.transform_bounds(4326), buffer=10
         )
         da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
 
@@ -995,7 +1002,7 @@ class SfincsModel(GridModel):
         """
         # get data
         da_org = self.data_catalog.get_rasterdataset(
-            cn, bbox=self.mask.raster.box.to_crs(4326).total_bounds, buffer=10
+            cn, bbox=self.mask.raster.transform_bounds(4326), buffer=10
         )
         # read variable
         v = "cn"
@@ -1045,13 +1052,13 @@ class SfincsModel(GridModel):
 
         # Read the datafiles
         da_landuse = self.data_catalog.get_rasterdataset(
-            lulc, bbox=self.mask.raster.box.to_crs(4326).total_bounds, buffer=10
+            lulc, bbox=self.mask.raster.transform_bounds(4326), buffer=10
         )
         da_HSG = self.data_catalog.get_rasterdataset(
-            hsg, bbox=self.mask.raster.box.to_crs(4326).total_bounds, buffer=10
+            hsg, bbox=self.mask.raster.transform_bounds(4326), buffer=10
         )
         da_Ksat = self.data_catalog.get_rasterdataset(
-            ksat, bbox=self.mask.raster.box.to_crs(4326).total_bounds, buffer=10
+            ksat, bbox=self.mask.raster.transform_bounds(4326), buffer=10
         )
         df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
 
@@ -1533,7 +1540,7 @@ class SfincsModel(GridModel):
             else:
                 da_offset = self.data_catalog.get_rasterdataset(
                     offset,
-                    bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+                    bbox=self.mask.raster.transform_bounds(4326),
                     buffer=5,
                 )
                 offset_pnts = da_offset.raster.sample(gdf_locs)
@@ -1629,7 +1636,7 @@ class SfincsModel(GridModel):
             # read and clip data in time & space
             da = self.data_catalog.get_geodataset(
                 geodataset,
-                bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+                bbox=self.mask.raster.transform_bounds(4326),
                 variables=["discharge"],
                 time_tuple=(tstart, tstop),
                 crs=self.crs,
@@ -1727,7 +1734,7 @@ class SfincsModel(GridModel):
         # read data
         ds = self.data_catalog.get_rasterdataset(
             discharge,
-            bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+            bbox=self.mask.raster.transform_bounds(4326),
             buffer=2,
             time_tuple=self.get_model_time(),  # model time
             variables=["discharge"],
@@ -1736,7 +1743,7 @@ class SfincsModel(GridModel):
         if uparea is not None and "uparea" in gdf.columns:
             da_upa = self.data_catalog.get_rasterdataset(
                 uparea,
-                bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+                bbox=self.mask.raster.transform_bounds(4326),
                 buffer=2,
                 variables=["uparea"],
             )
@@ -1798,7 +1805,7 @@ class SfincsModel(GridModel):
         # get data for model domain and config time range
         precip = self.data_catalog.get_rasterdataset(
             precip,
-            bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+            bbox=self.mask.raster.transform_bounds(4326),
             buffer=2,
             time_tuple=self.get_model_time(),
             variables=["precip"],
@@ -2899,7 +2906,7 @@ class SfincsModel(GridModel):
                 try:
                     da_elv = self.data_catalog.get_rasterdataset(
                         dataset.get("elevtn", dataset.get("da")),
-                        # bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+                        # bbox=self.mask.raster.transform_bounds(4326),
                         # buffer=10,
                         variables=["elevtn"],
                         zoom_level=(res, "meter"),
@@ -2935,7 +2942,7 @@ class SfincsModel(GridModel):
             if "offset" in dataset and not isinstance(dataset["offset"], (float, int)):
                 da_offset = self.data_catalog.get_rasterdataset(
                     dataset.get("offset"),
-                    bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+                    bbox=self.mask.raster.transform_bounds(4326),
                     buffer=20,
                 )
                 dd.update({"offset": da_offset})
@@ -2944,7 +2951,7 @@ class SfincsModel(GridModel):
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
                     path_or_key=dataset.get("mask"),
-                    bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+                    bbox=self.mask.raster.transform_bounds(4326),
                 )
                 dd.update({"gdf_valid": gdf_valid})
 
@@ -2982,7 +2989,7 @@ class SfincsModel(GridModel):
             if "manning" in dataset or "da" in dataset:
                 da_man = self.data_catalog.get_rasterdataset(
                     dataset.get("manning", dataset.get("da")),
-                    bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+                    bbox=self.mask.raster.transform_bounds(4326),
                     buffer=10,
                 )
                 dd.update({"da": da_man})
@@ -3001,7 +3008,7 @@ class SfincsModel(GridModel):
                     )
                 da_lulc = self.data_catalog.get_rasterdataset(
                     lulc,
-                    bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+                    bbox=self.mask.raster.transform_bounds(4326),
                     buffer=10,
                     variables=["lulc"],
                 )
@@ -3016,7 +3023,7 @@ class SfincsModel(GridModel):
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
                     path_or_key=dataset.get("mask"),
-                    bbox=self.mask.raster.box.to_crs(4326).total_bounds,
+                    bbox=self.mask.raster.transform_bounds(4326),
                 )
                 dd.update({"gdf_valid": gdf_valid})
 
