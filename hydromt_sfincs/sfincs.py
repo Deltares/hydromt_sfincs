@@ -1597,8 +1597,6 @@ class SfincsModel(GridModel):
                 index_col=0,
             )
             df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
-        else:
-            raise ValueError("Either geodataset or timeseries must be provided")
 
         # optionally read location data (if not already read from geodataset)
         if gdf_locs is None and locations is not None:
@@ -1627,7 +1625,13 @@ class SfincsModel(GridModel):
             )
 
         # set/ update forcing
-        self.set_forcing_1d(df_ts, gdf_locs, name="bzs", merge=merge)
+        if df_ts is not None:
+            # set timeseries and locations
+            self.set_forcing_1d(df_ts, gdf_locs, name="bzs", merge=merge)
+        else:
+            # set locations only
+            self.set_forcing_1d(gdf_locs=gdf_locs, name="bzs", merge=merge)
+
 
     def setup_waterlevel_bnd_from_mask(
         self,
