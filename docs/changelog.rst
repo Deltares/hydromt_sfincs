@@ -8,16 +8,21 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 v1.0.1 (unreleased)
 ===================
 
+
 Bugfix
 ------
 - bugfix in `SfincsModel.write_forcing` to ensure all NetCDF files are written instead of only the first one. PR #86
 - bugfix in `SfincsModel.read_config` & `SfincsInput.read` for relative paths in inp file. PR #88
 - bugfix in `SfincsModel.setup_subgrid` to ensure that a 'big geotiff' will be written by default when 'write_dep_tif' or 'write_man_tif' are True
+- fix memory issues caused by rasterizing the model region and reprojecting before clipping of rasters. PR #94 
 
 New
 -----------
 - `SfincsModel.setup_cn_infiltration_with_kr` to setup three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr)
 
+Changed
+-------
+- `SfincsModel.setup_mask_active` argument reset_mask default to True PR #94
 
 v1.0 (17 April 2023)
 ====================

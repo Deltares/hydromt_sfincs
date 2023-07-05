@@ -144,7 +144,7 @@ class RegularGrid:
         drop_area: float = 0,
         connectivity: int = 8,
         all_touched: bool = True,
-        reset_mask: bool = False,
+        reset_mask: bool = True,
         logger: logging.Logger = logger,
     ) -> xr.DataArray:
         """Create an integer mask with inactive (msk=0) and active (msk=1) cells, optionally bounded
@@ -179,7 +179,7 @@ class RegularGrid:
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
         reset_mask: bool, optional
-            If True, reset existing mask layer. If False (default) updating existing mask.
+            If True (default), reset existing mask layer. If False updating existing mask.
 
         Returns
         -------
