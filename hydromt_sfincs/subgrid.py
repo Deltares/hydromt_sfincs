@@ -10,6 +10,7 @@ import rasterio
 import xarray as xr
 from numba import njit
 from rasterio.windows import Window
+from scipy import ndimage
 
 from . import workflows
 
@@ -363,7 +364,7 @@ class SubgridTableRegular:
                 # Count
                 ib += 1
                 logger.debug(
-                    f"\nblock {ib + 1}/{nrbn * nrbm} -- "
+                    f"block {ib + 1}/{nrbn * nrbm} -- "
                     f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
                 )
 
@@ -371,16 +372,13 @@ class SubgridTableRegular:
                 da_mask_block = da_mask.isel(
                     {x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}
                 ).load()
-                assert np.all(
-                    [s > 1 for s in da_mask_block.shape]
-                ), f"unexpected block shape {da_mask_block.shape}"
-                if np.all(da_mask_block == 0):  # not active cells in block
-                    logger.info("Skip block - No active cells")
+                check_block = np.all([s > 1 for s in da_mask_block.shape])
+                assert check_block, f"unexpected block shape {da_mask_block.shape}"
+                nactive = int(np.sum(da_mask_block > 0))
+                if nactive == 0:  # not active cells in block
+                    logger.debug("Skip block - No active cells")
                     continue
-                logger.info(
-                    f"Processing block with {np.sum(da_mask_block.values):d} active cells .."
-                )
-
+                logger.debug(f"Processing block with {nactive} active cells..")
                 transform = da_mask_block.raster.transform
                 # add refi cells overlap in both dimensions for u and v in last row / col
                 reproj_kwargs = dict(
@@ -390,14 +388,19 @@ class SubgridTableRegular:
                     dst_height=(da_mask_block.raster.height + 1) * refi,
                 )
 
-                da_like = da_mask_block.raster.reproject(
-                    method="bilinear", **reproj_kwargs
+                # get subgrid mask tile with buffer of one cell
+                if nactive < da_mask_block.size:
+                    ndimage.binary_dilation(
+                        da_mask_block.values, output=da_mask_block.values
+                    )
+                da_mask_sbg = da_mask_block.raster.reproject(
+                    method="nearest", **reproj_kwargs
                 ).load()
 
                 # get subgrid bathymetry tile
                 da_dep = workflows.merge_multi_dataarrays(
                     da_list=datasets_dep,
-                    da_like=da_like,
+                    da_like=da_mask_sbg,
                     interp_method="linear",
                     buffer_cells=buffer_cells,
                 )
@@ -406,45 +409,51 @@ class SubgridTableRegular:
                 da_dep = np.maximum(da_dep, z_minimum)
                 # TODO what to do with remaining cell with nan values
                 # NOTE: this is still open for discussion, but for now we interpolate
-                if np.any(np.isnan(da_dep.values)) > 0:
+                if np.any(np.isnan(da_dep.values[da_mask_sbg > 0])) > 0:
                     logger.warning(
-                        f"WARNING: Interpolate data at {int(np.sum(np.isnan(da_dep.values)))} cells"
+                        f"Interpolate data at {int(np.sum(np.isnan(da_dep)))} cells"
                     )
                     da_dep = da_dep.raster.interpolate_na(method="rio_idw")
 
-                # Extrapolate option
-                if extrapolate_values == True:
-                    # Extrapolate this
-                    da_dep = da_dep.interpolate_na(
-                        dim=da_dep.raster.x_dim,
-                        fill_value="extrapolate",
-                    ).interpolate_na(
-                        dim=da_dep.raster.y_dim,
-                        fill_value="extrapolate",
-                    )
-                    logger.warning(f"WARNING: Extrapolated data")
-
-                else:
-                    # Assertion error
-                    assert np.all(~np.isnan(da_dep))
+                    # Extrapolate option
+                    # TODO replace with extrapolate=True in interpolate_na when available in core
+                    if extrapolate_values:
+                        da_dep = da_dep.interpolate_na(
+                            dim=da_dep.raster.x_dim,
+                            fill_value="extrapolate",
+                        ).interpolate_na(
+                            dim=da_dep.raster.y_dim,
+                            fill_value="extrapolate",
+                        )
+                        logger.warning("Extrapolated data")
+                    # mask values of inactive cells
+                    da_dep = da_dep.where(da_mask_sbg > 0, da_dep.raster.nodata)
+                check_nans = np.all(~np.isnan(da_dep.values[da_mask_sbg > 0]))
+                assert check_nans, "NaN values in depth array"
 
                 # get subgrid manning roughness tile
                 if len(datasets_rgh) > 0:
                     da_man = workflows.merge_multi_dataarrays(
                         da_list=datasets_rgh,
-                        da_like=da_like,
+                        da_like=da_mask_sbg,
                         interp_method="linear",
                         buffer_cells=buffer_cells,
                     )
-                    if np.isnan(da_man).any():
-                        logger.warning("WARNING: nan values in manning roughness array")
+                    if np.isnan(da_man.values[da_mask_sbg > 0]).any():
+                        logger.debug(
+                            "Missing values in manning roughness array, "
+                            "fill with default values"
+                        )
                         da_man0 = xr.where(
                             da_dep >= rgh_lev_land, manning_land, manning_sea
                         )
                         da_man = da_man.where(~np.isnan(da_man), da_man0)
                 else:
                     da_man = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
-                assert np.all(~np.isnan(da_man))
+                # mask values of inactive cells
+                da_man = da_man.where(da_mask_sbg > 0, da_man.raster.nodata)
+                check_nans = np.all(~np.isnan(da_man.values[da_mask_sbg > 0]))
+                assert check_nans, "NaN values in manning roughness array"
 
                 # optional write tile to file
                 # NOTE tiles have overlap! da_dep[:-refi,:-refi]

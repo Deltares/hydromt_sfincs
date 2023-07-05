@@ -334,14 +334,15 @@ class SfincsModel(GridModel):
             )
 
             # check if no nan data is present in the bed levels
-            if not np.isnan(da_dep).any():
+            if np.isnan(da_dep).any():
                 self.logger.warning(
                     f"Interpolate data at {int(np.sum(np.isnan(da_dep.values)))} cells"
                 )
+                # TODO add extrapolate=True option when available in hydromt core
                 da_dep = da_dep.raster.interpolate_na(method="rio_idw")
 
             self.set_grid(da_dep, name="dep")
-            # FIXME this shouldn't be necessary, since da_dep should already have the crs
+            # FIXME this shouldn't be necessary, since da_dep should already have a crs
             if self.crs is not None and self.grid.raster.crs is None:
                 self.grid.set_crs(self.crs)
 
@@ -606,9 +607,15 @@ class SfincsModel(GridModel):
         ----------
         datasets_dep : List[dict]
             List of dictionaries with topobathy data.
-            Each should minimally contain a data catalog source name, data file path, or xarray raster object ('elevtn')
-            Optional merge arguments include 'zmin', 'zmax', 'mask', 'offset', 'reproj_method', and 'merge_method'.
-            e.g.: [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
+            Each should minimally contain a data catalog source name, data file path,
+            or xarray raster object ('elevtn')
+
+            Optional merge arguments include 'zmin', 'zmax', 'mask', 'offset',
+            'reproj_method', and 'merge_method'. e.g.:
+            [
+                {'elevtn': merit_hydro, 'zmin': 0.01},
+                {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}
+            ]
             For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
         datasets_rgh : List[dict], optional
             List of dictionaries with Manning's n datasets. Each dictionary should at least contain one of the following:
@@ -2883,7 +2890,9 @@ class SfincsModel(GridModel):
 
     ## helper method
     def _parse_datasets_dep(self, datasets_dep, res):
-        """Parse filenames or paths of Datasets in list of dictionaries datasets_dep into xr.DataArray and gdf.GeoDataFrames:
+        """Parse filenames or paths of Datasets in list of dictionaries datasets_dep
+        into xr.DataArray and gdf.GeoDataFrames:
+
         * "elevtn" is parsed into da (xr.DataArray)
         * "offset" is parsed into da_offset (xr.DataArray)
         * "mask" is parsed into gdf (gpd.GeoDataFrame)
@@ -2891,9 +2900,11 @@ class SfincsModel(GridModel):
         Parameters
         ----------
         datasets_dep : List[dict]
-            List of dictionaries with topobathy data, each containing a dataset name or Path (dep) and optional merge arguments.
+            List of dictionaries with topobathy data, each containing a dataset name or
+            Path (dep) and optional merge arguments.
         res : float
-            Resolution of the model grid in meters. Used to obtain the correct zoom level of the depth datasets.
+            Resolution of the model grid in meters. Used to obtain the correct zoom
+            level of the depth datasets.
         """
         parse_keys = ["elevtn", "offset", "mask", "da"]
         copy_keys = ["zmin", "zmax", "reproj_method", "merge_method"]
@@ -2906,32 +2917,17 @@ class SfincsModel(GridModel):
                 try:
                     da_elv = self.data_catalog.get_rasterdataset(
                         dataset.get("elevtn", dataset.get("da")),
-                        # bbox=self.mask.raster.transform_bounds(4326),
-                        # buffer=10,
+                        bbox=self.mask.raster.transform_bounds(4326),
+                        buffer=10,
                         variables=["elevtn"],
                         zoom_level=(res, "meter"),
                     )
-
-                    # TODO properly fix this in hydromt core ?
-                    # check if CRS contains multiple sub CRSs (horizontal and vertical)
-                    if da_elv.raster.crs.is_compound:
-                        da_elv.raster.set_crs(da_elv.raster.crs.sub_crs_list[0])
-
-                    # cropping went wrong for very large datasets with crs != 4326 due to cropping with geom
-                    da_elv = da_elv.raster.clip_bbox(
-                        self.mask.raster.box.to_crs(
-                            da_elv.raster.crs.to_epsg()
-                        ).total_bounds,
-                        buffer=10,
-                    )
-
-                    dd.update({"da": da_elv})
-                except:
+                # TODO remove ValueError after fix in hydromt core
+                except (IndexError, ValueError):
                     data_name = dataset.get("elevtn")
-                    self.logger.warning(
-                        f"{data_name} not used; probably because all the data is outside of the mask."
-                    )
+                    self.logger.warning(f"No data in domain for {data_name}, skipped.")
                     continue
+                dd.update({"da": da_elv})
             else:
                 raise ValueError(
                     "No 'elevtn' (topobathy) dataset provided in datasets_dep."
@@ -2943,7 +2939,7 @@ class SfincsModel(GridModel):
                 da_offset = self.data_catalog.get_rasterdataset(
                     dataset.get("offset"),
                     bbox=self.mask.raster.transform_bounds(4326),
-                    buffer=20,
+                    buffer=10,
                 )
                 dd.update({"offset": da_offset})
 
@@ -2966,17 +2962,21 @@ class SfincsModel(GridModel):
         return datasets_out
 
     def _parse_datasets_rgh(self, datasets_rgh):
-        """Parse filenames or paths of Datasets in list of dictionaries datasets_rgh into xr.DataArrays and gdf.GeoDataFrames:
+        """Parse filenames or paths of Datasets in list of dictionaries datasets_rgh
+        into xr.DataArrays and gdf.GeoDataFrames:
+
         * "manning" is parsed into da (xr.DataArray)
-        * "lulc" is parsed into da (xr.DataArray) using reclassify table in "reclass_table"
+        * "lulc" is parsed into da (xr.DataArray) using reclass table in "reclass_table"
         * "mask" is parsed into gdf_valid (gpd.GeoDataFrame)
 
         Parameters
         ----------
         datasets_rgh : List[dict], optional
-            List of dictionaries with Manning's n datasets. Each dictionary should at least contain one of the following:
+            List of dictionaries with Manning's n datasets. Each dictionary should at
+            least contain one of the following:
             * (1) manning: filename (or Path) of gridded data with manning values
-            * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a reclassify table.
+            * (2) lulc (and reclass_table): a combination of a filename of gridded
+                  landuse/landcover and a reclassify table.
             In additon, optional merge arguments can be provided e.g.: merge_method, mask
         """
         parse_keys = ["manning", "lulc", "reclass_table", "mask", "da"]
