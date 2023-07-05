@@ -939,7 +939,13 @@ class SfincsModel(GridModel):
             self.set_geoms(gdf_riv, name="rivers_outflow")
 
     # Function to create constant spatially varying infiltration
-    def setup_constant_infiltration(self, qinf, reproj_method="average"):
+    def setup_constant_infiltration(
+        self,
+        qinf=None,
+        lulc=None,
+        reclass_table=None,
+        reproj_method="average",
+    ):
         """Setup spatially varying constant infiltration rate (qinffile).
 
         Adds model layers:
@@ -950,14 +956,45 @@ class SfincsModel(GridModel):
         ----------
         qinf : str, Path, or RasterDataset
             Spatially varying infiltration rates [mm/hr]
+        lulc: str, Path, or RasterDataset
+            Landuse/landcover data set
+        reclass_table: str, Path, or pd.DataFrame
+            Reclassification table to convert landuse/landcover to infiltration rates [mm/hr]
         reproj_method : str, optional
             Resampling method for reprojecting the infiltration data to the model grid.
             By default 'average'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
         """
 
         # get infiltration data
-        da_inf = self.data_catalog.get_rasterdataset(qinf, geom=self.region, buffer=10)
-        da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
+        if qinf is not None:
+            da_inf = self.data_catalog.get_rasterdataset(
+                qinf,
+                bbox=self.mask.raster.transform_bounds(4326),
+                buffer=10,
+            )
+            da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
+        elif lulc is not None:
+            # landuse/landcover should always be combined with mapping
+            if reclass_table is None and isinstance(lulc, str):
+                reclass_table = join(DATADIR, "qinf", f"{lulc}_mapping.csv")
+            if (
+                not os.path.isfile(reclass_table)
+                and reclass_table not in self.data_catalog
+            ):
+                raise IOError(f"Infiltration mapping file not found: {reclass_table}")
+            da_lulc = self.data_catalog.get_rasterdataset(
+                lulc,
+                bbox=self.mask.raster.transform_bounds(4326),
+                buffer=10,
+                variables=["lulc"],
+            )
+            df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
+            # reclassify
+            da_inf = da_lulc.raster.reclassify(df_map[["qinf"]])["qinf"]
+        else:
+            raise ValueError(
+                "Either qinf or lulc must be provided when setting up constant infiltration."
+            )
 
         # reproject infiltration data to model grid
         da_inf = da_inf.raster.reproject_like(self.mask, method=reproj_method)
