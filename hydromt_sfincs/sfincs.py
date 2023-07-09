@@ -972,31 +972,34 @@ class SfincsModel(GridModel):
                 bbox=self.mask.raster.transform_bounds(4326),
                 buffer=10,
             )
-            da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
         elif lulc is not None:
             # landuse/landcover should always be combined with mapping
             if reclass_table is None and isinstance(lulc, str):
-                reclass_table = join(DATADIR, "qinf", f"{lulc}_mapping.csv")
-            if (
-                not os.path.isfile(reclass_table)
-                and reclass_table not in self.data_catalog
-            ):
-                raise IOError(f"Infiltration mapping file not found: {reclass_table}")
+                reclass_table = join(DATADIR, "lulc", f"{lulc}_mapping.csv")
+            if reclass_table is None:
+                raise IOError(
+                    f"Infiltration mapping file should be provided for {lulc}"
+                )
             da_lulc = self.data_catalog.get_rasterdataset(
                 lulc,
                 bbox=self.mask.raster.transform_bounds(4326),
                 buffer=10,
                 variables=["lulc"],
             )
-            df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
+            df_map = self.data_catalog.get_dataframe(
+                reclass_table,
+                variables=["qinf"],
+                index_col=0,  # driver kwargs
+            )
             # reclassify
-            da_inf = da_lulc.raster.reclassify(df_map[["qinf"]])["qinf"]
+            da_inf = da_lulc.raster.reclassify(df_map)["qinf"]
         else:
             raise ValueError(
                 "Either qinf or lulc must be provided when setting up constant infiltration."
             )
 
         # reproject infiltration data to model grid
+        da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
         da_inf = da_inf.raster.reproject_like(self.mask, method=reproj_method)
 
         # check on nan values
