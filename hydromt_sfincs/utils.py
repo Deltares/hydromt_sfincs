@@ -317,7 +317,7 @@ def write_timeseries(
     data[:, 0] = (df.index - tref).total_seconds()
     # calculate required width for time column; hard coded single decimal precision
     # format for other columns is based on fmt`argument
-    w = int(np.floor(np.log10(data[-1, 0]))) + 3
+    w = int(np.floor(np.log10(abs(data[-1, 0])))) + 3
     fmt_lst = [f"%{w}.1f"] + [fmt for _ in range(df.columns.size)]
     fmt_out = " ".join(fmt_lst)
     with open(fn, "w") as f:
