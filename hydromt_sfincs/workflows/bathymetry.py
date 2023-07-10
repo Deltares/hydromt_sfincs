@@ -596,6 +596,7 @@ def burn_river_rect(
         da_elv1 = da_elv.raster.mask_nodata()
         da_elv1 = da_elv1.where(np.isnan(ds[rivdph_name]), np.nan)
         da_elv1.raster.set_nodata(np.nan)
+        # extrapolate requires HydroMT v0.7.2(!)
         da_elv1 = da_elv1.raster.interpolate_na(method="linear", extrapolate=True)
         # subtract river depth from interpolated river bank elevation
         da_elv1 = da_elv1 - ds[rivdph_name].fillna(0)
@@ -608,6 +609,8 @@ def burn_river_rect(
 
     # update manning:
     if "manning" in ds and da_man is not None:
-        da_man = da_man.where(np.isnan(ds["manning"]), ds["manning"])
+        da_man = da_man.where(
+            np.logical_or(np.isnan(ds["manning"]), ds["manning"] <= 0), ds["manning"]
+        )
 
     return da_elv, da_man
