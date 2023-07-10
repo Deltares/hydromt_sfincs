@@ -610,22 +610,37 @@ class SfincsModel(GridModel):
         ----------
         datasets_dep : List[dict]
             List of dictionaries with topobathy data.
-            Each should minimally contain a data catalog source name, data file path, or xarray raster object ('elevtn')
-            Optional merge arguments include 'zmin', 'zmax', 'mask', 'offset', 'reproj_method', and 'merge_method'.
-            e.g.: [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
-            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+            Each should minimally contain a data catalog source name, data file path,
+            or xarray raster object ('elevtn'). Optional merge arguments include:
+            'zmin', 'zmax', 'mask', 'offset', 'reproj_method', and 'merge_method'.
+            e.g.: [
+                {'elevtn': 'merit_hydro', 'zmin': 0.01},
+                {'elevtn': 'gebco', 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}
+            ]
+            For a complete overview of all merge options, see
+            :py:function:~hydromt.workflows.merge_multi_dataarrays
         datasets_rgh : List[dict], optional
-            List of dictionaries with Manning's n datasets. Each dictionary should at least contain one of the following:
+            List of dictionaries with Manning's n datasets. Each dictionary should at
+            least contain one of the following:
             * (1) manning: filename (or Path) of gridded data with manning values
-            * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a mapping table.
-            In additon, optional merge arguments can be provided e.g.: merge_method, gdf_valid_fn
+            * (2) lulc (and reclass_table) :a combination of a filename of gridded
+            landuse/landcover and a mapping table. In additon, optional merge arguments
+            can be provided, e.g.: [
+                {'manning': 'manning_data'},
+                {'lulc': 'esa_worlcover', 'reclass_table': 'esa_worlcover_mapping'}
+            ]
         datasets_riv : List[dict], optional
-            List of dictionaries with river datasets. Each dictionary should at least continthe following:
-            * river: filename, Path, or line vector of river centerline with river depth ("rivdph") [m] OR bz ("rivbed") [m+REF] and width ("rivwth") attributes [m]
-            * river_mask (optional): filename, Path, or shape vector of river mask (if provided "rivwth" in river is not used and can be omitted)
-            e.g.: [{'rivers': river_fn, 'river_mask': river_mask_fn}, {'river': river_fn2}]
+            List of dictionaries with river datasets. Each dictionary should at least the following:
+            * rivers: filename, Path, or line vector of river centerline with river depth
+              ("rivdph") [m] OR bed level ("rivbed") [m+REF] and width ("rivwth") attributes [m]
+            * river_mask (optional): filename, Path, or shape vector of river mask.
+            e.g.: [
+                {'rivers': river_fn, 'river_mask': river_mask_fn},
+                {'rivers': river_fn2}
+            ]
         buffer_cells : int, optional
-            Number of cells between datasets to ensure smooth transition of bed levels, by default 0
+            Number of cells between datasets to ensure smooth transition of bed levels,
+            by default 0
         nbins : int, optional
             Number of bins in which hypsometry is subdivided, by default 10
         nr_subgrid_pixels : int, optional
@@ -634,14 +649,17 @@ class SfincsModel(GridModel):
             Maximum number of cells per subgrid-block, by default 2000
             These blocks are used to prevent memory issues while working with large datasets
         max_gradient : float, optional
-            If slope in hypsometry exceeds this value, then smoothing is applied, to prevent numerical stability problems, by default 5.0
+            If slope in hypsometry exceeds this value, then smoothing is applied,
+            to prevent numerical stability problems, by default 5.0
         z_minimum : float, optional
             Minimum depth in the subgrid tables, by default -99999.0
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
-            Note that these values are only used when no Manning's n datasets are provided, or to fill the nodata values
+            Note that these values are only used when no Manning's n datasets are provided,
+            or to fill the nodata values
         rgh_lev_land : float, optional
-            Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
+            Elevation level to distinguish land and sea roughness
+            (when using manning_land and manning_sea), by default 0.0
         write_dep_tif : bool, optional
             Create geotiff of the merged topobathy on the subgrid resolution, by default False
         write_man_tif : bool, optional
@@ -3293,37 +3311,58 @@ class SfincsModel(GridModel):
             "gdf_zb",
         ]
         copy_keys = []
-        attrs = ["rivwth", "rivdph", "rivbed"]
+        attrs = ["rivwth", "rivdph", "rivbed", "manning"]
 
         datasets_out = []
         for dataset in datasets_riv:
             dd = {}
 
+            # parse rivers
             if "rivers" in dataset:
-                gdf_riv = self.data_catalog.get_geodataframe(
-                    dataset.get("rivers"),
-                    geom=self.mask.raster.box,
-                )
+                rivers = dataset.get("rivers")
+                if isinstance(rivers, str) and rivers in self.geoms:
+                    gdf_riv = self.geoms[rivers].copy()
+                else:
+                    gdf_riv = self.data_catalog.get_geodataframe(
+                        rivers,
+                        geom=self.mask.raster.box,
+                        buffer=1e3,  # 1km
+                    ).to_crs(self.crs)
+                # update missing attributes based on global values
                 for key in attrs:
                     if key in dataset:
-                        gdf_riv[key] = dataset.pop(key)
-                dd.update({"gdf_riv": gdf_riv})
+                        value = dataset.pop(key)
+                        if key not in gdf_riv.columns:  # update all
+                            gdf_riv[key] = value
+                        elif np.any(np.isnan(gdf_riv[key])):  # fill na
+                            gdf_riv[key] = gdf_riv[key].fillna(value)
             else:
                 raise ValueError("No 'rivers' dataset provided in datasets_riv.")
+            dd.update({"gdf_riv": gdf_riv})
 
+            # parse mask
             if "river_mask" in dataset:
                 gdf_riv_mask = self.data_catalog.get_geodataframe(
                     dataset.get("river_mask"),
                     geom=self.mask.raster.box,
                 )
                 dd.update({"gdf_riv_mask": gdf_riv_mask})
+            elif "rivwth" not in gdf_riv:
+                raise ValueError(
+                    "Either gdf_riv_mask must be provided or gdf_riv "
+                    "should contain 'rivwth' attribute."
+                )
 
-            if "river_zb" in dataset:
+            if "river_zb" in dataset and "rivbed" in dataset.get("river_zb").columns:
                 gdf_zb = self.data_catalog.get_geodataframe(
                     dataset.get("river_zb"),
                     geom=self.mask.raster.box,
                 )
                 dd.update({"gdf_zb": gdf_zb})
+            elif not gdf_riv.columns.isin(["rivbed", "rivdph"]).any():
+                raise ValueError(
+                    "No 'rivbed' or 'rivdph' attribute found in rivers or river_zb."
+                )
 
             # copy remaining keys
             for key, value in dataset.items():

@@ -16,9 +16,10 @@ def test_bathymetry():
     gdf_riv["rivwth"] = 200
     gdf_riv["rivdph"] = 4
     #
-    da_elv1 = bathymetry.burn_river_rect(
-        da_elv,
-        gdf_riv,
+    da_elv1, _ = bathymetry.burn_river_rect(
+        da_elv=da_elv.copy(),
+        da_man=None,
+        gdf_riv=gdf_riv,
     )
     diff = (da_elv - da_elv1).load()
     assert (diff >= 0).all()

@@ -203,23 +203,34 @@ class SubgridTableRegular:
         highres_dir: str = None,
         logger=logger,
     ):
-        """Create subgrid tables for regular grid based on a list of depth and Manning's n datasets.
+        """Create subgrid tables for regular grid based on a list of depth,
+        Manning's rougnhess and river datasets.
 
         Parameters
         ----------
         da_mask : xr.DataArray
-            Mask of the SFINCS domain, with 1,2,3 for active (and boundary) cells and 0 for inactive cells.
+            Mask of the SFINCS domain, with 1,2,3 for active (and boundary) cells
+            and 0 for inactive cells.
         datasets_dep : List[dict]
-            List of dictionaries with topobathy data, each containing an xarray.DataSet and optional merge arguments e.g.:
-            [{'da': merit_hydro_da, 'zmin': 0.01}, {'da': gebco_da, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
-            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+            List of dictionaries with topobathy data, each containing an xarray.DataSet
+            and optional merge arguments e.g.:
+            [
+                {'da': <xr.Dataset>, 'zmin': 0.01},
+                {'da': <xr.Dataset>, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}
+            ]
+            For a complete overview of all merge options,
+            see :py:function:~hydromt.workflows.merge_multi_dataarrays
         datsets_rgh : List[dict], optional
-            List of dictionaries with Manning's n data, each containing an xarray.DataSet with manning values and optional merge arguments
+            List of dictionaries with Manning's n data, each containing an
+            xarray.DataSet with manning values and optional merge arguments
         datasets_riv : List[dict], optional
-            List of dictionaries with river datasets. Each dictionary should at least continthe following:
-            * river: filename, Path, or line vector of river centerline with river depth ("rivdph") [m] OR bed level ("rivbed") [m+REF] and width ("rivwth") attributes [m]
-            * river_mask (optional): filename, Path, or shape vector of river mask (if provided "rivwth" in river is not used and can be omitted)
-            e.g.: [{'river': river_fn, 'river_mask': river_mask_fn}, {'river': river_fn2}]
+            List of dictionaries with river datasets. Each dictionary should at least
+            contain the following:
+            * gdf_riv: line vector of river centerline with river depth ("rivdph") [m]
+              OR bed level ("rivbed") [m+REF] and width ("rivwth") attributes [m]
+            * gdf_riv_mask (optional): polygon vector of river mask. If provided
+              "rivwth" in river is not used and can be omitted. e.g.:
+              [{'gdf_riv': <geopandas.GeoDataFrame>, 'gdf_riv_mask': <geopandas.GeoDataFrame>}]
         nbins : int, optional
             Number of bins in which hypsometry is subdivided, by default 10
         nr_subgrid_pixels : int, optional
@@ -228,14 +239,17 @@ class SubgridTableRegular:
             Maximum number of cells per subgrid-block, by default 2000
             These blocks are used to prevent memory issues while working with large datasets
         max_gradient : float, optional
-            If slope in hypsometry exceeds this value, then smoothing is applied, to prevent numerical stability problems, by default 5.0
+            If slope in hypsometry exceeds this value, then smoothing is applied, to
+            prevent numerical stability problems, by default 5.0
         z_minimum : float, optional
             Minimum depth in the subgrid tables, by default -99999.0
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
-            Note that these values are only used when no Manning's n datasets are provided, or to fill the nodata values
+            Note that these values are only used when no Manning's n datasets are
+            provided, or to fill the nodata values
         rgh_lev_land : float, optional
-            Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
+            Elevation level to distinguish land and sea roughness (when using
+            manning_land and manning_sea), by default 0.0
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         write_dep_tif : bool, optional
@@ -262,26 +276,29 @@ class SubgridTableRegular:
             1 / nr_subgrid_pixels
         )
 
+        profile = dict(
+            driver="GTiff",
+            width=output_width,
+            height=output_height,
+            count=1,
+            dtype=np.float32,
+            crs=da_mask.raster.crs,
+            transform=output_transform,
+            tiled=True,
+            blockxsize=256,
+            blockysize=256,
+            compress="deflate",
+            predictor=2,
+            profile="COG",
+            nodata=np.nan,
+            BIGTIFF="YES",  # Add the BIGTIFF option here
+        )
         if write_dep_tif:
             # create the CloudOptimizedGeotiff containing the merged topobathy data
             dep_tif = rasterio.open(
                 os.path.join(highres_dir, "dep_subgrid.tif"),
                 "w",
-                driver="GTiff",
-                width=output_width,
-                height=output_height,
-                count=1,
-                dtype=np.float32,
-                crs=da_mask.raster.crs,
-                transform=output_transform,
-                tiled=True,
-                blockxsize=256,
-                blockysize=256,
-                compress="deflate",
-                predictor=2,
-                profile="COG",
-                nodata=np.nan,
-                BIGTIFF="YES",  # Add the BIGTIFF option here
+                **profile,
             )
 
         if write_man_tif:
@@ -289,21 +306,7 @@ class SubgridTableRegular:
             man_tif = rasterio.open(
                 os.path.join(highres_dir, "manning_subgrid.tif"),
                 "w",
-                driver="GTiff",
-                width=output_width,
-                height=output_height,
-                count=1,
-                dtype=np.float32,
-                crs=da_mask.raster.crs,
-                transform=output_transform,
-                tiled=True,
-                blockxsize=256,
-                blockysize=256,
-                compress="deflate",
-                predictor=2,
-                profile="COG",
-                nodata=np.nan,
-                BIGTIFF="YES",  # Add the BIGTIFF option here
+                **profile,
             )
 
         # Z points
@@ -370,7 +373,7 @@ class SubgridTableRegular:
                 logger.warning(
                     f"\nblock {ib + 1}/{nrbn * nrbm} -- "
                     f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
-                ) #Should be logger.debug
+                )
 
                 # calculate transform and shape of block at cell and subgrid level
                 da_mask_block = da_mask.isel(
@@ -429,17 +432,6 @@ class SubgridTableRegular:
                     # Assertion error
                     assert np.all(~np.isnan(da_dep))
 
-                # burn rivers in bathymetry
-                if len(datasets_riv) > 0:
-                    for riv_kwargs in datasets_riv:
-                        try:
-                            da_dep = workflows.bathymetry.burn_river_rect(
-                                da_elv=da_dep, **riv_kwargs
-                            )
-                        except:
-                            logger.warning(f"WARNING: Something went wrong with burning in the river (probably river was outside the subgrid tile).")
-
-
                 # get subgrid manning roughness tile
                 if len(datasets_rgh) > 0:
                     da_man = workflows.merge_multi_dataarrays(
@@ -457,6 +449,13 @@ class SubgridTableRegular:
                 else:
                     da_man = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
                 assert np.all(~np.isnan(da_man))
+
+                # burn rivers in bathymetry and manning
+                if len(datasets_riv) > 0:
+                    for riv_kwargs in datasets_riv:
+                        da_dep, da_man = workflows.bathymetry.burn_river_rect(
+                            da_elv=da_dep, da_man=da_man, **riv_kwargs
+                        )
 
                 # optional write tile to file
                 # NOTE tiles have overlap! da_dep[:-refi,:-refi]
