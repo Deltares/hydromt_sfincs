@@ -3473,42 +3473,35 @@ document.write(`
 
     <span class="c1">## model configuration</span>
 
-<div class="viewcode-block" id="SfincsModel.read_config"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_config.html#hydromt_sfincs.SfincsModel.read_config">[docs]</a>    <span class="k">def</span> <span class="nf">read_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs.inp&quot;</span><span class="p">,</span> <span class="n">epsg</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="SfincsModel.read_config"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_config.html#hydromt_sfincs.SfincsModel.read_config">[docs]</a>    <span class="k">def</span> <span class="nf">read_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">epsg</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse config from SFINCS input file.</span>
-<span class="sd">        If in write-only mode the config is initialized with default settings.</span>
+<span class="sd">        If in write-only mode the config is initialized with default settings</span>
+<span class="sd">        unless a path to a template config file is provided.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        config_fn: str</span>
-<span class="sd">            Filename of config file, by default &quot;sfincs.inp&quot;.</span>
-<span class="sd">            If in a different folder than the model root, the root is updated.</span>
+<span class="sd">            Filename of config file, by default None.</span>
 <span class="sd">        epsg: int</span>
-<span class="sd">            EPSG code of the model CRS. Only used if missing in the SFINCS input file, by default None.</span>
+<span class="sd">            EPSG code of the model CRS. Only used if missing in the SFINCS input file,</span>
+<span class="sd">            by default None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">inp</span> <span class="o">=</span> <span class="n">SfincsInput</span><span class="p">()</span>  <span class="c1"># initialize with defaults</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read</span><span class="p">:</span>  <span class="c1"># in read-only or append mode, try reading config_fn</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">config_fn</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">isabs</span><span class="p">(</span><span class="n">config_fn</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">:</span>
-                <span class="c1"># path relative to self.root</span>
+        <span class="k">if</span> <span class="n">config_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">config_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># read from default location</span>
+                <span class="n">config_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_fn</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">isabs</span><span class="p">(</span><span class="n">config_fn</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">:</span>  <span class="c1"># read from model root</span>
                 <span class="n">config_fn</span> <span class="o">=</span> <span class="n">abspath</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">config_fn</span><span class="p">))</span>
-            <span class="k">elif</span> <span class="n">isfile</span><span class="p">(</span><span class="n">config_fn</span><span class="p">)</span> <span class="ow">and</span> <span class="n">abspath</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">config_fn</span><span class="p">))</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">:</span>
-                <span class="c1"># new root</span>
-                <span class="n">mode</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="s2">&quot;r+&quot;</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read</span>
-                    <span class="k">else</span> <span class="p">(</span><span class="s2">&quot;w&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write</span> <span class="k">else</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
-                <span class="p">)</span>
-                <span class="n">root</span> <span class="o">=</span> <span class="n">abspath</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">config_fn</span><span class="p">))</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;updating the model root to: </span><span class="si">{</span><span class="n">root</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">set_root</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">config_fn</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SFINCS input file not found </span><span class="si">{</span><span class="n">config_fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="c1"># read config_fn</span>
+            <span class="c1"># read inp file</span>
             <span class="n">inp</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">inp_fn</span><span class="o">=</span><span class="n">config_fn</span><span class="p">)</span>
         <span class="c1"># overwrite / initialize config attribute</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="o">=</span> <span class="n">inp</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">epsg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;epsg&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">epsg</span><span class="o">=</span><span class="n">epsg</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update_grid_from_config</span><span class="p">()</span>  <span class="c1"># update grid properties based on sfincs.inp</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;epsg&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">epsg</span><span class="p">))</span>
+        <span class="c1"># update grid properties based on sfincs.inp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_grid_from_config</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="SfincsModel.write_config"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_config.html#hydromt_sfincs.SfincsModel.write_config">[docs]</a>    <span class="k">def</span> <span class="nf">write_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs.inp&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write config to &lt;root/config_fn&gt;&quot;&quot;&quot;</span>
