@@ -1957,6 +1957,7 @@ document.write(`
 <span class="sd">            Path, data source name, or pandas data object for tabular timeseries.</span>
 <span class="sd">        locations: str, Path, gpd.GeoDataFrame, optional</span>
 <span class="sd">            Path, data source name, or geopandas object for bnd point locations.</span>
+<span class="sd">            It should contain a &#39;index&#39; column matching the column names in `timeseries`.</span>
 <span class="sd">        offset: str, Path, xr.Dataset, float, optional</span>
 <span class="sd">            Path, data source name, constant value or xarray raster data for gridded offset</span>
 <span class="sd">            between vertical reference of elevation and waterlevel data,</span>
@@ -2000,14 +2001,14 @@ document.write(`
                 <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">df_ts</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">df_ts</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>  <span class="c1"># parse column names to integers</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either geodataset or timeseries must be provided&quot;</span><span class="p">)</span>
 
-        <span class="c1"># optionally read location data (if not already read from geodataset)</span>
+        <span class="c1"># read location data (if not already read from geodataset)</span>
         <span class="k">if</span> <span class="n">gdf_locs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">locations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf_locs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
                 <span class="n">locations</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="n">buffer</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;index&quot;</span> <span class="ow">in</span> <span class="n">gdf_locs</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">gdf_locs</span> <span class="o">=</span> <span class="n">gdf_locs</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">gdf_locs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;bzs&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">:</span>
             <span class="n">gdf_locs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">[</span><span class="s2">&quot;bzs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">gdf_locs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -2030,7 +2031,7 @@ document.write(`
             <span class="p">)</span>
 
         <span class="c1"># set/ update forcing</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">gdf_locs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bzs&quot;</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">df_ts</span><span class="o">=</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">gdf_locs</span><span class="o">=</span><span class="n">gdf_locs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bzs&quot;</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SfincsModel.setup_waterlevel_bnd_from_mask"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask.html#hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask">[docs]</a>    <span class="k">def</span> <span class="nf">setup_waterlevel_bnd_from_mask</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -2077,7 +2078,12 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">gdf_locs</span><span class="o">=</span><span class="n">gdf</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bzs&quot;</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SfincsModel.setup_discharge_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_discharge_forcing</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">geodataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeseries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">locations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">True</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">geodataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">timeseries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">locations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">merge</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup discharge forcing.</span>
 
@@ -2100,8 +2106,12 @@ document.write(`
 <span class="sd">            Path, data source name, or pandas data object for tabular timeseries.</span>
 <span class="sd">        locations: str, Path, gpd.GeoDataFrame, optional</span>
 <span class="sd">            Path, data source name, or geopandas object for bnd point locations.</span>
+<span class="sd">            It should contain a &#39;index&#39; column matching the column names in `timeseries`.</span>
 <span class="sd">        merge : bool, optional</span>
 <span class="sd">            If True, merge with existing forcing data, by default True.</span>
+<span class="sd">        buffer: float, optional</span>
+<span class="sd">            Buffer [m] around model boundary within the model region</span>
+<span class="sd">            select discharge gauges, by default None.</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
@@ -2109,12 +2119,16 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">gdf_locs</span><span class="p">,</span> <span class="n">df_ts</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
         <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">()</span>  <span class="c1"># model time</span>
+        <span class="c1"># buffer</span>
+        <span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span>
+        <span class="k">if</span> <span class="n">buffer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># TODO this assumes the model crs is projected</span>
+            <span class="n">region</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)</span>
         <span class="c1"># read waterlevel data from geodataset or geodataframe</span>
         <span class="k">if</span> <span class="n">geodataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># read and clip data in time &amp; space</span>
             <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataset</span><span class="p">(</span>
                 <span class="n">geodataset</span><span class="p">,</span>
-                <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+                <span class="n">geom</span><span class="o">=</span><span class="n">region</span><span class="p">,</span>
                 <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;discharge&quot;</span><span class="p">],</span>
                 <span class="n">time_tuple</span><span class="o">=</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">),</span>
                 <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span>
@@ -2130,21 +2144,21 @@ document.write(`
                 <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">df_ts</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">df_ts</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>  <span class="c1"># parse column names to integers</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either geodataset or timeseries must be provided&quot;</span><span class="p">)</span>
 
-        <span class="c1"># optionally read location data (if not already read from geodataset)</span>
+        <span class="c1"># read location data (if not already read from geodataset)</span>
         <span class="k">if</span> <span class="n">gdf_locs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">locations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf_locs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                <span class="n">locations</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span>
+                <span class="n">locations</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;index&quot;</span> <span class="ow">in</span> <span class="n">gdf_locs</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">gdf_locs</span> <span class="o">=</span> <span class="n">gdf_locs</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">gdf_locs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;dis&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">:</span>
             <span class="n">gdf_locs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">[</span><span class="s2">&quot;dis&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">gdf_locs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No discharge boundary (src) points provided.&quot;</span><span class="p">)</span>
 
         <span class="c1"># set/ update forcing</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">gdf_locs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dis&quot;</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">df_ts</span><span class="o">=</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">gdf_locs</span><span class="o">=</span><span class="n">gdf_locs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dis&quot;</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SfincsModel.setup_discharge_forcing_from_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_discharge_forcing_from_grid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
