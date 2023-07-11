@@ -1554,6 +1554,7 @@ class SfincsModel(GridModel):
             Path, data source name, or pandas data object for tabular timeseries.
         locations: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for bnd point locations.
+            It should contain a 'index' column matching the column names in `timeseries`.
         offset: str, Path, xr.Dataset, float, optional
             Path, data source name, constant value or xarray raster data for gridded offset
             between vertical reference of elevation and waterlevel data,
@@ -1597,14 +1598,14 @@ class SfincsModel(GridModel):
                 index_col=0,
             )
             df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
-        else:
-            raise ValueError("Either geodataset or timeseries must be provided")
 
-        # optionally read location data (if not already read from geodataset)
+        # read location data (if not already read from geodataset)
         if gdf_locs is None and locations is not None:
             gdf_locs = self.data_catalog.get_geodataframe(
                 locations, geom=region, buffer=buffer, crs=self.crs
             ).to_crs(self.crs)
+            if "index" in gdf_locs.columns:
+                gdf_locs = gdf_locs.set_index("index")
         elif gdf_locs is None and "bzs" in self.forcing:
             gdf_locs = self.forcing["bzs"].vector.to_gdf()
         elif gdf_locs is None:
@@ -1627,7 +1628,7 @@ class SfincsModel(GridModel):
             )
 
         # set/ update forcing
-        self.set_forcing_1d(df_ts, gdf_locs, name="bzs", merge=merge)
+        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="bzs", merge=merge)
 
     def setup_waterlevel_bnd_from_mask(
         self,
@@ -1674,7 +1675,12 @@ class SfincsModel(GridModel):
         self.set_forcing_1d(gdf_locs=gdf, name="bzs", merge=merge)
 
     def setup_discharge_forcing(
-        self, geodataset=None, timeseries=None, locations=None, merge=True
+        self,
+        geodataset=None,
+        timeseries=None,
+        locations=None,
+        merge=True,
+        buffer: float = None,
     ):
         """Setup discharge forcing.
 
@@ -1697,8 +1703,12 @@ class SfincsModel(GridModel):
             Path, data source name, or pandas data object for tabular timeseries.
         locations: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for bnd point locations.
+            It should contain a 'index' column matching the column names in `timeseries`.
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
+        buffer: float, optional
+            Buffer [m] around model boundary within the model region
+            select discharge gauges, by default None.
 
         See Also
         --------
@@ -1706,12 +1716,16 @@ class SfincsModel(GridModel):
         """
         gdf_locs, df_ts = None, None
         tstart, tstop = self.get_model_time()  # model time
+        # buffer
+        region = self.region
+        if buffer is not None:  # TODO this assumes the model crs is projected
+            region = region.boundary.buffer(buffer).clip(self.region)
         # read waterlevel data from geodataset or geodataframe
         if geodataset is not None:
             # read and clip data in time & space
             da = self.data_catalog.get_geodataset(
                 geodataset,
-                geom=self.region,
+                geom=region,
                 variables=["discharge"],
                 time_tuple=(tstart, tstop),
                 crs=self.crs,
@@ -1727,21 +1741,21 @@ class SfincsModel(GridModel):
                 index_col=0,
             )
             df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
-        else:
-            raise ValueError("Either geodataset or timeseries must be provided")
 
-        # optionally read location data (if not already read from geodataset)
+        # read location data (if not already read from geodataset)
         if gdf_locs is None and locations is not None:
             gdf_locs = self.data_catalog.get_geodataframe(
-                locations, geom=self.region, crs=self.crs
+                locations, geom=region, crs=self.crs
             ).to_crs(self.crs)
+            if "index" in gdf_locs.columns:
+                gdf_locs = gdf_locs.set_index("index")
         elif gdf_locs is None and "dis" in self.forcing:
             gdf_locs = self.forcing["dis"].vector.to_gdf()
         elif gdf_locs is None:
             raise ValueError("No discharge boundary (src) points provided.")
 
         # set/ update forcing
-        self.set_forcing_1d(df_ts, gdf_locs, name="dis", merge=merge)
+        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="dis", merge=merge)
 
     def setup_discharge_forcing_from_grid(
         self,
