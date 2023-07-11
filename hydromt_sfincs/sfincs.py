@@ -3070,42 +3070,35 @@ class SfincsModel(GridModel):
 
     ## model configuration
 
-    def read_config(self, config_fn: str = "sfincs.inp", epsg: int = None) -> None:
+    def read_config(self, config_fn: str = None, epsg: int = None) -> None:
         """Parse config from SFINCS input file.
-        If in write-only mode the config is initialized with default settings.
+        If in write-only mode the config is initialized with default settings
+        unless a path to a template config file is provided.
 
         Parameters
         ----------
         config_fn: str
-            Filename of config file, by default "sfincs.inp".
-            If in a different folder than the model root, the root is updated.
+            Filename of config file, by default None.
         epsg: int
-            EPSG code of the model CRS. Only used if missing in the SFINCS input file, by default None.
+            EPSG code of the model CRS. Only used if missing in the SFINCS input file,
+            by default None.
         """
         inp = SfincsInput()  # initialize with defaults
-        if self._read:  # in read-only or append mode, try reading config_fn
-            if not isfile(config_fn) and not isabs(config_fn) and self._root:
-                # path relative to self.root
+        if config_fn is not None or self._read:
+            if config_fn is None:  # read from default location
+                config_fn = self._config_fn
+            if not isabs(config_fn) and self._root:  # read from model root
                 config_fn = abspath(join(self.root, config_fn))
-            elif isfile(config_fn) and abspath(dirname(config_fn)) != self._root:
-                # new root
-                mode = (
-                    "r+"
-                    if self._write and self._read
-                    else ("w" if self._write else "r")
-                )
-                root = abspath(dirname(config_fn))
-                self.logger.warning(f"updating the model root to: {root}")
-                self.set_root(root=root, mode=mode)
-            else:
+            if not isfile(config_fn):
                 raise IOError(f"SFINCS input file not found {config_fn}")
-            # read config_fn
+            # read inp file
             inp.read(inp_fn=config_fn)
         # overwrite / initialize config attribute
         self._config = inp.to_dict()
         if epsg is not None and "epsg" not in self.config:
-            self.config.update(epsg=epsg)
-        self.update_grid_from_config()  # update grid properties based on sfincs.inp
+            self.set_config("epsg", int(epsg))
+        # update grid properties based on sfincs.inp
+        self.update_grid_from_config()
 
     def write_config(self, config_fn: str = "sfincs.inp"):
         """Write config to <root/config_fn>"""
