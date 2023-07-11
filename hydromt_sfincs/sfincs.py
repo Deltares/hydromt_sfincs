@@ -2999,10 +2999,7 @@ class SfincsModel(GridModel):
                 reclass_table = dataset.get("reclass_table", None)
                 if reclass_table is None and isinstance(lulc, str):
                     reclass_table = join(DATADIR, "lulc", f"{lulc}_mapping.csv")
-                if (
-                    not os.path.isfile(reclass_table)
-                    and reclass_table not in self.data_catalog
-                ):
+                if reclass_table is None:
                     raise IOError(
                         f"Manning roughness mapping file not found: {reclass_table}"
                     )
