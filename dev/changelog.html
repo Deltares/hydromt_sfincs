@@ -441,6 +441,7 @@ document.write(`
 <li><p>bugfix in <cite>SfincsModel.write_forcing</cite> to ensure all NetCDF files are written instead of only the first one. PR #86</p></li>
 <li><p>bugfix in <cite>SfincsModel.read_config</cite> &amp; <cite>SfincsInput.read</cite> for relative paths in inp file. PR #88</p></li>
 <li><p>bugfix in <cite>SfincsModel.setup_subgrid</cite> to ensure that a ‘big geotiff’ will be written by default when ‘write_dep_tif’ or ‘write_man_tif’ are True</p></li>
+<li><p>fix memory issues caused by rasterizing the model region and reprojecting before clipping of rasters. PR #94</p></li>
 <li><p>bugfix in <cite>Sfincs.read_forcing</cite> when combining attributes from the locations stored in the gis folder with the actual forcing locations. PR #99</p></li>
 <li><p>bugfix in <cite>SfincsModel.setup_discharge_from_grid</cite> when snapping based on upstream area in case a src points is outside of the uparea grid domain. PR #99</p></li>
 </ul>
@@ -451,9 +452,16 @@ document.write(`
 <li><p><cite>SfincsModel.setup_cn_infiltration_with_kr</cite> to setup three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr). PR#87</p></li>
 <li><p><cite>SfincsModelsetup_drainage_structures</cite> to setup drainage structures (pumps,culverts) from a geodataframe. PR#90</p></li>
 <li><p>Added <cite>SfincsModel.setup_wind_forcing</cite>, <cite>SfincsModel.setup_wind_forcing_from_grid</cite> and <cite>SfincsModel.setup_pressure_forcing_from_grid</cite> methods to easily add wind and pressure forcing.  PR #92</p></li>
+<li><p><cite>SfincsModel.read_config</cite> allows to use a template input file from a directory different than the model root. PR #102</p></li>
 <li><p>Added the option to use landuse/landcover data combined with a reclass table to <cite>SfincsModel.setup_constant_infiltration</cite>.  PR #103</p></li>
 <li><p>Enabled to provide locations only (so no timeseries) for <cite>SfincsModel.setup_waterlevel_forcing</cite> and <cite>SfincsModel.setup_discharge_forcing</cite> PR #104</p></li>
 <li><p>New optional buffer argument in  <cite>SfincsModel.setup_discharge_forcing</cite> to select gauges around boundary only. PR #104</p></li>
+</ul>
+</section>
+<section id="changed">
+<h2>Changed<a class="headerlink" href="#changed" title="Permalink to this heading">#</a></h2>
+<ul class="simple">
+<li><p><cite>SfincsModel.setup_mask_active</cite> argument reset_mask default to True PR #94</p></li>
 </ul>
 </section>
 </section>
@@ -549,8 +557,8 @@ Derived ‘uparea’ and ‘flwdir’ maps are saved in the GIS folder and can b
 <li><p>Added parameter mapping file for ESA Worldcover dataset</p></li>
 </ul>
 </section>
-<section id="changed">
-<h2>Changed<a class="headerlink" href="#changed" title="Permalink to this heading">#</a></h2>
+<section id="id3">
+<h2>Changed<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p><strong>setup_mask</strong> and <strong>setup_bounds</strong> both have a “mask_fn”, “include_mask_fn” and “exclude_mask_fn” polygon and “min_elv” and “max_elv” elevation arguments to determine valid / boundary cells.</p></li>
 <li><p><strong>setup_mask</strong> and <strong>setup_bounds</strong> have a “reset_mask” and “reset_bounds” option respectively to start with a clean mask or remove previously set boundary cells.</p></li>
@@ -579,15 +587,15 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 </section>
 <section id="v0-2-0-2-august-2021">
 <h1>v0.2.0 (2 August 2021)<a class="headerlink" href="#v0-2-0-2-august-2021" title="Permalink to this heading">#</a></h1>
-<section id="id3">
-<h2>Bugfix<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h2>
+<section id="id4">
+<h2>Bugfix<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>scsfile variable changed to maximum soil moisture retention [inch]; was curve number [-]</p></li>
 <li><p>fix setting delimited text based geodatasets for h and q forcing.</p></li>
 </ul>
 </section>
-<section id="id4">
-<h2>Changed<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h2>
+<section id="id5">
+<h2>Changed<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Bumped minimal hydromt version to 0.4.2</p></li>
 <li><p>splitted <code class="docutils literal notranslate"><span class="pre">setup_topobathy</span></code> into multiple smaller methods: <code class="docutils literal notranslate"><span class="pre">setup_merge_topobathy</span></code>, <code class="docutils literal notranslate"><span class="pre">setup_mask</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_bounds</span></code></p></li>
@@ -631,8 +639,8 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <li><p>overviews with SfincsModel setup components &amp; SfincsModel data</p></li>
 </ul>
 </section>
-<section id="id5">
-<h2>Deprecated<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h2>
+<section id="id6">
+<h2>Deprecated<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">setup_p_gridded</span></code></p></li>
 </ul>
@@ -641,20 +649,20 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <section id="v0-1-0-18-may-2021">
 <h1>v0.1.0 (18 May 2021)<a class="headerlink" href="#v0-1-0-18-may-2021" title="Permalink to this heading">#</a></h1>
 <p>Noticeable changes are a new <code class="docutils literal notranslate"><span class="pre">setup_river_inflow</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_river_outflow</span></code> methods</p>
-<section id="id6">
-<h2>Added<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h2>
+<section id="id7">
+<h2>Added<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>setup_river_outflow method to set ouflow (msk=3) boundary at river outflow points</p></li>
 </ul>
 </section>
-<section id="id7">
-<h2>Changed<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h2>
+<section id="id8">
+<h2>Changed<a class="headerlink" href="#id8" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Updated to hydromt v0.4.1</p></li>
 </ul>
 </section>
-<section id="id8">
-<h2>Documentation<a class="headerlink" href="#id8" title="Permalink to this heading">#</a></h2>
+<section id="id9">
+<h2>Documentation<a class="headerlink" href="#id9" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Now <strong>latest</strong> and <strong>stable</strong> versions.</p></li>
 <li><p>Updated build instructions</p></li>
@@ -714,6 +722,7 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-1-unreleased">v1.0.1 (unreleased)</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bugfix">Bugfix</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#new">New</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#changed">Changed</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-17-april-2023">v1.0 (17 April 2023)</a><ul class="visible nav section-nav flex-column">
@@ -728,21 +737,21 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deprecated">Deprecated</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Bugfix</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">New</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#changed">Changed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Changed</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-2-0-2-august-2021">v0.2.0 (2 August 2021)</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Bugfix</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Changed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Bugfix</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Changed</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#added">Added</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Deprecated</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Deprecated</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-1-0-18-may-2021">v0.1.0 (18 May 2021)</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Added</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">Changed</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Documentation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">Added</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Changed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">Documentation</a></li>
 </ul>
 </li>
 </ul>

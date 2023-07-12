@@ -565,11 +565,19 @@ while still accounting for the local topography and roughness.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>datasets_dep</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a><em>]</em>) – List of dictionaries with topobathy data.
-Each should minimally contain a data catalog source name, data file path, or xarray raster object (‘elevtn’)
-Optional merge arguments include ‘zmin’, ‘zmax’, ‘mask’, ‘offset’, ‘reproj_method’, and ‘merge_method’.
-e.g.: [{‘elevtn’: merit_hydro, ‘zmin’: 0.01}, {‘elevtn’: gebco, ‘offset’: 0, ‘merge_method’: ‘first’, reproj_method: ‘bilinear’}]
-For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays</p></li>
+<li><p><strong>datasets_dep</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a><em>]</em>) – <p>List of dictionaries with topobathy data.
+Each should minimally contain a data catalog source name, data file path,
+or xarray raster object (‘elevtn’)</p>
+<p>Optional merge arguments include ‘zmin’, ‘zmax’, ‘mask’, ‘offset’,
+‘reproj_method’, and ‘merge_method’. e.g.:
+[</p>
+<blockquote>
+<div><p>{‘elevtn’: merit_hydro, ‘zmin’: 0.01},
+{‘elevtn’: gebco, ‘offset’: 0, ‘merge_method’: ‘first’, reproj_method: ‘bilinear’}</p>
+</div></blockquote>
+<p>]
+For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays</p>
+</p></li>
 <li><p><strong>datasets_rgh</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a><em>]</em><em>, </em><em>optional</em>) – List of dictionaries with Manning’s n datasets. Each dictionary should at least contain one of the following:
 * (1) manning: filename (or Path) of gridded data with manning values
 * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a mapping table.

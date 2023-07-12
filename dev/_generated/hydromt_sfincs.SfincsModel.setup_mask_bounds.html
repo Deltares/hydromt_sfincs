@@ -572,14 +572,16 @@ All conditions are combined using a logical AND operation.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>btype</strong> (<em>{'waterlevel'</em><em>, </em><em>'outflow'}</em>) – Boundary type</p></li>
-<li><p><strong>include_mask</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>gpd.GeoDataFrame</em><em>, </em><em>optional</em>) – Path or data source name for geometries with areas to include/exclude from the model boundary.</p></li>
-<li><p><strong>exclude_mask</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>gpd.GeoDataFrame</em><em>, </em><em>optional</em>) – Path or data source name for geometries with areas to include/exclude from the model boundary.</p></li>
+<li><p><strong>include_mask</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>gpd.GeoDataFrame</em><em>, </em><em>optional</em>) – Path or data source name for geometries with areas to include/exclude from
+the model boundary.</p></li>
+<li><p><strong>exclude_mask</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>gpd.GeoDataFrame</em><em>, </em><em>optional</em>) – Path or data source name for geometries with areas to include/exclude from
+the model boundary.</p></li>
 <li><p><strong>zmin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for boundary cells.
-Note that when include and exclude areas are used, the elevation range is only applied
-on cells within the include area and outside the exclude area.</p></li>
+Note that when include and exclude areas are used, the elevation range is
+only applied on cells within the include area and outside the exclude area.</p></li>
 <li><p><strong>zmax</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum and maximum elevation thresholds for boundary cells.
-Note that when include and exclude areas are used, the elevation range is only applied
-on cells within the include area and outside the exclude area.</p></li>
+Note that when include and exclude areas are used, the elevation range is
+only applied on cells within the include area and outside the exclude area.</p></li>
 <li><p><strong>reset_bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, reset existing boundary cells of the selected boundary
 type (<cite>btype</cite>) before setting new boundary cells, by default False.</p></li>
 <li><p><strong>all_touched</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – if True (default) include (or exclude) a cell in the mask if it touches any of the

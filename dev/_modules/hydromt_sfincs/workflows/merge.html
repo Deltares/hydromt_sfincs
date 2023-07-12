@@ -491,8 +491,18 @@ document.write(`
         <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;bilinear&quot;</span>
 
     <span class="k">if</span> <span class="n">da_like</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># reproject first raster to destination grid</span>
-        <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">da_like</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+        <span class="c1"># clip before reproject</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="n">da_like</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_bbox</span><span class="p">(</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">da1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="c1"># no data in da1 so use an empty array like da_like</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No data da1, start with empty array&quot;</span><span class="p">)</span>
+            <span class="n">da1</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">da_like</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># TODO: this applies to the whole dataset, not only the clipped part</span>
+            <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">load</span><span class="p">()</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">da_like</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">reproj_kwargs</span><span class="p">:</span>
+        <span class="c1"># TODO</span>
         <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="o">**</span><span class="n">reproj_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reprojection method of first dataset is: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -518,6 +528,7 @@ document.write(`
         <span class="c1"># base reprojection method on resolution of datasets</span>
         <span class="n">reproj_method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reproj_method&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">da2</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;da&quot;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">reproj_method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">dx_2</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">da2</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -610,15 +621,16 @@ document.write(`
     <span class="n">dtype</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">dtype</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">nodata</span><span class="p">):</span>
         <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
+    <span class="c1"># clip before reproject</span>
+    <span class="n">bbox</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="n">da2</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+    <span class="n">da2</span> <span class="o">=</span> <span class="n">da2</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_bbox</span><span class="p">(</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">da2</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data in dataset 2 within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">], skip&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">da1</span>
+
     <span class="c1">## reproject da2 and reset nodata value to match da1 nodata</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">da2</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">da2</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">da1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">load</span><span class="p">()</span>
-        <span class="p">)</span>
-    <span class="k">except</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No data for this tile&quot;</span><span class="p">)</span>
+    <span class="n">da2</span> <span class="o">=</span> <span class="n">da2</span><span class="o">.</span><span class="n">load</span><span class="p">()</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">da1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
+    <span class="n">da2</span> <span class="o">=</span> <span class="n">da2</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
 
     <span class="n">da2</span> <span class="o">=</span> <span class="n">_add_offset_mask_invalid</span><span class="p">(</span>
         <span class="n">da</span><span class="o">=</span><span class="n">da2</span><span class="p">,</span>

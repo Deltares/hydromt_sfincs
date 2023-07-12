@@ -747,14 +747,15 @@ document.write(`
             <span class="p">)</span>
 
             <span class="c1"># check if no nan data is present in the bed levels</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Interpolate data at </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span><span class="si">}</span><span class="s2"> cells&quot;</span>
                 <span class="p">)</span>
+                <span class="c1"># TODO add extrapolate=True option when available in hydromt core</span>
                 <span class="n">da_dep</span> <span class="o">=</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">interpolate_na</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;rio_idw&quot;</span><span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">da_dep</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dep&quot;</span><span class="p">)</span>
-            <span class="c1"># FIXME this shouldn&#39;t be necessary, since da_dep should already have the crs</span>
+            <span class="c1"># FIXME this shouldn&#39;t be necessary, since da_dep should already have a crs</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
 
@@ -777,7 +778,7 @@ document.write(`
         <span class="n">drop_area</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">connectivity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
         <span class="n">all_touched</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">reset_mask</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">reset_mask</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup active model cells.</span>
 
@@ -821,7 +822,7 @@ document.write(`
 <span class="sd">            include (or exclude) geometries. If False, include a cell only if its center is</span>
 <span class="sd">            within one of the shapes, or if it is selected by Bresenham&#39;s line algorithm.</span>
 <span class="sd">        reset_mask: bool, optional</span>
-<span class="sd">            If True, reset existing mask layer. If False (default) updating existing mask.</span>
+<span class="sd">            If True  (default), reset existing mask layer. If False updating existing mask.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># read geometries</span>
         <span class="n">gdf_mask</span><span class="p">,</span> <span class="n">gdf_include</span><span class="p">,</span> <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
@@ -884,9 +885,15 @@ document.write(`
             <span class="k">if</span> <span class="s2">&quot;indexfile&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;indexfile&quot;</span><span class="p">:</span> <span class="s2">&quot;sfincs.ind&quot;</span><span class="p">})</span>
             <span class="c1"># update region</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Derive region geometry based on active cells.&quot;</span><span class="p">)</span>
-            <span class="n">region</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_mask</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="s2">&quot;region&quot;</span><span class="p">)</span></div>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">da_mask</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Derive region geometry based on active cells.&quot;</span><span class="p">)</span>
+                <span class="c1"># make mask with ones and zeros only -&gt; vectorize ones</span>
+                <span class="n">region</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_mask</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">region</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No region found.&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="s2">&quot;region&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No active cells found.&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SfincsModel.setup_mask_bounds"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_mask_bounds.html#hydromt_sfincs.SfincsModel.setup_mask_bounds">[docs]</a>    <span class="k">def</span> <span class="nf">setup_mask_bounds</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -920,11 +927,12 @@ document.write(`
 <span class="sd">        btype: {&#39;waterlevel&#39;, &#39;outflow&#39;}</span>
 <span class="sd">            Boundary type</span>
 <span class="sd">        include_mask, exclude_mask: str, Path, gpd.GeoDataFrame, optional</span>
-<span class="sd">            Path or data source name for geometries with areas to include/exclude from the model boundary.</span>
+<span class="sd">            Path or data source name for geometries with areas to include/exclude from</span>
+<span class="sd">            the model boundary.</span>
 <span class="sd">        zmin, zmax : float, optional</span>
 <span class="sd">            Minimum and maximum elevation thresholds for boundary cells.</span>
-<span class="sd">            Note that when include and exclude areas are used, the elevation range is only applied</span>
-<span class="sd">            on cells within the include area and outside the exclude area.</span>
+<span class="sd">            Note that when include and exclude areas are used, the elevation range is</span>
+<span class="sd">            only applied on cells within the include area and outside the exclude area.</span>
 <span class="sd">        reset_bounds: bool, optional</span>
 <span class="sd">            If True, reset existing boundary cells of the selected boundary</span>
 <span class="sd">            type (`btype`) before setting new boundary cells, by default False.</span>
@@ -939,7 +947,7 @@ document.write(`
 
         <span class="c1"># get include / exclude geometries</span>
         <span class="n">gdf_include</span><span class="p">,</span> <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
-        <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span><span class="o">.</span><span class="n">total_bounds</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">include_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">include_mask</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span>
                 <span class="n">include_mask</span>
@@ -1012,9 +1020,15 @@ document.write(`
 <span class="sd">        ----------</span>
 <span class="sd">        datasets_dep : List[dict]</span>
 <span class="sd">            List of dictionaries with topobathy data.</span>
-<span class="sd">            Each should minimally contain a data catalog source name, data file path, or xarray raster object (&#39;elevtn&#39;)</span>
-<span class="sd">            Optional merge arguments include &#39;zmin&#39;, &#39;zmax&#39;, &#39;mask&#39;, &#39;offset&#39;, &#39;reproj_method&#39;, and &#39;merge_method&#39;.</span>
-<span class="sd">            e.g.: [{&#39;elevtn&#39;: merit_hydro, &#39;zmin&#39;: 0.01}, {&#39;elevtn&#39;: gebco, &#39;offset&#39;: 0, &#39;merge_method&#39;: &#39;first&#39;, reproj_method: &#39;bilinear&#39;}]</span>
+<span class="sd">            Each should minimally contain a data catalog source name, data file path,</span>
+<span class="sd">            or xarray raster object (&#39;elevtn&#39;)</span>
+
+<span class="sd">            Optional merge arguments include &#39;zmin&#39;, &#39;zmax&#39;, &#39;mask&#39;, &#39;offset&#39;,</span>
+<span class="sd">            &#39;reproj_method&#39;, and &#39;merge_method&#39;. e.g.:</span>
+<span class="sd">            [</span>
+<span class="sd">                {&#39;elevtn&#39;: merit_hydro, &#39;zmin&#39;: 0.01},</span>
+<span class="sd">                {&#39;elevtn&#39;: gebco, &#39;offset&#39;: 0, &#39;merge_method&#39;: &#39;first&#39;, reproj_method: &#39;bilinear&#39;}</span>
+<span class="sd">            ]</span>
 <span class="sd">            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays</span>
 <span class="sd">        datasets_rgh : List[dict], optional</span>
 <span class="sd">            List of dictionaries with Manning&#39;s n datasets. Each dictionary should at least contain one of the following:</span>
@@ -1165,7 +1179,7 @@ document.write(`
         <span class="k">if</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                 <span class="n">hydrography</span><span class="p">,</span>
-                <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
                 <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
                 <span class="n">buffer</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
             <span class="p">)</span>
@@ -1284,7 +1298,7 @@ document.write(`
         <span class="k">if</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                 <span class="n">hydrography</span><span class="p">,</span>
-                <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
                 <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
                 <span class="n">buffer</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
             <span class="p">)</span>
@@ -1443,7 +1457,9 @@ document.write(`
 <span class="sd">            By default &#39;med&#39;. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># get data</span>
-        <span class="n">da_org</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">cn</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">da_org</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">cn</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span>
+        <span class="p">)</span>
         <span class="c1"># read variable</span>
         <span class="n">v</span> <span class="o">=</span> <span class="s2">&quot;cn&quot;</span>
         <span class="k">if</span> <span class="n">antecedent_moisture</span><span class="p">:</span>
@@ -1492,10 +1508,14 @@ document.write(`
 
         <span class="c1"># Read the datafiles</span>
         <span class="n">da_landuse</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-            <span class="n">lulc</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span>
+            <span class="n">lulc</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span>
         <span class="p">)</span>
-        <span class="n">da_HSG</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">hsg</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-        <span class="n">da_Ksat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">ksat</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">da_HSG</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">hsg</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span>
+        <span class="p">)</span>
+        <span class="n">da_Ksat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">ksat</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span>
+        <span class="p">)</span>
         <span class="n">df_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span><span class="n">reclass_table</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="c1"># Define outputs</span>
@@ -2058,7 +2078,9 @@ document.write(`
                 <span class="n">df_ts</span> <span class="o">+=</span> <span class="n">offset</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">da_offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-                    <span class="n">offset</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">5</span>
+                    <span class="n">offset</span><span class="p">,</span>
+                    <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
+                    <span class="n">buffer</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">offset_pnts</span> <span class="o">=</span> <span class="n">da_offset</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">gdf_locs</span><span class="p">)</span>
                 <span class="n">df_offset</span> <span class="o">=</span> <span class="n">offset_pnts</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">df_ts</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -2264,7 +2286,7 @@ document.write(`
         <span class="c1"># read data</span>
         <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
             <span class="n">discharge</span><span class="p">,</span>
-            <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
             <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="n">time_tuple</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>  <span class="c1"># model time</span>
             <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;discharge&quot;</span><span class="p">],</span>
@@ -2272,7 +2294,10 @@ document.write(`
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">uparea</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;uparea&quot;</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="n">da_upa</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-                <span class="n">uparea</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span>
+                <span class="n">uparea</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
+                <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">],</span>
             <span class="p">)</span>
             <span class="c1"># make sure ds and da_upa align</span>
             <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_upa</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">)</span>
@@ -2332,7 +2357,7 @@ document.write(`
         <span class="c1"># get data for model domain and config time range</span>
         <span class="n">precip</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
             <span class="n">precip</span><span class="p">,</span>
-            <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
             <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="n">time_tuple</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>
             <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;precip&quot;</span><span class="p">],</span>
@@ -3592,7 +3617,9 @@ document.write(`
 
     <span class="c1">## helper method</span>
     <span class="k">def</span> <span class="nf">_parse_datasets_dep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets_dep</span><span class="p">,</span> <span class="n">res</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse filenames or paths of Datasets in list of dictionaries datasets_dep into xr.DataArray and gdf.GeoDataFrames:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse filenames or paths of Datasets in list of dictionaries datasets_dep</span>
+<span class="sd">        into xr.DataArray and gdf.GeoDataFrames:</span>
+
 <span class="sd">        * &quot;elevtn&quot; is parsed into da (xr.DataArray)</span>
 <span class="sd">        * &quot;offset&quot; is parsed into da_offset (xr.DataArray)</span>
 <span class="sd">        * &quot;mask&quot; is parsed into gdf (gpd.GeoDataFrame)</span>
@@ -3600,9 +3627,11 @@ document.write(`
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        datasets_dep : List[dict]</span>
-<span class="sd">            List of dictionaries with topobathy data, each containing a dataset name or Path (dep) and optional merge arguments.</span>
+<span class="sd">            List of dictionaries with topobathy data, each containing a dataset name or</span>
+<span class="sd">            Path (dep) and optional merge arguments.</span>
 <span class="sd">        res : float</span>
-<span class="sd">            Resolution of the model grid in meters. Used to obtain the correct zoom level of the depth datasets.</span>
+<span class="sd">            Resolution of the model grid in meters. Used to obtain the correct zoom</span>
+<span class="sd">            level of the depth datasets.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">parse_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">,</span> <span class="s2">&quot;offset&quot;</span><span class="p">,</span> <span class="s2">&quot;mask&quot;</span><span class="p">,</span> <span class="s2">&quot;da&quot;</span><span class="p">]</span>
         <span class="n">copy_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;zmin&quot;</span><span class="p">,</span> <span class="s2">&quot;zmax&quot;</span><span class="p">,</span> <span class="s2">&quot;reproj_method&quot;</span><span class="p">,</span> <span class="s2">&quot;merge_method&quot;</span><span class="p">]</span>
@@ -3615,18 +3644,17 @@ document.write(`
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">da_elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                         <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;elevtn&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;da&quot;</span><span class="p">)),</span>
-                        <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span><span class="p">,</span>
+                        <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
                         <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
                         <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">],</span>
                         <span class="n">zoom_level</span><span class="o">=</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">&quot;meter&quot;</span><span class="p">),</span>
                     <span class="p">)</span>
-                    <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da_elv</span><span class="p">})</span>
-                <span class="k">except</span><span class="p">:</span>
+                <span class="c1"># TODO remove ValueError after fix in hydromt core</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">IndexError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
                     <span class="n">data_name</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;elevtn&quot;</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_name</span><span class="si">}</span><span class="s2"> not used; probably because all the data is outside of the mask.&quot;</span>
-                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data in domain for </span><span class="si">{</span><span class="n">data_name</span><span class="si">}</span><span class="s2">, skipped.&quot;</span><span class="p">)</span>
                     <span class="k">continue</span>
+                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da_elv</span><span class="p">})</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">&quot;No &#39;elevtn&#39; (topobathy) dataset provided in datasets_dep.&quot;</span>
@@ -3637,8 +3665,8 @@ document.write(`
             <span class="k">if</span> <span class="s2">&quot;offset&quot;</span> <span class="ow">in</span> <span class="n">dataset</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="s2">&quot;offset&quot;</span><span class="p">],</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
                 <span class="n">da_offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                     <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;offset&quot;</span><span class="p">),</span>
-                    <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span><span class="p">,</span>
-                    <span class="n">buffer</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                    <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
+                    <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;offset&quot;</span><span class="p">:</span> <span class="n">da_offset</span><span class="p">})</span>
 
@@ -3646,7 +3674,7 @@ document.write(`
             <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="n">gdf_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
                     <span class="n">path_or_key</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">),</span>
-                    <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span><span class="p">,</span>
+                    <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;gdf_valid&quot;</span><span class="p">:</span> <span class="n">gdf_valid</span><span class="p">})</span>
 
@@ -3661,17 +3689,21 @@ document.write(`
         <span class="k">return</span> <span class="n">datasets_out</span>
 
     <span class="k">def</span> <span class="nf">_parse_datasets_rgh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets_rgh</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse filenames or paths of Datasets in list of dictionaries datasets_rgh into xr.DataArrays and gdf.GeoDataFrames:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse filenames or paths of Datasets in list of dictionaries datasets_rgh</span>
+<span class="sd">        into xr.DataArrays and gdf.GeoDataFrames:</span>
+
 <span class="sd">        * &quot;manning&quot; is parsed into da (xr.DataArray)</span>
-<span class="sd">        * &quot;lulc&quot; is parsed into da (xr.DataArray) using reclassify table in &quot;reclass_table&quot;</span>
+<span class="sd">        * &quot;lulc&quot; is parsed into da (xr.DataArray) using reclass table in &quot;reclass_table&quot;</span>
 <span class="sd">        * &quot;mask&quot; is parsed into gdf_valid (gpd.GeoDataFrame)</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        datasets_rgh : List[dict], optional</span>
-<span class="sd">            List of dictionaries with Manning&#39;s n datasets. Each dictionary should at least contain one of the following:</span>
+<span class="sd">            List of dictionaries with Manning&#39;s n datasets. Each dictionary should at</span>
+<span class="sd">            least contain one of the following:</span>
 <span class="sd">            * (1) manning: filename (or Path) of gridded data with manning values</span>
-<span class="sd">            * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a reclassify table.</span>
+<span class="sd">            * (2) lulc (and reclass_table): a combination of a filename of gridded</span>
+<span class="sd">                  landuse/landcover and a reclassify table.</span>
 <span class="sd">            In additon, optional merge arguments can be provided e.g.: merge_method, mask</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">parse_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="s2">&quot;lulc&quot;</span><span class="p">,</span> <span class="s2">&quot;reclass_table&quot;</span><span class="p">,</span> <span class="s2">&quot;mask&quot;</span><span class="p">,</span> <span class="s2">&quot;da&quot;</span><span class="p">]</span>
@@ -3684,7 +3716,7 @@ document.write(`
             <span class="k">if</span> <span class="s2">&quot;manning&quot;</span> <span class="ow">in</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="s2">&quot;da&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="n">da_man</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                     <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;da&quot;</span><span class="p">)),</span>
-                    <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span><span class="p">,</span>
+                    <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
                     <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da_man</span><span class="p">})</span>
@@ -3694,12 +3726,15 @@ document.write(`
                 <span class="n">reclass_table</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reclass_table&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">reclass_table</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lulc</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                     <span class="n">reclass_table</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">DATADIR</span><span class="p">,</span> <span class="s2">&quot;lulc&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">lulc</span><span class="si">}</span><span class="s2">_mapping.csv&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">reclass_table</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lulc</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">reclass_table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">&quot;Manning roughness mapping file not found: </span><span class="si">{</span><span class="n">reclass_table</span><span class="si">}</span><span class="s2">&quot;</span>
                     <span class="p">)</span>
                 <span class="n">da_lulc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-                    <span class="n">lulc</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;lulc&quot;</span><span class="p">]</span>
+                    <span class="n">lulc</span><span class="p">,</span>
+                    <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
+                    <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                    <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;lulc&quot;</span><span class="p">],</span>
                 <span class="p">)</span>
                 <span class="n">df_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span><span class="n">reclass_table</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
                 <span class="c1"># reclassify</span>
@@ -3712,7 +3747,7 @@ document.write(`
             <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="n">gdf_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
                     <span class="n">path_or_key</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">),</span>
-                    <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span><span class="p">,</span>
+                    <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;gdf_valid&quot;</span><span class="p">:</span> <span class="n">gdf_valid</span><span class="p">})</span>
 
