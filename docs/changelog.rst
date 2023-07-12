@@ -8,17 +8,24 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 v1.0.1 (unreleased)
 ===================
 
-
 Bugfix
 ------
 - bugfix in `SfincsModel.write_forcing` to ensure all NetCDF files are written instead of only the first one. PR #86
 - bugfix in `SfincsModel.read_config` & `SfincsInput.read` for relative paths in inp file. PR #88
 - bugfix in `SfincsModel.setup_subgrid` to ensure that a 'big geotiff' will be written by default when 'write_dep_tif' or 'write_man_tif' are True
 - fix memory issues caused by rasterizing the model region and reprojecting before clipping of rasters. PR #94 
+- bugfix in `Sfincs.read_forcing` when combining attributes from the locations stored in the gis folder with the actual forcing locations. PR #99
+- bugfix in `SfincsModel.setup_discharge_from_grid` when snapping based on upstream area in case a src points is outside of the uparea grid domain. PR #99
 
 New
 -----------
-- `SfincsModel.setup_cn_infiltration_with_kr` to setup three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr)
+- `SfincsModel.setup_cn_infiltration_with_kr` to setup three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr). PR#87
+- `SfincsModelsetup_drainage_structures` to setup drainage structures (pumps,culverts) from a geodataframe. PR#90
+- Added `SfincsModel.setup_wind_forcing`, `SfincsModel.setup_wind_forcing_from_grid` and `SfincsModel.setup_pressure_forcing_from_grid` methods to easily add wind and pressure forcing.  PR #92
+- `SfincsModel.read_config` allows to use a template input file from a directory different than the model root. PR #102
+- Added the option to use landuse/landcover data combined with a reclass table to `SfincsModel.setup_constant_infiltration`.  PR #103
+- Enabled to provide locations only (so no timeseries) for `SfincsModel.setup_waterlevel_forcing` and `SfincsModel.setup_discharge_forcing` PR #104
+- New optional buffer argument in  `SfincsModel.setup_discharge_forcing` to select gauges around boundary only. PR #104
 
 Changed
 -------
