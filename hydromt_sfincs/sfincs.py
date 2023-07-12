@@ -974,8 +974,6 @@ class SfincsModel(GridModel):
             )
         elif lulc is not None:
             # landuse/landcover should always be combined with mapping
-            if reclass_table is None and isinstance(lulc, str):
-                reclass_table = join(DATADIR, "lulc", f"{lulc}_mapping.csv")
             if reclass_table is None:
                 raise IOError(
                     f"Infiltration mapping file should be provided for {lulc}"
