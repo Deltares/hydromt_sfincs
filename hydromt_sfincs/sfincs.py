@@ -1592,6 +1592,7 @@ class SfincsModel(GridModel):
             Path, data source name, or pandas data object for tabular timeseries.
         locations: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for bnd point locations.
+            It should contain a 'index' column matching the column names in `timeseries`.
         offset: str, Path, xr.Dataset, float, optional
             Path, data source name, constant value or xarray raster data for gridded offset
             between vertical reference of elevation and waterlevel data,
@@ -1635,14 +1636,14 @@ class SfincsModel(GridModel):
                 index_col=0,
             )
             df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
-        else:
-            raise ValueError("Either geodataset or timeseries must be provided")
 
-        # optionally read location data (if not already read from geodataset)
+        # read location data (if not already read from geodataset)
         if gdf_locs is None and locations is not None:
             gdf_locs = self.data_catalog.get_geodataframe(
                 locations, geom=region, buffer=buffer, crs=self.crs
             ).to_crs(self.crs)
+            if "index" in gdf_locs.columns:
+                gdf_locs = gdf_locs.set_index("index")
         elif gdf_locs is None and "bzs" in self.forcing:
             gdf_locs = self.forcing["bzs"].vector.to_gdf()
         elif gdf_locs is None:
@@ -1665,7 +1666,7 @@ class SfincsModel(GridModel):
             )
 
         # set/ update forcing
-        self.set_forcing_1d(df_ts, gdf_locs, name="bzs", merge=merge)
+        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="bzs", merge=merge)
 
     def setup_waterlevel_bnd_from_mask(
         self,
@@ -1712,7 +1713,12 @@ class SfincsModel(GridModel):
         self.set_forcing_1d(gdf_locs=gdf, name="bzs", merge=merge)
 
     def setup_discharge_forcing(
-        self, geodataset=None, timeseries=None, locations=None, merge=True
+        self,
+        geodataset=None,
+        timeseries=None,
+        locations=None,
+        merge=True,
+        buffer: float = None,
     ):
         """Setup discharge forcing.
 
@@ -1735,8 +1741,12 @@ class SfincsModel(GridModel):
             Path, data source name, or pandas data object for tabular timeseries.
         locations: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for bnd point locations.
+            It should contain a 'index' column matching the column names in `timeseries`.
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
+        buffer: float, optional
+            Buffer [m] around model boundary within the model region
+            select discharge gauges, by default None.
 
         See Also
         --------
@@ -1744,12 +1754,16 @@ class SfincsModel(GridModel):
         """
         gdf_locs, df_ts = None, None
         tstart, tstop = self.get_model_time()  # model time
+        # buffer
+        region = self.region
+        if buffer is not None:  # TODO this assumes the model crs is projected
+            region = region.boundary.buffer(buffer).clip(self.region)
         # read waterlevel data from geodataset or geodataframe
         if geodataset is not None:
             # read and clip data in time & space
             da = self.data_catalog.get_geodataset(
                 geodataset,
-                geom=self.region,
+                geom=region,
                 variables=["discharge"],
                 time_tuple=(tstart, tstop),
                 crs=self.crs,
@@ -1765,21 +1779,21 @@ class SfincsModel(GridModel):
                 index_col=0,
             )
             df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
-        else:
-            raise ValueError("Either geodataset or timeseries must be provided")
 
-        # optionally read location data (if not already read from geodataset)
+        # read location data (if not already read from geodataset)
         if gdf_locs is None and locations is not None:
             gdf_locs = self.data_catalog.get_geodataframe(
-                locations, geom=self.region, crs=self.crs
+                locations, geom=region, crs=self.crs
             ).to_crs(self.crs)
+            if "index" in gdf_locs.columns:
+                gdf_locs = gdf_locs.set_index("index")
         elif gdf_locs is None and "dis" in self.forcing:
             gdf_locs = self.forcing["dis"].vector.to_gdf()
         elif gdf_locs is None:
             raise ValueError("No discharge boundary (src) points provided.")
 
         # set/ update forcing
-        self.set_forcing_1d(df_ts, gdf_locs, name="dis", merge=merge)
+        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="dis", merge=merge)
 
     def setup_discharge_forcing_from_grid(
         self,
@@ -3094,42 +3108,35 @@ class SfincsModel(GridModel):
 
     ## model configuration
 
-    def read_config(self, config_fn: str = "sfincs.inp", epsg: int = None) -> None:
+    def read_config(self, config_fn: str = None, epsg: int = None) -> None:
         """Parse config from SFINCS input file.
-        If in write-only mode the config is initialized with default settings.
+        If in write-only mode the config is initialized with default settings
+        unless a path to a template config file is provided.
 
         Parameters
         ----------
         config_fn: str
-            Filename of config file, by default "sfincs.inp".
-            If in a different folder than the model root, the root is updated.
+            Filename of config file, by default None.
         epsg: int
-            EPSG code of the model CRS. Only used if missing in the SFINCS input file, by default None.
+            EPSG code of the model CRS. Only used if missing in the SFINCS input file,
+            by default None.
         """
         inp = SfincsInput()  # initialize with defaults
-        if self._read:  # in read-only or append mode, try reading config_fn
-            if not isfile(config_fn) and not isabs(config_fn) and self._root:
-                # path relative to self.root
+        if config_fn is not None or self._read:
+            if config_fn is None:  # read from default location
+                config_fn = self._config_fn
+            if not isabs(config_fn) and self._root:  # read from model root
                 config_fn = abspath(join(self.root, config_fn))
-            elif isfile(config_fn) and abspath(dirname(config_fn)) != self._root:
-                # new root
-                mode = (
-                    "r+"
-                    if self._write and self._read
-                    else ("w" if self._write else "r")
-                )
-                root = abspath(dirname(config_fn))
-                self.logger.warning(f"updating the model root to: {root}")
-                self.set_root(root=root, mode=mode)
-            else:
+            if not isfile(config_fn):
                 raise IOError(f"SFINCS input file not found {config_fn}")
-            # read config_fn
+            # read inp file
             inp.read(inp_fn=config_fn)
         # overwrite / initialize config attribute
         self._config = inp.to_dict()
         if epsg is not None and "epsg" not in self.config:
-            self.config.update(epsg=epsg)
-        self.update_grid_from_config()  # update grid properties based on sfincs.inp
+            self.set_config("epsg", int(epsg))
+        # update grid properties based on sfincs.inp
+        self.update_grid_from_config()
 
     def write_config(self, config_fn: str = "sfincs.inp"):
         """Write config to <root/config_fn>"""
