@@ -451,6 +451,7 @@ document.write(`
 <li><p><cite>SfincsModel.setup_cn_infiltration_with_kr</cite> to setup three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr). PR#87</p></li>
 <li><p><cite>SfincsModelsetup_drainage_structures</cite> to setup drainage structures (pumps,culverts) from a geodataframe. PR#90</p></li>
 <li><p>Added <cite>SfincsModel.setup_wind_forcing</cite>, <cite>SfincsModel.setup_wind_forcing_from_grid</cite> and <cite>SfincsModel.setup_pressure_forcing_from_grid</cite> methods to easily add wind and pressure forcing.  PR #92</p></li>
+<li><p>Added the option to use landuse/landcover data combined with a reclass table to <cite>SfincsModel.setup_constant_infiltration</cite>.  PR #103</p></li>
 <li><p>Enabled to provide locations only (so no timeseries) for <cite>SfincsModel.setup_waterlevel_forcing</cite> and <cite>SfincsModel.setup_discharge_forcing</cite> PR #104</p></li>
 <li><p>New optional buffer argument in  <cite>SfincsModel.setup_discharge_forcing</cite> to select gauges around boundary only. PR #104</p></li>
 </ul>

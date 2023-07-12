@@ -1342,7 +1342,13 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivers_outflow&quot;</span><span class="p">)</span></div>
 
     <span class="c1"># Function to create constant spatially varying infiltration</span>
-<div class="viewcode-block" id="SfincsModel.setup_constant_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration.html#hydromt_sfincs.SfincsModel.setup_constant_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_constant_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qinf</span><span class="p">,</span> <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;average&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.setup_constant_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration.html#hydromt_sfincs.SfincsModel.setup_constant_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_constant_infiltration</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">qinf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">lulc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">reclass_table</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;average&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup spatially varying constant infiltration rate (qinffile).</span>
 
 <span class="sd">        Adds model layers:</span>
@@ -1353,16 +1359,48 @@ document.write(`
 <span class="sd">        ----------</span>
 <span class="sd">        qinf : str, Path, or RasterDataset</span>
 <span class="sd">            Spatially varying infiltration rates [mm/hr]</span>
+<span class="sd">        lulc: str, Path, or RasterDataset</span>
+<span class="sd">            Landuse/landcover data set</span>
+<span class="sd">        reclass_table: str, Path, or pd.DataFrame</span>
+<span class="sd">            Reclassification table to convert landuse/landcover to infiltration rates [mm/hr]</span>
 <span class="sd">        reproj_method : str, optional</span>
 <span class="sd">            Resampling method for reprojecting the infiltration data to the model grid.</span>
 <span class="sd">            By default &#39;average&#39;. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># get infiltration data</span>
-        <span class="n">da_inf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">qinf</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-        <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_inf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>  <span class="c1"># set nodata to nan</span>
+        <span class="k">if</span> <span class="n">qinf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">da_inf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                <span class="n">qinf</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
+                <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">lulc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># landuse/landcover should always be combined with mapping</span>
+            <span class="k">if</span> <span class="n">reclass_table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Infiltration mapping file should be provided for </span><span class="si">{</span><span class="n">lulc</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">da_lulc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                <span class="n">lulc</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
+                <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;lulc&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">df_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
+                <span class="n">reclass_table</span><span class="p">,</span>
+                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;qinf&quot;</span><span class="p">],</span>
+                <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># driver kwargs</span>
+            <span class="p">)</span>
+            <span class="c1"># reclassify</span>
+            <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_lulc</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reclassify</span><span class="p">(</span><span class="n">df_map</span><span class="p">)[</span><span class="s2">&quot;qinf&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Either qinf or lulc must be provided when setting up constant infiltration.&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># reproject infiltration data to model grid</span>
+        <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_inf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>  <span class="c1"># set nodata to nan</span>
         <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_inf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
 
         <span class="c1"># check on nan values</span>
