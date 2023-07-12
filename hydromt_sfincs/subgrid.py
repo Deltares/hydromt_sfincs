@@ -450,6 +450,7 @@ class SubgridTableRegular:
                         da_man = da_man.where(~np.isnan(da_man), da_man0)
                 else:
                     da_man = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
+                    da_man.raster.set_nodata(np.nan)
                 # mask values of inactive cells
                 da_man = da_man.where(da_mask_sbg > 0, da_man.raster.nodata)
                 check_nans = np.all(~np.isnan(da_man.values[da_mask_sbg > 0]))
