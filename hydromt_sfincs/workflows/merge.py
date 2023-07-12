@@ -88,8 +88,18 @@ def merge_multi_dataarrays(
         method = "bilinear"
 
     if da_like is not None:  # reproject first raster to destination grid
-        da1 = da1.raster.reproject_like(da_like, method=method).load()
+        # clip before reproject
+        bbox = da_like.raster.transform_bounds(da1.raster.crs)
+        da1 = da1.raster.clip_bbox(bbox, buffer=2)
+        if np.any(np.array(da1.shape) <= 2):
+            # no data in da1 so use an empty array like da_like
+            logger.debug("No data da1, start with empty array")
+            da1 = xr.full_like(da_like, np.nan)
+        else:
+            # TODO: this applies to the whole dataset, not only the clipped part
+            da1 = da1.load().raster.reproject_like(da_like)
     elif reproj_kwargs:
+        # TODO
         da1 = da1.raster.reproject(method=method, **reproj_kwargs).load()
     logger.debug(f"Reprojection method of first dataset is: {method}")
 
@@ -115,6 +125,7 @@ def merge_multi_dataarrays(
         # base reprojection method on resolution of datasets
         reproj_method = da_list[i].get("reproj_method", None)
         da2 = da_list[i].get("da")
+
         if reproj_method is None:
             dx_2 = (
                 np.abs(da2.raster.res[0])
@@ -207,15 +218,16 @@ def merge_dataarrays(
     dtype = da1.dtype
     if not np.isnan(nodata):
         da1 = da1.raster.mask_nodata()
+    # clip before reproject
+    bbox = da1.raster.transform_bounds(da2.raster.crs)
+    da2 = da2.raster.clip_bbox(bbox, buffer=2)
+    if np.any(np.array(da2.shape) <= 2):
+        logger.debug(f"No data in dataset 2 within bbox [{bbox}], skip")
+        return da1
+
     ## reproject da2 and reset nodata value to match da1 nodata
-    try:
-        da2 = (
-            da2.raster.reproject_like(da1, method=reproj_method)
-            .raster.mask_nodata()
-            .load()
-        )
-    except:
-        print("No data for this tile")
+    da2 = da2.load().raster.reproject_like(da1, method=reproj_method)
+    da2 = da2.raster.mask_nodata()
 
     da2 = _add_offset_mask_invalid(
         da=da2,
