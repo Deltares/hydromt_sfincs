@@ -454,7 +454,7 @@ class SubgridTableRegular:
                 if len(datasets_riv) > 0:
                     for riv_kwargs in datasets_riv:
                         da_dep, da_man = workflows.bathymetry.burn_river_rect(
-                            da_elv=da_dep, da_man=da_man, **riv_kwargs
+                            da_elv=da_dep, da_man=da_man, logger=logger, **riv_kwargs
                         )
 
                 # optional write tile to file

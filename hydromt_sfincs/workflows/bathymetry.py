@@ -4,6 +4,7 @@ from typing import Tuple
 
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 import pyflwdir
 import xarray as xr
 from hydromt.gis_utils import nearest, nearest_merge, parse_crs, spread2d
@@ -11,7 +12,8 @@ from hydromt.raster import full_like
 from hydromt.workflows import rivers
 from scipy import ndimage
 from scipy.interpolate import interp1d
-from shapely.ops import linemerge
+from shapely.geometry import LineString, Point, MultiLineString, MultiPoint
+from shapely.ops import linemerge, split, snap, unary_union
 
 logger = logging.getLogger(__name__)
 
@@ -390,73 +392,166 @@ def get_river_bathymetry(
 # 4. interpolate z values at cell centers based on x, normalized y with LinearNDInterpolator
 
 
-def interp_along_line_to_grid(
-    da: xr.DataArray,
-    gdf_lines: gpd.GeoDataFrame,
-    gdf_zb: gpd.GeoDataFrame,
-    gdf_mask: gpd.GeoDataFrame = None,
-    fill_value: float = np.nan,
-    column_names: list = ["z"],
-) -> xr.DataArray:
-    """Interpolate "z" values from `gdf_zb` along
-    lines from `gdf_lines` to grid cells from `da`.
+def _split_line_by_point(
+    line: LineString, point: Point, tolerance: float = 1.0e-5
+) -> MultiLineString:
+    """Split a single line with a point.
 
     Parameters
     ----------
-    da : xr.DataArray
-        grid to interpolate to
-    gdf_lines : gpd.GeoDataFrame
-        river center lines
-    gdf_zb : gpd.GeoDataFrame
-        point locations with z values to interpolate in "z" column
-    gdf_mask : gpd.GeoDataFrame, optional
-        mask in which to interpolate z values,
-        by default None (only along line)
-    fill_value : float, optional
-        fill value for lines without z point locations,
-        by default np.nan
+    line : LineString
+        line
+    point : Point
+        point
+    tolerance : float, optional
+        tolerance to snap the point to the line, by default 1.0e-5
 
     Returns
     -------
-    xr.DataArray
-        interpolated z values
+    MultiLineString
+        splitted line
     """
-    assert all([c in gdf_zb.columns for c in column_names])
-    # get cell centers of cells to interpolate
-    if gdf_mask is None:
-        mask = da.raster.geometry_mask(gdf_lines)
+    return split(snap(line, point, tolerance), point)
+
+
+def _line_to_points(line: LineString, dist: float = None, n: int = None) -> MultiPoint:
+    """Get points along line based on a distance `dist` or number of points `n`.
+
+    Parameters
+    ----------
+    line : LineString
+        line
+    dist : float
+        distance between points
+    n: integer
+        numer of points
+
+    Returns
+    -------
+    MultiPoint
+        points
+    """
+    if dist is not None:
+        distances = np.arange(0, line.length, dist)
+    elif n is not None:
+        distances = np.linspace(0, line.length, n)
     else:
-        mask = da.raster.geometry_mask(gdf_mask)
-    xs, ys = da.raster.xy(*np.where(mask.values))
-    cc = gpd.GeoDataFrame(geometry=gpd.points_from_xy(xs, ys), crs=da.raster.crs)
+        ValueError('Either "dist" or "n" should be provided')
+    points = unary_union(line.interpolate(distances))
+    return points
+
+
+def _split_line_equal(
+    line: LineString, approx_length: float, tolerance: float = 1.0e-5
+) -> MultiLineString:
+    """Split line into segments with equal length.
+
+    Parameters
+    ----------
+    line : LineString
+        line to split
+    approx_length : float
+        Based in this approximate length the number of line segments is determined.
+    tolerance : float, optional
+        tolerance to snap the point to the line, by default 1.0e-5
+
+    Returns
+    -------
+    MultiLineString
+        line splitted in segments of equal length
+    """
+    n = int(np.floor(line.length / approx_length))
+    if n <= 1:
+        return line
+    else:
+        split_points = _line_to_points(line, n=n)
+        return _split_line_by_point(line, split_points, tolerance=tolerance)
+
+
+def split_line_equal(gdf: gpd.GeoDataFrame, dist: float) -> gpd.GeoDataFrame:
+    """Split lines in `gdf` into segments with equal length `dist`.
+
+    Parameters
+    ----------
+    gdf : gpd.GeoDataFrame
+        lines
+    dist : float
+        approximate length of splitted line segments
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        splitted lines
+    """
+
+    def _split_geom(x: gpd.GeoSeries, dist: float = dist) -> MultiLineString:
+        return _split_line_equal(x.geometry, dist)
+
+    gdf_splitted = gdf.assign(geometry=gdf.apply(_split_geom, axis=1)).explode()
+    return gdf_splitted
+
+
+def interp_along_line_to_grid(
+    da_mask: xr.DataArray,
+    gdf_lines: gpd.GeoDataFrame,
+    gdf_zb: gpd.GeoDataFrame,
+    column_names: list = ["z"],
+    logger=logger,
+) -> xr.DataArray:
+    """Interpolate values from `gdf_zb` along
+    lines from `gdf_lines` to grid cells from `da_mask`.
+
+    Parameters
+    ----------
+    da_mask : xr.DataArray, optional
+        Boolean mask. Only cells with True values are interpolated.
+    gdf_lines : gpd.GeoDataFrame
+        center lines
+    gdf_zb : gpd.GeoDataFrame
+        point locations with alues to interpolate
+    column_names : list, optional
+        column names to interpolate, by default ["z"]
+
+    Returns
+    -------
+    xr.Dataset
+        interpolated values
+    """
+    if not all([c in gdf_zb.columns for c in column_names]):
+        missing = [c for c in column_names if c not in gdf_zb.columns]
+        raise ValueError(f"Missing columns in gdf_zb: {missing}")
+    # get cell centers of cells to interpolate
+    xs, ys = da_mask.raster.xy(*np.where(da_mask.values))
+    cc = gpd.GeoDataFrame(geometry=gpd.points_from_xy(xs, ys), crs=da_mask.raster.crs)
 
     # find nearest line and calculate relative distance along line for all z points
-    gdf_zb = gdf_zb.copy()
+    gdf_zb = gdf_zb[["geometry"] + column_names].copy()
     gdf_zb["idx0"], gdf_zb["dist"] = nearest(gdf_zb, gdf_lines)
-    gdf_zb["x"] = gdf_lines.loc[gdf_zb["idx0"], "geometry"].values.project(
-        gdf_zb["geometry"]
-    )
+    nearest_lines = gdf_lines.loc[gdf_zb["idx0"], "geometry"].values
+    gdf_zb["x"] = nearest_lines.project(gdf_zb["geometry"])
     gdf_zb.set_index("idx0", inplace=True)
 
     # find nearest line and calculate relative distance along line for all cell centers
     cc["idx0"], cc["dist"] = nearest(cc, gdf_lines)
-    cc["x"] = gdf_lines.loc[cc["idx0"], "geometry"].values.project(cc["geometry"])
+    nearest_lines = gdf_lines.loc[cc["idx0"], "geometry"].values
+    cc["x"] = nearest_lines.project(cc["geometry"].to_crs(gdf_lines.crs))
 
     # interpolate z values per line
-    def _interp(cc0, gdf_zb=gdf_zb, column_names=column_names, fill_value=fill_value):
+    def _interp(cc0, gdf_zb=gdf_zb, column_names=column_names):
         kwargs = dict(kind="linear", fill_value="extrapolate")
-        idx0 = cc0["idx0"].values[0]
-        if gdf_zb.loc[idx0].shape[0] == 0:
-            for name in column_names:
-                cc0[name] = fill_value
-        elif gdf_zb.loc[idx0].shape[0] == 1:
-            for name in column_names:
-                cc0[name] = gdf_zb.loc[idx0, name].values[0]
-        else:
-            x0 = gdf_zb.loc[idx0, "x"].values
-            x1 = cc0["x"].values
-            for name in column_names:
-                z0 = gdf_zb.loc[idx0, name].values
+        idx0 = cc0["idx0"].values[0]  # iterpolate per line with ID idx0
+        for name in column_names:
+            x0 = np.atleast_1d(gdf_zb.loc[idx0, "x"])
+            z0 = np.atleast_1d(gdf_zb.loc[idx0, name]).astype(np.float32)
+            valid = np.isfinite(z0)
+            x0, z0 = x0[valid], z0[valid]
+            if x0.size == 0:
+                cc0[name] = np.nan
+                logger.warning(f"River segment {idx0} has no valid values for {name}.")
+            elif x0.size == 1:
+                cc0[name] = z0[0]
+            else:
+                x1 = cc0["x"].values
                 cc0[name] = interp1d(x0, z0, **kwargs)(x1)
         return cc0
 
@@ -465,7 +560,7 @@ def interp_along_line_to_grid(
     # rasterize interpolated z values
     ds_out = xr.Dataset()
     for name in column_names:
-        da0 = da.raster.rasterize(cc, name, nodata=fill_value).where(mask, fill_value)
+        da0 = da_mask.raster.rasterize(cc, name, nodata=np.nan).where(da_mask)
         ds_out = ds_out.assign(**{name: da0})
 
     return ds_out
@@ -477,26 +572,15 @@ def burn_river_rect(
     da_man: xr.DataArray = None,
     gdf_zb: gpd.GeoDataFrame = None,
     gdf_riv_mask: gpd.GeoDataFrame = None,
+    segment_length: float = 200,
+    riv_bank_q: float = 0.25,
     rivwth_name: str = "rivwth",
     rivdph_name: str = "rivdph",
     rivbed_name: str = "rivbed",
     manning_name: str = "manning",
-    smooth_dist=0.01,
-    fill_value: float = np.nan,
+    logger=logger,
 ):
     """Burn rivers with a rectangular cross profile into a DEM.
-
-    The river width [m] can be provided in the 'rivwth' column of `gdf_riv`,
-    or as a polygon in the 'geometry' column of `gdf_riv_mask`.
-
-    River depth [m] can be provided in the 'rivdph' column of `gdf_riv` as a depth
-    relative to the river bank level, or in the 'rivbed' column of `gdf_riv` as
-    an absolute river bed level [m+REF]. If both columns are provided, 'rivbed' is used.
-    Alternativly, the river bed level can be provided `gdf_zb` which should
-    contain point locations along the river center line.
-
-    Depths or bed levels are interpolated along the river center line of the same
-    stream order ('strord') to grid cells within the river mask.
 
 
     Parameters
@@ -505,11 +589,6 @@ def burn_river_rect(
         DEM and manning raster to burn river depth and manning values into
     gdf_riv : gpd.GeoDataFrame
         River center lines.
-        * Should contain a 'rivwth' column with river width [m] if no river mask
-          `gdf_riv_mask` is provided.
-        * Should contain a 'rivdph' or 'rivbed' column with river depth [m] or bed level
-          [m+REF] if no point elevation locations `gdf_zb` are provided.
-        May contain a 'strord' column with stream order to limit interpolation to same stream order.
     gdf_zb : gpd.GeoDataFrame, optional
         Point locations with a 'rivbed' river bed level [m+REF] column, by defualt None
     gdf_riv_mask : gpd.GeoDataFrame, optional
@@ -521,93 +600,109 @@ def burn_river_rect(
     fill_value : float, optional
         fill value for lines without z point locations,
         by default np.nan
-    interp_dist: float, optional
-        Part of line at both ends at which to interpolate values between
-        different segments. By default 0.01
 
     """
     # clip
-    gdf_riv = gdf_riv.clip(da_elv.raster.box)
+    gdf_riv = gdf_riv.clip(da_elv.raster.box.to_crs(gdf_riv.crs))
     if gdf_riv.index.size == 0:  # no rivers in domain
         return da_elv, da_man
 
     # reproject to utm if geographic
-    if gdf_riv.crs.is_geographic:
+    dst_crs = gdf_riv.crs
+    if dst_crs.is_geographic:
         dst_crs = parse_crs("utm", gdf_riv.to_crs(4326).total_bounds)
         gdf_riv = gdf_riv.to_crs(dst_crs)
 
     # check river mask
-    if gdf_riv_mask is None and rivwth_name in gdf_riv.columns:
-        # create mask based on river width
-        gdf_riv_mask = gdf_riv.assign(
-            geometry=gdf_riv.geometry.buffer(gdf_riv[rivwth_name] / 2),
-        )
+    if gdf_riv_mask is None:
+        # create gdf_riv_mask based on buffered river center line only
+        if rivwth_name in gdf_riv.columns:
+            buffer = gdf_riv[rivwth_name] / 2
+        gdf_riv_mask = gdf_riv.assign(geometry=gdf_riv.buffer(buffer))
+    # make sure the river is at least one cell wide by rasterizing the river line
+    da_riv_mask = np.logical_or(
+        da_elv.raster.geometry_mask(gdf_riv_mask),  # polygon
+        da_elv.raster.geometry_mask(gdf_riv),  # line
+    )
 
-    # translate line to points
-    if gdf_zb is None:
-        # get z points along line length to interpolate river depth between segments
-        xnorm = np.unique([min(smooth_dist, 0.5), 1 - min(smooth_dist, 0.5)])
-        points = gdf_riv.geometry.apply(
-            lambda x: x.interpolate(xnorm, normalized=True)
-        ).explode()
-        gdf_zb = (
-            gdf_riv.loc[points.index].assign(geometry=points).reset_index(drop=True)
+    if gdf_zb is None and rivbed_name not in gdf_riv.columns:
+        # calculate river bedlevel based on river depth per segment
+        gdf_riv_seg = split_line_equal(gdf_riv, segment_length).reset_index(drop=True)
+        # create mask or river bank cells adjacent to river mask -> numpy array
+        riv_mask_closed = ndimage.binary_closing(da_riv_mask)  # remove islands
+        riv_bank = np.logical_xor(
+            riv_mask_closed, ndimage.binary_dilation(riv_mask_closed)
         )
-
-    # check rivdph vs rivbed inputs
-    if rivbed_name in gdf_zb.columns:
-        column_names = [rivbed_name]
-    elif rivdph_name in gdf_zb.columns:
-        column_names = [rivdph_name]
-    else:
-        raise ValueError(f"Missing {rivbed_name} or {rivdph_name} column in gdf_zb")
-    if "manning" in gdf_zb.columns:
-        column_names.append("manning")
-    gdf_zb = gdf_zb[column_names + ["geometry"]]
+        # make sure river bank cells are not nodata
+        riv_bank = np.logical_and(
+            riv_bank, ~np.isnan(da_elv.raster.mask_nodata().values)
+        )
+        # sample elevation at river bank cells
+        rows, cols = np.where(riv_bank)
+        riv_bank_cc = gpd.GeoDataFrame(
+            geometry=gpd.points_from_xy(*da_elv.raster.xy(rows, cols)),
+            data={"z": da_elv.values[rows, cols]},
+            crs=da_elv.raster.crs,
+        )
+        # find nearest river center line for each river bank cell
+        riv_bank_cc["idx0"], _ = nearest(riv_bank_cc, gdf_riv_seg)
+        # calculate segment river bank elevation as percentile of river bank cells
+        gdf_riv_seg["z"] = riv_bank_cc.groupby("idx0").quantile(q=riv_bank_q)
+        # calculate river bed elevation per segment
+        gdf_riv_seg[rivbed_name] = gdf_riv_seg["z"] - gdf_riv_seg[rivdph_name]
+        # get zb points at center of line segments
+        points = gdf_riv_seg.geometry.interpolate(0.5, normalized=True)
+        gdf_zb = gdf_riv_seg.assign(geometry=points)
+    elif gdf_zb is None:
+        # get zb points at center of line segments
+        points = gdf_riv.geometry.interpolate(0.5, normalized=True)
+        gdf_zb = gdf_riv.assign(geometry=points)
+    elif gdf_zb is not None:
+        if rivbed_name not in gdf_zb.columns:
+            raise ValueError(f"Missing {rivbed_name} attribute in gdf_zb")
+        # fill missing manning values based on centerlines
+        # TODO manning always defined on centerline?
+        if manning_name not in gdf_zb.columns and manning_name in gdf_riv.columns:
+            gdf_zb[manning_name] = np.nan
+        if np.any(np.isnan(gdf_zb[manning_name])):
+            gdf_zb["idx0"], _ = nearest(gdf_zb, gdf_riv)
+            man_nearest = gdf_riv.loc[gdf_zb["idx0"], manning_name]
+            gdf_zb[manning_name] = gdf_zb[manning_name].fillna(man_nearest)
+    elif rivbed_name not in gdf_zb.columns:
+        raise ValueError(f"Missing {rivbed_name} or {rivdph_name} attributes")
 
     # merge river lines > z points are interpolated along merged line
     if gdf_riv.index.size > 1:
-        gdf_riv = gpd.GeoDataFrame(
+        gdf_riv_merged = gpd.GeoDataFrame(
             geometry=[linemerge(gdf_riv.unary_union)], crs=gdf_riv.crs
         )
-        gdf_riv = gdf_riv.explode().reset_index(drop=True)
+        gdf_riv_merged = gdf_riv_merged.explode().reset_index(drop=True)
+    else:
+        gdf_riv_merged = gdf_riv
 
     # interpolate river depth along river center line
+    column_names = [rivbed_name]
+    if manning_name in gdf_zb.columns:
+        column_names += [manning_name]
+    # TODO use this for zb only, make seperate nearest interpolation for manning
     ds = interp_along_line_to_grid(
-        da=da_elv,
-        gdf_lines=gdf_riv,
+        da_mask=da_riv_mask,
+        gdf_lines=gdf_riv_merged,
         gdf_zb=gdf_zb,
-        gdf_mask=gdf_riv_mask,
-        fill_value=fill_value,
         column_names=column_names,
+        logger=logger,
     )
 
-    # update elevation
-    nodata, crs = da_elv.raster.nodata, da_elv.raster.crs
-    if rivbed_name in ds:
-        # replace elevations with river bottom elevations
-        da_elv1 = da_elv.where(np.isnan(ds[rivbed_name]), ds[rivbed_name])
-    else:
-        # replace values whitin river mask with np.nan
-        # and interpolate river bank elevation to river cells
-        # TODO this can be improved by calculating the river bank elevation
-        # based on a percentile elevation per segment, but not sure how to
-        # create the segments yet
-        da_elv1 = da_elv.raster.mask_nodata()
-        da_elv1 = da_elv1.where(np.isnan(ds[rivdph_name]), np.nan)
-        da_elv1.raster.set_nodata(np.nan)
-        da_elv1 = da_elv1.raster.interpolate_na(method="linear", extrapolate=True)
-        # subtract river depth from interpolated river bank elevation
-        da_elv1 = da_elv1 - ds[rivdph_name].fillna(0)
-        # reset original nodata values
-        da_elv1 = da_elv1.where(~np.isnan(da_elv1)).fillna(nodata)
+    # update elevation with river bottom elevations
     # river bed elevation must be lower than original elevation
-    da_elv = np.minimum(da_elv1, da_elv)
-    da_elv.raster.set_nodata(nodata)
-    da_elv.raster.set_crs(crs)
+    da_elv1 = da_elv.where(
+        np.logical_or(np.isnan(ds[rivbed_name]), da_elv < ds[rivbed_name]),
+        ds[rivbed_name],
+    )
 
     # update manning:
-    if "manning" in ds and da_man is not None:
-        da_man = da_man.where(np.isnan(ds["manning"]), ds["manning"])
+    da_man1 = da_man
+    if manning_name in ds and da_man is not None:
+        da_man1 = da_man1.where(np.isnan(ds[manning_name]), ds[manning_name])
 
-    return da_elv, da_man
+    return da_elv1, da_man1

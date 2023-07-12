@@ -3302,13 +3302,29 @@ class SfincsModel(GridModel):
         return datasets_out
 
     def _parse_datasets_riv(self, datasets_riv):
+        """Parse filenames or paths of Datasets in list of dictionaries
+        datasets_riv into xr.DataArrays and gdf.GeoDataFrames:
+
+        * "rivers" is parsed into gdf_riv (gpd.GeoDataFrame)
+        * "river_mask" is parsed into gdf_riv_mask (gpd.GeoDataFrame)
+        """
+
+        # option 1: rectangular river cross-sections based on river centerline
+        # depth/bedlevel, manning attributes are specified on the river centerline (rivers)
+        # the width is either specified on the river centerline or river mask
+        # option 2 (TODO): rectangular river cross-sections based on bedlevel points
+        # the width is either specified on the river centerline or river mask
+        # manning is specified on the river centerline (rivers)
+        # the bedlevel is specified on points (river_points)
+        # there should be at least 1 river_obs_points per river line
+        # the river_obs_points are snapped to the nearest river centerline
+        # option 3 (TODO): irregular river cross-sections
+        # cross-sections are specified as a series of points (river_crosssections)
         parse_keys = [
             "rivers",
             "river_mask",
-            "river_zb",
             "gdf_riv",
             "gdf_riv_mask",
-            "gdf_zb",
         ]
         copy_keys = []
         attrs = ["rivwth", "rivdph", "rivbed", "manning"]
@@ -3336,8 +3352,10 @@ class SfincsModel(GridModel):
                             gdf_riv[key] = value
                         elif np.any(np.isnan(gdf_riv[key])):  # fill na
                             gdf_riv[key] = gdf_riv[key].fillna(value)
+                if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any():
+                    raise ValueError("No 'rivbed' or 'rivdph' attribute found.")
             else:
-                raise ValueError("No 'rivers' dataset provided in datasets_riv.")
+                raise ValueError("No 'rivers' dataset provided.")
             dd.update({"gdf_riv": gdf_riv})
 
             # parse mask
@@ -3351,17 +3369,6 @@ class SfincsModel(GridModel):
                 raise ValueError(
                     "Either gdf_riv_mask must be provided or gdf_riv "
                     "should contain 'rivwth' attribute."
-                )
-
-            if "river_zb" in dataset and "rivbed" in dataset.get("river_zb").columns:
-                gdf_zb = self.data_catalog.get_geodataframe(
-                    dataset.get("river_zb"),
-                    geom=self.mask.raster.box,
-                )
-                dd.update({"gdf_zb": gdf_zb})
-            elif not gdf_riv.columns.isin(["rivbed", "rivdph"]).any():
-                raise ValueError(
-                    "No 'rivbed' or 'rivdph' attribute found in rivers or river_zb."
                 )
 
             # copy remaining keys
