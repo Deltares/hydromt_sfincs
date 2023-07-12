@@ -348,10 +348,11 @@ class SfincsModel(GridModel):
                 self.logger.warning(
                     f"Interpolate data at {int(np.sum(np.isnan(da_dep.values)))} cells"
                 )
+                # TODO add extrapolate=True option when available in hydromt core
                 da_dep = da_dep.raster.interpolate_na(method="rio_idw")
 
             self.set_grid(da_dep, name="dep")
-            # FIXME this shouldn't be necessary, since da_dep should already have the crs
+            # FIXME this shouldn't be necessary, since da_dep should already have a crs
             if self.crs is not None and self.grid.raster.crs is None:
                 self.grid.set_crs(self.crs)
 
@@ -374,7 +375,7 @@ class SfincsModel(GridModel):
         drop_area: float = 0.0,
         connectivity: int = 8,
         all_touched: bool = True,
-        reset_mask: bool = False,
+        reset_mask: bool = True,
     ):
         """Setup active model cells.
 
@@ -418,7 +419,7 @@ class SfincsModel(GridModel):
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
         reset_mask: bool, optional
-            If True, reset existing mask layer. If False (default) updating existing mask.
+            If True  (default), reset existing mask layer. If False updating existing mask.
         """
         # read geometries
         gdf_mask, gdf_include, gdf_exclude = None, None, None
@@ -481,9 +482,15 @@ class SfincsModel(GridModel):
             if "indexfile" not in self.config:
                 self.config.update({"indexfile": "sfincs.ind"})
             # update region
-            self.logger.info("Derive region geometry based on active cells.")
-            region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
-            self.set_geoms(region, "region")
+            if np.any(da_mask >= 1):
+                self.logger.info("Derive region geometry based on active cells.")
+                # make mask with ones and zeros only -> vectorize ones
+                region = da_mask.where(da_mask <= 1, 1).raster.vectorize()
+                if region.empty:
+                    raise ValueError("No region found.")
+                self.set_geoms(region, "region")
+            else:
+                self.logger.warning("No active cells found.")
 
     def setup_mask_bounds(
         self,
@@ -517,11 +524,12 @@ class SfincsModel(GridModel):
         btype: {'waterlevel', 'outflow'}
             Boundary type
         include_mask, exclude_mask: str, Path, gpd.GeoDataFrame, optional
-            Path or data source name for geometries with areas to include/exclude from the model boundary.
+            Path or data source name for geometries with areas to include/exclude from
+            the model boundary.
         zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for boundary cells.
-            Note that when include and exclude areas are used, the elevation range is only applied
-            on cells within the include area and outside the exclude area.
+            Note that when include and exclude areas are used, the elevation range is
+            only applied on cells within the include area and outside the exclude area.
         reset_bounds: bool, optional
             If True, reset existing boundary cells of the selected boundary
             type (`btype`) before setting new boundary cells, by default False.
@@ -536,7 +544,7 @@ class SfincsModel(GridModel):
 
         # get include / exclude geometries
         gdf_include, gdf_exclude = None, None
-        bbox = self.region.to_crs(4326).total_bounds
+        bbox = self.mask.raster.transform_bounds(4326)
         if include_mask is not None:
             if not isinstance(include_mask, gpd.GeoDataFrame) and str(
                 include_mask
@@ -790,7 +798,7 @@ class SfincsModel(GridModel):
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
-                geom=self.region,
+                bbox=self.mask.raster.transform_bounds(4326),
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
@@ -909,7 +917,7 @@ class SfincsModel(GridModel):
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
-                geom=self.region,
+                bbox=self.mask.raster.transform_bounds(4326),
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
@@ -967,7 +975,13 @@ class SfincsModel(GridModel):
             self.set_geoms(gdf_riv, name="rivers_outflow")
 
     # Function to create constant spatially varying infiltration
-    def setup_constant_infiltration(self, qinf, reproj_method="average"):
+    def setup_constant_infiltration(
+        self,
+        qinf=None,
+        lulc=None,
+        reclass_table=None,
+        reproj_method="average",
+    ):
         """Setup spatially varying constant infiltration rate (qinffile).
 
         Adds model layers:
@@ -978,16 +992,48 @@ class SfincsModel(GridModel):
         ----------
         qinf : str, Path, or RasterDataset
             Spatially varying infiltration rates [mm/hr]
+        lulc: str, Path, or RasterDataset
+            Landuse/landcover data set
+        reclass_table: str, Path, or pd.DataFrame
+            Reclassification table to convert landuse/landcover to infiltration rates [mm/hr]
         reproj_method : str, optional
             Resampling method for reprojecting the infiltration data to the model grid.
             By default 'average'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
         """
 
         # get infiltration data
-        da_inf = self.data_catalog.get_rasterdataset(qinf, geom=self.region, buffer=10)
-        da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
+        if qinf is not None:
+            da_inf = self.data_catalog.get_rasterdataset(
+                qinf,
+                bbox=self.mask.raster.transform_bounds(4326),
+                buffer=10,
+            )
+        elif lulc is not None:
+            # landuse/landcover should always be combined with mapping
+            if reclass_table is None:
+                raise IOError(
+                    f"Infiltration mapping file should be provided for {lulc}"
+                )
+            da_lulc = self.data_catalog.get_rasterdataset(
+                lulc,
+                bbox=self.mask.raster.transform_bounds(4326),
+                buffer=10,
+                variables=["lulc"],
+            )
+            df_map = self.data_catalog.get_dataframe(
+                reclass_table,
+                variables=["qinf"],
+                index_col=0,  # driver kwargs
+            )
+            # reclassify
+            da_inf = da_lulc.raster.reclassify(df_map)["qinf"]
+        else:
+            raise ValueError(
+                "Either qinf or lulc must be provided when setting up constant infiltration."
+            )
 
         # reproject infiltration data to model grid
+        da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
         da_inf = da_inf.raster.reproject_like(self.mask, method=reproj_method)
 
         # check on nan values
@@ -1030,7 +1076,9 @@ class SfincsModel(GridModel):
             By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
         """
         # get data
-        da_org = self.data_catalog.get_rasterdataset(cn, geom=self.region, buffer=10)
+        da_org = self.data_catalog.get_rasterdataset(
+            cn, bbox=self.mask.raster.transform_bounds(4326), buffer=10
+        )
         # read variable
         v = "cn"
         if antecedent_moisture:
@@ -1079,10 +1127,14 @@ class SfincsModel(GridModel):
 
         # Read the datafiles
         da_landuse = self.data_catalog.get_rasterdataset(
-            lulc, geom=self.region, buffer=10
+            lulc, bbox=self.mask.raster.transform_bounds(4326), buffer=10
         )
-        da_HSG = self.data_catalog.get_rasterdataset(hsg, geom=self.region, buffer=10)
-        da_Ksat = self.data_catalog.get_rasterdataset(ksat, geom=self.region, buffer=10)
+        da_HSG = self.data_catalog.get_rasterdataset(
+            hsg, bbox=self.mask.raster.transform_bounds(4326), buffer=10
+        )
+        da_Ksat = self.data_catalog.get_rasterdataset(
+            ksat, bbox=self.mask.raster.transform_bounds(4326), buffer=10
+        )
         df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
 
         # Define outputs
@@ -1582,6 +1634,7 @@ class SfincsModel(GridModel):
             Path, data source name, or pandas data object for tabular timeseries.
         locations: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for bnd point locations.
+            It should contain a 'index' column matching the column names in `timeseries`.
         offset: str, Path, xr.Dataset, float, optional
             Path, data source name, constant value or xarray raster data for gridded offset
             between vertical reference of elevation and waterlevel data,
@@ -1625,14 +1678,14 @@ class SfincsModel(GridModel):
                 index_col=0,
             )
             df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
-        else:
-            raise ValueError("Either geodataset or timeseries must be provided")
 
-        # optionally read location data (if not already read from geodataset)
+        # read location data (if not already read from geodataset)
         if gdf_locs is None and locations is not None:
             gdf_locs = self.data_catalog.get_geodataframe(
                 locations, geom=region, buffer=buffer, crs=self.crs
             ).to_crs(self.crs)
+            if "index" in gdf_locs.columns:
+                gdf_locs = gdf_locs.set_index("index")
         elif gdf_locs is None and "bzs" in self.forcing:
             gdf_locs = self.forcing["bzs"].vector.to_gdf()
         elif gdf_locs is None:
@@ -1644,7 +1697,9 @@ class SfincsModel(GridModel):
                 df_ts += offset
             else:
                 da_offset = self.data_catalog.get_rasterdataset(
-                    offset, geom=self.region, buffer=5
+                    offset,
+                    bbox=self.mask.raster.transform_bounds(4326),
+                    buffer=5,
                 )
                 offset_pnts = da_offset.raster.sample(gdf_locs)
                 df_offset = offset_pnts.to_pandas().reindex(df_ts.columns).fillna(0)
@@ -1655,7 +1710,7 @@ class SfincsModel(GridModel):
             )
 
         # set/ update forcing
-        self.set_forcing_1d(df_ts, gdf_locs, name="bzs", merge=merge)
+        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="bzs", merge=merge)
 
     def setup_waterlevel_bnd_from_mask(
         self,
@@ -1702,7 +1757,12 @@ class SfincsModel(GridModel):
         self.set_forcing_1d(gdf_locs=gdf, name="bzs", merge=merge)
 
     def setup_discharge_forcing(
-        self, geodataset=None, timeseries=None, locations=None, merge=True
+        self,
+        geodataset=None,
+        timeseries=None,
+        locations=None,
+        merge=True,
+        buffer: float = None,
     ):
         """Setup discharge forcing.
 
@@ -1725,8 +1785,12 @@ class SfincsModel(GridModel):
             Path, data source name, or pandas data object for tabular timeseries.
         locations: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for bnd point locations.
+            It should contain a 'index' column matching the column names in `timeseries`.
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
+        buffer: float, optional
+            Buffer [m] around model boundary within the model region
+            select discharge gauges, by default None.
 
         See Also
         --------
@@ -1734,12 +1798,16 @@ class SfincsModel(GridModel):
         """
         gdf_locs, df_ts = None, None
         tstart, tstop = self.get_model_time()  # model time
+        # buffer
+        region = self.region
+        if buffer is not None:  # TODO this assumes the model crs is projected
+            region = region.boundary.buffer(buffer).clip(self.region)
         # read waterlevel data from geodataset or geodataframe
         if geodataset is not None:
             # read and clip data in time & space
             da = self.data_catalog.get_geodataset(
                 geodataset,
-                geom=self.region,
+                geom=region,
                 variables=["discharge"],
                 time_tuple=(tstart, tstop),
                 crs=self.crs,
@@ -1755,21 +1823,21 @@ class SfincsModel(GridModel):
                 index_col=0,
             )
             df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
-        else:
-            raise ValueError("Either geodataset or timeseries must be provided")
 
-        # optionally read location data (if not already read from geodataset)
+        # read location data (if not already read from geodataset)
         if gdf_locs is None and locations is not None:
             gdf_locs = self.data_catalog.get_geodataframe(
-                locations, geom=self.region, crs=self.crs
+                locations, geom=region, crs=self.crs
             ).to_crs(self.crs)
+            if "index" in gdf_locs.columns:
+                gdf_locs = gdf_locs.set_index("index")
         elif gdf_locs is None and "dis" in self.forcing:
             gdf_locs = self.forcing["dis"].vector.to_gdf()
         elif gdf_locs is None:
             raise ValueError("No discharge boundary (src) points provided.")
 
         # set/ update forcing
-        self.set_forcing_1d(df_ts, gdf_locs, name="dis", merge=merge)
+        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="dis", merge=merge)
 
     def setup_discharge_forcing_from_grid(
         self,
@@ -1837,7 +1905,7 @@ class SfincsModel(GridModel):
         # read data
         ds = self.data_catalog.get_rasterdataset(
             discharge,
-            geom=self.region,
+            bbox=self.mask.raster.transform_bounds(4326),
             buffer=2,
             time_tuple=self.get_model_time(),  # model time
             variables=["discharge"],
@@ -1845,7 +1913,10 @@ class SfincsModel(GridModel):
         )
         if uparea is not None and "uparea" in gdf.columns:
             da_upa = self.data_catalog.get_rasterdataset(
-                uparea, geom=self.region, buffer=2, variables=["uparea"]
+                uparea,
+                bbox=self.mask.raster.transform_bounds(4326),
+                buffer=2,
+                variables=["uparea"],
             )
             # make sure ds and da_upa align
             ds["uparea"] = da_upa.raster.reproject_like(ds, method="nearest")
@@ -1905,7 +1976,7 @@ class SfincsModel(GridModel):
         # get data for model domain and config time range
         precip = self.data_catalog.get_rasterdataset(
             precip,
-            geom=self.region,
+            bbox=self.mask.raster.transform_bounds(4326),
             buffer=2,
             time_tuple=self.get_model_time(),
             variables=["precip"],
@@ -2689,17 +2760,22 @@ class SfincsModel(GridModel):
                         self.logger.warning(f"{xy_name}file not found at {xy_fn}")
                 else:
                     gdf = utils.read_xy(xy_fn, crs=self.crs)
-                    # read attribute data from gis files
+                    # read attribute data from gis files; merge based on index
                     gis_fn = join(self.root, "gis", f"{xy_name}.geojson")
                     if isfile(gis_fn):
                         gdf1 = gpd.read_file(gis_fn)
                         if "index" in gdf1.columns:
                             gdf1 = gdf1.set_index("index")
-                            gdf.index = gdf1.index.values
-                            ds = ds.assign_coords(index=gdf1.index.values)
-                        if np.any(gdf1.columns != "geometry"):
-                            gdf = gpd.sjoin(gdf, gdf1, how="left")[gdf1.columns]
-                    # set locations as coordinates dataset
+                        if not np.all(np.isin(gdf.index, gdf1.index)):
+                            self.logger.warning(
+                                f"Index in {xy_name}file does not match {gis_fn}"
+                            )
+                        else:
+                            for col in gdf1.columns:
+                                if col not in gdf.columns:
+                                    gdf[col] = gdf1.loc[gdf.index, col]
+                    # set locations and attributes as coordinates of dataset
+                    ds = ds.assign_coords(index=gdf.index.values)
                     ds = GeoDataset.from_gdf(gdf, ds, index_dim="index")
             # save in self.forcing
             if len(ds) > 1:
@@ -3079,42 +3155,35 @@ class SfincsModel(GridModel):
 
     ## model configuration
 
-    def read_config(self, config_fn: str = "sfincs.inp", epsg: int = None) -> None:
+    def read_config(self, config_fn: str = None, epsg: int = None) -> None:
         """Parse config from SFINCS input file.
-        If in write-only mode the config is initialized with default settings.
+        If in write-only mode the config is initialized with default settings
+        unless a path to a template config file is provided.
 
         Parameters
         ----------
         config_fn: str
-            Filename of config file, by default "sfincs.inp".
-            If in a different folder than the model root, the root is updated.
+            Filename of config file, by default None.
         epsg: int
-            EPSG code of the model CRS. Only used if missing in the SFINCS input file, by default None.
+            EPSG code of the model CRS. Only used if missing in the SFINCS input file,
+            by default None.
         """
         inp = SfincsInput()  # initialize with defaults
-        if self._read:  # in read-only or append mode, try reading config_fn
-            if not isfile(config_fn) and not isabs(config_fn) and self._root:
-                # path relative to self.root
+        if config_fn is not None or self._read:
+            if config_fn is None:  # read from default location
+                config_fn = self._config_fn
+            if not isabs(config_fn) and self._root:  # read from model root
                 config_fn = abspath(join(self.root, config_fn))
-            elif isfile(config_fn) and abspath(dirname(config_fn)) != self._root:
-                # new root
-                mode = (
-                    "r+"
-                    if self._write and self._read
-                    else ("w" if self._write else "r")
-                )
-                root = abspath(dirname(config_fn))
-                self.logger.warning(f"updating the model root to: {root}")
-                self.set_root(root=root, mode=mode)
-            else:
+            if not isfile(config_fn):
                 raise IOError(f"SFINCS input file not found {config_fn}")
-            # read config_fn
+            # read inp file
             inp.read(inp_fn=config_fn)
         # overwrite / initialize config attribute
         self._config = inp.to_dict()
         if epsg is not None and "epsg" not in self.config:
-            self.config.update(epsg=epsg)
-        self.update_grid_from_config()  # update grid properties based on sfincs.inp
+            self.set_config("epsg", int(epsg))
+        # update grid properties based on sfincs.inp
+        self.update_grid_from_config()
 
     def write_config(self, config_fn: str = "sfincs.inp"):
         """Write config to <root/config_fn>"""
@@ -3167,7 +3236,9 @@ class SfincsModel(GridModel):
 
     ## helper method
     def _parse_datasets_dep(self, datasets_dep, res):
-        """Parse filenames or paths of Datasets in list of dictionaries datasets_dep into xr.DataArray and gdf.GeoDataFrames:
+        """Parse filenames or paths of Datasets in list of dictionaries datasets_dep
+        into xr.DataArray and gdf.GeoDataFrames:
+
         * "elevtn" is parsed into da (xr.DataArray)
         * "offset" is parsed into da_offset (xr.DataArray)
         * "mask" is parsed into gdf (gpd.GeoDataFrame)
@@ -3175,9 +3246,11 @@ class SfincsModel(GridModel):
         Parameters
         ----------
         datasets_dep : List[dict]
-            List of dictionaries with topobathy data, each containing a dataset name or Path (dep) and optional merge arguments.
+            List of dictionaries with topobathy data, each containing a dataset name or
+            Path (dep) and optional merge arguments.
         res : float
-            Resolution of the model grid in meters. Used to obtain the correct zoom level of the depth datasets.
+            Resolution of the model grid in meters. Used to obtain the correct zoom
+            level of the depth datasets.
         """
         parse_keys = ["elevtn", "offset", "mask", "da"]
         copy_keys = ["zmin", "zmax", "reproj_method", "merge_method"]
@@ -3190,18 +3263,17 @@ class SfincsModel(GridModel):
                 try:
                     da_elv = self.data_catalog.get_rasterdataset(
                         dataset.get("elevtn", dataset.get("da")),
-                        geom=self.mask.raster.box,
+                        bbox=self.mask.raster.transform_bounds(4326),
                         buffer=10,
                         variables=["elevtn"],
                         zoom_level=(res, "meter"),
                     )
-                    dd.update({"da": da_elv})
-                except:
+                # TODO remove ValueError after fix in hydromt core
+                except (IndexError, ValueError):
                     data_name = dataset.get("elevtn")
-                    self.logger.warning(
-                        f"{data_name} not used; probably because all the data is outside of the mask."
-                    )
+                    self.logger.warning(f"No data in domain for {data_name}, skipped.")
                     continue
+                dd.update({"da": da_elv})
             else:
                 raise ValueError(
                     "No 'elevtn' (topobathy) dataset provided in datasets_dep."
@@ -3212,8 +3284,8 @@ class SfincsModel(GridModel):
             if "offset" in dataset and not isinstance(dataset["offset"], (float, int)):
                 da_offset = self.data_catalog.get_rasterdataset(
                     dataset.get("offset"),
-                    geom=self.mask.raster.box,
-                    buffer=20,
+                    bbox=self.mask.raster.transform_bounds(4326),
+                    buffer=10,
                 )
                 dd.update({"offset": da_offset})
 
@@ -3221,7 +3293,7 @@ class SfincsModel(GridModel):
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
                     path_or_key=dataset.get("mask"),
-                    geom=self.mask.raster.box,
+                    bbox=self.mask.raster.transform_bounds(4326),
                 )
                 dd.update({"gdf_valid": gdf_valid})
 
@@ -3236,17 +3308,21 @@ class SfincsModel(GridModel):
         return datasets_out
 
     def _parse_datasets_rgh(self, datasets_rgh):
-        """Parse filenames or paths of Datasets in list of dictionaries datasets_rgh into xr.DataArrays and gdf.GeoDataFrames:
+        """Parse filenames or paths of Datasets in list of dictionaries datasets_rgh
+        into xr.DataArrays and gdf.GeoDataFrames:
+
         * "manning" is parsed into da (xr.DataArray)
-        * "lulc" is parsed into da (xr.DataArray) using reclassify table in "reclass_table"
+        * "lulc" is parsed into da (xr.DataArray) using reclass table in "reclass_table"
         * "mask" is parsed into gdf_valid (gpd.GeoDataFrame)
 
         Parameters
         ----------
         datasets_rgh : List[dict], optional
-            List of dictionaries with Manning's n datasets. Each dictionary should at least contain one of the following:
+            List of dictionaries with Manning's n datasets. Each dictionary should at
+            least contain one of the following:
             * (1) manning: filename (or Path) of gridded data with manning values
-            * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a reclassify table.
+            * (2) lulc (and reclass_table): a combination of a filename of gridded
+                  landuse/landcover and a reclassify table.
             In additon, optional merge arguments can be provided e.g.: merge_method, mask
         """
         parse_keys = ["manning", "lulc", "reclass_table", "mask", "da"]
@@ -3259,7 +3335,7 @@ class SfincsModel(GridModel):
             if "manning" in dataset or "da" in dataset:
                 da_man = self.data_catalog.get_rasterdataset(
                     dataset.get("manning", dataset.get("da")),
-                    geom=self.mask.raster.box,
+                    bbox=self.mask.raster.transform_bounds(4326),
                     buffer=10,
                 )
                 dd.update({"da": da_man})
@@ -3269,12 +3345,15 @@ class SfincsModel(GridModel):
                 reclass_table = dataset.get("reclass_table", None)
                 if reclass_table is None and isinstance(lulc, str):
                     reclass_table = join(DATADIR, "lulc", f"{lulc}_mapping.csv")
-                if not os.path.isfile(reclass_table) and isinstance(lulc, str):
+                if reclass_table is None:
                     raise IOError(
                         f"Manning roughness mapping file not found: {reclass_table}"
                     )
                 da_lulc = self.data_catalog.get_rasterdataset(
-                    lulc, geom=self.mask.raster.box, buffer=10, variables=["lulc"]
+                    lulc,
+                    bbox=self.mask.raster.transform_bounds(4326),
+                    buffer=10,
+                    variables=["lulc"],
                 )
                 df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
                 # reclassify
@@ -3287,7 +3366,7 @@ class SfincsModel(GridModel):
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
                     path_or_key=dataset.get("mask"),
-                    geom=self.mask.raster.box,
+                    bbox=self.mask.raster.transform_bounds(4326),
                 )
                 dd.update({"gdf_valid": gdf_valid})
 

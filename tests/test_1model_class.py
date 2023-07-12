@@ -95,7 +95,7 @@ def test_infiltration(mod):
     assert np.isclose(
         mod1.grid["seff"].where(mod.mask > 0).sum(), 32.929287 * effective
     )
-    assert np.isclose(mod1.grid["kr"].where(mod.mask > 0).sum(), 1.7879527)
+    assert np.isclose(mod1.grid["kr"].where(mod.mask > 0).sum(), 330.588)
 
 
 def test_subgrid_rivers(mod):
