@@ -370,8 +370,8 @@ class SubgridTableRegular:
 
                 # Count
                 ib += 1
-                logger.warning(
-                    f"\nblock {ib + 1}/{nrbn * nrbm} -- "
+                logger.info(
+                    f"block {ib + 1}/{nrbn * nrbm} -- "
                     f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
                 )
 

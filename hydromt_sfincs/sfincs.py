@@ -636,7 +636,7 @@ class SfincsModel(GridModel):
             * river_mask (optional): filename, Path, or shape vector of river mask.
             e.g.: [
                 {'rivers': river_fn, 'river_mask': river_mask_fn},
-                {'rivers': river_fn2}
+                {'rivers': river_fn2, ''}
             ]
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels,
@@ -3302,6 +3302,27 @@ class SfincsModel(GridModel):
         return datasets_out
 
     def _parse_datasets_riv(self, datasets_riv):
+        """Parse filenames or paths of Datasets in list of dictionaries datasets_riv into gdf.GeoDataFrames:
+        * "rivers" is parsed into gdf_riv (gpd.GeoDataFrame)
+        * "river_mask" is parsed into gdf_riv_mask (gpd.GeoDataFrame)
+        * "river_zb" is parsed into gdf_zb (gpd.GeoDataFrame)
+
+        Parameters
+        ----------
+        datasets_riv : List[dict], optional
+            List of dictionaries with river datasets. Each dictionary should at least
+            contain the following:
+            * rivers: filename, Path or line vector of river centerline with river depth 
+              ("rivdph") [m] OR bed level ("rivbed") [m+REF], width ("rivwth") [m] and 
+              manning ("manning") [s.m-1/3] attributes
+            * river_mask (optional): filename, Path or polygon vector of river mask. If provided
+              "rivwth" in river is not used and can be omitted. e.g.:
+              [{'gdf_riv': <geopandas.GeoDataFrame>, 'gdf_riv_mask': <geopandas.GeoDataFrame>}]
+            * river_zb (optional): filename, Path or polygon vector of river bed level. If provided
+              "rivbed" or "rivdph" in river is not used and can be omitted. e.g.:
+              [{'gdf_riv': <geopandas.GeoDataFrame>, 'gdf_zb': <geopandas.GeoDataFrame>}]
+        """
+
         parse_keys = [
             "rivers",
             "river_mask",
