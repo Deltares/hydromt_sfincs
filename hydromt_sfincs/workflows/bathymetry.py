@@ -530,6 +530,8 @@ def interp_along_line_to_grid(
     nearest_lines = gdf_lines.loc[gdf_zb["idx0"], "geometry"].values
     gdf_zb["x"] = nearest_lines.project(gdf_zb["geometry"])
     gdf_zb.set_index("idx0", inplace=True)
+    # keep only lines with associated points
+    gdf_lines = gdf_lines.loc[np.unique(gdf_zb.index.values)]
 
     # find nearest line and calculate relative distance along line for all cell centers
     cc["idx0"], cc["dist"] = nearest(cc, gdf_lines)
