@@ -229,10 +229,11 @@ class SubgridTableRegular:
             List of dictionaries with river datasets. Each dictionary should at least
             contain the following:
             * gdf_riv: line vector of river centerline with river depth ("rivdph") [m]
-              OR bed level ("rivbed") [m+REF] and width ("rivwth") attributes [m]
+              OR bed level ("rivbed") [m+REF], width ("rivwth") and manning attributes [m]
             * gdf_riv_mask (optional): polygon vector of river mask. If provided
-              "rivwth" in river is not used and can be omitted. e.g.:
-              [{'gdf_riv': <geopandas.GeoDataFrame>, 'gdf_riv_mask': <geopandas.GeoDataFrame>}]
+              "rivwth" in river is not used and can be omitted.
+            * arguments for :py:function:~hydromt.workflows.bathymetry.burn_river_rect
+            e.g.: [{'gdf_riv': <geopandas.GeoDataFrame>, 'gdf_riv_mask': <geopandas.GeoDataFrame>}]
         nbins : int, optional
             Number of bins in which hypsometry is subdivided, by default 10
         nr_subgrid_pixels : int, optional

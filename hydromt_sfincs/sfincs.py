@@ -638,13 +638,18 @@ class SfincsModel(GridModel):
                 {'lulc': 'esa_worlcover', 'reclass_table': 'esa_worlcover_mapping'}
             ]
         datasets_riv : List[dict], optional
-            List of dictionaries with river datasets. Each dictionary should at least the following:
-            * rivers: filename, Path, or line vector of river centerline with river depth
-              ("rivdph") [m] OR bed level ("rivbed") [m+REF] and width ("rivwth") attributes [m]
+            List of dictionaries with river datasets. Each dictionary should have the following keys:
+            * rivers: filename, Path, or line vector of river centerline with attributes
+              river depth ("rivdph") [m] OR bed level ("rivbed") [m+REF],
+              river width ("rivwth") and manning ("manning") attributes [m]
             * river_mask (optional): filename, Path, or shape vector of river mask.
+              This is used instead of the river with attribute if provided.
+            * river attributes (optional): "rivdph", "rivbed", "rivwth", "manning" to fill misisng values
+            * arguments to the river burn method (optional): e.g., segment_length [m] and
+              riv_bank_q [0-1] used to estimate the river bank height in case river depth is provided.
+              For more info see :py:function:~hydromt.workflows.bathymetry.burn_river_rect
             e.g.: [
-                {'rivers': river_fn, 'river_mask': river_mask_fn},
-                {'rivers': river_fn2}
+                {'rivers': river_fn, 'river_mask': river_mask_fn, 'manning': 0.035},
             ]
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels,
@@ -3390,11 +3395,12 @@ class SfincsModel(GridModel):
 
         # option 1: rectangular river cross-sections based on river centerline
         # depth/bedlevel, manning attributes are specified on the river centerline (rivers)
+        # TODO: make this work with LineStringZ geometries for bedlevel
         # the width is either specified on the river centerline or river mask
         # option 2 (TODO): rectangular river cross-sections based on bedlevel points
-        # the width is either specified on the river centerline or river mask
-        # manning is specified on the river centerline (rivers)
         # the bedlevel is specified on points (river_points)
+        # the width is either specified on the river centerline or river mask
+        # manning is specified on the river centerline or points
         # there should be at least 1 river_obs_points per river line
         # the river_obs_points are snapped to the nearest river centerline
         # option 3 (TODO): irregular river cross-sections

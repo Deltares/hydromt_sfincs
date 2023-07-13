@@ -572,7 +572,7 @@ def burn_river_rect(
     da_man: xr.DataArray = None,
     gdf_zb: gpd.GeoDataFrame = None,
     gdf_riv_mask: gpd.GeoDataFrame = None,
-    segment_length: float = 200,
+    segment_length: float = 500,
     riv_bank_q: float = 0.25,
     rivwth_name: str = "rivwth",
     rivdph_name: str = "rivdph",
@@ -581,7 +581,6 @@ def burn_river_rect(
     logger=logger,
 ):
     """Burn rivers with a rectangular cross profile into a DEM.
-
 
     Parameters
     ----------
@@ -594,12 +593,14 @@ def burn_river_rect(
     gdf_riv_mask : gpd.GeoDataFrame, optional
         Mask in which to interpolate z values, by default None.
         If provided, 'rivwth' column is not required in `gdf_riv`.
+    segment_length : float, optional
+        Approximate river segment length [m], by default 500
+    riv_bank_q : float, optional
+        quantile [0-1] for river bank estimation, by default 0.25
     rivwth_name, rivdph_name, rivbed_name, manning_name: str, optional
         river width [m], depth [m], bed level [m+REF], and manning [s.m-1/3] column names
         in gdf_riv, by default "rivwth", "rivdph", "rivbed", and "manning"
-    fill_value : float, optional
-        fill value for lines without z point locations,
-        by default np.nan
+
 
     """
     # clip
