@@ -648,7 +648,9 @@ def burn_river_rect(
         # find nearest river center line for each river bank cell
         riv_bank_cc["idx0"], _ = nearest(riv_bank_cc, gdf_riv_seg)
         # calculate segment river bank elevation as percentile of river bank cells
-        gdf_riv_seg["z"] = riv_bank_cc.groupby("idx0").quantile(q=riv_bank_q)
+        gdf_riv_seg["z"] = (
+            riv_bank_cc[["idx0", "z"]].groupby("idx0").quantile(q=riv_bank_q)
+        )
         # calculate river bed elevation per segment
         gdf_riv_seg[rivbed_name] = gdf_riv_seg["z"] - gdf_riv_seg[rivdph_name]
         # get zb points at center of line segments
