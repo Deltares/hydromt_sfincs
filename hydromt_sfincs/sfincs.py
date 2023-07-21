@@ -1320,6 +1320,8 @@ class SfincsModel(GridModel):
         self,
         structures: Union[str, Path, gpd.GeoDataFrame],
         stype: str,
+        dep: Union[str, Path, xr.DataArray] = None,
+        buffer: float = None,
         dz: float = None,
         merge: bool = True,
         **kwargs,
@@ -1340,6 +1342,12 @@ class SfincsModel(GridModel):
             "par1" defaults to 0.6 if gdf has no "par1" column.
         stype : {'thd', 'weir'}
             Structure type.
+        dep : str, Path, xr.DataArray, optional
+            Path, data source name, or xarray raster object ('elevtn') describing the depth in an 
+            alternative resolution which is used for sampling the weir. 
+        buffer : float, optional
+            If provided, describes the distance from the centerline to the foot of the structure. 
+            This distance is supplied to the raster.sample as the window (wdw).
         merge : bool, optional
             If True, merge with existing'stype' structures, by default True.
         dz: float, optional
@@ -1363,13 +1371,30 @@ class SfincsModel(GridModel):
 
         structs = utils.gdf2linestring(gdf)  # check if it parsed correct
         # sample zb values from dep file and set z = zb + dz
-        if stype == "weir" and dz is not None:
-            elv = self.grid["dep"]
+        if stype == "weir" and (dep is not None or dz is not None):
+            if dep is not None:
+                elv = self.data_catalog.get_rasterdataset(dep)
+            else:
+                elv = self.grid["dep"]
+
+            if buffer is not None:
+                res = elv.raster.res[0]
+                if elv.raster.crs.is_geographic:
+                    res = res * 111111.0
+                window_size = np.ceil(buffer / res)
+            else:
+                window_size = 0
+
             structs_out = []
             for s in structs:
                 pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
-                zb = elv.raster.sample(gpd.GeoDataFrame(geometry=pnts, crs=self.crs))
-                s["z"] = zb.values + float(dz)
+                zb = elv.raster.sample(
+                    gpd.GeoDataFrame(geometry=pnts, crs=self.crs), wdw=window_size
+                )
+                if dz is not None:
+                    s["z"] = zb.values + float(dz)
+                else:
+                    s["z"] = zb.values
                 structs_out.append(s)
             gdf = utils.linestring2gdf(structs_out, crs=self.crs)
         # Else function if you define elevation of weir
@@ -1384,6 +1409,8 @@ class SfincsModel(GridModel):
         # set structures
         self.set_geoms(gdf, stype)
         self.set_config(f"{stype}file", f"sfincs.{stype}")
+
+    
 
     def setup_drainage_structures(
         self,
