@@ -1343,10 +1343,10 @@ class SfincsModel(GridModel):
         stype : {'thd', 'weir'}
             Structure type.
         dep : str, Path, xr.DataArray, optional
-            Path, data source name, or xarray raster object ('elevtn') describing the depth in an 
-            alternative resolution which is used for sampling the weir. 
+            Path, data source name, or xarray raster object ('elevtn') describing the depth in an
+            alternative resolution which is used for sampling the weir.
         buffer : float, optional
-            If provided, describes the distance from the centerline to the foot of the structure. 
+            If provided, describes the distance from the centerline to the foot of the structure.
             This distance is supplied to the raster.sample as the window (wdw).
         merge : bool, optional
             If True, merge with existing'stype' structures, by default True.
@@ -1409,8 +1409,6 @@ class SfincsModel(GridModel):
         # set structures
         self.set_geoms(gdf, stype)
         self.set_config(f"{stype}file", f"sfincs.{stype}")
-
-    
 
     def setup_drainage_structures(
         self,
