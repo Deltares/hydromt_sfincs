@@ -906,7 +906,7 @@ def downscale_floodmap(
 
 
 def rotated_grid(
-    pol: Polygon, res: float, dec_origin=0, dec_rotation=3
+    pol: Polygon, res: float, align_origin_to_res=True, dec_rotation=3
 ) -> Tuple[float, float, int, int, float]:
     """Returns the origin (x0, y0), shape (mmax, nmax) and rotation
     of the rotated grid fitted to the minimum rotated rectangle around the
@@ -939,7 +939,8 @@ def rotated_grid(
     ir = (ib + 1) % 4
     il = (ib + 3) % 4
     x0, y0 = coords[ib, :]
-    x0, y0 = round(x0, dec_origin), round(y0, dec_origin)
+    if align_origin_to_res:
+        x0, y0 = x0 // res * res, y0 // res * res
     az1 = _azimuth((x0, y0), coords[ir, :])
     az2 = _azimuth((x0, y0), coords[il, :])
     axis1 = _dist((x0, y0), coords[ir, :])

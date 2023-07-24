@@ -30,6 +30,7 @@ New
 Changed
 -------
 - `SfincsModel.setup_mask_active` argument reset_mask default to True PR #94
+- `SfincsModel.setup_grid_from_region` replace dec_orgigin argument by more robust align_origin_to_res PR #112
 
 v1.0 (17 April 2023)
 ====================

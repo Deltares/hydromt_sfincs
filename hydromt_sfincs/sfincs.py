@@ -224,8 +224,8 @@ class SfincsModel(GridModel):
         rotated: bool = False,
         hydrography_fn: str = None,
         basin_index_fn: str = None,
-        dec_origin: int = 0,
         dec_rotation: int = 3,
+        align_origin_to_res: bool = True,
     ):
         """Setup a regular or quadtree grid from a region.
 
@@ -255,8 +255,8 @@ class SfincsModel(GridModel):
             Name of data source with basin (bounding box) geometries associated with
             the 'basins' layer of `hydrography_fn`. Only required if the `region` is
             based on a (sub)(inter)basins without a 'bounds' argument.
-        dec_origin : int, optional
-            number of decimals to round the origin coordinates, by default 0
+        align_origin_to_res : bool, optional
+            if True (default) the origin of the grid is aligned to the resolution.
         dec_rotation : int, optional
             number of decimals to round the rotation angle, by default 3
 
@@ -278,15 +278,18 @@ class SfincsModel(GridModel):
             self.geoms["region"] = self.geoms["region"].to_crs(pyproj_crs)
 
         # create grid from region
-        # NOTE keyword rotated is added to still have the possibility to create unrotated grids if needed (e.g. for FEWS?)
+        # NOTE keyword rotated is added to still have the possibility
+        # to create unrotated grids if needed (e.g. for FEWS?)
+        res = abs(res)
         if rotated:
             geom = self.geoms["region"].unary_union
             x0, y0, mmax, nmax, rot = utils.rotated_grid(
-                geom, res, dec_origin=dec_origin, dec_rotation=dec_rotation
+                geom, res, align_origin_to_res, dec_rotation=dec_rotation
             )
         else:
             x0, y0, x1, y1 = self.geoms["region"].total_bounds
-            x0, y0 = round(x0, dec_origin), round(y0, dec_origin)
+            if align_origin_to_res:
+                x0, y0 = x0 // res * res, y0 // res * res
             mmax = int(np.ceil((x1 - x0) / res))
             nmax = int(np.ceil((y1 - y0) / res))
             rot = 0
