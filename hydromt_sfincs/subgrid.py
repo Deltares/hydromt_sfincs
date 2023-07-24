@@ -369,9 +369,11 @@ class SubgridTableRegular:
                 )
 
                 # calculate transform and shape of block at cell and subgrid level
-                da_mask_block = da_mask.isel(
-                    {x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}
-                ).copy().load()
+                da_mask_block = (
+                    da_mask.isel({x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)})
+                    .copy()
+                    .load()
+                )
                 check_block = np.all([s > 1 for s in da_mask_block.shape])
                 assert check_block, f"unexpected block shape {da_mask_block.shape}"
                 nactive = int(np.sum(da_mask_block > 0))
