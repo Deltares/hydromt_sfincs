@@ -556,20 +556,22 @@ document.write(`
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.build">
 <span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hydromt_sfincs.SfincsModel.build" title="Permalink to this definition">#</a></dt>
 <dd><p>Single method to build a model from scratch based on settings in <cite>opt</cite>.</p>
-<p>Methods will be run one by one based on the order of appearance in <cite>opt</cite> (.ini configuration file).
-All model methods are supported including setup_*, read_* and write_* methods.</p>
-<p>If a write_* option is listed in <cite>opt</cite> (ini file) the full writing of the model at the end
-of the update process is skipped.</p>
+<p>Methods will be run one by one based on the order of appearance in <cite>opt</cite>
+(.ini configuration file). All model methods are supported including
+setup_*, read_* and write_* methods.</p>
+<p>If a write_* option is listed in <cite>opt</cite> (ini file) the full writing of the
+model at the end of the update process is skipped.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>region</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – Description of model region. See <code class="xref py py-meth docutils literal notranslate"><span class="pre">parse_region()</span></code>
 for all options.</p></li>
-<li><p><strong>write</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – Write the complete model after executing all methods in opt, by default True.</p></li>
+<li><p><strong>write</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – Write complete model after executing all methods in opt, by default True.</p></li>
 <li><p><strong>opt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a><em>, </em><em>optional</em>) – <p>Model build configuration. The configuration can be parsed from a
 .ini file using <code class="xref py py-meth docutils literal notranslate"><span class="pre">configread()</span></code>.
-This is a nested dictionary where the first-level keys are the names of model
-specific (setup) methods and the second-level contain argument-value pairs of the method.</p>
+This is a nested dictionary where the first-level keys are the names
+of model specific (setup) methods and the second-level contain
+argument-value pairs of the method.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>{
     &lt;name of method1&gt;: {
         &lt;argument1&gt;: &lt;value1&gt;, &lt;argument2&gt;: &lt;value2&gt;

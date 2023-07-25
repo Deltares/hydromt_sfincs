@@ -562,11 +562,16 @@ document.write(`
 <li><p><strong>args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><em>tuple</em></a><em> or </em><em>string</em>) – keys can given by multiple args: (‘key1’, ‘key2’)
 or a string with ‘.’ indicating a new level: (‘key1.key2’)</p></li>
 <li><p><strong>fallback</strong> (<em>any</em><em>, </em><em>optional</em>) – fallback value if key(s) not found in config, by default None.</p></li>
-<li><p><strong>abs_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – If True return the absolute path relative to the model root, by deafult False.
+<li><p><strong>abs_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – If True return the absolute path relative to the model root,
+by deafult False.
 NOTE: this assumes the config is located in model root!</p></li>
-<li><p><strong>Returns</strong> – </p></li>
-<li><p><strong>value</strong> (<em>any type</em>) – dictionary value</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>value</strong> – dictionary value</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>any type</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>

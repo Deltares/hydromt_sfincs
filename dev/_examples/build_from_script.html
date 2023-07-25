@@ -682,7 +682,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 </section>
 <section id="6.-Add-spatially-varying-roughness-data:">
 <h2>6. Add spatially varying roughness data:<a class="headerlink" href="#6.-Add-spatially-varying-roughness-data:" title="Permalink to this heading">#</a></h2>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
@@ -707,6 +707,49 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 </pre></div>
 </div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">TypeError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[9], line 7</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(95,135,135)"># --&gt; this is used in making subgrid tables</span>
+<span class="ansi-green-intense-fg ansi-bold">      2</span>
+<span class="ansi-green-intense-fg ansi-bold">      3</span> <span style="color: rgb(95,135,135)"># to ensure a correct lower roughness of the rivers in the domain, we &#39;burn in&#39; the river with a lower manning roughness value.</span>
+<span class="ansi-green-intense-fg ansi-bold">      4</span> <span style="color: rgb(95,135,135)"># the position of the river is based on global data, that is loaded below</span>
+<span class="ansi-green-intense-fg ansi-bold">      5</span>
+<span class="ansi-green-intense-fg ansi-bold">      6</span> <span style="color: rgb(95,135,135)"># read river shapefile and add manning value to the attributes</span>
+<span class="ansi-green-fg">----&gt; 7</span> gdf <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">sf</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">data_catalog</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">get_rasterdataset</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">rivers_lin2019_v1</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">geom</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">sf</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">region</span><span class="ansi-yellow-bg">)</span><span style="color: rgb(98,98,98)">.</span>to_crs(
+<span class="ansi-green-intense-fg ansi-bold">      8</span>     sf<span style="color: rgb(98,98,98)">.</span>crs
+<span class="ansi-green-intense-fg ansi-bold">      9</span> )
+<span class="ansi-green-intense-fg ansi-bold">     10</span> gdf[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">geometry</span><span style="color: rgb(175,0,0)">&#34;</span>] <span style="color: rgb(98,98,98)">=</span> gdf<span style="color: rgb(98,98,98)">.</span>buffer(<span style="color: rgb(98,98,98)">50</span>)
+<span class="ansi-green-intense-fg ansi-bold">     11</span> gdf[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">manning</span><span style="color: rgb(175,0,0)">&#34;</span>] <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(98,98,98)">0.03</span>
+
+File <span class="ansi-green-fg">/usr/share/miniconda/envs/hydromt-sfincs-dev/lib/python3.10/site-packages/hydromt/data_catalog.py:707</span>, in <span class="ansi-cyan-fg">DataCatalog.get_rasterdataset</span><span class="ansi-blue-fg">(self, data_like, bbox, geom, zoom_level, buffer, align, variables, time_tuple, single_var_as_array, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    702</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_used_data<span style="color: rgb(98,98,98)">.</span>append(name)
+<span class="ansi-green-intense-fg ansi-bold">    703</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>logger<span style="color: rgb(98,98,98)">.</span>info(
+<span class="ansi-green-intense-fg ansi-bold">    704</span>     <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">DataCatalog: Getting </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>name<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)"> RasterDataset </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>source<span style="color: rgb(98,98,98)">.</span>driver<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)"> data from</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    705</span>     <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)"> </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>source<span style="color: rgb(98,98,98)">.</span>path<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    706</span> )
+<span class="ansi-green-fg">--&gt; 707</span> obj <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">source</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">get_data</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    708</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">bbox</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">bbox</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    709</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">geom</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">geom</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    710</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">buffer</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">buffer</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    711</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">zoom_level</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">zoom_level</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    712</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">align</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">align</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    713</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">variables</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">variables</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    714</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">time_tuple</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">time_tuple</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    715</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">single_var_as_array</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">single_var_as_array</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    716</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">cache_root</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_cache_dir</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">if</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">cache</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">else</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">None</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    717</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    718</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    719</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> obj
+
+<span class="ansi-red-fg">TypeError</span>: GeoDataFrameAdapter.get_data() got an unexpected keyword argument &#39;zoom_level&#39;
+</pre></div></div>
+</div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
@@ -725,20 +768,27 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_build_from_script_23_1.png" src="../_images/_examples_build_from_script_23_1.png" />
-</div>
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[10], line 3</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(95,135,135)"># use the river manning raster in combination with vito land to derive the manning roughness file</span>
+<span class="ansi-green-intense-fg ansi-bold">      2</span> <span style="color: rgb(95,135,135)"># NOTE that we can combine in-memory data with data from the data catalog</span>
+<span class="ansi-green-fg">----&gt; 3</span> datasets_rgh <span style="color: rgb(98,98,98)">=</span> [{<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">manning</span><span style="color: rgb(175,0,0)">&#34;</span>: <span class="ansi-yellow-bg">da_manning</span>}, {<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">lulc</span><span style="color: rgb(175,0,0)">&#34;</span>: <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">vito</span><span style="color: rgb(175,0,0)">&#34;</span>}]
+<span class="ansi-green-intense-fg ansi-bold">      5</span> sf<span style="color: rgb(98,98,98)">.</span>setup_manning_roughness(
+<span class="ansi-green-intense-fg ansi-bold">      6</span>     datasets_rgh<span style="color: rgb(98,98,98)">=</span>datasets_rgh,
+<span class="ansi-green-intense-fg ansi-bold">      7</span>     manning_land<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">0.04</span>,
+<span class="ansi-green-intense-fg ansi-bold">      8</span>     manning_sea<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">0.02</span>,
+<span class="ansi-green-intense-fg ansi-bold">      9</span>     rgh_lev_land<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">0</span>,  <span style="color: rgb(95,135,135)"># the minimum elevation of the land</span>
+<span class="ansi-green-intense-fg ansi-bold">     10</span> )
+<span class="ansi-green-intense-fg ansi-bold">     11</span> _ <span style="color: rgb(98,98,98)">=</span> sf<span style="color: rgb(98,98,98)">.</span>plot_basemap(variable<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">manning</span><span style="color: rgb(175,0,0)">&#34;</span>, plot_bounds<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">False</span>, bmap<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">sat</span><span style="color: rgb(175,0,0)">&#34;</span>, zoomlevel<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">12</span>)
+
+<span class="ansi-red-fg">NameError</span>: name &#39;da_manning&#39; is not defined
+</pre></div></div>
 </div>
 </section>
 <section id="7.-Make-subgrid-derived-tables:">
@@ -747,7 +797,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 <p>You as user can specify multiple settings about how the subgrid derived tables should be made.</p>
 <p>Every single grid cell of the flux grid of the size inp.dx by inp.dy is defined into subgrid pixels (default nr_subgrid_pixels = 20). For every subgrid pixel the topobathy data is loaded, ideally this consists of high-resolution DEM datasets that you specify as user.</p>
 <p>In this example with dx=dy=50m, having nr_subgrid_pixels = 20 means we are loading data onto a 2.5 m subpixel grid However, the input data of Gebco and Merit_hydro is way coarser, therefore let’s set the ratio to 5 for now.</p>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
@@ -770,6 +820,33 @@ No artists with labels found to put in legend.  Note that artists whose label st
 <span class="c1">#       you either have more accurate results or run on a coarser grid resolution (= much faster) or both</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[11], line 6</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(95,135,135)"># Every single grid cell of the flux grid of the size inp.dx by inp.dy is defined into subgrid pixels (default is 20, nr_subgrid_pixels = 20).</span>
+<span class="ansi-green-intense-fg ansi-bold">      2</span> <span style="color: rgb(95,135,135)"># For every subgrid pixel the topobathy data is loaded, ideally this consists also of high-resolution DEM datasets that you specify as user.</span>
+<span class="ansi-green-intense-fg ansi-bold">      4</span> sf<span style="color: rgb(98,98,98)">.</span>setup_subgrid(
+<span class="ansi-green-intense-fg ansi-bold">      5</span>     datasets_dep<span style="color: rgb(98,98,98)">=</span>datasets_dep,
+<span class="ansi-green-fg">----&gt; 6</span>     datasets_rgh<span style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">datasets_rgh</span>,
+<span class="ansi-green-intense-fg ansi-bold">      7</span>     nr_subgrid_pixels<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">5</span>,
+<span class="ansi-green-intense-fg ansi-bold">      8</span>     write_dep_tif<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>,
+<span class="ansi-green-intense-fg ansi-bold">      9</span>     write_man_tif<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">False</span>,
+<span class="ansi-green-intense-fg ansi-bold">     10</span> )
+<span class="ansi-green-intense-fg ansi-bold">     12</span> <span style="color: rgb(95,135,135)"># NOTE: we turned on that the merged topobathy of the different (high-res) datasets is written to a geotiff</span>
+<span class="ansi-green-intense-fg ansi-bold">     13</span>
+<span class="ansi-green-intense-fg ansi-bold">     14</span> <span style="color: rgb(95,135,135)"># NOTE: if you have a very large domain with 100,000s to millions of cells, and very high-resolution datasets (e.g. 1 m), this step might take minutes to hours!!!</span>
+<span class="ansi-green-intense-fg ansi-bold">     15</span> <span style="color: rgb(95,135,135)">#       But good news; when finished succesfully, you can very quickly run very accurate SFINCS simulations!</span>
+<span class="ansi-green-intense-fg ansi-bold">     16</span> <span style="color: rgb(95,135,135)">#       The whole point of the subgrid functionality of SFINCS is that by derived subgrid tables based on high res elevation data,</span>
+<span class="ansi-green-intense-fg ansi-bold">     17</span> <span style="color: rgb(95,135,135)">#       you either have more accurate results or run on a coarser grid resolution (= much faster) or both</span>
+
+<span class="ansi-red-fg">NameError</span>: name &#39;datasets_rgh&#39; is not defined
+</pre></div></div>
 </div>
 <p>Now we can see what kind of subgrid-derived variables are created:</p>
 <div class="nbinput docutils container">
@@ -825,8 +902,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 <div class="highlight"><pre>
 KeysView(Data variables:
     dep      (y, x) float32 -12.0 -12.0 -12.0 -12.0 -12.0 ... 0.3 0.3 0.3 0.4
-    msk      (y, x) uint8 0 0 0 0 0 0 0 0 0 0 0 0 0 ... 1 1 1 1 1 1 1 1 1 1 1 1
-    manning  (y, x) float64 0.02 0.02 0.02 0.02 0.02 ... 0.037 0.037 0.037 0.037
+    msk      (y, x) uint8 0 0 0 0 0 0 0 0 0 0 0 0 0 ... 1 1 1 1 1 1 1 1 3 3 3 3
     scs      (y, x) float64 dask.array&lt;chunksize=(107, 250), meta=np.ndarray&gt;)
 </pre></div></div>
 </div>
@@ -856,7 +932,7 @@ KeysView(Data variables:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;mmax&#39;: 250, &#39;nmax&#39;: 107, &#39;dx&#39;: 50.0, &#39;dy&#39;: 50.0, &#39;x0&#39;: 318650, &#39;y0&#39;: 5040000, &#39;rotation&#39;: 27, &#39;latitude&#39;: 0.0, &#39;tref&#39;: &#39;20100201 000000&#39;, &#39;tstart&#39;: &#39;20100205 000000&#39;, &#39;tstop&#39;: &#39;20100207 000000&#39;, &#39;tspinup&#39;: 60.0, &#39;dtout&#39;: 3600.0, &#39;dthisout&#39;: 600.0, &#39;dtrstout&#39;: 0.0, &#39;dtmaxout&#39;: 99999.0, &#39;trstout&#39;: -999.0, &#39;dtwnd&#39;: 1800.0, &#39;alpha&#39;: 0.5, &#39;theta&#39;: 1.0, &#39;huthresh&#39;: 0.01, &#39;manning&#39;: 0.04, &#39;zsini&#39;: 0.0, &#39;rhoa&#39;: 1.25, &#39;rhow&#39;: 1024.0, &#39;dtmax&#39;: 60.0, &#39;advection&#39;: 2, &#39;baro&#39;: 0, &#39;pavbnd&#39;: 0, &#39;gapres&#39;: 101200.0, &#39;stopdepth&#39;: 100.0, &#39;crsgeo&#39;: 0, &#39;btfilter&#39;: 60.0, &#39;viscosity&#39;: 1, &#39;inputformat&#39;: &#39;bin&#39;, &#39;outputformat&#39;: &#39;net&#39;, &#39;cdnrb&#39;: 3, &#39;cdwnd&#39;: [0.0, 28.0, 50.0], &#39;cdval&#39;: [0.001, 0.0025, 0.0015], &#39;epsg&#39;: 32633, &#39;mskfile&#39;: &#39;sfincs.msk&#39;, &#39;indexfile&#39;: &#39;sfincs.ind&#39;, &#39;sbgfile&#39;: &#39;sfincs.sbg&#39;, &#39;scsfile&#39;: &#39;sfincs.scs&#39;}
+{&#39;mmax&#39;: 250, &#39;nmax&#39;: 107, &#39;dx&#39;: 50.0, &#39;dy&#39;: 50.0, &#39;x0&#39;: 318650, &#39;y0&#39;: 5040000, &#39;rotation&#39;: 27, &#39;latitude&#39;: 0.0, &#39;tref&#39;: &#39;20100201 000000&#39;, &#39;tstart&#39;: &#39;20100205 000000&#39;, &#39;tstop&#39;: &#39;20100207 000000&#39;, &#39;tspinup&#39;: 60.0, &#39;dtout&#39;: 3600.0, &#39;dthisout&#39;: 600.0, &#39;dtrstout&#39;: 0.0, &#39;dtmaxout&#39;: 99999.0, &#39;trstout&#39;: -999.0, &#39;dtwnd&#39;: 1800.0, &#39;alpha&#39;: 0.5, &#39;theta&#39;: 1.0, &#39;huthresh&#39;: 0.01, &#39;manning&#39;: 0.04, &#39;manning_land&#39;: 0.04, &#39;manning_sea&#39;: 0.02, &#39;rgh_lev_land&#39;: 0.0, &#39;zsini&#39;: 0.0, &#39;rhoa&#39;: 1.25, &#39;rhow&#39;: 1024.0, &#39;dtmax&#39;: 60.0, &#39;advection&#39;: 2, &#39;baro&#39;: 0, &#39;pavbnd&#39;: 0, &#39;gapres&#39;: 101200.0, &#39;stopdepth&#39;: 100.0, &#39;crsgeo&#39;: 0, &#39;btfilter&#39;: 60.0, &#39;viscosity&#39;: 1, &#39;inputformat&#39;: &#39;bin&#39;, &#39;outputformat&#39;: &#39;net&#39;, &#39;cdnrb&#39;: 3, &#39;cdwnd&#39;: [0.0, 28.0, 50.0], &#39;cdval&#39;: [0.001, 0.0025, 0.0015], &#39;epsg&#39;: 32633, &#39;depfile&#39;: &#39;sfincs.dep&#39;, &#39;mskfile&#39;: &#39;sfincs.msk&#39;, &#39;indexfile&#39;: &#39;sfincs.ind&#39;, &#39;scsfile&#39;: &#39;sfincs.scs&#39;}
 </pre></div></div>
 </div>
 <p><strong>a. Specify water level input locations:</strong></p>
@@ -1201,7 +1277,7 @@ dict_keys([&#39;region&#39;, &#39;weir&#39;, &#39;obs&#39;])
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;sfincs.dis&#39;, &#39;sfincs.src&#39;, &#39;sfincs.scs&#39;, &#39;sfincs.obs&#39;, &#39;hydromt.log&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.weir&#39;, &#39;gis&#39;, &#39;figs&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.bzs&#39;, &#39;precip_2d.nc&#39;, &#39;sfincs.sbg&#39;, &#39;sfincs.bnd&#39;, &#39;subgrid&#39;]
+[&#39;sfincs.dep&#39;, &#39;sfincs.dis&#39;, &#39;sfincs.src&#39;, &#39;sfincs.scs&#39;, &#39;sfincs.obs&#39;, &#39;hydromt.log&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.weir&#39;, &#39;gis&#39;, &#39;figs&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.bzs&#39;, &#39;precip_2d.nc&#39;, &#39;sfincs.bnd&#39;]
 </pre></div></div>
 </div>
 <p>Your basemap and forcing figures are saved in the folder ‘figs’, GIS files (tiff &amp; geojson) of your model setup in ‘gis’ and merged elevation and manning roughness on subgrid resolution in ‘subgrid’.</p>
