@@ -617,16 +617,28 @@ def burn_river_rect(
         gdf_riv = gdf_riv.to_crs(dst_crs)
 
     # check river mask
+    # create gdf_riv_mask based on buffered river center line only
+    # make sure the river is at least one cell wide
+    res = abs(da_elv.raster.res[0])
+    if rivwth_name in gdf_riv.columns:
+        gdf_riv["buf"] = np.maximum(gdf_riv[rivwth_name].fillna(2), res) / 2
+    else:
+        gdf_riv["buf"] = res / 2
     if gdf_riv_mask is None:
-        # create gdf_riv_mask based on buffered river center line only
-        if rivwth_name in gdf_riv.columns:
-            buffer = gdf_riv[rivwth_name] / 2
-        gdf_riv_mask = gdf_riv.assign(geometry=gdf_riv.buffer(buffer))
-    # make sure the river is at least one cell wide by rasterizing the river line
-    da_riv_mask = np.logical_or(
-        da_elv.raster.geometry_mask(gdf_riv_mask),  # polygon
-        da_elv.raster.geometry_mask(gdf_riv),  # line
-    )
+        gdf_riv_mask = gdf_riv.assign(geometry=gdf_riv.buffer(gdf_riv["buf"]))
+    else:
+        # get gdf_riv outside of mask and buffer these lines
+        # then merge with gdf_riv_mask to get the full river mask
+        gdf_mask = gpd.GeoDataFrame(
+            geometry=[gdf_riv_mask.buffer(0).unary_union],
+            crs=gdf_riv_mask.crs,
+        )  # create single polygon to clip
+        gdf_riv_clip = gdf_riv.overlay(gdf_mask, how="difference")
+        gdf_riv_mask1 = gdf_riv_clip.assign(
+            geometry=gdf_riv_clip.buffer(gdf_riv_clip["buf"])
+        )
+        gdf_riv_mask = gpd.overlay(gdf_riv_mask, gdf_riv_mask1, how="union")
+    da_riv_mask = da_elv.raster.geometry_mask(gdf_riv_mask)
 
     if gdf_zb is None and rivbed_name not in gdf_riv.columns:
         # calculate river bedlevel based on river depth per segment
@@ -685,11 +697,11 @@ def burn_river_rect(
     else:
         gdf_riv_merged = gdf_riv
 
-    # interpolate river depth along river center line
+    # interpolate river depth and manning along river center line
+    # TODO nearest interpolation for manning?
     column_names = [rivbed_name]
     if manning_name in gdf_zb.columns:
         column_names += [manning_name]
-    # TODO use this for zb only, make seperate nearest interpolation for manning
     ds = interp_along_line_to_grid(
         da_mask=da_riv_mask,
         gdf_lines=gdf_riv_merged,

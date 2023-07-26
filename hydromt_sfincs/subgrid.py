@@ -416,9 +416,8 @@ class SubgridTableRegular:
                 # TODO what to do with remaining cell with nan values
                 # NOTE: this is still open for discussion, but for now we interpolate
                 if np.any(np.isnan(da_dep.values[da_mask_sbg > 0])) > 0:
-                    logger.warning(
-                        f"Interpolate data at {int(np.sum(np.isnan(da_dep)))} cells"
-                    )
+                    npx = int(np.sum(np.isnan(da_dep.values[da_mask_sbg > 0])))
+                    logger.warning(f"Interpolate data at {npx} subgrid pixels")
                     da_dep = da_dep.raster.interpolate_na(
                         method="rio_idw", extrapolate=extrapolate_values
                     )
