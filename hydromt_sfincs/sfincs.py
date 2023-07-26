@@ -1381,16 +1381,21 @@ class SfincsModel(GridModel):
                 res = elv.raster.res[0]
                 if elv.raster.crs.is_geographic:
                     res = res * 111111.0
-                window_size = np.ceil(buffer / res)
+                window_size = int(np.ceil(buffer / res))
             else:
                 window_size = 0
 
             structs_out = []
             for s in structs:
                 pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
-                zb = elv.raster.sample(
+                zb_array = elv.raster.sample(
                     gpd.GeoDataFrame(geometry=pnts, crs=self.crs), wdw=window_size
                 )
+                if buffer is not None:
+                    zb = zb_array.max(axis=1)
+                else:
+                    zb = zb_array
+
                 if dz is not None:
                     s["z"] = zb.values + float(dz)
                 else:
