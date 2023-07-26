@@ -638,7 +638,7 @@ def burn_river_rect(
         )
         # make sure river bank cells are not nodata
         riv_bank = np.logical_and(
-            riv_bank, ~np.isnan(da_elv.raster.mask_nodata().values)
+            riv_bank, np.isfinite(da_elv.raster.mask_nodata().values)
         )
         # sample elevation at river bank cells
         rows, cols = np.where(riv_bank)

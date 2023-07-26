@@ -298,19 +298,15 @@ class SubgridTableRegular:
         )
         if write_dep_tif:
             # create the CloudOptimizedGeotiff containing the merged topobathy data
-            dep_tif = rasterio.open(
-                os.path.join(highres_dir, "dep_subgrid.tif"),
-                "w",
-                **profile,
-            )
+            fn_dep_tif = os.path.join(highres_dir, "dep_subgrid.tif")
+            with rasterio.open(fn_dep_tif, "w", **profile):
+                pass
 
         if write_man_tif:
             # create the CloudOptimizedGeotiff creating the merged manning roughness
-            man_tif = rasterio.open(
-                os.path.join(highres_dir, "manning_subgrid.tif"),
-                "w",
-                **profile,
-            )
+            fn_man_tif = os.path.join(highres_dir, "manning_subgrid.tif")
+            with rasterio.open(fn_man_tif, "w", **profile):
+                pass
 
         # Z points
         self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
@@ -423,23 +419,9 @@ class SubgridTableRegular:
                     logger.warning(
                         f"Interpolate data at {int(np.sum(np.isnan(da_dep)))} cells"
                     )
-                    da_dep = da_dep.raster.interpolate_na(method="rio_idw")
-
-                    # Extrapolate option
-                    # TODO replace with extrapolate=True in interpolate_na when available in core
-                    if extrapolate_values:
-                        da_dep = da_dep.interpolate_na(
-                            dim=da_dep.raster.x_dim,
-                            fill_value="extrapolate",
-                        ).interpolate_na(
-                            dim=da_dep.raster.y_dim,
-                            fill_value="extrapolate",
-                        )
-                        logger.warning("Extrapolated data")
-                    # mask values of inactive cells
-                    da_dep = da_dep.where(da_mask_sbg > 0, da_dep.raster.nodata)
-                check_nans = np.all(~np.isnan(da_dep.values[da_mask_sbg > 0]))
-                assert check_nans, "NaN values in depth array"
+                    da_dep = da_dep.raster.interpolate_na(
+                        method="rio_idw", extrapolate=extrapolate_values
+                    )
 
                 # get subgrid manning roughness tile
                 if len(datasets_rgh) > 0:
@@ -461,17 +443,23 @@ class SubgridTableRegular:
                 else:
                     da_man = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
                     da_man.raster.set_nodata(np.nan)
-                # mask values of inactive cells
-                da_man = da_man.where(da_mask_sbg > 0, da_man.raster.nodata)
-                check_nans = np.all(~np.isnan(da_man.values[da_mask_sbg > 0]))
-                assert check_nans, "NaN values in manning roughness array"
 
                 # burn rivers in bathymetry and manning
                 if len(datasets_riv) > 0:
+                    logger.debug("Burn rivers in bathymetry and manning data")
                     for riv_kwargs in datasets_riv:
                         da_dep, da_man = workflows.bathymetry.burn_river_rect(
                             da_elv=da_dep, da_man=da_man, logger=logger, **riv_kwargs
                         )
+
+                # mask values of inactive cells
+                da_man = da_man.where(da_mask_sbg > 0, da_man.raster.nodata)
+                da_dep = da_dep.where(da_mask_sbg > 0, da_dep.raster.nodata)
+                # check for NaN values
+                check_nans = np.all(np.isfinite(da_dep.values[da_mask_sbg > 0]))
+                assert check_nans, "NaN values in depth array"
+                check_nans = np.all(np.isfinite(da_man.values[da_mask_sbg > 0]))
+                assert check_nans, "NaN values in manning roughness array"
 
                 # optional write tile to file
                 # NOTE tiles have overlap! da_dep[:-refi,:-refi]
@@ -483,11 +471,12 @@ class SubgridTableRegular:
                         da_dep[:-refi, :-refi].sizes[x_dim],
                         da_dep[:-refi, :-refi].sizes[y_dim],
                     )
-                    dep_tif.write(
-                        da_dep[:-refi, :-refi].values.astype(dep_tif.dtypes[0]),
-                        window=window,
-                        indexes=1,
-                    )
+                    with rasterio.open(fn_dep_tif, "r+") as dep_tif:
+                        dep_tif.write(
+                            da_dep[:-refi, :-refi].values.astype(dep_tif.dtypes[0]),
+                            window=window,
+                            indexes=1,
+                        )
 
                 if write_man_tif:
                     # write the block to the output COG
@@ -497,11 +486,12 @@ class SubgridTableRegular:
                         da_man[:-refi, :-refi].sizes[x_dim],
                         da_man[:-refi, :-refi].sizes[y_dim],
                     )
-                    man_tif.write(
-                        da_man[:-refi, :-refi].values.astype(man_tif.dtypes[0]),
-                        window=window,
-                        indexes=1,
-                    )
+                    with rasterio.open(fn_man_tif, "r+") as man_tif:
+                        man_tif.write(
+                            da_man[:-refi, :-refi].values.astype(man_tif.dtypes[0]),
+                            window=window,
+                            indexes=1,
+                        )
 
                 yg = da_dep.raster.ycoords.values
                 if yg.ndim == 1:
@@ -512,7 +502,6 @@ class SubgridTableRegular:
                 (
                     self.z_zmin[sn, sm],
                     self.z_zmax[sn, sm],
-                    # self.z_zmean[sn, sm],
                     self.z_volmax[sn, sm],
                     self.z_depth[:, sn, sm],
                     self.u_zmin[sn, sm],
