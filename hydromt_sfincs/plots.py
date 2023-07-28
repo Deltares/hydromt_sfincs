@@ -19,6 +19,7 @@ geom_style = {
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
     "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
     "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
+    "crs": dict(linestyle=":", linewidth=1.0, color="k", annotate=False),
     "region": dict(ls="--", linewidth=1, color="r"),
 }
 

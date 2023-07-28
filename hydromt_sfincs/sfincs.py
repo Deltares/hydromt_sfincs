@@ -38,6 +38,7 @@ class SfincsModel(GridModel):
     _NAME = "sfincs"
     _GEOMS = {
         "observation_points": "obs",
+        "observation_lines": "crs",
         "weirs": "weir",
         "thin_dams": "thd",
         "drainage_structures": "drn",
@@ -1315,6 +1316,49 @@ class SfincsModel(GridModel):
 
         self.set_geoms(gdf_obs, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
+
+    def setup_observation_lines(
+        self,
+        locations: Union[str, Path, gpd.GeoDataFrame],
+        merge: bool = True,
+        **kwargs,
+    ):
+        """Setup model observation lines (cross-sections) to monitor discharges.
+
+        Adds model layers:
+
+        * **crs** geom: observation lines (cross-sections)
+
+        Parameters
+        ---------
+        locations: str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for observation lines (cross-sections).
+        merge: bool, optional
+            If True, merge the new observation lines with the existing ones. By default True.
+        """
+        name = self._GEOMS["observation_lines"]
+
+        # FIXME ensure the catalog is loaded before adding any new entries
+        self.data_catalog.sources
+
+        # FIXME assert_gtype="LineString" does not work for MultiLineString and default seems to be Point (??)
+        gdf_obs = self.data_catalog.get_geodataframe(
+            locations, geom=self.region, assert_gtype=None, **kwargs
+        ).to_crs(self.crs)
+
+        # make sure MultiLineString are converted to LineString
+        gdf_obs = gdf_obs.explode().reset_index(drop=True)
+
+        if not gdf_obs.geometry.type.isin(["LineString"]).all():
+            raise ValueError("Observation lines must be of type LineString.")
+
+        if merge and name in self.geoms:
+            gdf0 = self._geoms.pop(name)
+            gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
+            self.logger.info(f"Adding new observation lines to existing ones.")
+
+        self.set_geoms(gdf_obs, name)
+        self.set_config(f"{name}file", f"sfincs.{name}")        
 
     def setup_structures(
         self,
@@ -2633,7 +2677,7 @@ class SfincsModel(GridModel):
                 elif not isfile(fn):
                     self.logger.warning(f"{gname}file not found at {fn}")
                     continue
-                if gname in ["thd", "weir"]:
+                if gname in ["thd", "weir", "crs"]:
                     struct = utils.read_geoms(fn)
                     gdf = utils.linestring2gdf(struct, crs=self.crs)
                 elif gname == "obs":
@@ -2678,7 +2722,7 @@ class SfincsModel(GridModel):
                     if f"{gname}file" not in self.config:
                         self.set_config(f"{gname}file", f"sfincs.{gname}")
                     fn = self.get_config(f"{gname}file", abs_path=True)
-                    if gname in ["thd", "weir"]:
+                    if gname in ["thd", "weir", "crs"]:
                         struct = utils.gdf2linestring(gdf)
                         utils.write_geoms(fn, struct, stype=gname)
                     elif gname == "obs":

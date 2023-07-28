@@ -160,6 +160,45 @@ def test_drainage_structures(tmpdir):
     assert len(mod.geoms["drn"].index) == nr_drainage_structures * 2
 
 
+def test_observations(tmpdir):
+    root = TESTMODELDIR
+    mod = SfincsModel(root=root, mode="r+")
+    # read
+    mod.set_config("obsfile", "sfincs.obs")
+    mod.read_grid()
+    mod.read_geoms()
+
+    # observation points
+    assert "obs" in mod.geoms
+    nr_observation_points = len(mod.geoms["obs"].index)
+    # write obs file only
+    tmp_root = str(tmpdir.join("observation_points_test"))
+    mod.set_root(tmp_root, mode="w")
+    mod.write_geoms(data_vars=["obs"])
+    assert isfile(join(mod.root, "sfincs.obs"))
+    assert not isfile(join(mod.root, "sfincs.crs"))
+    fn_obs_gis = join(mod.root, "gis", "obs.geojson")
+    assert isfile(fn_obs_gis)
+    # add more observation points
+    mod.setup_observation_points(fn_obs_gis, merge=True)
+    assert len(mod.geoms["obs"].index) == nr_observation_points * 2
+
+    # observation lines
+    assert "crs" in mod.geoms
+    nr_observation_lines = len(mod.geoms["crs"].index)
+    # write crs file only
+    tmp_root = str(tmpdir.join("observation_lines_test"))
+    mod.set_root(tmp_root, mode="w")
+    mod.write_geoms(data_vars=["crs"])
+    assert isfile(join(mod.root, "sfincs.crs"))
+    assert not isfile(join(mod.root, "sfincs.obs"))
+    fn_crs_gis = join(mod.root, "gis", "crs.geojson")
+    assert isfile(fn_crs_gis)
+    # add more observation lines
+    mod.setup_observation_lines(fn_crs_gis, merge=True)
+    assert len(mod.geoms["crs"].index) == nr_observation_lines * 2
+
+
 def test_results():
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
