@@ -1358,7 +1358,7 @@ class SfincsModel(GridModel):
             self.logger.info(f"Adding new observation lines to existing ones.")
 
         self.set_geoms(gdf_obs, name)
-        self.set_config(f"{name}file", f"sfincs.{name}")        
+        self.set_config(f"{name}file", f"sfincs.{name}")
 
     def setup_structures(
         self,
