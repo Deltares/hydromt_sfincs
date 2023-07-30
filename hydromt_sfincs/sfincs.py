@@ -638,19 +638,20 @@ class SfincsModel(GridModel):
                 {'lulc': 'esa_worlcover', 'reclass_table': 'esa_worlcover_mapping'}
             ]
         datasets_riv : List[dict], optional
-            List of dictionaries with river datasets. Each dictionary should have the following keys:
-            * rivers: filename, Path, or line vector of river centerline with attributes
-              river depth ("rivdph") [m] OR bed level ("rivbed") [m+REF],
-              river width ("rivwth") and manning ("manning") attributes [m]
-            * river_mask (optional): filename, Path, or shape vector of river mask.
-              This is used instead of the river with attribute if provided.
-            * river attributes (optional): "rivdph", "rivbed", "rivwth", "manning" to fill misisng values
-            * arguments to the river burn method (optional): e.g., segment_length [m] and
-              riv_bank_q [0-1] used to estimate the river bank height in case river depth is provided.
+            List of dictionaries with river datasets. Each dictionary should at least
+            contain a river centerline data and optionally a river mask:
+            * centerline: filename (or Path) of river centerline with attributes
+                rivwth (river width [m]; required if not river mask provided),
+                rivdph or rivbed (river depth [m]; river bedlevel [m+REF]),
+                manning (Manning's n [s/m^(1/3)]; optional)
+            * mask (optional): filename (or Path) of river mask
+            * river attributes (optional): "rivdph", "rivbed", "rivwth", "manning"
+                to fill missing values
+            * arguments to the river burn method (optional):
+                segment_length [m] (default 500m) and riv_bank_q [0-1] (default 0.5)
+                which used to estimate the river bank height in case river depth is provided.
               For more info see :py:function:~hydromt.workflows.bathymetry.burn_river_rect
-            e.g.: [
-                {'rivers': river_fn, 'river_mask': river_mask_fn, 'manning': 0.035},
-            ]
+           e.g.: [{'centerline': 'river_lines', 'mask': 'river_mask', 'manning': 0.035}]
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels,
             by default 0
@@ -673,10 +674,11 @@ class SfincsModel(GridModel):
         rgh_lev_land : float, optional
             Elevation level to distinguish land and sea roughness
             (when using manning_land and manning_sea), by default 0.0
-        write_dep_tif : bool, optional
-            Create geotiff of the merged topobathy on the subgrid resolution, by default False
-        write_man_tif : bool, optional
-            Create geotiff of the merged roughness on the subgrid resolution, by default False
+        write_dep_tif, write_man_tif : bool, optional
+            Write geotiff of the merged topobathy / roughness on the subgrid resolution.
+            These files are not used by SFINCS, but can be used for visualisation and
+            downscaling of the floodmaps. Unlinke the SFINCS files it is written
+            to disk at execution of this method. By default False
         """
 
         # retrieve model resolution
@@ -3389,25 +3391,17 @@ class SfincsModel(GridModel):
         """Parse filenames or paths of Datasets in list of dictionaries
         datasets_riv into xr.DataArrays and gdf.GeoDataFrames:
 
-        * "rivers" is parsed into gdf_riv (gpd.GeoDataFrame)
-        * "river_mask" is parsed into gdf_riv_mask (gpd.GeoDataFrame)
+        see SfincsModel.setup_subgrid for details
         """
-
         # option 1: rectangular river cross-sections based on river centerline
-        # depth/bedlevel, manning attributes are specified on the river centerline (rivers)
+        # depth/bedlevel, manning attributes are specified on the river centerline
         # TODO: make this work with LineStringZ geometries for bedlevel
         # the width is either specified on the river centerline or river mask
-        # option 2 (TODO): rectangular river cross-sections based on bedlevel points
-        # the bedlevel is specified on points (river_points)
-        # the width is either specified on the river centerline or river mask
-        # manning is specified on the river centerline or points
-        # there should be at least 1 river_obs_points per river line
-        # the river_obs_points are snapped to the nearest river centerline
-        # option 3 (TODO): irregular river cross-sections
+        # option 2: (TODO): irregular river cross-sections
         # cross-sections are specified as a series of points (river_crosssections)
         parse_keys = [
-            "rivers",
-            "river_mask",
+            "centerline",
+            "mask",
             "gdf_riv",
             "gdf_riv_mask",
         ]
@@ -3419,8 +3413,8 @@ class SfincsModel(GridModel):
             dd = {}
 
             # parse rivers
-            if "rivers" in dataset:
-                rivers = dataset.get("rivers")
+            if "centerline" in dataset:
+                rivers = dataset.get("centerline")
                 if isinstance(rivers, str) and rivers in self.geoms:
                     gdf_riv = self.geoms[rivers].copy()
                 else:
@@ -3440,20 +3434,20 @@ class SfincsModel(GridModel):
                 if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any():
                     raise ValueError("No 'rivbed' or 'rivdph' attribute found.")
             else:
-                raise ValueError("No 'rivers' dataset provided.")
+                raise ValueError("No 'centerline' dataset provided.")
             dd.update({"gdf_riv": gdf_riv})
 
             # parse mask
-            if "river_mask" in dataset:
+            if "mask" in dataset:
                 gdf_riv_mask = self.data_catalog.get_geodataframe(
-                    dataset.get("river_mask"),
+                    dataset.get("mask"),
                     geom=self.mask.raster.box,
                 )
                 dd.update({"gdf_riv_mask": gdf_riv_mask})
             elif "rivwth" not in gdf_riv:
                 raise ValueError(
-                    "Either gdf_riv_mask must be provided or gdf_riv "
-                    "should contain 'rivwth' attribute."
+                    "Either mask must be provided or centerline "
+                    "should contain a 'rivwth' attribute."
                 )
 
             # copy remaining keys

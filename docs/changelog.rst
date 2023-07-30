@@ -26,6 +26,10 @@ Bugfix
 - bugfix in `Sfincs.read_forcing` when combining attributes from the locations stored in the gis folder with the actual forcing locations. PR #99
 - bugfix in `SfincsModel.setup_discharge_from_grid` when snapping based on upstream area in case a src points is outside of the uparea grid domain. PR #99
 
+Deprecated
+----------
+- `burn_river_zb` and `get_river_bathymetry` workflow methods have been deprecated in favor of `burn_river_rect`. PR #84 
+
 
 v1.0 (17 April 2023)
 ====================
