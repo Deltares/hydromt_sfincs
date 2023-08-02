@@ -287,19 +287,17 @@ class SubgridTableRegular:
         )
 
         profile = dict(
-            driver="GTiff",
+            driver="COG",
             width=output_width,
             height=output_height,
             count=1,
             dtype=np.float32,
             crs=da_mask.raster.crs,
             transform=output_transform,
-            tiled=True,
             blockxsize=256,
             blockysize=256,
             compress="deflate",
             predictor=2,
-            profile="COG",
             nodata=np.nan,
             BIGTIFF="YES",  # Add the BIGTIFF option here
         )
@@ -384,7 +382,7 @@ class SubgridTableRegular:
                 # calculate transform and shape of block at cell and subgrid level
                 # copy da_mask block to avoid accidently changing da_mask
                 slice_block = {x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}
-                da_mask_block = da_mask.isel(slice_block).copy().load()
+                da_mask_block = da_mask.isel(slice_block).load()
                 check_block = np.all([s > 1 for s in da_mask_block.shape])
                 assert check_block, f"unexpected block shape {da_mask_block.shape}"
                 nactive = int(np.sum(da_mask_block > 0))
@@ -400,12 +398,6 @@ class SubgridTableRegular:
                     dst_width=(da_mask_block.raster.width + 1) * refi,
                     dst_height=(da_mask_block.raster.height + 1) * refi,
                 )
-
-                # get subgrid mask tile with buffer of one cell
-                if nactive < da_mask_block.size:
-                    ndimage.binary_dilation(
-                        da_mask_block.values, output=da_mask_block.values
-                    )
                 da_mask_sbg = da_mask_block.raster.reproject(
                     method="nearest", **reproj_kwargs
                 ).load()
@@ -422,12 +414,14 @@ class SubgridTableRegular:
                 da_dep = np.maximum(da_dep, z_minimum)
                 # TODO what to do with remaining cell with nan values
                 # NOTE: this is still open for discussion, but for now we interpolate
+                # raise warning if NaN values in active cells
                 if np.any(np.isnan(da_dep.values[da_mask_sbg > 0])) > 0:
                     npx = int(np.sum(np.isnan(da_dep.values[da_mask_sbg > 0])))
                     logger.warning(f"Interpolate data at {npx} subgrid pixels")
-                    da_dep = da_dep.raster.interpolate_na(
-                        method="rio_idw", extrapolate=extrapolate_values
-                    )
+                # always interpolate/extrapolate to avoid NaN values
+                da_dep = da_dep.raster.interpolate_na(
+                    method="rio_idw", extrapolate=True
+                )
 
                 # get subgrid manning roughness tile
                 if len(datasets_rgh) > 0:
@@ -437,15 +431,17 @@ class SubgridTableRegular:
                         interp_method="linear",
                         buffer_cells=buffer_cells,
                     )
+                    # raise warning if NaN values in active cells
                     if np.isnan(da_man.values[da_mask_sbg > 0]).any():
                         logger.debug(
                             "Missing values in manning roughness array, "
                             "fill with default values"
                         )
-                        da_man0 = xr.where(
-                            da_dep >= rgh_lev_land, manning_land, manning_sea
-                        )
-                        da_man = da_man.where(~np.isnan(da_man), da_man0)
+                    # always fill based on land/sea elevation to avoid NaN values
+                    da_man0 = xr.where(
+                        da_dep >= rgh_lev_land, manning_land, manning_sea
+                    )
+                    da_man = da_man.where(~np.isnan(da_man), da_man0)
                 else:
                     da_man = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
                     da_man.raster.set_nodata(np.nan)
@@ -458,46 +454,35 @@ class SubgridTableRegular:
                             da_elv=da_dep, da_man=da_man, logger=logger, **riv_kwargs
                         )
 
-                # mask values of inactive cells
-                da_man = da_man.where(da_mask_sbg > 0, da_man.raster.nodata)
-                da_dep = da_dep.where(da_mask_sbg > 0, da_dep.raster.nodata)
-                # check for NaN values
-                check_nans = np.all(np.isfinite(da_dep.values[da_mask_sbg > 0]))
-                assert check_nans, "NaN values in depth array"
-                check_nans = np.all(np.isfinite(da_man.values[da_mask_sbg > 0]))
-                assert check_nans, "NaN values in manning roughness array"
-
                 # optional write tile to file
                 # NOTE tiles have overlap! da_dep[:-refi,:-refi]
+                window = Window(
+                    bm0 * nr_subgrid_pixels,
+                    bn0 * nr_subgrid_pixels,
+                    da_dep[:-refi, :-refi].sizes[x_dim],
+                    da_dep[:-refi, :-refi].sizes[y_dim],
+                )
                 if write_dep_tif:
                     # write the block to the output COG
-                    window = Window(
-                        bm0 * nr_subgrid_pixels,
-                        bn0 * nr_subgrid_pixels,
-                        da_dep[:-refi, :-refi].sizes[x_dim],
-                        da_dep[:-refi, :-refi].sizes[y_dim],
-                    )
                     with rasterio.open(fn_dep_tif, "r+") as dep_tif:
                         dep_tif.write(
-                            da_dep[:-refi, :-refi].values.astype(dep_tif.dtypes[0]),
+                            da_dep.where(da_mask_sbg > 0)[:-refi, :-refi].values,
+                            window=window,
+                            indexes=1,
+                        )
+                if write_man_tif:
+                    with rasterio.open(fn_man_tif, "r+") as man_tif:
+                        man_tif.write(
+                            da_man.where(da_mask_sbg > 0)[:-refi, :-refi].values,
                             window=window,
                             indexes=1,
                         )
 
-                if write_man_tif:
-                    # write the block to the output COG
-                    window = Window(
-                        bm0 * nr_subgrid_pixels,
-                        bn0 * nr_subgrid_pixels,
-                        da_man[:-refi, :-refi].sizes[x_dim],
-                        da_man[:-refi, :-refi].sizes[y_dim],
-                    )
-                    with rasterio.open(fn_man_tif, "r+") as man_tif:
-                        man_tif.write(
-                            da_man[:-refi, :-refi].values.astype(man_tif.dtypes[0]),
-                            window=window,
-                            indexes=1,
-                        )
+                # check for NaN values for entire tile
+                check_nans = np.all(np.isfinite(da_dep))
+                assert check_nans, "NaN values in depth array"
+                check_nans = np.all(np.isfinite(da_man))
+                assert check_nans, "NaN values in manning roughness array"
 
                 yg = da_dep.raster.ycoords.values
                 if yg.ndim == 1:
@@ -534,12 +519,7 @@ class SubgridTableRegular:
                 del da_mask_block, da_dep, da_man
                 gc.collect()
 
-        # close the output cloud optimized geotiff
-        if write_dep_tif:
-            dep_tif.close()
-
-        if write_man_tif:
-            man_tif.close()
+        # TODO build COG overviews
 
     def to_xarray(self, dims, coords):
         """Convert subgrid class to xarray dataset."""
@@ -565,7 +545,7 @@ class SubgridTableRegular:
             setattr(self, name, ds_sbg[name].values)
 
 
-@njit
+# @njit
 def process_tile(
     mask, zg, manning_grid, dxp, dyp, refi, nbins, yg, max_gradient, is_geographic=False
 ):
@@ -591,8 +571,8 @@ def process_tile(
     v_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
 
     # Loop through all active cells in this block
-    for n in range(mask.shape[0]):
-        for m in range(mask.shape[1]):
+    for n in range(mask.shape[0]):  # row
+        for m in range(mask.shape[1]):  # col
             if mask[n, m] < 1:
                 # Not an active point
                 continue
@@ -611,14 +591,12 @@ def process_tile(
 
             # First the volumes in the cells
             zgc = zg[nn : nn + refi, mm : mm + refi]
-            zv = zgc.flatten()
             zvmin = -20.0
-            z, v, zmin, zmax, zmean = subgrid_v_table(
-                zv, dxpm, dypm, nbins, zvmin, max_gradient
+            z, v, zmin, zmax = subgrid_v_table(
+                zgc.flatten(), dxpm, dypm, nbins, zvmin, max_gradient
             )
             z_zmin[n, m] = zmin
             z_zmax[n, m] = zmax
-            # z_zmean[n, m] = zmean
             z_volmax[n, m] = v[-1]
             z_depth[:, n, m] = z[1:]
 
@@ -628,11 +606,11 @@ def process_tile(
             mm = m * refi + int(0.5 * refi)
             zgu = zg[nn : nn + refi, mm : mm + refi]
             zgu = np.transpose(zgu)
-            zv = zgu.flatten()
             manning = manning_grid[nn : nn + refi, mm : mm + refi]
             manning = np.transpose(manning)
-            manning = manning.flatten()
-            zmin, zmax, hrep, navg, zz = subgrid_q_table(zv, manning, nbins)
+            zmin, zmax, hrep, navg, zz = subgrid_q_table(
+                zgu.flatten(), manning.flatten(), nbins
+            )
             u_zmin[n, m] = zmin
             u_zmax[n, m] = zmax
             u_hrep[:, n, m] = hrep
@@ -642,10 +620,10 @@ def process_tile(
             nn = n * refi + int(0.5 * refi)
             mm = m * refi
             zgu = zg[nn : nn + refi, mm : mm + refi]
-            zv = zgu.flatten()
             manning = manning_grid[nn : nn + refi, mm : mm + refi]
-            manning = manning.flatten()
-            zmin, zmax, hrep, navg, zz = subgrid_q_table(zv, manning, nbins)
+            zmin, zmax, hrep, navg, zz = subgrid_q_table(
+                zgu.flatten(), manning.flatten(), nbins
+            )
             v_zmin[n, m] = zmin
             v_zmax[n, m] = zmax
             v_hrep[:, n, m] = hrep
@@ -714,8 +692,8 @@ def subgrid_v_table(
     ------
     z, V: np.ndarray
         sorted elevation values, volume per elevation value
-    zmin, zmax, zmean: float
-        minimum, maximum, and mean elevation values
+    zmin, zmax: float
+        minimum, and maximum elevation values
     """
 
     # Cell area
@@ -751,7 +729,7 @@ def subgrid_v_table(
         z[idx + 1] = z[idx] + max_gradient * (dvol / a)
         dzdh = get_dzdh(z, V, a)
         n += 1
-    return z, V, elevation.min(), z.max(), ele_sort.mean()
+    return z, V, elevation.min(), z.max()
 
 
 @njit
@@ -776,7 +754,6 @@ def subgrid_q_table(elevation: np.ndarray, manning: np.ndarray, nbins: int):
         conveyance depth, average manning roughness, and elevation values
         for each bin
     """
-
     hrep = np.zeros(nbins, dtype=np.float32)
     navg = np.zeros(nbins, dtype=np.float32)
     zz = np.zeros(nbins, dtype=np.float32)
@@ -812,7 +789,6 @@ def subgrid_q_table(elevation: np.ndarray, manning: np.ndarray, nbins: int):
         qi = h ** (5.0 / 3.0) / manning  # unit discharge in each pixel
         q = np.sum(qi) / n  # combined unit discharge for cell
 
-        assert not np.any(manning[ibelow]), "NaNs found?!"
         navg[ibin] = manning[ibelow].mean()  # mean manning's n
         hrep[ibin] = (q * navg[ibin]) ** (3.0 / 5.0)  # conveyance depth
 
