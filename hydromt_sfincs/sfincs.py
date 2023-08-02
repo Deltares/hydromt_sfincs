@@ -1364,7 +1364,7 @@ class SfincsModel(GridModel):
             "thd": ["name", "geometry"],
             "weir": ["name", "z", "par1", "geometry"],
         }
-        assert stype in cols
+        assert stype in cols, f"stype must be one of {list(cols.keys())}"
         gdf = gdf_structures[
             [c for c in cols[stype] if c in gdf_structures.columns]
         ]  # keep relevant cols
@@ -1372,34 +1372,36 @@ class SfincsModel(GridModel):
         structs = utils.gdf2linestring(gdf)  # check if it parsed correct
         # sample zb values from dep file and set z = zb + dz
         if stype == "weir" and (dep is not None or dz is not None):
-            if dep is not None:
-                elv = self.data_catalog.get_rasterdataset(dep)
-            else:
+            if dep is None or dep == "dep":
+                assert "dep" in self.grid, "dep layer not found"
                 elv = self.grid["dep"]
+            else:
+                elv = self.data_catalog.get_rasterdataset(
+                    dep, geom=self.region, buffer=5, variables=["elevtn"]
+                )
 
+            # calculate window size from buffer
             if buffer is not None:
-                res = elv.raster.res[0]
+                res = abs(elv.raster.res[0])
                 if elv.raster.crs.is_geographic:
                     res = res * 111111.0
                 window_size = int(np.ceil(buffer / res))
             else:
                 window_size = 0
+            self.logger.debug(f"Sampling elevation with window size {window_size}")
 
             structs_out = []
             for s in structs:
                 pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
-                zb_array = elv.raster.sample(
+                zb = elv.raster.sample(
                     gpd.GeoDataFrame(geometry=pnts, crs=self.crs), wdw=window_size
                 )
-                if buffer is not None:
-                    zb = zb_array.max(axis=1)
-                else:
-                    zb = zb_array
+                if zb.ndim > 1:
+                    zb = zb.max(axis=1)
 
+                s["z"] = zb.values
                 if dz is not None:
-                    s["z"] = zb.values + float(dz)
-                else:
-                    s["z"] = zb.values
+                    s["z"] += float(dz)
                 structs_out.append(s)
             gdf = utils.linestring2gdf(structs_out, crs=self.crs)
         # Else function if you define elevation of weir
