@@ -545,7 +545,7 @@ class SubgridTableRegular:
             setattr(self, name, ds_sbg[name].values)
 
 
-# @njit
+@njit
 def process_tile(
     mask, zg, manning_grid, dxp, dyp, refi, nbins, yg, max_gradient, is_geographic=False
 ):
