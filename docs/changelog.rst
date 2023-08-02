@@ -30,6 +30,7 @@ New
 Changed
 -------
 - `SfincsModel.setup_mask_active` argument reset_mask default to True PR #94
+- `SfincsModel.plot_basemaps` now supports other CRS than UTM zones. PR #111
 
 v1.0 (17 April 2023)
 ====================
