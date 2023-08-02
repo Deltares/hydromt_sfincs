@@ -1,11 +1,11 @@
 """
 SubgridTableRegular class to create, read and write sfincs subgrid (sbg) files.
 """
-import os
 import gc
+import logging
+import os
 
 import numpy as np
-import logging
 import rasterio
 import xarray as xr
 from numba import njit
@@ -96,7 +96,7 @@ class SubgridTableRegular:
         self.u_zmax[iok[0], iok[1]] = np.fromfile(
             file, dtype=np.float32, count=self.nr_cells
         )
-        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
+        _ = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
         for ibin in range(self.nbins):
             self.u_hrep[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
@@ -112,7 +112,7 @@ class SubgridTableRegular:
         self.v_zmax[iok[0], iok[1]] = np.fromfile(
             file, dtype=np.float32, count=self.nr_cells
         )
-        dhdz = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
+        _ = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
         for ibin in range(self.nbins):
             self.v_hrep[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
@@ -218,7 +218,7 @@ class SubgridTableRegular:
             and optional merge arguments e.g.:
             [
                 {'da': <xr.Dataset>, 'zmin': 0.01},
-                {'da': <xr.Dataset>, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}
+                {'da': <xr.Dataset>, 'merge_method': 'first', reproj_method: 'bilinear'}
             ]
             For a complete overview of all merge options,
             see :py:function:~hydromt.workflows.merge_multi_dataarrays
@@ -228,39 +228,46 @@ class SubgridTableRegular:
         datasets_riv : List[dict], optional
             List of dictionaries with river datasets. Each dictionary should at least
             contain the following:
-            * gdf_riv: line vector of river centerline with river depth ("rivdph") [m]
-              OR bed level ("rivbed") [m+REF], width ("rivwth") and manning attributes [m]
+            * gdf_riv: line vector of river centerline with
+              river depth ("rivdph") [m] OR bed level ("rivbed") [m+REF],
+              river width ("rivwth"), and
+              river manning ("manning") attributes [m]
             * gdf_riv_mask (optional): polygon vector of river mask. If provided
               "rivwth" in river is not used and can be omitted.
             * arguments for :py:function:~hydromt.workflows.bathymetry.burn_river_rect
-            e.g.: [{'gdf_riv': <geopandas.GeoDataFrame>, 'gdf_riv_mask': <geopandas.GeoDataFrame>}]
+            e.g.: [{'gdf_riv': <gpd.GeoDataFrame>, 'gdf_riv_mask': <gpd.GeoDataFrame>}]
         nbins : int, optional
             Number of bins in which hypsometry is subdivided, by default 10
         nr_subgrid_pixels : int, optional
             Number of subgrid pixels per computational cell, by default 20
         nrmax : int, optional
             Maximum number of cells per subgrid-block, by default 2000
-            These blocks are used to prevent memory issues while working with large datasets
+            These blocks are used to prevent memory issues
         max_gradient : float, optional
             If slope in hypsometry exceeds this value, then smoothing is applied, to
             prevent numerical stability problems, by default 5.0
         z_minimum : float, optional
             Minimum depth in the subgrid tables, by default -99999.0
         manning_land, manning_sea : float, optional
-            Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
+            Constant manning roughness values for land and sea,
+            by default 0.04 and 0.02 s.m-1/3
             Note that these values are only used when no Manning's n datasets are
             provided, or to fill the nodata values
         rgh_lev_land : float, optional
             Elevation level to distinguish land and sea roughness (when using
             manning_land and manning_sea), by default 0.0
         buffer_cells : int, optional
-            Number of cells between datasets to ensure smooth transition of bed levels, by default 0
+            Number of cells between datasets to ensure smooth transition of bed levels,
+            by default 0
         write_dep_tif : bool, optional
-            Create geotiff of the merged topobathy on the subgrid resolution, by default False
+            Create geotiff of the merged topobathy on the subgrid resolution,
+            by default False
         write_man_tif : bool, optional
-            Create geotiff of the merged roughness on the subgrid resolution, by default False
+            Create geotiff of the merged roughness on the subgrid resolution,
+            by default False
         highres_dir : str, optional
-            Directory where high-resolution geotiffs for topobathy and manning are stored, by default None
+            Directory where high-resolution geotiffs for topobathy and manning
+            are stored, by default None
         """
 
         if write_dep_tif or write_man_tif:
@@ -271,7 +278,7 @@ class SubgridTableRegular:
         grid_dim = da_mask.raster.shape
         x_dim, y_dim = da_mask.raster.x_dim, da_mask.raster.y_dim
 
-        # determine the output dimensions and transform to match the resolution of da_mask
+        # determine the output dimensions and transform to match da_mask grid
         # NOTE: this is only usef for writing the cloud optimized geotiffs
         output_width = da_mask.sizes[x_dim] * nr_subgrid_pixels
         output_height = da_mask.sizes[y_dim] * nr_subgrid_pixels
@@ -386,7 +393,7 @@ class SubgridTableRegular:
                     continue
                 logger.debug(f"Processing block with {nactive} active cells..")
                 transform = da_mask_block.raster.transform
-                # add refi cells overlap in both dimensions for u and v in last row / col
+                # add refi cells overlap in both dimensions for u and v in last row/col
                 reproj_kwargs = dict(
                     dst_crs=da_mask.raster.crs,
                     dst_transform=transform * transform.scale(1 / refi),
@@ -676,23 +683,39 @@ def isclose(a, b, rtol=1e-05, atol=1e-08):
 
 
 @njit
-def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
+def subgrid_v_table(
+    elevation: np.ndarray,
+    dx: float,
+    dy: float,
+    nbins: int,
+    zvolmin: float,
+    max_gradient: float,
+):
     """
-    map vector of elevation values into a hypsometric volume - depth relationship for one grid cell
+    map vector of elevation values into a hypsometric volume - depth relationship
+    for one grid cell
 
     Parameters
     ----------
-    elevation : np.ndarray (nr of pixels in one cell) containing subgrid elevation values for one grid cell [m]
-    dx: float, x-directional cell size (typically not known at this level) [m]
-    dy: float, y-directional cell size (typically not known at this level) [m]
-    nbins: int, number of bins to use for the hypsometric curve
-    zvolmin: float, minimum elevation value to use for volume calculation (typically -20 m)
-    max_gradient: float, maximum gradient to use for volume calculation (typically 0.1)
+    elevation: np.ndarray
+        subgrid elevation values for one grid cell [m]
+    dx: float
+        x-directional cell size (typically not known at this level) [m]
+    dy: float
+        y-directional cell size (typically not known at this level) [m]
+    nbins: int
+        number of bins to use for the hypsometric curve
+    zvolmin: float
+        minimum elevation value to use for volume calculation (typically -20 m)
+    max_gradient: float
+        maximum gradient to use for volume calculation (typically 0.1)
 
     Return
     ------
-    ele_sort : np.ndarray (1D flattened from elevation) with sorted and flattened elevation values
-    volume : np.ndarray (1D flattened from elevation) containing volumes (lowest value zero) per sorted elevation value
+    z, V: np.ndarray
+        sorted elevation values, volume per elevation value
+    zmin, zmax, zmean: float
+        minimum, maximum, and mean elevation values
     """
 
     # Cell area
@@ -732,21 +755,26 @@ def subgrid_v_table(elevation, dx, dy, nbins, zvolmin, max_gradient):
 
 
 @njit
-def subgrid_q_table(elevation, manning, nbins):
+def subgrid_q_table(elevation: np.ndarray, manning: np.ndarray, nbins: int):
     """
-    map vector of elevation values into a hypsometric hydraulic radius - depth relationship for one grid cell
+    map elevation values into a hypsometric hydraulic radius - depth relationship
 
     Parameters
     ----------
-    elevation : np.ndarray (nr of pixels in one cell) containing subgrid elevation values for one grid cell [m]
-    manning : np.ndarray (nr of pixels in one cell) containing subgrid manning roughness values for one grid cell [s m^(-1/3)]
-    nbins : int, number of bins to use for the hypsometric curve
-    dx : float, x-directional cell size (typically not known at this level) [m]
-    dy : float, y-directional cell size (typically not known at this level) [m]
+    elevation: np.ndarray
+        subgrid elevation values for one grid cell [m]
+    manning: np.ndarray
+        subgrid manning roughness values for one grid cell [s m^(-1/3)]
+    nbins: int
+        number of bins to use for the hypsometric curve
 
     Returns
     -------
-    ele_sort, R : np.ndarray of sorted elevation values, np.ndarray of sorted hydraulic radii that belong with depth
+    zmin, zmax: float
+        minimum and maximum elevation values used for hypsometric curve
+    hrep, navg, zz: np.ndarray
+        conveyance depth, average manning roughness, and elevation values
+        for each bin
     """
 
     hrep = np.zeros(nbins, dtype=np.float32)
@@ -784,8 +812,7 @@ def subgrid_q_table(elevation, manning, nbins):
         qi = h ** (5.0 / 3.0) / manning  # unit discharge in each pixel
         q = np.sum(qi) / n  # combined unit discharge for cell
 
-        if not np.any(manning[ibelow]):
-            print("NaNs found?!")
+        assert not np.any(manning[ibelow]), "NaNs found?!"
         navg[ibin] = manning[ibelow].mean()  # mean manning's n
         hrep[ibin] = (q * navg[ibin]) ** (3.0 / 5.0)  # conveyance depth
 

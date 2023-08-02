@@ -1,7 +1,6 @@
 """Test sfincs model class against hydromt.models.model_api"""
 
 from os.path import isfile, join
-import shutil
 
 import numpy as np
 import pandas as pd
@@ -116,7 +115,7 @@ def test_subgrid_rivers(mod):
         datasets_rgh=[{"lulc": "vito"}],
         datasets_riv=[
             {
-                "rivers": gdf_riv,
+                "centerlines": gdf_riv,
                 "rivdph": 1,
                 "rivwth": 100,
                 "manning": 0.035,
@@ -132,7 +131,7 @@ def test_subgrid_rivers(mod):
     assert isfile(join(mod.root, "subgrid", "dep_subgrid.tif"))
     assert isfile(join(mod.root, "subgrid", "manning_subgrid.tif"))
 
-    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 536.72156)
+    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 448.9449)
 
 
 def test_structs(tmpdir):
@@ -223,7 +222,7 @@ def test_model_build(tmpdir, case):
     # check maps
     invalid_maps = []
     if len(mod0._staticmaps) > 0:
-        assert np.all(mod0.crs == mod1.crs), f"map crs"
+        assert np.all(mod0.crs == mod1.crs), "map crs"
         for name in mod0.staticmaps.raster.vars:
             map0 = mod0.staticmaps[name]
             map1 = mod1.staticmaps[name]
@@ -253,7 +252,7 @@ def test_model_build(tmpdir, case):
     # check config
     if mod0._config:
         # flatten
-        assert mod0._config == mod1._config, f"config mismatch"
+        assert mod0._config == mod1._config, "config mismatch"
     # check forcing
     if mod0._forcing:
         for name in mod0.forcing:

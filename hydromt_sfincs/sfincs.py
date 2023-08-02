@@ -640,7 +640,7 @@ class SfincsModel(GridModel):
         datasets_riv : List[dict], optional
             List of dictionaries with river datasets. Each dictionary should at least
             contain a river centerline data and optionally a river mask:
-            * centerline: filename (or Path) of river centerline with attributes
+            * centerlines: filename (or Path) of river centerline with attributes
                 rivwth (river width [m]; required if not river mask provided),
                 rivdph or rivbed (river depth [m]; river bedlevel [m+REF]),
                 manning (Manning's n [s/m^(1/3)]; optional)
@@ -651,7 +651,7 @@ class SfincsModel(GridModel):
                 segment_length [m] (default 500m) and riv_bank_q [0-1] (default 0.5)
                 which used to estimate the river bank height in case river depth is provided.
               For more info see :py:function:~hydromt.workflows.bathymetry.burn_river_rect
-           e.g.: [{'centerline': 'river_lines', 'mask': 'river_mask', 'manning': 0.035}]
+           e.g.: [{'centerlines': 'river_lines', 'mask': 'river_mask', 'manning': 0.035}]
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels,
             by default 0
@@ -3400,7 +3400,7 @@ class SfincsModel(GridModel):
         # option 2: (TODO): irregular river cross-sections
         # cross-sections are specified as a series of points (river_crosssections)
         parse_keys = [
-            "centerline",
+            "centerlines",
             "mask",
             "gdf_riv",
             "gdf_riv_mask",
@@ -3413,8 +3413,8 @@ class SfincsModel(GridModel):
             dd = {}
 
             # parse rivers
-            if "centerline" in dataset:
-                rivers = dataset.get("centerline")
+            if "centerlines" in dataset:
+                rivers = dataset.get("centerlines")
                 if isinstance(rivers, str) and rivers in self.geoms:
                     gdf_riv = self.geoms[rivers].copy()
                 else:
@@ -3434,7 +3434,7 @@ class SfincsModel(GridModel):
                 if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any():
                     raise ValueError("No 'rivbed' or 'rivdph' attribute found.")
             else:
-                raise ValueError("No 'centerline' dataset provided.")
+                raise ValueError("No 'centerlines' dataset provided.")
             dd.update({"gdf_riv": gdf_riv})
 
             # parse mask
@@ -3446,7 +3446,7 @@ class SfincsModel(GridModel):
                 dd.update({"gdf_riv_mask": gdf_riv_mask})
             elif "rivwth" not in gdf_riv:
                 raise ValueError(
-                    "Either mask must be provided or centerline "
+                    "Either mask must be provided or centerlines "
                     "should contain a 'rivwth' attribute."
                 )
 

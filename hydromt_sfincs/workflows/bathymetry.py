@@ -1,19 +1,14 @@
 """Workflows, to estimate river bathymetry and burn these in a DEM."""
 import logging
-from typing import Tuple
 
 import geopandas as gpd
 import numpy as np
-import pandas as pd
-import pyflwdir
 import xarray as xr
-from hydromt.gis_utils import nearest, nearest_merge, parse_crs, spread2d
-from hydromt.raster import full_like
-from hydromt.workflows import rivers
+from hydromt.gis_utils import nearest, parse_crs
 from scipy import ndimage
 from scipy.interpolate import interp1d
-from shapely.geometry import LineString, Point, MultiLineString, MultiPoint
-from shapely.ops import linemerge, split, snap, unary_union
+from shapely.geometry import LineString, MultiLineString, MultiPoint, Point
+from shapely.ops import linemerge, snap, split, unary_union
 
 logger = logging.getLogger(__name__)
 
@@ -230,7 +225,7 @@ def burn_river_rect(
     riv_bank_q : float, optional
         quantile [0-1] for river bank estimation, by default 0.25
     rivwth_name, rivdph_name, rivbed_name, manning_name: str, optional
-        river width [m], depth [m], bed level [m+REF], and manning [s.m-1/3] column names
+        river width [m], depth [m], bed level [m+REF], & manning [s.m-1/3] column names
         in gdf_riv, by default "rivwth", "rivdph", "rivbed", and "manning"
 
 
