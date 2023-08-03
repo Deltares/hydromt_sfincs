@@ -591,6 +591,7 @@ class SfincsModel(GridModel):
         self,
         datasets_dep: List[dict],
         datasets_rgh: List[dict] = [],
+        datasets_riv: List[dict] = [],
         buffer_cells: int = 0,
         nbins: int = 10,
         nr_subgrid_pixels: int = 20,
@@ -619,22 +620,42 @@ class SfincsModel(GridModel):
         datasets_dep : List[dict]
             List of dictionaries with topobathy data.
             Each should minimally contain a data catalog source name, data file path,
-            or xarray raster object ('elevtn')
-
-            Optional merge arguments include 'zmin', 'zmax', 'mask', 'offset',
-            'reproj_method', and 'merge_method'. e.g.:
-            [
-                {'elevtn': merit_hydro, 'zmin': 0.01},
-                {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}
+            or xarray raster object ('elevtn'). Optional merge arguments include:
+            'zmin', 'zmax', 'mask', 'offset', 'reproj_method', and 'merge_method'.
+            e.g.: [
+                {'elevtn': 'merit_hydro', 'zmin': 0.01},
+                {'elevtn': 'gebco', 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}
             ]
-            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+            For a complete overview of all merge options, see
+            :py:function:~hydromt.workflows.merge_multi_dataarrays
         datasets_rgh : List[dict], optional
-            List of dictionaries with Manning's n datasets. Each dictionary should at least contain one of the following:
+            List of dictionaries with Manning's n datasets. Each dictionary should at
+            least contain one of the following:
             * (1) manning: filename (or Path) of gridded data with manning values
-            * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a mapping table.
-            In additon, optional merge arguments can be provided e.g.: merge_method, gdf_valid_fn
+            * (2) lulc (and reclass_table) :a combination of a filename of gridded
+            landuse/landcover and a mapping table. In additon, optional merge arguments
+            can be provided, e.g.: [
+                {'manning': 'manning_data'},
+                {'lulc': 'esa_worlcover', 'reclass_table': 'esa_worlcover_mapping'}
+            ]
+        datasets_riv : List[dict], optional
+            List of dictionaries with river datasets. Each dictionary should at least
+            contain a river centerline data and optionally a river mask:
+            * centerlines: filename (or Path) of river centerline with attributes
+                rivwth (river width [m]; required if not river mask provided),
+                rivdph or rivbed (river depth [m]; river bedlevel [m+REF]),
+                manning (Manning's n [s/m^(1/3)]; optional)
+            * mask (optional): filename (or Path) of river mask
+            * river attributes (optional): "rivdph", "rivbed", "rivwth", "manning"
+                to fill missing values
+            * arguments to the river burn method (optional):
+                segment_length [m] (default 500m) and riv_bank_q [0-1] (default 0.5)
+                which used to estimate the river bank height in case river depth is provided.
+              For more info see :py:function:~hydromt.workflows.bathymetry.burn_river_rect
+           e.g.: [{'centerlines': 'river_lines', 'mask': 'river_mask', 'manning': 0.035}]
         buffer_cells : int, optional
-            Number of cells between datasets to ensure smooth transition of bed levels, by default 0
+            Number of cells between datasets to ensure smooth transition of bed levels,
+            by default 0
         nbins : int, optional
             Number of bins in which hypsometry is subdivided, by default 10
         nr_subgrid_pixels : int, optional
@@ -643,18 +664,22 @@ class SfincsModel(GridModel):
             Maximum number of cells per subgrid-block, by default 2000
             These blocks are used to prevent memory issues while working with large datasets
         max_gradient : float, optional
-            If slope in hypsometry exceeds this value, then smoothing is applied, to prevent numerical stability problems, by default 5.0
+            If slope in hypsometry exceeds this value, then smoothing is applied,
+            to prevent numerical stability problems, by default 5.0
         z_minimum : float, optional
             Minimum depth in the subgrid tables, by default -99999.0
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
-            Note that these values are only used when no Manning's n datasets are provided, or to fill the nodata values
+            Note that these values are only used when no Manning's n datasets are provided,
+            or to fill the nodata values
         rgh_lev_land : float, optional
-            Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
-        write_dep_tif : bool, optional
-            Create geotiff of the merged topobathy on the subgrid resolution, by default False
-        write_man_tif : bool, optional
-            Create geotiff of the merged roughness on the subgrid resolution, by default False
+            Elevation level to distinguish land and sea roughness
+            (when using manning_land and manning_sea), by default 0.0
+        write_dep_tif, write_man_tif : bool, optional
+            Write geotiff of the merged topobathy / roughness on the subgrid resolution.
+            These files are not used by SFINCS, but can be used for visualisation and
+            downscaling of the floodmaps. Unlinke the SFINCS files it is written
+            to disk at execution of this method. By default False
         """
 
         # retrieve model resolution
@@ -670,6 +695,9 @@ class SfincsModel(GridModel):
             # NOTE conversion from landuse/landcover to manning happens here
             datasets_rgh = self._parse_datasets_rgh(datasets_rgh)
 
+        if len(datasets_riv) > 0:
+            datasets_riv = self._parse_datasets_riv(datasets_riv)
+
         # folder where high-resolution topobathy and manning geotiffs are stored
         if write_dep_tif or write_man_tif:
             highres_dir = os.path.join(self.root, "subgrid")
@@ -683,6 +711,7 @@ class SfincsModel(GridModel):
                 da_mask=self.mask,
                 datasets_dep=datasets_dep,
                 datasets_rgh=datasets_rgh,
+                datasets_riv=datasets_riv,
                 buffer_cells=buffer_cells,
                 nbins=nbins,
                 nr_subgrid_pixels=nr_subgrid_pixels,
@@ -2560,7 +2589,7 @@ class SfincsModel(GridModel):
         # config last; might be udpated when writing maps, states or forcing
         self.write_config()
         # write data catalog with used data sources
-        # self.write_data_catalog()  # new in hydromt v0.4.4
+        self.write_data_catalog()  # new in hydromt v0.4.4
 
     def read_grid(self, data_vars: Union[List, str] = None) -> None:
         """Read SFINCS binary grid files and save to `grid` attribute.
@@ -3430,6 +3459,79 @@ class SfincsModel(GridModel):
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
                     self.logger.warning(f"Unknown key {key} in datasets_rgh. Ignoring.")
+            datasets_out.append(dd)
+
+        return datasets_out
+
+    def _parse_datasets_riv(self, datasets_riv):
+        """Parse filenames or paths of Datasets in list of dictionaries
+        datasets_riv into xr.DataArrays and gdf.GeoDataFrames:
+
+        see SfincsModel.setup_subgrid for details
+        """
+        # option 1: rectangular river cross-sections based on river centerline
+        # depth/bedlevel, manning attributes are specified on the river centerline
+        # TODO: make this work with LineStringZ geometries for bedlevel
+        # the width is either specified on the river centerline or river mask
+        # option 2: (TODO): irregular river cross-sections
+        # cross-sections are specified as a series of points (river_crosssections)
+        parse_keys = [
+            "centerlines",
+            "mask",
+            "gdf_riv",
+            "gdf_riv_mask",
+        ]
+        copy_keys = []
+        attrs = ["rivwth", "rivdph", "rivbed", "manning"]
+
+        datasets_out = []
+        for dataset in datasets_riv:
+            dd = {}
+
+            # parse rivers
+            if "centerlines" in dataset:
+                rivers = dataset.get("centerlines")
+                if isinstance(rivers, str) and rivers in self.geoms:
+                    gdf_riv = self.geoms[rivers].copy()
+                else:
+                    gdf_riv = self.data_catalog.get_geodataframe(
+                        rivers,
+                        geom=self.mask.raster.box,
+                        buffer=1e3,  # 1km
+                    ).to_crs(self.crs)
+                # update missing attributes based on global values
+                for key in attrs:
+                    if key in dataset:
+                        value = dataset.pop(key)
+                        if key not in gdf_riv.columns:  # update all
+                            gdf_riv[key] = value
+                        elif np.any(np.isnan(gdf_riv[key])):  # fill na
+                            gdf_riv[key] = gdf_riv[key].fillna(value)
+                if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any():
+                    raise ValueError("No 'rivbed' or 'rivdph' attribute found.")
+            else:
+                raise ValueError("No 'centerlines' dataset provided.")
+            dd.update({"gdf_riv": gdf_riv})
+
+            # parse mask
+            if "mask" in dataset:
+                gdf_riv_mask = self.data_catalog.get_geodataframe(
+                    dataset.get("mask"),
+                    geom=self.mask.raster.box,
+                )
+                dd.update({"gdf_riv_mask": gdf_riv_mask})
+            elif "rivwth" not in gdf_riv:
+                raise ValueError(
+                    "Either mask must be provided or centerlines "
+                    "should contain a 'rivwth' attribute."
+                )
+
+            # copy remaining keys
+            for key, value in dataset.items():
+                if key in copy_keys and key not in dd:
+                    dd.update({key: value})
+                elif key not in copy_keys + parse_keys:
+                    self.logger.warning(f"Unknown key {key} in datasets_riv. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out

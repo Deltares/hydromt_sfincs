@@ -7,6 +7,8 @@ import numpy as np
 import xarray as xr
 from scipy import ndimage
 
+from .bathymetry import burn_river_rect
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["merge_multi_dataarrays", "merge_dataarrays"]
@@ -14,6 +16,7 @@ __all__ = ["merge_multi_dataarrays", "merge_dataarrays"]
 
 def merge_multi_dataarrays(
     da_list: List[dict],
+    gdf_list: List[dict] = [],
     da_like: xr.DataArray = None,
     reproj_kwargs: Dict = {},
     buffer_cells: int = 0,  # not in list
@@ -153,6 +156,22 @@ def merge_multi_dataarrays(
             interp_method=interp_method,
         )
 
+    # burn in rivers
+    for i in range(len(gdf_list)):
+        cs_type = gdf_list[i].get("type", "rectangular")
+        if cs_type == "rectangular":
+            # width or gdf_riv_mask is required
+            # zb is used if provided, otherwise depth is used
+            da1 = burn_river_rect(
+                da_elv=da1,
+                gdf_riv=gdf_list[i].get("gdf"),
+                gdf_riv_mask=gdf_list[i].get("gdf_mask", None),
+                rivdph_name=gdf_list[i].get("depth", "rivdph"),
+                rivwth_name=gdf_list[i].get("width", "rivwth"),
+                rivbed_name=gdf_list[i].get("zb", "rivbed"),
+            )
+        else:
+            raise NotImplementedError(f"Cross section type {cs_type} not implemented.")
     return da1
 
 

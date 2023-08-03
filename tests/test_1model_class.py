@@ -1,13 +1,14 @@
 """Test sfincs model class against hydromt.models.model_api"""
 
-import pytest
-from os.path import join, dirname, abspath, isfile
-import numpy as np
-import xarray as xr
-import pandas as pd
+from os.path import isfile, join
 
+import numpy as np
+import pandas as pd
+import pytest
+import xarray as xr
 from hydromt.cli.cli_utils import parse_config
 from hydromt.log import setuplog
+
 from hydromt_sfincs.sfincs import SfincsModel
 
 from .conftest import TESTDATADIR, TESTMODELDIR
@@ -32,36 +33,23 @@ def test_model_class(case):
     # pass
 
 
-def test_states(tmpdir):
-    root = TESTMODELDIR
-    fn = "sfincs.zsini"
-    mod = SfincsModel(root=root, mode="r+")
-    mod.read()
+def test_states(mod):
     # create dummy state and set to states
     mask = mod.grid["dep"] < -0.5
     zsini = xr.where(mask, 0.5, -9999.0)
     zsini.raster.set_nodata(-9999.0)
     zsini.raster.set_crs(mod.crs)
     mod.set_states(zsini, "zsini")
-
-    tmp_root = str(tmpdir.join("restart_test"))
-    mod.set_root(tmp_root, mode="w")
     # write and check if isfile
     mod.write_states()
     mod.write_config()
-    assert isfile(join(mod.root, fn))
+    assert isfile(join(mod.root, "sfincs.zsini"))
     # read and check if identical
-    mod1 = SfincsModel(root=tmp_root, mode="r")
+    mod1 = SfincsModel(root=mod.root, mode="r")
     assert np.allclose(mod1.states["zsini"], mod.states["zsini"])
 
 
-def test_infiltration(tmpdir):
-    # FIXME: very shallow test, add more specific tests
-    root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r")
-    mod.read()
-    mod.set_root(str(tmpdir.join("infiltration_test")), mode="w")
-
+def test_infiltration(mod):
     # set constant infiltration
     qinf = xr.where(mod.grid["dep"] < -0.5, -9999, 0.1)
     qinf.raster.set_nodata(-9999.0)
@@ -109,9 +97,46 @@ def test_infiltration(tmpdir):
     assert np.isclose(mod1.grid["kr"].where(mod.mask > 0).sum(), 330.588)
 
 
+def test_subgrid_rivers(mod):
+    gdf_riv = mod.data_catalog.get_geodataframe(
+        "rivers_lin2019_v1", geom=mod.region, buffer=1e3
+    )
+    rivdph = gdf_riv["rivwth"].values / 100
+    rivdph[-1] = np.nan
+    gdf_riv["rivdph"] = rivdph
+
+    sbg_org = mod.subgrid.copy()
+
+    mod.setup_subgrid(
+        datasets_dep=[
+            {"elevtn": "merit_hydro", "zmin": 0.001},
+            {"elevtn": "gebco"},
+        ],
+        datasets_rgh=[{"lulc": "vito"}],
+        datasets_riv=[
+            {
+                "centerlines": gdf_riv,
+                "rivdph": 1,
+                "rivwth": 100,
+                "manning": 0.035,
+            }
+        ],
+        write_dep_tif=True,
+        write_man_tif=True,
+        nr_subgrid_pixels=5,
+        nbins=8,
+        nrmax=250,  # multiple tiles
+    )
+
+    assert isfile(join(mod.root, "subgrid", "dep_subgrid.tif"))
+    assert isfile(join(mod.root, "subgrid", "manning_subgrid.tif"))
+
+    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 448.9449)
+
+
 def test_structs(tmpdir):
     root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r+")
+    mod = SfincsModel(root=root, mode="r")
     # read
     mod.set_config("thdfile", "sfincs.thd")
     mod.read_grid()
@@ -143,7 +168,7 @@ def test_structs(tmpdir):
 
 def test_drainage_structures(tmpdir):
     root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r+")
+    mod = SfincsModel(root=root, mode="r")
     # read
     mod.set_config("drnfile", "sfincs.drn")
     mod.read_grid()
@@ -202,17 +227,13 @@ def test_observations(tmpdir):
     assert len(mod.geoms["crs"].index) == nr_observation_lines * 2
 
 
-def test_results():
+def test_read_results():
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
     assert all([v in mod.results for v in ["zs", "zsmax", "inp"]])
 
 
-def test_plots(tmpdir):
-    root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r")
-    mod.read()
-    mod.set_root(str(tmpdir.join("plots_test")))
+def test_plots(mod):
     mod.plot_forcing(fn_out="forcing.png")
     assert isfile(join(mod.root, "figs", "forcing.png"))
     mod.plot_basemap(fn_out="basemap.png")
@@ -243,7 +264,7 @@ def test_model_build(tmpdir, case):
     # check maps
     invalid_maps = []
     if len(mod0._staticmaps) > 0:
-        assert np.all(mod0.crs == mod1.crs), f"map crs"
+        assert np.all(mod0.crs == mod1.crs), "map crs"
         for name in mod0.staticmaps.raster.vars:
             map0 = mod0.staticmaps[name]
             map1 = mod1.staticmaps[name]
@@ -273,7 +294,7 @@ def test_model_build(tmpdir, case):
     # check config
     if mod0._config:
         # flatten
-        assert mod0._config == mod1._config, f"config mismatch"
+        assert mod0._config == mod1._config, "config mismatch"
     # check forcing
     if mod0._forcing:
         for name in mod0.forcing:

@@ -1,10 +1,10 @@
-mmax                 = 250
+mmax                 = 251
 nmax                 = 107
-dx                   = 50.0
-dy                   = 50.0
-x0                   = 318650
-y0                   = 5040000
-rotation             = 27
+dx                   = 50
+dy                   = 50
+x0                   = 318650.0
+y0                   = 5040000.0
+rotation             = 27.0
 epsg                 = 32633
 latitude             = 0.0
 tref                 = 20100201 000000
