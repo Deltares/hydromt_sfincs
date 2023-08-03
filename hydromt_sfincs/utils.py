@@ -424,9 +424,9 @@ def gdf2linestring(gdf: gpd.GeoDataFrame) -> List[Dict]:
         feat = item.drop("geometry").dropna().to_dict()
         # check geom
         line = item.geometry
-        if line.type == "MultiLineString" and len(line.geoms) == 1:
+        if line.geom_type == "MultiLineString" and len(line.geoms) == 1:
             line = line.geoms[0]
-        if line.type != "LineString":
+        if line.geom_type != "LineString":
             raise ValueError("Invalid geometry type, only LineString is accepted.")
         xyz = tuple(zip(*line.coords[:]))
         feat["x"], feat["y"] = list(xyz[0]), list(xyz[1])
