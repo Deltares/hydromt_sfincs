@@ -440,6 +440,7 @@ document.write(`
     <span class="n">_NAME</span> <span class="o">=</span> <span class="s2">&quot;sfincs&quot;</span>
     <span class="n">_GEOMS</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;observation_points&quot;</span><span class="p">:</span> <span class="s2">&quot;obs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;observation_lines&quot;</span><span class="p">:</span> <span class="s2">&quot;crs&quot;</span><span class="p">,</span>
         <span class="s2">&quot;weirs&quot;</span><span class="p">:</span> <span class="s2">&quot;weir&quot;</span><span class="p">,</span>
         <span class="s2">&quot;thin_dams&quot;</span><span class="p">:</span> <span class="s2">&quot;thd&quot;</span><span class="p">,</span>
         <span class="s2">&quot;drainage_structures&quot;</span><span class="p">:</span> <span class="s2">&quot;drn&quot;</span><span class="p">,</span>
@@ -1717,6 +1718,49 @@ document.write(`
 
         <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_obs</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">setup_observation_lines</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">locations</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
+        <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup model observation lines (cross-sections) to monitor discharges.</span>
+
+<span class="sd">        Adds model layers:</span>
+
+<span class="sd">        * **crs** geom: observation lines (cross-sections)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ---------</span>
+<span class="sd">        locations: str, Path, gpd.GeoDataFrame, optional</span>
+<span class="sd">            Path, data source name, or geopandas object for observation lines (cross-sections).</span>
+<span class="sd">        merge: bool, optional</span>
+<span class="sd">            If True, merge the new observation lines with the existing ones. By default True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GEOMS</span><span class="p">[</span><span class="s2">&quot;observation_lines&quot;</span><span class="p">]</span>
+
+        <span class="c1"># FIXME ensure the catalog is loaded before adding any new entries</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">sources</span>
+
+        <span class="c1"># FIXME assert_gtype=&quot;LineString&quot; does not work for MultiLineString and default seems to be Point (??)</span>
+        <span class="n">gdf_obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
+            <span class="n">locations</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">assert_gtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+
+        <span class="c1"># make sure MultiLineString are converted to LineString</span>
+        <span class="n">gdf_obs</span> <span class="o">=</span> <span class="n">gdf_obs</span><span class="o">.</span><span class="n">explode</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf_obs</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;LineString&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Observation lines must be of type LineString.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">merge</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">:</span>
+            <span class="n">gdf0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_geoms</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">gdf_obs</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">gdf_obs</span><span class="p">,</span> <span class="n">gdf0</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adding new observation lines to existing ones.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_obs</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SfincsModel.setup_structures"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures">[docs]</a>    <span class="k">def</span> <span class="nf">setup_structures</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -3067,7 +3111,7 @@ document.write(`
                 <span class="k">elif</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gname</span><span class="si">}</span><span class="s2">file not found at </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="k">continue</span>
-                <span class="k">if</span> <span class="n">gname</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;thd&quot;</span><span class="p">,</span> <span class="s2">&quot;weir&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">gname</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;thd&quot;</span><span class="p">,</span> <span class="s2">&quot;weir&quot;</span><span class="p">,</span> <span class="s2">&quot;crs&quot;</span><span class="p">]:</span>
                     <span class="n">struct</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
                     <span class="n">gdf</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">linestring2gdf</span><span class="p">(</span><span class="n">struct</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="n">gname</span> <span class="o">==</span> <span class="s2">&quot;obs&quot;</span><span class="p">:</span>
@@ -3112,7 +3156,7 @@ document.write(`
                     <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gname</span><span class="si">}</span><span class="s2">file&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">gname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">gname</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;thd&quot;</span><span class="p">,</span> <span class="s2">&quot;weir&quot;</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">gname</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;thd&quot;</span><span class="p">,</span> <span class="s2">&quot;weir&quot;</span><span class="p">,</span> <span class="s2">&quot;crs&quot;</span><span class="p">]:</span>
                         <span class="n">struct</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">gdf2linestring</span><span class="p">(</span><span class="n">gdf</span><span class="p">)</span>
                         <span class="n">utils</span><span class="o">.</span><span class="n">write_geoms</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">struct</span><span class="p">,</span> <span class="n">stype</span><span class="o">=</span><span class="n">gname</span><span class="p">)</span>
                     <span class="k">elif</span> <span class="n">gname</span> <span class="o">==</span> <span class="s2">&quot;obs&quot;</span><span class="p">:</span>
