@@ -1722,6 +1722,8 @@ document.write(`
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">structures</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
         <span class="n">stype</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">dep</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">dz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -1742,6 +1744,12 @@ document.write(`
 <span class="sd">            &quot;par1&quot; defaults to 0.6 if gdf has no &quot;par1&quot; column.</span>
 <span class="sd">        stype : {&#39;thd&#39;, &#39;weir&#39;}</span>
 <span class="sd">            Structure type.</span>
+<span class="sd">        dep : str, Path, xr.DataArray, optional</span>
+<span class="sd">            Path, data source name, or xarray raster object (&#39;elevtn&#39;) describing the depth in an</span>
+<span class="sd">            alternative resolution which is used for sampling the weir.</span>
+<span class="sd">        buffer : float, optional</span>
+<span class="sd">            If provided, describes the distance from the centerline to the foot of the structure.</span>
+<span class="sd">            This distance is supplied to the raster.sample as the window (wdw).</span>
 <span class="sd">        merge : bool, optional</span>
 <span class="sd">            If True, merge with existing&#39;stype&#39; structures, by default True.</span>
 <span class="sd">        dz: float, optional</span>
@@ -1758,20 +1766,44 @@ document.write(`
             <span class="s2">&quot;thd&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;geometry&quot;</span><span class="p">],</span>
             <span class="s2">&quot;weir&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;par1&quot;</span><span class="p">,</span> <span class="s2">&quot;geometry&quot;</span><span class="p">],</span>
         <span class="p">}</span>
-        <span class="k">assert</span> <span class="n">stype</span> <span class="ow">in</span> <span class="n">cols</span>
+        <span class="k">assert</span> <span class="n">stype</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;stype must be one of </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">cols</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf_structures</span><span class="p">[</span>
             <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">[</span><span class="n">stype</span><span class="p">]</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
         <span class="p">]</span>  <span class="c1"># keep relevant cols</span>
 
         <span class="n">structs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">gdf2linestring</span><span class="p">(</span><span class="n">gdf</span><span class="p">)</span>  <span class="c1"># check if it parsed correct</span>
         <span class="c1"># sample zb values from dep file and set z = zb + dz</span>
-        <span class="k">if</span> <span class="n">stype</span> <span class="o">==</span> <span class="s2">&quot;weir&quot;</span> <span class="ow">and</span> <span class="n">dz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s2">&quot;dep&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">stype</span> <span class="o">==</span> <span class="s2">&quot;weir&quot;</span> <span class="ow">and</span> <span class="p">(</span><span class="n">dep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dep</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dep</span> <span class="o">==</span> <span class="s2">&quot;dep&quot;</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="s2">&quot;dep&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span> <span class="s2">&quot;dep layer not found&quot;</span>
+                <span class="n">elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s2">&quot;dep&quot;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                    <span class="n">dep</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">]</span>
+                <span class="p">)</span>
+
+            <span class="c1"># calculate window size from buffer</span>
+            <span class="k">if</span> <span class="n">buffer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="n">res</span> <span class="o">*</span> <span class="mf">111111.0</span>
+                <span class="n">window_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">buffer</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">window_size</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sampling elevation with window size </span><span class="si">{</span><span class="n">window_size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
             <span class="n">structs_out</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">structs</span><span class="p">:</span>
                 <span class="n">pnts</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">])</span>
-                <span class="n">zb</span> <span class="o">=</span> <span class="n">elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="n">pnts</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">))</span>
-                <span class="n">s</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zb</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">dz</span><span class="p">)</span>
+                <span class="n">zb</span> <span class="o">=</span> <span class="n">elv</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+                    <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="n">pnts</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">),</span> <span class="n">wdw</span><span class="o">=</span><span class="n">window_size</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">zb</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">zb</span> <span class="o">=</span> <span class="n">zb</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="n">s</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zb</span><span class="o">.</span><span class="n">values</span>
+                <span class="k">if</span> <span class="n">dz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">s</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">dz</span><span class="p">)</span>
                 <span class="n">structs_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">linestring2gdf</span><span class="p">(</span><span class="n">structs_out</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
         <span class="c1"># Else function if you define elevation of weir</span>
