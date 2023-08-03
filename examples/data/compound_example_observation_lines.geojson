@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"name": "compound_example_observation_lines",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "Canale Cavetta" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 12.721892761721298, 45.535511195902046 ], [ 12.721889110039772, 45.535128791146363 ] ] ] } },
+{ "type": "Feature", "properties": { "name": "Piave inflow" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 12.711856115045457, 45.557094303070933 ], [ 12.713579708726007, 45.55776932081114 ] ] ] } },
+{ "type": "Feature", "properties": { "name": "Piave outflow" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 12.726509400091304, 45.529217173464907 ], [ 12.727922600842096, 45.529660374484038 ], [ 12.729582290095932, 45.530080548848773 ] ] ] } }
+]
+}

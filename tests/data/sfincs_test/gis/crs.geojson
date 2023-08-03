@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32633" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "Canale Cavetta" }, "geometry": { "type": "LineString", "coordinates": [ [ 322131.498434403445572, 5044966.007600662298501 ], [ 322130.007149593380746, 5044923.531961773522198 ] ] } },
+{ "type": "Feature", "properties": { "name": "Piave inflow" }, "geometry": { "type": "LineString", "coordinates": [ [ 321416.261422272771597, 5047386.110819689929485 ], [ 321552.919881363399327, 5047457.266937555745244 ] ] } },
+{ "type": "Feature", "properties": { "name": "Piave outflow" }, "geometry": { "type": "LineString", "coordinates": [ [ 322472.138677117007319, 5044256.542221014387906 ], [ 322583.883002776186913, 5044302.654811487533152 ], [ 322714.800058968015946, 5044345.666600314900279 ] ] } }
+]
+}

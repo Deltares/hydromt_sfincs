@@ -26,7 +26,8 @@ New
 - Added the option to use landuse/landcover data combined with a reclass table to `SfincsModel.setup_constant_infiltration`.  PR #103
 - Enabled to provide locations only (so no timeseries) for `SfincsModel.setup_waterlevel_forcing` and `SfincsModel.setup_discharge_forcing` PR #104
 - New optional buffer argument in  `SfincsModel.setup_discharge_forcing` to select gauges around boundary only. PR #104
-- New functionality within `SfincsModel.setup_structures` to use high resolution dem for weir elevation
+- New functionality within `SfincsModel.setup_structures` to use high resolution dem for weir elevation. PR #109
+- `SfincsModel.setup_observation_lines` to setup model observation lines (cross-sections) to monitor discharges. PR #114
 
 Changed
 -------
