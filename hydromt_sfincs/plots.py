@@ -11,7 +11,8 @@ __all__ = ["plot_forcing", "plot_basemap"]
 
 geom_style = {
     "rivers": dict(linestyle="-", linewidth=1.0, color="darkblue"),
-    "rivers_out": dict(linestyle="-", linewidth=1.0, color="darkgreen"),
+    "rivers_inflow": dict(linestyle=":", linewidth=1.0, color="darkblue"),
+    "rivers_outflow": dict(linestyle=":", linewidth=1.0, color="darkgreen"),
     "msk2": dict(linestyle="-", linewidth=1.5, color="r"),
     "msk3": dict(linestyle="-", linewidth=1.5, color="m"),
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=False),
@@ -19,7 +20,7 @@ geom_style = {
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
     "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
     "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
-    "crs": dict(linestyle=":", linewidth=1.0, color="k", annotate=False),
+    "crs": dict(linestyle="-", linewidth=1.5, color="deeppink", annotate=False),
     "region": dict(ls="--", linewidth=1, color="r"),
 }
 
@@ -211,7 +212,7 @@ def plot_basemap(
             kwargs0.update(norm=norm, cmap=cmap)
         elif variable == "msk" and "msk" in ds:
             cmap = colors.LinearSegmentedColormap.from_list(
-                "Set1", ["grey", "r", "m"], N=4
+                "Set1", ["grey", "r", "m"], N=3
             )
             norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5], 3)
             kwargs0.update(norm=norm, cmap=cmap)

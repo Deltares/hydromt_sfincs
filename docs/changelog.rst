@@ -1,6 +1,7 @@
 What's new
 ==========
-All notable changes to this project will be documented in this page. Distinction is made between new methods (Added), changes to existing methods (Changed), bugfixes (Fixed), deprecated methods (Deprecated) and removed methods (Removed).
+All notable changes to this project will be documented in this page. 
+Distinction is made between new methods (Added), changes to existing methods (Changed), bugfixes (Fixed), deprecated methods (Deprecated) and removed methods (Removed).
 
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
@@ -26,6 +27,7 @@ Changed
 - New optional buffer argument in  `SfincsModel.setup_discharge_forcing` to select gauges around boundary only. PR #104
 - `SfincsModel.plot_basemaps` now supports other CRS than UTM zones. PR #111
 - New functionality within `SfincsModel.setup_structures` to use high resolution dem for weir elevation. PR #109
+- hydromt_data.yml is written to the model root directory with used data sources. 
 
 Fixed
 ------
@@ -36,7 +38,7 @@ Fixed
 - bugfix in `Sfincs.read_forcing` when combining attributes from the locations stored in the gis folder with the actual forcing locations. PR #99
 - bugfix in `SfincsModel.setup_discharge_from_grid` when snapping based on upstream area in case a src points is outside of the uparea grid domain. PR #99
 
-Deprecated
+Removed
 ----------
 - `burn_river_zb` and `get_river_bathymetry` workflow methods have been deprecated in favor of `burn_river_rect`. PR #84 
 
