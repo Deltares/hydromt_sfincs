@@ -136,6 +136,9 @@ def test_structs(tmpdir):
     assert "weirfile" in mod.config
     mod.write_geoms()
     assert isfile(join(mod.root, "sfincs.weir"))
+    # test with buffer
+    mod.setup_structures(fn_thd_gis, stype="weir", buffer=5, dep="dep", merge=False)
+    assert len(mod.geoms["weir"].index) == 2
 
 
 def test_drainage_structures(tmpdir):
