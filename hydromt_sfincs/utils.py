@@ -241,9 +241,9 @@ def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, crs: int = N
             except:
                 name = "obs" + str(point["id"])
             if crs.is_geographic:
-                string = f'{x:12.6f}{y:12.6f}  "{name}"\n'
+                string = f"{x:12.6f}{y:12.6f}  {name}\n"
             else:
-                string = f'{x:12.1f}{y:12.1f}  "{name}"\n'
+                string = f"{x:12.1f}{y:12.1f}  {name}\n"
             fid.write(string)
 
 
@@ -424,9 +424,9 @@ def gdf2linestring(gdf: gpd.GeoDataFrame) -> List[Dict]:
         feat = item.drop("geometry").dropna().to_dict()
         # check geom
         line = item.geometry
-        if line.type == "MultiLineString" and len(line.geoms) == 1:
+        if line.geom_type == "MultiLineString" and len(line.geoms) == 1:
             line = line.geoms[0]
-        if line.type != "LineString":
+        if line.geom_type != "LineString":
             raise ValueError("Invalid geometry type, only LineString is accepted.")
         xyz = tuple(zip(*line.coords[:]))
         feat["x"], feat["y"] = list(xyz[0]), list(xyz[1])
@@ -540,10 +540,11 @@ def write_geoms(
         Path to output structure file.
     feats: list of dict
         List of dictionaries describing structures.
-        For pli, pol and thd files "x" and "y" are required, "name" is optional.
+        For pli, pol, thd anc crs files "x" and "y" are required, "name" is optional.
         For weir files "x", "y" and "z" are required, "name" and "par1" are optional.
-    stype: {'pli', 'pol', 'thd', 'weir'}
-        Geom type polylines (pli), polygons (pol) thin dams (thd) or weirs (weir).
+    stype: {'pli', 'pol', 'thd', 'weir', 'crs'}
+        Geom type polylines (pli), polygons (pol) thin dams (thd), weirs (weir)
+        or cross-sections (crs).
     fmt: str
         format for "z" and "par1" fields.
 
@@ -567,7 +568,7 @@ def write_geoms(
         ]
     >>> write_structures('sfincs.weir', feats, stype='weir')
     """
-    cols = {"pli": 2, "pol": 2, "thd": 2, "weir": 4}[stype.lower()]
+    cols = {"pli": 2, "pol": 2, "thd": 2, "weir": 4, "crs": 2}[stype.lower()]
     fmt = ["%.0f", "%.0f"] + [fmt for _ in range(cols - 2)]
     if stype.lower() == "weir" and np.any(["z" not in f for f in feats]):
         raise ValueError('"z" value missing for weir files.')

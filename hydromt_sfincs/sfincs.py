@@ -38,6 +38,7 @@ class SfincsModel(GridModel):
     _NAME = "sfincs"
     _GEOMS = {
         "observation_points": "obs",
+        "observation_lines": "crs",
         "weirs": "weir",
         "thin_dams": "thd",
         "drainage_structures": "drn",
@@ -1345,10 +1346,55 @@ class SfincsModel(GridModel):
         self.set_geoms(gdf_obs, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
 
+    def setup_observation_lines(
+        self,
+        locations: Union[str, Path, gpd.GeoDataFrame],
+        merge: bool = True,
+        **kwargs,
+    ):
+        """Setup model observation lines (cross-sections) to monitor discharges.
+
+        Adds model layers:
+
+        * **crs** geom: observation lines (cross-sections)
+
+        Parameters
+        ---------
+        locations: str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for observation lines (cross-sections).
+        merge: bool, optional
+            If True, merge the new observation lines with the existing ones. By default True.
+        """
+        name = self._GEOMS["observation_lines"]
+
+        # FIXME ensure the catalog is loaded before adding any new entries
+        self.data_catalog.sources
+
+        # FIXME assert_gtype="LineString" does not work for MultiLineString and default seems to be Point (??)
+        gdf_obs = self.data_catalog.get_geodataframe(
+            locations, geom=self.region, assert_gtype=None, **kwargs
+        ).to_crs(self.crs)
+
+        # make sure MultiLineString are converted to LineString
+        gdf_obs = gdf_obs.explode().reset_index(drop=True)
+
+        if not gdf_obs.geometry.type.isin(["LineString"]).all():
+            raise ValueError("Observation lines must be of type LineString.")
+
+        if merge and name in self.geoms:
+            gdf0 = self._geoms.pop(name)
+            gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
+            self.logger.info(f"Adding new observation lines to existing ones.")
+
+        self.set_geoms(gdf_obs, name)
+        self.set_config(f"{name}file", f"sfincs.{name}")
+
     def setup_structures(
         self,
         structures: Union[str, Path, gpd.GeoDataFrame],
         stype: str,
+        dep: Union[str, Path, xr.DataArray] = None,
+        buffer: float = None,
         dz: float = None,
         merge: bool = True,
         **kwargs,
@@ -1369,6 +1415,12 @@ class SfincsModel(GridModel):
             "par1" defaults to 0.6 if gdf has no "par1" column.
         stype : {'thd', 'weir'}
             Structure type.
+        dep : str, Path, xr.DataArray, optional
+            Path, data source name, or xarray raster object ('elevtn') describing the depth in an
+            alternative resolution which is used for sampling the weir.
+        buffer : float, optional
+            If provided, describes the distance from the centerline to the foot of the structure.
+            This distance is supplied to the raster.sample as the window (wdw).
         merge : bool, optional
             If True, merge with existing'stype' structures, by default True.
         dz: float, optional
@@ -1385,20 +1437,44 @@ class SfincsModel(GridModel):
             "thd": ["name", "geometry"],
             "weir": ["name", "z", "par1", "geometry"],
         }
-        assert stype in cols
+        assert stype in cols, f"stype must be one of {list(cols.keys())}"
         gdf = gdf_structures[
             [c for c in cols[stype] if c in gdf_structures.columns]
         ]  # keep relevant cols
 
         structs = utils.gdf2linestring(gdf)  # check if it parsed correct
         # sample zb values from dep file and set z = zb + dz
-        if stype == "weir" and dz is not None:
-            elv = self.grid["dep"]
+        if stype == "weir" and (dep is not None or dz is not None):
+            if dep is None or dep == "dep":
+                assert "dep" in self.grid, "dep layer not found"
+                elv = self.grid["dep"]
+            else:
+                elv = self.data_catalog.get_rasterdataset(
+                    dep, geom=self.region, buffer=5, variables=["elevtn"]
+                )
+
+            # calculate window size from buffer
+            if buffer is not None:
+                res = abs(elv.raster.res[0])
+                if elv.raster.crs.is_geographic:
+                    res = res * 111111.0
+                window_size = int(np.ceil(buffer / res))
+            else:
+                window_size = 0
+            self.logger.debug(f"Sampling elevation with window size {window_size}")
+
             structs_out = []
             for s in structs:
                 pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
-                zb = elv.raster.sample(gpd.GeoDataFrame(geometry=pnts, crs=self.crs))
-                s["z"] = zb.values + float(dz)
+                zb = elv.raster.sample(
+                    gpd.GeoDataFrame(geometry=pnts, crs=self.crs), wdw=window_size
+                )
+                if zb.ndim > 1:
+                    zb = zb.max(axis=1)
+
+                s["z"] = zb.values
+                if dz is not None:
+                    s["z"] += float(dz)
                 structs_out.append(s)
             gdf = utils.linestring2gdf(structs_out, crs=self.crs)
         # Else function if you define elevation of weir
@@ -2662,7 +2738,7 @@ class SfincsModel(GridModel):
                 elif not isfile(fn):
                     self.logger.warning(f"{gname}file not found at {fn}")
                     continue
-                if gname in ["thd", "weir"]:
+                if gname in ["thd", "weir", "crs"]:
                     struct = utils.read_geoms(fn)
                     gdf = utils.linestring2gdf(struct, crs=self.crs)
                 elif gname == "obs":
@@ -2707,7 +2783,7 @@ class SfincsModel(GridModel):
                     if f"{gname}file" not in self.config:
                         self.set_config(f"{gname}file", f"sfincs.{gname}")
                     fn = self.get_config(f"{gname}file", abs_path=True)
-                    if gname in ["thd", "weir"]:
+                    if gname in ["thd", "weir", "crs"]:
                         struct = utils.gdf2linestring(gdf)
                         utils.write_geoms(fn, struct, stype=gname)
                     elif gname == "obs":

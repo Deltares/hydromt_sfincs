@@ -1,6 +1,6 @@
 What's new
 ==========
-All notable changes to this project will be documented in this page.
+All notable changes to this project will be documented in this page. Distinction is made between new methods (Added), changes to existing methods (Changed), bugfixes (Fixed), deprecated methods (Deprecated) and removed methods (Removed).
 
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
@@ -10,14 +10,24 @@ v1.0.1 (unreleased)
 
 Added
 -----
-- `setup_subgrid`` now supports the 'riv_datasets' to burn in river bathymetry into the subgrid. PR #84
 - `SfincsModel.setup_cn_infiltration_with_kr` to setup three layers related to the curve number 
   (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr) PR #87
-- `SfincsModel.setup_cn_infiltration_with_kr` to setup three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr). PR#87
 - `SfincsModelsetup_drainage_structures` to setup drainage structures (pumps,culverts) from a geodataframe. PR#90
 - Added `SfincsModel.setup_wind_forcing`, `SfincsModel.setup_wind_forcing_from_grid` and `SfincsModel.setup_pressure_forcing_from_grid` methods to easily add wind and pressure forcing.  PR #92
+- `SfincsModel.setup_observation_lines` to setup model observation lines (cross-sections) to monitor discharges. PR #114
 
-Bugfix
+Changed
+-------
+- `SfincsModel.setup_subgrid`` now supports the 'riv_datasets' to burn in river bathymetry into the subgrid. PR #84
+- `SfincsModel.setup_mask_active` argument reset_mask default to True PR #94
+- `SfincsModel.read_config` allows to use a template input file from a directory different than the model root. PR #102
+- Added the option to use landuse/landcover data combined with a reclass table to `SfincsModel.setup_constant_infiltration`.  PR #103
+- Enabled to provide locations only (so no timeseries) for `SfincsModel.setup_waterlevel_forcing` and `SfincsModel.setup_discharge_forcing` PR #104
+- New optional buffer argument in  `SfincsModel.setup_discharge_forcing` to select gauges around boundary only. PR #104
+- `SfincsModel.plot_basemaps` now supports other CRS than UTM zones. PR #111
+- New functionality within `SfincsModel.setup_structures` to use high resolution dem for weir elevation. PR #109
+
+Fixed
 ------
 - bugfix in `SfincsModel.write_forcing` to ensure all NetCDF files are written instead of only the first one. PR #86
 - bugfix in `SfincsModel.read_config` & `SfincsInput.read` for relative paths in inp file. PR #88
@@ -29,11 +39,6 @@ Bugfix
 Deprecated
 ----------
 - `burn_river_zb` and `get_river_bathymetry` workflow methods have been deprecated in favor of `burn_river_rect`. PR #84 
-
-Changed
--------
-- `SfincsModel.setup_mask_active` argument reset_mask default to True PR #94
-- `SfincsModel.plot_basemaps` now supports other CRS than UTM zones. PR #111
 
 v1.0 (17 April 2023)
 ====================
@@ -61,7 +66,7 @@ Main differences
 - `setup_precip_forcing_from_grid` has replaced `setup_p_forcing_from_grid`
 - `setup_observation_points` has replace `setup_gauges`
 
-New methods
+Added
 -----------
 - `setup_grid` to setup a user-defined regular grid based coordinates, shape, rotation, etc.
 - `setup_subgrid` to setup subgrid tables (sbgfile) based on one ore more elevation and Manning roughness datasets
@@ -69,12 +74,12 @@ New methods
 - `setup_waterlevel_bnd_from_mask` to setup water level boundary points (bndfile) based on the SFINCS model mask (mskfile)
 - `setup_tiles` to create tiles of the model for fast visualization
 
-Changed methods
+Changed
 ---------------
 - `setup_river_inflow` and `setup_river_outflow` are now based river centerline data (which can be derivded from hydrography data).
   This is more robust compared to the previous method which was based on reprojected flow direction data.
 
-Removed methods (not replaced)
+Removed (not replaced)
 ------------------------------
 - `setup_basemaps` This method was already deprecated in v0.2.1 and has now been removed.
 - `setup_river_hydrography` This method was removed as reprojection of the hydrography data is no longer required for river inflow/outflow.

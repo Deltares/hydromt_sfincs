@@ -43,6 +43,7 @@ Setup components
    SfincsModel.setup_river_inflow
    SfincsModel.setup_river_outflow
    SfincsModel.setup_observation_points
+   SfincsModel.setup_observation_lines
    SfincsModel.setup_structures
    SfincsModel.setup_drainage_structures
    SfincsModel.setup_waterlevel_forcing
