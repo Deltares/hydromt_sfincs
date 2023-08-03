@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>hydromt_sfincs.workflows.burn_river_zb &#8212; HydroMT SFINCS  documentation</title>
+    <title>hydromt_sfincs.SfincsModel.setup_observation_lines &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -41,11 +41,11 @@
     <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="../_static/design-tabs.js?v=36754332"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.workflows.burn_river_zb';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.SfincsModel.setup_observation_lines';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.workflows.snap_discharge" href="hydromt_sfincs.workflows.snap_discharge.html" />
-    <link rel="prev" title="hydromt_sfincs.workflows.get_river_bathymetry" href="hydromt_sfincs.workflows.get_river_bathymetry.html" />
+    <link rel="next" title="hydromt_sfincs.SfincsModel.setup_structures" href="hydromt_sfincs.SfincsModel.setup_structures.html" />
+    <link rel="prev" title="hydromt_sfincs.SfincsModel.setup_observation_points" href="hydromt_sfincs.SfincsModel.setup_observation_points.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -361,7 +361,7 @@ document.write(`
   <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.html">hydromt_sfincs.SfincsModel</a></li>
 </ul>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_config.html">hydromt_sfincs.SfincsModel.setup_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_region.html">hydromt_sfincs.SfincsModel.setup_region</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_grid.html">hydromt_sfincs.SfincsModel.setup_grid</a></li>
@@ -377,6 +377,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">hydromt_sfincs.SfincsModel.setup_river_inflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_outflow.html">hydromt_sfincs.SfincsModel.setup_river_outflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_observation_points.html">hydromt_sfincs.SfincsModel.setup_observation_points</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_observation_lines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_structures.html">hydromt_sfincs.SfincsModel.setup_structures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_drainage_structures.html">hydromt_sfincs.SfincsModel.setup_drainage_structures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html">hydromt_sfincs.SfincsModel.setup_waterlevel_forcing</a></li>
@@ -443,12 +444,10 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.set_results.html">hydromt_sfincs.SfincsModel.set_results</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_results.html">hydromt_sfincs.SfincsModel.read_results</a></li>
 </ul>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.merge_multi_dataarrays.html">hydromt_sfincs.workflows.merge_multi_dataarrays</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.merge_dataarrays.html">hydromt_sfincs.workflows.merge_dataarrays</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.get_rivbank_dz.html">hydromt_sfincs.workflows.get_rivbank_dz</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.get_river_bathymetry.html">hydromt_sfincs.workflows.get_river_bathymetry</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.workflows.burn_river_zb</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.burn_river_rect.html">hydromt_sfincs.workflows.burn_river_rect</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.snap_discharge.html">hydromt_sfincs.workflows.snap_discharge</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.river_boundary_points.html">hydromt_sfincs.workflows.river_boundary_points</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.river_centerline_from_hydrography.html">hydromt_sfincs.workflows.river_centerline_from_hydrography</a></li>
@@ -532,7 +531,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API reference</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">hydromt_sfincs.workflows.burn_river_zb</li>
+    <li class="breadcrumb-item active" aria-current="page">hydromt_sfincs.SfincsModel.setup_observation_lines</li>
   </ul>
 </nav>
 </div>
@@ -549,28 +548,22 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="hydromt-sfincs-workflows-burn-river-zb">
-<h1>hydromt_sfincs.workflows.burn_river_zb<a class="headerlink" href="#hydromt-sfincs-workflows-burn-river-zb" title="Permalink to this heading">#</a></h1>
-<dl class="py function">
-<dt class="sig sig-object py" id="hydromt_sfincs.workflows.burn_river_zb">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">burn_river_zb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gdf_riv:</span> <span class="pre">~geopandas.geodataframe.GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_elv:</span> <span class="pre">~xarray.core.dataarray.DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_msk:</span> <span class="pre">~xarray.core.dataarray.DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flwdir:</span> <span class="pre">~pyflwdir.pyflwdir.FlwdirRaster</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_d4:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.bathymetry</span> <span class="pre">(WARNING)&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/bathymetry.html#burn_river_zb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.burn_river_zb" title="Permalink to this definition">#</a></dt>
-<dd><p>Burn bedlevels from <cite>gdf_riv</cite> (column zb) into the DEM <cite>da_elv</cite> at river cells
-indicated in <cite>da_msk</cite>.</p>
+  <section id="hydromt-sfincs-sfincsmodel-setup-observation-lines">
+<h1>hydromt_sfincs.SfincsModel.setup_observation_lines<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-observation-lines" title="Permalink to this heading">#</a></h1>
+<dl class="py method">
+<dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_observation_lines">
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_observation_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.11)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.13.2)"><span class="pre">GeoDataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_observation_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_observation_lines" title="Permalink to this definition">#</a></dt>
+<dd><p>Setup model observation lines (cross-sections) to monitor discharges.</p>
+<p>Adds model layers:</p>
+<ul class="simple">
+<li><p><strong>crs</strong> geom: observation lines (cross-sections)</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>gdf_riv</strong> (<em>gpd.GeoDataFrame</em>) – River segments with bed level (zb) estimates</p></li>
-<li><p><strong>da_elv</strong> (<em>xr.DataArray</em><em> of </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Elevation raster</p></li>
-<li><p><strong>da_msk</strong> (<em>xr.DataArray</em><em> of </em><em>bool:</em>) – River mask</p></li>
-<li><p><strong>flwdir</strong> (<em>pyflwdir.FlwdirRaster</em><em>, </em><em>optional</em>) – Flow direction object</p></li>
-<li><p><strong>river_d4</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – If True (default) ensure river cells have D4 connectivity</p></li>
+<li><p><strong>locations</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>Path</em><em>, </em><em>gpd.GeoDataFrame</em><em>, </em><em>optional</em>) – Path, data source name, or geopandas object for observation lines (cross-sections).</p></li>
+<li><p><strong>merge</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, merge the new observation lines with the existing ones. By default True.</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>da_elv1</strong> – DEM with bedlevels burned in.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>xr.DataArray</p>
 </dd>
 </dl>
 </dd></dl>
@@ -589,20 +582,20 @@ indicated in <cite>da_msk</cite>.</p>
     <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
-       href="hydromt_sfincs.workflows.get_river_bathymetry.html"
+       href="hydromt_sfincs.SfincsModel.setup_observation_points.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">hydromt_sfincs.workflows.get_river_bathymetry</p>
+        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_observation_points</p>
       </div>
     </a>
     <a class="right-next"
-       href="hydromt_sfincs.workflows.snap_discharge.html"
+       href="hydromt_sfincs.SfincsModel.setup_structures.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">hydromt_sfincs.workflows.snap_discharge</p>
+        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_structures</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -624,13 +617,13 @@ indicated in <cite>da_msk</cite>.</p>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.workflows.burn_river_zb"><code class="docutils literal notranslate"><span class="pre">burn_river_zb()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.SfincsModel.setup_observation_lines"><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_observation_lines()</span></code></a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">
-    <a href="../_sources/_generated/hydromt_sfincs.workflows.burn_river_zb.rst.txt">
+    <a href="../_sources/_generated/hydromt_sfincs.SfincsModel.setup_observation_lines.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>hydromt_sfincs.workflows.get_rivbank_dz &#8212; HydroMT SFINCS  documentation</title>
+    <title>hydromt_sfincs.workflows.burn_river_rect &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -41,10 +41,10 @@
     <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="../_static/design-tabs.js?v=36754332"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.workflows.get_rivbank_dz';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.workflows.burn_river_rect';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.workflows.get_river_bathymetry" href="hydromt_sfincs.workflows.get_river_bathymetry.html" />
+    <link rel="next" title="hydromt_sfincs.workflows.snap_discharge" href="hydromt_sfincs.workflows.snap_discharge.html" />
     <link rel="prev" title="hydromt_sfincs.workflows.merge_dataarrays" href="hydromt_sfincs.workflows.merge_dataarrays.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -377,6 +377,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">hydromt_sfincs.SfincsModel.setup_river_inflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_outflow.html">hydromt_sfincs.SfincsModel.setup_river_outflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_observation_points.html">hydromt_sfincs.SfincsModel.setup_observation_points</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_observation_lines.html">hydromt_sfincs.SfincsModel.setup_observation_lines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_structures.html">hydromt_sfincs.SfincsModel.setup_structures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_drainage_structures.html">hydromt_sfincs.SfincsModel.setup_drainage_structures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html">hydromt_sfincs.SfincsModel.setup_waterlevel_forcing</a></li>
@@ -446,9 +447,7 @@ document.write(`
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.merge_multi_dataarrays.html">hydromt_sfincs.workflows.merge_multi_dataarrays</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.merge_dataarrays.html">hydromt_sfincs.workflows.merge_dataarrays</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.workflows.get_rivbank_dz</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.get_river_bathymetry.html">hydromt_sfincs.workflows.get_river_bathymetry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.burn_river_zb.html">hydromt_sfincs.workflows.burn_river_zb</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.workflows.burn_river_rect</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.snap_discharge.html">hydromt_sfincs.workflows.snap_discharge</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.river_boundary_points.html">hydromt_sfincs.workflows.river_boundary_points</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.river_centerline_from_hydrography.html">hydromt_sfincs.workflows.river_centerline_from_hydrography</a></li>
@@ -532,7 +531,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API reference</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">hydromt_sfincs.workflows.get_rivbank_dz</li>
+    <li class="breadcrumb-item active" aria-current="page">hydromt_sfincs.workflows.burn_river_rect</li>
   </ul>
 </nav>
 </div>
@@ -549,31 +548,32 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="hydromt-sfincs-workflows-get-rivbank-dz">
-<h1>hydromt_sfincs.workflows.get_rivbank_dz<a class="headerlink" href="#hydromt-sfincs-workflows-get-rivbank-dz" title="Permalink to this heading">#</a></h1>
+  <section id="hydromt-sfincs-workflows-burn-river-rect">
+<h1>hydromt_sfincs.workflows.burn_river_rect<a class="headerlink" href="#hydromt-sfincs-workflows-burn-river-rect" title="Permalink to this heading">#</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="hydromt_sfincs.workflows.get_rivbank_dz">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">get_rivbank_dz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gdf_riv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.13.2)"><span class="pre">GeoDataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_msk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v2023.7.1.dev0)"><span class="pre">DataArray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_hnd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v2023.7.1.dev0)"><span class="pre">DataArray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">25.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/bathymetry.html#get_rivbank_dz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.get_rivbank_dz" title="Permalink to this definition">#</a></dt>
-<dd><p>Return river bank height estimated as from height above nearest drainage
-(HAND) values adjecent to river cells. For each feature in <cite>gdf_riv</cite> the nearest
-river bank cells are identified and the bank heigth is estimated based on a quantile
-value <cite>q</cite>.</p>
+<dt class="sig sig-object py" id="hydromt_sfincs.workflows.burn_river_rect">
+<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">burn_river_rect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da_elv:</span> <span class="pre">~xarray.core.dataarray.DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf_riv:</span> <span class="pre">~geopandas.geodataframe.GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_man:</span> <span class="pre">~xarray.core.dataarray.DataArray</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf_zb:</span> <span class="pre">~geopandas.geodataframe.GeoDataFrame</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf_riv_mask:</span> <span class="pre">~geopandas.geodataframe.GeoDataFrame</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segment_length:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">riv_bank_q:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivwth_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'rivwth'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivdph_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'rivdph'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivbed_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'rivbed'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manning_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'manning'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.bathymetry</span> <span class="pre">(WARNING)&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/bathymetry.html#burn_river_rect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.burn_river_rect" title="Permalink to this definition">#</a></dt>
+<dd><p>Burn rivers with a rectangular cross profile into a DEM.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>gdf_riv</strong> (<em>gpd.GeoDataFrame</em>) – River segments</p></li>
-<li><p><strong>da_msk</strong> (<em>xr.DataArray</em><em> of </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – River mask</p></li>
-<li><p><strong>da_hnd</strong> (<em>xr.DataArray</em><em> of </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Height above nearest drain (HAND) map</p></li>
-<li><p><strong>nmin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Minimum threshold for valid river bank cells, by default 20</p></li>
-<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – quantile [0-100] for river bank estimate, by default 25.0</p></li>
+<li><p><strong>da_elv</strong> (<em>xr.DataArray</em>) – DEM and manning raster to burn river depth and manning values into</p></li>
+<li><p><strong>da_man</strong> (<em>xr.DataArray</em>) – DEM and manning raster to burn river depth and manning values into</p></li>
+<li><p><strong>gdf_riv</strong> (<em>gpd.GeoDataFrame</em>) – River center lines.</p></li>
+<li><p><strong>gdf_zb</strong> (<em>gpd.GeoDataFrame</em><em>, </em><em>optional</em>) – Point locations with a ‘rivbed’ river bed level [m+REF] column, by defualt None</p></li>
+<li><p><strong>gdf_riv_mask</strong> (<em>gpd.GeoDataFrame</em><em>, </em><em>optional</em>) – Mask in which to interpolate z values, by default None.
+If provided, ‘rivwth’ column is not required in <cite>gdf_riv</cite>.</p></li>
+<li><p><strong>segment_length</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Approximate river segment length [m], by default 500</p></li>
+<li><p><strong>riv_bank_q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – quantile [0-1] for river bank estimation, by default 0.25</p></li>
+<li><p><strong>rivwth_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – river width [m], depth [m], bed level [m+REF], &amp; manning [s.m-1/3] column names
+in gdf_riv, by default “rivwth”, “rivdph”, “rivbed”, and “manning”</p></li>
+<li><p><strong>rivdph_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – river width [m], depth [m], bed level [m+REF], &amp; manning [s.m-1/3] column names
+in gdf_riv, by default “rivwth”, “rivdph”, “rivbed”, and “manning”</p></li>
+<li><p><strong>rivbed_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – river width [m], depth [m], bed level [m+REF], &amp; manning [s.m-1/3] column names
+in gdf_riv, by default “rivwth”, “rivdph”, “rivbed”, and “manning”</p></li>
+<li><p><strong>manning_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – river width [m], depth [m], bed level [m+REF], &amp; manning [s.m-1/3] column names
+in gdf_riv, by default “rivwth”, “rivdph”, “rivbed”, and “manning”</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>rivbank_dz</strong> (<em>np.ndarray</em>) – riverbank elevations for each segment in <cite>gdf_riv</cite></p></li>
-<li><p><strong>da_riv_mask, da_bnk_mask</strong> (<em>xr.DataArray:</em>) – River and river-bank masks</p></li>
-</ul>
-</p>
 </dd>
 </dl>
 </dd></dl>
@@ -601,11 +601,11 @@ value <cite>q</cite>.</p>
       </div>
     </a>
     <a class="right-next"
-       href="hydromt_sfincs.workflows.get_river_bathymetry.html"
+       href="hydromt_sfincs.workflows.snap_discharge.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">hydromt_sfincs.workflows.get_river_bathymetry</p>
+        <p class="prev-next-title">hydromt_sfincs.workflows.snap_discharge</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -627,13 +627,13 @@ value <cite>q</cite>.</p>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.workflows.get_rivbank_dz"><code class="docutils literal notranslate"><span class="pre">get_rivbank_dz()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.workflows.burn_river_rect"><code class="docutils literal notranslate"><span class="pre">burn_river_rect()</span></code></a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">
-    <a href="../_sources/_generated/hydromt_sfincs.workflows.get_rivbank_dz.rst.txt">
+    <a href="../_sources/_generated/hydromt_sfincs.workflows.burn_river_rect.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

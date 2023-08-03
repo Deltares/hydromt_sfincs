@@ -428,14 +428,39 @@ document.write(`
                   
   <section id="what-s-new">
 <h1>What’s new<a class="headerlink" href="#what-s-new" title="Permalink to this heading">#</a></h1>
-<p>All notable changes to this project will be documented in this page.</p>
+<p>All notable changes to this project will be documented in this page.
+Distinction is made between new methods (Added), changes to existing methods (Changed), bugfixes (Fixed), deprecated methods (Deprecated) and removed methods (Removed).</p>
 <p>The format is based on <a class="reference external" href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to
 <a class="reference external" href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 </section>
 <section id="v1-0-1-unreleased">
 <h1>v1.0.1 (unreleased)<a class="headerlink" href="#v1-0-1-unreleased" title="Permalink to this heading">#</a></h1>
-<section id="bugfix">
-<h2>Bugfix<a class="headerlink" href="#bugfix" title="Permalink to this heading">#</a></h2>
+<section id="added">
+<h2>Added<a class="headerlink" href="#added" title="Permalink to this heading">#</a></h2>
+<ul class="simple">
+<li><p><cite>SfincsModel.setup_cn_infiltration_with_kr</cite> to setup three layers related to the curve number
+(maximum and effective infiltration capacity; seff and smax) and recovery rate (kr) PR #87</p></li>
+<li><p><cite>SfincsModelsetup_drainage_structures</cite> to setup drainage structures (pumps,culverts) from a geodataframe. PR#90</p></li>
+<li><p>Added <cite>SfincsModel.setup_wind_forcing</cite>, <cite>SfincsModel.setup_wind_forcing_from_grid</cite> and <cite>SfincsModel.setup_pressure_forcing_from_grid</cite> methods to easily add wind and pressure forcing.  PR #92</p></li>
+<li><p><cite>SfincsModel.setup_observation_lines</cite> to setup model observation lines (cross-sections) to monitor discharges. PR #114</p></li>
+</ul>
+</section>
+<section id="changed">
+<h2>Changed<a class="headerlink" href="#changed" title="Permalink to this heading">#</a></h2>
+<ul class="simple">
+<li><p><cite>SfincsModel.setup_subgrid`</cite> now supports the ‘riv_datasets’ to burn in river bathymetry into the subgrid. PR #84</p></li>
+<li><p><cite>SfincsModel.setup_mask_active</cite> argument reset_mask default to True PR #94</p></li>
+<li><p><cite>SfincsModel.read_config</cite> allows to use a template input file from a directory different than the model root. PR #102</p></li>
+<li><p>Added the option to use landuse/landcover data combined with a reclass table to <cite>SfincsModel.setup_constant_infiltration</cite>.  PR #103</p></li>
+<li><p>Enabled to provide locations only (so no timeseries) for <cite>SfincsModel.setup_waterlevel_forcing</cite> and <cite>SfincsModel.setup_discharge_forcing</cite> PR #104</p></li>
+<li><p>New optional buffer argument in  <cite>SfincsModel.setup_discharge_forcing</cite> to select gauges around boundary only. PR #104</p></li>
+<li><p><cite>SfincsModel.plot_basemaps</cite> now supports other CRS than UTM zones. PR #111</p></li>
+<li><p>New functionality within <cite>SfincsModel.setup_structures</cite> to use high resolution dem for weir elevation. PR #109</p></li>
+<li><p>hydromt_data.yml is written to the model root directory with used data sources.</p></li>
+</ul>
+</section>
+<section id="fixed">
+<h2>Fixed<a class="headerlink" href="#fixed" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>bugfix in <cite>SfincsModel.write_forcing</cite> to ensure all NetCDF files are written instead of only the first one. PR #86</p></li>
 <li><p>bugfix in <cite>SfincsModel.read_config</cite> &amp; <cite>SfincsInput.read</cite> for relative paths in inp file. PR #88</p></li>
@@ -445,25 +470,10 @@ document.write(`
 <li><p>bugfix in <cite>SfincsModel.setup_discharge_from_grid</cite> when snapping based on upstream area in case a src points is outside of the uparea grid domain. PR #99</p></li>
 </ul>
 </section>
-<section id="new">
-<h2>New<a class="headerlink" href="#new" title="Permalink to this heading">#</a></h2>
+<section id="removed">
+<h2>Removed<a class="headerlink" href="#removed" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
-<li><p><cite>SfincsModel.setup_cn_infiltration_with_kr</cite> to setup three layers related to the curve number (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr). PR#87</p></li>
-<li><p><cite>SfincsModelsetup_drainage_structures</cite> to setup drainage structures (pumps,culverts) from a geodataframe. PR#90</p></li>
-<li><p>Added <cite>SfincsModel.setup_wind_forcing</cite>, <cite>SfincsModel.setup_wind_forcing_from_grid</cite> and <cite>SfincsModel.setup_pressure_forcing_from_grid</cite> methods to easily add wind and pressure forcing.  PR #92</p></li>
-<li><p><cite>SfincsModel.read_config</cite> allows to use a template input file from a directory different than the model root. PR #102</p></li>
-<li><p>Added the option to use landuse/landcover data combined with a reclass table to <cite>SfincsModel.setup_constant_infiltration</cite>.  PR #103</p></li>
-<li><p>Enabled to provide locations only (so no timeseries) for <cite>SfincsModel.setup_waterlevel_forcing</cite> and <cite>SfincsModel.setup_discharge_forcing</cite> PR #104</p></li>
-<li><p>New optional buffer argument in  <cite>SfincsModel.setup_discharge_forcing</cite> to select gauges around boundary only. PR #104</p></li>
-<li><p>New functionality within <cite>SfincsModel.setup_structures</cite> to use high resolution dem for weir elevation. PR #109</p></li>
-<li><p><cite>SfincsModel.setup_observation_lines</cite> to setup model observation lines (cross-sections) to monitor discharges. PR #114</p></li>
-</ul>
-</section>
-<section id="changed">
-<h2>Changed<a class="headerlink" href="#changed" title="Permalink to this heading">#</a></h2>
-<ul class="simple">
-<li><p><cite>SfincsModel.setup_mask_active</cite> argument reset_mask default to True PR #94</p></li>
-<li><p><cite>SfincsModel.plot_basemaps</cite> now supports other CRS than UTM zones. PR #111</p></li>
+<li><p><cite>burn_river_zb</cite> and <cite>get_river_bathymetry</cite> workflow methods have been deprecated in favor of <cite>burn_river_rect</cite>. PR #84</p></li>
 </ul>
 </section>
 </section>
@@ -492,8 +502,8 @@ This method can now also be used to setup a bathymetry map from multiple sources
 <li><p><cite>setup_observation_points</cite> has replace <cite>setup_gauges</cite></p></li>
 </ul>
 </section>
-<section id="new-methods">
-<h2>New methods<a class="headerlink" href="#new-methods" title="Permalink to this heading">#</a></h2>
+<section id="id1">
+<h2>Added<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p><cite>setup_grid</cite> to setup a user-defined regular grid based coordinates, shape, rotation, etc.</p></li>
 <li><p><cite>setup_subgrid</cite> to setup subgrid tables (sbgfile) based on one ore more elevation and Manning roughness datasets</p></li>
@@ -502,15 +512,15 @@ This method can now also be used to setup a bathymetry map from multiple sources
 <li><p><cite>setup_tiles</cite> to create tiles of the model for fast visualization</p></li>
 </ul>
 </section>
-<section id="changed-methods">
-<h2>Changed methods<a class="headerlink" href="#changed-methods" title="Permalink to this heading">#</a></h2>
+<section id="id2">
+<h2>Changed<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p><cite>setup_river_inflow</cite> and <cite>setup_river_outflow</cite> are now based river centerline data (which can be derivded from hydrography data).
 This is more robust compared to the previous method which was based on reprojected flow direction data.</p></li>
 </ul>
 </section>
-<section id="removed-methods-not-replaced">
-<h2>Removed methods (not replaced)<a class="headerlink" href="#removed-methods-not-replaced" title="Permalink to this heading">#</a></h2>
+<section id="removed-not-replaced">
+<h2>Removed (not replaced)<a class="headerlink" href="#removed-not-replaced" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p><cite>setup_basemaps</cite> This method was already deprecated in v0.2.1 and has now been removed.</p></li>
 <li><p><cite>setup_river_hydrography</cite> This method was removed as reprojection of the hydrography data is no longer required for river inflow/outflow.</p></li>
@@ -541,16 +551,16 @@ in the subgrid data will be added in to <cite>setup_subgrid</cite> a future rele
 <li><p><strong>setup_q_forcing_from_grid</strong> and <strong>workflows.snap_discharge</strong> have a “rel_error” and “abs_error” argument instead of a single “max_error” argument.</p></li>
 </ul>
 </section>
-<section id="id1">
-<h2>Bugfix<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h2>
+<section id="bugfix">
+<h2>Bugfix<a class="headerlink" href="#bugfix" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>bugfix <strong>setup_p_forcing</strong> to ensure the data is 1D when passed to set_forcing_1d method</p></li>
 <li><p>bugfix <strong>setup_p_forcing_from_grid</strong> when aggregating with a multi polygon region.</p></li>
 <li><p>bugfix <strong>read_results</strong> with new corner_x/y instead of edge_x/y dimensions in sfincs_map.nc</p></li>
 </ul>
 </section>
-<section id="id2">
-<h2>New<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h2>
+<section id="new">
+<h2>New<a class="headerlink" href="#new" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p><strong>setup_region</strong> method to set the (hydrological) model region of interest (before part of <strong>setup_basemaps</strong>).</p></li>
 <li><p><strong>setup_river_hydrography</strong> allows to derive hydrography data [‘flwdir’, ‘uparea’] from the model elevation or reproject it from a global dataset.
@@ -607,8 +617,8 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <li><p>staticmaps are by default saved (and read) in S-&gt;N orientation as this matches the SFINCS better.</p></li>
 </ul>
 </section>
-<section id="added">
-<h2>Added<a class="headerlink" href="#added" title="Permalink to this heading">#</a></h2>
+<section id="id6">
+<h2>Added<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h2>
 <p>support for SFINCS files:</p>
 <ul class="simple">
 <li><p>structures: sfincs.thd &amp; sfincs.weir</p></li>
@@ -641,8 +651,8 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <li><p>overviews with SfincsModel setup components &amp; SfincsModel data</p></li>
 </ul>
 </section>
-<section id="id6">
-<h2>Deprecated<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h2>
+<section id="id7">
+<h2>Deprecated<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">setup_p_gridded</span></code></p></li>
 </ul>
@@ -651,20 +661,20 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <section id="v0-1-0-18-may-2021">
 <h1>v0.1.0 (18 May 2021)<a class="headerlink" href="#v0-1-0-18-may-2021" title="Permalink to this heading">#</a></h1>
 <p>Noticeable changes are a new <code class="docutils literal notranslate"><span class="pre">setup_river_inflow</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_river_outflow</span></code> methods</p>
-<section id="id7">
-<h2>Added<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h2>
+<section id="id8">
+<h2>Added<a class="headerlink" href="#id8" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>setup_river_outflow method to set ouflow (msk=3) boundary at river outflow points</p></li>
 </ul>
 </section>
-<section id="id8">
-<h2>Changed<a class="headerlink" href="#id8" title="Permalink to this heading">#</a></h2>
+<section id="id9">
+<h2>Changed<a class="headerlink" href="#id9" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Updated to hydromt v0.4.1</p></li>
 </ul>
 </section>
-<section id="id9">
-<h2>Documentation<a class="headerlink" href="#id9" title="Permalink to this heading">#</a></h2>
+<section id="id10">
+<h2>Documentation<a class="headerlink" href="#id10" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Now <strong>latest</strong> and <strong>stable</strong> versions.</p></li>
 <li><p>Updated build instructions</p></li>
@@ -722,38 +732,39 @@ The model domain is also determined on-the-fly, thus it is not required to run s
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">What’s new</a></li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-1-unreleased">v1.0.1 (unreleased)</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bugfix">Bugfix</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#new">New</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#added">Added</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#changed">Changed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fixed">Fixed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#removed">Removed</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-17-april-2023">v1.0 (17 April 2023)</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#main-differences">Main differences</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#new-methods">New methods</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#changed-methods">Changed methods</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#removed-methods-not-replaced">Removed methods (not replaced)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Added</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Changed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#removed-not-replaced">Removed (not replaced)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#new-low-level-classes">New low-level classes</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-2-1-23-february-2022">v0.2.1 (23 February 2022)</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deprecated">Deprecated</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Bugfix</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">New</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bugfix">Bugfix</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#new">New</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Changed</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-2-0-2-august-2021">v0.2.0 (2 August 2021)</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Bugfix</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Changed</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#added">Added</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Added</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Deprecated</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">Deprecated</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-1-0-18-may-2021">v0.1.0 (18 May 2021)</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">Added</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Changed</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">Documentation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Added</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">Changed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">Documentation</a></li>
 </ul>
 </li>
 </ul>

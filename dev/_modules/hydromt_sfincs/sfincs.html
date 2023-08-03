@@ -993,6 +993,7 @@ document.write(`
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">datasets_dep</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
         <span class="n">datasets_rgh</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">datasets_riv</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
         <span class="n">buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">nbins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
         <span class="n">nr_subgrid_pixels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
@@ -1021,22 +1022,42 @@ document.write(`
 <span class="sd">        datasets_dep : List[dict]</span>
 <span class="sd">            List of dictionaries with topobathy data.</span>
 <span class="sd">            Each should minimally contain a data catalog source name, data file path,</span>
-<span class="sd">            or xarray raster object (&#39;elevtn&#39;)</span>
-
-<span class="sd">            Optional merge arguments include &#39;zmin&#39;, &#39;zmax&#39;, &#39;mask&#39;, &#39;offset&#39;,</span>
-<span class="sd">            &#39;reproj_method&#39;, and &#39;merge_method&#39;. e.g.:</span>
-<span class="sd">            [</span>
-<span class="sd">                {&#39;elevtn&#39;: merit_hydro, &#39;zmin&#39;: 0.01},</span>
-<span class="sd">                {&#39;elevtn&#39;: gebco, &#39;offset&#39;: 0, &#39;merge_method&#39;: &#39;first&#39;, reproj_method: &#39;bilinear&#39;}</span>
+<span class="sd">            or xarray raster object (&#39;elevtn&#39;). Optional merge arguments include:</span>
+<span class="sd">            &#39;zmin&#39;, &#39;zmax&#39;, &#39;mask&#39;, &#39;offset&#39;, &#39;reproj_method&#39;, and &#39;merge_method&#39;.</span>
+<span class="sd">            e.g.: [</span>
+<span class="sd">                {&#39;elevtn&#39;: &#39;merit_hydro&#39;, &#39;zmin&#39;: 0.01},</span>
+<span class="sd">                {&#39;elevtn&#39;: &#39;gebco&#39;, &#39;offset&#39;: 0, &#39;merge_method&#39;: &#39;first&#39;, reproj_method: &#39;bilinear&#39;}</span>
 <span class="sd">            ]</span>
-<span class="sd">            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays</span>
+<span class="sd">            For a complete overview of all merge options, see</span>
+<span class="sd">            :py:function:~hydromt.workflows.merge_multi_dataarrays</span>
 <span class="sd">        datasets_rgh : List[dict], optional</span>
-<span class="sd">            List of dictionaries with Manning&#39;s n datasets. Each dictionary should at least contain one of the following:</span>
+<span class="sd">            List of dictionaries with Manning&#39;s n datasets. Each dictionary should at</span>
+<span class="sd">            least contain one of the following:</span>
 <span class="sd">            * (1) manning: filename (or Path) of gridded data with manning values</span>
-<span class="sd">            * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a mapping table.</span>
-<span class="sd">            In additon, optional merge arguments can be provided e.g.: merge_method, gdf_valid_fn</span>
+<span class="sd">            * (2) lulc (and reclass_table) :a combination of a filename of gridded</span>
+<span class="sd">            landuse/landcover and a mapping table. In additon, optional merge arguments</span>
+<span class="sd">            can be provided, e.g.: [</span>
+<span class="sd">                {&#39;manning&#39;: &#39;manning_data&#39;},</span>
+<span class="sd">                {&#39;lulc&#39;: &#39;esa_worlcover&#39;, &#39;reclass_table&#39;: &#39;esa_worlcover_mapping&#39;}</span>
+<span class="sd">            ]</span>
+<span class="sd">        datasets_riv : List[dict], optional</span>
+<span class="sd">            List of dictionaries with river datasets. Each dictionary should at least</span>
+<span class="sd">            contain a river centerline data and optionally a river mask:</span>
+<span class="sd">            * centerlines: filename (or Path) of river centerline with attributes</span>
+<span class="sd">                rivwth (river width [m]; required if not river mask provided),</span>
+<span class="sd">                rivdph or rivbed (river depth [m]; river bedlevel [m+REF]),</span>
+<span class="sd">                manning (Manning&#39;s n [s/m^(1/3)]; optional)</span>
+<span class="sd">            * mask (optional): filename (or Path) of river mask</span>
+<span class="sd">            * river attributes (optional): &quot;rivdph&quot;, &quot;rivbed&quot;, &quot;rivwth&quot;, &quot;manning&quot;</span>
+<span class="sd">                to fill missing values</span>
+<span class="sd">            * arguments to the river burn method (optional):</span>
+<span class="sd">                segment_length [m] (default 500m) and riv_bank_q [0-1] (default 0.5)</span>
+<span class="sd">                which used to estimate the river bank height in case river depth is provided.</span>
+<span class="sd">              For more info see :py:function:~hydromt.workflows.bathymetry.burn_river_rect</span>
+<span class="sd">           e.g.: [{&#39;centerlines&#39;: &#39;river_lines&#39;, &#39;mask&#39;: &#39;river_mask&#39;, &#39;manning&#39;: 0.035}]</span>
 <span class="sd">        buffer_cells : int, optional</span>
-<span class="sd">            Number of cells between datasets to ensure smooth transition of bed levels, by default 0</span>
+<span class="sd">            Number of cells between datasets to ensure smooth transition of bed levels,</span>
+<span class="sd">            by default 0</span>
 <span class="sd">        nbins : int, optional</span>
 <span class="sd">            Number of bins in which hypsometry is subdivided, by default 10</span>
 <span class="sd">        nr_subgrid_pixels : int, optional</span>
@@ -1045,18 +1066,22 @@ document.write(`
 <span class="sd">            Maximum number of cells per subgrid-block, by default 2000</span>
 <span class="sd">            These blocks are used to prevent memory issues while working with large datasets</span>
 <span class="sd">        max_gradient : float, optional</span>
-<span class="sd">            If slope in hypsometry exceeds this value, then smoothing is applied, to prevent numerical stability problems, by default 5.0</span>
+<span class="sd">            If slope in hypsometry exceeds this value, then smoothing is applied,</span>
+<span class="sd">            to prevent numerical stability problems, by default 5.0</span>
 <span class="sd">        z_minimum : float, optional</span>
 <span class="sd">            Minimum depth in the subgrid tables, by default -99999.0</span>
 <span class="sd">        manning_land, manning_sea : float, optional</span>
 <span class="sd">            Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3</span>
-<span class="sd">            Note that these values are only used when no Manning&#39;s n datasets are provided, or to fill the nodata values</span>
+<span class="sd">            Note that these values are only used when no Manning&#39;s n datasets are provided,</span>
+<span class="sd">            or to fill the nodata values</span>
 <span class="sd">        rgh_lev_land : float, optional</span>
-<span class="sd">            Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0</span>
-<span class="sd">        write_dep_tif : bool, optional</span>
-<span class="sd">            Create geotiff of the merged topobathy on the subgrid resolution, by default False</span>
-<span class="sd">        write_man_tif : bool, optional</span>
-<span class="sd">            Create geotiff of the merged roughness on the subgrid resolution, by default False</span>
+<span class="sd">            Elevation level to distinguish land and sea roughness</span>
+<span class="sd">            (when using manning_land and manning_sea), by default 0.0</span>
+<span class="sd">        write_dep_tif, write_man_tif : bool, optional</span>
+<span class="sd">            Write geotiff of the merged topobathy / roughness on the subgrid resolution.</span>
+<span class="sd">            These files are not used by SFINCS, but can be used for visualisation and</span>
+<span class="sd">            downscaling of the floodmaps. Unlinke the SFINCS files it is written</span>
+<span class="sd">            to disk at execution of this method. By default False</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># retrieve model resolution</span>
@@ -1072,6 +1097,9 @@ document.write(`
             <span class="c1"># NOTE conversion from landuse/landcover to manning happens here</span>
             <span class="n">datasets_rgh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_datasets_rgh</span><span class="p">(</span><span class="n">datasets_rgh</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">datasets_riv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">datasets_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_datasets_riv</span><span class="p">(</span><span class="n">datasets_riv</span><span class="p">)</span>
+
         <span class="c1"># folder where high-resolution topobathy and manning geotiffs are stored</span>
         <span class="k">if</span> <span class="n">write_dep_tif</span> <span class="ow">or</span> <span class="n">write_man_tif</span><span class="p">:</span>
             <span class="n">highres_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;subgrid&quot;</span><span class="p">)</span>
@@ -1085,6 +1113,7 @@ document.write(`
                 <span class="n">da_mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
                 <span class="n">datasets_dep</span><span class="o">=</span><span class="n">datasets_dep</span><span class="p">,</span>
                 <span class="n">datasets_rgh</span><span class="o">=</span><span class="n">datasets_rgh</span><span class="p">,</span>
+                <span class="n">datasets_riv</span><span class="o">=</span><span class="n">datasets_riv</span><span class="p">,</span>
                 <span class="n">buffer_cells</span><span class="o">=</span><span class="n">buffer_cells</span><span class="p">,</span>
                 <span class="n">nbins</span><span class="o">=</span><span class="n">nbins</span><span class="p">,</span>
                 <span class="n">nr_subgrid_pixels</span><span class="o">=</span><span class="n">nr_subgrid_pixels</span><span class="p">,</span>
@@ -1719,7 +1748,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_obs</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">setup_observation_lines</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_observation_lines"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_observation_lines.html#hydromt_sfincs.SfincsModel.setup_observation_lines">[docs]</a>    <span class="k">def</span> <span class="nf">setup_observation_lines</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">locations</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -1760,7 +1789,7 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adding new observation lines to existing ones.&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_obs</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SfincsModel.setup_structures"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures">[docs]</a>    <span class="k">def</span> <span class="nf">setup_structures</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -2960,9 +2989,9 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">write_forcing</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_states</span><span class="p">()</span>
         <span class="c1"># config last; might be udpated when writing maps, states or forcing</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">write_config</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_config</span><span class="p">()</span>
         <span class="c1"># write data catalog with used data sources</span>
-        <span class="c1"># self.write_data_catalog()  # new in hydromt v0.4.4</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_data_catalog</span><span class="p">()</span>  <span class="c1"># new in hydromt v0.4.4</span></div>
 
 <div class="viewcode-block" id="SfincsModel.read_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_grid.html#hydromt_sfincs.SfincsModel.read_grid">[docs]</a>    <span class="k">def</span> <span class="nf">read_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS binary grid files and save to `grid` attribute.</span>
@@ -3832,6 +3861,79 @@ document.write(`
                     <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="p">})</span>
                 <span class="k">elif</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">copy_keys</span> <span class="o">+</span> <span class="n">parse_keys</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> in datasets_rgh. Ignoring.&quot;</span><span class="p">)</span>
+            <span class="n">datasets_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dd</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">datasets_out</span>
+
+    <span class="k">def</span> <span class="nf">_parse_datasets_riv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets_riv</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse filenames or paths of Datasets in list of dictionaries</span>
+<span class="sd">        datasets_riv into xr.DataArrays and gdf.GeoDataFrames:</span>
+
+<span class="sd">        see SfincsModel.setup_subgrid for details</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># option 1: rectangular river cross-sections based on river centerline</span>
+        <span class="c1"># depth/bedlevel, manning attributes are specified on the river centerline</span>
+        <span class="c1"># TODO: make this work with LineStringZ geometries for bedlevel</span>
+        <span class="c1"># the width is either specified on the river centerline or river mask</span>
+        <span class="c1"># option 2: (TODO): irregular river cross-sections</span>
+        <span class="c1"># cross-sections are specified as a series of points (river_crosssections)</span>
+        <span class="n">parse_keys</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;centerlines&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;mask&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;gdf_riv&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;gdf_riv_mask&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">copy_keys</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">,</span> <span class="s2">&quot;rivdph&quot;</span><span class="p">,</span> <span class="s2">&quot;rivbed&quot;</span><span class="p">,</span> <span class="s2">&quot;manning&quot;</span><span class="p">]</span>
+
+        <span class="n">datasets_out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">datasets_riv</span><span class="p">:</span>
+            <span class="n">dd</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="c1"># parse rivers</span>
+            <span class="k">if</span> <span class="s2">&quot;centerlines&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+                <span class="n">rivers</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;centerlines&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rivers</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">:</span>
+                    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="n">rivers</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
+                        <span class="n">rivers</span><span class="p">,</span>
+                        <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span><span class="p">,</span>
+                        <span class="n">buffer</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span>  <span class="c1"># 1km</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+                <span class="c1"># update missing attributes based on global values</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+                        <span class="n">value</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>  <span class="c1"># update all</span>
+                            <span class="n">gdf_riv</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                        <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="n">key</span><span class="p">])):</span>  <span class="c1"># fill na</span>
+                            <span class="n">gdf_riv</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;rivbed&quot;</span><span class="p">,</span> <span class="s2">&quot;rivdph&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No &#39;rivbed&#39; or &#39;rivdph&#39; attribute found.&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No &#39;centerlines&#39; dataset provided.&quot;</span><span class="p">)</span>
+            <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;gdf_riv&quot;</span><span class="p">:</span> <span class="n">gdf_riv</span><span class="p">})</span>
+
+            <span class="c1"># parse mask</span>
+            <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+                <span class="n">gdf_riv_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">),</span>
+                    <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;gdf_riv_mask&quot;</span><span class="p">:</span> <span class="n">gdf_riv_mask</span><span class="p">})</span>
+            <span class="k">elif</span> <span class="s2">&quot;rivwth&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Either mask must be provided or centerlines &quot;</span>
+                    <span class="s2">&quot;should contain a &#39;rivwth&#39; attribute.&quot;</span>
+                <span class="p">)</span>
+
+            <span class="c1"># copy remaining keys</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">copy_keys</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dd</span><span class="p">:</span>
+                    <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="p">})</span>
+                <span class="k">elif</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">copy_keys</span> <span class="o">+</span> <span class="n">parse_keys</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> in datasets_riv. Ignoring.&quot;</span><span class="p">)</span>
             <span class="n">datasets_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dd</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">datasets_out</span></div>

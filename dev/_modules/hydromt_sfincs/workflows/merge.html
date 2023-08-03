@@ -409,6 +409,8 @@ document.write(`
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span>
 
+<span class="kn">from</span> <span class="nn">.bathymetry</span> <span class="kn">import</span> <span class="n">burn_river_rect</span>
+
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;merge_multi_dataarrays&quot;</span><span class="p">,</span> <span class="s2">&quot;merge_dataarrays&quot;</span><span class="p">]</span>
@@ -416,6 +418,7 @@ document.write(`
 
 <div class="viewcode-block" id="merge_multi_dataarrays"><a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.merge_multi_dataarrays.html#hydromt_sfincs.workflows.merge_multi_dataarrays">[docs]</a><span class="k">def</span> <span class="nf">merge_multi_dataarrays</span><span class="p">(</span>
     <span class="n">da_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
+    <span class="n">gdf_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
     <span class="n">da_like</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">reproj_kwargs</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
     <span class="n">buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># not in list</span>
@@ -555,6 +558,22 @@ document.write(`
             <span class="n">interp_method</span><span class="o">=</span><span class="n">interp_method</span><span class="p">,</span>
         <span class="p">)</span>
 
+    <span class="c1"># burn in rivers</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gdf_list</span><span class="p">)):</span>
+        <span class="n">cs_type</span> <span class="o">=</span> <span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;rectangular&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cs_type</span> <span class="o">==</span> <span class="s2">&quot;rectangular&quot;</span><span class="p">:</span>
+            <span class="c1"># width or gdf_riv_mask is required</span>
+            <span class="c1"># zb is used if provided, otherwise depth is used</span>
+            <span class="n">da1</span> <span class="o">=</span> <span class="n">burn_river_rect</span><span class="p">(</span>
+                <span class="n">da_elv</span><span class="o">=</span><span class="n">da1</span><span class="p">,</span>
+                <span class="n">gdf_riv</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf&quot;</span><span class="p">),</span>
+                <span class="n">gdf_riv_mask</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_mask&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="n">rivdph_name</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;depth&quot;</span><span class="p">,</span> <span class="s2">&quot;rivdph&quot;</span><span class="p">),</span>
+                <span class="n">rivwth_name</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;width&quot;</span><span class="p">,</span> <span class="s2">&quot;rivwth&quot;</span><span class="p">),</span>
+                <span class="n">rivbed_name</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;zb&quot;</span><span class="p">,</span> <span class="s2">&quot;rivbed&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cross section type </span><span class="si">{</span><span class="n">cs_type</span><span class="si">}</span><span class="s2"> not implemented.&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">da1</span></div>
 
 
