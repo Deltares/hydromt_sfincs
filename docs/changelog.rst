@@ -6,8 +6,25 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
-v1.0.1 (3 August 2023)
+v1.0.2 (unreleased)
 ===================
+
+Added
+-----
+
+Changed
+-------
+
+Fixed
+-----
+- writing COG files in `SfincsModel.setup_subgrid` (the COG driver settings were wrong) PR #117
+
+Deprecated
+----------
+
+
+v1.0.1 (3 August 2023)
+======================
 This release contains several new features, such as burning in river bathymetry into the subgrid, setting up drainage structures and adding wind and pressure forcing.
 It also contains several bugfixes and improvements to existing methods. 
 It is recommended to use this release together with the latest version of the `SFINCS model <https://github.com/Deltares/SFINCS/releases/tag/v2.0.2_Blockhaus_release>`_.
@@ -22,7 +39,7 @@ Added
 
 Changed
 -------
-- `SfincsModel.setup_subgrid`` now supports the 'riv_datasets' to burn in river bathymetry into the subgrid. PR #84
+- `SfincsModel.setup_subgrid` now supports the 'riv_datasets' to burn in river bathymetry into the subgrid. PR #84
 - `SfincsModel.setup_mask_active` argument reset_mask default to True PR #94
 - `SfincsModel.read_config` allows to use a template input file from a directory different than the model root. PR #102
 - Added the option to use landuse/landcover data combined with a reclass table to `SfincsModel.setup_constant_infiltration`.  PR #103
