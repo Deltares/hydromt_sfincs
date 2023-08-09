@@ -286,18 +286,21 @@ class SubgridTableRegular:
             1 / nr_subgrid_pixels
         )
 
+        # create COGs for topobathy/manning
         profile = dict(
-            driver="COG",
+            driver="GTiff",
             width=output_width,
             height=output_height,
             count=1,
             dtype=np.float32,
             crs=da_mask.raster.crs,
             transform=output_transform,
+            tiled=True,
             blockxsize=256,
             blockysize=256,
             compress="deflate",
             predictor=2,
+            profile="COG",
             nodata=np.nan,
             BIGTIFF="YES",  # Add the BIGTIFF option here
         )
@@ -389,7 +392,6 @@ class SubgridTableRegular:
                 if nactive == 0:  # not active cells in block
                     logger.debug("Skip block - No active cells")
                     continue
-                logger.debug(f"Processing block with {nactive} active cells..")
                 transform = da_mask_block.raster.transform
                 # add refi cells overlap in both dimensions for u and v in last row/col
                 reproj_kwargs = dict(
@@ -417,7 +419,9 @@ class SubgridTableRegular:
                 # raise warning if NaN values in active cells
                 if np.any(np.isnan(da_dep.values[da_mask_sbg > 0])) > 0:
                     npx = int(np.sum(np.isnan(da_dep.values[da_mask_sbg > 0])))
-                    logger.warning(f"Interpolate data at {npx} subgrid pixels")
+                    logger.warning(
+                        f"Interpolate elevation data at {npx} subgrid pixels"
+                    )
                 # always interpolate/extrapolate to avoid NaN values
                 da_dep = da_dep.raster.interpolate_na(
                     method="rio_idw", extrapolate=True
@@ -433,9 +437,9 @@ class SubgridTableRegular:
                     )
                     # raise warning if NaN values in active cells
                     if np.isnan(da_man.values[da_mask_sbg > 0]).any():
-                        logger.debug(
-                            "Missing values in manning roughness array, "
-                            "fill with default values"
+                        npx = int(np.sum(np.isnan(da_man.values[da_mask_sbg > 0])))
+                        logger.warning(
+                            f"Fill manning roughness data at {npx} subgrid pixels with default values"
                         )
                     # always fill based on land/sea elevation to avoid NaN values
                     da_man0 = xr.where(
@@ -489,6 +493,7 @@ class SubgridTableRegular:
                     yg = np.repeat(np.atleast_2d(yg), da_dep.raster.shape[0], axis=0)
 
                 # Now compute subgrid properties
+                logger.debug(f"Processing subgrid tables for {nactive} active cells..")
                 sn, sm = slice(bn0, bn1), slice(bm0, bm1)
                 (
                     self.z_zmin[sn, sm],

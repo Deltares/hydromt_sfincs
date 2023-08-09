@@ -3342,7 +3342,7 @@ class SfincsModel(GridModel):
             level of the depth datasets.
         """
         parse_keys = ["elevtn", "offset", "mask", "da"]
-        copy_keys = ["zmin", "zmax", "reproj_method", "merge_method"]
+        copy_keys = ["zmin", "zmax", "reproj_method", "merge_method", "offset"]
 
         datasets_out = []
         for dataset in datasets_dep:
