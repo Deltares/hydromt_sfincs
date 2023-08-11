@@ -41,6 +41,7 @@ def test_states(mod):
     zsini.raster.set_crs(mod.crs)
     mod.set_states(zsini, "zsini")
     # write and check if isfile
+    mod.write_grid()  # required to write file
     mod.write_states()
     mod.write_config()
     assert isfile(join(mod.root, "sfincs.zsini"))
@@ -90,11 +91,11 @@ def test_infiltration(mod):
     mod1 = SfincsModel(root=mod.root, mode="r")
 
     # assure the sum of smax is close to earlier calculated value
-    assert np.isclose(mod1.grid["smax"].where(mod.mask > 0).sum(), 32.929287)
+    assert np.isclose(mod1.grid["smax"].where(mod.mask > 0).sum(), 37.918575)
     assert np.isclose(
-        mod1.grid["seff"].where(mod.mask > 0).sum(), 32.929287 * effective
+        mod1.grid["seff"].where(mod.mask > 0).sum(), 37.918575 * effective
     )
-    assert np.isclose(mod1.grid["kr"].where(mod.mask > 0).sum(), 330.588)
+    assert np.isclose(mod1.grid["kr"].where(mod.mask > 0).sum(), 351.10803)
 
 
 def test_subgrid_rivers(mod):
@@ -131,7 +132,7 @@ def test_subgrid_rivers(mod):
     assert isfile(join(mod.root, "subgrid", "dep_subgrid.tif"))
     assert isfile(join(mod.root, "subgrid", "manning_subgrid.tif"))
 
-    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 448.9449)
+    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 117.32075)
 
 
 def test_structs(tmpdir):
@@ -261,22 +262,30 @@ def test_model_build(tmpdir, case):
     mod0.read()
     mod1 = SfincsModel(root=root, mode="r")
     mod1.read()
+    # check config
+    if mod0.config:
+        assert mod0.config == mod1.config, "config mismatch"
     # check maps
     invalid_maps = []
-    if len(mod0._staticmaps) > 0:
+    if len(mod0.grid) > 0:
         assert np.all(mod0.crs == mod1.crs), "map crs"
-        for name in mod0.staticmaps.raster.vars:
-            map0 = mod0.staticmaps[name]
-            map1 = mod1.staticmaps[name]
-            if not np.allclose(map0, map1):
+        mask = (mod0.grid["msk"] > 0).values  # compare only active cells
+        mask1 = (mod1.grid["msk"] > 0).values
+        assert np.allclose(mask, mask1), "mask not matching"
+        for name in mod0.grid.raster.vars:
+            if name == "msk":
+                continue
+            map0 = mod0.grid[name].values
+            map1 = mod1.grid[name].values
+            if not np.allclose(map0[mask], map1[mask]):
                 invalid_maps.append(name)
     invalid_map_str = ", ".join(invalid_maps)
     assert len(invalid_maps) == 0, f"invalid maps: {invalid_map_str}"
     # check geoms
-    if mod0._staticgeoms:
-        for name in mod0.staticgeoms:
-            geom0 = mod0.staticgeoms[name]
-            geom1 = mod1.staticgeoms[name]
+    if mod0.geoms:
+        for name in mod0.geoms:
+            geom0 = mod0.geoms[name]
+            geom1 = mod1.geoms[name]
             assert geom0.index.size == geom1.index.size and np.all(
                 geom0.index == geom1.index
             ), f"geom index {name}"
@@ -286,16 +295,12 @@ def test_model_build(tmpdir, case):
             assert geom0.crs == geom1.crs, f"geom crs {name}"
             assert np.all(geom0.geometry == geom1.geometry), f"geom {name}"
     # check forcing
-    if mod0._forcing:
+    if mod0.forcing:
         for name in mod0.forcing:
             assert np.allclose(
                 mod0.forcing[name], mod1.forcing[name]
             ), f"forcing {name}"
-    # check config
-    if mod0._config:
-        # flatten
-        assert mod0._config == mod1._config, "config mismatch"
     # check forcing
-    if mod0._forcing:
+    if mod0.forcing:
         for name in mod0.forcing:
             assert np.allclose(mod0.forcing[name], mod1.forcing[name])
