@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from geopandas.testing import assert_geodataframe_equal
 from hydromt.cli.cli_utils import parse_config
 from hydromt.log import setuplog
 
@@ -262,6 +263,7 @@ def test_model_build(tmpdir, case):
     mod0.read()
     mod1 = SfincsModel(root=root, mode="r")
     mod1.read()
+    # TODO using hydromt core Model._check_equal after fix https://github.com/Deltares/hydromt/issues/253
     # check config
     if mod0.config:
         assert mod0.config == mod1.config, "config mismatch"
@@ -271,7 +273,7 @@ def test_model_build(tmpdir, case):
         assert np.all(mod0.crs == mod1.crs), "map crs"
         mask = (mod0.grid["msk"] > 0).values  # compare only active cells
         mask1 = (mod1.grid["msk"] > 0).values
-        assert np.allclose(mask, mask1), "mask not matching"
+        assert np.allclose(mask, mask1), "mask mismatch"
         for name in mod0.grid.raster.vars:
             if name == "msk":
                 continue
@@ -282,18 +284,20 @@ def test_model_build(tmpdir, case):
     invalid_map_str = ", ".join(invalid_maps)
     assert len(invalid_maps) == 0, f"invalid maps: {invalid_map_str}"
     # check geoms
+    invalid_geoms = []
     if mod0.geoms:
         for name in mod0.geoms:
-            geom0 = mod0.geoms[name]
-            geom1 = mod1.geoms[name]
-            assert geom0.index.size == geom1.index.size and np.all(
-                geom0.index == geom1.index
-            ), f"geom index {name}"
-            assert geom0.columns.size == geom1.columns.size and np.all(
-                geom0.columns == geom1.columns
-            ), f"geom columns {name}"
-            assert geom0.crs == geom1.crs, f"geom crs {name}"
-            assert np.all(geom0.geometry == geom1.geometry), f"geom {name}"
+            try:
+                assert_geodataframe_equal(
+                    mod0.geoms[name],
+                    mod1.geoms[name],
+                    check_less_precise=True,  # allow for rounding errors in geoms
+                    check_like=True,  # order may be different
+                    check_geom_type=True,  # geometry types should be the same
+                )
+            except AssertionError:  # re-raise error with geom name
+                invalid_geoms.append(name)
+    assert len(invalid_geoms) == 0, f"invalid geoms: {invalid_geoms}"
     # check forcing
     if mod0.forcing:
         for name in mod0.forcing:
