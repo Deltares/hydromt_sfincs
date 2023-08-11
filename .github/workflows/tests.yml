@@ -36,7 +36,7 @@ jobs:
          conda list
 
       - name: Intall hydromt_sfincs
-        run: pip install
+        run: pip install .
 
       - name: Test
         run: python -m pytest --verbose --cov=hydromt_sfincs --cov-report xml

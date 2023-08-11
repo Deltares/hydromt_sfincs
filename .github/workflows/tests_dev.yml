@@ -32,11 +32,11 @@ jobs:
          conda info
          conda list
 
-      - name: Intall hydromt_sfincs
-        run: pip install
-
       - name: Intall hydromt core dev version
         run: pip install git+https://github.com/Deltares/hydromt.git
+
+      - name: Intall hydromt_sfincs
+        run: pip install .
 
       - name: Test
         run: python -m pytest --verbose --cov=hydromt_sfincs --cov-report xml
