@@ -36,9 +36,9 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=ccbe24c1"></script>
+    <script src="../_static/documentation_options.js?v=8a448e45"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=36754332"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/sfincs_build_update';</script>
@@ -439,13 +439,13 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <section id="building-or-updating-a-model">
-<span id="sfincs-build-update"></span><h1>Building or updating a model<a class="headerlink" href="#building-or-updating-a-model" title="Permalink to this heading">#</a></h1>
+<span id="sfincs-build-update"></span><h1>Building or updating a model<a class="headerlink" href="#building-or-updating-a-model" title="Link to this heading">#</a></h1>
 <p>This plugin allows users to build or update a SFINCS model from available data using
 the <a class="reference internal" href="#sfincs-cli"><span class="std std-ref">command line interface</span></a> or <a class="reference internal" href="#sfincs-python"><span class="std std-ref">Python scripting</span></a>.
 For a brief overview of the differences, see <a class="reference internal" href="sfincs.html#working-with-sfincs"><span class="std std-ref">Working with the SFINCS model</span></a>.</p>
 <p>In the following sections, examples are provided how to build your SFINCS model with HydroMT using either the CLI or Python scripting.</p>
 <section id="command-line-interface-cli-basic">
-<span id="sfincs-cli"></span><h2>Command Line Interface (CLI) - Basic<a class="headerlink" href="#command-line-interface-cli-basic" title="Permalink to this heading">#</a></h2>
+<span id="sfincs-cli"></span><h2>Command Line Interface (CLI) - Basic<a class="headerlink" href="#command-line-interface-cli-basic" title="Link to this heading">#</a></h2>
 <p>This plugin allows users to <strong>build</strong> a complete SFINCS model from available data for your area of interest. The model <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/model_region.html">region</a> is typically defined by a bounding box,
 see example below, or a geometry file. Once the configuration and data libraries are set, you can build a model by using:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">hydromt build sfincs path/to/built_model -r &quot;{&#39;bbox&#39;: [xmin, ymin, xmax, ymax]}&quot; -i sfincs_build.yml -d data_sources.yml -vv</span>
@@ -456,7 +456,7 @@ see example below, or a geometry file. Once the configuration and data libraries
 </pre></div>
 </div>
 <section id="configuration-file">
-<h3>Configuration file<a class="headerlink" href="#configuration-file" title="Permalink to this heading">#</a></h3>
+<h3>Configuration file<a class="headerlink" href="#configuration-file" title="Link to this heading">#</a></h3>
 <p>Settings to build or update a SFINCS model are managed in a configuration file. In this file,
 every option from each <a class="reference internal" href="sfincs_model_setup.html#model-methods"><span class="std std-ref">model method</span></a> can be changed by the user
 in its corresponding section. See the HydroMT core documentation for more info about the <a class="reference external" href="config">model configuration .yml-file</a> and check-out the example below.</p>
@@ -497,7 +497,7 @@ in its corresponding section. See the HydroMT core documentation for more info a
 </ul>
 </section>
 <section id="data-catalogs">
-<h3>Data Catalogs<a class="headerlink" href="#data-catalogs" title="Permalink to this heading">#</a></h3>
+<h3>Data Catalogs<a class="headerlink" href="#data-catalogs" title="Link to this heading">#</a></h3>
 <p>Data sources are provided to HydroMT in one or more user-definfed data catalog (yaml) files
 or from pre-defined data catalogs. These data catalogs contain required information on the
 different data sources so that HydroMT can process them for the different models.
@@ -516,13 +516,13 @@ which contains an extract of global data for a small region around the Piave riv
 </ul>
 </section>
 <section id="example">
-<h3>Example<a class="headerlink" href="#example" title="Permalink to this heading">#</a></h3>
+<h3>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h3>
 <p>See <a class="reference internal" href="../_examples/build_from_cli.html"><span class="doc">Example: Build from CLI</span></a> for suggested components
 and options to use for compound flooding applications.</p>
 </section>
 </section>
 <section id="python-scripting-advanced">
-<span id="sfincs-python"></span><h2>Python scripting - Advanced<a class="headerlink" href="#python-scripting-advanced" title="Permalink to this heading">#</a></h2>
+<span id="sfincs-python"></span><h2>Python scripting - Advanced<a class="headerlink" href="#python-scripting-advanced" title="Link to this heading">#</a></h2>
 <p>Next to the command line interface, HydroMT-SFINCS also allows to setup (or interact with) a SFINCS model from Python scripting.
 The main advantage of this approach is that you can work with in-memory datasets, e.g. datasets that you have modified, next to datasets that are defined in the data catalog.</p>
 <p>Typical applications where this approach can be useful are:</p>
@@ -552,7 +552,7 @@ The main advantage of this approach is that you can work with in-memory datasets
 </pre></div>
 </div>
 <section id="id1">
-<h3>Example<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h3>
+<h3>Example<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
 <p>See <a class="reference internal" href="../_examples/build_from_script.html"><span class="doc">Example: Build from Script</span></a> for a more detailed example.</p>
 <div class="toctree-wrapper compound">
 </div>
@@ -660,7 +660,7 @@ The main advantage of this approach is that you can work with in-memory datasets
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.3.
     <br/>
   </p>
 </div>

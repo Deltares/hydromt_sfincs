@@ -35,9 +35,9 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=ccbe24c1"></script>
+    <script src="../../_static/documentation_options.js?v=8a448e45"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/design-tabs.js?v=36754332"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt/io';</script>
@@ -404,7 +404,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">glob</span>
 <span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">isfile</span><span class="p">,</span> <span class="n">join</span><span class="p">,</span> <span class="n">splitext</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">isfile</span><span class="p">,</span> <span class="n">join</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span> <span class="nn">dask</span>
@@ -711,11 +711,11 @@ document.write(`
 <span class="sd">    fn_data: path, str</span>
 <span class="sd">        Path to data file of which the index dimension which should match the geospatial</span>
 <span class="sd">        coordinates index.</span>
-<span class="sd">        This can either be a csv, or parquet with datetime in the first column and the</span>
-<span class="sd">        location index in the header row, or a netcdf with a time and index dimensions.</span>
+<span class="sd">        This can either be a csv with datetime in the first column and the location</span>
+<span class="sd">        index in the header row, or a netcdf with a time and index dimensions.</span>
 <span class="sd">    var_name: str, optional</span>
-<span class="sd">        Name of the variable in case of a csv, or parquet fn_data file. By default,</span>
-<span class="sd">        None and infered from basename.</span>
+<span class="sd">        Name of the variable in case of a csv fn_data file. By default, None and</span>
+<span class="sd">        infered from basename.</span>
 <span class="sd">    crs: str, `pyproj.CRS`, or dict</span>
 <span class="sd">        Source coordinate reference system, ignored for files with a native crs.</span>
 <span class="sd">    bbox : array of float, default None</span>
@@ -763,7 +763,7 @@ document.write(`
 <span class="k">def</span> <span class="nf">open_timeseries_from_table</span><span class="p">(</span>
     <span class="n">fn</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index_dim</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open timeseries csv or parquet file and parse to xarray.DataArray.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open timeseries csv file and parse to xarray.DataArray.</span>
 
 <span class="sd">    Accepts files with time index on one dimension and numeric location index on the</span>
 <span class="sd">    other dimension. In case of string location indices, non-numeric parts are</span>
@@ -789,16 +789,9 @@ document.write(`
 <span class="sd">    da: xarray.DataArray</span>
 <span class="sd">        DataArray</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">splitext</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;.csv&quot;</span><span class="p">:</span>
-        <span class="n">kwargs0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs0</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">ext</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;.parquet&quot;</span><span class="p">,</span> <span class="s2">&quot;.pq&quot;</span><span class="p">]:</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown table file format: </span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
+    <span class="n">kwargs0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs0</span><span class="p">)</span>
     <span class="c1"># check if time index</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
@@ -831,9 +824,9 @@ document.write(`
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open fiona-compatible geometry, csv, parquet, excel or xy file and parse it.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open fiona-compatible geometry, csv, excel or xy file and parse it.</span>
 
-<span class="sd">    Construct a :py:meth:`geopandas.GeoDataFrame` CSV, parquet, or XLS file are</span>
+<span class="sd">    Construct a :py:meth:`geopandas.GeoDataFrame` CSV or XLS file are</span>
 <span class="sd">    converted to point geometries based on default columns names</span>
 <span class="sd">    for the x- and y-coordinates, or if given, the x_dim and y_dim arguments.</span>
 
@@ -841,11 +834,10 @@ document.write(`
 <span class="sd">    ----------</span>
 <span class="sd">    fn : str</span>
 <span class="sd">        path to geometry file</span>
-<span class="sd">    driver: {&#39;csv&#39;, &#39;xls&#39;, &#39;xy&#39;, &#39;vector&#39;, &#39;parquet&#39;}, optional</span>
+<span class="sd">    driver: {&#39;csv&#39;, &#39;xls&#39;, &#39;xy&#39;, &#39;vector&#39;}, optional</span>
 <span class="sd">        driver used to read the file: :py:meth:`geopandas.open_file` for gdal vector</span>
 <span class="sd">        files, :py:meth:`hydromt.io.open_vector_from_table`</span>
-<span class="sd">        for csv, parquet, xls(x) and xy files. By default None, and infered from</span>
-<span class="sd">        file extention.</span>
+<span class="sd">        for csv, xls(x) and xy files. By default None, and infered from file extention.</span>
 <span class="sd">    crs: str, `pyproj.CRS`, or dict</span>
 <span class="sd">        Source coordinate reference system, ignored for files with a native crs.</span>
 <span class="sd">    dst_crs: str, `pyproj.CRS`, or dict</span>
@@ -862,7 +854,7 @@ document.write(`
 <span class="sd">        the predicate function against each item. Requires bbox or mask.</span>
 <span class="sd">        By default &#39;intersects&#39;</span>
 <span class="sd">    x_dim, y_dim : str</span>
-<span class="sd">        Name of x, y-coordinate columns, only applicable for parquet, csv or xls tables</span>
+<span class="sd">        Name of x, y-coordinate columns, only applicable for csv or xls tables</span>
 <span class="sd">    assert_gtype : {Point, LineString, Polygon}, optional</span>
 <span class="sd">        If given, assert geometry type</span>
 <span class="sd">    mode: {&#39;r&#39;, &#39;a&#39;, &#39;w&#39;}</span>
@@ -880,7 +872,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">filtered</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">driver</span> <span class="o">=</span> <span class="n">driver</span> <span class="k">if</span> <span class="n">driver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">driver</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;csv&quot;</span><span class="p">,</span> <span class="s2">&quot;parquet&quot;</span><span class="p">,</span> <span class="s2">&quot;xls&quot;</span><span class="p">,</span> <span class="s2">&quot;xlsx&quot;</span><span class="p">,</span> <span class="s2">&quot;xy&quot;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">driver</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;csv&quot;</span><span class="p">,</span> <span class="s2">&quot;xls&quot;</span><span class="p">,</span> <span class="s2">&quot;xlsx&quot;</span><span class="p">,</span> <span class="s2">&quot;xy&quot;</span><span class="p">]:</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="n">open_vector_from_table</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="n">driver</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">geom</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -919,13 +911,12 @@ document.write(`
     <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read point geometry files from csv, parquet, xy or excel table files.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read point geometry files from csv, xy or excel table files.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    driver: {&#39;csv&#39;, &#39;parquet&#39;, &#39;xls&#39;, &#39;xlsx&#39;, &#39;xy&#39;}</span>
+<span class="sd">    driver: {&#39;csv&#39;, &#39;xls&#39;, &#39;xlsx&#39;, &#39;xy&#39;}</span>
 <span class="sd">        If &#39;csv&#39; use :py:meth:`pandas.read_csv` to read the data;</span>
-<span class="sd">        If &#39;parquet&#39; use :py:meth:`pandas.read_parquet` to read the data;</span>
 <span class="sd">        If &#39;xls&#39; or &#39;xlsx&#39; use :py:meth:`pandas.read_excel` with `engine=openpyxl`</span>
 <span class="sd">        If &#39;xy&#39; use :py:meth:`pandas.read_csv` with `index_col=False`, `header=None`,</span>
 <span class="sd">        `delim_whitespace=True`.</span>
@@ -948,15 +939,13 @@ document.write(`
 <span class="sd">        Parsed and filtered point geometries</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">driver</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">driver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">if</span> <span class="s2">&quot;index_col&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="n">driver</span> <span class="o">!=</span> <span class="s2">&quot;parquet&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s2">&quot;index_col&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">driver</span> <span class="o">==</span> <span class="s2">&quot;csv&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">driver</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;csv&quot;</span><span class="p">]:</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">driver</span> <span class="o">==</span> <span class="s2">&quot;parquet&quot;</span><span class="p">:</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">driver</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;xls&quot;</span><span class="p">,</span> <span class="s2">&quot;xlsx&quot;</span><span class="p">]:</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;openpyxl&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">driver</span> <span class="o">==</span> <span class="s2">&quot;xy&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">driver</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;xy&quot;</span><span class="p">]:</span>
         <span class="n">x_dim</span> <span class="o">=</span> <span class="n">x_dim</span> <span class="k">if</span> <span class="n">x_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;x&quot;</span>
         <span class="n">y_dim</span> <span class="o">=</span> <span class="n">y_dim</span> <span class="k">if</span> <span class="n">y_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;y&quot;</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">index_col</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -984,7 +973,9 @@ document.write(`
     <span class="k">return</span> <span class="n">gdf</span>
 
 
-<div class="viewcode-block" id="write_xy"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_xy.html#hydromt_sfincs.utils.write_xy">[docs]</a><span class="k">def</span> <span class="nf">write_xy</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.4f</span><span class="s2">&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="write_xy">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_xy.html#hydromt_sfincs.utils.write_xy">[docs]</a>
+<span class="k">def</span> <span class="nf">write_xy</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.4f</span><span class="s2">&quot;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Write geopandas.GeoDataFrame with Point geometries to point xy files.</span>
 
 <span class="sd">    Parameters</span>
@@ -1001,6 +992,7 @@ document.write(`
     <span class="n">xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">values</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">xy</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span></div>
+
 </pre></div>
 
                 </article>
@@ -1053,7 +1045,7 @@ document.write(`
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.3.
     <br/>
   </p>
 </div>

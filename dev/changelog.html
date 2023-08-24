@@ -36,9 +36,9 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=ccbe24c1"></script>
+    <script src="_static/documentation_options.js?v=8a448e45"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/design-tabs.js?v=36754332"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'changelog';</script>
@@ -428,38 +428,38 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <section id="what-s-new">
-<h1>What’s new<a class="headerlink" href="#what-s-new" title="Permalink to this heading">#</a></h1>
+<h1>What’s new<a class="headerlink" href="#what-s-new" title="Link to this heading">#</a></h1>
 <p>All notable changes to this project will be documented in this page.
 Distinction is made between new methods (Added), changes to existing methods (Changed), bugfixes (Fixed), deprecated methods (Deprecated) and removed methods (Removed).</p>
 <p>The format is based on <a class="reference external" href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to
 <a class="reference external" href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 </section>
 <section id="v1-0-2-unreleased">
-<h1>v1.0.2 (unreleased)<a class="headerlink" href="#v1-0-2-unreleased" title="Permalink to this heading">#</a></h1>
+<h1>v1.0.2 (unreleased)<a class="headerlink" href="#v1-0-2-unreleased" title="Link to this heading">#</a></h1>
 <section id="added">
-<h2>Added<a class="headerlink" href="#added" title="Permalink to this heading">#</a></h2>
+<h2>Added<a class="headerlink" href="#added" title="Link to this heading">#</a></h2>
 </section>
 <section id="changed">
-<h2>Changed<a class="headerlink" href="#changed" title="Permalink to this heading">#</a></h2>
+<h2>Changed<a class="headerlink" href="#changed" title="Link to this heading">#</a></h2>
 </section>
 <section id="fixed">
-<h2>Fixed<a class="headerlink" href="#fixed" title="Permalink to this heading">#</a></h2>
+<h2>Fixed<a class="headerlink" href="#fixed" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>writing COG files in <cite>SfincsModel.setup_subgrid</cite> (the COG driver settings were wrong) PR #117</p></li>
 <li><p>a constant offset in the <cite>datasets_dep</cite> argument to <cite>SfincsModel.setup_subgrid</cite> and <cite>SfincsModel.setup_dep</cite> was ignored PR #119</p></li>
 </ul>
 </section>
 <section id="deprecated">
-<h2>Deprecated<a class="headerlink" href="#deprecated" title="Permalink to this heading">#</a></h2>
+<h2>Deprecated<a class="headerlink" href="#deprecated" title="Link to this heading">#</a></h2>
 </section>
 </section>
 <section id="v1-0-1-3-august-2023">
-<h1>v1.0.1 (3 August 2023)<a class="headerlink" href="#v1-0-1-3-august-2023" title="Permalink to this heading">#</a></h1>
+<h1>v1.0.1 (3 August 2023)<a class="headerlink" href="#v1-0-1-3-august-2023" title="Link to this heading">#</a></h1>
 <p>This release contains several new features, such as burning in river bathymetry into the subgrid, setting up drainage structures and adding wind and pressure forcing.
 It also contains several bugfixes and improvements to existing methods.
 It is recommended to use this release together with the latest version of the <a class="reference external" href="https://github.com/Deltares/SFINCS/releases/tag/v2.0.2_Blockhaus_release">SFINCS model</a>.</p>
 <section id="id1">
-<h2>Added<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h2>
+<h2>Added<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><cite>SfincsModel.setup_cn_infiltration_with_kr</cite> to setup three layers related to the curve number
 (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr) PR #87</p></li>
@@ -469,7 +469,7 @@ It is recommended to use this release together with the latest version of the <a
 </ul>
 </section>
 <section id="id2">
-<h2>Changed<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h2>
+<h2>Changed<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><cite>SfincsModel.setup_subgrid</cite> now supports the ‘riv_datasets’ to burn in river bathymetry into the subgrid. PR #84</p></li>
 <li><p><cite>SfincsModel.setup_mask_active</cite> argument reset_mask default to True PR #94</p></li>
@@ -483,7 +483,7 @@ It is recommended to use this release together with the latest version of the <a
 </ul>
 </section>
 <section id="id3">
-<h2>Fixed<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h2>
+<h2>Fixed<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>bugfix in <cite>SfincsModel.write_forcing</cite> to ensure all NetCDF files are written instead of only the first one. PR #86</p></li>
 <li><p>bugfix in <cite>SfincsModel.read_config</cite> &amp; <cite>SfincsInput.read</cite> for relative paths in inp file. PR #88</p></li>
@@ -494,14 +494,14 @@ It is recommended to use this release together with the latest version of the <a
 </ul>
 </section>
 <section id="removed">
-<h2>Removed<a class="headerlink" href="#removed" title="Permalink to this heading">#</a></h2>
+<h2>Removed<a class="headerlink" href="#removed" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><cite>burn_river_zb</cite> and <cite>get_river_bathymetry</cite> workflow methods have been deprecated in favor of <cite>burn_river_rect</cite>. PR #84</p></li>
 </ul>
 </section>
 </section>
 <section id="v1-0-17-april-2023">
-<h1>v1.0 (17 April 2023)<a class="headerlink" href="#v1-0-17-april-2023" title="Permalink to this heading">#</a></h1>
+<h1>v1.0 (17 April 2023)<a class="headerlink" href="#v1-0-17-april-2023" title="Link to this heading">#</a></h1>
 <p>This release is a major update of the SfincsModel interface. It contains many new features,
 such as support for <em>rotated grids</em>, <em>subgrid</em> and improved support for <em>building models from Python</em> scripts.
 The documentation and exmaples have been updated to reflect these changes.</p>
@@ -509,7 +509,7 @@ The documentation and exmaples have been updated to reflect these changes.</p>
 consistency of the interface and match it more closely to the SFINCS model itself.
 Please carefully check the API reference for the new methods and arguments.</p>
 <section id="main-differences">
-<h2>Main differences<a class="headerlink" href="#main-differences" title="Permalink to this heading">#</a></h2>
+<h2>Main differences<a class="headerlink" href="#main-differences" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><cite>setup_region</cite> has been replaced by <cite>setup_grid_from_region</cite> and  <cite>setup_grid</cite>.
 This method actually creates an empty regular grid based on a region of interest or user-defined coordinates, shape, rotation, etc..</p></li>
@@ -526,7 +526,7 @@ This method can now also be used to setup a bathymetry map from multiple sources
 </ul>
 </section>
 <section id="id4">
-<h2>Added<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h2>
+<h2>Added<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><cite>setup_grid</cite> to setup a user-defined regular grid based coordinates, shape, rotation, etc.</p></li>
 <li><p><cite>setup_subgrid</cite> to setup subgrid tables (sbgfile) based on one ore more elevation and Manning roughness datasets</p></li>
@@ -536,14 +536,14 @@ This method can now also be used to setup a bathymetry map from multiple sources
 </ul>
 </section>
 <section id="id5">
-<h2>Changed<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h2>
+<h2>Changed<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><cite>setup_river_inflow</cite> and <cite>setup_river_outflow</cite> are now based river centerline data (which can be derivded from hydrography data).
 This is more robust compared to the previous method which was based on reprojected flow direction data.</p></li>
 </ul>
 </section>
 <section id="removed-not-replaced">
-<h2>Removed (not replaced)<a class="headerlink" href="#removed-not-replaced" title="Permalink to this heading">#</a></h2>
+<h2>Removed (not replaced)<a class="headerlink" href="#removed-not-replaced" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><cite>setup_basemaps</cite> This method was already deprecated in v0.2.1 and has now been removed.</p></li>
 <li><p><cite>setup_river_hydrography</cite> This method was removed as reprojection of the hydrography data is no longer required for river inflow/outflow.</p></li>
@@ -553,7 +553,7 @@ in the subgrid data will be added in to <cite>setup_subgrid</cite> a future rele
 </ul>
 </section>
 <section id="new-low-level-classes">
-<h2>New low-level classes<a class="headerlink" href="#new-low-level-classes" title="Permalink to this heading">#</a></h2>
+<h2>New low-level classes<a class="headerlink" href="#new-low-level-classes" title="Link to this heading">#</a></h2>
 <p>These classes are not intended to be used directly by the user, but are used internally by the SfincsModel class.</p>
 <ul class="simple">
 <li><p>The <cite>SfincsInput</cite> class contains methods to generate, read and write SFINCS input files</p></li>
@@ -563,9 +563,9 @@ in the subgrid data will be added in to <cite>setup_subgrid</cite> a future rele
 </section>
 </section>
 <section id="v0-2-1-23-february-2022">
-<h1>v0.2.1 (23 February 2022)<a class="headerlink" href="#v0-2-1-23-february-2022" title="Permalink to this heading">#</a></h1>
+<h1>v0.2.1 (23 February 2022)<a class="headerlink" href="#v0-2-1-23-february-2022" title="Link to this heading">#</a></h1>
 <section id="id6">
-<h2>Deprecated<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h2>
+<h2>Deprecated<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><strong>setup_basemaps</strong> has been replaced by <strong>setup_topobathy</strong></p></li>
 <li><p>In <strong>setup_mask</strong>, the “active_mask_fn” argument has been renamed to “mask_fn” for consistency</p></li>
@@ -575,7 +575,7 @@ in the subgrid data will be added in to <cite>setup_subgrid</cite> a future rele
 </ul>
 </section>
 <section id="bugfix">
-<h2>Bugfix<a class="headerlink" href="#bugfix" title="Permalink to this heading">#</a></h2>
+<h2>Bugfix<a class="headerlink" href="#bugfix" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>bugfix <strong>setup_p_forcing</strong> to ensure the data is 1D when passed to set_forcing_1d method</p></li>
 <li><p>bugfix <strong>setup_p_forcing_from_grid</strong> when aggregating with a multi polygon region.</p></li>
@@ -583,7 +583,7 @@ in the subgrid data will be added in to <cite>setup_subgrid</cite> a future rele
 </ul>
 </section>
 <section id="new">
-<h2>New<a class="headerlink" href="#new" title="Permalink to this heading">#</a></h2>
+<h2>New<a class="headerlink" href="#new" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><strong>setup_region</strong> method to set the (hydrological) model region of interest (before part of <strong>setup_basemaps</strong>).</p></li>
 <li><p><strong>setup_river_hydrography</strong> allows to derive hydrography data [‘flwdir’, ‘uparea’] from the model elevation or reproject it from a global dataset.
@@ -593,7 +593,7 @@ Derived ‘uparea’ and ‘flwdir’ maps are saved in the GIS folder and can b
 </ul>
 </section>
 <section id="id7">
-<h2>Changed<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h2>
+<h2>Changed<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><strong>setup_mask</strong> and <strong>setup_bounds</strong> both have a “mask_fn”, “include_mask_fn” and “exclude_mask_fn” polygon and “min_elv” and “max_elv” elevation arguments to determine valid / boundary cells.</p></li>
 <li><p><strong>setup_mask</strong> and <strong>setup_bounds</strong> have a “reset_mask” and “reset_bounds” option respectively to start with a clean mask or remove previously set boundary cells.</p></li>
@@ -621,16 +621,16 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 </section>
 </section>
 <section id="v0-2-0-2-august-2021">
-<h1>v0.2.0 (2 August 2021)<a class="headerlink" href="#v0-2-0-2-august-2021" title="Permalink to this heading">#</a></h1>
+<h1>v0.2.0 (2 August 2021)<a class="headerlink" href="#v0-2-0-2-august-2021" title="Link to this heading">#</a></h1>
 <section id="id8">
-<h2>Bugfix<a class="headerlink" href="#id8" title="Permalink to this heading">#</a></h2>
+<h2>Bugfix<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>scsfile variable changed to maximum soil moisture retention [inch]; was curve number [-]</p></li>
 <li><p>fix setting delimited text based geodatasets for h and q forcing.</p></li>
 </ul>
 </section>
 <section id="id9">
-<h2>Changed<a class="headerlink" href="#id9" title="Permalink to this heading">#</a></h2>
+<h2>Changed<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Bumped minimal hydromt version to 0.4.2</p></li>
 <li><p>splitted <code class="docutils literal notranslate"><span class="pre">setup_topobathy</span></code> into multiple smaller methods: <code class="docutils literal notranslate"><span class="pre">setup_merge_topobathy</span></code>, <code class="docutils literal notranslate"><span class="pre">setup_mask</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_bounds</span></code></p></li>
@@ -641,7 +641,7 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 </ul>
 </section>
 <section id="id10">
-<h2>Added<a class="headerlink" href="#id10" title="Permalink to this heading">#</a></h2>
+<h2>Added<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
 <p>support for SFINCS files:</p>
 <ul class="simple">
 <li><p>structures: sfincs.thd &amp; sfincs.weir</p></li>
@@ -668,36 +668,36 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 </ul>
 </section>
 <section id="documentation">
-<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this heading">#</a></h2>
+<h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>build from python example</p></li>
 <li><p>overviews with SfincsModel setup components &amp; SfincsModel data</p></li>
 </ul>
 </section>
 <section id="id11">
-<h2>Deprecated<a class="headerlink" href="#id11" title="Permalink to this heading">#</a></h2>
+<h2>Deprecated<a class="headerlink" href="#id11" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">setup_p_gridded</span></code></p></li>
 </ul>
 </section>
 </section>
 <section id="v0-1-0-18-may-2021">
-<h1>v0.1.0 (18 May 2021)<a class="headerlink" href="#v0-1-0-18-may-2021" title="Permalink to this heading">#</a></h1>
+<h1>v0.1.0 (18 May 2021)<a class="headerlink" href="#v0-1-0-18-may-2021" title="Link to this heading">#</a></h1>
 <p>Noticeable changes are a new <code class="docutils literal notranslate"><span class="pre">setup_river_inflow</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_river_outflow</span></code> methods</p>
 <section id="id12">
-<h2>Added<a class="headerlink" href="#id12" title="Permalink to this heading">#</a></h2>
+<h2>Added<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>setup_river_outflow method to set ouflow (msk=3) boundary at river outflow points</p></li>
 </ul>
 </section>
 <section id="id13">
-<h2>Changed<a class="headerlink" href="#id13" title="Permalink to this heading">#</a></h2>
+<h2>Changed<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Updated to hydromt v0.4.1</p></li>
 </ul>
 </section>
 <section id="id14">
-<h2>Documentation<a class="headerlink" href="#id14" title="Permalink to this heading">#</a></h2>
+<h2>Documentation<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Now <strong>latest</strong> and <strong>stable</strong> versions.</p></li>
 <li><p>Updated build instructions</p></li>
@@ -841,7 +841,7 @@ The model domain is also determined on-the-fly, thus it is not required to run s
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.3.
     <br/>
   </p>
 </div>

@@ -35,9 +35,9 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=ccbe24c1"></script>
+    <script src="../../_static/documentation_options.js?v=8a448e45"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/design-tabs.js?v=36754332"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/sfincs';</script>
@@ -433,7 +433,9 @@ document.write(`
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="SfincsModel"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel">[docs]</a><span class="k">class</span> <span class="nc">SfincsModel</span><span class="p">(</span><span class="n">GridModel</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel">[docs]</a>
+<span class="k">class</span> <span class="nc">SfincsModel</span><span class="p">(</span><span class="n">GridModel</span><span class="p">):</span>
     <span class="c1"># GLOBAL Static class variables that can be used by all methods within</span>
     <span class="c1"># SfincsModel class. Typically list of variables (e.g. _MAPS) or</span>
     <span class="c1"># dict with varname - filename pairs (e.g. thin_dams : thd)</span>
@@ -493,7 +495,9 @@ document.write(`
         <span class="s2">&quot;wnd&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;wind&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">},</span>
     <span class="p">}</span>
 
-<div class="viewcode-block" id="SfincsModel.__init__"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.__init__">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span>
@@ -539,6 +543,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subgrid</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span></div>
 
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns model mask&quot;&quot;&quot;</span>
@@ -579,7 +584,9 @@ document.write(`
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">crs</span> <span class="o">=</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="SfincsModel.setup_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_grid.html#hydromt_sfincs.SfincsModel.setup_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_grid</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_grid">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_grid.html#hydromt_sfincs.SfincsModel.setup_grid">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_grid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">x0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">y0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -619,7 +626,10 @@ document.write(`
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_grid_from_config</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_grid_from_region"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_grid_from_region.html#hydromt_sfincs.SfincsModel.setup_grid_from_region">[docs]</a>    <span class="k">def</span> <span class="nf">setup_grid_from_region</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_grid_from_region">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_grid_from_region.html#hydromt_sfincs.SfincsModel.setup_grid_from_region">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_grid_from_region</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">region</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
         <span class="n">res</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
@@ -704,7 +714,10 @@ document.write(`
             <span class="n">epsg</span><span class="o">=</span><span class="n">pyproj_crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">(),</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_dep"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_dep.html#hydromt_sfincs.SfincsModel.setup_dep">[docs]</a>    <span class="k">def</span> <span class="nf">setup_dep</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_dep">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_dep.html#hydromt_sfincs.SfincsModel.setup_dep">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_dep</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">datasets_dep</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
         <span class="n">buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># not in list</span>
@@ -747,12 +760,12 @@ document.write(`
             <span class="p">)</span>
 
             <span class="c1"># check if no nan data is present in the bed levels</span>
-            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Interpolate data at </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span><span class="si">}</span><span class="s2"> cells&quot;</span>
+            <span class="n">nmissing</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="n">nmissing</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Interpolate elevation at </span><span class="si">{</span><span class="n">nmissing</span><span class="si">}</span><span class="s2"> cells&quot;</span><span class="p">)</span>
+                <span class="n">da_dep</span> <span class="o">=</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">interpolate_na</span><span class="p">(</span>
+                    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;rio_idw&quot;</span><span class="p">,</span> <span class="n">extrapolate</span><span class="o">=</span><span class="kc">True</span>
                 <span class="p">)</span>
-                <span class="c1"># TODO add extrapolate=True option when available in hydromt core</span>
-                <span class="n">da_dep</span> <span class="o">=</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">interpolate_na</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;rio_idw&quot;</span><span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">da_dep</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dep&quot;</span><span class="p">)</span>
             <span class="c1"># FIXME this shouldn&#39;t be necessary, since da_dep should already have a crs</span>
@@ -766,7 +779,10 @@ document.write(`
                 <span class="s2">&quot;Create dep not yet implemented for quadtree grids.&quot;</span>
             <span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_mask_active"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_mask_active.html#hydromt_sfincs.SfincsModel.setup_mask_active">[docs]</a>    <span class="k">def</span> <span class="nf">setup_mask_active</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_mask_active">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_mask_active.html#hydromt_sfincs.SfincsModel.setup_mask_active">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_mask_active</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mask</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">include_mask</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -895,7 +911,10 @@ document.write(`
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No active cells found.&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_mask_bounds"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_mask_bounds.html#hydromt_sfincs.SfincsModel.setup_mask_bounds">[docs]</a>    <span class="k">def</span> <span class="nf">setup_mask_bounds</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_mask_bounds">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_mask_bounds.html#hydromt_sfincs.SfincsModel.setup_mask_bounds">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_mask_bounds</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">btype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;waterlevel&quot;</span><span class="p">,</span>
         <span class="n">include_mask</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -989,7 +1008,10 @@ document.write(`
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;msk&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_subgrid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_subgrid.html#hydromt_sfincs.SfincsModel.setup_subgrid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_subgrid</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_subgrid">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_subgrid.html#hydromt_sfincs.SfincsModel.setup_subgrid">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_subgrid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">datasets_dep</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
         <span class="n">datasets_rgh</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
@@ -1143,7 +1165,10 @@ document.write(`
         <span class="k">if</span> <span class="s2">&quot;manningfile&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;manningfile&quot;</span><span class="p">)</span>  <span class="c1"># remove manningfile from config</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_river_inflow"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.SfincsModel.setup_river_inflow">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_inflow</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_river_inflow">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.SfincsModel.setup_river_inflow">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_river_inflow</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">rivers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">hydrography</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1265,7 +1290,10 @@ document.write(`
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="s2">&quot;msk&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Boundary cells (n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">) updated around src points.&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_river_outflow"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_river_outflow.html#hydromt_sfincs.SfincsModel.setup_river_outflow">[docs]</a>    <span class="k">def</span> <span class="nf">setup_river_outflow</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_river_outflow">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_river_outflow.html#hydromt_sfincs.SfincsModel.setup_river_outflow">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_river_outflow</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">rivers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">hydrography</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1384,8 +1412,11 @@ document.write(`
         <span class="k">if</span> <span class="n">keep_rivers_geom</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rivers_outflow&quot;</span><span class="p">)</span></div>
 
+
     <span class="c1"># Function to create constant spatially varying infiltration</span>
-<div class="viewcode-block" id="SfincsModel.setup_constant_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration.html#hydromt_sfincs.SfincsModel.setup_constant_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_constant_infiltration</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_constant_infiltration">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration.html#hydromt_sfincs.SfincsModel.setup_constant_infiltration">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_constant_infiltration</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">qinf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">lulc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1461,8 +1492,11 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
+
     <span class="c1"># Function to create curve number for SFINCS</span>
-<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cn_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">,</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span> <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;med&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_cn_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">,</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span> <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;med&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup model potential maximum soil moisture retention map (scsfile)</span>
 <span class="sd">        from gridded curve number map.</span>
 
@@ -1512,8 +1546,11 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
+
     <span class="c1"># Function to create curve number for SFINCS including recovery term (Kr)</span>
-<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration_with_kr"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cn_infiltration_with_kr</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration_with_kr">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_cn_infiltration_with_kr</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">lulc</span><span class="p">,</span> <span class="n">hsg</span><span class="p">,</span> <span class="n">ksat</span><span class="p">,</span> <span class="n">reclass_table</span><span class="p">,</span> <span class="n">effective</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">2000</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS</span>
@@ -1641,8 +1678,11 @@ document.write(`
         <span class="c1"># Remove qinf variable in sfincs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
+
     <span class="c1"># Roughness</span>
-<div class="viewcode-block" id="SfincsModel.setup_manning_roughness"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_manning_roughness.html#hydromt_sfincs.SfincsModel.setup_manning_roughness">[docs]</a>    <span class="k">def</span> <span class="nf">setup_manning_roughness</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.setup_manning_roughness">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_manning_roughness.html#hydromt_sfincs.SfincsModel.setup_manning_roughness">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_manning_roughness</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">datasets_rgh</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
         <span class="n">manning_land</span><span class="o">=</span><span class="mf">0.04</span><span class="p">,</span>
@@ -1709,7 +1749,10 @@ document.write(`
                 <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_observation_points"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_observation_points.html#hydromt_sfincs.SfincsModel.setup_observation_points">[docs]</a>    <span class="k">def</span> <span class="nf">setup_observation_points</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_observation_points">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_observation_points.html#hydromt_sfincs.SfincsModel.setup_observation_points">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_observation_points</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">locations</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -1748,7 +1791,10 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_obs</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_observation_lines"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_observation_lines.html#hydromt_sfincs.SfincsModel.setup_observation_lines">[docs]</a>    <span class="k">def</span> <span class="nf">setup_observation_lines</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_observation_lines">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_observation_lines.html#hydromt_sfincs.SfincsModel.setup_observation_lines">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_observation_lines</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">locations</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -1791,7 +1837,10 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_obs</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_structures"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures">[docs]</a>    <span class="k">def</span> <span class="nf">setup_structures</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_structures">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_structures</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">structures</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
         <span class="n">stype</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -1892,7 +1941,10 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">stype</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stype</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">stype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_drainage_structures"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_drainage_structures.html#hydromt_sfincs.SfincsModel.setup_drainage_structures">[docs]</a>    <span class="k">def</span> <span class="nf">setup_drainage_structures</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_drainage_structures">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_drainage_structures.html#hydromt_sfincs.SfincsModel.setup_drainage_structures">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_drainage_structures</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">structures</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
         <span class="n">stype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pump&quot;</span><span class="p">,</span>
@@ -1974,8 +2026,11 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf_structures</span><span class="p">,</span> <span class="s2">&quot;drn&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;drnfile&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.drn&quot;</span><span class="p">)</span></div>
 
+
     <span class="c1">### FORCING</span>
-<div class="viewcode-block" id="SfincsModel.set_forcing_1d"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.set_forcing_1d.html#hydromt_sfincs.SfincsModel.set_forcing_1d">[docs]</a>    <span class="k">def</span> <span class="nf">set_forcing_1d</span><span class="p">(</span>
+<div class="viewcode-block" id="SfincsModel.set_forcing_1d">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.set_forcing_1d.html#hydromt_sfincs.SfincsModel.set_forcing_1d">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_forcing_1d</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">df_ts</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">gdf_locs</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2090,7 +2145,10 @@ document.write(`
         <span class="n">da</span> <span class="o">=</span> <span class="n">GeoDataArray</span><span class="o">.</span><span class="n">from_gdf</span><span class="p">(</span><span class="n">gdf_locs</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">),</span> <span class="n">data</span><span class="o">=</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_waterlevel_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html#hydromt_sfincs.SfincsModel.setup_waterlevel_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_waterlevel_forcing</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_waterlevel_forcing">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html#hydromt_sfincs.SfincsModel.setup_waterlevel_forcing">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_waterlevel_forcing</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">geodataset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeseries</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2197,7 +2255,10 @@ document.write(`
         <span class="c1"># set/ update forcing</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">df_ts</span><span class="o">=</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">gdf_locs</span><span class="o">=</span><span class="n">gdf_locs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bzs&quot;</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_waterlevel_bnd_from_mask"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask.html#hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask">[docs]</a>    <span class="k">def</span> <span class="nf">setup_waterlevel_bnd_from_mask</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_waterlevel_bnd_from_mask">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask.html#hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_waterlevel_bnd_from_mask</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e4</span><span class="p">,</span>
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -2241,7 +2302,10 @@ document.write(`
         <span class="c1"># set waterlevel boundary</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">gdf_locs</span><span class="o">=</span><span class="n">gdf</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bzs&quot;</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_discharge_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_discharge_forcing</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_discharge_forcing">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_discharge_forcing</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">geodataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">timeseries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -2324,7 +2388,10 @@ document.write(`
         <span class="c1"># set/ update forcing</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing_1d</span><span class="p">(</span><span class="n">df_ts</span><span class="o">=</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">gdf_locs</span><span class="o">=</span><span class="n">gdf_locs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dis&quot;</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_discharge_forcing_from_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_discharge_forcing_from_grid</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_discharge_forcing_from_grid">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_discharge_forcing_from_grid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">discharge</span><span class="p">,</span>
         <span class="n">locations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -2427,7 +2494,10 @@ document.write(`
         <span class="c1"># keep snapped locations</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">ds_snapped</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">(),</span> <span class="s2">&quot;src_snapped&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_precip_forcing_from_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_precip_forcing_from_grid</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_precip_forcing_from_grid">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_precip_forcing_from_grid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">precip</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup precipitation forcing from a gridded spatially varying data source.</span>
@@ -2502,7 +2572,10 @@ document.write(`
             <span class="c1"># add to forcing</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">precip_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;precip_2d&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_precip_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing.html#hydromt_sfincs.SfincsModel.setup_precip_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_precip_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeseries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">magnitude</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_precip_forcing">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing.html#hydromt_sfincs.SfincsModel.setup_precip_forcing">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_precip_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeseries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">magnitude</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup spatially uniform precipitation forcing (precip).</span>
 
 <span class="sd">        Adds model layers:</span>
@@ -2544,7 +2617,10 @@ document.write(`
         <span class="n">df_ts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">df_ts</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;precip&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_pressure_forcing_from_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_pressure_forcing_from_grid</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_pressure_forcing_from_grid">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_pressure_forcing_from_grid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">press</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">101325</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup pressure forcing from a gridded spatially varying data source.</span>
@@ -2604,7 +2680,10 @@ document.write(`
         <span class="c1"># add to forcing</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">press_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;press_2d&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_wind_forcing_from_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid">[docs]</a>    <span class="k">def</span> <span class="nf">setup_wind_forcing_from_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wind</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_wind_forcing_from_grid">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_wind_forcing_from_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wind</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup pressure forcing from a gridded spatially varying data source.</span>
 
 <span class="sd">        Adds one model layer:</span>
@@ -2662,7 +2741,10 @@ document.write(`
         <span class="c1"># add to forcing</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">wind_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;wind_2d&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_wind_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_wind_forcing.html#hydromt_sfincs.SfincsModel.setup_wind_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">setup_wind_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeseries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">magnitude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_wind_forcing">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_wind_forcing.html#hydromt_sfincs.SfincsModel.setup_wind_forcing">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_wind_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeseries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">magnitude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup spatially uniform wind forcing (wind).</span>
 
 <span class="sd">        Adds model layers:</span>
@@ -2711,7 +2793,10 @@ document.write(`
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;wnd&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.setup_tiles"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_tiles.html#hydromt_sfincs.SfincsModel.setup_tiles">[docs]</a>    <span class="k">def</span> <span class="nf">setup_tiles</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.setup_tiles">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_tiles.html#hydromt_sfincs.SfincsModel.setup_tiles">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_tiles</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">region</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2817,8 +2902,11 @@ document.write(`
                 <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
             <span class="p">)</span></div>
 
+
     <span class="c1"># Plotting</span>
-<div class="viewcode-block" id="SfincsModel.plot_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">plot_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.plot_forcing">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot model timeseries forcing.</span>
 
 <span class="sd">        For distributed forcing a spatial avarage, minimum or maximum is plotted.</span>
@@ -2865,7 +2953,10 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No forcing found in model.&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.plot_basemap"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.plot_basemap.html#hydromt_sfincs.SfincsModel.plot_basemap">[docs]</a>    <span class="k">def</span> <span class="nf">plot_basemap</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.plot_basemap">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.plot_basemap.html#hydromt_sfincs.SfincsModel.plot_basemap">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_basemap</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn_out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">variable</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span>
@@ -2926,7 +3017,7 @@ document.write(`
         <span class="k">for</span> <span class="n">fname</span><span class="p">,</span> <span class="n">gname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_FORCING_1D</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">fname</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span> <span class="ow">and</span> <span class="n">gname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">sg</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">gname</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forcing</span><span class="p">[</span><span class="n">fname</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">()})</span>
+                    <span class="n">sg</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">gname</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">[</span><span class="n">fname</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">()})</span>
                 <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unable to plot forcing location: &quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">plot_region</span> <span class="ow">and</span> <span class="s2">&quot;region&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">:</span>
@@ -2967,8 +3058,11 @@ document.write(`
 
         <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span></div>
 
+
     <span class="c1"># I/O</span>
-<div class="viewcode-block" id="SfincsModel.read"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read.html#hydromt_sfincs.SfincsModel.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epsg</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.read">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read.html#hydromt_sfincs.SfincsModel.read">[docs]</a>
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epsg</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read the complete model schematization and configuration from file.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">read_config</span><span class="p">(</span><span class="n">epsg</span><span class="o">=</span><span class="n">epsg</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">epsg</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;epsg&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
@@ -2979,7 +3073,10 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">read_forcing</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Model read&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write.html#hydromt_sfincs.SfincsModel.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.write">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write.html#hydromt_sfincs.SfincsModel.write">[docs]</a>
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the complete model schematization and configuration to file.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Writing model data to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="c1"># TODO - add check for subgrid &amp; quadtree &gt; give flags to self.write_grid() and self.write_config()</span>
@@ -2993,7 +3090,10 @@ document.write(`
         <span class="c1"># write data catalog with used data sources</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_data_catalog</span><span class="p">()</span>  <span class="c1"># new in hydromt v0.4.4</span></div>
 
-<div class="viewcode-block" id="SfincsModel.read_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_grid.html#hydromt_sfincs.SfincsModel.read_grid">[docs]</a>    <span class="k">def</span> <span class="nf">read_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="SfincsModel.read_grid">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_grid.html#hydromt_sfincs.SfincsModel.read_grid">[docs]</a>
+    <span class="k">def</span> <span class="nf">read_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS binary grid files and save to `grid` attribute.</span>
 <span class="sd">        Filenames are taken from the `config` attribute (i.e. input file).</span>
 
@@ -3049,7 +3149,10 @@ document.write(`
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
                 <span class="n">ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_grid.html#hydromt_sfincs.SfincsModel.write_grid">[docs]</a>    <span class="k">def</span> <span class="nf">write_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.write_grid">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_grid.html#hydromt_sfincs.SfincsModel.write_grid">[docs]</a>
+    <span class="k">def</span> <span class="nf">write_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SFINCS grid to binary files including map index file.</span>
 <span class="sd">        Filenames are taken from the `config` attribute (i.e. input file).</span>
 
@@ -3096,7 +3199,10 @@ document.write(`
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span><span class="s2">&quot;grid&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.read_subgrid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_subgrid.html#hydromt_sfincs.SfincsModel.read_subgrid">[docs]</a>    <span class="k">def</span> <span class="nf">read_subgrid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.read_subgrid">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_subgrid.html#hydromt_sfincs.SfincsModel.read_subgrid">[docs]</a>
+    <span class="k">def</span> <span class="nf">read_subgrid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS subgrid file and add to `subgrid` attribute.</span>
 <span class="sd">        Filename is taken from the `config` attribute (i.e. input file).&quot;&quot;&quot;</span>
 
@@ -3113,7 +3219,10 @@ document.write(`
                 <span class="n">dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">coords</span>
             <span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write_subgrid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_subgrid.html#hydromt_sfincs.SfincsModel.write_subgrid">[docs]</a>    <span class="k">def</span> <span class="nf">write_subgrid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.write_subgrid">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_subgrid.html#hydromt_sfincs.SfincsModel.write_subgrid">[docs]</a>
+    <span class="k">def</span> <span class="nf">write_subgrid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SFINCS subgrid file.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_assert_write_mode</span>
 
@@ -3123,7 +3232,10 @@ document.write(`
             <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sbgfile&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">subgrid</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.read_geoms"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_geoms.html#hydromt_sfincs.SfincsModel.read_geoms">[docs]</a>    <span class="k">def</span> <span class="nf">read_geoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.read_geoms">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_geoms.html#hydromt_sfincs.SfincsModel.read_geoms">[docs]</a>
+    <span class="k">def</span> <span class="nf">read_geoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read geometry files and save to `geoms` attribute.</span>
 <span class="sd">        Known geometry files mentioned in the sfincs.inp configuration file are read,</span>
 <span class="sd">        including: bnd/src/obs xy(n) files, thd/weir structure files and drn drainage structure files.</span>
@@ -3160,7 +3272,10 @@ document.write(`
             <span class="n">gdf</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">open_vector</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_geoms</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write_geoms"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_geoms.html#hydromt_sfincs.SfincsModel.write_geoms">[docs]</a>    <span class="k">def</span> <span class="nf">write_geoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.write_geoms">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_geoms.html#hydromt_sfincs.SfincsModel.write_geoms">[docs]</a>
+    <span class="k">def</span> <span class="nf">write_geoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write geoms to bnd/src/obs xy files and thd/weir structure files.</span>
 <span class="sd">        Filenames are based on the `config` attribute.</span>
 
@@ -3199,7 +3314,10 @@ document.write(`
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;geoms&quot;</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="SfincsModel.read_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_forcing.html#hydromt_sfincs.SfincsModel.read_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">read_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.read_forcing">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_forcing.html#hydromt_sfincs.SfincsModel.read_forcing">[docs]</a>
+    <span class="k">def</span> <span class="nf">read_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read forcing files and save to `forcing` attribute.</span>
 <span class="sd">        Known forcing files mentioned in the sfincs.inp configuration file are read,</span>
 <span class="sd">        including: bzs/dis/precip ascii files and the netampr netcdf file.</span>
@@ -3291,7 +3409,10 @@ document.write(`
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No forcing variables found in </span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write_forcing"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_forcing.html#hydromt_sfincs.SfincsModel.write_forcing">[docs]</a>    <span class="k">def</span> <span class="nf">write_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.write_forcing">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_forcing.html#hydromt_sfincs.SfincsModel.write_forcing">[docs]</a>
+    <span class="k">def</span> <span class="nf">write_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write forcing to ascii or netcdf (netampr) files.</span>
 <span class="sd">        Filenames are based on the `config` attribute.</span>
 
@@ -3387,7 +3508,10 @@ document.write(`
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">ds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.read_states"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_states.html#hydromt_sfincs.SfincsModel.read_states">[docs]</a>    <span class="k">def</span> <span class="nf">read_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.read_states">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_states.html#hydromt_sfincs.SfincsModel.read_states">[docs]</a>
+    <span class="k">def</span> <span class="nf">read_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read waterlevel state (zsini) from binary file and save to `states` attribute.</span>
 <span class="sd">        The inifile if mentioned in the sfincs.inp configuration file is read.</span>
 
@@ -3395,12 +3519,17 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_assert_read_mode</span>
 
         <span class="c1"># read index file</span>
-        <span class="n">ind_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;indexfile&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">&quot;sfincs.ind&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">ind_fn</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.ind path </span><span class="si">{</span><span class="n">ind_fn</span><span class="si">}</span><span class="s2"> does not exist&quot;</span><span class="p">)</span>
-
+        <span class="c1"># TODO make reggrid a property where we trigger the initialization of reggrid</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_grid_from_config</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">read_ind</span><span class="p">(</span><span class="n">ind_fn</span><span class="o">=</span><span class="n">ind_fn</span><span class="p">)</span>
+            <span class="n">ind_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;indexfile&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">&quot;sfincs.ind&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;msk&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">:</span>  <span class="c1"># triggers reading grid if empty and in read mode</span>
+                <span class="n">ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">ind</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">isfile</span><span class="p">(</span><span class="n">ind_fn</span><span class="p">):</span>
+                <span class="n">ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">read_ind</span><span class="p">(</span><span class="n">ind_fn</span><span class="o">=</span><span class="n">ind_fn</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;indexfile </span><span class="si">{</span><span class="n">ind_fn</span><span class="si">}</span><span class="s2"> does not exist&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="s2">&quot;inifile&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
                 <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;inifile&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
@@ -3414,7 +3543,10 @@ document.write(`
                     <span class="n">zsini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_states</span><span class="p">(</span><span class="n">zsini</span><span class="p">,</span> <span class="s2">&quot;zsini&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write_states"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_states.html#hydromt_sfincs.SfincsModel.write_states">[docs]</a>    <span class="k">def</span> <span class="nf">write_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.write_states">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_states.html#hydromt_sfincs.SfincsModel.write_states">[docs]</a>
+    <span class="k">def</span> <span class="nf">write_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write waterlevel state (zsini) to binary map file.</span>
 <span class="sd">        The filenames is based on the `config` attribute.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -3438,8 +3570,8 @@ document.write(`
             <span class="n">ind_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;indexfile&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">write_ind</span><span class="p">(</span><span class="n">ind_fn</span><span class="o">=</span><span class="n">ind_fn</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;inifile&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;inifile&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;inifile&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;inifile&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;inifile&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -3456,7 +3588,10 @@ document.write(`
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span><span class="s2">&quot;states&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.read_results"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_results.html#hydromt_sfincs.SfincsModel.read_results">[docs]</a>    <span class="k">def</span> <span class="nf">read_results</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SfincsModel.read_results">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_results.html#hydromt_sfincs.SfincsModel.read_results">[docs]</a>
+    <span class="k">def</span> <span class="nf">read_results</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">chunksize</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
         <span class="n">drop</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincsgrid&quot;</span><span class="p">],</span>
@@ -3500,9 +3635,10 @@ document.write(`
                 <span class="n">fn_his</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span>
             <span class="p">)</span>
             <span class="c1"># drop double vars (map files has priority)</span>
-            <span class="n">drop_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ds_his</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span> <span class="ow">or</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">drop</span><span class="p">]</span>
+            <span class="n">drop_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ds_his</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="ow">or</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">drop</span><span class="p">]</span>
             <span class="n">ds_his</span> <span class="o">=</span> <span class="n">ds_his</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="n">drop_vars</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">ds_his</span><span class="p">,</span> <span class="n">split_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">write_raster</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -3640,7 +3776,9 @@ document.write(`
 
     <span class="c1">## model configuration</span>
 
-<div class="viewcode-block" id="SfincsModel.read_config"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_config.html#hydromt_sfincs.SfincsModel.read_config">[docs]</a>    <span class="k">def</span> <span class="nf">read_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">epsg</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="SfincsModel.read_config">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_config.html#hydromt_sfincs.SfincsModel.read_config">[docs]</a>
+    <span class="k">def</span> <span class="nf">read_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">epsg</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse config from SFINCS input file.</span>
 <span class="sd">        If in write-only mode the config is initialized with default settings</span>
 <span class="sd">        unless a path to a template config file is provided.</span>
@@ -3670,7 +3808,10 @@ document.write(`
         <span class="c1"># update grid properties based on sfincs.inp</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_grid_from_config</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="SfincsModel.write_config"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_config.html#hydromt_sfincs.SfincsModel.write_config">[docs]</a>    <span class="k">def</span> <span class="nf">write_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs.inp&quot;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.write_config">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_config.html#hydromt_sfincs.SfincsModel.write_config">[docs]</a>
+    <span class="k">def</span> <span class="nf">write_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs.inp&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write config to &lt;root/config_fn&gt;&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_assert_write_mode</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">isabs</span><span class="p">(</span><span class="n">config_fn</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">:</span>
@@ -3679,7 +3820,10 @@ document.write(`
         <span class="n">inp</span> <span class="o">=</span> <span class="n">SfincsInput</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
         <span class="n">inp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">inp_fn</span><span class="o">=</span><span class="n">abspath</span><span class="p">(</span><span class="n">config_fn</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="SfincsModel.update_spatial_attrs"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.update_spatial_attrs.html#hydromt_sfincs.SfincsModel.update_spatial_attrs">[docs]</a>    <span class="k">def</span> <span class="nf">update_spatial_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.update_spatial_attrs">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.update_spatial_attrs.html#hydromt_sfincs.SfincsModel.update_spatial_attrs">[docs]</a>
+    <span class="k">def</span> <span class="nf">update_spatial_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update geospatial `config` (sfincs.inp) attributes based on grid&quot;&quot;&quot;</span>
         <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">res</span>
         <span class="c1"># TODO check self.bounds with rotation!! origin not necessary equal to total_bounds</span>
@@ -3693,7 +3837,10 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;x0&quot;</span><span class="p">,</span> <span class="n">west</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;y0&quot;</span><span class="p">,</span> <span class="n">south</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SfincsModel.update_grid_from_config"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.update_grid_from_config.html#hydromt_sfincs.SfincsModel.update_grid_from_config">[docs]</a>    <span class="k">def</span> <span class="nf">update_grid_from_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SfincsModel.update_grid_from_config">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.update_grid_from_config.html#hydromt_sfincs.SfincsModel.update_grid_from_config">[docs]</a>
+    <span class="k">def</span> <span class="nf">update_grid_from_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update grid properties based on `config` (sfincs.inp) attributes&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">&quot;quadtree&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;qtrfile&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;regular&quot;</span>
@@ -3711,13 +3858,17 @@ document.write(`
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ow">not</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Quadtree grid not implemented yet&quot;</span><span class="p">)</span></div>
+
             <span class="c1"># self.quadtree = QuadtreeGrid()</span>
 
-<div class="viewcode-block" id="SfincsModel.get_model_time"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.get_model_time.html#hydromt_sfincs.SfincsModel.get_model_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_model_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsModel.get_model_time">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.get_model_time.html#hydromt_sfincs.SfincsModel.get_model_time">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_model_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return (tstart, tstop) tuple with parsed model start and end time&quot;&quot;&quot;</span>
         <span class="n">tstart</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tstart&quot;</span><span class="p">])</span>
         <span class="n">tstop</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tstop&quot;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span></div>
+
 
     <span class="c1">## helper method</span>
     <span class="k">def</span> <span class="nf">_parse_datasets_dep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets_dep</span><span class="p">,</span> <span class="n">res</span><span class="p">):</span>
@@ -3937,6 +4088,7 @@ document.write(`
             <span class="n">datasets_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dd</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">datasets_out</span></div>
+
 </pre></div>
 
                 </article>
@@ -3989,7 +4141,7 @@ document.write(`
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.3.
     <br/>
   </p>
 </div>

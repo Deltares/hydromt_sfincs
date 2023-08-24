@@ -35,9 +35,9 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=ccbe24c1"></script>
+    <script src="../../_static/documentation_options.js?v=8a448e45"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/design-tabs.js?v=36754332"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/utils';</script>
@@ -460,7 +460,9 @@ document.write(`
 <span class="c1">## BINARY MAPS: sfincs.ind, sfincs.msk, sfincs.dep etc. ##</span>
 
 
-<div class="viewcode-block" id="write_binary_map_index"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_binary_map_index.html#hydromt_sfincs.utils.write_binary_map_index">[docs]</a><span class="k">def</span> <span class="nf">write_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">msk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="write_binary_map_index">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_binary_map_index.html#hydromt_sfincs.utils.write_binary_map_index">[docs]</a>
+<span class="k">def</span> <span class="nf">write_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">msk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Write flat index of binary map file.</span>
 
 <span class="sd">    NOTE: The array should be in S-&gt;N and W-&gt;E orientation, with origin in the SW corner.</span>
@@ -478,7 +480,10 @@ document.write(`
     <span class="n">indices_</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="read_binary_map_index"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_binary_map_index.html#hydromt_sfincs.utils.read_binary_map_index">[docs]</a><span class="k">def</span> <span class="nf">read_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+
+<div class="viewcode-block" id="read_binary_map_index">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_binary_map_index.html#hydromt_sfincs.utils.read_binary_map_index">[docs]</a>
+<span class="k">def</span> <span class="nf">read_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read binary map index file.</span>
 
 <span class="sd">    Parameters</span>
@@ -497,7 +502,10 @@ document.write(`
     <span class="k">return</span> <span class="n">ind</span></div>
 
 
-<div class="viewcode-block" id="write_binary_map"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_binary_map.html#hydromt_sfincs.utils.write_binary_map">[docs]</a><span class="k">def</span> <span class="nf">write_binary_map</span><span class="p">(</span>
+
+<div class="viewcode-block" id="write_binary_map">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_binary_map.html#hydromt_sfincs.utils.write_binary_map">[docs]</a>
+<span class="k">def</span> <span class="nf">write_binary_map</span><span class="p">(</span>
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">msk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -522,7 +530,10 @@ document.write(`
     <span class="n">data_out</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="read_binary_map"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_binary_map.html#hydromt_sfincs.utils.read_binary_map">[docs]</a><span class="k">def</span> <span class="nf">read_binary_map</span><span class="p">(</span>
+
+<div class="viewcode-block" id="read_binary_map">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_binary_map.html#hydromt_sfincs.utils.read_binary_map">[docs]</a>
+<span class="k">def</span> <span class="nf">read_binary_map</span><span class="p">(</span>
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">ind</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
@@ -557,10 +568,13 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span></div>
 
 
+
 <span class="c1">## ASCII maps: sfincs.restart ##</span>
 
 
-<div class="viewcode-block" id="read_ascii_map"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_ascii_map.html#hydromt_sfincs.utils.read_ascii_map">[docs]</a><span class="k">def</span> <span class="nf">read_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="read_ascii_map">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_ascii_map.html#hydromt_sfincs.utils.read_ascii_map">[docs]</a>
+<span class="k">def</span> <span class="nf">read_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read ascii map</span>
 
 <span class="sd">    Parameters</span>
@@ -577,7 +591,10 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="write_ascii_map"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_ascii_map.html#hydromt_sfincs.utils.write_ascii_map">[docs]</a><span class="k">def</span> <span class="nf">write_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%8.3f</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="write_ascii_map">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_ascii_map.html#hydromt_sfincs.utils.write_ascii_map">[docs]</a>
+<span class="k">def</span> <span class="nf">write_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%8.3f</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Write ascii map</span>
 
 <span class="sd">    NOTE: The array should be in S-&gt;N and W-&gt;E orientation, with origin in the SW corner.</span>
@@ -595,11 +612,14 @@ document.write(`
         <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span></div>
 
 
+
 <span class="c1">## XY files: bnd / src ##</span>
 <span class="c1"># write_xy defined in hydromt.io</span>
 
 
-<div class="viewcode-block" id="read_xy"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_xy.html#hydromt_sfincs.utils.read_xy">[docs]</a><span class="k">def</span> <span class="nf">read_xy</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+<div class="viewcode-block" id="read_xy">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_xy.html#hydromt_sfincs.utils.read_xy">[docs]</a>
+<span class="k">def</span> <span class="nf">read_xy</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read sfincs xy files and parse to GeoDataFrame.</span>
 
 <span class="sd">    Parameters</span>
@@ -619,7 +639,10 @@ document.write(`
     <span class="k">return</span> <span class="n">gdf</span></div>
 
 
-<div class="viewcode-block" id="read_xyn"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_xyn.html#hydromt_sfincs.utils.read_xyn">[docs]</a><span class="k">def</span> <span class="nf">read_xyn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">crs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="read_xyn">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_xyn.html#hydromt_sfincs.utils.read_xyn">[docs]</a>
+<span class="k">def</span> <span class="nf">read_xyn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">crs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">delim_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
         <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">}</span>
     <span class="p">)</span>
@@ -634,7 +657,10 @@ document.write(`
     <span class="k">return</span> <span class="n">gdf</span></div>
 
 
-<div class="viewcode-block" id="write_xyn"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_xyn.html#hydromt_sfincs.utils.write_xyn">[docs]</a><span class="k">def</span> <span class="nf">write_xyn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs.obs&quot;</span><span class="p">,</span> <span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">crs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="write_xyn">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_xyn.html#hydromt_sfincs.utils.write_xyn">[docs]</a>
+<span class="k">def</span> <span class="nf">write_xyn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs.obs&quot;</span><span class="p">,</span> <span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">crs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">iterfeatures</span><span class="p">():</span>
             <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">point</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;coordinates&quot;</span><span class="p">]</span>
@@ -649,10 +675,13 @@ document.write(`
             <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div>
 
 
+
 <span class="c1">## ASCII TIMESERIES: bzs / dis / precip ##</span>
 
 
-<div class="viewcode-block" id="parse_datetime"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.parse_datetime.html#hydromt_sfincs.utils.parse_datetime">[docs]</a><span class="k">def</span> <span class="nf">parse_datetime</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<div class="viewcode-block" id="parse_datetime">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.parse_datetime.html#hydromt_sfincs.utils.parse_datetime">[docs]</a>
+<span class="k">def</span> <span class="nf">parse_datetime</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Checks and/or parses datetime from a string, default sfincs datetime string format&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="nb">format</span><span class="p">)</span>
@@ -661,7 +690,10 @@ document.write(`
     <span class="k">return</span> <span class="n">dt</span></div>
 
 
-<div class="viewcode-block" id="read_timeseries"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_timeseries.html#hydromt_sfincs.utils.read_timeseries">[docs]</a><span class="k">def</span> <span class="nf">read_timeseries</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">tref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+
+<div class="viewcode-block" id="read_timeseries">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_timeseries.html#hydromt_sfincs.utils.read_timeseries">[docs]</a>
+<span class="k">def</span> <span class="nf">read_timeseries</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">tref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read ascii timeseries files such as sfincs.bzs, sfincs.dis and sfincs.precip.</span>
 <span class="sd">    The first column (time index) is parsed to datetime format assumming it represents</span>
 <span class="sd">    seconds from `tref`.</span>
@@ -687,7 +719,10 @@ document.write(`
     <span class="k">return</span> <span class="n">df</span></div>
 
 
-<div class="viewcode-block" id="write_timeseries"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_timeseries.html#hydromt_sfincs.utils.write_timeseries">[docs]</a><span class="k">def</span> <span class="nf">write_timeseries</span><span class="p">(</span>
+
+<div class="viewcode-block" id="write_timeseries">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_timeseries.html#hydromt_sfincs.utils.write_timeseries">[docs]</a>
+<span class="k">def</span> <span class="nf">write_timeseries</span><span class="p">(</span>
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span>
     <span class="n">tref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">],</span>
@@ -726,10 +761,13 @@ document.write(`
         <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt_out</span><span class="p">)</span></div>
 
 
+
 <span class="c1">## MASK</span>
 
 
-<div class="viewcode-block" id="get_bounds_vector"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.get_bounds_vector.html#hydromt_sfincs.utils.get_bounds_vector">[docs]</a><span class="k">def</span> <span class="nf">get_bounds_vector</span><span class="p">(</span><span class="n">da_msk</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+<div class="viewcode-block" id="get_bounds_vector">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.get_bounds_vector.html#hydromt_sfincs.utils.get_bounds_vector">[docs]</a>
+<span class="k">def</span> <span class="nf">get_bounds_vector</span><span class="p">(</span><span class="n">da_msk</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get bounds of vectorized mask as GeoDataFrame.</span>
 
 <span class="sd">    Parameters</span>
@@ -756,7 +794,10 @@ document.write(`
     <span class="k">return</span> <span class="n">gdf_msk</span></div>
 
 
-<div class="viewcode-block" id="mask2gdf"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.mask2gdf.html#hydromt_sfincs.utils.mask2gdf">[docs]</a><span class="k">def</span> <span class="nf">mask2gdf</span><span class="p">(</span>
+
+<div class="viewcode-block" id="mask2gdf">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.mask2gdf.html#hydromt_sfincs.utils.mask2gdf">[docs]</a>
+<span class="k">def</span> <span class="nf">mask2gdf</span><span class="p">(</span>
     <span class="n">da_mask</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">option</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
@@ -799,10 +840,13 @@ document.write(`
         <span class="k">return</span> <span class="kc">None</span></div>
 
 
+
 <span class="c1">## STRUCTURES: thd / weir ##</span>
 
 
-<div class="viewcode-block" id="gdf2linestring"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.gdf2linestring.html#hydromt_sfincs.utils.gdf2linestring">[docs]</a><span class="k">def</span> <span class="nf">gdf2linestring</span><span class="p">(</span><span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+<div class="viewcode-block" id="gdf2linestring">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.gdf2linestring.html#hydromt_sfincs.utils.gdf2linestring">[docs]</a>
+<span class="k">def</span> <span class="nf">gdf2linestring</span><span class="p">(</span><span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert GeoDataFrame[LineString] to list of structure dictionaries</span>
 
 <span class="sd">    The x,y are taken from the geometry.</span>
@@ -838,7 +882,10 @@ document.write(`
     <span class="k">return</span> <span class="n">feats</span></div>
 
 
-<div class="viewcode-block" id="gdf2polygon"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.gdf2polygon.html#hydromt_sfincs.utils.gdf2polygon">[docs]</a><span class="k">def</span> <span class="nf">gdf2polygon</span><span class="p">(</span><span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="gdf2polygon">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.gdf2polygon.html#hydromt_sfincs.utils.gdf2polygon">[docs]</a>
+<span class="k">def</span> <span class="nf">gdf2polygon</span><span class="p">(</span><span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert GeoDataFrame[Polygon] to list of structure dictionaries</span>
 
 <span class="sd">    The x,y are taken from the geometry.</span>
@@ -868,7 +915,10 @@ document.write(`
     <span class="k">return</span> <span class="n">feats</span></div>
 
 
-<div class="viewcode-block" id="linestring2gdf"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.linestring2gdf.html#hydromt_sfincs.utils.linestring2gdf">[docs]</a><span class="k">def</span> <span class="nf">linestring2gdf</span><span class="p">(</span><span class="n">feats</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+
+<div class="viewcode-block" id="linestring2gdf">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.linestring2gdf.html#hydromt_sfincs.utils.linestring2gdf">[docs]</a>
+<span class="k">def</span> <span class="nf">linestring2gdf</span><span class="p">(</span><span class="n">feats</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert list of structure dictionaries to GeoDataFrame[LineString]</span>
 
 <span class="sd">    Parameters</span>
@@ -897,7 +947,10 @@ document.write(`
     <span class="k">return</span> <span class="n">gdf</span></div>
 
 
-<div class="viewcode-block" id="polygon2gdf"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.polygon2gdf.html#hydromt_sfincs.utils.polygon2gdf">[docs]</a><span class="k">def</span> <span class="nf">polygon2gdf</span><span class="p">(</span>
+
+<div class="viewcode-block" id="polygon2gdf">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.polygon2gdf.html#hydromt_sfincs.utils.polygon2gdf">[docs]</a>
+<span class="k">def</span> <span class="nf">polygon2gdf</span><span class="p">(</span>
     <span class="n">feats</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span>
     <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -931,7 +984,10 @@ document.write(`
     <span class="k">return</span> <span class="n">gdf</span></div>
 
 
-<div class="viewcode-block" id="write_geoms"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_geoms.html#hydromt_sfincs.utils.write_geoms">[docs]</a><span class="k">def</span> <span class="nf">write_geoms</span><span class="p">(</span>
+
+<div class="viewcode-block" id="write_geoms">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_geoms.html#hydromt_sfincs.utils.write_geoms">[docs]</a>
+<span class="k">def</span> <span class="nf">write_geoms</span><span class="p">(</span>
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">feats</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">stype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;thd&quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Write list of structure dictionaries to file</span>
@@ -993,7 +1049,10 @@ document.write(`
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span></div>
 
 
-<div class="viewcode-block" id="read_geoms"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_geoms.html#hydromt_sfincs.utils.read_geoms">[docs]</a><span class="k">def</span> <span class="nf">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="read_geoms">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_geoms.html#hydromt_sfincs.utils.read_geoms">[docs]</a>
+<span class="k">def</span> <span class="nf">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read structure files to list of dictionaries.</span>
 
 <span class="sd">    Parameters</span>
@@ -1028,7 +1087,10 @@ document.write(`
     <span class="k">return</span> <span class="n">feats</span></div>
 
 
-<div class="viewcode-block" id="write_drn"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_drn.html#hydromt_sfincs.utils.write_drn">[docs]</a><span class="k">def</span> <span class="nf">write_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">gdf_drainage</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.4f</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="write_drn">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.write_drn.html#hydromt_sfincs.utils.write_drn">[docs]</a>
+<span class="k">def</span> <span class="nf">write_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">gdf_drainage</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.4f</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Write structure files from list of dictionaries.</span>
 
 <span class="sd">    Parameters</span>
@@ -1071,7 +1133,10 @@ document.write(`
     <span class="n">gdf</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">float_format</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="read_drn"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_drn.html#hydromt_sfincs.utils.read_drn">[docs]</a><span class="k">def</span> <span class="nf">read_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+
+<div class="viewcode-block" id="read_drn">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_drn.html#hydromt_sfincs.utils.read_drn">[docs]</a>
+<span class="k">def</span> <span class="nf">read_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read drainage structure files to geodataframe.</span>
 
 <span class="sd">    Parameters</span>
@@ -1120,10 +1185,13 @@ document.write(`
     <span class="k">return</span> <span class="n">gdf</span></div>
 
 
+
 <span class="c1">## OUTPUT: sfincs_map.nc, sfincs_his.nc ##</span>
 
 
-<div class="viewcode-block" id="read_sfincs_map_results"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_sfincs_map_results.html#hydromt_sfincs.utils.read_sfincs_map_results">[docs]</a><span class="k">def</span> <span class="nf">read_sfincs_map_results</span><span class="p">(</span>
+<div class="viewcode-block" id="read_sfincs_map_results">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_sfincs_map_results.html#hydromt_sfincs.utils.read_sfincs_map_results">[docs]</a>
+<span class="k">def</span> <span class="nf">read_sfincs_map_results</span><span class="p">(</span>
     <span class="n">fn_map</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">ds_like</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
     <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
@@ -1196,7 +1264,10 @@ document.write(`
     <span class="k">return</span> <span class="n">ds_face</span><span class="p">,</span> <span class="n">ds_edge</span></div>
 
 
-<div class="viewcode-block" id="read_sfincs_his_results"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_sfincs_his_results.html#hydromt_sfincs.utils.read_sfincs_his_results">[docs]</a><span class="k">def</span> <span class="nf">read_sfincs_his_results</span><span class="p">(</span>
+
+<div class="viewcode-block" id="read_sfincs_his_results">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.read_sfincs_his_results.html#hydromt_sfincs.utils.read_sfincs_his_results">[docs]</a>
+<span class="k">def</span> <span class="nf">read_sfincs_his_results</span><span class="p">(</span>
     <span class="n">fn_his</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
@@ -1234,7 +1305,10 @@ document.write(`
     <span class="k">return</span> <span class="n">ds_his</span></div>
 
 
-<div class="viewcode-block" id="downscale_floodmap"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.downscale_floodmap.html#hydromt_sfincs.utils.downscale_floodmap">[docs]</a><span class="k">def</span> <span class="nf">downscale_floodmap</span><span class="p">(</span>
+
+<div class="viewcode-block" id="downscale_floodmap">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.downscale_floodmap.html#hydromt_sfincs.utils.downscale_floodmap">[docs]</a>
+<span class="k">def</span> <span class="nf">downscale_floodmap</span><span class="p">(</span>
     <span class="n">zsmax</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">dep</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
@@ -1308,7 +1382,10 @@ document.write(`
     <span class="k">return</span> <span class="n">hmax</span></div>
 
 
-<div class="viewcode-block" id="rotated_grid"><a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.rotated_grid.html#hydromt_sfincs.utils.rotated_grid">[docs]</a><span class="k">def</span> <span class="nf">rotated_grid</span><span class="p">(</span>
+
+<div class="viewcode-block" id="rotated_grid">
+<a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.rotated_grid.html#hydromt_sfincs.utils.rotated_grid">[docs]</a>
+<span class="k">def</span> <span class="nf">rotated_grid</span><span class="p">(</span>
     <span class="n">pol</span><span class="p">:</span> <span class="n">Polygon</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dec_origin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dec_rotation</span><span class="o">=</span><span class="mi">3</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the origin (x0, y0), shape (mmax, nmax) and rotation</span>
@@ -1357,6 +1434,7 @@ document.write(`
         <span class="n">nmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">axis2</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">mmax</span><span class="p">,</span> <span class="n">nmax</span><span class="p">,</span> <span class="n">rot</span></div>
+
 </pre></div>
 
                 </article>
@@ -1409,7 +1487,7 @@ document.write(`
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.3.
     <br/>
   </p>
 </div>

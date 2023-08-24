@@ -37,9 +37,9 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=ccbe24c1"></script>
+    <script src="../_static/documentation_options.js?v=8a448e45"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=36754332"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
@@ -453,7 +453,7 @@ document.write(`
     <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/build_from_script.ipynb" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
 </div></div>
 <section id="Build-a-model-from-Python">
-<h1>Build a model from Python<a class="headerlink" href="#Build-a-model-from-Python" title="Permalink to this heading">#</a></h1>
+<h1>Build a model from Python<a class="headerlink" href="#Build-a-model-from-Python" title="Link to this heading">#</a></h1>
 <p>In this example a simple <strong>SFINCS</strong> compound flood model will be made, using the underlying Python functions of <strong>HydroMT-SFINCS</strong> to build a model.</p>
 <p>The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
 <div class="nbinput nblast docutils container">
@@ -496,7 +496,7 @@ document.write(`
 </li><li><p>Save all files</p>
 </li></ol><p>Let’s get started!</p>
 <section id="1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:">
-<h2>1. Initialize SfincsModel class, set data library and output folder:<a class="headerlink" href="#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:" title="Permalink to this heading">#</a></h2>
+<h2>1. Initialize SfincsModel class, set data library and output folder:<a class="headerlink" href="#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:" title="Link to this heading">#</a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -509,7 +509,7 @@ document.write(`
 </div>
 </section>
 <section id="2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:">
-<h2>2. Specify characteristics of the wanted grid and generate grid:<a class="headerlink" href="#2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:" title="Permalink to this heading">#</a></h2>
+<h2>2. Specify characteristics of the wanted grid and generate grid:<a class="headerlink" href="#2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:" title="Link to this heading">#</a></h2>
 <p>For more info about how to define a grid, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#grid-characteristics">click here</a>.</p>
 <p><em>Hint: if you only have a bounding box or geometry, you can also use ``SfincsModel.setup_grid_from_region``.</em></p>
 <div class="nbinput docutils container">
@@ -569,7 +569,7 @@ document.write(`
 </div>
 </section>
 <section id="3.-Load-in-wanted-elevation-datasets:">
-<h2>3. Load in wanted elevation datasets:<a class="headerlink" href="#3.-Load-in-wanted-elevation-datasets:" title="Permalink to this heading">#</a></h2>
+<h2>3. Load in wanted elevation datasets:<a class="headerlink" href="#3.-Load-in-wanted-elevation-datasets:" title="Link to this heading">#</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
@@ -605,7 +605,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 </div>
 </section>
 <section id="4.-Make-mask-of-active-and-inactive-cells:">
-<h2>4. Make mask of active and inactive cells:<a class="headerlink" href="#4.-Make-mask-of-active-and-inactive-cells:" title="Permalink to this heading">#</a></h2>
+<h2>4. Make mask of active and inactive cells:<a class="headerlink" href="#4.-Make-mask-of-active-and-inactive-cells:" title="Link to this heading">#</a></h2>
 <p>Here we generate the mask of active (msk=1) and inactive cells (msk=0), determining what cells on your grid should be used. For more info about the msk-file, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#mask-file">click here</a>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -638,7 +638,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 that every time you start with an ampy mask while defining your msk cells, if <code class="docutils literal notranslate"><span class="pre">reset_bounds=False</span></code> (default) you continue on the prevous time you ran that function</p>
 </section>
 <section id="5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">
-<h2>5. Update mask with water level and outflow boundary cells - including use of polygons:<a class="headerlink" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:" title="Permalink to this heading">#</a></h2>
+<h2>5. Update mask with water level and outflow boundary cells - including use of polygons:<a class="headerlink" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:" title="Link to this heading">#</a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
@@ -676,7 +676,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;GeoAxesSubplot:title={&#39;center&#39;:&#39;SFINCS msk map&#39;}, xlabel=&#39;x [m] - WGS 84 / UTM zone 33N&#39;, ylabel=&#39;y [m]&#39;&gt;
+&lt;GeoAxes: title={&#39;center&#39;: &#39;SFINCS msk map&#39;}, xlabel=&#39;x [m] - WGS 84 / UTM zone 33N&#39;, ylabel=&#39;y [m]&#39;&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -689,7 +689,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 <p>NOTE: - As you can see now, also msk=2 values (red line) have been added along the coastal boundary - As you can see now, also msk=3 values (purple line) have been added along the lateral inland boundaries within the gdf_include shapefile - <code class="docutils literal notranslate"><span class="pre">reset_bounds=True</span></code> means that you start without initial boundary cells (of the specified type), if <code class="docutils literal notranslate"><span class="pre">reset_bounds=False</span></code> (default) you build on the existing boundary cells (if available)</p>
 </section>
 <section id="6.-Add-river-inflow-points:">
-<h2>6. Add river inflow points:<a class="headerlink" href="#6.-Add-river-inflow-points:" title="Permalink to this heading">#</a></h2>
+<h2>6. Add river inflow points:<a class="headerlink" href="#6.-Add-river-inflow-points:" title="Link to this heading">#</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
@@ -744,7 +744,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 </div>
 </section>
 <section id="7.-Add-spatially-varying-roughness-data:">
-<h2>7. Add spatially varying roughness data:<a class="headerlink" href="#7.-Add-spatially-varying-roughness-data:" title="Permalink to this heading">#</a></h2>
+<h2>7. Add spatially varying roughness data:<a class="headerlink" href="#7.-Add-spatially-varying-roughness-data:" title="Link to this heading">#</a></h2>
 <p>To ensure a correct lower roughness of the rivers in the domain, we ‘burn in’ the river with a lower manning roughness value. There is two different ways to do this:</p>
 <ol><li><p>Rasterize the manning value of gdf to the model grid and use this as a manning raster in datasets_rgh</p>
 </li><li><p>Provide a manning roughness for datasets_riv while burning in rivers into the subgrid</p>
@@ -797,7 +797,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 </div>
 </section>
 <section id="8.-Make-subgrid-derived-tables:">
-<h2>8. Make subgrid derived tables:<a class="headerlink" href="#8.-Make-subgrid-derived-tables:" title="Permalink to this heading">#</a></h2>
+<h2>8. Make subgrid derived tables:<a class="headerlink" href="#8.-Make-subgrid-derived-tables:" title="Link to this heading">#</a></h2>
 <p>Subgrid derived tables are used to better capture the elevation and roughness of your domain, to either improve your results, or to allow you to run on a courser grid resolution (means faster simulation). For more info about subgrid tables, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/developments.html#recent-advancements-in-accuracy-subgrid-mode">click here</a>.</p>
 <p>You as user can specify multiple settings about how the subgrid derived tables should be made.</p>
 <p>Every single grid cell of the flux grid of the size inp.dx by inp.dy is defined into subgrid pixels (default nr_subgrid_pixels = 20). For every subgrid pixel the topobathy data is loaded, ideally this consists of high-resolution DEM datasets that you specify as user.</p>
@@ -859,7 +859,7 @@ The nodata value None is not in the reclass table.None will be used for the para
 </div>
 </section>
 <section id="9.-Add-spatially-varying-infiltration-data:">
-<h2>9. Add spatially varying infiltration data:<a class="headerlink" href="#9.-Add-spatially-varying-infiltration-data:" title="Permalink to this heading">#</a></h2>
+<h2>9. Add spatially varying infiltration data:<a class="headerlink" href="#9.-Add-spatially-varying-infiltration-data:" title="Link to this heading">#</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
@@ -888,7 +888,7 @@ KeysView(Data variables:
 <p>By now we have made all basic SFINCS spatial layers to make the mskfile, infiltrationfile and subgridfiles, now we’re going to add some forcing…</p>
 </section>
 <section id="10.-Add-water-level-time-series-as-forcing:">
-<h2>10. Add water level time-series as forcing:<a class="headerlink" href="#10.-Add-water-level-time-series-as-forcing:" title="Permalink to this heading">#</a></h2>
+<h2>10. Add water level time-series as forcing:<a class="headerlink" href="#10.-Add-water-level-time-series-as-forcing:" title="Link to this heading">#</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
@@ -1066,7 +1066,7 @@ dict_keys([&#39;dis&#39;, &#39;bzs&#39;])
 </div>
 </section>
 <section id="11.-Add-an-upstream-discharge-time-series-as-forcing:">
-<h2>11. Add an upstream discharge time-series as forcing:<a class="headerlink" href="#11.-Add-an-upstream-discharge-time-series-as-forcing:" title="Permalink to this heading">#</a></h2>
+<h2>11. Add an upstream discharge time-series as forcing:<a class="headerlink" href="#11.-Add-an-upstream-discharge-time-series-as-forcing:" title="Link to this heading">#</a></h2>
 <p><strong>a. specify discharge input locations: srcfile</strong></p>
 <p>For more info about what the srcfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#discharge-points">click here</a></p>
 <p><strong>b. specify discharge time-series: disfile</strong></p>
@@ -1107,7 +1107,7 @@ dict_keys([&#39;dis&#39;, &#39;bzs&#39;])
 <p>In case you want to add other types of forcing, see the example notebook example_forcing.ipynb for other types. Or read more about this in the <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html">SFINCS manual</a></p>
 </section>
 <section id="12.-Add-spatially-varying-rainfall-data:">
-<h2>12. Add spatially varying rainfall data:<a class="headerlink" href="#12.-Add-spatially-varying-rainfall-data:" title="Permalink to this heading">#</a></h2>
+<h2>12. Add spatially varying rainfall data:<a class="headerlink" href="#12.-Add-spatially-varying-rainfall-data:" title="Link to this heading">#</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
@@ -1147,7 +1147,7 @@ dict_keys([&#39;dis&#39;, &#39;bzs&#39;, &#39;precip_2d&#39;])
 </div>
 </section>
 <section id="13.-Add-weirfile:">
-<h2>13. Add weirfile:<a class="headerlink" href="#13.-Add-weirfile:" title="Permalink to this heading">#</a></h2>
+<h2>13. Add weirfile:<a class="headerlink" href="#13.-Add-weirfile:" title="Link to this heading">#</a></h2>
 <p>In SFINCS, a weirfile is often used to explicity account for line-element features such as dikes, dunes or floodwalls. Read more about structures in the <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_structures.html">SFINCS manual</a></p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
@@ -1177,7 +1177,7 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;])
 </div>
 </section>
 <section id="14.-Add-observation-points:">
-<h2>14. Add observation points:<a class="headerlink" href="#14.-Add-observation-points:" title="Permalink to this heading">#</a></h2>
+<h2>14. Add observation points:<a class="headerlink" href="#14.-Add-observation-points:" title="Link to this heading">#</a></h2>
 <p>For more info about what the obsfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#observation-points">click here</a></p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
@@ -1205,7 +1205,7 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
 </div>
 </section>
 <section id="14.-Add-observation-lines:">
-<h2>14. Add observation lines:<a class="headerlink" href="#14.-Add-observation-lines:" title="Permalink to this heading">#</a></h2>
+<h2>14. Add observation lines:<a class="headerlink" href="#14.-Add-observation-lines:" title="Link to this heading">#</a></h2>
 <p>Observation lines (cross-sections) can be added to monitor discharges through cross-sections. For more info about what the crsfile is, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#cross-sections-for-discharge-output">click here</a></p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
@@ -1232,7 +1232,7 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
 </div>
 </section>
 <section id="15.-Show-model:">
-<h2>15. Show model:<a class="headerlink" href="#15.-Show-model:" title="Permalink to this heading">#</a></h2>
+<h2>15. Show model:<a class="headerlink" href="#15.-Show-model:" title="Link to this heading">#</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
 </pre></div>
@@ -1251,7 +1251,7 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
 </div>
 </section>
 <section id="16.-Save-all-files">
-<h2>16. Save all files<a class="headerlink" href="#16.-Save-all-files" title="Permalink to this heading">#</a></h2>
+<h2>16. Save all files<a class="headerlink" href="#16.-Save-all-files" title="Link to this heading">#</a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
 </pre></div>
@@ -1275,7 +1275,7 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;sfincs.bnd&#39;, &#39;sfincs.bzs&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.inp&#39;, &#39;subgrid&#39;, &#39;sfincs.scs&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.crs&#39;, &#39;sfincs.ind&#39;, &#39;figs&#39;, &#39;sfincs.dis&#39;, &#39;hydromt.log&#39;, &#39;precip_2d.nc&#39;, &#39;sfincs.sbg&#39;, &#39;sfincs.src&#39;, &#39;gis&#39;, &#39;hydromt_data.yml&#39;, &#39;sfincs.weir&#39;]
+[&#39;precip_2d.nc&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.weir&#39;, &#39;sfincs.ind&#39;, &#39;hydromt_data.yml&#39;, &#39;sfincs.crs&#39;, &#39;sfincs.src&#39;, &#39;sfincs.sbg&#39;, &#39;hydromt.log&#39;, &#39;figs&#39;, &#39;sfincs.dis&#39;, &#39;sfincs.scs&#39;, &#39;gis&#39;, &#39;sfincs.bzs&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.bnd&#39;, &#39;sfincs.msk&#39;, &#39;subgrid&#39;]
 </pre></div></div>
 </div>
 <p>Your basemap and forcing figures are saved in the folder ‘figs’, GIS files (tiff &amp; geojson) of your model setup in ‘gis’ and merged elevation and manning roughness on subgrid resolution in ‘subgrid’.</p>
@@ -1390,7 +1390,7 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.3.
     <br/>
   </p>
 </div>

@@ -35,9 +35,9 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=ccbe24c1"></script>
+    <script src="../../../_static/documentation_options.js?v=8a448e45"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/design-tabs.js?v=36754332"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/workflows/tiling';</script>
@@ -419,7 +419,9 @@ document.write(`
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;create_topobathy_tiles&quot;</span><span class="p">,</span> <span class="s2">&quot;downscale_floodmap_webmercator&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="downscale_floodmap_webmercator"><a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.downscale_floodmap_webmercator.html#hydromt_sfincs.workflows.downscale_floodmap_webmercator">[docs]</a><span class="k">def</span> <span class="nf">downscale_floodmap_webmercator</span><span class="p">(</span>
+<div class="viewcode-block" id="downscale_floodmap_webmercator">
+<a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.downscale_floodmap_webmercator.html#hydromt_sfincs.workflows.downscale_floodmap_webmercator">[docs]</a>
+<span class="k">def</span> <span class="nf">downscale_floodmap_webmercator</span><span class="p">(</span>
     <span class="n">zsmax</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
     <span class="n">index_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">topobathy_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -527,7 +529,10 @@ document.write(`
                     <span class="n">elevation2png</span><span class="p">(</span><span class="n">hmax</span><span class="p">,</span> <span class="n">floodmap_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="create_topobathy_tiles"><a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.create_topobathy_tiles.html#hydromt_sfincs.workflows.create_topobathy_tiles">[docs]</a><span class="k">def</span> <span class="nf">create_topobathy_tiles</span><span class="p">(</span>
+
+<div class="viewcode-block" id="create_topobathy_tiles">
+<a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.create_topobathy_tiles.html#hydromt_sfincs.workflows.create_topobathy_tiles">[docs]</a>
+<span class="k">def</span> <span class="nf">create_topobathy_tiles</span><span class="p">(</span>
     <span class="n">root</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">region</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
     <span class="n">datasets_dep</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
@@ -654,6 +659,7 @@ document.write(`
                 <span class="n">elevation2png</span><span class="p">(</span><span class="n">da_dep</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;tif&quot;</span><span class="p">:</span>
                 <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">to_raster</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">deg2num</span><span class="p">(</span><span class="n">lat_deg</span><span class="p">,</span> <span class="n">lon_deg</span><span class="p">,</span> <span class="n">zoom</span><span class="p">):</span>
@@ -838,7 +844,7 @@ document.write(`
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.3.
     <br/>
   </p>
 </div>

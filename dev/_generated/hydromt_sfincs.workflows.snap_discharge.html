@@ -36,9 +36,9 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=ccbe24c1"></script>
+    <script src="../_static/documentation_options.js?v=8a448e45"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=36754332"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.workflows.snap_discharge';</script>
@@ -549,10 +549,10 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <section id="hydromt-sfincs-workflows-snap-discharge">
-<h1>hydromt_sfincs.workflows.snap_discharge<a class="headerlink" href="#hydromt-sfincs-workflows-snap-discharge" title="Permalink to this heading">#</a></h1>
+<h1>hydromt_sfincs.workflows.snap_discharge<a class="headerlink" href="#hydromt-sfincs-workflows-snap-discharge" title="Link to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="hydromt_sfincs.workflows.snap_discharge">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">snap_discharge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds:</span> <span class="pre">~xarray.core.dataset.Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf:</span> <span class="pre">~geopandas.geodataframe.GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wdw:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_error:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_error:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uparea_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'uparea'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discharge_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'discharge'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.discharge</span> <span class="pre">(WARNING)&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v2023.7.1.dev0)"><span class="pre">DataArray</span></a></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/discharge.html#snap_discharge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.snap_discharge" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">snap_discharge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds:</span> <span class="pre">~xarray.core.dataset.Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf:</span> <span class="pre">~geopandas.geodataframe.GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wdw:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_error:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_error:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uparea_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'uparea'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discharge_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'discharge'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.discharge</span> <span class="pre">(WARNING)&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.DataArray.html#xarray.DataArray" title="(in xarray v2023.8.1.dev0)"><span class="pre">DataArray</span></a></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/discharge.html#snap_discharge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.snap_discharge" title="Link to this definition">#</a></dt>
 <dd><p>Snaps point locations to grid cell with smallest difference in upstream area
 within <cite>wdw</cite> around the original location if the local cell does not meet the
 error criteria. Both the upstream area variable named <code class="docutils literal notranslate"><span class="pre">uparea_name</span></code> in
@@ -560,7 +560,7 @@ error criteria. Both the upstream area variable named <code class="docutils lite
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v2023.7.1.dev0)"><em>xarray.Dataset</em></a>) – Dataset with discharge and optional uparea variable.</p></li>
+<li><p><strong>ds</strong> (<a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v2023.8.1.dev0)"><em>xarray.Dataset</em></a>) – Dataset with discharge and optional uparea variable.</p></li>
 <li><p><strong>gdf</strong> (<a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.13.2)"><em>geopandas.GeoDataFrame</em></a><em>[</em><em>Points</em><em>]</em>) – Dataframe with Point geometries of locations of interest.</p></li>
 <li><p><strong>wdw</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Window size in number of cells around discharge boundary locations
 to snap to, only used if <code class="docutils literal notranslate"><span class="pre">uparea_fn</span></code> is provided. By default 1.</p></li>
@@ -576,7 +576,7 @@ the best fit grid cell, only used if “discharge” staticgeoms has a “uparea
 <dd class="field-even"><p><strong>ds</strong> – snapped dataset</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v2023.7.1.dev0)">xarray.Dataset</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v2023.8.1.dev0)">xarray.Dataset</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -674,7 +674,7 @@ the best fit grid cell, only used if “discharge” staticgeoms has a “uparea
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.3.
     <br/>
   </p>
 </div>
