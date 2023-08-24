@@ -2,7 +2,7 @@
 "type": "FeatureCollection",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32633" } },
 "features": [
-{ "type": "Feature", "properties": { "id": 1, "type": 1, "par1": 10.0, "par2": 0, "par3": 0, "par4": 0, "par5": 0 }, "geometry": { "type": "LineString", "coordinates": [ [ 322021.879048462666105, 5045547.683568798005581 ], [ 322378.691038294811733, 5045133.781660593114793 ] ] } },
-{ "type": "Feature", "properties": { "id": 2, "type": 2, "par1": 40.0, "par2": 0, "par3": 0, "par4": 0, "par5": 0 }, "geometry": { "type": "LineString", "coordinates": [ [ 319160.246890009148046, 5045262.233976932242513 ], [ 319167.383129805792123, 5044976.784385066479445 ] ] } }
+{ "type": "Feature", "properties": { "id": 1, "par1": 10.0, "type": 1, "par2": 0, "par3": 0, "par4": 0, "par5": 0 }, "geometry": { "type": "LineString", "coordinates": [ [ 322021.879048462666105, 5045547.683568798005581 ], [ 322378.691038294811733, 5045133.781660593114793 ] ] } },
+{ "type": "Feature", "properties": { "id": 2, "par1": 40.0, "type": 2, "par2": 0, "par3": 0, "par4": 0, "par5": 0 }, "geometry": { "type": "LineString", "coordinates": [ [ 319160.246890009148046, 5045262.233976932242513 ], [ 319167.383129805792123, 5044976.784385066479445 ] ] } }
 ]
 }

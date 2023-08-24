@@ -1,4 +1,4 @@
-name: Tests stable
+name: Tests Dev
 
 on:
   push:
@@ -8,22 +8,19 @@ on:
 
 jobs:
   Test:
-    name: ${{ matrix.os }} - py${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
+    name: HydroMT dev - ubuntu-latest - py3.10
+    runs-on: "ubuntu-latest"
     defaults:
       run:
         shell: bash -l {0}
     strategy:
       fail-fast: false
-      matrix:
-        os: ["ubuntu-latest"] #, "macos-latest", "windows-latest"]
-        python-version: ["3.9", "3.10", "3.11"]
     
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.10"
           mamba-version: "*"
           channels: conda-forge,defaults
           channel-priority: true
@@ -34,6 +31,9 @@ jobs:
         run: |
          conda info
          conda list
+
+      - name: Intall hydromt core dev version
+        run: pip install git+https://github.com/Deltares/hydromt.git
 
       - name: Intall hydromt_sfincs
         run: pip install .
