@@ -1,7 +1,10 @@
 """add global fixtures"""
 
+from os.path import abspath, dirname, join
+
 import pytest
-from os.path import dirname, abspath, join
+
+from hydromt_sfincs.sfincs import SfincsModel
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
 TESTMODELDIR = join(TESTDATADIR, "sfincs_test")
@@ -25,3 +28,12 @@ def weirs():
         },
     ]
     return feats
+
+
+@pytest.fixture
+def mod(tmpdir):
+    root = TESTMODELDIR
+    mod = SfincsModel(root=root, mode="r")
+    mod.read()
+    mod.set_root(str(tmpdir), mode="r+")
+    return mod

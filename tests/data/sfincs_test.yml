@@ -43,6 +43,9 @@ setup_subgrid:
 
 setup_observation_points:
   locations: observations
+  
+setup_observation_lines:
+  locations: observation_lines
 
 setup_structures:
   structures: weir
