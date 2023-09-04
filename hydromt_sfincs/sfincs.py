@@ -1684,7 +1684,7 @@ class SfincsModel(GridModel):
                     elif (
                         single_height is not None and not np.isnan(single_height).any()
                     ):
-                        da_vol += area * row["height"]
+                        da_vol += area * single_height
                     else:
                         self.logger.warning(
                             f"No volume or height provided for storage location of type Polygon"
