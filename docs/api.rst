@@ -43,6 +43,7 @@ Setup components
    SfincsModel.setup_river_inflow
    SfincsModel.setup_river_outflow
    SfincsModel.setup_observation_points
+   SfincsModel.setup_observation_lines
    SfincsModel.setup_structures
    SfincsModel.setup_drainage_structures
    SfincsModel.setup_waterlevel_forcing
@@ -150,9 +151,7 @@ SFINCS workflows
 
    workflows.merge_multi_dataarrays
    workflows.merge_dataarrays
-   workflows.get_rivbank_dz
-   workflows.get_river_bathymetry
-   workflows.burn_river_zb
+   workflows.burn_river_rect
    workflows.snap_discharge
    workflows.river_boundary_points
    workflows.river_centerline_from_hydrography

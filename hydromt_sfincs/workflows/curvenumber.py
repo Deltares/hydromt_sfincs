@@ -1,26 +1,36 @@
 """Workflow for curve number."""
 import logging
-from typing import Dict, List, Union
 
-import geopandas as gpd
 import numpy as np
 import xarray as xr
-from scipy import ndimage
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 
 # Merge data for Curvenumber
-def scs_recovery_determination(da_landuse, da_HSG, da_Ksat, df_map, da_mask_block):
+def scs_recovery_determination(
+    da_landuse: xr.DataArray,
+    da_HSG: xr.DataArray,
+    da_Ksat: xr.DataArray,
+    df_map: pd.DataFrame,
+    da_mask_block: xr.DataArray,
+):
     """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files.
     More information see http://new.streamstech.com/wp-content/uploads/2018/07/SWMM-Reference-Manual-Part-I-Hydrology-1.pdf
 
     Parameters
     ----------
-    dataset_landuse : filename (or Path) of gridded data with land use classes (e.g. NLCD)
-    dataset_HSG     : filename (or Path) of gridded data with hydrologic soil group classes (HSG)
-    dataset_Ksat    : filename (or Path) of gridded data with saturated hydraulic conductivity (Ksat)
-    reclass_table   : mapping table that related landuse and HSG to each other (matrix; not list)
+    da_landuse: xr.DataArray
+        gridded data with land use classes (e.g. NLCD)
+    da_HSG: xr.DataArray
+        gridded data with hydrologic soil group classes (HSG)
+    da: xr.DataArray
+        gridded data with saturated hydraulic conductivity (Ksat)
+    df_map: pd.DataFrame
+        mapping table that related landuse and HSG to each other (matrix; not list)
+    da_mask_block: xr.DataArray
+        gridded data with mask
     """
     # Started
     da_smax = xr.full_like(da_mask_block, -9999, dtype=np.float32)

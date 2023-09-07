@@ -11,7 +11,8 @@ __all__ = ["plot_forcing", "plot_basemap"]
 
 geom_style = {
     "rivers": dict(linestyle="-", linewidth=1.0, color="darkblue"),
-    "rivers_out": dict(linestyle="-", linewidth=1.0, color="darkgreen"),
+    "rivers_inflow": dict(linestyle=":", linewidth=1.0, color="darkblue"),
+    "rivers_outflow": dict(linestyle=":", linewidth=1.0, color="darkgreen"),
     "msk2": dict(linestyle="-", linewidth=1.5, color="r"),
     "msk3": dict(linestyle="-", linewidth=1.5, color="m"),
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=False),
@@ -19,6 +20,7 @@ geom_style = {
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
     "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
     "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
+    "crs": dict(linestyle="-", linewidth=1.5, color="deeppink", annotate=False),
     "region": dict(ls="--", linewidth=1, color="r"),
 }
 
@@ -163,20 +165,28 @@ def plot_basemap(
     from matplotlib import colors, patheffects
 
     # read crs and utm zone > convert to cartopy
-    wkt = ds.raster.crs.to_wkt()
-    if "UTM zone " not in wkt:
-        raise ValueError("Model CRS UTM zone not found.")
-    utm_zone = ds.raster.crs.to_wkt().split("UTM zone ")[1][:3]
-    utm = ccrs.UTM(int(utm_zone[:2]), "S" in utm_zone)
-    extent = np.array(ds.raster.box.buffer(1e2).total_bounds)[[0, 2, 1, 3]]
+    proj_crs = ds.raster.crs
+    proj_str = proj_crs.name
+    if proj_crs.is_projected and proj_crs.to_epsg() is not None:
+        crs = ccrs.epsg(ds.raster.crs.to_epsg())
+        unit = proj_crs.axis_info[0].unit_name
+        unit = "m" if unit == "metre" else unit
+        xlab, ylab = f"x [{unit}] - {proj_str}", f"y [{unit}]"
+    elif proj_crs.is_geographic:
+        crs = ccrs.PlateCarree()
+        xlab, ylab = f"lon [deg] - {proj_str}", "lat [deg]"
+    else:
+        raise ValueError("Unsupported CRS")
+    bounds = ds.raster.box.buffer(abs(ds.raster.res[0] * 1)).total_bounds
+    extent = np.array(bounds)[[0, 2, 1, 3]]
 
     # create fig with geo-axis and set background
     if figsize is None:
         ratio = ds.raster.ycoords.size / (ds.raster.xcoords.size * 1.4)
         figsize = (8, 8 * ratio)
     fig = plt.figure(figsize=figsize)
-    ax = plt.subplot(projection=utm)
-    ax.set_extent(extent, crs=utm)
+    ax = plt.subplot(projection=crs)
+    ax.set_extent(extent, crs=crs)
     if bmap == "sat":
         ax.add_image(cimgt.QuadtreeTiles(**bmap_kwargs), zoomlevel)
     elif bmap == "osm":
@@ -202,7 +212,7 @@ def plot_basemap(
             kwargs0.update(norm=norm, cmap=cmap)
         elif variable == "msk" and "msk" in ds:
             cmap = colors.LinearSegmentedColormap.from_list(
-                "Set1", ["grey", "r", "m"], N=4
+                "Set1", ["grey", "r", "m"], N=3
             )
             norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5], 3)
             kwargs0.update(norm=norm, cmap=cmap)
@@ -213,9 +223,9 @@ def plot_basemap(
         if np.any(ds["msk"] > 0):
             da = da.where(ds["msk"] > 0)
         if da.raster.rotation != 0 and "xc" in da.coords and "yc" in da.coords:
-            da.plot(transform=utm, x="xc", y="yc", ax=ax, zorder=1, **kwargs0)
+            da.plot(transform=crs, x="xc", y="yc", ax=ax, zorder=1, **kwargs0)
         else:
-            da.plot.imshow(transform=utm, ax=ax, zorder=1, **kwargs0)
+            da.plot.imshow(transform=crs, ax=ax, zorder=1, **kwargs0)
         if shaded and variable == "dep" and da.raster.rotation == 0:
             ls = colors.LightSource(azdeg=315, altdeg=45)
             dx, dy = da.raster.res
@@ -232,7 +242,7 @@ def plot_basemap(
                 dims=("y", "x", "rgb"), data=_rgb, coords=da.raster.coords
             )
             rgb = xr.where(np.isnan(da), np.nan, rgb)
-            rgb.plot.imshow(transform=utm, ax=ax, zorder=1)
+            rgb.plot.imshow(transform=crs, ax=ax, zorder=1)
 
     # geometry plotting and annotate kwargs
     for k, d in geom_kwargs.items():
@@ -280,8 +290,8 @@ def plot_basemap(
     # title, legend and labels
     ax.xaxis.set_visible(True)
     ax.yaxis.set_visible(True)
-    ax.set_ylabel(f"y coordinate UTM zone {utm_zone} [m]")
-    ax.set_xlabel(f"x coordinate UTM zone {utm_zone} [m]")
+    ax.set_ylabel(ylab)
+    ax.set_xlabel(xlab)
     variable = "base" if variable is None else variable
     ax.set_title(f"SFINCS {variable} map")
     # NOTE without defined loc it takes forever to find a 'best' location
