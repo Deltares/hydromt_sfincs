@@ -474,7 +474,7 @@ document.write(`
         <span class="p">)</span>
         <span class="c1"># calculate distance to center cell (measured in cells)</span>
         <span class="n">ar_wdw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">wdw</span><span class="p">,</span> <span class="n">wdw</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="o">**</span><span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">ar_wdw</span><span class="p">,</span> <span class="n">ar_wdw</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">ar_wdw</span><span class="p">,</span> <span class="n">ar_wdw</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
         <span class="n">ds_wdw</span><span class="p">[</span><span class="s2">&quot;dist&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span>
             <span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="s2">&quot;wdw&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="p">(</span><span class="n">ds_wdw</span><span class="p">[</span><span class="s2">&quot;index&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
         <span class="p">)</span>
@@ -543,7 +543,7 @@ document.write(`
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.5.
     <br/>
   </p>
 </div>
