@@ -2095,8 +2095,8 @@ class SfincsModel(GridModel):
                     downsampling="sum",
                     logger=self.logger,
                 )
-            precip_out = precip_out.rename("precip_2d")
-
+            precip_out = precip_out.rename({"precip":"precip_2d"})
+            
             # add to forcing
             self.set_forcing(precip_out, name="precip_2d")
 
@@ -2197,8 +2197,8 @@ class SfincsModel(GridModel):
                 logger=self.logger,
             )
 
-        press_out = press_out.rename("press_2d")
-
+        press_out = press_out.rename({"press":"press_2d"})
+        
         # add to forcing
         self.set_forcing(press_out, name="press_2d")
 
