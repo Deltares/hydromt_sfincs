@@ -70,7 +70,7 @@ def plot_forcing(forcing: Dict, **kwargs):
         # convert dates a-priori as automatic conversion doesn't always work
         df.index = mdates.date2num(df.index)
         if name.startswith("precip"):
-            axes[i].bar(df.index, df.values, facecolor="darkblue")
+            df.plot(drawstyle="steps", ax=axes[i])
         elif (
             name.startswith("press")
             or name.startswith("wind_u")
