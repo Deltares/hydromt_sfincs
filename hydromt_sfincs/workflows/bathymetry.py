@@ -265,7 +265,11 @@ def burn_river_rect(
         gdf_riv_mask = gpd.overlay(gdf_riv_mask, gdf_riv_mask1, how="union")
     da_riv_mask = da_elv.raster.geometry_mask(gdf_riv_mask)
 
-    if gdf_zb is None and rivbed_name not in gdf_riv.columns:
+    if gdf_zb is None and (
+        rivbed_name not in gdf_riv.columns or gdf_riv[rivbed_name].isna().any()
+    ):
+        if rivbed_name not in gdf_riv.columns:
+            gdf_riv[rivbed_name] = np.nan
         # calculate river bedlevel based on river depth per segment
         gdf_riv_seg = split_line_equal(gdf_riv, segment_length).reset_index(drop=True)
         # create mask or river bank cells adjacent to river mask -> numpy array
@@ -291,7 +295,11 @@ def burn_river_rect(
             riv_bank_cc[["idx0", "z"]].groupby("idx0").quantile(q=riv_bank_q)
         )
         # calculate river bed elevation per segment
-        gdf_riv_seg[rivbed_name] = gdf_riv_seg["z"] - gdf_riv_seg[rivdph_name]
+        gdf_riv_seg[rivbed_name] = np.where(
+            gdf_riv_seg[rivdph_name].isna(),
+            gdf_riv_seg["z"] - gdf_riv_seg[rivdph_name],
+            gdf_riv_seg[rivbed_name],
+        )
         # get zb points at center of line segments
         points = gdf_riv_seg.geometry.interpolate(0.5, normalized=True)
         gdf_zb = gdf_riv_seg.assign(geometry=points)
