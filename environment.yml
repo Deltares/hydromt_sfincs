@@ -13,6 +13,6 @@ dependencies:
   - hydromt>=0.8.0
   - hydromt_sfincs>=1.0
   - jupyterlab # to run examples
-  - matplotlib==3.5.* # to run examples / https://github.com/SciTools/cartopy/issues/2086
+  - matplotlib # to run examples
   - pip
   - python=3.10 # fixing python version for binder

@@ -6,8 +6,8 @@ Postprocessing and visualization
 
 The Hydromt SFINCS plugin provides several possibilities to postprocess and visualize the model data and model results:
 
-* `Example: Plot maximum water depth <../_examples/sfincs_results_hmax.ipynb>`_
-* `Example: Make an animation <../_examples/sfincs_results_animation.ipynb>`_
+* `Example: Determine maximum water depth <../_examples/sfincs_results_hmax.ipynb>`_
+* `Example: Create an animation <../_examples/sfincs_results_animation.ipynb>`_
 
 .. toctree::
     :hidden:

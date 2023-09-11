@@ -345,12 +345,12 @@ class SfincsModel(GridModel):
             )
 
             # check if no nan data is present in the bed levels
-            if np.isnan(da_dep).any():
-                self.logger.warning(
-                    f"Interpolate data at {int(np.sum(np.isnan(da_dep.values)))} cells"
+            nmissing = int(np.sum(np.isnan(da_dep.values)))
+            if nmissing > 0:
+                self.logger.warning(f"Interpolate elevation at {nmissing} cells")
+                da_dep = da_dep.raster.interpolate_na(
+                    method="rio_idw", extrapolate=True
                 )
-                # TODO add extrapolate=True option when available in hydromt core
-                da_dep = da_dep.raster.interpolate_na(method="rio_idw")
 
             self.set_grid(da_dep, name="dep")
             # FIXME this shouldn't be necessary, since da_dep should already have a crs
@@ -2527,7 +2527,7 @@ class SfincsModel(GridModel):
         for fname, gname in self._FORCING_1D.values():
             if fname[0] in self.forcing and gname is not None:
                 try:
-                    sg.update({gname: self._forcing[fname[0]].vector.to_gdf()})
+                    sg.update({gname: self.forcing[fname[0]].vector.to_gdf()})
                 except ValueError:
                     self.logger.debug(f'unable to plot forcing location: "{fname}"')
         if plot_region and "region" not in self.geoms:
@@ -2999,12 +2999,17 @@ class SfincsModel(GridModel):
         self._assert_read_mode
 
         # read index file
-        ind_fn = self.get_config("indexfile", fallback="sfincs.ind", abs_path=True)
-        if not isfile(ind_fn):
-            raise IOError(f".ind path {ind_fn} does not exist")
-
+        # TODO make reggrid a property where we trigger the initialization of reggrid
+        if self.reggrid is None:
+            self.update_grid_from_config()
         if self.reggrid is not None:
-            ind = self.reggrid.read_ind(ind_fn=ind_fn)
+            ind_fn = self.get_config("indexfile", fallback="sfincs.ind", abs_path=True)
+            if "msk" in self.grid:  # triggers reading grid if empty and in read mode
+                ind = self.reggrid.ind(self.grid["msk"].values)
+            elif isfile(ind_fn):
+                ind = self.reggrid.read_ind(ind_fn=ind_fn)
+            else:
+                raise IOError(f"indexfile {ind_fn} does not exist")
             if "inifile" in self.config:
                 fn = self.get_config("inifile", abs_path=True)
                 if not isfile(fn):
@@ -3042,8 +3047,8 @@ class SfincsModel(GridModel):
             ind_fn = self.get_config("indexfile", abs_path=True)
             self.reggrid.write_ind(ind_fn=ind_fn, mask=mask)
 
-            if f"inifile" not in self.config:
-                self.set_config(f"inifile", f"sfincs.{name}")
+            if "inifile" not in self.config:
+                self.set_config("inifile", f"sfincs.{name}")
             fn = self.get_config("inifile", abs_path=True)
             da = self.states[name]
             if da.raster.res[1] < 0:
@@ -3104,7 +3109,7 @@ class SfincsModel(GridModel):
                 fn_his, crs=self.crs, chunksize=chunksize
             )
             # drop double vars (map files has priority)
-            drop_vars = [v for v in ds_his.data_vars if v in self._results or v in drop]
+            drop_vars = [v for v in ds_his.data_vars if v in self.results or v in drop]
             ds_his = ds_his.drop_vars(drop_vars)
             self.set_results(ds_his, split_dataset=True)
 

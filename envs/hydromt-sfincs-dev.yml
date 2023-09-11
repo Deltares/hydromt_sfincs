@@ -15,7 +15,7 @@ dependencies:
   - geopandas>=0.8
   - hydromt>=0.8.0
   - jupyterlab  # to run examples
-  - matplotlib==3.5.* # to run examples / https://github.com/SciTools/cartopy/issues/2086
+  - matplotlib # to run examples
   - nbsphinx  # docs
   - numba
   - numpy
@@ -35,4 +35,3 @@ dependencies:
   - xarray
   - pip:
     - sphinx_design  # docs
-    - git+https://github.com/Deltares/hydromt.git # bathymetry.burn_river_rect requires v0.7.2
