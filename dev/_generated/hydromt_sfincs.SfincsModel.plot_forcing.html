@@ -552,7 +552,7 @@ document.write(`
 <h1>hydromt_sfincs.SfincsModel.plot_forcing<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-plot-forcing" title="Link to this heading">#</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.plot_forcing">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">plot_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.plot_forcing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.plot_forcing" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">plot_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forcings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.plot_forcing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.plot_forcing" title="Link to this definition">#</a></dt>
 <dd><p>Plot model timeseries forcing.</p>
 <p>For distributed forcing a spatial avarage, minimum or maximum is plotted.</p>
 <dl class="field-list simple">
@@ -561,7 +561,12 @@ document.write(`
 <li><p><strong>fn_out</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – Path to output figure file.
 If a basename is given it is saved to &lt;model_root&gt;/figs/&lt;fn_out&gt;
 If None, no file is saved.</p></li>
-<li><p><strong>forcing</strong> (<em>Dict</em><em> of </em><em>xr.DataArray</em>) – Model forcing</p></li>
+<li><p><strong>forcings</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – List of forcings to plot, by default ‘all’.
+If ‘all’, all available forcings are plotted.
+See <code class="xref py py-attr docutils literal notranslate"><span class="pre">keys()</span></code>
+for available forcings.</p></li>
+<li><p><strong>**kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – Additional keyword arguments passed to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">hydromt.plotting.plot_forcing()</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

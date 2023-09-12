@@ -2906,7 +2906,7 @@ document.write(`
     <span class="c1"># Plotting</span>
 <div class="viewcode-block" id="SfincsModel.plot_forcing">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing">[docs]</a>
-    <span class="k">def</span> <span class="nf">plot_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">plot_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">forcings</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot model timeseries forcing.</span>
 
 <span class="sd">        For distributed forcing a spatial avarage, minimum or maximum is plotted.</span>
@@ -2917,8 +2917,14 @@ document.write(`
 <span class="sd">            Path to output figure file.</span>
 <span class="sd">            If a basename is given it is saved to &lt;model_root&gt;/figs/&lt;fn_out&gt;</span>
 <span class="sd">            If None, no file is saved.</span>
-<span class="sd">        forcing : Dict of xr.DataArray</span>
-<span class="sd">            Model forcing</span>
+<span class="sd">        forcings : str</span>
+<span class="sd">            List of forcings to plot, by default &#39;all&#39;.</span>
+<span class="sd">            If &#39;all&#39;, all available forcings are plotted.</span>
+<span class="sd">            See :py:attr:`~hydromt_sfincs.SfincsModel.forcing.keys()`</span>
+<span class="sd">            for available forcings.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Additional keyword arguments passed to</span>
+<span class="sd">            :py:func:`hydromt.plotting.plot_forcing`.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -2930,10 +2936,21 @@ document.write(`
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">:</span>
             <span class="n">forcing</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">forcings</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+                <span class="n">forcings</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">forcings</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">forcings</span> <span class="o">=</span> <span class="p">[</span><span class="n">forcings</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">forcings</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;No forcing named &quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&quot; found in model.&#39;</span><span class="p">)</span>
+                    <span class="k">continue</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
-                    <span class="k">continue</span>  <span class="c1"># plot only dataarrays</span>
-                <span class="n">forcing</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;Skipping forcing &quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&quot; as it is a dataset.&#39;</span>
+                    <span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="c1"># plot only dataarrays</span>
+                <span class="n">forcing</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
                 <span class="c1"># update missing attributes for plot labels</span>
                 <span class="n">forcing</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{}))</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">forcing</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
