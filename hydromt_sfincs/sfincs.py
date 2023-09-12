@@ -1110,7 +1110,7 @@ class SfincsModel(GridModel):
         self.config.pop("qinf", None)
         self.set_config(f"{mname}file", f"sfincs.{mname}")
 
-    # Function to create curve number for SFINCS including recovery term (Kr)
+    # Function to create curve number for SFINCS including recovery via saturated hydraulic conductivity [mm/hr]
     def setup_cn_infiltration_with_kr(
         self, lulc, hsg, ksat, reclass_table, effective, block_size=2000
     ):
@@ -1124,7 +1124,7 @@ class SfincsModel(GridModel):
         hsg : str, Path, or RasterDataset
             HSG (Hydrological Similarity Group) in integers
         ksat : str, Path, or RasterDataset
-            Ksat (saturated hydraulic conductivity) [µm/s]
+            Ksat (saturated hydraulic conductivity) [mm/hr]
         reclass_table : str, Path, or RasterDataset
             reclass table to relate landcover with soiltype
         effective : float
@@ -1147,7 +1147,7 @@ class SfincsModel(GridModel):
 
         # Define outputs
         da_smax = xr.full_like(self.mask, -9999, dtype=np.float32)
-        da_kr = xr.full_like(self.mask, -9999, dtype=np.float32)
+        da_ks = xr.full_like(self.mask, -9999, dtype=np.float32)
 
         # Compute resolution land use (we are assuming that is the finest)
         resolution_landuse = np.mean(
@@ -1207,7 +1207,7 @@ class SfincsModel(GridModel):
                 # Call workflow
                 (
                     da_smax_block,
-                    da_kr_block,
+                    da_ks_block,
                 ) = workflows.curvenumber.scs_recovery_determination(
                     da_landuse, da_HSG, da_Ksat, df_map, da_mask_block
                 )
@@ -1215,7 +1215,7 @@ class SfincsModel(GridModel):
                 # New place in the overall matrix
                 sn, sm = slice(bn0, bn1), slice(bm0, bm1)
                 da_smax[sn, sm] = da_smax_block
-                da_kr[sn, sm] = da_kr_block
+                da_ks[sn, sm] = da_ks_block
 
         # Done
         self.logger.info(f"Done with determination of values (in blocks).")
@@ -1225,9 +1225,9 @@ class SfincsModel(GridModel):
         da_seff = da_seff * effective
         da_seff.raster.set_nodata(da_smax.raster.nodata)
 
-        # set grids for seff, smax and kr
-        names = ["smax", "seff", "kr"]
-        data = [da_smax, da_seff, da_kr]
+        # set grids for seff, smax and ks (saturated hydraulic conductivity)
+        names = ["smax", "seff", "ks"]
+        data = [da_smax, da_seff, da_ks]
         for name, da in zip(names, data):
             # Give metadata to the layer and set grid
             da.attrs.update(**self._ATTRS.get(name, {}))
