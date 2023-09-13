@@ -153,9 +153,7 @@ html_theme_options = {
             "url": "https://deltares.github.io/hydromt/latest/index.html",
         },
     ],
-    "logo": {
-        "text": "HydroMT SFINCS",
-    },
+    "logo": {"text": "HydroMT SFINCS",},
     "navbar_end": ["navbar-icon-links"],  # remove dark mode switch
 }
 

@@ -15,10 +15,7 @@ from hydromt_sfincs.sfincs import SfincsModel
 from .conftest import TESTDATADIR, TESTMODELDIR
 
 _cases = {
-    "test1": {
-        "ini": "sfincs_test.yml",
-        "example": "sfincs_test",
-    },
+    "test1": {"ini": "sfincs_test.yml", "example": "sfincs_test",},
 }
 
 
@@ -72,6 +69,7 @@ def test_infiltration(mod):
 
     # set cn infiltration with recovery
     import matplotlib.pyplot as plt
+
     lulc = xr.where(mod.grid["dep"] < -0.5, 70, 30)
     hsg = xr.where(mod.grid["dep"] < 2, 1, 3)
     ksat = xr.where(mod.grid["dep"] < 1, 0.01, 0.2)
@@ -111,18 +109,10 @@ def test_subgrid_rivers(mod):
     sbg_org = mod.subgrid.copy()
 
     mod.setup_subgrid(
-        datasets_dep=[
-            {"elevtn": "merit_hydro", "zmin": 0.001},
-            {"elevtn": "gebco"},
-        ],
+        datasets_dep=[{"elevtn": "merit_hydro", "zmin": 0.001}, {"elevtn": "gebco"},],
         datasets_rgh=[{"lulc": "vito"}],
         datasets_riv=[
-            {
-                "centerlines": gdf_riv,
-                "rivdph": 1,
-                "rivwth": 100,
-                "manning": 0.035,
-            }
+            {"centerlines": gdf_riv, "rivdph": 1, "rivwth": 100, "manning": 0.035,}
         ],
         write_dep_tif=True,
         write_man_tif=True,

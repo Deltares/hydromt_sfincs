@@ -354,10 +354,7 @@ def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
     return gdf_msk
 
 
-def mask2gdf(
-    da_mask: xr.DataArray,
-    option: str = "all",
-) -> gpd.GeoDataFrame:
+def mask2gdf(da_mask: xr.DataArray, option: str = "all",) -> gpd.GeoDataFrame:
     """Convert a boolean mask to a GeoDataFrame of polygons.
 
     Parameters

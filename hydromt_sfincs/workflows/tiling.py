@@ -216,18 +216,11 @@ def create_topobathy_tiles(
             x3857, y3857 = transform * (x, y)
             zg = np.float32(np.full([npix, npix], np.nan))
 
-            da_dep = xr.DataArray(
-                zg,
-                coords={"y": y3857, "x": x3857},
-                dims=["y", "x"],
-            )
+            da_dep = xr.DataArray(zg, coords={"y": y3857, "x": x3857}, dims=["y", "x"],)
             da_dep.raster.set_crs(3857)
 
             # get subgrid bathymetry tile
-            da_dep = merge_multi_dataarrays(
-                da_list=datasets_dep,
-                da_like=da_dep,
-            )
+            da_dep = merge_multi_dataarrays(da_list=datasets_dep, da_like=da_dep,)
 
             if np.isnan(da_dep.values).all():
                 # only nans in this tile
@@ -257,7 +250,7 @@ def create_topobathy_tiles(
 def deg2num(lat_deg, lon_deg, zoom):
     """Convert lat/lon to webmercator tile number"""
     lat_rad = math.radians(lat_deg)
-    n = 2**zoom
+    n = 2 ** zoom
     xtile = int((lon_deg + 180.0) / 360.0 * n)
     ytile = int((1.0 - math.asinh(math.tan(-lat_rad)) / math.pi) / 2.0 * n)
     return (xtile, ytile)
@@ -265,7 +258,7 @@ def deg2num(lat_deg, lon_deg, zoom):
 
 def num2deg(xtile, ytile, zoom):
     """Convert webmercator tile number to lat/lon"""
-    n = 2**zoom
+    n = 2 ** zoom
     lon_deg = xtile / n * 360.0 - 180.0
     lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
     lat_deg = math.degrees(-lat_rad)
@@ -275,13 +268,13 @@ def num2deg(xtile, ytile, zoom):
 def rgba2int(rgba):
     """Convert rgba tuple to int"""
     r, g, b, a = rgba
-    return (r * 256**3) + (g * 256**2) + (b * 256) + a
+    return (r * 256 ** 3) + (g * 256 ** 2) + (b * 256) + a
 
 
 def int2rgba(int_val):
     """Convert int to rgba tuple"""
-    r = (int_val // 256**3) % 256
-    g = (int_val // 256**2) % 256
+    r = (int_val // 256 ** 3) % 256
+    g = (int_val // 256 ** 2) % 256
     b = (int_val // 256) % 256
     a = int_val % 256
     return (r, g, b, a)
@@ -369,7 +362,7 @@ def elevation2png(val, png_file):
 
 def tile_window(zl, minx, miny, maxx, maxy):
     """Window generator for a given zoom level and bounding box"""
-    dxy = (20037508.34 * 2) / (2**zl)
+    dxy = (20037508.34 * 2) / (2 ** zl)
     # Origin displacement
     odx = np.floor(abs(-20037508.34 - minx) / dxy)
     ody = np.floor(abs(20037508.34 - maxy) / dxy)
