@@ -34,7 +34,7 @@ def scs_recovery_determination(
     """
     # Started
     da_smax = xr.full_like(da_mask_block, -9999, dtype=np.float32)
-    da_kr = xr.full_like(da_mask_block, -9999, dtype=np.float32)
+    da_ks = xr.full_like(da_mask_block, -9999, dtype=np.float32)
 
     # Interpolate soil type to landuse
     da_HSG_to_landuse = da_HSG.raster.reproject_like(
@@ -70,13 +70,13 @@ def scs_recovery_determination(
     # med-high 	    1 - 10          Loamy sand  8.3 µm/s    1.18 inch/hr    1.4%
     # high 		    10 - 100        Sand        33 µm/s     4.74 inch/hr    2.9%
     # very high 	100 - Inf
-    da_kr = da_Ksat.raster.reproject_like(da_kr, method="average").load()
-    da_kr = np.minimum(da_kr, 100)  # not higher than 100
-    da_kr = da_kr * 3.6  # from micrometers per second to mm/hr    (constant)
+    da_ks = da_Ksat.raster.reproject_like(da_ks, method="average").load()
+    da_ks = np.minimum(da_ks, 100)  # not higher than 100
+    da_ks = da_ks * 3.6  # from micrometers per second to mm/hr    (constant)
 
     # Ensure no NaNs
     da_smax = da_smax.fillna(0)
-    da_kr = da_kr.fillna(0)
+    da_ks = da_ks.fillna(0)
 
     # Done
-    return da_smax, da_kr
+    return da_smax, da_ks

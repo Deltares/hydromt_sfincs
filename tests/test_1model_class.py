@@ -77,14 +77,16 @@ def test_infiltration(mod):
     # create pandas reclass table for lulc and hsg to cn
     reclass_table = pd.DataFrame([[0, 35], [0, 56]], index=[70, 30], columns=[1, 3])
     effective = 0.5
-    mod.setup_cn_infiltration_with_kr(
+    mod.setup_cn_infiltration_with_ks(
         lulc=lulc, hsg=hsg, ksat=ksat, reclass_table=reclass_table, effective=effective
     )
 
+    # Check if variables are there
     assert "smax" in mod.grid
     assert "seff" in mod.grid
-    assert "kr" in mod.grid
+    assert "ks" in mod.grid
 
+    # Write model
     mod.write_grid()
     mod.write_config()
 
@@ -96,7 +98,7 @@ def test_infiltration(mod):
     assert np.isclose(
         mod1.grid["seff"].where(mod.mask > 0).sum(), 37.918575 * effective
     )
-    assert np.isclose(mod1.grid["kr"].where(mod.mask > 0).sum(), 351.10803)
+    assert np.isclose(mod1.grid["ks"].where(mod.mask > 0).sum(), 351.10803)
 
 
 def test_subgrid_rivers(mod):
