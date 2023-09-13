@@ -1547,10 +1547,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
-    <span class="c1"># Function to create curve number for SFINCS including recovery term (Kr)</span>
-<div class="viewcode-block" id="SfincsModel.setup_cn_infiltration_with_kr">
-<a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_kr">[docs]</a>
-    <span class="k">def</span> <span class="nf">setup_cn_infiltration_with_kr</span><span class="p">(</span>
+    <span class="c1"># Function to create curve number for SFINCS including recovery via saturated hydraulic conductivity [mm/hr]</span>
+    <span class="k">def</span> <span class="nf">setup_cn_infiltration_with_ks</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">lulc</span><span class="p">,</span> <span class="n">hsg</span><span class="p">,</span> <span class="n">ksat</span><span class="p">,</span> <span class="n">reclass_table</span><span class="p">,</span> <span class="n">effective</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">2000</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS</span>
@@ -1563,7 +1561,7 @@ document.write(`
 <span class="sd">        hsg : str, Path, or RasterDataset</span>
 <span class="sd">            HSG (Hydrological Similarity Group) in integers</span>
 <span class="sd">        ksat : str, Path, or RasterDataset</span>
-<span class="sd">            Ksat (saturated hydraulic conductivity) [µm/s]</span>
+<span class="sd">            Ksat (saturated hydraulic conductivity) [mm/hr]</span>
 <span class="sd">        reclass_table : str, Path, or RasterDataset</span>
 <span class="sd">            reclass table to relate landcover with soiltype</span>
 <span class="sd">        effective : float</span>
@@ -1586,7 +1584,7 @@ document.write(`
 
         <span class="c1"># Define outputs</span>
         <span class="n">da_smax</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-        <span class="n">da_kr</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">da_ks</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
         <span class="c1"># Compute resolution land use (we are assuming that is the finest)</span>
         <span class="n">resolution_landuse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
@@ -1646,7 +1644,7 @@ document.write(`
                 <span class="c1"># Call workflow</span>
                 <span class="p">(</span>
                     <span class="n">da_smax_block</span><span class="p">,</span>
-                    <span class="n">da_kr_block</span><span class="p">,</span>
+                    <span class="n">da_ks_block</span><span class="p">,</span>
                 <span class="p">)</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">curvenumber</span><span class="o">.</span><span class="n">scs_recovery_determination</span><span class="p">(</span>
                     <span class="n">da_landuse</span><span class="p">,</span> <span class="n">da_HSG</span><span class="p">,</span> <span class="n">da_Ksat</span><span class="p">,</span> <span class="n">df_map</span><span class="p">,</span> <span class="n">da_mask_block</span>
                 <span class="p">)</span>
@@ -1654,7 +1652,7 @@ document.write(`
                 <span class="c1"># New place in the overall matrix</span>
                 <span class="n">sn</span><span class="p">,</span> <span class="n">sm</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">)</span>
                 <span class="n">da_smax</span><span class="p">[</span><span class="n">sn</span><span class="p">,</span> <span class="n">sm</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_smax_block</span>
-                <span class="n">da_kr</span><span class="p">[</span><span class="n">sn</span><span class="p">,</span> <span class="n">sm</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_kr_block</span>
+                <span class="n">da_ks</span><span class="p">[</span><span class="n">sn</span><span class="p">,</span> <span class="n">sm</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_ks_block</span>
 
         <span class="c1"># Done</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Done with determination of values (in blocks).&quot;</span><span class="p">)</span>
@@ -1664,9 +1662,9 @@ document.write(`
         <span class="n">da_seff</span> <span class="o">=</span> <span class="n">da_seff</span> <span class="o">*</span> <span class="n">effective</span>
         <span class="n">da_seff</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">da_smax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span><span class="p">)</span>
 
-        <span class="c1"># set grids for seff, smax and kr</span>
-        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;smax&quot;</span><span class="p">,</span> <span class="s2">&quot;seff&quot;</span><span class="p">,</span> <span class="s2">&quot;kr&quot;</span><span class="p">]</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">da_smax</span><span class="p">,</span> <span class="n">da_seff</span><span class="p">,</span> <span class="n">da_kr</span><span class="p">]</span>
+        <span class="c1"># set grids for seff, smax and ks (saturated hydraulic conductivity)</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;smax&quot;</span><span class="p">,</span> <span class="s2">&quot;seff&quot;</span><span class="p">,</span> <span class="s2">&quot;ks&quot;</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">da_smax</span><span class="p">,</span> <span class="n">da_seff</span><span class="p">,</span> <span class="n">da_ks</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">da</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
             <span class="c1"># Give metadata to the layer and set grid</span>
             <span class="n">da</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{}))</span>
@@ -1676,8 +1674,7 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># give it to SFINCS</span>
 
         <span class="c1"># Remove qinf variable in sfincs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="c1"># Roughness</span>
 <div class="viewcode-block" id="SfincsModel.setup_manning_roughness">
