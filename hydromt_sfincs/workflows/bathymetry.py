@@ -255,7 +255,8 @@ def burn_river_rect(
         # get gdf_riv outside of mask and buffer these lines
         # then merge with gdf_riv_mask to get the full river mask
         gdf_mask = gpd.GeoDataFrame(
-            geometry=[gdf_riv_mask.buffer(0).unary_union], crs=gdf_riv_mask.crs,
+            geometry=[gdf_riv_mask.buffer(0).unary_union],
+            crs=gdf_riv_mask.crs,
         )  # create single polygon to clip
         gdf_riv_clip = gdf_riv.overlay(gdf_mask, how="difference")
         gdf_riv_mask1 = gdf_riv_clip.assign(

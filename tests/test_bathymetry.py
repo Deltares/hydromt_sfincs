@@ -34,13 +34,17 @@ def test_bathymetry():
     assert np.allclose(da_man1.values[diff.values > 0], 0.035)
     # test without mask
     da_elv1, _ = bathymetry.burn_river_rect(
-        da_elv=da_elv0, da_man=None, gdf_riv=gdf_riv.drop(columns="rivbed"),
+        da_elv=da_elv0,
+        da_man=None,
+        gdf_riv=gdf_riv.drop(columns="rivbed"),
     )
     diff = (da_elv0 - da_elv1).load()
     assert (diff > 0).sum() == 292
     # test with rivbed
     da_elv1, _ = bathymetry.burn_river_rect(
-        da_elv=da_elv0, da_man=None, gdf_riv=gdf_riv,
+        da_elv=da_elv0,
+        da_man=None,
+        gdf_riv=gdf_riv,
     )
     assert np.allclose(da_elv1.values[diff.values > 0], -9)
     # test with zb

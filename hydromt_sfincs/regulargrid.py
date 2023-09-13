@@ -109,7 +109,9 @@ class RegularGrid:
         return ind
 
     def write_ind(
-        self, mask: np.ndarray, ind_fn: Union[str, Path] = "sfincs.ind",
+        self,
+        mask: np.ndarray,
+        ind_fn: Union[str, Path] = "sfincs.ind",
     ) -> None:
         """Write indices of active cells in mask to binary file."""
         assert mask.shape == (self.nmax, self.mmax)
@@ -118,7 +120,10 @@ class RegularGrid:
         indices_ = np.array(np.hstack([np.array(len(ind)), ind + 1]), dtype="u4")
         indices_.tofile(ind_fn)
 
-    def read_ind(self, ind_fn: Union[str, Path] = "sfincs.ind",) -> np.ndarray:
+    def read_ind(
+        self,
+        ind_fn: Union[str, Path] = "sfincs.ind",
+    ) -> np.ndarray:
         """Read indices of active cells in mask from binary file."""
         _ind = np.fromfile(ind_fn, dtype="u4")
         ind = _ind[1:] - 1  # convert to zero based index
