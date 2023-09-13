@@ -70,7 +70,7 @@ def snap_discharge(
         )
         # calculate distance to center cell (measured in cells)
         ar_wdw = np.abs(np.arange(-wdw, wdw + 1))
-        dist = np.hypot(**np.meshgrid(ar_wdw, ar_wdw)).ravel()
+        dist = np.hypot(*np.meshgrid(ar_wdw, ar_wdw)).ravel()
         ds_wdw["dist"] = xr.Variable(
             ("index", "wdw"), np.tile(dist, (ds_wdw["index"].size, 1))
         )

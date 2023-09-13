@@ -2541,7 +2541,7 @@ class SfincsModel(GridModel):
             )
 
     # Plotting
-    def plot_forcing(self, fn_out=None, **kwargs):
+    def plot_forcing(self, fn_out=None, forcings="all", **kwargs):
         """Plot model timeseries forcing.
 
         For distributed forcing a spatial avarage, minimum or maximum is plotted.
@@ -2552,8 +2552,14 @@ class SfincsModel(GridModel):
             Path to output figure file.
             If a basename is given it is saved to <model_root>/figs/<fn_out>
             If None, no file is saved.
-        forcing : Dict of xr.DataArray
-            Model forcing
+        forcings : str
+            List of forcings to plot, by default 'all'.
+            If 'all', all available forcings are plotted.
+            See :py:attr:`~hydromt_sfincs.SfincsModel.forcing.keys()`
+            for available forcings.
+        **kwargs : dict
+            Additional keyword arguments passed to
+            :py:func:`hydromt.plotting.plot_forcing`.
 
         Returns
         -------
@@ -2565,10 +2571,21 @@ class SfincsModel(GridModel):
 
         if self.forcing:
             forcing = {}
-            for name in self.forcing:
+            if forcings == "all":
+                forcings = list(self.forcing.keys())
+            elif isinstance(forcings, str):
+                forcings = [forcings]
+            for name in forcings:
+                if name not in self.forcing:
+                    self.logger.warning(f'No forcing named "{name}" found in model.')
+                    continue
                 if isinstance(self.forcing[name], xr.Dataset):
-                    continue  # plot only dataarrays
-                forcing[name] = self.forcing[name]
+                    self.logger.warning(
+                        f'Skipping forcing "{name}" as it is a dataset.'
+                    )
+                    continue
+                # plot only dataarrays
+                forcing[name] = self.forcing[name].copy()
                 # update missing attributes for plot labels
                 forcing[name].attrs.update(**self._ATTRS.get(name, {}))
             if len(forcing) > 0:
