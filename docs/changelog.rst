@@ -14,6 +14,7 @@ Added
 
 Changed
 -------
+- Changed `setup_cn_infiltration_with_kr` into `setup_cn_infiltration_with_ks` since saturated hydraulic conductivity (ks) is used instead of recovery rate (kr) PR #126
 
 Fixed
 -----
