@@ -1111,7 +1111,7 @@ class SfincsModel(GridModel):
         self.set_config(f"{mname}file", f"sfincs.{mname}")
 
     # Function to create curve number for SFINCS including recovery via saturated hydraulic conductivity [mm/hr]
-    def setup_cn_infiltration_with_kr(
+    def setup_cn_infiltration_with_ks(
         self, lulc, hsg, ksat, reclass_table, effective, block_size=2000
     ):
         """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
