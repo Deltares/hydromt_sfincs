@@ -20,7 +20,7 @@ from hydromt.raster import RasterDataArray
 from hydromt.vector import GeoDataArray, GeoDataset
 from hydromt.workflows.forcing import da_to_timedelta
 from pyproj import CRS
-from shapely.geometry import box, LineString, MultiLineString, Polygon
+from shapely.geometry import LineString, MultiLineString, Polygon, box
 
 from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
@@ -812,7 +812,11 @@ class SfincsModel(GridModel):
             )
             da_flwdir = ds["flwdir"]
             da_uparea = ds["uparea"]
-        elif rivers == "rivers_outflow" and rivers in self.geoms:
+        elif (
+            isinstance(rivers, str)
+            and rivers == "rivers_outflw"
+            and rivers in self.geoms
+        ):
             # reuse rivers from setup_river_in/outflow
             gdf_riv = self.geoms[rivers]
         elif rivers is not None:
