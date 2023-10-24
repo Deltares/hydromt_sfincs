@@ -241,9 +241,9 @@ def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, crs: int = N
             except:
                 name = "obs" + str(point["id"])
             if crs.is_geographic:
-                string = f"{x:12.6f}{y:12.6f}  {name}\n"
+                string = f'{x:12.6f}{y:12.6f} "{name}"\n'
             else:
-                string = f"{x:12.1f}{y:12.1f}  {name}\n"
+                string = f'{x:12.1f}{y:12.1f} "{name}"\n'
             fid.write(string)
 
 
