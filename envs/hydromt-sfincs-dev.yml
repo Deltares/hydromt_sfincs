@@ -13,7 +13,6 @@ dependencies:
   - ffmpeg  # to run examples (animation)
   - flit>=3.4
   - geopandas>=0.8
-  - hydromt>=0.8.0
   - jupyterlab  # to run examples
   - matplotlib # to run examples
   - nbsphinx  # docs

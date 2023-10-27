@@ -10,7 +10,6 @@ dependencies:
   - descartes # to run examples
   - ffmpeg  # to run examples (animation)
   # - git
-  - hydromt>=0.8.0
   - hydromt_sfincs>=1.0
   - jupyterlab # to run examples
   - matplotlib # to run examples
