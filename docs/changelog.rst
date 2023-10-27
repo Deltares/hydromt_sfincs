@@ -11,15 +11,18 @@ v1.0.2 (unreleased)
 
 Added
 -----
+- Added reverse_river_geom keyword argument in workflows.river_boundary_points #PR 136
 
 Changed
 -------
 - Changed `setup_cn_infiltration_with_kr` into `setup_cn_infiltration_with_ks` since saturated hydraulic conductivity (ks) is used instead of recovery rate (kr) PR #126
 
+
 Fixed
 -----
 - writing COG files in `SfincsModel.setup_subgrid` (the COG driver settings were wrong) PR #117
 - a constant offset in the `datasets_dep` argument to `SfincsModel.setup_subgrid` and `SfincsModel.setup_dep` was ignored PR #119
+- Bugfixes in workflows.river_boundary_points to make sure function also works with geoDataFrame #PR 136
 
 Deprecated
 ----------
