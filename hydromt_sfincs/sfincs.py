@@ -1825,6 +1825,10 @@ class SfincsModel(GridModel):
         gdf_msk = utils.get_bounds_vector(self.mask)
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
 
+        # convert to meters if crs is geographic
+        if self.mask.raster.crs.is_geographic:
+            distance = distance / 111111.0
+
         # create points along boundary
         points = []
         for _, row in gdf_msk2.iterrows():

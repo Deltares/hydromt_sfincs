@@ -342,7 +342,11 @@ def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
         GeoDataFrame with line geometries of mask boundaries.
     """
     gdf_msk = da_msk.raster.vectorize()
-    gdf_msk["geometry"] = gdf_msk.buffer(1)  # small buffer for rounding errors
+    # small buffer for rounding errors
+    if da_msk.raster.crs.is_geographic:
+        gdf_msk["geometry"] = gdf_msk.buffer(1e-6)
+    else:
+        gdf_msk["geometry"] = gdf_msk.buffer(1)
     region = (da_msk >= 1).astype("int16").raster.vectorize()
     region = region[region["value"] == 1].drop(columns="value")
     region["geometry"] = region.boundary
