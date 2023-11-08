@@ -961,10 +961,11 @@ def rotated_grid(
     return x0, y0, mmax, nmax, rot
 
 
-def build_overviews(fn: Union[str, Path], 
-                    resample_method: str = "average",
-                    overviews: Union[list, str] = "auto",
-                    logger=logger,
+def build_overviews(
+    fn: Union[str, Path],
+    resample_method: str = "average",
+    overviews: Union[list, str] = "auto",
+    logger=logger,
 ):
     """Build overviews for GeoTIFF file.
 
@@ -996,15 +997,11 @@ def build_overviews(fn: Union[str, Path],
             max_level = get_maximum_overview_level(src.width, src.height, 256)
             overviews = [2**j for j in range(1, max_level + 1)]
         if not isinstance(overviews, list):
-            raise ValueError(
-                "overviews should be a list of integers or 'auto'."
-            )
-        
+            raise ValueError("overviews should be a list of integers or 'auto'.")
+
         resampling = getattr(Resampling, resample_method, None)
         if resampling is None:
-            raise ValueError(
-                f"Resampling method unknown: {resample_method}"
-            )
+            raise ValueError(f"Resampling method unknown: {resample_method}")
 
         no = len(overviews)
         logger.info(f"Building {no} overviews with {resample_method}")

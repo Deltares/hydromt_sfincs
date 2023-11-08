@@ -525,15 +525,19 @@ class SubgridTableRegular:
 
         # Create COG overviews
         if write_dep_tif:
-            utils.build_overviews(fn=fn_dep_tif, 
-                                  resample_method="average",
-                                  overviews="auto",
-                                  logger=logger)
+            utils.build_overviews(
+                fn=fn_dep_tif,
+                resample_method="average",
+                overviews="auto",
+                logger=logger,
+            )
         if write_man_tif:
-            utils.build_overviews(fn=fn_man_tif, 
-                                  resample_method="average",
-                                  overviews="auto",
-                                  logger=logger)
+            utils.build_overviews(
+                fn=fn_man_tif,
+                resample_method="average",
+                overviews="auto",
+                logger=logger,
+            )
 
     def to_xarray(self, dims, coords):
         """Convert subgrid class to xarray dataset."""
