@@ -2798,6 +2798,11 @@ class SfincsModel(GridModel):
         """
         self._assert_write_mode
 
+        if self.crs.is_geographic:
+            fmt = "%.6f"
+        else:
+            fmt = "%.1f"
+
         if self.geoms:
             dvars = self._GEOMS.values()
             if data_vars is not None:
@@ -2810,13 +2815,13 @@ class SfincsModel(GridModel):
                     fn = self.get_config(f"{gname}file", abs_path=True)
                     if gname in ["thd", "weir", "crs"]:
                         struct = utils.gdf2linestring(gdf)
-                        utils.write_geoms(fn, struct, stype=gname)
+                        utils.write_geoms(fn, struct, stype=gname, fmt=fmt)
                     elif gname == "obs":
-                        utils.write_xyn(fn, gdf, crs=self.crs)
+                        utils.write_xyn(fn, gdf, fmt=fmt)
                     elif gname == "drn":
-                        utils.write_drn(fn, gdf)
+                        utils.write_drn(fn, gdf, fmt=fmt)
                     else:
-                        utils.write_xy(fn, gdf, fmt="%8.2f")
+                        utils.write_xy(fn, gdf, fmt=fmt)
 
             # NOTE: all geoms are written to geojson files in a "gis" subfolder
             if self._write_gis:

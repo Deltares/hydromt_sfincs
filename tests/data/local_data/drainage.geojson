@@ -4,6 +4,6 @@
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32633" } },
 "features": [
 { "type": "Feature", "properties": { "id": 1, "discharge": 10.0, "type": 1 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 322021.879048462666105, 5045547.683568798005581 ], [ 322378.691038294811733, 5045133.781660593114793 ] ] ] } },
-{ "type": "Feature", "properties": { "id": 2, "discharge": 40.0, "type": 2 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 319160.246890009148046, 5045262.233976932242513 ], [ 319167.383129805792123, 5044976.784385066479445 ] ] ] } }
+{ "type": "Feature", "properties": { "id": 2, "discharge": 40.495, "type": 2 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 319160.246890009148046, 5045262.233976932242513 ], [ 319167.383129805792123, 5044976.784385066479445 ] ] ] } }
 ]
 }

@@ -232,7 +232,10 @@ def read_xyn(fn: str, crs: int = None):
     return gdf
 
 
-def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, crs: int = None):
+def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, fmt: str = "%.1f"):
+    # strip %-sign of fmt if present
+    fmt = fmt.replace("%", "")
+    
     with open(fn, "w") as fid:
         for point in gdf.iterfeatures():
             x, y = point["geometry"]["coordinates"]
@@ -240,10 +243,7 @@ def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, crs: int = N
                 name = point["properties"]["name"]
             except:
                 name = "obs" + str(point["id"])
-            if crs.is_geographic:
-                string = f'{x:12.6f}{y:12.6f} "{name}"\n'
-            else:
-                string = f'{x:12.1f}{y:12.1f} "{name}"\n'
+            string = f'{x:{fmt}} {y:{fmt}} "{name}"\n'
             fid.write(string)
 
 
@@ -534,7 +534,11 @@ def polygon2gdf(
 
 
 def write_geoms(
-    fn: Union[str, Path], feats: List[Dict], stype: str = "thd", fmt="%.1f"
+    fn: Union[str, Path], 
+    feats: List[Dict], 
+    stype: str = "thd", 
+    fmt: str ="%.1f",
+    fmt_z: str ="%.1f",
 ) -> None:
     """Write list of structure dictionaries to file
 
@@ -550,6 +554,8 @@ def write_geoms(
         Geom type polylines (pli), polygons (pol) thin dams (thd), weirs (weir)
         or cross-sections (crs).
     fmt: str
+        format for "x" and "y" fields.
+    fmt_z: str
         format for "z" and "par1" fields.
 
     Examples
@@ -573,7 +579,8 @@ def write_geoms(
     >>> write_structures('sfincs.weir', feats, stype='weir')
     """
     cols = {"pli": 2, "pol": 2, "thd": 2, "weir": 4, "crs": 2}[stype.lower()]
-    fmt = ["%.0f", "%.0f"] + [fmt for _ in range(cols - 2)]
+
+    fmt = [fmt, fmt] + [fmt_z for _ in range(cols - 2)]
     if stype.lower() == "weir" and np.any(["z" not in f for f in feats]):
         raise ValueError('"z" value missing for weir files.')
     with open(fn, "w") as f:
@@ -583,8 +590,8 @@ def write_geoms(
                 name = f"{stype:s}{name:02d}"
             rows = len(feat["x"])
             a = np.zeros((rows, cols), dtype=np.float32)
-            a[:, 0] = np.asarray(feat["x"]).round(0)
-            a[:, 1] = np.asarray(feat["y"]).round(0)
+            a[:, 0] = np.asarray(feat["x"])
+            a[:, 1] = np.asarray(feat["y"])
             if stype.lower() == "weir":
                 a[:, 2] = feat["z"]
                 a[:, 3] = feat.get("par1", 0.6)
@@ -630,7 +637,7 @@ def read_geoms(fn: Union[str, Path]) -> List[Dict]:
     return feats
 
 
-def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.4f") -> None:
+def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") -> None:
     """Write structure files from list of dictionaries.
 
     Parameters
@@ -640,7 +647,7 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.4f") 
     drainage : gpd.GeoDataFrame
         Dataframe with drainage structure parameters and geometry.
     fmt : str
-        Format for float values.
+        Format for coordinate values.
     """
 
     # expected columns for drainage structures
@@ -669,8 +676,12 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.4f") 
     # reorder columns based on col_names
     gdf = gdf[col_names]
 
+    # change the format of the coordinates according to fmt
+    for col in ["xsnk", "ysnk", "xsrc", "ysrc"]:
+        gdf[col] = gdf[col].apply(lambda x: fmt % x)
+
     # write to file
-    gdf.to_csv(fn, sep=" ", index=False, header=False, float_format=fmt)
+    gdf.to_csv(fn, sep=" ", index=False, header=False)
 
 
 def read_drn(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:
