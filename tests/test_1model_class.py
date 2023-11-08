@@ -250,6 +250,11 @@ def test_storage_volume(tmpdir):
 
     assert np.isclose(mod.grid["vol"].sum(), 34.5)
 
+    # check index of the point with maximum volume
+    index = mod.grid["vol"].argmax()
+    assert index == 1601
+
+
 def test_observations(tmpdir):
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r+")
