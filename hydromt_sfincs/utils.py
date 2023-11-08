@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import rasterio
 from rasterio.enums import Resampling
+from rasterio.rio.overview import get_maximum_overview_level
 from rasterio.windows import Window
 import xarray as xr
 from hydromt.io import write_xy
@@ -1061,7 +1062,12 @@ def rotated_grid(
     return x0, y0, mmax, nmax, rot
 
 
-def build_overviews(fn: Union[str, Path], resample_method: str = "average"):
+def build_overviews(
+    fn: Union[str, Path],
+    resample_method: str = "average",
+    overviews: Union[list, str] = "auto",
+    logger=logger,
+):
     """Build overviews for GeoTIFF file.
 
     Overviews are reduced resolution versions of your dataset that can speed up
@@ -1074,6 +1080,9 @@ def build_overviews(fn: Union[str, Path], resample_method: str = "average"):
         Path to GeoTIFF file.
     method: str
         Resampling method, by default "average". Other option is "nearest".
+    overviews: list of int, optional
+        List of overview levels, by default "auto". When set to "auto" the
+        overview levels are determined based on the size of the dataset.
     """
 
     # check if fn is a geotiff file
@@ -1084,8 +1093,22 @@ def build_overviews(fn: Union[str, Path], resample_method: str = "average"):
 
     # open rasterio dataset
     with rasterio.open(fn, "r+") as src:
+        # determine overviews when not provided
+        if overviews == "auto":
+            max_level = get_maximum_overview_level(src.width, src.height, 256)
+            overviews = [2**j for j in range(1, max_level + 1)]
+        if not isinstance(overviews, list):
+            raise ValueError("overviews should be a list of integers or 'auto'.")
+
+        resampling = getattr(Resampling, resample_method, None)
+        if resampling is None:
+            raise ValueError(f"Resampling method unknown: {resample_method}")
+
+        no = len(overviews)
+        logger.info(f"Building {no} overviews with {resample_method}")
+
         # create new overviews, resampling with average method
-        src.build_overviews([2, 4, 8, 16, 32], getattr(Resampling, resample_method))
+        src.build_overviews(overviews, resampling)
 
         # update dataset tags
         src.update_tags(ns="rio_overview", resampling=resample_method)
