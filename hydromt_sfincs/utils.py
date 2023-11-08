@@ -841,6 +841,8 @@ def downscale_floodmap(
     gdf_mask: gpd.GeoDataFrame = None,
     floodmap_fn: Union[Path, str] = None,
     reproj_method: str = "nearest",
+    nrmax: int = 2000,
+    logger=logger,
     **kwargs,
 ):
     """Create a downscaled floodmap for (model) region.
@@ -865,6 +867,8 @@ def downscale_floodmap(
     reproj_method : str, optional
         Reprojection method for downscaling the water levels, by default "nearest".
         Other option is "bilinear".
+    nrmax : int, optional
+        Maximum number of cells per block, by default 2000. These blocks are used to prevent memory issues.
     kwargs : dict, optional
         Additional keyword arguments passed to `RasterDataArray.to_raster`.
 
@@ -906,7 +910,7 @@ def downscale_floodmap(
             hmax.raster.to_raster(floodmap_fn, **kwargs)
 
             # add overviews
-            build_overviews(fn=floodmap_fn, resample_method="nearest")
+            build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
 
         hmax.name = "hmax"
         hmax.attrs.update({"long_name": "Maximum flood depth", "units": "m"})
@@ -920,7 +924,7 @@ def downscale_floodmap(
         with rasterio.open(dep) as src:
             # Define block size
             n1, m1 = src.shape
-            nrcb = 2000  # nr of cells in a block
+            nrcb = nrmax  # nr of cells in a block
             nrbn = int(np.ceil(n1 / nrcb))  # nr of blocks in n direction
             nrbm = int(np.ceil(m1 / nrcb))  # nr of blocks in m direction
 
@@ -977,6 +981,8 @@ def downscale_floodmap(
                     # check for nan-data
                     if np.all(np.isnan(block_data)):
                         continue
+
+                    # TODO directly use the rasterio warp method rather than the raster.reproject see PR #145
                     # Convert row and column indices to pixel coordinates
                     cols, rows = np.indices((bm1 - bm0, bn1 - bn0))
                     x_coords, y_coords = src.transform * (cols + bm0, rows + bn0)
@@ -1008,7 +1014,7 @@ def downscale_floodmap(
                         )
 
         # add overviews
-        build_overviews(fn=floodmap_fn, resample_method="nearest")
+        build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
 
 
 def rotated_grid(
