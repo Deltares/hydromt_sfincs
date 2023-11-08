@@ -259,6 +259,7 @@ class SfincsModel(GridModel):
             based on a (sub)(inter)basins without a 'bounds' argument.
         align : bool, optional
             If True (default), align target transform to resolution.
+            Note that this has only been implemented for non-rotated grids.
         dec_origin : int, optional
             number of decimals to round the origin coordinates, by default 0
         dec_rotation : int, optional
