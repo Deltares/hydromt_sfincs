@@ -882,19 +882,11 @@ def downscale_floodmap(
         zsmax = zsmax.max(timedim)
 
     if isinstance(dep, xr.DataArray):
-        # interpolate zsmax to dep grid
-        zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
-        zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
-
-        # get flood depth
-        hmax = (zsmax - dep).astype("float32")
-        hmax.raster.set_nodata(np.nan)
-
-        # mask floodmap
-        hmax = hmax.where(hmax > hmin)
-        if gdf_mask is not None:
-            mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
-            hmax = hmax.where(mask)
+        hmax = _downscale_floodmap_da(zsmax=zsmax,
+                                      dep=dep,
+                                      hmin=hmin,
+                                      gdf_mask=gdf_mask,
+                                      reproj_method=reproj_method)
 
         # write floodmap
         if floodmap_fn is not None:
@@ -916,6 +908,7 @@ def downscale_floodmap(
         hmax.name = "hmax"
         hmax.attrs.update({"long_name": "Maximum flood depth", "units": "m"})
         return hmax
+    
     elif isinstance(dep, (str, Path)):
         assert floodmap_fn is not None, "floodmap_fn should be provided when dep is a Path or str."
 
@@ -995,20 +988,11 @@ def downscale_floodmap(
                     )
                     block_dep.raster.set_crs(src.crs)
 
-                    # NOTE next part is similar to the xr.DataArray method
-                    # interpolate zsmax to dep grid
-                    block_zsmax = zsmax.raster.reproject_like(block_dep, method=reproj_method)
-                    block_zsmax = block_zsmax.raster.mask_nodata()  # make sure nodata is nan
-
-                    # get flood depth
-                    block_hmax = (block_zsmax - block_dep).astype("float32")
-                    block_hmax.raster.set_nodata(np.nan)
-
-                    # mask floodmap
-                    block_hmax = block_hmax.where(block_hmax > hmin)
-                    if gdf_mask is not None:
-                        block_mask = block_hmax.raster.geometry_mask(gdf_mask, all_touched=True)
-                        block_hmax = block_hmax.where(block_mask)
+                    block_hmax = _downscale_floodmap_da(zsmax=zsmax,
+                                dep=block_dep,
+                                hmin=hmin,
+                                gdf_mask=gdf_mask,
+                                reproj_method=reproj_method)
 
                     with rasterio.open(floodmap_fn, "r+") as fm_tif:
                         fm_tif.write(
@@ -1099,3 +1083,42 @@ def build_overviews(fn: Union[str, Path], resample_method: str = "average"):
 
         # update dataset tags
         src.update_tags(ns="rio_overview", resampling=resample_method)
+
+def _downscale_floodmap_da(
+    zsmax: xr.DataArray,
+    dep: xr.DataArray,
+    hmin: float = 0.05,
+    gdf_mask: gpd.GeoDataFrame = None,
+    reproj_method: str = "nearest",
+) -> xr.DataArray:
+    
+    """Create a downscaled floodmap for (model) region.
+
+    Parameters
+    ----------
+    zsmax : xr.DataArray
+        Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
+    dep : Path, str, xr.DataArray
+        High-resolution DEM (m) of model region: 
+    hmin : float, optional
+        Minimum water depth (m) to be considered as "flooded", by default 0.05
+    gdf_mask : gpd.GeoDataFrame, optional
+        Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
+        Note that the area outside the polygons is set to nodata.
+    """
+
+    # interpolate zsmax to dep grid
+    zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
+    zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
+
+    # get flood depth
+    hmax = (zsmax - dep).astype("float32")
+    hmax.raster.set_nodata(np.nan)
+
+    # mask floodmap
+    hmax = hmax.where(hmax > hmin)
+    if gdf_mask is not None:
+        mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
+        hmax = hmax.where(mask)
+
+    return hmax
