@@ -2808,7 +2808,7 @@ class SfincsModel(GridModel):
                     elif gname == "drn":
                         utils.write_drn(fn, gdf)
                     else:
-                        utils.write_xy(fn, gdf, fmt="%8.2f")
+                        hydromt.io.write_xy(fn, gdf, fmt="%8.2f")
 
             # NOTE: all geoms are written to geojson files in a "gis" subfolder
             if self._write_gis:
