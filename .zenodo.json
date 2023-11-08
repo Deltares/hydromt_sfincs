@@ -4,13 +4,14 @@
     "upload_type": "software",
     "creators": [
         {
-            "affiliation":"Deltares",
-            "name": "de Goede, Roel"
-        },
-        {
             "affiliation": "Deltares",
             "name": "Eilander, Dirk",
             "orcid": "0000-0002-0951-8418"
+        },
+        {
+            "affiliation":"Deltares",
+            "name": "de Goede, Roel",
+            "orcid": "0000-0002-9987-4933"
         },
         {
             "affiliation": "Deltares",
