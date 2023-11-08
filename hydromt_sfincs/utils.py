@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import rasterio
 from rasterio.enums import Resampling
+from rasterio.windows import Window
 import xarray as xr
 from hydromt.io import write_xy
 from pyproj.crs.crs import CRS
@@ -834,21 +835,25 @@ def read_sfincs_his_results(
 
 def downscale_floodmap(
     zsmax: xr.DataArray,
-    dep: xr.DataArray,
+    dep: Union[Path, str, xr.DataArray],
     hmin: float = 0.05,
     gdf_mask: gpd.GeoDataFrame = None,
     floodmap_fn: Union[Path, str] = None,
     reproj_method: str = "nearest",
     **kwargs,
-) -> xr.Dataset:
+):
     """Create a downscaled floodmap for (model) region.
 
     Parameters
     ----------
     zsmax : xr.DataArray
         Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
-    dep : xr.DataArray
-        High-resolution DEM (m) of model region.
+    dep : Path, str, xr.DataArray
+        High-resolution DEM (m) of model region: 
+        * If a Path or str is provided, the DEM is read from disk and the floodmap 
+        is written to disk (recommened for datasets that do not fit in memory.)
+        * If a xr.DataArray is provided, the floodmap is returned as xr.DataArray 
+        and only written to disk when floodmap_fn is provided.
     hmin : float, optional
         Minimum water depth (m) to be considered as "flooded", by default 0.05
     gdf_mask : gpd.GeoDataFrame, optional
@@ -876,38 +881,144 @@ def downscale_floodmap(
     if timedim:
         zsmax = zsmax.max(timedim)
 
-    # interpolate zsmax to dep grid
-    zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
-    zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
+    if isinstance(dep, xr.DataArray):
+        # interpolate zsmax to dep grid
+        zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
+        zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
 
-    # get flood depth
-    hmax = (zsmax - dep).astype("float32")
-    hmax.raster.set_nodata(np.nan)
+        # get flood depth
+        hmax = (zsmax - dep).astype("float32")
+        hmax.raster.set_nodata(np.nan)
 
-    # mask floodmap
-    hmax = hmax.where(hmax > hmin)
-    if gdf_mask is not None:
-        mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
-        hmax = hmax.where(mask)
+        # mask floodmap
+        hmax = hmax.where(hmax > hmin)
+        if gdf_mask is not None:
+            mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
+            hmax = hmax.where(mask)
 
-    # write floodmap
-    if floodmap_fn is not None:
-        if not kwargs:  # write COG by default
-            kwargs = dict(
+        # write floodmap
+        if floodmap_fn is not None:
+            if not kwargs:  # write COG by default
+                kwargs = dict(
+                    driver="GTiff",
+                    tiled=True,
+                    blockxsize=256,
+                    blockysize=256,
+                    compress="deflate",
+                    predictor=2,
+                    profile="COG",
+                )
+            hmax.raster.to_raster(floodmap_fn, **kwargs)
+
+            # add overviews
+            build_overviews(fn=floodmap_fn, resample_method="nearest")
+
+        hmax.name = "hmax"
+        hmax.attrs.update({"long_name": "Maximum flood depth", "units": "m"})
+        return hmax
+    elif isinstance(dep, (str, Path)):
+        assert floodmap_fn is not None, "floodmap_fn should be provided when dep is a Path or str."
+
+        with rasterio.open(dep) as src:
+
+            # Define block size
+            n1, m1 = src.shape
+            nrcb = 2000  # nr of cells in a block
+            nrbn = int(np.ceil(n1 / nrcb))  # nr of blocks in n direction
+            nrbm = int(np.ceil(m1 / nrcb))  # nr of blocks in m direction
+            
+            # avoid blocks with width or height of 1
+            merge_last_col = False
+            merge_last_row = False
+            if m1 % nrcb == 1:
+                nrbm -= 1
+                merge_last_col = True
+            if n1 % nrcb == 1:
+                nrbn -= 1
+                merge_last_row = True
+
+            profile = dict(
                 driver="GTiff",
+                width=src.width,
+                height=src.height,
+                count=1,
+                dtype=np.float32,
+                crs=src.crs,
+                transform=src.transform,
                 tiled=True,
                 blockxsize=256,
                 blockysize=256,
                 compress="deflate",
                 predictor=2,
                 profile="COG",
+                nodata=np.nan,
+                BIGTIFF="YES",  # Add the BIGTIFF option here
             )
-        hmax.raster.to_raster(floodmap_fn, **kwargs)
 
-    hmax.name = "hmax"
-    hmax.attrs.update({"long_name": "Maximum flood depth", "units": "m"})
-    return hmax
+            with rasterio.open(floodmap_fn, "w", **profile):
+                pass
 
+            ## Loop through blocks
+            for ii in range(nrbm):
+                bm0 = ii * nrcb  # Index of first m in block
+                bm1 = min(bm0 + nrcb, m1)  # last m in block
+                if merge_last_col and ii == (nrbm - 1):
+                    bm1 += 1
+
+                for jj in range(nrbn):
+                    bn0 = jj * nrcb  # Index of first n in block
+                    bn1 = min(bn0 + nrcb, n1)  # last n in block
+                    if merge_last_row and jj == (nrbn - 1):
+                        bn1 += 1
+
+                    # Define a window to read a block of data
+                    window = Window(bm0, bn0, bm1-bm0, bn1-bn0)
+
+                    # Read the block of data
+                    block_data = src.read(window=window)
+
+                    # check for nan-data
+                    if np.all(np.isnan(block_data)):
+                        continue
+                    # Convert row and column indices to pixel coordinates
+                    cols,rows = np.indices((bm1-bm0, bn1-bn0))
+                    x_coords, y_coords = src.transform * (cols + bm0, rows + bn0)
+
+                    # Create xarray DataArray with coordinates
+                    block_dep = xr.DataArray(
+                        block_data.squeeze().transpose(),
+                        dims=("y", "x"),
+                        coords = {
+                            "yc": (("y", "x"), y_coords),
+                            "xc": (("y", "x"), x_coords),
+                        }
+                    )
+                    block_dep.raster.set_crs(src.crs)
+
+                    # NOTE next part is similar to the xr.DataArray method
+                    # interpolate zsmax to dep grid
+                    block_zsmax = zsmax.raster.reproject_like(block_dep, method=reproj_method)
+                    block_zsmax = block_zsmax.raster.mask_nodata()  # make sure nodata is nan
+
+                    # get flood depth
+                    block_hmax = (block_zsmax - block_dep).astype("float32")
+                    block_hmax.raster.set_nodata(np.nan)
+
+                    # mask floodmap
+                    block_hmax = block_hmax.where(block_hmax > hmin)
+                    if gdf_mask is not None:
+                        block_mask = block_hmax.raster.geometry_mask(gdf_mask, all_touched=True)
+                        block_hmax = block_hmax.where(block_mask)
+
+                    with rasterio.open(floodmap_fn, "r+") as fm_tif:
+                        fm_tif.write(
+                            np.transpose(block_hmax.values),
+                            window=window,
+                            indexes=1,
+                        )
+
+        # add overviews
+        build_overviews(fn=floodmap_fn, resample_method="nearest")
 
 def rotated_grid(
     pol: Polygon, res: float, dec_origin=0, dec_rotation=3
