@@ -434,6 +434,7 @@
 <span class="kn">import</span> <span class="nn">rasterio</span>
 <span class="kn">from</span> <span class="nn">rasterio.enums</span> <span class="kn">import</span> <span class="n">Resampling</span>
 <span class="kn">from</span> <span class="nn">rasterio.rio.overview</span> <span class="kn">import</span> <span class="n">get_maximum_overview_level</span>
+<span class="kn">from</span> <span class="nn">rasterio.windows</span> <span class="kn">import</span> <span class="n">Window</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
 <span class="kn">from</span> <span class="nn">hydromt.io</span> <span class="kn">import</span> <span class="n">write_xy</span>
 <span class="kn">from</span> <span class="nn">pyproj.crs.crs</span> <span class="kn">import</span> <span class="n">CRS</span>
@@ -1326,21 +1327,27 @@
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.downscale_floodmap.html#hydromt_sfincs.utils.downscale_floodmap">[docs]</a>
 <span class="k">def</span> <span class="nf">downscale_floodmap</span><span class="p">(</span>
     <span class="n">zsmax</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
-    <span class="n">dep</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">dep</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
     <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
     <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">floodmap_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;nearest&quot;</span><span class="p">,</span>
+    <span class="n">nrmax</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
+    <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a downscaled floodmap for (model) region.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    zsmax : xr.DataArray</span>
 <span class="sd">        Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.</span>
-<span class="sd">    dep : xr.DataArray</span>
-<span class="sd">        High-resolution DEM (m) of model region.</span>
+<span class="sd">    dep : Path, str, xr.DataArray</span>
+<span class="sd">        High-resolution DEM (m) of model region:</span>
+<span class="sd">        * If a Path or str is provided, the DEM is read from disk and the floodmap</span>
+<span class="sd">        is written to disk (recommened for datasets that do not fit in memory.)</span>
+<span class="sd">        * If a xr.DataArray is provided, the floodmap is returned as xr.DataArray</span>
+<span class="sd">        and only written to disk when floodmap_fn is provided.</span>
 <span class="sd">    hmin : float, optional</span>
 <span class="sd">        Minimum water depth (m) to be considered as &quot;flooded&quot;, by default 0.05</span>
 <span class="sd">    gdf_mask : gpd.GeoDataFrame, optional</span>
@@ -1351,6 +1358,8 @@
 <span class="sd">    reproj_method : str, optional</span>
 <span class="sd">        Reprojection method for downscaling the water levels, by default &quot;nearest&quot;.</span>
 <span class="sd">        Other option is &quot;bilinear&quot;.</span>
+<span class="sd">    nrmax : int, optional</span>
+<span class="sd">        Maximum number of cells per block, by default 2000. These blocks are used to prevent memory issues.</span>
 <span class="sd">    kwargs : dict, optional</span>
 <span class="sd">        Additional keyword arguments passed to `RasterDataArray.to_raster`.</span>
 
@@ -1368,37 +1377,136 @@
     <span class="k">if</span> <span class="n">timedim</span><span class="p">:</span>
         <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">timedim</span><span class="p">)</span>
 
-    <span class="c1"># interpolate zsmax to dep grid</span>
-    <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
-    <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>  <span class="c1"># make sure nodata is nan</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+        <span class="n">hmax</span> <span class="o">=</span> <span class="n">_downscale_floodmap_da</span><span class="p">(</span>
+            <span class="n">zsmax</span><span class="o">=</span><span class="n">zsmax</span><span class="p">,</span>
+            <span class="n">dep</span><span class="o">=</span><span class="n">dep</span><span class="p">,</span>
+            <span class="n">hmin</span><span class="o">=</span><span class="n">hmin</span><span class="p">,</span>
+            <span class="n">gdf_mask</span><span class="o">=</span><span class="n">gdf_mask</span><span class="p">,</span>
+            <span class="n">reproj_method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">,</span>
+        <span class="p">)</span>
 
-    <span class="c1"># get flood depth</span>
-    <span class="n">hmax</span> <span class="o">=</span> <span class="p">(</span><span class="n">zsmax</span> <span class="o">-</span> <span class="n">dep</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
-    <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="c1"># write floodmap</span>
+        <span class="k">if</span> <span class="n">floodmap_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">:</span>  <span class="c1"># write COG by default</span>
+                <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;GTiff&quot;</span><span class="p">,</span>
+                    <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                    <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                    <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span>
+                    <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                    <span class="n">profile</span><span class="o">=</span><span class="s2">&quot;COG&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">to_raster</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="c1"># mask floodmap</span>
-    <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hmax</span> <span class="o">&gt;</span> <span class="n">hmin</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">gdf_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_mask</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+            <span class="c1"># add overviews</span>
+            <span class="n">build_overviews</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="n">resample_method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
 
-    <span class="c1"># write floodmap</span>
-    <span class="k">if</span> <span class="n">floodmap_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">:</span>  <span class="c1"># write COG by default</span>
-            <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">hmax</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;hmax&quot;</span>
+        <span class="n">hmax</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Maximum flood depth&quot;</span><span class="p">,</span> <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m&quot;</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">hmax</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">floodmap_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;floodmap_fn should be provided when dep is a Path or str.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+            <span class="c1"># Define block size</span>
+            <span class="n">n1</span><span class="p">,</span> <span class="n">m1</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">nrcb</span> <span class="o">=</span> <span class="n">nrmax</span>  <span class="c1"># nr of cells in a block</span>
+            <span class="n">nrbn</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n1</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>  <span class="c1"># nr of blocks in n direction</span>
+            <span class="n">nrbm</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">m1</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>  <span class="c1"># nr of blocks in m direction</span>
+
+            <span class="c1"># avoid blocks with width or height of 1</span>
+            <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">m1</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">nrbm</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">n1</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">nrbn</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="n">profile</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
                 <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;GTiff&quot;</span><span class="p">,</span>
+                <span class="n">width</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
+                <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                <span class="n">crs</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span>
+                <span class="n">transform</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span>
                 <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
                 <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
                 <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span>
                 <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                 <span class="n">profile</span><span class="o">=</span><span class="s2">&quot;COG&quot;</span><span class="p">,</span>
+                <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                <span class="n">BIGTIFF</span><span class="o">=</span><span class="s2">&quot;YES&quot;</span><span class="p">,</span>  <span class="c1"># Add the BIGTIFF option here</span>
             <span class="p">)</span>
-        <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">to_raster</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="n">hmax</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;hmax&quot;</span>
-    <span class="n">hmax</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Maximum flood depth&quot;</span><span class="p">,</span> <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m&quot;</span><span class="p">})</span>
-    <span class="k">return</span> <span class="n">hmax</span></div>
+            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
+                <span class="k">pass</span>
+
+            <span class="c1">## Loop through blocks</span>
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbm</span><span class="p">):</span>
+                <span class="n">bm0</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">*</span> <span class="n">nrcb</span>  <span class="c1"># Index of first m in block</span>
+                <span class="n">bm1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bm0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">m1</span><span class="p">)</span>  <span class="c1"># last m in block</span>
+                <span class="k">if</span> <span class="n">merge_last_col</span> <span class="ow">and</span> <span class="n">ii</span> <span class="o">==</span> <span class="p">(</span><span class="n">nrbm</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">bm1</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbn</span><span class="p">):</span>
+                    <span class="n">bn0</span> <span class="o">=</span> <span class="n">jj</span> <span class="o">*</span> <span class="n">nrcb</span>  <span class="c1"># Index of first n in block</span>
+                    <span class="n">bn1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bn0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">n1</span><span class="p">)</span>  <span class="c1"># last n in block</span>
+                    <span class="k">if</span> <span class="n">merge_last_row</span> <span class="ow">and</span> <span class="n">jj</span> <span class="o">==</span> <span class="p">(</span><span class="n">nrbn</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                        <span class="n">bn1</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="c1"># Define a window to read a block of data</span>
+                    <span class="n">window</span> <span class="o">=</span> <span class="n">Window</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bn0</span><span class="p">,</span> <span class="n">bm1</span> <span class="o">-</span> <span class="n">bm0</span><span class="p">,</span> <span class="n">bn1</span> <span class="o">-</span> <span class="n">bn0</span><span class="p">)</span>
+
+                    <span class="c1"># Read the block of data</span>
+                    <span class="n">block_data</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+
+                    <span class="c1"># check for nan-data</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">block_data</span><span class="p">)):</span>
+                        <span class="k">continue</span>
+
+                    <span class="c1"># TODO directly use the rasterio warp method rather than the raster.reproject see PR #145</span>
+                    <span class="c1"># Convert row and column indices to pixel coordinates</span>
+                    <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">((</span><span class="n">bm1</span> <span class="o">-</span> <span class="n">bm0</span><span class="p">,</span> <span class="n">bn1</span> <span class="o">-</span> <span class="n">bn0</span><span class="p">))</span>
+                    <span class="n">x_coords</span><span class="p">,</span> <span class="n">y_coords</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="n">cols</span> <span class="o">+</span> <span class="n">bm0</span><span class="p">,</span> <span class="n">rows</span> <span class="o">+</span> <span class="n">bn0</span><span class="p">)</span>
+
+                    <span class="c1"># Create xarray DataArray with coordinates</span>
+                    <span class="n">block_dep</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+                        <span class="n">block_data</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">transpose</span><span class="p">(),</span>
+                        <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span>
+                        <span class="n">coords</span><span class="o">=</span><span class="p">{</span>
+                            <span class="s2">&quot;yc&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">y_coords</span><span class="p">),</span>
+                            <span class="s2">&quot;xc&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">x_coords</span><span class="p">),</span>
+                        <span class="p">},</span>
+                    <span class="p">)</span>
+                    <span class="n">block_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+
+                    <span class="n">block_hmax</span> <span class="o">=</span> <span class="n">_downscale_floodmap_da</span><span class="p">(</span>
+                        <span class="n">zsmax</span><span class="o">=</span><span class="n">zsmax</span><span class="p">,</span>
+                        <span class="n">dep</span><span class="o">=</span><span class="n">block_dep</span><span class="p">,</span>
+                        <span class="n">hmin</span><span class="o">=</span><span class="n">hmin</span><span class="p">,</span>
+                        <span class="n">gdf_mask</span><span class="o">=</span><span class="n">gdf_mask</span><span class="p">,</span>
+                        <span class="n">reproj_method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="s2">&quot;r+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fm_tif</span><span class="p">:</span>
+                        <span class="n">fm_tif</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">block_hmax</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+                            <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
+                            <span class="n">indexes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="p">)</span>
+
+        <span class="c1"># add overviews</span>
+        <span class="n">build_overviews</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="n">resample_method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span></div>
 
 
 
@@ -1489,7 +1597,7 @@
     <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;r+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
         <span class="c1"># determine overviews when not provided</span>
         <span class="k">if</span> <span class="n">overviews</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
-            <span class="n">bs</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;blockxsize&#39;</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
+            <span class="n">bs</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;blockxsize&quot;</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
             <span class="n">max_level</span> <span class="o">=</span> <span class="n">get_maximum_overview_level</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">bs</span><span class="p">)</span>
             <span class="n">overviews</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="o">**</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">overviews</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -1507,6 +1615,45 @@
 
         <span class="c1"># update dataset tags</span>
         <span class="n">src</span><span class="o">.</span><span class="n">update_tags</span><span class="p">(</span><span class="n">ns</span><span class="o">=</span><span class="s2">&quot;rio_overview&quot;</span><span class="p">,</span> <span class="n">resampling</span><span class="o">=</span><span class="n">resample_method</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_downscale_floodmap_da</span><span class="p">(</span>
+    <span class="n">zsmax</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">dep</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+    <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;nearest&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a downscaled floodmap for (model) region.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    zsmax : xr.DataArray</span>
+<span class="sd">        Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.</span>
+<span class="sd">    dep : Path, str, xr.DataArray</span>
+<span class="sd">        High-resolution DEM (m) of model region:</span>
+<span class="sd">    hmin : float, optional</span>
+<span class="sd">        Minimum water depth (m) to be considered as &quot;flooded&quot;, by default 0.05</span>
+<span class="sd">    gdf_mask : gpd.GeoDataFrame, optional</span>
+<span class="sd">        Geodataframe with polygons to mask floodmap, example containing the landarea, by default None</span>
+<span class="sd">        Note that the area outside the polygons is set to nodata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># interpolate zsmax to dep grid</span>
+    <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
+    <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>  <span class="c1"># make sure nodata is nan</span>
+
+    <span class="c1"># get flood depth</span>
+    <span class="n">hmax</span> <span class="o">=</span> <span class="p">(</span><span class="n">zsmax</span> <span class="o">-</span> <span class="n">dep</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+    <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="c1"># mask floodmap</span>
+    <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hmax</span> <span class="o">&gt;</span> <span class="n">hmin</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">gdf_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_mask</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">hmax</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">hmax</span>
 </pre></div>
 
                 </article>
