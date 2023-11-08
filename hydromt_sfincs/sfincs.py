@@ -225,6 +225,7 @@ class SfincsModel(GridModel):
         rotated: bool = False,
         hydrography_fn: str = None,
         basin_index_fn: str = None,
+        align: bool = False,
         dec_origin: int = 0,
         dec_rotation: int = 3,
     ):
@@ -256,6 +257,9 @@ class SfincsModel(GridModel):
             Name of data source with basin (bounding box) geometries associated with
             the 'basins' layer of `hydrography_fn`. Only required if the `region` is
             based on a (sub)(inter)basins without a 'bounds' argument.
+        align : bool, optional
+            If True (default), align target transform to resolution.
+            Note that this has only been implemented for non-rotated grids.
         dec_origin : int, optional
             number of decimals to round the origin coordinates, by default 0
         dec_rotation : int, optional
@@ -287,7 +291,11 @@ class SfincsModel(GridModel):
             )
         else:
             x0, y0, x1, y1 = self.geoms["region"].total_bounds
-            x0, y0 = round(x0, dec_origin), round(y0, dec_origin)
+            if align:
+                x0 = round(x0 / res) * res
+                y0 = round(y0 / res) * res
+            else:
+                x0, y0 = round(x0, dec_origin), round(y0, dec_origin)
             mmax = int(np.ceil((x1 - x0) / res))
             nmax = int(np.ceil((y1 - y0) / res))
             rot = 0
