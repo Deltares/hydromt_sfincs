@@ -278,6 +278,10 @@ class SfincsModel(GridModel):
         if self.geoms["region"].crs != pyproj_crs:
             self.geoms["region"] = self.geoms["region"].to_crs(pyproj_crs)
 
+        # update config for geographic coordinates
+        if pyproj_crs.is_geographic:
+            self.set_config("crsgeo", 1)
+
         # create grid from region
         # NOTE keyword rotated is added to still have the possibility to create unrotated grids if needed (e.g. for FEWS?)
         if rotated:
