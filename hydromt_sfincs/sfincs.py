@@ -609,7 +609,6 @@ class SfincsModel(GridModel):
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
-        extrapolate_values: bool = False,
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
     ):
@@ -731,7 +730,6 @@ class SfincsModel(GridModel):
                 rgh_lev_land=rgh_lev_land,
                 write_dep_tif=write_dep_tif,
                 write_man_tif=write_man_tif,
-                extrapolate_values=extrapolate_values,
                 highres_dir=highres_dir,
                 logger=self.logger,
             )
