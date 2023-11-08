@@ -6,7 +6,6 @@ as well as some common data conversions.
 import copy
 import io
 import logging
-from configparser import ConfigParser
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
@@ -15,8 +14,8 @@ import geopandas as gpd
 import hydromt
 import numpy as np
 import pandas as pd
-import pyproj
 import rasterio
+from rasterio.enums import Resampling
 import xarray as xr
 from hydromt.io import write_xy
 from pyproj.crs.crs import CRS
@@ -50,6 +49,7 @@ __all__ = [
     "read_sfincs_his_results",
     "downscale_floodmap",
     "rotated_grid",
+    "build_overviews",
 ]
 
 logger = logging.getLogger(__name__)
@@ -958,3 +958,29 @@ def rotated_grid(
         nmax = int(np.ceil(axis2 / res))
 
     return x0, y0, mmax, nmax, rot
+
+def build_overviews(fn: Union[str, Path], resample_method: str = "average"):
+    """Build overviews for GeoTIFF file.
+
+    Overviews are reduced resolution versions of your dataset that can speed up 
+    rendering when you don’t need full resolution. By precomputing the upsampled 
+    pixels, rendering can be significantly faster when zoomed out.
+
+    Parameters
+    ----------
+    fn : str, Path
+        Path to GeoTIFF file.
+    method: str
+        Resampling method, by default "average". Other option is "nearest".
+    """
+
+    # check if fn is a geotiff file
+    assert fn.suffix == '.tif', f'File {fn} is not a GeoTIFF file.'
+
+    # open rasterio dataset
+    with rasterio.open(fn, "r+") as src:
+        # create new overviews, resampling with average method
+        src.build_overviews([2, 4, 8, 16, 32], getattr(Resampling, resample_method))
+
+        # update dataset tags
+        src.update_tags(ns='rio_overview', resampling=resample_method)
