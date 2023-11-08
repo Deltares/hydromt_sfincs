@@ -22,6 +22,7 @@ Fixed
 - writing COG files in `SfincsModel.setup_subgrid` (the COG driver settings were wrong) PR #117
 - a constant offset in the `datasets_dep` argument to `SfincsModel.setup_subgrid` and `SfincsModel.setup_dep` was ignored PR #119
 - mismatch between gis data and the model grid causing issues while reading the model PR #128
+- `utils.downscale_floodmap` now also works for large (rotated) grids PR #145
 
 Deprecated
 ----------
