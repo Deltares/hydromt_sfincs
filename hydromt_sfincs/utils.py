@@ -994,7 +994,8 @@ def build_overviews(
     with rasterio.open(fn, "r+") as src:
         # determine overviews when not provided
         if overviews == "auto":
-            max_level = get_maximum_overview_level(src.width, src.height, 256)
+            bs = src.profile.get('blockxsize', 256)
+            max_level = get_maximum_overview_level(src.width, src.height, bs)
             overviews = [2**j for j in range(1, max_level + 1)]
         if not isinstance(overviews, list):
             raise ValueError("overviews should be a list of integers or 'auto'.")
