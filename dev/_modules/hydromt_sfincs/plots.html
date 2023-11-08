@@ -17,12 +17,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=c5ced968eda925caa686" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=c5ced968eda925caa686" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=c5ced968eda925caa686" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=c5ced968eda925caa686" rel="stylesheet" />
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -32,9 +32,9 @@
     <link rel="stylesheet" type="text/css" href="../../_static/theme-deltares.css?v=9d31670e" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=c5ced968eda925caa686" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=c5ced968eda925caa686" />
-  <script src="../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=c5ced968eda925caa686"></script>
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6" />
+  <script src="../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=365ca57ee442770a23c6"></script>
 
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
@@ -536,7 +536,7 @@
     <span class="n">plot_region</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">plot_geoms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">bmap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">zoomlevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span>
+    <span class="n">zoomlevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
     <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">geom_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">geom_kwargs</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
@@ -562,10 +562,12 @@
 <span class="sd">        If True, plot region outline.</span>
 <span class="sd">    plot_geoms : bool, optional</span>
 <span class="sd">        If True, plot available geoms.</span>
-<span class="sd">    bmap : {&#39;sat&#39;, &#39;osm&#39;}</span>
-<span class="sd">        background map, by default &quot;sat&quot;</span>
+<span class="sd">    bmap : str, optional</span>
+<span class="sd">        background map souce name, by default None</span>
+<span class="sd">        Default image tiles &quot;sat&quot;, and &quot;osm&quot; are fetched from cartopy image tiles.</span>
+<span class="sd">        If contextily is installed, xyzproviders tiles can be used as well.</span>
 <span class="sd">    zoomlevel : int, optional</span>
-<span class="sd">        zoomlevel, by default 11</span>
+<span class="sd">        zoomlevel, by default &#39;auto&#39;</span>
 <span class="sd">    figsize : Tuple[int], optional</span>
 <span class="sd">        figure size, by default None</span>
 <span class="sd">    geom_names : List[str], optional</span>
@@ -586,6 +588,13 @@
     <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
     <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">colors</span><span class="p">,</span> <span class="n">patheffects</span>
 
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">contextily</span> <span class="k">as</span> <span class="nn">cx</span>
+
+        <span class="n">has_cx</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="n">has_cx</span> <span class="o">=</span> <span class="kc">False</span>
+
     <span class="c1"># read crs and utm zone &gt; convert to cartopy</span>
     <span class="n">proj_crs</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span>
     <span class="n">proj_str</span> <span class="o">=</span> <span class="n">proj_crs</span><span class="o">.</span><span class="n">name</span>
@@ -605,16 +614,32 @@
     <span class="c1"># create fig with geo-axis and set background</span>
     <span class="k">if</span> <span class="n">figsize</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ratio</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">ycoords</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">xcoords</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="mf">1.4</span><span class="p">)</span>
-        <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">)</span>
+        <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">)</span>
     <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
     <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_extent</span><span class="p">(</span><span class="n">extent</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">bmap</span> <span class="o">==</span> <span class="s2">&quot;sat&quot;</span><span class="p">:</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">add_image</span><span class="p">(</span><span class="n">cimgt</span><span class="o">.</span><span class="n">QuadtreeTiles</span><span class="p">(</span><span class="o">**</span><span class="n">bmap_kwargs</span><span class="p">),</span> <span class="n">zoomlevel</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">bmap</span> <span class="o">==</span> <span class="s2">&quot;osm&quot;</span><span class="p">:</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">add_image</span><span class="p">(</span><span class="n">cimgt</span><span class="o">.</span><span class="n">OSM</span><span class="p">(</span><span class="o">**</span><span class="n">bmap_kwargs</span><span class="p">),</span> <span class="n">zoomlevel</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">bmap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cimgt</span><span class="p">,</span> <span class="n">bmap</span><span class="p">):</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">add_image</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cimgt</span><span class="p">,</span> <span class="n">bmap</span><span class="p">)(</span><span class="o">**</span><span class="n">bmap_kwargs</span><span class="p">),</span> <span class="n">zoomlevel</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">bmap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">zoomlevel</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>  <span class="c1"># auto zoomlevel</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">6378137</span>  <span class="c1"># Earth circumference</span>
+            <span class="n">lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">))[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="c1"># max 4 x 4 tiles per image</span>
+            <span class="n">tile_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">4</span>
+            <span class="n">zoomlevel</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lat</span><span class="p">))</span> <span class="o">/</span> <span class="n">tile_size</span><span class="p">))</span>
+            <span class="c1"># sensible range is 9 (large metropolitan area) - 16 (street)</span>
+            <span class="n">zoomlevel</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="p">))</span>
+        <span class="c1">#  short names for cartopy image tiles</span>
+        <span class="n">bmap</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sat&quot;</span><span class="p">:</span> <span class="s2">&quot;QuadtreeTiles&quot;</span><span class="p">,</span> <span class="s2">&quot;osm&quot;</span><span class="p">:</span> <span class="s2">&quot;OSM&quot;</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">bmap</span><span class="p">,</span> <span class="n">bmap</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">has_cx</span> <span class="ow">and</span> <span class="n">bmap</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">cx</span><span class="o">.</span><span class="n">providers</span><span class="o">.</span><span class="n">flatten</span><span class="p">()):</span>
+            <span class="n">bmap_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">zoom</span><span class="o">=</span><span class="n">zoomlevel</span><span class="p">,</span> <span class="o">**</span><span class="n">bmap_kwargs</span><span class="p">)</span>
+            <span class="n">cx</span><span class="o">.</span><span class="n">add_basemap</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">bmap</span><span class="p">,</span> <span class="o">**</span><span class="n">bmap_kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cimgt</span><span class="p">,</span> <span class="n">bmap</span><span class="p">):</span>
+            <span class="n">bmap_img</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cimgt</span><span class="p">,</span> <span class="n">bmap</span><span class="p">)(</span><span class="o">**</span><span class="n">bmap_kwargs</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">add_image</span><span class="p">(</span><span class="n">bmap_img</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Unknown background map: </span><span class="si">{</span><span class="n">bmap</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">has_cx</span><span class="p">:</span>
+                <span class="n">err</span> <span class="o">+=</span> <span class="s2">&quot; (note that contextily is not installed)&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
 
     <span class="c1"># by default colorbar on lower right &amp; legend upper right</span>
     <span class="n">kwargs0</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;cbar_kwargs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}}</span>
@@ -642,7 +667,7 @@
 
     <span class="k">if</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
         <span class="n">da</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">variable</span><span class="p">]</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;msk&quot;</span> <span class="ow">in</span> <span class="n">ds</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
             <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">rotation</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="s2">&quot;xc&quot;</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span> <span class="ow">and</span> <span class="s2">&quot;yc&quot;</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
             <span class="n">da</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">transform</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;xc&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;yc&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs0</span><span class="p">)</span>
@@ -679,7 +704,12 @@
         <span class="p">],</span>
     <span class="p">)</span>
     <span class="c1"># plot mask boundaries</span>
-    <span class="k">if</span> <span class="n">plot_bounds</span> <span class="ow">and</span> <span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">plot_bounds</span> <span class="ow">and</span> <span class="s2">&quot;msk&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;No &#39;msk&#39; (sfincs.msk) found in ds required to plot the model bounds &quot;</span>
+            <span class="s2">&quot;Set plot_bounds=False or add &#39;msk&#39; to ds&quot;</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">plot_bounds</span> <span class="ow">and</span> <span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
         <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">get_bounds_vector</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">])</span>
         <span class="n">gdf_msk2</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="p">[</span><span class="n">gdf_msk</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span>
         <span class="n">gdf_msk3</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="p">[</span><span class="n">gdf_msk</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">]</span>
@@ -760,8 +790,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=c5ced968eda925caa686"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=c5ced968eda925caa686"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -791,7 +821,7 @@
     <div class="footer-items__end">
       
         <div class="footer-item"><p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.2.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.3.
 </p></div>
       
     </div>

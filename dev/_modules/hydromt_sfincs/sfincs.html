@@ -17,12 +17,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=c5ced968eda925caa686" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=c5ced968eda925caa686" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=c5ced968eda925caa686" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=c5ced968eda925caa686" rel="stylesheet" />
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -32,9 +32,9 @@
     <link rel="stylesheet" type="text/css" href="../../_static/theme-deltares.css?v=9d31670e" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=c5ced968eda925caa686" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=c5ced968eda925caa686" />
-  <script src="../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=c5ced968eda925caa686"></script>
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6" />
+  <script src="../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=365ca57ee442770a23c6"></script>
 
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
@@ -2988,13 +2988,13 @@
     <span class="k">def</span> <span class="nf">plot_basemap</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn_out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">variable</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span>
+        <span class="n">variable</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span>
         <span class="n">shaded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">plot_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">plot_region</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">plot_geoms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">bmap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">zoomlevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span>
+        <span class="n">zoomlevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
         <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">geom_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">geom_kwargs</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
@@ -3009,8 +3009,9 @@
 <span class="sd">            Path to output figure file, by default None.</span>
 <span class="sd">            If a basename is given it is saved to &lt;model_root&gt;/figs/&lt;fn_out&gt;</span>
 <span class="sd">            If None, no file is saved.</span>
-<span class="sd">        variable : str, optional</span>
+<span class="sd">        variable : str, xr.DataArray, optional</span>
 <span class="sd">            Map of variable in ds to plot, by default &#39;dep&#39;</span>
+<span class="sd">            Alternatively, provide a xr.DataArray</span>
 <span class="sd">        shaded : bool, optional</span>
 <span class="sd">            Add shade to variable (only for variable = &#39;dep&#39; and non-rotated grids),</span>
 <span class="sd">            by default False</span>
@@ -3020,10 +3021,12 @@
 <span class="sd">            If True, plot region outline.</span>
 <span class="sd">        plot_geoms : bool, optional</span>
 <span class="sd">            If True, plot available geoms.</span>
-<span class="sd">        bmap : {&#39;sat&#39;, &#39;osm&#39;}, optional</span>
-<span class="sd">            background map, by default None</span>
+<span class="sd">        bmap : str, optional</span>
+<span class="sd">            background map souce name, by default None.</span>
+<span class="sd">            Default image tiles &quot;sat&quot;, and &quot;osm&quot; are fetched from cartopy image tiles.</span>
+<span class="sd">            If contextily is installed, xyzproviders tiles can be used as well.</span>
 <span class="sd">        zoomlevel : int, optional</span>
-<span class="sd">            zoomlevel, by default 11</span>
+<span class="sd">            zoomlevel, by default &#39;auto&#39;</span>
 <span class="sd">        figsize : Tuple[int], optional</span>
 <span class="sd">            figure size, by default None</span>
 <span class="sd">        geom_names : List[str], optional</span>
@@ -3053,13 +3056,16 @@
             <span class="n">sg</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">})</span>
 
         <span class="c1"># make sure grid are set</span>
-        <span class="k">if</span> <span class="n">variable</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;subgrid.&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">subgrid</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">to_dataset</span><span class="p">()</span>
+            <span class="n">variable</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">elif</span> <span class="n">variable</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;subgrid.&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">subgrid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subgrid</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
             <span class="n">variable</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;subgrid.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="k">if</span> <span class="s2">&quot;msk&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
-            <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span>
+            <span class="k">if</span> <span class="s2">&quot;msk&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+                <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span>
 
         <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plots</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
             <span class="n">ds</span><span class="p">,</span>
@@ -3502,8 +3508,8 @@
                     <span class="n">fn_xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">xy_name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                     <span class="c1"># write xy</span>
                     <span class="n">utils</span><span class="o">.</span><span class="n">write_xy</span><span class="p">(</span><span class="n">fn_xy</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%8.2f</span><span class="s2">&quot;</span><span class="p">)</span>
-                    <span class="c1"># write geojson file to gis folder</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;forcing.</span><span class="si">{</span><span class="n">ts_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>  <span class="c1"># write geojson file to gis folder</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;forcing.</span><span class="si">{</span><span class="n">ts_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
             <span class="c1"># netcdf forcing</span>
             <span class="n">encoding</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
@@ -3531,8 +3537,8 @@
                 <span class="c1"># write 1D timeseries</span>
                 <span class="k">if</span> <span class="n">fname</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;netbndbzsbzi&quot;</span><span class="p">,</span> <span class="s2">&quot;netsrcdis&quot;</span><span class="p">]:</span>
                     <span class="n">ds</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_xy</span><span class="p">()</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span>
-                    <span class="c1"># write geojson file to gis folder</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;forcing.</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">rename</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>  <span class="c1"># write geojson file to gis folder</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;forcing.</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">rename</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="c1"># write 2D gridded timeseries</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">ds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span></div>
@@ -4147,8 +4153,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=c5ced968eda925caa686"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=c5ced968eda925caa686"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -4178,7 +4184,7 @@
     <div class="footer-items__end">
       
         <div class="footer-item"><p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.2.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.3.
 </p></div>
       
     </div>

@@ -18,12 +18,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=c5ced968eda925caa686" rel="stylesheet" />
-<link href="../_static/styles/bootstrap.css?digest=c5ced968eda925caa686" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=c5ced968eda925caa686" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
 
   
-  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=c5ced968eda925caa686" rel="stylesheet" />
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -34,9 +34,9 @@
     <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=9d31670e" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=c5ced968eda925caa686" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=c5ced968eda925caa686" />
-  <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=c5ced968eda925caa686"></script>
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6" />
+  <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=365ca57ee442770a23c6"></script>
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
@@ -603,7 +603,7 @@ path: /home/runner/.hydromt_data/artifact_data/v0.0.8/gswo.tif
 <span class="n">da_hmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;hmax&quot;</span><span class="p">]</span>
 
 <span class="c1"># get overland flood depth with GSWO and set minimum flood depth</span>
-<span class="n">da_hmax_fld</span> <span class="o">=</span> <span class="n">da_hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">gswo_mask</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_hmax</span> <span class="o">&gt;</span> <span class="n">hmin</span><span class="p">)</span>
+<span class="n">da_hmax</span> <span class="o">=</span> <span class="n">da_hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">gswo_mask</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_hmax</span> <span class="o">&gt;</span> <span class="n">hmin</span><span class="p">)</span>
 
 <span class="c1"># update attributes for colorbar label later</span>
 <span class="n">da_hmax</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">long_name</span><span class="o">=</span><span class="s2">&quot;flood depth&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">)</span>
@@ -618,22 +618,17 @@ path: /home/runner/.hydromt_data/artifact_data/v0.0.8/gswo.tif
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create hmax plot and save to mod.root/figs/hmax.png</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
     <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="c1"># no variable to plot, only basemap</span>
+    <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+    <span class="n">variable</span><span class="o">=</span><span class="n">da_hmax</span><span class="p">,</span>
     <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">plot_geoms</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span>
     <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
-    <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
-<span class="p">)</span>
-<span class="c1"># plot overland flooding based on gswo mask and minimum flood depth</span>
-<span class="n">cbar_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
-<span class="n">cax_fld</span> <span class="o">=</span> <span class="n">da_hmax_fld</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-    <span class="n">x</span><span class="o">=</span><span class="s2">&quot;xc&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;yc&quot;</span><span class="p">,</span>
-    <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
-    <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
+    <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">vmax</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
     <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">,</span>
-    <span class="n">cbar_kwargs</span><span class="o">=</span><span class="n">cbar_kwargs</span>
+    <span class="n">cbar_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
 <span class="p">)</span>
-
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SFINCS maximum water depth&quot;</span><span class="p">)</span>
 <span class="c1"># plt.savefig(join(mod.root, &#39;figs&#39;, &#39;hmax.png&#39;), dpi=225, bbox_inches=&quot;tight&quot;)</span>
 </pre></div>
@@ -690,7 +685,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
 <span class="c1"># with the depfile on subgrid resolution this would be:</span>
 <span class="c1"># depfile = join(sfincs_root, &quot;subgrid&quot;, &quot;dep_subgrid.tif&quot;)</span>
 
-<span class="n">dep</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">depfile</span><span class="p">)</span>
+<span class="n">da_dep</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">depfile</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -702,11 +697,9 @@ The process of interpolating the water levels onto the higher-resolution elevati
 <span class="n">mod</span><span class="o">.</span><span class="n">read_results</span><span class="p">()</span>
 
 <span class="c1"># now assuming we have a subgrid model, we don&#39;t have hmax available, so we are using zsmax (maximum water levels)</span>
-<span class="n">zsmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;zsmax&quot;</span><span class="p">]</span>
-
 <span class="c1"># compute the maximum over all time steps</span>
-<span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;timemax&#39;</span><span class="p">)</span>
-</pre></div>
+<span class="n">da_zsmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;zsmax&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;timemax&#39;</span><span class="p">)</span>
+<br/></pre></div>
 </div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -732,9 +725,9 @@ The process of interpolating the water levels onto the higher-resolution elevati
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fourthly, we downscale the floodmap</span>
-<span class="n">hmax</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">downscale_floodmap</span><span class="p">(</span>
-    <span class="n">zsmax</span><span class="o">=</span><span class="n">zsmax</span><span class="p">,</span>
-    <span class="n">dep</span><span class="o">=</span><span class="n">dep</span><span class="p">,</span>
+<span class="n">da_hmax</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">downscale_floodmap</span><span class="p">(</span>
+    <span class="n">zsmax</span><span class="o">=</span><span class="n">da_zsmax</span><span class="p">,</span>
+    <span class="n">dep</span><span class="o">=</span><span class="n">da_dep</span><span class="p">,</span>
     <span class="n">hmin</span><span class="o">=</span><span class="n">hmin</span><span class="p">,</span>
     <span class="n">gdf_mask</span><span class="o">=</span><span class="n">gdf_osm</span><span class="p">,</span>
     <span class="c1"># floodmap_fn=join(sfincs_root, &quot;floodmap.tif&quot;) # uncomment to save to &lt;mod.root&gt;/floodmap.tif</span>
@@ -749,22 +742,16 @@ The process of interpolating the water levels onto the higher-resolution elevati
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Lastly, we create a basemap plot with hmax on top</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
     <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="c1"># no variable to plot, only basemap</span>
+    <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+    <span class="n">variable</span><span class="o">=</span><span class="n">da_hmax</span><span class="p">,</span>
     <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">plot_geoms</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span>
-    <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
-    <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+    <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span>
+    <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">vmax</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
+    <span class="n">cbar_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
 <span class="p">)</span>
-
-<span class="n">cbar_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
-<span class="n">cax_fld</span> <span class="o">=</span> <span class="n">hmax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-    <span class="n">x</span><span class="o">=</span><span class="s2">&quot;xc&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;yc&quot;</span><span class="p">,</span>
-    <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
-    <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
-    <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">,</span>
-    <span class="n">cbar_kwargs</span><span class="o">=</span><span class="n">cbar_kwargs</span><span class="p">,</span>
-<span class="p">)</span>
-
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SFINCS maximum water depth&quot;</span><span class="p">)</span>
 <span class="c1"># plt.savefig(join(mod.root, &#39;figs&#39;, &#39;hmax.png&#39;), dpi=225, bbox_inches=&quot;tight&quot;)</span>
 </pre></div>
@@ -861,8 +848,8 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../_static/scripts/bootstrap.js?digest=c5ced968eda925caa686"></script>
-<script src="../_static/scripts/pydata-sphinx-theme.js?digest=c5ced968eda925caa686"></script>
+  <script src="../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -892,7 +879,7 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
     <div class="footer-items__end">
       
         <div class="footer-item"><p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.2.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.3.
 </p></div>
       
     </div>
