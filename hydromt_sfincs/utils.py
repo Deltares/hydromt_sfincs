@@ -959,11 +959,12 @@ def rotated_grid(
 
     return x0, y0, mmax, nmax, rot
 
+
 def build_overviews(fn: Union[str, Path], resample_method: str = "average"):
     """Build overviews for GeoTIFF file.
 
-    Overviews are reduced resolution versions of your dataset that can speed up 
-    rendering when you don’t need full resolution. By precomputing the upsampled 
+    Overviews are reduced resolution versions of your dataset that can speed up
+    rendering when you don’t need full resolution. By precomputing the upsampled
     pixels, rendering can be significantly faster when zoomed out.
 
     Parameters
@@ -975,7 +976,10 @@ def build_overviews(fn: Union[str, Path], resample_method: str = "average"):
     """
 
     # check if fn is a geotiff file
-    assert fn.suffix == '.tif', f'File {fn} is not a GeoTIFF file.'
+    extensions = [".tif", ".tiff"]
+    assert any(
+        fn.endswith(ext) for ext in extensions
+    ), f"File {fn} is not a GeoTIFF file."
 
     # open rasterio dataset
     with rasterio.open(fn, "r+") as src:
@@ -983,4 +987,4 @@ def build_overviews(fn: Union[str, Path], resample_method: str = "average"):
         src.build_overviews([2, 4, 8, 16, 32], getattr(Resampling, resample_method))
 
         # update dataset tags
-        src.update_tags(ns='rio_overview', resampling=resample_method)
+        src.update_tags(ns="rio_overview", resampling=resample_method)
