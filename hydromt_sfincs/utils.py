@@ -917,9 +917,8 @@ def downscale_floodmap(
         return hmax
 
     elif isinstance(dep, (str, Path)):
-        assert (
-            floodmap_fn is not None
-        ), "floodmap_fn should be provided when dep is a Path or str."
+        if floodmap_fn is not None:
+            raise ValueError("floodmap_fn should be provided when dep is a Path or str.")
 
         with rasterio.open(dep) as src:
             # Define block size
