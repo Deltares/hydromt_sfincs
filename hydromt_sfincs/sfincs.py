@@ -226,6 +226,7 @@ class SfincsModel(GridModel):
         rotated: bool = False,
         hydrography_fn: str = None,
         basin_index_fn: str = None,
+        align: bool = False,
         dec_origin: int = 0,
         dec_rotation: int = 3,
     ):
@@ -257,6 +258,9 @@ class SfincsModel(GridModel):
             Name of data source with basin (bounding box) geometries associated with
             the 'basins' layer of `hydrography_fn`. Only required if the `region` is
             based on a (sub)(inter)basins without a 'bounds' argument.
+        align : bool, optional
+            If True (default), align target transform to resolution.
+            Note that this has only been implemented for non-rotated grids.
         dec_origin : int, optional
             number of decimals to round the origin coordinates, by default 0
         dec_rotation : int, optional
@@ -288,7 +292,11 @@ class SfincsModel(GridModel):
             )
         else:
             x0, y0, x1, y1 = self.geoms["region"].total_bounds
-            x0, y0 = round(x0, dec_origin), round(y0, dec_origin)
+            if align:
+                x0 = round(x0 / res) * res
+                y0 = round(y0 / res) * res
+            else:
+                x0, y0 = round(x0, dec_origin), round(y0, dec_origin)
             mmax = int(np.ceil((x1 - x0) / res))
             nmax = int(np.ceil((y1 - y0) / res))
             rot = 0
@@ -602,7 +610,6 @@ class SfincsModel(GridModel):
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
-        extrapolate_values: bool = False,
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
     ):
@@ -724,7 +731,6 @@ class SfincsModel(GridModel):
                 rgh_lev_land=rgh_lev_land,
                 write_dep_tif=write_dep_tif,
                 write_man_tif=write_man_tif,
-                extrapolate_values=extrapolate_values,
                 highres_dir=highres_dir,
                 logger=self.logger,
             )
@@ -1111,8 +1117,8 @@ class SfincsModel(GridModel):
         self.config.pop("qinf", None)
         self.set_config(f"{mname}file", f"sfincs.{mname}")
 
-    # Function to create curve number for SFINCS including recovery term (Kr)
-    def setup_cn_infiltration_with_kr(
+    # Function to create curve number for SFINCS including recovery via saturated hydraulic conductivity [mm/hr]
+    def setup_cn_infiltration_with_ks(
         self, lulc, hsg, ksat, reclass_table, effective, block_size=2000
     ):
         """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
@@ -1125,7 +1131,7 @@ class SfincsModel(GridModel):
         hsg : str, Path, or RasterDataset
             HSG (Hydrological Similarity Group) in integers
         ksat : str, Path, or RasterDataset
-            Ksat (saturated hydraulic conductivity) [µm/s]
+            Ksat (saturated hydraulic conductivity) [mm/hr]
         reclass_table : str, Path, or RasterDataset
             reclass table to relate landcover with soiltype
         effective : float
@@ -1148,7 +1154,7 @@ class SfincsModel(GridModel):
 
         # Define outputs
         da_smax = xr.full_like(self.mask, -9999, dtype=np.float32)
-        da_kr = xr.full_like(self.mask, -9999, dtype=np.float32)
+        da_ks = xr.full_like(self.mask, -9999, dtype=np.float32)
 
         # Compute resolution land use (we are assuming that is the finest)
         resolution_landuse = np.mean(
@@ -1208,7 +1214,7 @@ class SfincsModel(GridModel):
                 # Call workflow
                 (
                     da_smax_block,
-                    da_kr_block,
+                    da_ks_block,
                 ) = workflows.curvenumber.scs_recovery_determination(
                     da_landuse, da_HSG, da_Ksat, df_map, da_mask_block
                 )
@@ -1216,7 +1222,7 @@ class SfincsModel(GridModel):
                 # New place in the overall matrix
                 sn, sm = slice(bn0, bn1), slice(bm0, bm1)
                 da_smax[sn, sm] = da_smax_block
-                da_kr[sn, sm] = da_kr_block
+                da_ks[sn, sm] = da_ks_block
 
         # Done
         self.logger.info(f"Done with determination of values (in blocks).")
@@ -1226,9 +1232,9 @@ class SfincsModel(GridModel):
         da_seff = da_seff * effective
         da_seff.raster.set_nodata(da_smax.raster.nodata)
 
-        # set grids for seff, smax and kr
-        names = ["smax", "seff", "kr"]
-        data = [da_smax, da_seff, da_kr]
+        # set grids for seff, smax and ks (saturated hydraulic conductivity)
+        names = ["smax", "seff", "ks"]
+        data = [da_smax, da_seff, da_ks]
         for name, da in zip(names, data):
             # Give metadata to the layer and set grid
             da.attrs.update(**self._ATTRS.get(name, {}))
@@ -2608,13 +2614,13 @@ class SfincsModel(GridModel):
     def plot_basemap(
         self,
         fn_out: str = None,
-        variable: str = "dep",
+        variable: Union[str, xr.DataArray] = "dep",
         shaded: bool = False,
         plot_bounds: bool = True,
         plot_region: bool = False,
         plot_geoms: bool = True,
         bmap: str = None,
-        zoomlevel: int = 11,
+        zoomlevel: int = "auto",
         figsize: Tuple[int] = None,
         geom_names: List[str] = None,
         geom_kwargs: Dict = {},
@@ -2629,8 +2635,9 @@ class SfincsModel(GridModel):
             Path to output figure file, by default None.
             If a basename is given it is saved to <model_root>/figs/<fn_out>
             If None, no file is saved.
-        variable : str, optional
+        variable : str, xr.DataArray, optional
             Map of variable in ds to plot, by default 'dep'
+            Alternatively, provide a xr.DataArray
         shaded : bool, optional
             Add shade to variable (only for variable = 'dep' and non-rotated grids),
             by default False
@@ -2640,10 +2647,12 @@ class SfincsModel(GridModel):
             If True, plot region outline.
         plot_geoms : bool, optional
             If True, plot available geoms.
-        bmap : {'sat', 'osm'}, optional
-            background map, by default None
+        bmap : str, optional
+            background map souce name, by default None.
+            Default image tiles "sat", and "osm" are fetched from cartopy image tiles.
+            If contextily is installed, xyzproviders tiles can be used as well.
         zoomlevel : int, optional
-            zoomlevel, by default 11
+            zoomlevel, by default 'auto'
         figsize : Tuple[int], optional
             figure size, by default None
         geom_names : List[str], optional
@@ -2673,13 +2682,16 @@ class SfincsModel(GridModel):
             sg.update({"region": self.region})
 
         # make sure grid are set
-        if variable.startswith("subgrid.") and self.subgrid:
+        if isinstance(variable, xr.DataArray):
+            ds = variable.to_dataset()
+            variable = variable.name
+        elif variable.startswith("subgrid.") and self.subgrid is not None:
             ds = self.subgrid.copy()
             variable = variable.replace("subgrid.", "")
         else:
             ds = self.grid.copy()
-        if "msk" not in ds:
-            ds["msk"] = self.mask
+            if "msk" not in ds:
+                ds["msk"] = self.mask
 
         fig, ax = plots.plot_basemap(
             ds,
@@ -3092,8 +3104,8 @@ class SfincsModel(GridModel):
                     fn_xy = self.get_config(f"{xy_name}file", abs_path=True)
                     # write xy
                     utils.write_xy(fn_xy, gdf, fmt="%8.2f")
-                    # write geojson file to gis folder
-                    self.write_vector(variables=f"forcing.{ts_names[0]}")
+                    if self._write_gis:  # write geojson file to gis folder
+                        self.write_vector(variables=f"forcing.{ts_names[0]}")
 
             # netcdf forcing
             encoding = dict(
@@ -3121,8 +3133,8 @@ class SfincsModel(GridModel):
                 # write 1D timeseries
                 if fname in ["netbndbzsbzi", "netsrcdis"]:
                     ds.vector.to_xy().to_netcdf(fn, encoding=encoding)
-                    # write geojson file to gis folder
-                    self.write_vector(variables=f"forcing.{list(rename.keys())[0]}")
+                    if self._write_gis:  # write geojson file to gis folder
+                        self.write_vector(variables=f"forcing.{list(rename.keys())[0]}")
                 # write 2D gridded timeseries
                 else:
                     ds.to_netcdf(fn, encoding=encoding)
@@ -3312,7 +3324,7 @@ class SfincsModel(GridModel):
                         )
                         continue
                 # only write active cells to gis files
-                da = da.raster.clip_geom(self.region, mask=True).raster.mask_nodata()
+                da = da.where(self.mask > 0, da.raster.nodata).raster.mask_nodata()
                 if da.raster.res[1] > 0:  # make sure orientation is N->S
                     da = da.raster.flipud()
                 da.raster.to_raster(
