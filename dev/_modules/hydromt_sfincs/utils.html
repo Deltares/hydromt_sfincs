@@ -423,7 +423,6 @@
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">configparser</span> <span class="kn">import</span> <span class="n">ConfigParser</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
@@ -432,8 +431,9 @@
 <span class="kn">import</span> <span class="nn">hydromt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">pyproj</span>
 <span class="kn">import</span> <span class="nn">rasterio</span>
+<span class="kn">from</span> <span class="nn">rasterio.enums</span> <span class="kn">import</span> <span class="n">Resampling</span>
+<span class="kn">from</span> <span class="nn">rasterio.rio.overview</span> <span class="kn">import</span> <span class="n">get_maximum_overview_level</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
 <span class="kn">from</span> <span class="nn">hydromt.io</span> <span class="kn">import</span> <span class="n">write_xy</span>
 <span class="kn">from</span> <span class="nn">pyproj.crs.crs</span> <span class="kn">import</span> <span class="n">CRS</span>
@@ -467,6 +467,7 @@
     <span class="s2">&quot;read_sfincs_his_results&quot;</span><span class="p">,</span>
     <span class="s2">&quot;downscale_floodmap&quot;</span><span class="p">,</span>
     <span class="s2">&quot;rotated_grid&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_overviews&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -1453,6 +1454,59 @@
 
     <span class="k">return</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">mmax</span><span class="p">,</span> <span class="n">nmax</span><span class="p">,</span> <span class="n">rot</span></div>
 
+
+
+<span class="k">def</span> <span class="nf">build_overviews</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">resample_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;average&quot;</span><span class="p">,</span>
+    <span class="n">overviews</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build overviews for GeoTIFF file.</span>
+
+<span class="sd">    Overviews are reduced resolution versions of your dataset that can speed up</span>
+<span class="sd">    rendering when you don’t need full resolution. By precomputing the upsampled</span>
+<span class="sd">    pixels, rendering can be significantly faster when zoomed out.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn : str, Path</span>
+<span class="sd">        Path to GeoTIFF file.</span>
+<span class="sd">    method: str</span>
+<span class="sd">        Resampling method, by default &quot;average&quot;. Other option is &quot;nearest&quot;.</span>
+<span class="sd">    overviews: list of int, optional</span>
+<span class="sd">        List of overview levels, by default &quot;auto&quot;. When set to &quot;auto&quot; the</span>
+<span class="sd">        overview levels are determined based on the size of the dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># check if fn is a geotiff file</span>
+    <span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.tif&quot;</span><span class="p">,</span> <span class="s2">&quot;.tiff&quot;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="n">fn</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">extensions</span>
+    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2"> is not a GeoTIFF file.&quot;</span>
+
+    <span class="c1"># open rasterio dataset</span>
+    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;r+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+        <span class="c1"># determine overviews when not provided</span>
+        <span class="k">if</span> <span class="n">overviews</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+            <span class="n">bs</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;blockxsize&#39;</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
+            <span class="n">max_level</span> <span class="o">=</span> <span class="n">get_maximum_overview_level</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">bs</span><span class="p">)</span>
+            <span class="n">overviews</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="o">**</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">overviews</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;overviews should be a list of integers or &#39;auto&#39;.&quot;</span><span class="p">)</span>
+
+        <span class="n">resampling</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Resampling</span><span class="p">,</span> <span class="n">resample_method</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resampling</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Resampling method unknown: </span><span class="si">{</span><span class="n">resample_method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">no</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">overviews</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Building </span><span class="si">{</span><span class="n">no</span><span class="si">}</span><span class="s2"> overviews with </span><span class="si">{</span><span class="n">resample_method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># create new overviews, resampling with average method</span>
+        <span class="n">src</span><span class="o">.</span><span class="n">build_overviews</span><span class="p">(</span><span class="n">overviews</span><span class="p">,</span> <span class="n">resampling</span><span class="p">)</span>
+
+        <span class="c1"># update dataset tags</span>
+        <span class="n">src</span><span class="o">.</span><span class="n">update_tags</span><span class="p">(</span><span class="n">ns</span><span class="o">=</span><span class="s2">&quot;rio_overview&quot;</span><span class="p">,</span> <span class="n">resampling</span><span class="o">=</span><span class="n">resample_method</span><span class="p">)</span>
 </pre></div>
 
                 </article>
