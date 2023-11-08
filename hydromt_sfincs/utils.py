@@ -849,10 +849,10 @@ def downscale_floodmap(
     zsmax : xr.DataArray
         Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
     dep : Path, str, xr.DataArray
-        High-resolution DEM (m) of model region: 
-        * If a Path or str is provided, the DEM is read from disk and the floodmap 
+        High-resolution DEM (m) of model region:
+        * If a Path or str is provided, the DEM is read from disk and the floodmap
         is written to disk (recommened for datasets that do not fit in memory.)
-        * If a xr.DataArray is provided, the floodmap is returned as xr.DataArray 
+        * If a xr.DataArray is provided, the floodmap is returned as xr.DataArray
         and only written to disk when floodmap_fn is provided.
     hmin : float, optional
         Minimum water depth (m) to be considered as "flooded", by default 0.05
@@ -882,11 +882,13 @@ def downscale_floodmap(
         zsmax = zsmax.max(timedim)
 
     if isinstance(dep, xr.DataArray):
-        hmax = _downscale_floodmap_da(zsmax=zsmax,
-                                      dep=dep,
-                                      hmin=hmin,
-                                      gdf_mask=gdf_mask,
-                                      reproj_method=reproj_method)
+        hmax = _downscale_floodmap_da(
+            zsmax=zsmax,
+            dep=dep,
+            hmin=hmin,
+            gdf_mask=gdf_mask,
+            reproj_method=reproj_method,
+        )
 
         # write floodmap
         if floodmap_fn is not None:
@@ -908,18 +910,19 @@ def downscale_floodmap(
         hmax.name = "hmax"
         hmax.attrs.update({"long_name": "Maximum flood depth", "units": "m"})
         return hmax
-    
+
     elif isinstance(dep, (str, Path)):
-        assert floodmap_fn is not None, "floodmap_fn should be provided when dep is a Path or str."
+        assert (
+            floodmap_fn is not None
+        ), "floodmap_fn should be provided when dep is a Path or str."
 
         with rasterio.open(dep) as src:
-
             # Define block size
             n1, m1 = src.shape
             nrcb = 2000  # nr of cells in a block
             nrbn = int(np.ceil(n1 / nrcb))  # nr of blocks in n direction
             nrbm = int(np.ceil(m1 / nrcb))  # nr of blocks in m direction
-            
+
             # avoid blocks with width or height of 1
             merge_last_col = False
             merge_last_row = False
@@ -965,7 +968,7 @@ def downscale_floodmap(
                         bn1 += 1
 
                     # Define a window to read a block of data
-                    window = Window(bm0, bn0, bm1-bm0, bn1-bn0)
+                    window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
 
                     # Read the block of data
                     block_data = src.read(window=window)
@@ -974,25 +977,27 @@ def downscale_floodmap(
                     if np.all(np.isnan(block_data)):
                         continue
                     # Convert row and column indices to pixel coordinates
-                    cols,rows = np.indices((bm1-bm0, bn1-bn0))
+                    cols, rows = np.indices((bm1 - bm0, bn1 - bn0))
                     x_coords, y_coords = src.transform * (cols + bm0, rows + bn0)
 
                     # Create xarray DataArray with coordinates
                     block_dep = xr.DataArray(
                         block_data.squeeze().transpose(),
                         dims=("y", "x"),
-                        coords = {
+                        coords={
                             "yc": (("y", "x"), y_coords),
                             "xc": (("y", "x"), x_coords),
-                        }
+                        },
                     )
                     block_dep.raster.set_crs(src.crs)
 
-                    block_hmax = _downscale_floodmap_da(zsmax=zsmax,
-                                dep=block_dep,
-                                hmin=hmin,
-                                gdf_mask=gdf_mask,
-                                reproj_method=reproj_method)
+                    block_hmax = _downscale_floodmap_da(
+                        zsmax=zsmax,
+                        dep=block_dep,
+                        hmin=hmin,
+                        gdf_mask=gdf_mask,
+                        reproj_method=reproj_method,
+                    )
 
                     with rasterio.open(floodmap_fn, "r+") as fm_tif:
                         fm_tif.write(
@@ -1003,6 +1008,7 @@ def downscale_floodmap(
 
         # add overviews
         build_overviews(fn=floodmap_fn, resample_method="nearest")
+
 
 def rotated_grid(
     pol: Polygon, res: float, dec_origin=0, dec_rotation=3
@@ -1084,6 +1090,7 @@ def build_overviews(fn: Union[str, Path], resample_method: str = "average"):
         # update dataset tags
         src.update_tags(ns="rio_overview", resampling=resample_method)
 
+
 def _downscale_floodmap_da(
     zsmax: xr.DataArray,
     dep: xr.DataArray,
@@ -1091,7 +1098,6 @@ def _downscale_floodmap_da(
     gdf_mask: gpd.GeoDataFrame = None,
     reproj_method: str = "nearest",
 ) -> xr.DataArray:
-    
     """Create a downscaled floodmap for (model) region.
 
     Parameters
@@ -1099,7 +1105,7 @@ def _downscale_floodmap_da(
     zsmax : xr.DataArray
         Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
     dep : Path, str, xr.DataArray
-        High-resolution DEM (m) of model region: 
+        High-resolution DEM (m) of model region:
     hmin : float, optional
         Minimum water depth (m) to be considered as "flooded", by default 0.05
     gdf_mask : gpd.GeoDataFrame, optional
