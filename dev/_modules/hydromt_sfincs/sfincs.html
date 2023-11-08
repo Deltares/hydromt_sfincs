@@ -652,6 +652,7 @@
         <span class="n">rotated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">hydrography_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">basin_index_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">align</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">dec_origin</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">dec_rotation</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
     <span class="p">):</span>
@@ -683,6 +684,9 @@
 <span class="sd">            Name of data source with basin (bounding box) geometries associated with</span>
 <span class="sd">            the &#39;basins&#39; layer of `hydrography_fn`. Only required if the `region` is</span>
 <span class="sd">            based on a (sub)(inter)basins without a &#39;bounds&#39; argument.</span>
+<span class="sd">        align : bool, optional</span>
+<span class="sd">            If True (default), align target transform to resolution.</span>
+<span class="sd">            Note that this has only been implemented for non-rotated grids.</span>
 <span class="sd">        dec_origin : int, optional</span>
 <span class="sd">            number of decimals to round the origin coordinates, by default 0</span>
 <span class="sd">        dec_rotation : int, optional</span>
@@ -714,7 +718,11 @@
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="s2">&quot;region&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">total_bounds</span>
-            <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">dec_origin</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">dec_origin</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">align</span><span class="p">:</span>
+                <span class="n">x0</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">x0</span> <span class="o">/</span> <span class="n">res</span><span class="p">)</span> <span class="o">*</span> <span class="n">res</span>
+                <span class="n">y0</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">y0</span> <span class="o">/</span> <span class="n">res</span><span class="p">)</span> <span class="o">*</span> <span class="n">res</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">dec_origin</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">dec_origin</span><span class="p">)</span>
             <span class="n">mmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">x1</span> <span class="o">-</span> <span class="n">x0</span><span class="p">)</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
             <span class="n">nmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">y1</span> <span class="o">-</span> <span class="n">y0</span><span class="p">)</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>
             <span class="n">rot</span> <span class="o">=</span> <span class="mi">0</span>
