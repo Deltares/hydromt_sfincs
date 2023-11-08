@@ -2483,13 +2483,13 @@ class SfincsModel(GridModel):
     def plot_basemap(
         self,
         fn_out: str = None,
-        variable: str = "dep",
+        variable: Union[str, xr.DataArray] = "dep",
         shaded: bool = False,
         plot_bounds: bool = True,
         plot_region: bool = False,
         plot_geoms: bool = True,
         bmap: str = None,
-        zoomlevel: int = 11,
+        zoomlevel: int = "auto",
         figsize: Tuple[int] = None,
         geom_names: List[str] = None,
         geom_kwargs: Dict = {},
@@ -2504,8 +2504,9 @@ class SfincsModel(GridModel):
             Path to output figure file, by default None.
             If a basename is given it is saved to <model_root>/figs/<fn_out>
             If None, no file is saved.
-        variable : str, optional
+        variable : str, xr.DataArray, optional
             Map of variable in ds to plot, by default 'dep'
+            Alternatively, provide a xr.DataArray
         shaded : bool, optional
             Add shade to variable (only for variable = 'dep' and non-rotated grids),
             by default False
@@ -2515,10 +2516,12 @@ class SfincsModel(GridModel):
             If True, plot region outline.
         plot_geoms : bool, optional
             If True, plot available geoms.
-        bmap : {'sat', 'osm'}, optional
-            background map, by default None
+        bmap : str, optional
+            background map souce name, by default None.
+            Default image tiles "sat", and "osm" are fetched from cartopy image tiles.
+            If contextily is installed, xyzproviders tiles can be used as well.
         zoomlevel : int, optional
-            zoomlevel, by default 11
+            zoomlevel, by default 'auto'
         figsize : Tuple[int], optional
             figure size, by default None
         geom_names : List[str], optional
@@ -2548,13 +2551,16 @@ class SfincsModel(GridModel):
             sg.update({"region": self.region})
 
         # make sure grid are set
-        if variable.startswith("subgrid.") and self.subgrid:
+        if isinstance(variable, xr.DataArray):
+            ds = variable.to_dataset()
+            variable = variable.name
+        elif variable.startswith("subgrid.") and self.subgrid is not None:
             ds = self.subgrid.copy()
             variable = variable.replace("subgrid.", "")
         else:
             ds = self.grid.copy()
-        if "msk" not in ds:
-            ds["msk"] = self.mask
+            if "msk" not in ds:
+                ds["msk"] = self.mask
 
         fig, ax = plots.plot_basemap(
             ds,
@@ -2967,8 +2973,8 @@ class SfincsModel(GridModel):
                     fn_xy = self.get_config(f"{xy_name}file", abs_path=True)
                     # write xy
                     utils.write_xy(fn_xy, gdf, fmt="%8.2f")
-                    # write geojson file to gis folder
-                    self.write_vector(variables=f"forcing.{ts_names[0]}")
+                    if self._write_gis:  # write geojson file to gis folder
+                        self.write_vector(variables=f"forcing.{ts_names[0]}")
 
             # netcdf forcing
             encoding = dict(
@@ -2996,8 +3002,8 @@ class SfincsModel(GridModel):
                 # write 1D timeseries
                 if fname in ["netbndbzsbzi", "netsrcdis"]:
                     ds.vector.to_xy().to_netcdf(fn, encoding=encoding)
-                    # write geojson file to gis folder
-                    self.write_vector(variables=f"forcing.{list(rename.keys())[0]}")
+                    if self._write_gis:  # write geojson file to gis folder
+                        self.write_vector(variables=f"forcing.{list(rename.keys())[0]}")
                 # write 2D gridded timeseries
                 else:
                     ds.to_netcdf(fn, encoding=encoding)

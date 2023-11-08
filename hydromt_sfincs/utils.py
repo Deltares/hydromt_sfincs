@@ -903,6 +903,9 @@ def downscale_floodmap(
                 profile="COG",
             )
         hmax.raster.to_raster(floodmap_fn, **kwargs)
+
+    hmax.name = "hmax"
+    hmax.attrs.update({"long_name": "Maximum flood depth", "units": "m"})
     return hmax
 
 
