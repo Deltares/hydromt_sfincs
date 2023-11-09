@@ -816,7 +816,7 @@ class SfincsModel(GridModel):
             da_uparea = ds["uparea"]
         elif (
             isinstance(rivers, str)
-            and rivers == "rivers_outflw"
+            and rivers == "rivers_outflow"
             and rivers in self.geoms
         ):
             # reuse rivers from setup_river_in/outflow
@@ -942,7 +942,11 @@ class SfincsModel(GridModel):
             )
             da_flwdir = ds["flwdir"]
             da_uparea = ds["uparea"]
-        elif rivers == "rivers_inflow" and rivers in self.geoms:
+        elif (
+            isinstance(rivers, str)
+            and rivers == "rivers_inflow"
+            and rivers in self.geoms
+        ):
             # reuse rivers from setup_river_in/outflow
             gdf_riv = self.geoms[rivers]
         elif rivers is not None:
