@@ -1638,7 +1638,11 @@ class SfincsModel(GridModel):
 
             # add storage volumes form gdf to da_vol
             da_vol = workflows.add_storage_volume(
-                da_vol, gdf, volume=volume, height=height, logger=self.logger,
+                da_vol,
+                gdf,
+                volume=volume,
+                height=height,
+                logger=self.logger,
             )
 
             # set grid

@@ -9,12 +9,12 @@ logger = logging.getLogger(__name__)
 
 
 def add_storage_volume(
-    da_vol: xr.DataArray, 
-    gdf: gpd.GeoDataFrame, 
+    da_vol: xr.DataArray,
+    gdf: gpd.GeoDataFrame,
     volume: Union[float, List[float]] = None,
     height: Union[float, List[float]] = None,
     logger=logger,
-    ) -> xr.DataArray:
+) -> xr.DataArray:
     """Add storage volume to a grid based on a GeoDataFrame with storage locations.
 
     Parameters
@@ -45,12 +45,10 @@ def add_storage_volume(
         single_height = single_gdf.get("height", np.nan)
 
         # check if volume or height is provided in the gdf or as input
-        if np.isnan(float(single_vol)): # volume not provided or nan
-            if np.isnan(float(single_height)): # height not provided or nan
-                if volume is not None: # volume provided as input (list)
-                    single_vol = (
-                        volume if not isinstance(volume, list) else volume[i]
-                    )
+        if np.isnan(float(single_vol)):  # volume not provided or nan
+            if np.isnan(float(single_height)):  # height not provided or nan
+                if volume is not None:  # volume provided as input (list)
+                    single_vol = volume if not isinstance(volume, list) else volume[i]
                 elif height is not None:  # height provided as input (list)
                     single_height = (
                         height if not isinstance(height, list) else height[i]
@@ -88,9 +86,7 @@ def add_storage_volume(
                     dict(x=closest_point.x.item(), y=closest_point.y.item())
                 ] += single_vol
             else:
-                logger.warning(
-                    f"No volume provided for storage location of type Point"
-                )
+                logger.warning(f"No volume provided for storage location of type Point")
 
         elif single_gdf.geometry.type[0] == "Polygon":
             # rasterize the geometry
