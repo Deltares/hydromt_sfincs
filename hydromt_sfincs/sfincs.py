@@ -2827,6 +2827,7 @@ class SfincsModel(GridModel):
         """
         self._assert_write_mode
 
+        # change precision of coordinates according to crs
         if self.crs.is_geographic:
             fmt = "%.6f"
         else:
@@ -2958,6 +2959,12 @@ class SfincsModel(GridModel):
             List of data variables to write, by default None (all)
         """
         self._assert_write_mode
+        
+        # change precision of coordinates according to crs
+        if self.crs.is_geographic:
+            fmt = "%.6f"
+        else:
+            fmt = "%.1f"
 
         if self.forcing:
             self.logger.info("Write forcing files")
@@ -3008,7 +3015,7 @@ class SfincsModel(GridModel):
                         self.set_config(f"{xy_name}file", f"sfincs.{xy_name}")
                     fn_xy = self.get_config(f"{xy_name}file", abs_path=True)
                     # write xy
-                    hydromt.io.write_xy(fn_xy, gdf, fmt="%8.2f")
+                    hydromt.io.write_xy(fn_xy, gdf, fmt=fmt)
                     if self._write_gis:  # write geojson file to gis folder
                         self.write_vector(variables=f"forcing.{ts_names[0]}")
 

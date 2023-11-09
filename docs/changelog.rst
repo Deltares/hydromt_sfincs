@@ -17,6 +17,7 @@ Added
 Changed
 -------
 - Changed `setup_cn_infiltration_with_kr` into `setup_cn_infiltration_with_ks` since saturated hydraulic conductivity (ks) is used instead of recovery rate (kr) PR #126
+- precision of coordinates in geoms and forcing now depends on CRS (geographic or not) PR #143
 
 
 Fixed
