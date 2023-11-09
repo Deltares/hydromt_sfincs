@@ -16,11 +16,10 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from hydromt.models.model_grid import GridModel
-from hydromt.raster import RasterDataArray
 from hydromt.vector import GeoDataArray, GeoDataset
 from hydromt.workflows.forcing import da_to_timedelta
 from pyproj import CRS
-from shapely.geometry import box, LineString, MultiLineString, Polygon
+from shapely.geometry import LineString, box
 
 from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
@@ -758,6 +757,7 @@ class SfincsModel(GridModel):
         merge: bool = False,
         first_index: int = 1,
         keep_rivers_geom: bool = False,
+        reverse_river_geom: bool = False,
     ):
         """Setup discharge (src) points where a river enters the model domain.
 
@@ -801,8 +801,9 @@ class SfincsModel(GridModel):
             First index for the river source points, by default 1.
         keep_rivers_geom: bool, optional
             If True, keep a geometry of the rivers "rivers_inflow" in geoms. By default False.
-        buffer: int, optional
-            Buffer [no. of cells] around model domain, by default 10.
+        reverse_river_geom: bool, optional
+            If True, assume that segments in 'rivers' are drawn from downstream to upstream.
+            Only used if 'rivers' is not None, By default False
 
         See Also
         --------
@@ -819,7 +820,11 @@ class SfincsModel(GridModel):
             )
             da_flwdir = ds["flwdir"]
             da_uparea = ds["uparea"]
-        elif rivers == "rivers_outflow" and rivers in self.geoms:
+        elif (
+            isinstance(rivers, str)
+            and rivers == "rivers_outflow"
+            and rivers in self.geoms
+        ):
             # reuse rivers from setup_river_in/outflow
             gdf_riv = self.geoms[rivers]
         elif rivers is not None:
@@ -838,6 +843,8 @@ class SfincsModel(GridModel):
             river_len=river_len,
             river_upa=river_upa,
             inflow=True,
+            reverse_river_geom=reverse_river_geom,
+            logger=self.logger,
         )
         n = len(gdf_src.index)
         self.logger.info(f"Found {n} river inflow points.")
@@ -880,6 +887,7 @@ class SfincsModel(GridModel):
         keep_rivers_geom: bool = False,
         reset_bounds: bool = False,
         btype: str = "outflow",
+        reverse_river_geom: bool = False,
     ):
         """Setup open boundary cells (mask=3) where a river flows
         out of the model domain.
@@ -923,6 +931,9 @@ class SfincsModel(GridModel):
             by default False.
         btype: {'waterlevel', 'outflow'}
             Boundary type
+        reverse_river_geom: bool, optional
+            If True, assume that segments in 'rivers' are drawn from downstream to upstream.
+            Only used if rivers is not None, By default False
 
         See Also
         --------
@@ -938,7 +949,11 @@ class SfincsModel(GridModel):
             )
             da_flwdir = ds["flwdir"]
             da_uparea = ds["uparea"]
-        elif rivers == "rivers_inflow" and rivers in self.geoms:
+        elif (
+            isinstance(rivers, str)
+            and rivers == "rivers_inflow"
+            and rivers in self.geoms
+        ):
             # reuse rivers from setup_river_in/outflow
             gdf_riv = self.geoms[rivers]
         elif rivers is not None:
@@ -958,6 +973,8 @@ class SfincsModel(GridModel):
             river_len=river_len,
             river_upa=river_upa,
             inflow=False,
+            reverse_river_geom=reverse_river_geom,
+            logger=self.logger,
         )
 
         if len(gdf_out) > 0:
@@ -2873,7 +2890,7 @@ class SfincsModel(GridModel):
                     elif gname == "drn":
                         utils.write_drn(fn, gdf)
                     else:
-                        utils.write_xy(fn, gdf, fmt="%8.2f")
+                        hydromt.io.write_xy(fn, gdf, fmt="%8.2f")
 
             # NOTE: all geoms are written to geojson files in a "gis" subfolder
             if self._write_gis:
@@ -3031,7 +3048,7 @@ class SfincsModel(GridModel):
                         self.set_config(f"{xy_name}file", f"sfincs.{xy_name}")
                     fn_xy = self.get_config(f"{xy_name}file", abs_path=True)
                     # write xy
-                    utils.write_xy(fn_xy, gdf, fmt="%8.2f")
+                    hydromt.io.write_xy(fn_xy, gdf, fmt="%8.2f")
                     if self._write_gis:  # write geojson file to gis folder
                         self.write_vector(variables=f"forcing.{ts_names[0]}")
 
