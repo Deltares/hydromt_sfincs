@@ -114,7 +114,7 @@ def plot_basemap(
     plot_region: bool = False,
     plot_geoms: bool = True,
     bmap: str = None,
-    zoomlevel: int = 11,
+    zoomlevel: int = "auto",
     figsize: Tuple[int] = None,
     geom_names: List[str] = None,
     geom_kwargs: Dict = {},
@@ -140,10 +140,12 @@ def plot_basemap(
         If True, plot region outline.
     plot_geoms : bool, optional
         If True, plot available geoms.
-    bmap : {'sat', 'osm'}
-        background map, by default "sat"
+    bmap : str, optional
+        background map souce name, by default None
+        Default image tiles "sat", and "osm" are fetched from cartopy image tiles.
+        If contextily is installed, xyzproviders tiles can be used as well.
     zoomlevel : int, optional
-        zoomlevel, by default 11
+        zoomlevel, by default 'auto'
     figsize : Tuple[int], optional
         figure size, by default None
     geom_names : List[str], optional
@@ -164,6 +166,13 @@ def plot_basemap(
     import matplotlib.pyplot as plt
     from matplotlib import colors, patheffects
 
+    try:
+        import contextily as cx
+
+        has_cx = True
+    except ImportError:
+        has_cx = False
+
     # read crs and utm zone > convert to cartopy
     proj_crs = ds.raster.crs
     proj_str = proj_crs.name
@@ -183,16 +192,32 @@ def plot_basemap(
     # create fig with geo-axis and set background
     if figsize is None:
         ratio = ds.raster.ycoords.size / (ds.raster.xcoords.size * 1.4)
-        figsize = (8, 8 * ratio)
+        figsize = (6, 6 * ratio)
     fig = plt.figure(figsize=figsize)
     ax = plt.subplot(projection=crs)
     ax.set_extent(extent, crs=crs)
-    if bmap == "sat":
-        ax.add_image(cimgt.QuadtreeTiles(**bmap_kwargs), zoomlevel)
-    elif bmap == "osm":
-        ax.add_image(cimgt.OSM(**bmap_kwargs), zoomlevel)
-    elif bmap is not None and hasattr(cimgt, bmap):
-        ax.add_image(getattr(cimgt, bmap)(**bmap_kwargs), zoomlevel)
+    if bmap is not None:
+        if zoomlevel == "auto":  # auto zoomlevel
+            c = 2 * np.pi * 6378137  # Earth circumference
+            lat = np.array(ds.raster.transform_bounds(4326))[[1, 3]].mean()
+            # max 4 x 4 tiles per image
+            tile_size = max(bounds[2] - bounds[0], bounds[3] - bounds[1]) / 4
+            zoomlevel = int(np.log2(c * abs(np.cos(lat)) / tile_size))
+            # sensible range is 9 (large metropolitan area) - 16 (street)
+            zoomlevel = min(16, max(9, zoomlevel))
+        #  short names for cartopy image tiles
+        bmap = {"sat": "QuadtreeTiles", "osm": "OSM"}.get(bmap, bmap)
+        if has_cx and bmap in list(cx.providers.flatten()):
+            bmap_kwargs = dict(zoom=zoomlevel, **bmap_kwargs)
+            cx.add_basemap(ax, crs=crs, source=bmap, **bmap_kwargs)
+        elif hasattr(cimgt, bmap):
+            bmap_img = getattr(cimgt, bmap)(**bmap_kwargs)
+            ax.add_image(bmap_img, zoomlevel)
+        else:
+            err = f"Unknown background map: {bmap}"
+            if not has_cx:
+                err += " (note that contextily is not installed)"
+            raise ValueError(err)
 
     # by default colorbar on lower right & legend upper right
     kwargs0 = {"cbar_kwargs": {"shrink": 0.5, "anchor": (0, 0)}}
@@ -220,7 +245,7 @@ def plot_basemap(
 
     if variable in ds:
         da = ds[variable].raster.mask_nodata()
-        if np.any(ds["msk"] > 0):
+        if "msk" in ds and np.any(ds["msk"] > 0):
             da = da.where(ds["msk"] > 0)
         if da.raster.rotation != 0 and "xc" in da.coords and "yc" in da.coords:
             da.plot(transform=crs, x="xc", y="yc", ax=ax, zorder=1, **kwargs0)
@@ -257,7 +282,12 @@ def plot_basemap(
         ],
     )
     # plot mask boundaries
-    if plot_bounds and (ds["msk"] >= 1).any():
+    if plot_bounds and "msk" not in ds:
+        raise ValueError(
+            "No 'msk' (sfincs.msk) found in ds required to plot the model bounds "
+            "Set plot_bounds=False or add 'msk' to ds"
+        )
+    elif plot_bounds and (ds["msk"] >= 1).any():
         gdf_msk = get_bounds_vector(ds["msk"])
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
         gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
