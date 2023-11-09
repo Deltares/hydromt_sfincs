@@ -1,7 +1,7 @@
 ---
 name: Documentation Improvement
 description: Report wrong or missing documentation
-labels: [Documentation, Needs refinement]
+labels: [Documentation, Needs refinement, Examples]
 
 body:
   - type: checkboxes
