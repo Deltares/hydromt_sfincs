@@ -6,7 +6,6 @@ as well as some common data conversions.
 import copy
 import io
 import logging
-from configparser import ConfigParser
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
@@ -15,8 +14,6 @@ import geopandas as gpd
 import hydromt
 import numpy as np
 import pandas as pd
-import pyproj
-import rasterio
 import xarray as xr
 from hydromt.io import write_xy
 from pyproj.crs.crs import CRS
@@ -35,7 +32,7 @@ __all__ = [
     "get_bounds_vector",
     "mask2gdf",
     "read_xy",
-    "write_xy",
+    "write_xy",  # defined in hydromt.io
     "read_xyn",
     "write_xyn",
     "read_geoms",

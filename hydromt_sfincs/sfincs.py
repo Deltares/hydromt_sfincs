@@ -16,11 +16,10 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from hydromt.models.model_grid import GridModel
-from hydromt.raster import RasterDataArray
 from hydromt.vector import GeoDataArray, GeoDataset
 from hydromt.workflows.forcing import da_to_timedelta
 from pyproj import CRS
-from shapely.geometry import box, LineString, MultiLineString, Polygon
+from shapely.geometry import box, LineString
 
 from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
@@ -2808,7 +2807,7 @@ class SfincsModel(GridModel):
                     elif gname == "drn":
                         utils.write_drn(fn, gdf)
                     else:
-                        hydromt.io.write_xy(fn, gdf, fmt="%8.2f")
+                        utils.write_xy(fn, gdf, fmt="%8.2f")
 
             # NOTE: all geoms are written to geojson files in a "gis" subfolder
             if self._write_gis:
