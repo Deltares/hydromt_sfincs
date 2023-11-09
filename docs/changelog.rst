@@ -24,8 +24,8 @@ Fixed
 -----
 - writing COG files in `SfincsModel.setup_subgrid` (the COG driver settings were wrong) PR #117
 - a constant offset in the `datasets_dep` argument to `SfincsModel.setup_subgrid` and `SfincsModel.setup_dep` was ignored PR #119
-- Bugfixes in workflows.river_boundary_points to make sure function also works with geoDataFrame #PR 136
 - mismatch between gis data and the model grid causing issues while reading the model PR #128
+- Bugfixes in workflows.river_boundary_points to make sure function also works with geoDataFrame #PR 136
 - `utils.downscale_floodmap` now also works for large (rotated) grids PR #145
 
 Deprecated
