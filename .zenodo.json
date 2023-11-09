@@ -4,13 +4,14 @@
     "upload_type": "software",
     "creators": [
         {
-            "affiliation":"Deltares",
-            "name": "de Goede, Roel"
-        },
-        {
             "affiliation": "Deltares",
             "name": "Eilander, Dirk",
             "orcid": "0000-0002-0951-8418"
+        },
+        {
+            "affiliation":"Deltares",
+            "name": "de Goede, Roel",
+            "orcid": "0000-0002-9987-4933"
         },
         {
             "affiliation": "Deltares",
@@ -18,15 +19,21 @@
             "orcid": "0000-0003-1873-3387"
         },
         {
-            "affiliation": "Deltares",
-            "name": "Winsemius, Hessel C.",
-            "orcid": "0000-0001-5471-172X"
+            "affiliation": "Deltares-USA",
+            "name": "van Ormondt, Maarten",
+            "orcid": "0000-0002-1745-4688"
         },
         {
             "affiliation": "Deltares-USA",
-            "name": "van Ormondt, Maarten"
+            "name": "Nederhoff, Kees",
+            "orcid": "0000-0003-0552-3428"
+        },
+        {
+            "affiliation": "Deltares",
+            "name": "Winsemius, Hessel C.",
+            "orcid": "0000-0001-5471-172X"
         }
     ],
     "access_right": "open",
-    "license": "GNU Lesser General Public License v3.0"
+    "license": "GPL-3.0"
 }
