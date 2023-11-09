@@ -65,7 +65,7 @@ class SfincsModel(GridModel):
         ),
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
-    _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "kr", "vol"]
+    _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
     _STATES = ["rst", "ini"]
     _FOLDERS = []
     _CLI_ARGS = {"region": "setup_grid_from_region", "res": "setup_grid_from_region"}

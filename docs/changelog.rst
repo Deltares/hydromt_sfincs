@@ -11,6 +11,7 @@ v1.0.2 (unreleased)
 
 Added
 -----
+- `SfincsModel.setup_storage_volume` to account for green-infrastructure PR #101
 - the COG files that are written automatically contain overviews for faster visualization PR #144
 
 Changed
