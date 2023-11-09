@@ -41,17 +41,13 @@ def add_storage_volume(
         # create a gdf with only the current row
         single_gdf = gpd.GeoDataFrame(gdf.loc[[i]]).reset_index(drop=True)
 
-        single_vol = single_gdf.get("volume")
-        single_height = single_gdf.get("height")
+        single_vol = single_gdf.get("volume", np.nan)
+        single_height = single_gdf.get("height", np.nan)
 
         # check if volume or height is provided in the gdf or as input
-        if (
-            single_vol is None or np.isnan(single_vol).any()
-        ):  # volume not provided or nan
-            if (
-                single_height is None or np.isnan(single_height).any()
-            ):  # height not provided or nan
-                if volume is not None:  # volume provided as input (list)
+        if np.isnan(float(single_vol)): # volume not provided or nan
+            if np.isnan(float(single_height)): # height not provided or nan
+                if volume is not None: # volume provided as input (list)
                     single_vol = (
                         volume if not isinstance(volume, list) else volume[i]
                     )
@@ -87,7 +83,7 @@ def add_storage_volume(
                 closest_point = da_vol.sel(x=x, y=y, method="nearest")
 
             # add the volume to the grid cell
-            if single_vol is not None and not np.isnan(single_vol).any():
+            if not np.isnan(float(single_vol)):
                 da_vol.loc[
                     dict(x=closest_point.x.item(), y=closest_point.y.item())
                 ] += single_vol
@@ -102,11 +98,9 @@ def add_storage_volume(
             total_area = area.sum().values
 
             # calculate the volume per cell and add it to the grid
-            if single_vol is not None and not np.isnan(single_vol).any():
+            if not np.isnan(float(single_vol)):
                 da_vol += area / total_area * single_vol
-            elif (
-                single_height is not None and not np.isnan(single_height).any()
-            ):
+            elif not np.isnan(float(single_height)):
                 da_vol += area * single_height
             else:
                 logger.warning(
