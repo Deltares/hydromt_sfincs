@@ -433,11 +433,10 @@
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
 <span class="kn">from</span> <span class="nn">hydromt.models.model_grid</span> <span class="kn">import</span> <span class="n">GridModel</span>
-<span class="kn">from</span> <span class="nn">hydromt.raster</span> <span class="kn">import</span> <span class="n">RasterDataArray</span>
 <span class="kn">from</span> <span class="nn">hydromt.vector</span> <span class="kn">import</span> <span class="n">GeoDataArray</span><span class="p">,</span> <span class="n">GeoDataset</span>
 <span class="kn">from</span> <span class="nn">hydromt.workflows.forcing</span> <span class="kn">import</span> <span class="n">da_to_timedelta</span>
 <span class="kn">from</span> <span class="nn">pyproj</span> <span class="kn">import</span> <span class="n">CRS</span>
-<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">box</span><span class="p">,</span> <span class="n">LineString</span><span class="p">,</span> <span class="n">MultiLineString</span><span class="p">,</span> <span class="n">Polygon</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">box</span><span class="p">,</span> <span class="n">LineString</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">DATADIR</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">workflows</span>
 <span class="kn">from</span> <span class="nn">.regulargrid</span> <span class="kn">import</span> <span class="n">RegularGrid</span>
@@ -3349,7 +3348,7 @@
                     <span class="k">elif</span> <span class="n">gname</span> <span class="o">==</span> <span class="s2">&quot;drn&quot;</span><span class="p">:</span>
                         <span class="n">utils</span><span class="o">.</span><span class="n">write_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">gdf</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="n">utils</span><span class="o">.</span><span class="n">write_xy</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%8.2f</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="n">hydromt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_xy</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%8.2f</span><span class="s2">&quot;</span><span class="p">)</span>
 
             <span class="c1"># NOTE: all geoms are written to geojson files in a &quot;gis&quot; subfolder</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>
@@ -3513,7 +3512,7 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">xy_name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">xy_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="n">fn_xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">xy_name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                     <span class="c1"># write xy</span>
-                    <span class="n">utils</span><span class="o">.</span><span class="n">write_xy</span><span class="p">(</span><span class="n">fn_xy</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%8.2f</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">hydromt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_xy</span><span class="p">(</span><span class="n">fn_xy</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%8.2f</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>  <span class="c1"># write geojson file to gis folder</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;forcing.</span><span class="si">{</span><span class="n">ts_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
