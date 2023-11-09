@@ -64,7 +64,7 @@ class SfincsModel(GridModel):
         ),
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
-    _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "kr"]
+    _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
     _STATES = ["rst", "ini"]
     _FOLDERS = []
     _CLI_ARGS = {"region": "setup_grid_from_region", "res": "setup_grid_from_region"}
@@ -79,6 +79,7 @@ class SfincsModel(GridModel):
         },
         "qinf": {"standard_name": "infiltration rate", "unit": "mm.hr-1"},
         "manning": {"standard_name": "manning roughness", "unit": "s.m-1/3"},
+        "vol": {"standard_name": "storage volume", "unit": "m3"},
         "bzs": {"standard_name": "waterlevel", "unit": "m+ref"},
         "bzi": {"standard_name": "wave height", "unit": "m"},
         "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
@@ -1594,6 +1595,62 @@ class SfincsModel(GridModel):
         # set structures
         self.set_geoms(gdf_structures, "drn")
         self.set_config("drnfile", f"sfincs.drn")
+
+    def setup_storage_volume(
+        self,
+        storage_locs: Union[str, Path, gpd.GeoDataFrame],
+        volume: Union[float, List[float]] = None,
+        height: Union[float, List[float]] = None,
+        merge: bool = True,
+    ):
+        """Setup storage volume.
+
+        Adds model layer:
+        * **vol** map: storage volume for green infrastructure
+
+        Parameters
+        ----------
+        storage_locs : str, Path
+            Path, data source name, or geopandas object to storage location polygon or point geometry file.
+            Optional "volume" or "height" attributes can be provided to set the storage volume.
+        volume : float, optional
+            Storage volume [m3], by default None
+        height : float, optional
+            Storage height [m], by default None
+        merge : bool, optional
+            If True, merge with existing storage volumes, by default True.
+
+        """
+
+        # read, clip and reproject
+        gdf = self.data_catalog.get_geodataframe(
+            storage_locs,
+            geom=self.region,
+            buffer=10,
+        ).to_crs(self.crs)
+
+        if self.grid_type == "regular":
+            # if merge, add new storage volumes to existing ones
+            if merge and "vol" in self.grid:
+                da_vol = self.grid["vol"]
+            else:
+                da_vol = xr.full_like(self.mask, 0, dtype=np.float64)
+
+            # add storage volumes form gdf to da_vol
+            da_vol = workflows.add_storage_volume(
+                da_vol,
+                gdf,
+                volume=volume,
+                height=height,
+                logger=self.logger,
+            )
+
+            # set grid
+            mname = "vol"
+            da_vol.attrs.update(**self._ATTRS.get(mname, {}))
+            self.set_grid(da_vol, name=mname)
+            # update config
+            self.set_config(f"{mname}file", f"sfincs.{mname[:3]}")
 
     ### FORCING
     def set_forcing_1d(

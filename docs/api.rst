@@ -46,6 +46,7 @@ Setup components
    SfincsModel.setup_observation_lines
    SfincsModel.setup_structures
    SfincsModel.setup_drainage_structures
+   SfincsModel.setup_storage_volume
    SfincsModel.setup_waterlevel_forcing
    SfincsModel.setup_waterlevel_bnd_from_mask
    SfincsModel.setup_discharge_forcing

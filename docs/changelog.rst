@@ -11,6 +11,7 @@ v1.0.2 (unreleased)
 
 Added
 -----
+- `SfincsModel.setup_storage_volume` to account for green-infrastructure PR #101
 - Added reverse_river_geom keyword argument in workflows.river_boundary_points #PR 136
 - the COG files that are written automatically contain overviews for faster visualization PR #144
 
