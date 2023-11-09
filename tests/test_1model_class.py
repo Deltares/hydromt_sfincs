@@ -193,22 +193,32 @@ def test_drainage_structures(tmpdir):
     mod.setup_drainage_structures(fn_drn_gis, merge=True)
     assert len(mod.geoms["drn"].index) == nr_drainage_structures * 2
 
+
 def test_storage_volume(tmpdir):
     tmp_root = str(tmpdir.join("storage_volume_test"))
 
-    # create two arbitrary but overlapping polygons 
-    coords1 = [(3.5,3.5), (6.5,3.5), (6.5,6.5), (4.5,6.5), (4.5,7.25), (6.5,7.25), (6.5,8), (3,8)]
+    # create two arbitrary but overlapping polygons
+    coords1 = [
+        (3.5, 3.5),
+        (6.5, 3.5),
+        (6.5, 6.5),
+        (4.5, 6.5),
+        (4.5, 7.25),
+        (6.5, 7.25),
+        (6.5, 8),
+        (3, 8),
+    ]
     poly1 = Polygon(coords1)
     # second polygon which overlaps aprtly with the first but is smaller
-    coords2 = [(6,3), (7,3), (7,4), (6,4)]
+    coords2 = [(6, 3), (7, 3), (7, 4), (6, 4)]
     poly2 = Polygon(coords2)
     # create a geodataframe with the two polygons
-    gdf = gpd.GeoDataFrame({'geometry': [poly1, poly2]}, crs=4326)
+    gdf = gpd.GeoDataFrame({"geometry": [poly1, poly2]}, crs=4326)
     gdf["volume"] = [None, 1000]
 
     # also create an arbitrary point
-    point = Point(5,6)
-    point_gdf = gpd.GeoDataFrame({'geometry': [point]},crs=4326)
+    point = Point(5, 6)
+    point_gdf = gpd.GeoDataFrame({"geometry": [point]}, crs=4326)
     point_gdf["volume"] = 20
 
     # create a sfincs model
@@ -236,7 +246,7 @@ def test_storage_volume(tmpdir):
     mod.config.update(config)
     mod.update_grid_from_config()
 
-    # test setup_storage_volume with 
+    # test setup_storage_volume with
     # drop volume column from gdf
     gdf = gdf.drop(columns=["volume"])
     mod.setup_storage_volume(storage_locs=gdf, volume=[350, 800])
