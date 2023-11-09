@@ -454,6 +454,7 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 <section id="added">
 <h2>Added<a class="headerlink" href="#added" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>Added reverse_river_geom keyword argument in workflows.river_boundary_points #PR 136</p></li>
 <li><p>the COG files that are written automatically contain overviews for faster visualization PR #144</p></li>
 </ul>
 </section>
@@ -468,6 +469,7 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 <ul class="simple">
 <li><p>writing COG files in <cite>SfincsModel.setup_subgrid</cite> (the COG driver settings were wrong) PR #117</p></li>
 <li><p>a constant offset in the <cite>datasets_dep</cite> argument to <cite>SfincsModel.setup_subgrid</cite> and <cite>SfincsModel.setup_dep</cite> was ignored PR #119</p></li>
+<li><p>Bugfixes in workflows.river_boundary_points to make sure function also works with geoDataFrame #PR 136</p></li>
 <li><p>mismatch between gis data and the model grid causing issues while reading the model PR #128</p></li>
 <li><p><cite>utils.downscale_floodmap</cite> now also works for large (rotated) grids PR #145</p></li>
 </ul>

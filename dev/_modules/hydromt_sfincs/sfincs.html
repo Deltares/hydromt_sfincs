@@ -436,7 +436,7 @@
 <span class="kn">from</span> <span class="nn">hydromt.vector</span> <span class="kn">import</span> <span class="n">GeoDataArray</span><span class="p">,</span> <span class="n">GeoDataset</span>
 <span class="kn">from</span> <span class="nn">hydromt.workflows.forcing</span> <span class="kn">import</span> <span class="n">da_to_timedelta</span>
 <span class="kn">from</span> <span class="nn">pyproj</span> <span class="kn">import</span> <span class="n">CRS</span>
-<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">box</span><span class="p">,</span> <span class="n">LineString</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">LineString</span><span class="p">,</span> <span class="n">box</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">DATADIR</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">workflows</span>
 <span class="kn">from</span> <span class="nn">.regulargrid</span> <span class="kn">import</span> <span class="n">RegularGrid</span>
@@ -1198,6 +1198,7 @@
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">first_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">keep_rivers_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">reverse_river_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup discharge (src) points where a river enters the model domain.</span>
 
@@ -1241,8 +1242,9 @@
 <span class="sd">            First index for the river source points, by default 1.</span>
 <span class="sd">        keep_rivers_geom: bool, optional</span>
 <span class="sd">            If True, keep a geometry of the rivers &quot;rivers_inflow&quot; in geoms. By default False.</span>
-<span class="sd">        buffer: int, optional</span>
-<span class="sd">            Buffer [no. of cells] around model domain, by default 10.</span>
+<span class="sd">        reverse_river_geom: bool, optional</span>
+<span class="sd">            If True, assume that segments in &#39;rivers&#39; are drawn from downstream to upstream.</span>
+<span class="sd">            Only used if &#39;rivers&#39; is not None, By default False</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
@@ -1259,7 +1261,11 @@
             <span class="p">)</span>
             <span class="n">da_flwdir</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;flwdir&quot;</span><span class="p">]</span>
             <span class="n">da_uparea</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="n">rivers</span> <span class="o">==</span> <span class="s2">&quot;rivers_outflow&quot;</span> <span class="ow">and</span> <span class="n">rivers</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">rivers</span> <span class="o">==</span> <span class="s2">&quot;rivers_outflow&quot;</span>
+            <span class="ow">and</span> <span class="n">rivers</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span>
+        <span class="p">):</span>
             <span class="c1"># reuse rivers from setup_river_in/outflow</span>
             <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="n">rivers</span><span class="p">]</span>
         <span class="k">elif</span> <span class="n">rivers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1278,6 +1284,8 @@
             <span class="n">river_len</span><span class="o">=</span><span class="n">river_len</span><span class="p">,</span>
             <span class="n">river_upa</span><span class="o">=</span><span class="n">river_upa</span><span class="p">,</span>
             <span class="n">inflow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">reverse_river_geom</span><span class="o">=</span><span class="n">reverse_river_geom</span><span class="p">,</span>
+            <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_src</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> river inflow points.&quot;</span><span class="p">)</span>
@@ -1323,6 +1331,7 @@
         <span class="n">keep_rivers_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">reset_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">btype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;outflow&quot;</span><span class="p">,</span>
+        <span class="n">reverse_river_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup open boundary cells (mask=3) where a river flows</span>
 <span class="sd">        out of the model domain.</span>
@@ -1366,6 +1375,9 @@
 <span class="sd">            by default False.</span>
 <span class="sd">        btype: {&#39;waterlevel&#39;, &#39;outflow&#39;}</span>
 <span class="sd">            Boundary type</span>
+<span class="sd">        reverse_river_geom: bool, optional</span>
+<span class="sd">            If True, assume that segments in &#39;rivers&#39; are drawn from downstream to upstream.</span>
+<span class="sd">            Only used if rivers is not None, By default False</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
@@ -1381,7 +1393,11 @@
             <span class="p">)</span>
             <span class="n">da_flwdir</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;flwdir&quot;</span><span class="p">]</span>
             <span class="n">da_uparea</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="n">rivers</span> <span class="o">==</span> <span class="s2">&quot;rivers_inflow&quot;</span> <span class="ow">and</span> <span class="n">rivers</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">rivers</span> <span class="o">==</span> <span class="s2">&quot;rivers_inflow&quot;</span>
+            <span class="ow">and</span> <span class="n">rivers</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span>
+        <span class="p">):</span>
             <span class="c1"># reuse rivers from setup_river_in/outflow</span>
             <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="n">rivers</span><span class="p">]</span>
         <span class="k">elif</span> <span class="n">rivers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1401,6 +1417,8 @@
             <span class="n">river_len</span><span class="o">=</span><span class="n">river_len</span><span class="p">,</span>
             <span class="n">river_upa</span><span class="o">=</span><span class="n">river_upa</span><span class="p">,</span>
             <span class="n">inflow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">reverse_river_geom</span><span class="o">=</span><span class="n">reverse_river_geom</span><span class="p">,</span>
+            <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_out</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
