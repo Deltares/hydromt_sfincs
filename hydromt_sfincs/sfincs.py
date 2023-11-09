@@ -842,7 +842,8 @@ class SfincsModel(GridModel):
             river_len=river_len,
             river_upa=river_upa,
             inflow=True,
-            reverse_river_geom = reverse_river_geom,
+            reverse_river_geom=reverse_river_geom,
+            logger=self.logger,
         )
         n = len(gdf_src.index)
         self.logger.info(f"Found {n} river inflow points.")
@@ -971,7 +972,8 @@ class SfincsModel(GridModel):
             river_len=river_len,
             river_upa=river_upa,
             inflow=False,
-            reverse_river_geom = reverse_river_geom,
+            reverse_river_geom=reverse_river_geom,
+            logger=self.logger,
         )
 
         if len(gdf_out) > 0:

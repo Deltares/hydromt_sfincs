@@ -71,6 +71,7 @@ def river_boundary_points(
     river_len: float = 1e3,
     inflow: bool = True,
     reverse_river_geom: bool = False,
+    logger: logging.Logger = logger,
 ) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """Returns the locations where a river flows in (`inflow=True`)
     or out (`inflow=False`) of the model region.
@@ -109,6 +110,11 @@ def river_boundary_points(
         region.geometry.type == "Polygon"
     ):
         raise ValueError("Boundary must be a GeoDataFrame of LineStrings.")
+    if res > 0.01 and region.crs.is_geographic:
+        # provide warning
+        logger.warning(
+            "The region crs is geographic, while the resolution seems to be in meters."
+        )
 
     if gdf_riv is None and (da_flwdir is None or da_uparea is None):
         raise ValueError("Either gdf_riv or da_flwdir and da_uparea must be provided.")
@@ -124,6 +130,8 @@ def river_boundary_points(
             gdf_riv = gdf_riv[gdf_riv["uparea"] >= river_upa]
         if "rivlen" in gdf_riv.columns:
             gdf_riv = gdf_riv[gdf_riv["rivlen"] > river_len]
+    # a positive dx results in a point near the start of the line (inflow)
+    # a negative dx results in a point near the end of the line (outflow)
     dx = res / 5 if inflow else -res / 5
     if reverse_river_geom:
         dx = -dx
