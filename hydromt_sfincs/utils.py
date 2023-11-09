@@ -237,7 +237,7 @@ def read_xyn(fn: str, crs: int = None):
 def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, fmt: str = "%.1f"):
     # strip %-sign of fmt if present
     fmt = fmt.replace("%", "")
-    
+
     with open(fn, "w") as fid:
         for point in gdf.iterfeatures():
             x, y = point["geometry"]["coordinates"]
@@ -536,11 +536,11 @@ def polygon2gdf(
 
 
 def write_geoms(
-    fn: Union[str, Path], 
-    feats: List[Dict], 
-    stype: str = "thd", 
-    fmt: str ="%.1f",
-    fmt_z: str ="%.1f",
+    fn: Union[str, Path],
+    feats: List[Dict],
+    stype: str = "thd",
+    fmt: str = "%.1f",
+    fmt_z: str = "%.1f",
 ) -> None:
     """Write list of structure dictionaries to file
 

@@ -2959,7 +2959,7 @@ class SfincsModel(GridModel):
             List of data variables to write, by default None (all)
         """
         self._assert_write_mode
-        
+
         # change precision of coordinates according to crs
         if self.crs.is_geographic:
             fmt = "%.6f"
