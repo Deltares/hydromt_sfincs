@@ -709,6 +709,10 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="s2">&quot;region&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">crs</span> <span class="o">!=</span> <span class="n">pyproj_crs</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="s2">&quot;region&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="s2">&quot;region&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">pyproj_crs</span><span class="p">)</span>
 
+        <span class="c1"># update config for geographic coordinates</span>
+        <span class="k">if</span> <span class="n">pyproj_crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;crsgeo&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
         <span class="c1"># create grid from region</span>
         <span class="c1"># NOTE keyword rotated is added to still have the possibility to create unrotated grids if needed (e.g. for FEWS?)</span>
         <span class="k">if</span> <span class="n">rotated</span><span class="p">:</span>
@@ -2383,6 +2387,10 @@
         <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_bounds_vector</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span>
         <span class="n">gdf_msk2</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="p">[</span><span class="n">gdf_msk</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span>
 
+        <span class="c1"># convert to meters if crs is geographic</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
+            <span class="n">distance</span> <span class="o">=</span> <span class="n">distance</span> <span class="o">/</span> <span class="mf">111111.0</span>
+
         <span class="c1"># create points along boundary</span>
         <span class="n">points</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gdf_msk2</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
@@ -3408,6 +3416,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_assert_write_mode</span>
 
+        <span class="c1"># change precision of coordinates according to crs</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.6f</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">:</span>
             <span class="n">dvars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GEOMS</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -3420,11 +3434,11 @@
                     <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">gname</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;thd&quot;</span><span class="p">,</span> <span class="s2">&quot;weir&quot;</span><span class="p">,</span> <span class="s2">&quot;crs&quot;</span><span class="p">]:</span>
                         <span class="n">struct</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">gdf2linestring</span><span class="p">(</span><span class="n">gdf</span><span class="p">)</span>
-                        <span class="n">utils</span><span class="o">.</span><span class="n">write_geoms</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">struct</span><span class="p">,</span> <span class="n">stype</span><span class="o">=</span><span class="n">gname</span><span class="p">)</span>
+                        <span class="n">utils</span><span class="o">.</span><span class="n">write_geoms</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">struct</span><span class="p">,</span> <span class="n">stype</span><span class="o">=</span><span class="n">gname</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
                     <span class="k">elif</span> <span class="n">gname</span> <span class="o">==</span> <span class="s2">&quot;obs&quot;</span><span class="p">:</span>
-                        <span class="n">utils</span><span class="o">.</span><span class="n">write_xyn</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+                        <span class="n">utils</span><span class="o">.</span><span class="n">write_xyn</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
                     <span class="k">elif</span> <span class="n">gname</span> <span class="o">==</span> <span class="s2">&quot;drn&quot;</span><span class="p">:</span>
-                        <span class="n">utils</span><span class="o">.</span><span class="n">write_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">gdf</span><span class="p">)</span>
+                        <span class="n">utils</span><span class="o">.</span><span class="n">write_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">hydromt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_xy</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%8.2f</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -3541,6 +3555,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_assert_write_mode</span>
 
+        <span class="c1"># change precision of coordinates according to crs</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.6f</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Write forcing files&quot;</span><span class="p">)</span>
 
@@ -3590,7 +3610,7 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">xy_name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">xy_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="n">fn_xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">xy_name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                     <span class="c1"># write xy</span>
-                    <span class="n">hydromt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_xy</span><span class="p">(</span><span class="n">fn_xy</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%8.2f</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">hydromt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_xy</span><span class="p">(</span><span class="n">fn_xy</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>  <span class="c1"># write geojson file to gis folder</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;forcing.</span><span class="si">{</span><span class="n">ts_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 

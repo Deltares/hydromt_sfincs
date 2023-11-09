@@ -463,6 +463,7 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 <h2>Changed<a class="headerlink" href="#changed" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Changed <cite>setup_cn_infiltration_with_kr</cite> into <cite>setup_cn_infiltration_with_ks</cite> since saturated hydraulic conductivity (ks) is used instead of recovery rate (kr) PR #126</p></li>
+<li><p>precision of coordinates in geoms and forcing now depends on CRS (geographic or not) PR #143</p></li>
 </ul>
 </section>
 <section id="fixed">
@@ -470,8 +471,8 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 <ul class="simple">
 <li><p>writing COG files in <cite>SfincsModel.setup_subgrid</cite> (the COG driver settings were wrong) PR #117</p></li>
 <li><p>a constant offset in the <cite>datasets_dep</cite> argument to <cite>SfincsModel.setup_subgrid</cite> and <cite>SfincsModel.setup_dep</cite> was ignored PR #119</p></li>
-<li><p>Bugfixes in workflows.river_boundary_points to make sure function also works with geoDataFrame #PR 136</p></li>
 <li><p>mismatch between gis data and the model grid causing issues while reading the model PR #128</p></li>
+<li><p>Bugfixes in workflows.river_boundary_points to make sure function also works with geoDataFrame #PR 136</p></li>
 <li><p><cite>utils.downscale_floodmap</cite> now also works for large (rotated) grids PR #145</p></li>
 </ul>
 </section>
