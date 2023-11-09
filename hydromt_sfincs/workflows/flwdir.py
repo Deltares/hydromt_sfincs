@@ -70,6 +70,8 @@ def river_boundary_points(
     river_upa: float = 10,
     river_len: float = 1e3,
     inflow: bool = True,
+    reverse_river_geom: bool = False,
+    logger: logging.Logger = logger,
 ) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """Returns the locations where a river flows in (`inflow=True`)
     or out (`inflow=False`) of the model region.
@@ -95,6 +97,9 @@ def river_boundary_points(
         Mimimum river length [m] within the model domain to define river cells, by default 1000 m.
     inflow: bool, optional
         If True, return inflow otherwise outflow boundary points, by default True.
+    reverse_river_geom: bool, optional
+        If True, assume that segments in 'rivers' are drawn from downstream to upstream.
+        Only used if 'rivers' is not None, By default False
 
     Returns
     -------
@@ -105,6 +110,11 @@ def river_boundary_points(
         region.geometry.type == "Polygon"
     ):
         raise ValueError("Boundary must be a GeoDataFrame of LineStrings.")
+    if res > 0.01 and region.crs.is_geographic:
+        # provide warning
+        logger.warning(
+            "The region crs is geographic, while the resolution seems to be in meters."
+        )
 
     if gdf_riv is None and (da_flwdir is None or da_uparea is None):
         raise ValueError("Either gdf_riv or da_flwdir and da_uparea must be provided.")
@@ -117,11 +127,15 @@ def river_boundary_points(
         gdf_riv = gdf_riv.to_crs(region.crs).clip(region.unary_union)
         # filter river network based on uparea and length
         if "uparea" in gdf_riv.columns:
-            gdf_riv = [gdf_riv["uparea"] >= river_upa]
+            gdf_riv = gdf_riv[gdf_riv["uparea"] >= river_upa]
         if "rivlen" in gdf_riv.columns:
             gdf_riv = gdf_riv[gdf_riv["rivlen"] > river_len]
-
+    # a positive dx results in a point near the start of the line (inflow)
+    # a negative dx results in a point near the end of the line (outflow)
     dx = res / 5 if inflow else -res / 5
+    if reverse_river_geom:
+        dx = -dx
+
     # move point a bit into the model domain
     gdf_pnt = gdf_riv.interpolate(dx).to_frame("geometry")
     # keep points on boundary cells
@@ -133,8 +147,8 @@ def river_boundary_points(
         gdf_pnt["uparea"] = da_uparea.raster.sample(gdf_pnt).values
         gdf_pnt = gdf_pnt.sort_values("uparea", ascending=False).reset_index(drop=True)
     if "rivwth" in gdf_riv.columns:
-        gdf_out = hydromt.gis_utils.nearest_merge(
-            gdf_out, gdf_riv, columns=["rivwth"], max_dist=10
+        gdf_pnt = hydromt.gis_utils.nearest_merge(
+            gdf_pnt, gdf_riv, columns=["rivwth"], max_dist=10
         )
 
     return gdf_pnt, gdf_riv
