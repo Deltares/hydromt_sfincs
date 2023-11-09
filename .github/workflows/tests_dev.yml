@@ -33,7 +33,7 @@ jobs:
          conda list
 
       - name: Intall hydromt core dev version
-        run: pip install git+https://github.com/Deltares/hydromt.git
+        run: pip install git+https://github.com/Deltares/hydromt.git@zoom_level_bug # FIXME: remove when merged in master
 
       - name: Intall hydromt_sfincs
         run: pip install .
