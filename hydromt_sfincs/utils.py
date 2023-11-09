@@ -36,7 +36,7 @@ __all__ = [
     "get_bounds_vector",
     "mask2gdf",
     "read_xy",
-    "write_xy",
+    "write_xy",  # defined in hydromt.io
     "read_xyn",
     "write_xyn",
     "read_geoms",
