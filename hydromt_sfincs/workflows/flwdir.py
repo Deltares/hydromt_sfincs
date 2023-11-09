@@ -124,10 +124,9 @@ def river_boundary_points(
             gdf_riv = gdf_riv[gdf_riv["uparea"] >= river_upa]
         if "rivlen" in gdf_riv.columns:
             gdf_riv = gdf_riv[gdf_riv["rivlen"] > river_len]
-        if reverse_river_geom:
-            geometry_column = gdf_riv.geometry.name
-            gdf_riv[geometry_column] = gdf_riv[geometry_column].reverse()
     dx = res / 5 if inflow else -res / 5
+    if reverse_river_geom:
+        dx = -dx
 
     # move point a bit into the model domain
     gdf_pnt = gdf_riv.interpolate(dx).to_frame("geometry")
