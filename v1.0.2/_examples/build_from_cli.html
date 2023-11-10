@@ -1,0 +1,1140 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Build a model from CLI &#8212; HydroMT SFINCS  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=9d31670e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6" />
+  <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=365ca57ee442770a23c6"></script>
+
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=36754332"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_examples/build_from_cli';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Build a model from Python" href="build_from_script.html" />
+    <link rel="prev" title="Building or updating a model" href="../user_guide/sfincs_build_update.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../_static/hydromt-icon.svg" class="logo__image only-light" alt=""/>
+    <script>document.write(`<img src="../_static/hydromt-icon.svg" class="logo__image only-dark" alt=""/>`);</script>
+  
+  
+    <p class="title logo__title">HydroMT SFINCS</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../getting_started/intro.html">
+                        Getting started
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../user_guide/intro.html">
+                        User guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../dev_guide/intro.html">
+                        Developments
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+                    HydroMT core
+                  </a>
+                </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary" tabindex="0">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../getting_started/intro.html">
+                        Getting started
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../user_guide/intro.html">
+                        User guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../dev_guide/intro.html">
+                        Developments
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+                    HydroMT core
+                  </a>
+                </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../user_guide/sfincs.html">Working with the SFINCS model</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/sfincs_model_setup.html">Model components and methods</a></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../user_guide/sfincs_build_update.html">Building or updating a model</a><input checked class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">Example: Build from CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build_from_script.html">Example: Build from Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="example_datasources.html">Example: Working with data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../user_guide/sfincs_run.html">Running a model</a><input checked class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="run_sfincs_model.html">Example: Running a model</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/sfincs_analyse.html">Postprocessing and visualization</a><input checked class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="sfincs_results_hmax.html">Example: Determine maximum waterdepth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sfincs_results_animation.html">Example: Create animation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+
+
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../user_guide/intro.html" class="nav-link">User guide</a></li>
+    
+    
+    <li class="breadcrumb-item"><i class="fa-solid fa-ellipsis"></i></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../user_guide/sfincs_build_update.html" class="nav-link">Building or updating a model</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Build a...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<div>
+    For an interactive online version click here:
+    <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/build_from_cli.ipynb" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
+</div></div>
+<section id="Build-a-model-from-CLI">
+<h1>Build a model from CLI<a class="headerlink" href="#Build-a-model-from-CLI" title="Link to this heading">#</a></h1>
+<p>In this example a simple <strong>SFINCS</strong> compound flood model will be made, using <strong>HydroMT</strong>’s yml-file that allows for fast model configuration. The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># To check the version of hydromt and the hydromt_sfincs plugin, run the following command in a terminal:</span>
+<span class="o">!</span>hydromt<span class="w"> </span>--models
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+model plugins:
+ - sfincs (hydromt_sfincs 1.0.2)
+generic models (hydromt 0.8.0):
+ - grid_model
+ - lumped_model
+ - network_model
+
+
+</pre></div></div>
+</div>
+<p>This example shows how to build a simple SFINCS model on a regular grid, containing an elevation dep-file, offshore water level forcing and an upstream discharge input forcing. For making a more advanced model including e.g. spatially varying infiltration and roughness, see the example notebook: examples/build_from_script.ipynb</p>
+<p>In case you want to adjust this example to build a SFINCS model anywhere else in the world, you will have to add your own datasets to HydroMT’s data catalog. For more info on that, check-out:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/data_prepare_cat.html">Prepare data catalog</a></p></li>
+<li><p><a class="reference external" href="https://deltares.github.io/hydromt/latest/_examples/prep_data_catalog.html">Example: Prepare data catalog</a></p></li>
+<li><p><a class="reference internal" href="example_datasources.html"><span class="doc">Example: Datasources</span></a></p></li>
+</ul>
+<p><strong>Steps followed in this notebook to build your SFINCS model:</strong></p>
+<ol><li><p>Build your first SFINCS model</p>
+</li><li><p>Check what files have been created</p>
+</li><li><p>Information about created files</p>
+</li><li><p>Plot current base model</p>
+</li><li><p>Explanation of HydroMT’s .yml-file</p>
+</li><li><p>Make new model including forcing</p>
+</li><li><p>Plot model including forcing</p>
+</li><li><p>Check what additional files have been created</p>
+</li></ol><p>Let’s get started!</p>
+<section id="1.-Build-your-first-SFINCS-model:">
+<h2>1. Build your first SFINCS model:<a class="headerlink" href="#1.-Build-your-first-SFINCS-model:" title="Link to this heading">#</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">root</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;./tmp_sfincs_base&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>hydromt<span class="w"> </span>build<span class="w"> </span>sfincs<span class="w"> </span>tmp_sfincs_base<span class="w"> </span>--region<span class="w"> </span><span class="s2">&quot;{&#39;geom&#39;: &#39;data/region.geojson&#39;}&quot;</span><span class="w"> </span>-i<span class="w"> </span>sfincs_base_build.yml<span class="w"> </span>--force-overwrite<span class="w"> </span>-v
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+2023-11-10 09:19:29,965 - build - log - INFO - HydroMT version: 0.8.0
+2023-11-10 09:19:29,966 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base.
+2023-11-10 09:19:29,966 - build - main - INFO - User settings:
+2023-11-10 09:19:30,010 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.2).
+2023-11-10 09:19:30,010 - build - model_api - INFO - setup_grid_from_region.region: {&#39;geom&#39;: &#39;data/region.geojson&#39;}
+2023-11-10 09:19:30,010 - build - model_api - INFO - setup_grid_from_region.res: 50
+2023-11-10 09:19:30,011 - build - model_api - INFO - setup_grid_from_region.crs: utm
+2023-11-10 09:19:30,011 - build - model_api - INFO - setup_grid_from_region.rotated: True
+2023-11-10 09:19:30,011 - build - model_api - INFO - setup_grid_from_region.hydrography_fn: None
+2023-11-10 09:19:30,011 - build - model_api - INFO - setup_grid_from_region.basin_index_fn: None
+2023-11-10 09:19:30,011 - build - model_api - INFO - setup_grid_from_region.align: False
+2023-11-10 09:19:30,011 - build - model_api - INFO - setup_grid_from_region.dec_origin: 0
+2023-11-10 09:19:30,011 - build - model_api - INFO - setup_grid_from_region.dec_rotation: 3
+2023-11-10 09:19:30,083 - build - model_api - INFO - setup_dep.datasets_dep: [{&#39;elevtn&#39;: &#39;merit_hydro&#39;, &#39;zmin&#39;: 0.001}, {&#39;elevtn&#39;: &#39;gebco&#39;}]
+2023-11-10 09:19:30,083 - build - model_api - INFO - setup_dep.buffer_cells: 0
+2023-11-10 09:19:30,083 - build - model_api - INFO - setup_dep.interp_method: linear
+2023-11-10 09:19:30,154 - build - data_catalog - INFO - Reading data catalog artifact_data v0.0.8 from archive
+2023-11-10 09:19:32,192 - build - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
+2023-11-10 09:19:32,274 - build - data_catalog - INFO - DataCatalog: Getting merit_hydro RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/merit_hydro/{variable}.tif
+2023-11-10 09:19:32,344 - build - data_catalog - INFO - DataCatalog: Getting gebco RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gebco.tif
+2023-11-10 09:19:32,878 - build - model_api - INFO - setup_mask_active.mask: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2023-11-10 09:19:32,878 - build - model_api - INFO - setup_mask_active.include_mask: None
+2023-11-10 09:19:32,878 - build - model_api - INFO - setup_mask_active.exclude_mask: None
+2023-11-10 09:19:32,878 - build - model_api - INFO - setup_mask_active.mask_buffer: 0
+2023-11-10 09:19:32,878 - build - model_api - INFO - setup_mask_active.zmin: -5
+2023-11-10 09:19:32,878 - build - model_api - INFO - setup_mask_active.zmax: None
+2023-11-10 09:19:32,878 - build - model_api - INFO - setup_mask_active.fill_area: 10.0
+2023-11-10 09:19:32,879 - build - model_api - INFO - setup_mask_active.drop_area: 0.0
+2023-11-10 09:19:32,879 - build - model_api - INFO - setup_mask_active.connectivity: 8
+2023-11-10 09:19:32,879 - build - model_api - INFO - setup_mask_active.all_touched: True
+2023-11-10 09:19:32,879 - build - model_api - INFO - setup_mask_active.reset_mask: True
+2023-11-10 09:19:32,883 - build - data_catalog - INFO - DataCatalog: Getting region GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2023-11-10 09:19:32,893 - build - geodataframe - INFO - GeoDataFrame: Read vector data and clip to bbox (epsg:4326) [12.646, 45.490, 12.820, 45.586].
+2023-11-10 09:19:32,937 - build - regulargrid - INFO - 4 gaps outside valid elevation range &lt; 10.0 km2.
+2023-11-10 09:19:32,940 - build - sfincs - INFO - Derive region geometry based on active cells.
+2023-11-10 09:19:32,948 - build - model_api - WARNING - Replacing geom: region
+2023-11-10 09:19:32,949 - build - model_api - INFO - setup_mask_bounds.btype: waterlevel
+2023-11-10 09:19:32,949 - build - model_api - INFO - setup_mask_bounds.include_mask: None
+2023-11-10 09:19:32,949 - build - model_api - INFO - setup_mask_bounds.exclude_mask: None
+2023-11-10 09:19:32,949 - build - model_api - INFO - setup_mask_bounds.zmin: None
+2023-11-10 09:19:32,949 - build - model_api - INFO - setup_mask_bounds.zmax: -1
+2023-11-10 09:19:32,949 - build - model_api - INFO - setup_mask_bounds.connectivity: 8
+2023-11-10 09:19:32,949 - build - model_api - INFO - setup_mask_bounds.all_touched: False
+2023-11-10 09:19:32,949 - build - model_api - INFO - setup_mask_bounds.reset_bounds: False
+2023-11-10 09:19:32,985 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
+2023-11-10 09:19:32,987 - build - sfincs - INFO - Write raster file(s) for grid to &#39;gis&#39; subfolder
+2023-11-10 09:19:33,011 - build - sfincs - INFO - Write geom files
+2023-11-10 09:19:33,011 - build - sfincs - INFO - Write vector file(s) for geoms to &#39;gis&#39; subfolder
+2023-11-10 09:19:33,043 - build - sfincs - WARNING - zsini not in states, skipping
+
+</pre></div></div>
+</div>
+<p><strong>Explanation of what is provided:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">!</span></code> : the ‘!’ is added so you can run the command line interface (CLI) from a python notebook</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hydromt</span> <span class="pre">build</span> <span class="pre">sfincs</span></code> : HydroMT should build a SFINCS model,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tmp_sfincs_base</span></code> : HydroMT should build the model in a folder called “tmp_sfincs_base” relative to the current working directory (you can also provide absolute paths)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--region</span> <span class="pre">&quot;{'geom':</span> <span class="pre">'data/region.geojson'}&quot;</span></code> : the area of interest for which a model is created is based on a geometry, which is already defined for you in the file “data/region.geojson”</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-i</span> <span class="pre">sfincs_base_build.yml</span></code> : model configuration which describes the complete pipeline to build your model, more on that later</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--force-overwrite</span></code> : even if there’s already an existing folder with the same name and SFINCS input files, HydroMT will overwrite it</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-v</span></code> : add verbosity to the logger</p></li>
+</ul>
+<p><strong>NOTE:</strong></p>
+<ul class="simple">
+<li><p>instead of <code class="docutils literal notranslate"><span class="pre">--region</span></code>, you can also type <code class="docutils literal notranslate"><span class="pre">-r</span></code></p></li>
+<li><p>instead of <code class="docutils literal notranslate"><span class="pre">--force-overwrite</span></code>, you can also type <code class="docutils literal notranslate"><span class="pre">--fo</span></code></p></li>
+<li><p>for extra output information of HydroMT’s logfile command, add <code class="docutils literal notranslate"><span class="pre">-v</span></code></p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># For more information on command line available options, type:</span>
+<span class="o">!</span>hydromt<span class="w"> </span>build<span class="w"> </span>--help
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Usage: hydromt build [OPTIONS] MODEL MODEL_ROOT
+
+  Build models from scratch.
+
+  Example usage: --------------
+
+  To build a wflow model for a subbasin using a point coordinates snapped to
+  cells with upstream area &gt;= 50 km2 hydromt build wflow /path/to/model_root
+  -i /path/to/wflow_config.ini  -r &#34;{&#39;subbasin&#39;: [-7.24, 62.09], &#39;uparea&#39;:
+  50}&#34; -d deltares_data -d /path/to/data_catalog.yml -v
+
+  To build a sfincs model based on a bbox hydromt build sfincs
+  /path/to/model_root  -i /path/to/sfincs_config.ini  -r &#34;{&#39;bbox&#39;:
+  [4.6891,52.9750,4.9576,53.1994]}&#34;  -d /path/to/data_catalog.yml -v
+
+Options:
+  --opt TEXT               Method specific keyword arguments, see the method
+                           documentation of the specific model for more
+                           information about the arguments.
+  -i, --config PATH        Path to hydroMT configuration file, for the model
+                           specific implementation.
+  -r, --region TEXT        Set the region for which to build the model, e.g.
+                           {&#39;subbasin&#39;: [-7.24, 62.09]}
+  -d, --data TEXT          Path to local yaml data catalog file OR name of
+                           predefined data catalog.
+  --dd, --deltares-data    Flag: Shortcut to add the &#34;deltares_data&#34; catalog
+  --fo, --force-overwrite  Flag: If provided overwrite existing model files
+  --cache                  Flag: If provided cache tiled rasterdatasets
+  -v, --verbose            Increase verbosity.
+  -q, --quiet              Decrease verbosity.
+  --help                   Show this message and exit.
+
+</pre></div></div>
+</div>
+</section>
+<section id="2.-Check-what-files-have-been-created:">
+<h2>2. Check what files have been created:<a class="headerlink" href="#2.-Check-what-files-have-been-created:" title="Link to this heading">#</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="n">dir_list</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dir_list</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;gis&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.ind&#39;, &#39;hydromt_data.yml&#39;, &#39;sfincs.dep&#39;, &#39;hydromt.log&#39;, &#39;sfincs.inp&#39;]
+</pre></div></div>
+</div>
+</section>
+<section id="3.-Information-about-created-files:">
+<h2>3. Information about created files:<a class="headerlink" href="#3.-Information-about-created-files:" title="Link to this heading">#</a></h2>
+<p><strong>SFINCS native input files:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SFINCS</span> <span class="pre">configuration</span></code>: sfincs.inp (<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#overview">Read more</a>)</p>
+<ul>
+<li><p>which includes the grid definition (<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#grid-characteristics">Read more</a>)</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">depfile</span></code>: sfincs.dep (<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#depth-file">Read more</a>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mskfile</span></code>: sfincs.msk (<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#mask-file">Read more</a>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">indfile</span></code>: sfincs.ind (<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#index-file">Read more</a>)</p></li>
+</ul>
+<p>Check-out the SFINCS manual (see links) in case you want to have more information about each file</p>
+<p><strong>HydroMT output:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">folder</span> <span class="pre">'gis'</span></code> : contains tiff- and geojson-files of the input files of SFINCS, for you to easily check in your favourite GIS application</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">folder</span> <span class="pre">'subgrid'</span></code> : contains tiff-files of the subgrid input which can be used for downscaling later</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hydromt.log</span></code> : log-file with feedback of HydroMT during building your model</p></li>
+</ul>
+</section>
+<section id="4.-Plot-current-base-model">
+<h2>4. Plot current base model<a class="headerlink" href="#4.-Plot-current-base-model" title="Link to this heading">#</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">hydromt_sfincs</span> <span class="kn">import</span> <span class="n">SfincsModel</span>
+
+<span class="c1"># read the model with hydromt methods</span>
+<span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>Here in the plot you see the following: - Background geoimage of the region - Spatial colourplot of the elevation (dep) - In the red line of ‘waterlevel bnd’ the boundary cells along which SFINCS will later force input water levels</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the model with satelite basemap (see hydromt_sfincs.plot_basemap for more options)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">shaded</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_build_from_cli_19_0.png" src="../_images/_examples_build_from_cli_19_0.png" />
+</div>
+</div>
+</section>
+<section id="5.-Explanation-of-HydroMT's-.yml-file:">
+<h2>5. Explanation of HydroMT’s .yml-file:<a class="headerlink" href="#5.-Explanation-of-HydroMT's-.yml-file:" title="Link to this heading">#</a></h2>
+<p>This model was made using HydroMT’s yaml-file, in this case <strong>‘sfincs_base_build.yml’</strong>, that contains:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn</span> <span class="o">=</span> <span class="s2">&quot;sfincs_base_build.yml&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+global:
+  data_libs: []                # add optional paths to data_catalog yml files
+
+setup_config:
+  tref: 20100201 000000
+  tstart: 20100201 000000
+  tstop: 20100202 000000
+
+setup_grid_from_region:
+  res: 50                      # model resolution
+  crs: utm                     # model CRS (must be UTM zone)
+  rotated: True                # allow a rotated grid
+
+setup_dep:
+  datasets_dep:
+  - elevtn: merit_hydro        # 1st elevation dataset
+    zmin: 0.001                # only use where values &gt; 0.001
+  - elevtn: gebco              # 2nd eleveation dataset (to be merged with the first)
+
+setup_mask_active:
+  mask: data//region.geojson   # Note that this is local data and only valid for this example
+  zmin: -5                     # set cells below zmin to inactive
+
+setup_mask_bounds:
+  btype: waterlevel            # Set waterlevel boundaries
+  zmax: -1                     # only cells below zmax can be waterlevel boundaries
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># in case you want to see how hydromt interprets the config file, you can use the following:</span>
+<span class="kn">from</span> <span class="nn">hydromt.config</span> <span class="kn">import</span> <span class="n">configread</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">configread</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+<span class="n">config</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;global&#39;: {&#39;data_libs&#39;: []},
+ &#39;setup_config&#39;: {&#39;tref&#39;: &#39;20100201 000000&#39;,
+  &#39;tstart&#39;: &#39;20100201 000000&#39;,
+  &#39;tstop&#39;: &#39;20100202 000000&#39;},
+ &#39;setup_grid_from_region&#39;: {&#39;res&#39;: 50, &#39;crs&#39;: &#39;utm&#39;, &#39;rotated&#39;: True},
+ &#39;setup_dep&#39;: {&#39;datasets_dep&#39;: [{&#39;elevtn&#39;: &#39;merit_hydro&#39;, &#39;zmin&#39;: 0.001},
+   {&#39;elevtn&#39;: &#39;gebco&#39;}]},
+ &#39;setup_mask_active&#39;: {&#39;mask&#39;: &#39;data//region.geojson&#39;, &#39;zmin&#39;: -5},
+ &#39;setup_mask_bounds&#39;: {&#39;btype&#39;: &#39;waterlevel&#39;, &#39;zmax&#39;: -1}}
+</pre></div></div>
+</div>
+<p><strong>You can see the following sections:</strong></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">setup_config</span></code>: arguments are forwarded to the SFINCS model configuration file sfincs.inp, in this case the reference time ‘tref’, model start time ‘tstart’ and end time ‘tstop’</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setup_grid_from_region</span></code>: used to create a model grid covering the region you provided;</p>
+<ul><li><p>using a grid resolution of 50 meters (res = 50)</p>
+</li><li><p>using the closest UTM zone (crs = utm) to the model domain as the Coordinate Reference System (also a specific CRS or epsg-code can be provided)</p>
+</li><li><p>using a rotation that results in a minimum rectangle around your region (if rotation=True)</p>
+</li></ul></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setup_dep</span></code>: adds topography and bathymetry data to the model domain. If using local data sources, these should be described in a <code class="docutils literal notranslate"><span class="pre">data_catalog.yml</span></code>. At least one dataset is required.</p>
+<ul><li><p>Additional data sources are merged with the first elevation dataset using merge argements (e.g. zmin, zmax, offset, mask) if provided.</p>
+</li></ul></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setup_mask_active</span></code>: set valid model cells based on an input region file (more options available).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setup_mask_bounds</span></code>: set cells at the model domain edge with a maxmimum elevation of -5 meters (zmax = -5) to waterlevel boundary cells.</p></li>
+</ul>
+<p>From here on, we’re going to extend the model with some forcing of water level and river discharge, so that actually something interesting will happen when you run the created SFINCS model later. Also, we’re adding some observations points so we can inspect this. We do this with the additional yml-file <strong>sfincs_base_update.yml</strong> containing what we want to add:</p>
+</section>
+<section id="6.-Update-the-model-to-include-forcing:">
+<h2>6. Update the model to include forcing:<a class="headerlink" href="#6.-Update-the-model-to-include-forcing:" title="Link to this heading">#</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>hydromt<span class="w"> </span>update<span class="w"> </span>sfincs<span class="w"> </span>tmp_sfincs_base<span class="w"> </span>-i<span class="w"> </span>sfincs_base_update.yml<span class="w"> </span>-v
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+2023-11-10 09:19:44,618 - update - log - INFO - HydroMT version: 0.8.0
+2023-11-10 09:19:44,618 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base (r+).
+2023-11-10 09:19:44,618 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
+2023-11-10 09:19:44,618 - update - main - INFO - User settings:
+2023-11-10 09:19:44,661 - update - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/gis.
+2023-11-10 09:19:44,662 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.2).
+2023-11-10 09:19:44,721 - update - model_api - INFO - setup_observation_points.locations: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
+2023-11-10 09:19:44,721 - update - model_api - INFO - setup_observation_points.merge: True
+2023-11-10 09:19:44,754 - update - data_catalog - INFO - Reading data catalog artifact_data v0.0.8 from archive
+2023-11-10 09:19:44,754 - update - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
+2023-11-10 09:19:44,836 - update - data_catalog - INFO - DataCatalog: Getting compound_example_observation_points GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
+2023-11-10 09:19:44,839 - update - geodataframe - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:32633) [316221.151, 5041336.510, 329106.596, 5050441.766].
+2023-11-10 09:19:44,853 - update - model_api - INFO - setup_waterlevel_forcing.geodataset: gtsmv3_eu_era5
+2023-11-10 09:19:44,853 - update - model_api - INFO - setup_waterlevel_forcing.timeseries: None
+2023-11-10 09:19:44,853 - update - model_api - INFO - setup_waterlevel_forcing.locations: None
+2023-11-10 09:19:44,853 - update - model_api - INFO - setup_waterlevel_forcing.offset: None
+2023-11-10 09:19:44,853 - update - model_api - INFO - setup_waterlevel_forcing.buffer: 2000
+2023-11-10 09:19:44,853 - update - model_api - INFO - setup_waterlevel_forcing.merge: True
+2023-11-10 09:19:44,871 - update - data_catalog - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gtsmv3_eu_era5.nc
+2023-11-10 09:19:44,912 - update - geodataset - INFO - GeoDataset: Read netcdf data and clip to geom (epsg:32633) [315583.508, 5039336.895, 331106.210, 5049946.562].
+2023-11-10 09:19:45,288 - update - model_api - INFO - setup_discharge_forcing.geodataset: None
+2023-11-10 09:19:45,288 - update - model_api - INFO - setup_discharge_forcing.timeseries: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
+2023-11-10 09:19:45,288 - update - model_api - INFO - setup_discharge_forcing.locations: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
+2023-11-10 09:19:45,288 - update - model_api - INFO - setup_discharge_forcing.merge: True
+2023-11-10 09:19:45,288 - update - model_api - INFO - setup_discharge_forcing.buffer: None
+2023-11-10 09:19:45,289 - update - data_catalog - INFO - DataCatalog: Getting compound_dis_timeseries DataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
+2023-11-10 09:19:45,289 - update - dataframe - INFO - DataFrame: Read csv data.
+2023-11-10 09:19:45,295 - update - data_catalog - INFO - DataCatalog: Getting compound_src_locations GeoDataFrame vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
+2023-11-10 09:19:45,295 - update - geodataframe - INFO - GeoDataFrame: Read vector data and clip to geom (epsg:32633) [316221.151, 5041336.510, 329106.596, 5050441.766].
+2023-11-10 09:19:45,311 - update - sfincs - INFO - Setting gdf_locs index to ID
+2023-11-10 09:19:45,313 - update - sfincs - INFO - No matching index column found in gdf_locs; assuming the order is correct
+2023-11-10 09:19:45,324 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
+2023-11-10 09:19:45,328 - update - sfincs - INFO - Write raster file(s) for grid to &#39;gis&#39; subfolder
+2023-11-10 09:19:45,367 - update - sfincs - INFO - Write geom files
+2023-11-10 09:19:45,370 - update - sfincs - INFO - Write vector file(s) for geoms to &#39;gis&#39; subfolder
+2023-11-10 09:19:45,409 - update - sfincs - INFO - Write forcing files
+2023-11-10 09:19:45,420 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2023-11-10 09:19:45,455 - update - sfincs - INFO - Write vector file(s) for forcing.dis to &#39;gis&#39; subfolder
+2023-11-10 09:19:45,480 - update - sfincs - WARNING - zsini not in states, skipping
+2023-11-10 09:19:45,481 - update - data_catalog - INFO - Parsing data catalog from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/hydromt_data.yml
+
+</pre></div></div>
+</div>
+<p>The example above means the following: run <strong>hydromt</strong> with:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">sfincs</span></code>: i.e. update a SFINCS model.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tmp_sfincs_base</span></code>: original model folder. Here we update the model inplace. Add <code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">&lt;output</span> <span class="pre">folder&gt;</span></code> to store the udpated model in another directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-i</span> <span class="pre">sfincs_base_update.yml</span></code>: configuration file containing the components to update and their different options.</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Let&#39;s see what is in the yml-file:</span>
+
+<span class="n">fn</span> <span class="o">=</span> <span class="s2">&quot;sfincs_base_update.yml&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+setup_observation_points:
+  locations: data//compound_example_observation_points.geojson       # Note that this is local data and only valid for this example
+
+setup_waterlevel_forcing:
+  geodataset: gtsmv3_eu_era5
+  buffer: 2000                                                        # [m] find points within 2 km of waterlevel boundary
+
+setup_discharge_forcing:
+  timeseries: data/compound_dis_timeseries.csv
+  locations: data/compound_src_locations.geojson                     # Note that this is local data and only valid for this example
+
+</pre></div></div>
+</div>
+<p><strong>You can see the following sections:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">setup_observation_points</span></code>: add 3 observation points based on the locations given in the shapefile <em>“data//compound_example_observation_points.shp”</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setup_waterlevel_forcing</span></code>: add water level forcing, in this case water levels from a GTSM run, with 4 output points found in the SFINCS model domain. Timeseries are clipped automatically to the earlier provided start and stop time of the SFINCS model (in setup_config)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setup_discharge_forcing</span></code>: add an upstream river discharge input point, in this case from a csv file (timeseries) and a geojson (locations)</p></li>
+</ul>
+</section>
+<section id="7.-Plot-model-including-forcing:">
+<h2>7. Plot model including forcing:<a class="headerlink" href="#7.-Plot-model-including-forcing:" title="Link to this heading">#</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">hydromt_sfincs</span> <span class="kn">import</span> <span class="n">SfincsModel</span>
+
+<span class="c1"># read the model with hydromt methods</span>
+<span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p><strong>In the forcing plot you see the following:</strong></p>
+<ul class="simple">
+<li><p>Water level time-series based on GTSM input for the model period. For each of the 4 stations within the SFINCS domain, these time-series are interpolated to the ‘waterlevel’ boundary cells (bnd) using the two nearest stations.</p></li>
+<li><p>Discharge time series from the local file input. These timeseries are forced at the ‘discharge src’ points</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot time-series:</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_forcing</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;forcing.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_build_from_cli_34_0.png" src="../_images/_examples_build_from_cli_34_0.png" />
+</div>
+</div>
+<p><strong>In the basemap plot you see the following:</strong></p>
+<ul class="simple">
+<li><p>Background geoimage of the region</p></li>
+<li><p>Spatial colourplot of the elevation (dep)</p></li>
+<li><p>In the red line of ‘waterlevel bnd’ the boundary cells along which SFINCS will later force input water levels</p></li>
+<li><p>Specified observation points ‘obs’ in red diamond to get a ‘sfincs_his.nc’ output file</p></li>
+<li><p>Discharge ‘src’ and waterlevel ‘bnd’ point locations.</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the model basemaps</span>
+<span class="c1"># Note the added obs and forcing points</span>
+
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;basemap.png&quot;</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_build_from_cli_36_0.png" src="../_images/_examples_build_from_cli_36_0.png" />
+</div>
+</div>
+</section>
+<section id="8.-Check-what-additional-files-have-been-created:">
+<h2>8. Check what additional files have been created:<a class="headerlink" href="#8.-Check-what-additional-files-have-been-created:" title="Link to this heading">#</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dir_list</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dir_list</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;sfincs.bzs&#39;, &#39;gis&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.dis&#39;, &#39;sfincs.ind&#39;, &#39;figs&#39;, &#39;hydromt_data.yml&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.src&#39;, &#39;hydromt.log&#39;, &#39;sfincs.bnd&#39;, &#39;sfincs.inp&#39;]
+</pre></div></div>
+</div>
+<p><strong>SFINCS native input files:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">obsfile</span></code>: sfincs.obs (<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#observation-points">Read more</a>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bndfile</span></code>: sfincs.bnd (<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#water-level-points">Read more</a>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bzsfile</span></code>: sfincs.bzs (<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#water-level-time-series">Read more</a>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">srcfile</span></code>: sfincs.src (<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#discharge-points">Read more</a>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">disfile</span></code>: sfincs.dis (<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html#discharge-time-series">Read more</a>)</p></li>
+</ul>
+<p>Click on <strong>Read more</strong> in case you want to have more information about what each file means!</p>
+<p>In case you want to add other types of forcing, check-out:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html">SFINCS manual about input forcing</a></p></li>
+<li><p><a class="reference internal" href="example_forcing.html"><span class="doc">Example: Forcing</span></a></p></li>
+</ul>
+<p>Now you have made a model, you can progress to the notebooks:</p>
+<ul><li><p>examples/run_sfincs_model.ipynb</p>
+</li><li><p>examples/analyse_sfincs_model.ipynb</p>
+</li></ul><p>This notebook provides you a simple SFINCS model on a regular grid. A more advanced example is provided in see examples/build_from_script.ipynb. In addition, an overview of all available options in HydroMT-SFINCS can be found <a class="reference external" href="https://deltares.github.io/hydromt_sfincs/latest/user_guide/sfincs.html">here</a>.</p>
+<p><strong>NOTE:</strong> HydroMT can build even more models for you, like the Hydrological model Wflow, to provide for instance upstream boundary conditions for your SFINCS model! See e.g: <a class="reference external" href="https://deltares.github.io/hydromt/latest/plugins.html">https://deltares.github.io/hydromt/latest/plugins.html</a></p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  <!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../user_guide/sfincs_build_update.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Building or updating a model</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="build_from_script.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Build a model from Python</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#1.-Build-your-first-SFINCS-model:">1. Build your first SFINCS model:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Check-what-files-have-been-created:">2. Check what files have been created:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Information-about-created-files:">3. Information about created files:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Plot-current-base-model">4. Plot current base model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#5.-Explanation-of-HydroMT's-.yml-file:">5. Explanation of HydroMT’s .yml-file:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#6.-Update-the-model-to-include-forcing:">6. Update the model to include forcing:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#7.-Plot-model-including-forcing:">7. Plot model including forcing:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#8.-Check-what-additional-files-have-been-created:">8. Check what additional files have been created:</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="../_sources/_examples/build_from_cli.ipynb.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright Deltares.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
