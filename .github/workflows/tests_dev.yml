@@ -1,4 +1,4 @@
-name: Tests Dev
+name: Tests dev
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   Test:
-    name: HydroMT dev - ubuntu-latest - py3.10
+    name: ubuntu-latest - py3.9
     runs-on: "ubuntu-latest"
     defaults:
       run:
