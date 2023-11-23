@@ -3,9 +3,8 @@
 from os.path import dirname, join, abspath
 
 
-__version__ = "1.0.2"
+__version__ = "1.0.3.dev0"
 
 DATADIR = join(dirname(abspath(__file__)), "data")
 
-# from .hydromt_sfincs import *
 from .sfincs import *
