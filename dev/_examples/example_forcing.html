@@ -458,10 +458,10 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-11-09 14:43:04,027 - root - log - INFO - HydroMT version: 0.8.0
-2023-11-09 14:43:05,096 - root - data_catalog - INFO - Reading data catalog artifact_data v0.0.8 from archive
-2023-11-09 14:43:05,097 - root - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
-2023-11-09 14:43:05,168 - root - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.2.dev0).
+2023-11-23 14:41:34,251 - root - log - INFO - HydroMT version: 0.9.1
+2023-11-23 14:41:34,286 - root - data_catalog - INFO - Reading data catalog archive artifact_data v0.0.8
+2023-11-23 14:41:34,287 - root - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
+2023-11-23 14:41:34,418 - root - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.3.dev0).
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -511,8 +511,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-11-09 14:43:05,209 - root - data_catalog - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/era5_hourly.nc
-2023-11-09 14:43:05,542 - root - sfincs - INFO - Write forcing files
+2023-11-23 14:41:34,448 - root - rasterdataset - INFO - Reading era5_hourly netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/era5_hourly.nc
+2023-11-23 14:41:34,637 - root - sfincs - INFO - Write forcing files
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -532,8 +532,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-11-09 14:43:05,559 - root - data_catalog - INFO - DataCatalog: Getting era5_hourly RasterDataset netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/era5_hourly.nc
-2023-11-09 14:43:05,626 - root - model_api - WARNING - Replacing forcing: precip
+2023-11-23 14:41:34,648 - root - rasterdataset - INFO - Reading era5_hourly netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/era5_hourly.nc
+2023-11-23 14:41:34,698 - root - model_api - WARNING - Replacing forcing: precip
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -554,8 +554,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-11-09 14:43:05,639 - root - data_catalog - INFO - DataCatalog: Getting precip DataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/precip.csv
-2023-11-09 14:43:05,639 - root - dataframe - INFO - DataFrame: Read csv data.
+2023-11-23 14:41:34,706 - root - dataframe - INFO - Reading  csv data from precip.csv
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -638,8 +637,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-11-09 14:43:06,125 - root - data_catalog - INFO - DataCatalog: Getting dtu10mdt RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/dtu10mdt.tif
-2023-11-09 14:43:06,182 - root - model_api - WARNING - Replacing forcing: bzs
+2023-11-23 14:41:35,091 - root - rasterdataset - INFO - Reading dtu10mdt raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/dtu10mdt.tif
+2023-11-23 14:41:35,133 - root - model_api - WARNING - Replacing forcing: bzs
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -678,9 +677,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-11-09 14:43:06,426 - root - data_catalog - INFO - DataCatalog: Getting waterlevel DataFrame csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/waterlevel.csv
-2023-11-09 14:43:06,428 - root - dataframe - INFO - DataFrame: Read csv data.
-2023-11-09 14:43:06,457 - root - model_api - WARNING - Replacing forcing: bzs
+2023-11-23 14:41:35,322 - root - dataframe - INFO - Reading  csv data from waterlevel.csv
+2023-11-23 14:41:35,344 - root - model_api - WARNING - Replacing forcing: bzs
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -719,10 +717,9 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-11-09 14:43:06,700 - root - data_catalog - INFO - DataCatalog: Getting gtsmv3_eu_era5 GeoDataset netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gtsmv3_eu_era5.nc
-2023-11-09 14:43:06,704 - root - geodataset - INFO - GeoDataset: Read netcdf data and clip to geom (epsg:32633) [263650.000, 5013550.000, 337400.000, 5064350.000].
-2023-11-09 14:43:06,822 - root - data_catalog - INFO - DataCatalog: Getting dtu10mdt RasterDataset raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/dtu10mdt.tif
-2023-11-09 14:43:06,865 - root - model_api - WARNING - Replacing forcing: bzs
+2023-11-23 14:41:35,530 - hydromt.data_adapter.geodataset - geodataset - INFO - Reading gtsmv3_eu_era5 netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gtsmv3_eu_era5.nc
+2023-11-23 14:41:35,633 - root - rasterdataset - INFO - Reading dtu10mdt raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/dtu10mdt.tif
+2023-11-23 14:41:35,663 - root - model_api - WARNING - Replacing forcing: bzs
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -756,8 +753,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-11-09 14:43:07,239 - root - sfincs - INFO - Write forcing files
-2023-11-09 14:43:07,260 - root - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2023-11-23 14:41:35,961 - root - sfincs - INFO - Write forcing files
+2023-11-23 14:41:35,978 - root - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -777,9 +774,13 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-11-09 14:43:07,344 - hydromt_sfincs.sfincs - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.2.dev0).
-2023-11-09 14:43:07,365 - hydromt_sfincs.sfincs - sfincs - WARNING - Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_example/gis/bnd.geojson
-2023-11-09 14:43:07,382 - hydromt_sfincs.sfincs - sfincs - WARNING - Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_example/gis/bnd.geojson
+2023-11-23 14:41:36,020 - hydromt_sfincs.sfincs - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.3.dev0).
+2023-11-23 14:41:36,036 - hydromt_sfincs.sfincs - sfincs - WARNING - Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_example/gis/bnd.geojson
+2023-11-23 14:41:36,053 - hydromt_sfincs.sfincs - sfincs - WARNING - Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_example/gis/bnd.geojson
+2023-11-23 14:41:36,066 - hydromt_sfincs.sfincs - sfincs - WARNING - Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_example/gis/bnd.geojson
+2023-11-23 14:41:36,072 - hydromt_sfincs.sfincs - model_api - WARNING - Replacing forcing: bzs
+2023-11-23 14:41:36,081 - hydromt_sfincs.sfincs - sfincs - WARNING - Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_example/gis/bnd.geojson
+2023-11-23 14:41:36,087 - hydromt_sfincs.sfincs - model_api - WARNING - Replacing forcing: precip
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
