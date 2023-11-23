@@ -6,8 +6,26 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+v1.0.3 (in development)
+=======================
+
+Added
+-----
+
+Changed
+-------
+- support for HydroMT core v0.9
+
+Fixed
+-----
+
+Deprecated
+----------
+
+
+
 v1.0.2 (9 November 2023)
-===================
+========================
 This release mostly contains bugfixes and improvements to existing methods. Some new features have been added as well, 
 such as the option to add storage volume to the model to account for green infrastructure. Another addition is the 
 generation of overviews for the Cloud Optimized GeoTIFF files for faster visualization. 
