@@ -881,6 +881,11 @@ def downscale_floodmap(
     --------
     hydromt.raster.RasterDataArray.to_raster
     """
+
+    # Hydromt expects a string so if a Path is provided, convert to str
+    if isinstance(floodmap_fn, Path):
+        floodmap_fn = str(floodmap_fn)
+
     # get maximum water level
     timedim = set(zsmax.dims) - set(zsmax.raster.dims)
     if timedim:
