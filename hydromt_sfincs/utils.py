@@ -1097,6 +1097,10 @@ def build_overviews(
         overview levels are determined based on the size of the dataset.
     """
 
+    # Endswith is not a method of Path so convert to str
+    if isinstance(fn, Path):
+        fn = str(fn)
+
     # check if fn is a geotiff file
     extensions = [".tif", ".tiff"]
     assert any(
