@@ -18,6 +18,7 @@ Changed
 
 Fixed
 -----
+- fixed `SfincsModel.setup_subgrid` for models with geograpgical CRS #152
 
 Deprecated
 ----------
