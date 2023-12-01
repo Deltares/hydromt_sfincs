@@ -459,11 +459,12 @@ class SubgridTableRegular:
 
                 # optional write tile to file
                 # NOTE tiles have overlap! da_dep[:-refi,:-refi]
+                x_dim_dep, y_dim_dep = da_dep.raster.x_dim, da_dep.raster.y_dim
                 window = Window(
                     bm0 * nr_subgrid_pixels,
                     bn0 * nr_subgrid_pixels,
-                    da_dep[:-refi, :-refi].sizes[x_dim],
-                    da_dep[:-refi, :-refi].sizes[y_dim],
+                    da_dep[:-refi, :-refi].sizes[x_dim_dep],
+                    da_dep[:-refi, :-refi].sizes[y_dim_dep],
                 )
                 if write_dep_tif:
                     # write the block to the output COG
