@@ -15,6 +15,8 @@ Added
 Changed
 -------
 - support for HydroMT core v0.9
+- increased default value of dtmaxout to 999999.0 in sfincs.inp
+- changed default value for advection to 1 (instead of non-existing 2 in previous versions) in sfincs.inp
 
 Fixed
 -----
