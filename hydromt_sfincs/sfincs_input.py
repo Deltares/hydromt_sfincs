@@ -29,7 +29,7 @@ class SfincsInput:
         self.dtmapout = None
         self.dthisout = 600.0
         self.dtrstout = 0.0
-        self.dtmaxout = 99999.0
+        self.dtmaxout = 999999.0
         self.trstout = -999.0
         self.dtwnd = 1800.0
         self.alpha = 0.5
