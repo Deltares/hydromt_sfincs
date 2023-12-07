@@ -44,7 +44,7 @@ class SfincsInput:
         self.rhoa = 1.25
         self.rhow = 1024.0
         self.dtmax = 60.0
-        self.advection = 2
+        self.advection = 1
         self.baro = 0
         self.pavbnd = 0
         self.gapres = 101200.0
