@@ -901,6 +901,10 @@ def downscale_floodmap(
     if timedim:
         zsmax = zsmax.max(timedim)
 
+    # Hydromt expects a string so if a Path is provided, convert to str
+    if isinstance(floodmap_fn, Path):
+        floodmap_fn = str(floodmap_fn)
+
     if isinstance(dep, xr.DataArray):
         hmax = _downscale_floodmap_da(
             zsmax=zsmax,
@@ -1106,6 +1110,10 @@ def build_overviews(
         List of overview levels, by default "auto". When set to "auto" the
         overview levels are determined based on the size of the dataset.
     """
+
+    # Endswith is not a method of Path so convert to str
+    if isinstance(fn, Path):
+        fn = str(fn)
 
     # check if fn is a geotiff file
     extensions = [".tif", ".tiff"]
