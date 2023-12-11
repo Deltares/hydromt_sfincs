@@ -10,6 +10,7 @@ from typing import Dict, Any
 class SfincsInput:
     def __init__(self):
         """Initialize SfincsInput class with default values"""
+        # SFINCS - grid        
         self.mmax = 10
         self.nmax = 10
         self.dx = 10.0
@@ -20,6 +21,8 @@ class SfincsInput:
         self.epsg = None
         self.latitude = 0.0
         self.utmzone = None
+        
+        # SFINCS - time        
         self.tref = datetime(2010, 2, 1, 0, 0, 0)
         self.tstart = datetime(2010, 2, 1, 0, 0, 0)
         self.tstop = datetime(2010, 2, 2, 0, 0, 0)
@@ -32,6 +35,8 @@ class SfincsInput:
         self.dtmaxout = 99999.0
         self.trstout = -999.0
         self.dtwnd = 1800.0
+        
+        # SFINCS - numerical settings        
         self.alpha = 0.5
         self.theta = 1.0
         self.huthresh = 0.01
@@ -53,6 +58,7 @@ class SfincsInput:
         self.btfilter = 60.0
         self.viscosity = 1
 
+        # SFINCS - input files
         self.depfile = None
         self.mskfile = None
         self.indexfile = None
@@ -87,43 +93,50 @@ class SfincsInput:
         self.manningfile = None
         self.scsfile = None
         self.rstfile = None
-        self.wfpfile = None
-        self.whifile = None
-        self.wtifile = None
-        self.wstfile = None
+        self.wmvfile = None        
+        # self.wfpfile = None
+        # self.whifile = None
+        # self.wtifile = None
+        # self.wstfile = None
 
+        # SFINCS - input/output format
         self.inputformat = "bin"
         self.outputformat = "net"
 
+        # SFINCS - wind drag coefficients
         self.cdnrb = 3
         self.cdwnd = [0.0, 28.0, 50.0]
         self.cdval = [0.001, 0.0025, 0.0015]
         
-        # wave coupling
+        # SFINCS - wave coupling
         self.snapwave = None
         self.dtwave = None
 
-        # SnapWave
-        self.snapwave_igwaves = None
-        self.snapwave_alpha = None
-        self.snapwave_alpha_ig = None
-        self.snapwave_gamma = None
-        self.snapwave_gammaig = None
-        self.snapwave_ig_opt = None
-        self.snapwave_hmin = None
-        self.snapwave_shpercig = None
-        self.snapwave_Tinc2ig = None
-        self.snapwave_dtheta = None
-        self.snapwave_alphaigfac = None
-        self.snapwave_fw = None
-        self.snapwave_fwig = None
-        self.snapwave_dt = None
-        
+        # SnapWave - generic
         self.snapwave_mskfile  = None        
         self.netwavefile = None
+
+        self.snapwave_hmin = None
+        self.snapwave_dt = None
+        self.snapwave_dtheta = None
         
         self.snapwave_tol = None
         self.snapwave_crit = None
+        
+        # SnapWave - incident wave
+        self.snapwave_alpha = None
+        self.snapwave_gamma = None
+        self.snapwave_fw = None
+        
+        # SnapWave - infragravity wave
+        self.snapwave_igwaves = None
+        self.snapwave_alpha_ig = None
+        self.snapwave_gammaig = None
+        self.snapwave_fwig = None
+        self.snapwave_ig_opt = None
+        self.snapwave_shpercig = None
+        self.snapwave_Tinc2ig = None
+        self.snapwave_alphaigfac = None        
 
     def read(self, inp_fn: str) -> None:
         """Read sfincs input file and set attributes to values in file."""

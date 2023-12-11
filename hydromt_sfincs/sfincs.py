@@ -41,16 +41,16 @@ class SfincsModel(GridModel):
         "weirs": "weir",
         "thin_dams": "thd",
         "drainage_structures": "drn",
+        "wavemaker": "wvm",        
     }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
         # timeseries (can be multiple), locations tuple
         "waterlevel": (["bzs"], "bnd"),
-        "waves": (["bzi"], "bnd"),
         "discharge": (["dis"], "src"),
         "precip": (["precip"], None),
         "wind": (["wnd"], None),
-        # "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),
-        # "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
+        # "waves": (["bzi"], "bnd"), #--> don't do that anymore for msk=2 cells   
+        "wavemaker_timeseries": (["wzi"], "wvm"),          # TODO check names and test
     }
     _FORCING_NET = {
         # 2D forcing sfincs name, rename tuple
@@ -58,9 +58,9 @@ class SfincsModel(GridModel):
         "discharge": ("netsrcdis", {"discharge": "dis"}),
         "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
         "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
-        "wind_2d": ("netamuamv",
-            {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
-        "wave": ("netwave", {"bhs":"wave_height", "btp":"wave_period" , "bwd":"wave_direction", "bds":"wave_spreading"}),                                        
+        "wind_2d": ("netamuamv", {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
+        "snapwave": ("netsnapwave", {"wave_height", "wave_period", "wave_direction", "wave_spreading"}),   
+        "wavemaker": ("netwavemaker", {"whi":"wavemaker_wave_height","wti":"wavemaker_wave_period","wst":"wavemaker_wave_setup"}),                                             
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
@@ -80,7 +80,8 @@ class SfincsModel(GridModel):
         "manning": {"standard_name": "manning roughness", "unit": "s.m-1/3"},
         "vol": {"standard_name": "storage volume", "unit": "m3"},
         "bzs": {"standard_name": "waterlevel", "unit": "m+ref"},
-        "bzi": {"standard_name": "wave height", "unit": "m"},
+        # "bzi": {"standard_name": "wave height", "unit": "m"},
+        "wzi": {"standard_name": "waterlevel individual waves", "unit": "m"},
         "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
         "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
         "precip_2d": {"standard_name": "precipitation", "unit": "mm.hr-1"},
@@ -2457,7 +2458,7 @@ class SfincsModel(GridModel):
                 geodataset,
                 geom=region,
                 buffer=buffer,
-                variables=["wave"],
+                variables=["snapwave"],
                 time_tuple=(tstart, tstop),
                 crs=self.crs,
             )
@@ -2480,17 +2481,61 @@ class SfincsModel(GridModel):
             ).to_crs(self.crs)
             if "index" in gdf_locs.columns:
                 gdf_locs = gdf_locs.set_index("index")
-        elif gdf_locs is None and "bhs" in self.forcing:
-            gdf_locs = self.forcing["bhs"].vector.to_gdf()
+        elif gdf_locs is None and "wave_height" in self.forcing: #TODO: check if needed for all 4 vars
+            gdf_locs = self.forcing["wave_height"].vector.to_gdf()
         elif gdf_locs is None:
             raise ValueError("No wave boundary (snapwave_bnd) points provided.")
 
         # set/ update forcing
-        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="wave_height", merge=merge)
-        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="wave_period", merge=merge)
-        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="wave_direction", merge=merge)
-        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="wave_spreading", merge=merge)
+        self.set_forcing(df_ts=df_ts, gdf_locs=gdf_locs, name=["snapwave"], merge=merge)
 
+    def setup_wavemaker(
+        self,
+        wavemaker: Union[str, Path, gpd.GeoDataFrame],
+        stype: str,        
+        merge: bool = True,
+        **kwargs,
+    ):
+        """Setup wavemaker polylines.
+
+        Adds model layer (depending on `stype`):
+
+        * **wavm** geom: wavemaker
+
+        Parameters
+        ----------
+        wavemaker : str, Path
+            Path, data source name, or geopandas object to wavemaker line geometry file.
+        stype : {'wvm'}
+            Wavemaker type.            
+        merge : bool, optional
+            If True, merge with existing'stype' structures, by default True.
+        """
+
+        # read, clip and reproject
+        gdf_wavemaker = self.data_catalog.get_geodataframe(
+            wavemaker, geom=self.region, **kwargs
+        ).to_crs(self.crs)
+
+        cols = {
+            "wvm": ["name", "geometry"], # TODO: do we need to keep the option that it could be multiple vars?
+        }
+        assert stype in cols, f"stype must be one of {list(cols.keys())}"
+        gdf = gdf_wavemaker[
+            [c for c in cols[stype] if c in gdf_wavemaker.columns]
+        ]  # keep relevant cols
+
+        structs = utils.gdf2linestring(gdf)  # check if it parsed correct
+        # combine with existing structures if present
+        if merge and stype in self.geoms:
+            gdf0 = self._geoms.pop(stype)
+            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
+            self.logger.info(f"Adding {stype} wavemaker to existing wavemakers.")
+
+        # set structures
+        self.set_geoms(gdf, stype)
+        self.set_config(f"{stype}file", f"sfincs.{stype}")
+        
     def setup_tiles(
         self,
         path: Union[str, Path] = None,
@@ -2943,7 +2988,7 @@ class SfincsModel(GridModel):
                 elif not isfile(fn):
                     self.logger.warning(f"{gname}file not found at {fn}")
                     continue
-                if gname in ["thd", "weir", "crs"]:
+                if gname in ["thd", "weir", "crs", "wvm"]:
                     struct = utils.read_geoms(fn)
                     gdf = utils.linestring2gdf(struct, crs=self.crs)
                 elif gname == "obs":
@@ -2994,7 +3039,7 @@ class SfincsModel(GridModel):
                     if f"{gname}file" not in self.config:
                         self.set_config(f"{gname}file", f"sfincs.{gname}")
                     fn = self.get_config(f"{gname}file", abs_path=True)
-                    if gname in ["thd", "weir", "crs"]:
+                    if gname in ["thd", "weir", "crs", "wvm"]:
                         struct = utils.gdf2linestring(gdf)
                         utils.write_geoms(fn, struct, stype=gname, fmt=fmt)
                     elif gname == "obs":
@@ -3089,7 +3134,7 @@ class SfincsModel(GridModel):
                 if fn is not None:
                     self.logger.warning(f"{name}file not found at {fn}")
                 continue
-            elif name in ["netbndbzsbzi", "netsrcdis", "netwave"]:
+            elif name in ["netbndbzsbzi", "netsrcdis", "netsnapwave", "netwavemaker"]:
                 ds = GeoDataset.from_netcdf(fn, crs=self.crs, chunks="auto")
             else:
                 ds = xr.open_dataset(fn, chunks="auto")
@@ -3194,7 +3239,7 @@ class SfincsModel(GridModel):
                     self.set_config(f"{fname}file", f"{name}.nc")
                 fn = self.get_config(f"{fname}file", abs_path=True)
                 # write 1D timeseries
-                if fname in ["netbndbzsbzi", "netsrcdis", "netwave"]:
+                if fname in ["netbndbzsbzi", "netsrcdis", "netsnapwave", "netwavemaker"]:
                     ds.vector.to_xy().to_netcdf(fn, encoding=encoding)
                     if self._write_gis:  # write geojson file to gis folder
                         self.write_vector(variables=f"forcing.{list(rename.keys())[0]}")
