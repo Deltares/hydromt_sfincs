@@ -49,8 +49,8 @@ class SfincsModel(GridModel):
         "discharge": (["dis"], "src"),
         "precip": (["precip"], None),
         "wind": (["wnd"], None),
-        "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),
-        "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
+        # "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),
+        # "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
     }
     _FORCING_NET = {
         # 2D forcing sfincs name, rename tuple
@@ -58,10 +58,9 @@ class SfincsModel(GridModel):
         "discharge": ("netsrcdis", {"discharge": "dis"}),
         "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
         "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
-        "wind_2d": (
-            "netamuamv",
-            {"eastward_wind": "wind_u", "northward_wind": "wind_v"},
-        ),
+        "wind_2d": ("netamuamv",
+            {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
+        "wave": ("netwave", {"bhs":"wave_height", "btp":"wave_period" , "bwd":"wave_direction", "bds":"wave_spreading"}),                                        
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
@@ -89,6 +88,10 @@ class SfincsModel(GridModel):
         "wind_u": {"standard_name": "eastward wind", "unit": "m/s"},
         "wind_v": {"standard_name": "northward wind", "unit": "m/s"},
         "wnd": {"standard_name": "wind", "unit": "m/s"},
+        "wave_height": {"standard_name": "sea_surface_wave_significant_height", "unit": "m"},  #https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html
+        "wave_period": {"standard_name": "sea_surface_wind_wave_period_at_variance_spectral_density_maximum", "unit": "s"},
+        "wave_direction": {"standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum", "unit": "degree wrt North"},
+        "wave_spreading": {"standard_name": "sea_surface_wave_directional_spread", "unit": "degree"},                        
     }
 
     def __init__(
