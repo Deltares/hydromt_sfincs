@@ -90,7 +90,7 @@ class SfincsModel(GridModel):
         "wnd": {"standard_name": "wind", "unit": "m/s"},
         "wave_height": {"standard_name": "sea_surface_wave_significant_height", "unit": "m"},  #https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html
         "wave_period": {"standard_name": "sea_surface_wind_wave_period_at_variance_spectral_density_maximum", "unit": "s"},
-        "wave_direction": {"standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum", "unit": "degree wrt North"},
+        "wave_direction": {"standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum", "unit": "coming from degree wrt North"},
         "wave_spreading": {"standard_name": "sea_surface_wave_directional_spread", "unit": "degree"},                        
     }
 
@@ -2400,6 +2400,97 @@ class SfincsModel(GridModel):
         )
         self.set_forcing(da, name="wnd")
 
+    def setup_wave_forcing(
+        self,
+        geodataset: Union[str, Path, xr.Dataset] = None,
+        timeseries: Union[str, Path, pd.DataFrame] = None,
+        locations: Union[str, Path, gpd.GeoDataFrame] = None,
+        buffer: float = 5e3,
+        merge: bool = True,
+    ):
+        """Setup wave forcing.
+
+        Wave boundary conditions are read from a `geodataset` (geospatial point timeseries)
+        or a tabular `timeseries` dataframe. At least one of these must be provided.
+
+        The tabular timeseries data is combined with `locations` if provided,
+        or with existing 'snapwave_bnd' locations if previously set.
+
+        Adds model forcing layers:
+
+        * **wave_height** forcing: significant wave height time series [m]
+        * **wave_period** forcing: peak wave period time series [s]
+        * **wave_direction** forcing: mean wave direction time series [coming from degree wrt North]
+        * **wave_spreading** forcing: wave spreading time series [degree]            
+
+        Parameters
+        ----------
+        geodataset: str, Path, xr.Dataset, optional
+            Path, data source name, or xarray data object for geospatial point timeseries.
+        timeseries: str, Path, pd.DataFrame, optional
+            Path, data source name, or pandas data object for tabular timeseries.
+        locations: str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for bnd point locations.
+            It should contain a 'index' column matching the column names in `timeseries`.
+        buffer: float, optional
+            Buffer [m] around model wave boundary cells to select wave gauges,
+            by default 5 km.
+        merge : bool, optional
+            If True, merge with existing forcing data, by default True.
+
+        See Also
+        --------
+        set_forcing_1d
+        """
+        gdf_locs, df_ts = None, None
+        tstart, tstop = self.get_model_time()  # model time
+        # buffer around msk==2 values
+        if np.any(self.snapwave_msk == 2):
+            region = self.mask.where(self.snapwave_msk == 2, 0).raster.vectorize() 
+            #TODO: check if will be 'snapwave_msk' or 'wave_mask' or 'snapwave.msk' or ...
+        else:
+            region = self.region
+        # read waterlevel data from geodataset or geodataframe
+        if geodataset is not None:
+            # read and clip data in time & space
+            da = self.data_catalog.get_geodataset(
+                geodataset,
+                geom=region,
+                buffer=buffer,
+                variables=["wave"],
+                time_tuple=(tstart, tstop),
+                crs=self.crs,
+            )
+            df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
+            gdf_locs = da.vector.to_gdf()
+        elif timeseries is not None:
+            df_ts = self.data_catalog.get_dataframe(
+                timeseries,
+                time_tuple=(tstart, tstop),
+                # kwargs below only applied if timeseries not in data catalog
+                parse_dates=True,
+                index_col=0,
+            )
+            df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
+
+        # read location data (if not already read from geodataset)
+        if gdf_locs is None and locations is not None:
+            gdf_locs = self.data_catalog.get_geodataframe(
+                locations, geom=region, buffer=buffer, crs=self.crs
+            ).to_crs(self.crs)
+            if "index" in gdf_locs.columns:
+                gdf_locs = gdf_locs.set_index("index")
+        elif gdf_locs is None and "bhs" in self.forcing:
+            gdf_locs = self.forcing["bhs"].vector.to_gdf()
+        elif gdf_locs is None:
+            raise ValueError("No wave boundary (snapwave_bnd) points provided.")
+
+        # set/ update forcing
+        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="wave_height", merge=merge)
+        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="wave_period", merge=merge)
+        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="wave_direction", merge=merge)
+        self.set_forcing_1d(df_ts=df_ts, gdf_locs=gdf_locs, name="wave_spreading", merge=merge)
+
     def setup_tiles(
         self,
         path: Union[str, Path] = None,
@@ -2998,7 +3089,7 @@ class SfincsModel(GridModel):
                 if fn is not None:
                     self.logger.warning(f"{name}file not found at {fn}")
                 continue
-            elif name in ["netbndbzsbzi", "netsrcdis"]:
+            elif name in ["netbndbzsbzi", "netsrcdis", "netwave"]:
                 ds = GeoDataset.from_netcdf(fn, crs=self.crs, chunks="auto")
             else:
                 ds = xr.open_dataset(fn, chunks="auto")
@@ -3103,7 +3194,7 @@ class SfincsModel(GridModel):
                     self.set_config(f"{fname}file", f"{name}.nc")
                 fn = self.get_config(f"{fname}file", abs_path=True)
                 # write 1D timeseries
-                if fname in ["netbndbzsbzi", "netsrcdis"]:
+                if fname in ["netbndbzsbzi", "netsrcdis", "netwave"]:
                     ds.vector.to_xy().to_netcdf(fn, encoding=encoding)
                     if self._write_gis:  # write geojson file to gis folder
                         self.write_vector(variables=f"forcing.{list(rename.keys())[0]}")
