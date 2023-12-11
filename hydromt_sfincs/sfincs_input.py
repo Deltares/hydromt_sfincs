@@ -98,6 +98,32 @@ class SfincsInput:
         self.cdnrb = 3
         self.cdwnd = [0.0, 28.0, 50.0]
         self.cdval = [0.001, 0.0025, 0.0015]
+        
+        # wave coupling
+        self.snapwave = None
+        self.dtwave = None
+
+        # SnapWave
+        self.snapwave_igwaves = None
+        self.snapwave_alpha = None
+        self.snapwave_alpha_ig = None
+        self.snapwave_gamma = None
+        self.snapwave_gammaig = None
+        self.snapwave_ig_opt = None
+        self.snapwave_hmin = None
+        self.snapwave_shpercig = None
+        self.snapwave_Tinc2ig = None
+        self.snapwave_dtheta = None
+        self.snapwave_alphaigfac = None
+        self.snapwave_fw = None
+        self.snapwave_fwig = None
+        self.snapwave_dt = None
+        
+        self.snapwave_mskfile  = None        
+        self.netwavefile = None
+        
+        self.snapwave_tol = None
+        self.snapwave_crit = None
 
     def read(self, inp_fn: str) -> None:
         """Read sfincs input file and set attributes to values in file."""
