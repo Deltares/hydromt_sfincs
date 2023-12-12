@@ -2445,7 +2445,7 @@ class SfincsModel(GridModel):
         """
         gdf_locs, df_ts = None, None
         tstart, tstop = self.get_model_time()  # model time
-        # buffer around msk==2 values
+        # buffer around snapwave msk==2 values
         if np.any(self.snapwave_msk == 2):
             region = self.mask.where(self.snapwave_msk == 2, 0).raster.vectorize() 
             #TODO: check if will be 'snapwave_msk' or 'wave_mask' or 'snapwave.msk' or ...
@@ -2458,7 +2458,7 @@ class SfincsModel(GridModel):
                 geodataset,
                 geom=region,
                 buffer=buffer,
-                variables=["snapwave"],
+                variables=["snapwave"], #TODO: Question - is this correct? will the data_catalog then load all 4 required vars?
                 time_tuple=(tstart, tstop),
                 crs=self.crs,
             )
@@ -2487,12 +2487,11 @@ class SfincsModel(GridModel):
             raise ValueError("No wave boundary (snapwave_bnd) points provided.")
 
         # set/ update forcing
-        self.set_forcing(df_ts=df_ts, gdf_locs=gdf_locs, name=["snapwave"], merge=merge)
+        self.set_forcing(df_ts=df_ts, gdf_locs=gdf_locs, name=["snapwave"], merge=merge) #TODO: Question - split_dataset instead of merge? en True or False?
 
     def setup_wavemaker(
         self,
         wavemaker: Union[str, Path, gpd.GeoDataFrame],
-        stype: str,        
         merge: bool = True,
         **kwargs,
     ):
@@ -2505,36 +2504,26 @@ class SfincsModel(GridModel):
         Parameters
         ----------
         wavemaker : str, Path
-            Path, data source name, or geopandas object to wavemaker line geometry file.
-        stype : {'wvm'}
-            Wavemaker type.            
+            Path, data source name, or geopandas object to wavemaker line geometry file.          
         merge : bool, optional
             If True, merge with existing'stype' structures, by default True.
         """
+        name = self._GEOMS["wavemaker"]
 
         # read, clip and reproject
         gdf_wavemaker = self.data_catalog.get_geodataframe(
             wavemaker, geom=self.region, **kwargs
         ).to_crs(self.crs)
 
-        cols = {
-            "wvm": ["name", "geometry"], # TODO: do we need to keep the option that it could be multiple vars?
-        }
-        assert stype in cols, f"stype must be one of {list(cols.keys())}"
-        gdf = gdf_wavemaker[
-            [c for c in cols[stype] if c in gdf_wavemaker.columns]
-        ]  # keep relevant cols
-
-        structs = utils.gdf2linestring(gdf)  # check if it parsed correct
         # combine with existing structures if present
-        if merge and stype in self.geoms:
-            gdf0 = self._geoms.pop(stype)
+        if merge and name in self.geoms:
+            gdf0 = self._geoms.pop(name)
             gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
-            self.logger.info(f"Adding {stype} wavemaker to existing wavemakers.")
+            self.logger.info(f"Adding wavemaker polyline to existing ones.")
 
         # set structures
-        self.set_geoms(gdf, stype)
-        self.set_config(f"{stype}file", f"sfincs.{stype}")
+        self.set_geoms(gdf, name)
+        self.set_config(f"{name}file", f"sfincs.{name}")
         
     def setup_tiles(
         self,
