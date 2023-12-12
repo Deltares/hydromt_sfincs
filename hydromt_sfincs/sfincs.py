@@ -510,6 +510,7 @@ class SfincsModel(GridModel):
         btype: str = "waterlevel",
         include_mask: Union[str, Path, gpd.GeoDataFrame] = None,
         exclude_mask: Union[str, Path, gpd.GeoDataFrame] = None,
+        include_mask_buffer: int = 0,
         zmin: float = None,
         zmax: float = None,
         connectivity: int = 8,
@@ -569,6 +570,10 @@ class SfincsModel(GridModel):
             else:
                 gdf_include = self.data_catalog.get_geodataframe(
                     include_mask, bbox=bbox
+                )
+            if include_mask_buffer > 0:  # NOTE assumes model in projected CRS!
+                gdf_include["geometry"] = gdf_include.to_crs(self.crs).buffer(
+                    include_mask_buffer
                 )
         if exclude_mask is not None:
             if not isinstance(exclude_mask, gpd.GeoDataFrame) and str(
