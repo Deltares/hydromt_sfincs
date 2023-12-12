@@ -49,8 +49,8 @@ class SfincsModel(GridModel):
         "discharge": (["dis"], "src"),
         "precip": (["precip"], None),
         "wind": (["wnd"], None),
-        # "waves": (["bzi"], "bnd"), #--> don't do that anymore for msk=2 cells   
-        "wavemaker_timeseries": (["wzi"], "wvm"),          # TODO check names and test
+        # "waves": (["bzi"], "bnd"), #--> #TODO: don't do that anymore for msk=2 cells   
+        # "wavemaker_timeseries": (["wzi"], "wvm"),          # TODO check names and test > Question - is wvm here a multi polyline as a weir, or points as bnd?
     }
     _FORCING_NET = {
         # 2D forcing sfincs name, rename tuple
@@ -2481,7 +2481,7 @@ class SfincsModel(GridModel):
             ).to_crs(self.crs)
             if "index" in gdf_locs.columns:
                 gdf_locs = gdf_locs.set_index("index")
-        elif gdf_locs is None and "wave_height" in self.forcing: #TODO: check if needed for all 4 vars
+        elif gdf_locs is None and "wave_height" in self.forcing: #TODO: Question - check needed for all 4 vars?
             gdf_locs = self.forcing["wave_height"].vector.to_gdf()
         elif gdf_locs is None:
             raise ValueError("No wave boundary (snapwave_bnd) points provided.")
@@ -2518,11 +2518,11 @@ class SfincsModel(GridModel):
         # combine with existing structures if present
         if merge and name in self.geoms:
             gdf0 = self._geoms.pop(name)
-            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
+            gdf_wavemaker = gpd.GeoDataFrame(pd.concat([gdf_wavemaker, gdf0], ignore_index=True))
             self.logger.info(f"Adding wavemaker polyline to existing ones.")
 
         # set structures
-        self.set_geoms(gdf, name)
+        self.set_geoms(gdf_wavemaker, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
         
     def setup_tiles(
