@@ -552,9 +552,9 @@ def write_geoms(
         List of dictionaries describing structures.
         For pli, pol, thd anc crs files "x" and "y" are required, "name" is optional.
         For weir files "x", "y" and "z" are required, "name" and "par1" are optional.
-    stype: {'pli', 'pol', 'thd', 'weir', 'crs'}
-        Geom type polylines (pli), polygons (pol) thin dams (thd), weirs (weir)
-        or cross-sections (crs).
+    stype: {'pli', 'pol', 'thd', 'weir', 'crs', 'wvm'}
+        Geom type polylines (pli), polygons (pol) thin dams (thd), weirs (weir), 
+        cross-sections (crs) or wavemaker (wvm).
     fmt: str
         format for "x" and "y" fields.
     fmt_z: str
@@ -580,7 +580,7 @@ def write_geoms(
         ]
     >>> write_structures('sfincs.weir', feats, stype='weir')
     """
-    cols = {"pli": 2, "pol": 2, "thd": 2, "weir": 4, "crs": 2}[stype.lower()]
+    cols = {"pli": 2, "pol": 2, "thd": 2, "weir": 4, "crs": 2, "wvm": 2}[stype.lower()]
 
     fmt = [fmt, fmt] + [fmt_z for _ in range(cols - 2)]
     if stype.lower() == "weir" and np.any(["z" not in f for f in feats]):
