@@ -571,7 +571,9 @@ class SfincsModel(GridModel):
                 gdf_include = self.data_catalog.get_geodataframe(
                     include_mask, bbox=bbox
                 )
-            if include_mask_buffer > 0:  # NOTE assumes model in projected CRS!
+            if include_mask_buffer > 0:
+                if self.crs.is_geographic:
+                    include_mask_buffer = include_mask_buffer / 111111.0
                 gdf_include["geometry"] = gdf_include.to_crs(self.crs).buffer(
                     include_mask_buffer
                 )
