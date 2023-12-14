@@ -22,7 +22,58 @@ class SubgridTableRegular:
         # A regular subgrid table contains only for cells with msk>0
         self.version = version
 
-    def load(self, file_name, mask):
+    def read(self, file_name):
+        # Read from netcdf file with xarray
+        self.ds = xr.open_dataset(file_name)
+        self.ds.close() # Should this be closed ?
+        # Should we also make self.z_zmin, self.z_zmax, etc. ?
+
+    def write(self, file_name):
+        # Write XArray dataset to netcdf file
+
+        if isinstance(mask, xr.DataArray):
+            mask = mask.values
+
+        # Array iok where mask > 0 
+        iok = np.where(np.transpose(mask) > 0)
+        iok = (iok[1], iok[0])
+
+        # Make new xarray dataset
+        ds = xr.Dataset()
+        ds.attrs.update({"_FillValue": np.nan})
+        ds["z_zmin"] = xr.DataArray(self.z_zmin[iok], dims=("cells"))
+        ds["z_zmax"] = xr.DataArray(self.z_zmax[iok], dims=("cells"))
+        ds["z_volmax"] = xr.DataArray(self.z_volmax[iok], dims=("cells"))
+        ds["z_level"] = xr.DataArray(self.z_level[:, iok], dims=("bins", "cells"))
+        ds["u_zmin"] = xr.DataArray(self.u_zmin[iok], dims=("cells"))
+        ds["u_zmax"] = xr.DataArray(self.u_zmax[iok], dims=("cells"))
+        ds["u_havg"] = xr.DataArray(self.u_havg[:, iok], dims=("bins", "cells"))
+        ds["u_nrep"] = xr.DataArray(self.u_nrep[:, iok], dims=("bins", "cells"))
+        ds["u_pwet"] = xr.DataArray(self.u_pwet[:, iok], dims=("bins", "cells"))
+        ds["u_ffit"] = xr.DataArray(self.u_ffit[iok], dims=("cells"))
+        ds["u_navg"] = xr.DataArray(self.u_navg[iok], dims=("cells"))
+        ds["v_zmin"] = xr.DataArray(self.v_zmin[iok], dims=("cells"))
+        ds["v_zmax"] = xr.DataArray(self.v_zmax[iok], dims=("cells"))
+        ds["v_havg"] = xr.DataArray(self.v_havg[:, iok], dims=("bins", "cells"))
+        ds["v_nrep"] = xr.DataArray(self.v_nrep[:, iok], dims=("bins", "cells"))
+        ds["v_pwet"] = xr.DataArray(self.v_pwet[:, iok], dims=("bins", "cells"))
+        ds["v_ffit"] = xr.DataArray(self.v_ffit[iok], dims=("cells"))
+        ds["v_navg"] = xr.DataArray(self.v_navg[iok], dims=("cells"))
+
+        # Need to swap the first and second dimensions to match the FORTRAN convention in SFINCS
+        ds["z_level"] = ds["z_level"].swap_dims({"bins": "cells"})
+        ds["u_havg"]  = ds["u_havg"].swap_dims({"bins": "cells"})
+        ds["u_nrep"]  = ds["u_nrep"].swap_dims({"bins": "cells"})
+        ds["u_pwet"]  = ds["u_pwet"].swap_dims({"bins": "cells"})
+        ds["v_havg"]  = ds["v_havg"].swap_dims({"bins": "cells"})
+        ds["v_nrep"]  = ds["v_nrep"].swap_dims({"bins": "cells"})
+        ds["v_pwet"]  = ds["v_pwet"].swap_dims({"bins": "cells"})
+
+        # Write to netcdf file
+        self.ds.to_netcdf(file_name)
+
+    # Following should not me use anymore !
+    def load(self, file_name, mask): 
         """Load subgrid table from file for a regular grid with given mask."""
 
         if isinstance(mask, xr.DataArray):
@@ -49,29 +100,39 @@ class SubgridTableRegular:
         self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         # self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.z_depth = np.full(
+        self.z_level = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
 
         # U points
         self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.u_hrep = np.full(
+        self.u_havg = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
-        self.u_navg = np.full(
+        self.u_nrep = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
+        self.u_pwet = np.full(
+            (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.u_nrep = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.u_ffit = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
 
         # V points
         self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.v_hrep = np.full(
+        self.v_havg = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
-        self.v_navg = np.full(
+        self.v_nrep= np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
+        self.v_pwet= np.full(
+            (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.v_nrep = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.v_ffit = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
 
         self.z_zmin[iok[0], iok[1]] = np.fromfile(
             file, dtype=np.float32, count=self.nr_cells
@@ -86,7 +147,7 @@ class SubgridTableRegular:
             file, dtype=np.float32, count=self.nr_cells
         )
         for ibin in range(self.nbins):
-            self.z_depth[ibin, iok[0], iok[1]] = np.fromfile(
+            self.z_level[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
             )
 
@@ -98,11 +159,11 @@ class SubgridTableRegular:
         )
         _ = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
         for ibin in range(self.nbins):
-            self.u_hrep[ibin, iok[0], iok[1]] = np.fromfile(
+            self.u_havg[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
             )
         for ibin in range(self.nbins):
-            self.u_navg[ibin, iok[0], iok[1]] = np.fromfile(
+            self.u_nrep[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
             )
 
@@ -114,16 +175,17 @@ class SubgridTableRegular:
         )
         _ = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
         for ibin in range(self.nbins):
-            self.v_hrep[ibin, iok[0], iok[1]] = np.fromfile(
+            self.v_havg[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
             )
         for ibin in range(self.nbins):
-            self.v_navg[ibin, iok[0], iok[1]] = np.fromfile(
+            self.v_nrep[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
             )
 
         file.close()
 
+    # Following should not me use anymore !
     def save(self, file_name, mask):
         """Save the subgrid data to a binary file."""
         if isinstance(mask, xr.DataArray):
@@ -152,7 +214,7 @@ class SubgridTableRegular:
         v = self.z_volmax[iok]
         file.write(np.float32(v))
         for ibin in range(self.nbins):
-            v = np.squeeze(self.z_depth[ibin, :, :])[iok]
+            v = np.squeeze(self.z_level[ibin, :, :])[iok]
             file.write(np.float32(v))
 
         # U
@@ -163,10 +225,10 @@ class SubgridTableRegular:
         dhdz = np.full(np.shape(v), 1.0)
         file.write(np.float32(dhdz))  # Not used in SFINCS anymore
         for ibin in range(self.nbins):
-            v = np.squeeze(self.u_hrep[ibin, :, :])[iok]
+            v = np.squeeze(self.u_havg[ibin, :, :])[iok]
             file.write(np.float32(v))
         for ibin in range(self.nbins):
-            v = np.squeeze(self.u_navg[ibin, :, :])[iok]
+            v = np.squeeze(self.u_nrep[ibin, :, :])[iok]
             file.write(np.float32(v))
 
         # V
@@ -176,10 +238,10 @@ class SubgridTableRegular:
         file.write(np.float32(v))
         file.write(np.float32(dhdz))  # Not used in SFINCS anymore
         for ibin in range(self.nbins):
-            v = np.squeeze(self.v_hrep[ibin, :, :])[iok]
+            v = np.squeeze(self.v_havg[ibin, :, :])[iok]
             file.write(np.float32(v))
         for ibin in range(self.nbins):
-            v = np.squeeze(self.v_navg[ibin, :, :])[iok]
+            v = np.squeeze(self.v_nrep[ibin, :, :])[iok]
             file.write(np.float32(v))
 
         file.close()
@@ -195,6 +257,7 @@ class SubgridTableRegular:
         nrmax=2000,
         max_gradient=5.0,
         z_minimum=-99999.0,
+        huthresh: float = 0.01,
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
@@ -247,6 +310,8 @@ class SubgridTableRegular:
             prevent numerical stability problems, by default 5.0
         z_minimum : float, optional
             Minimum depth in the subgrid tables, by default -99999.0
+        huthresh : float, optional
+            Threshold depth in SFINCS model, by default 0.01 m
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea,
             by default 0.04 and 0.02 s.m-1/3
@@ -278,7 +343,7 @@ class SubgridTableRegular:
         x_dim, y_dim = da_mask.raster.x_dim, da_mask.raster.y_dim
 
         # determine the output dimensions and transform to match da_mask grid
-        # NOTE: this is only usef for writing the cloud optimized geotiffs
+        # NOTE: this is only used for writing the cloud optimized geotiffs
         output_width = da_mask.sizes[x_dim] * nr_subgrid_pixels
         output_height = da_mask.sizes[y_dim] * nr_subgrid_pixels
         output_transform = da_mask.raster.transform * da_mask.raster.transform.scale(
@@ -320,19 +385,25 @@ class SubgridTableRegular:
         self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         # self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.z_depth = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.z_level = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
 
         # U points
         self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.u_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
-        self.u_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_havg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_nrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_pwet = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_ffit = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_navg = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
 
         # V points
         self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.v_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
-        self.v_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_havg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_nrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_pwet = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_ffit = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_navg = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
 
         dx, dy = da_mask.raster.res
         dxp = dx / refi  # size of subgrid pixel
@@ -498,16 +569,23 @@ class SubgridTableRegular:
                     self.z_zmin[sn, sm],
                     self.z_zmax[sn, sm],
                     self.z_volmax[sn, sm],
-                    self.z_depth[:, sn, sm],
+                    self.z_level[:, sn, sm],
                     self.u_zmin[sn, sm],
                     self.u_zmax[sn, sm],
-                    self.u_hrep[:, sn, sm],
-                    self.u_navg[:, sn, sm],
+                    self.u_havg[:, sn, sm],
+                    self.u_nrep[:, sn, sm],
+                    self.u_pwet[:, sn, sm],
+                    self.u_ffit[sn, sm],
+                    self.u_navg[sn, sm],
+                    self.u_zmax[sn, sm],
                     self.v_zmin[sn, sm],
                     self.v_zmax[sn, sm],
-                    self.v_hrep[:, sn, sm],
-                    self.v_navg[:, sn, sm],
-                ) = process_tile(
+                    self.v_havg[:, sn, sm],
+                    self.v_nrep[:, sn, sm],
+                    self.v_pwet[:, sn, sm],
+                    self.v_ffit[sn, sm],
+                    self.v_navg[sn, sm],
+                ) = process_tile_regular(
                     da_mask_block.values,
                     da_dep.values,
                     da_man.values,
@@ -517,6 +595,7 @@ class SubgridTableRegular:
                     nbins,
                     yg,
                     max_gradient,
+                    huthresh,
                     da_mask.raster.crs.is_geographic,
                 )
 
@@ -545,8 +624,8 @@ class SubgridTableRegular:
         ds_sbg.attrs.update({"_FillValue": np.nan})
 
         zlst2 = ["z_zmin", "z_zmax", "z_zmin", "z_volmax"]  # "z_zmean",
-        uvlst2 = ["u_zmin", "u_zmax", "v_zmin", "v_zmax"]
-        lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]
+        uvlst2 = ["u_zmin", "u_zmax", "u_ffit", "u_navg", "v_zmin", "v_zmax", "v_ffit", "v_navg"]
+        lst3 = ["z_depth", "u_havg", "u_nrep", "u_pwet", "v_avg", "v_nrep", "v_pwet"]
         # 2D arrays
         for name in zlst2 + uvlst2:
             if hasattr(self, name):
@@ -563,30 +642,555 @@ class SubgridTableRegular:
             setattr(self, name, ds_sbg[name].values)
 
 
+class SubgridTableQuadtree:
+    # This code is still slow as it does not use numba
+
+    def __init__(self, version=0):
+        # A quadtree subgrid table contains data for EACH cell, u and v point in the quadtree mesh,
+        # regardless of the mask value!
+        self.version = version
+
+    def read(self, file_name):
+
+        if not os.path.isfile(file_name):
+            print("File " + file_name + " does not exist!")
+            return
+
+        # Read from netcdf file with xarray
+        self.ds = xr.open_dataset(file_name)
+        # Swap the first and second dimensions to convert from FORTRAN convention in SFINCS to Python
+        self.ds["z_level"] = self.ds["z_level"].swap_dims({"bins": "cells"})
+        self.ds["uv_havg"] = self.ds["uv_havg"].swap_dims({"bins": "uv_points"})
+        self.ds["uv_nrep"] = self.ds["uv_nrep"].swap_dims({"bins": "uv_points"})
+        self.ds["uv_pwet"] = self.ds["uv_pwet"].swap_dims({"bins": "uv_points"})
+        self.ds.close() # Should this be closed ?
+
+    def write(self, file_name):
+        # Write XArray dataset to netcdf file
+        # Need to switch the first and second dimensions to match the FORTRAN convention in SFINCS
+        self.ds["z_level"] = self.ds["z_level"].swap_dims({"bins": "cells"})
+        self.ds["uv_havg"] = self.ds["uv_havg"].swap_dims({"bins": "uv_points"})
+        self.ds["uv_nrep"] = self.ds["uv_nrep"].swap_dims({"bins": "uv_points"})
+        self.ds["uv_pwet"] = self.ds["uv_pwet"].swap_dims({"bins": "uv_points"})
+        self.ds.to_netcdf(file_name)
+
+    def build(
+        self,
+        ds_mesh: xr.Dataset,
+        datasets_dep: list[dict],
+        datasets_rgh: list[dict] = [],
+        datasets_riv: list[dict] = [],
+        nbins=10,
+        nr_subgrid_pixels=20,
+        nrmax=2000,
+        max_gradient=5.0,
+        z_minimum=-99999.0,
+        z_multiply=1.0,
+        manning_land: float = 0.04,
+        manning_sea: float = 0.02,
+        rgh_lev_land: float = 0.0,
+        huthresh: float = 0.01,
+        buffer_cells: int = 0,
+        write_dep_tif: bool = False,
+        write_man_tif: bool = False,
+        highres_dir: str = None,
+        logger=logger,
+        progress_bar=None,
+    ):
+        """Create subgrid tables for regular grid based on a list of depth,
+        Manning's rougnhess and river datasets.
+
+        Parameters
+        ----------
+        ds_mesh : xr.Dataset
+            Quadtree mesh of the SFINCS domain.
+        datasets_dep : List[dict]
+            List of dictionaries with topobathy data, each containing an xarray.DataSet
+            and optional merge arguments e.g.:
+            [
+                {'da': <xr.Dataset>, 'zmin': 0.01},
+                {'da': <xr.Dataset>, 'merge_method': 'first', reproj_method: 'bilinear'}
+            ]
+            For a complete overview of all merge options,
+            see :py:function:~hydromt.workflows.merge_multi_dataarrays
+        datsets_rgh : List[dict], optional
+            List of dictionaries with Manning's n data, each containing an
+            xarray.DataSet with manning values and optional merge arguments
+        datasets_riv : List[dict], optional
+            List of dictionaries with river datasets. Each dictionary should at least
+            contain the following:
+            * gdf_riv: line vector of river centerline with
+              river depth ("rivdph") [m] OR bed level ("rivbed") [m+REF],
+              river width ("rivwth"), and
+              river manning ("manning") attributes [m]
+            * gdf_riv_mask (optional): polygon vector of river mask. If provided
+              "rivwth" in river is not used and can be omitted.
+            * arguments for :py:function:~hydromt.workflows.bathymetry.burn_river_rect
+            e.g.: [{'gdf_riv': <gpd.GeoDataFrame>, 'gdf_riv_mask': <gpd.GeoDataFrame>}]
+        nbins : int, optional
+            Number of bins in which hypsometry is subdivided, by default 10
+        nr_subgrid_pixels : int, optional
+            Number of subgrid pixels per computational cell, by default 20
+        nrmax : int, optional
+            Maximum number of cells per subgrid-block, by default 2000
+            These blocks are used to prevent memory issues
+        max_gradient : float, optional
+            If slope in hypsometry exceeds this value, then smoothing is applied, to
+            prevent numerical stability problems, by default 5.0
+        z_minimum : float, optional
+            Minimum depth in the subgrid tables, by default -99999.0
+        huthresh : float, optional
+            Threshold depth in SFINCS model, by default 0.01 m
+        z_multiply : float, optional
+            Multiplication factor for bed levels, by default 1.0
+        manning_land, manning_sea : float, optional
+            Constant manning roughness values for land and sea,
+            by default 0.04 and 0.02 s.m-1/3
+            Note that these values are only used when no Manning's n datasets are
+            provided, or to fill the nodata values
+        rgh_lev_land : float, optional
+            Elevation level to distinguish land and sea roughness (when using
+            manning_land and manning_sea), by default 0.0 m
+        buffer_cells : int, optional
+            Number of cells between datasets to ensure smooth transition of bed levels,
+            by default 0
+        write_dep_tif : bool, optional
+            Create geotiff of the merged topobathy on the subgrid resolution,
+            by default False
+        write_man_tif : bool, optional
+            Create geotiff of the merged roughness on the subgrid resolution,
+            by default False
+        highres_dir : str, optional
+            Directory where high-resolution geotiffs for topobathy and manning
+            are stored, by default None
+        progress_bar : Object, optional
+            Guitares progress bar object
+        """
+
+        # Dimensions etc
+        refi   = nr_subgrid_pixels
+        # nr_cells is length of dimension "cells" in ds_mesh. CHECK IF THIS IS CORRECT
+        nr_cells = ds_mesh.dims["cells"]
+        is_geographic = ds_mesh.attrs["is_geographic"] # TO DO crs
+        nlevs  = ds_mesh.attrs["nr_levels"]
+        cosrot = np.cos(ds_mesh.attrs["rotation"]*np.pi/180)
+        sinrot = np.sin(ds_mesh.attrs["rotation"]*np.pi/180)
+        nrmax  = 2000
+
+        # Grid neighbors
+        level = ds_mesh["level"].values[:]
+        n   = ds_mesh["n"].values[:]
+        m   = ds_mesh["m"].values[:]
+        nu  = ds_mesh["nu"].values[:]
+        nu1 = ds_mesh["nu1"].values[:]
+        nu2 = ds_mesh["nu2"].values[:]
+        mu  = ds_mesh["mu"].values[:]
+        mu1 = ds_mesh["mu1"].values[:]
+        mu2 = ds_mesh["mu2"].values[:]
+
+        # U/V points 
+        # Need to count the number of uv points in order allocate arrays (probably better to store this in the grid)
+        # if self.model.grid_type == "quadtree":   
+        # For quadtree grids, all points are stored
+        index_nu1 = np.zeros(nr_cells, dtype=int)
+        index_nu2 = np.zeros(nr_cells, dtype=int)
+        index_mu1 = np.zeros(nr_cells, dtype=int)
+        index_mu2 = np.zeros(nr_cells, dtype=int)        
+        index_nm  = np.zeros(nr_cells, dtype=int)
+        npuv = 0
+        for ip in range(nr_cells):
+            index_nm[ip] = ip
+            if mu1[ip]>=0:
+                index_mu1[ip] = npuv
+                npuv += 1
+            if mu2[ip]>=0:
+                index_mu2[ip] = npuv
+                npuv += 1
+            if nu1[ip]>=0:
+                index_nu1[ip] = npuv
+                npuv += 1
+            if nu2[ip]>=0:
+                index_nu2[ip] = npuv
+                npuv += 1
+
+        # Create xarray dataset with empty arrays
+        self.ds = xr.Dataset()
+        self.ds.attrs["version"] = self.version
+        self.ds["z_zmin"] = xr.DataArray(np.zeros(nr_cells), dims=["cells"])
+        self.ds["z_zmax"] = xr.DataArray(np.zeros(nr_cells), dims=["cells"])
+        self.ds["z_volmax"] = xr.DataArray(np.zeros(nr_cells), dims=["cells"])
+        self.ds["z_level"] = xr.DataArray(np.zeros((nr_cells, nbins)), dims=["bins", "cells"])
+        self.ds["uv_zmin"] = xr.DataArray(np.zeros(npuv), dims=["uv_points"])
+        self.ds["uv_zmax"] = xr.DataArray(np.zeros(npuv), dims=["uv_points"])
+        self.ds["uv_havg"] = xr.DataArray(np.zeros((nbins, npuv)), dims=["bins", "uv_points"])
+        self.ds["uv_nrep"] = xr.DataArray(np.zeros((nbins, npuv)), dims=["bins", "uv_points"])
+        self.ds["uv_pwet"] = xr.DataArray(np.zeros((nbins, npuv)), dims=["bins", "uv_points"])
+        self.ds["uv_ffit"] = xr.DataArray(np.zeros(npuv), dims=["uv_points"])
+        self.ds["uv_navg"] = xr.DataArray(np.zeros(npuv), dims=["uv_points"])
+        
+        # Determine first indices and number of cells per refinement level
+        ifirst = np.zeros(nlevs, dtype=int)
+        ilast  = np.zeros(nlevs, dtype=int)
+        nr_cells_per_level = np.zeros(nlevs, dtype=int)
+        ireflast = -1
+        for ic in range(nr_cells):
+            if level[ic]>ireflast:
+                ifirst[level[ic]] = ic
+                ireflast = level[ic]
+        for ilev in range(nlevs - 1):
+            ilast[ilev] = ifirst[ilev + 1] - 1
+        ilast[nlevs - 1] = nr_cells - 1
+        for ilev in range(nlevs):
+            nr_cells_per_level[ilev] = ilast[ilev] - ifirst[ilev] + 1 
+
+        # Loop through all levels
+        for ilev in range(nlevs):
+
+            print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+            print("Processing level " + str(ilev + 1) + " of " + str(nlevs) + " ...")
+            
+            # Make blocks off cells in this level only
+            cell_indices_in_level = np.arange(ifirst[ilev], ilast[ilev] + 1, dtype=int)
+            nr_cells_in_level = np.size(cell_indices_in_level)
+            
+            if nr_cells_in_level == 0:
+                continue
+
+            n0 = np.min(n[ifirst[ilev]:ilast[ilev] + 1])
+            n1 = np.max(n[ifirst[ilev]:ilast[ilev] + 1]) # + 1 # add extra cell to compute u and v in the last row/column
+            m0 = np.min(m[ifirst[ilev]:ilast[ilev] + 1])
+            m1 = np.max(m[ifirst[ilev]:ilast[ilev] + 1]) # + 1 # add extra cell to compute u and v in the last row/column
+            
+            dx   = ds_mesh.attrs["dx"]/2**ilev      # cell size
+            dy   = ds_mesh.attrs["dy"]/2**ilev      # cell size
+            dxp  = dx/refi              # size of subgrid pixel
+            dyp  = dy/refi              # size of subgrid pixel
+            
+            nrcb = int(np.floor(nrmax/refi))         # nr of regular cells in a block            
+            nrbn = int(np.ceil((n1 - n0 + 1)/nrcb))  # nr of blocks in n direction
+            nrbm = int(np.ceil((m1 - m0 + 1)/nrcb))  # nr of blocks in m direction
+
+            print("Number of regular cells in a block : " + str(nrcb))
+            print("Number of blocks in n direction    : " + str(nrbn))
+            print("Number of blocks in m direction    : " + str(nrbm))
+            
+            print("Grid size of flux grid             : dx= " + str(dx) + ", dy= " + str(dy))
+            print("Grid size of subgrid pixels        : dx= " + str(dxp) + ", dy= " + str(dyp))
+
+            ib = -1
+            ibt = 1
+
+            if progress_bar:
+                progress_bar.set_text("               Generating Sub-grid Tables (level " + str(ilev) + ") ...                ")
+                progress_bar.set_maximum(nrbm * nrbn)
+
+            ## Loop through blocks
+            for ii in range(nrbm):
+                for jj in range(nrbn):
+                    
+                    # Count
+                    ib += 1
+                    
+                    bn0 = n0  + jj*nrcb               # Index of first n in block
+                    bn1 = min(bn0 + nrcb - 1, n1) + 1 # Index of last n in block (cut off excess above, but add extra cell to compute u and v in the last row)
+                    bm0 = m0  + ii*nrcb               # Index of first m in block
+                    bm1 = min(bm0 + nrcb - 1, m1) + 1 # Index of last m in block (cut off excess to the right, but add extra cell to compute u and v in the last column)
+
+                    print("--------------------------------------------------------------")
+                    print("Processing block " + str(ib + 1) + " of " + str(nrbn*nrbm) + " ...")
+
+                    # Now build the pixel matrix
+                    x00 = 0.5*dxp + bm0*refi*dyp
+                    x01 = x00 + (bm1 - bm0 + 1)*refi*dxp
+                    y00 = 0.5*dyp + bn0*refi*dyp
+                    y01 = y00 + (bn1 - bn0 + 1)*refi*dyp
+                    
+                    x0 = np.arange(x00, x01, dxp)
+                    y0 = np.arange(y00, y01, dyp)
+                    xg0, yg0 = np.meshgrid(x0, y0)
+                    # Rotate and translate
+                    xg = ds_mesh.attrs["x0"] + cosrot*xg0 - sinrot*yg0
+                    yg = ds_mesh.attrs["y0"] + sinrot*xg0 + cosrot*yg0
+
+                    # Clear variables
+                    del x0, y0, xg0, yg0
+                    
+                    # # Create xarray data array with xg and yg
+                    # da_xg = xr.DataArray(xg, dims=["y", "x"])
+                    # da_yg = xr.DataArray(yg, dims=["y", "x"])
+                    # Create xarray data array with depths and coordinate da_xg and da_yg
+                    da_sbg = xr.DataArray(np.zeros((bn1 - bn0 + 1)*refi, (bm1 - bm0 + 1)*refi), dims=["n", "m"], coords={"x": xg, "y": yg})
+                    # Make sure da_sbg has the correct CRS
+                    da_sbg.raster.set_crs(ds_mesh.attrs["crs"])             
+
+                    # get subgrid bathymetry tile
+                    da_dep = workflows.merge_multi_dataarrays(
+                        da_list=datasets_dep,
+                        da_like=da_sbg,
+                        interp_method="linear",
+                        buffer_cells=buffer_cells,
+                    )
+
+                    # set minimum depth
+                    da_dep = np.maximum(da_dep, z_minimum)
+                    # TODO what to do with remaining cell with nan values
+                    # NOTE: this is still open for discussion, but for now we interpolate
+                    # raise warning if NaN values in active cells
+                    npx = int(np.sum(np.isnan(da_dep.values[:])))
+                    logger.warning(
+                        f"Interpolate elevation data at {npx} subgrid pixels"
+                    )
+                    # always interpolate/extrapolate to avoid NaN values
+                    da_dep = da_dep.raster.interpolate_na(
+                        method="rio_idw", extrapolate=True
+                    )
+
+                    # Multiply bed level da_dep with factor z_multiply (this should not normally be done)
+                    # da_dep.values[:] = da_dep.values[:]*z_multiply
+
+                    # get subgrid manning roughness tile
+                    if len(datasets_rgh) > 0:
+                        da_man = workflows.merge_multi_dataarrays(
+                            da_list=datasets_rgh,
+                            da_like=da_sbg,
+                            interp_method="linear",
+                            buffer_cells=buffer_cells,
+                        )
+                        # raise warning if NaN values in active cells
+                        npx = int(np.sum(np.isnan(da_man.values[:])))
+                        logger.warning(
+                            f"Fill manning roughness data at {npx} subgrid pixels with default values"
+                        )
+                        # always fill based on land/sea elevation to avoid NaN values
+                        da_man0 = xr.where(
+                            da_dep >= rgh_lev_land, manning_land, manning_sea
+                        )
+                        da_man = da_man.where(~np.isnan(da_man), da_man0)
+                    else:
+                        da_man = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
+                        da_man.raster.set_nodata(np.nan)
+
+                    # burn rivers in bathymetry and manning
+                    if len(datasets_riv) > 0:
+                        logger.debug("Burn rivers in bathymetry and manning data")
+                        for riv_kwargs in datasets_riv:
+                            da_dep, da_man = workflows.bathymetry.burn_river_rect(
+                                da_elv=da_dep, da_man=da_man, logger=logger, **riv_kwargs
+                            )
+                                        
+                    # Now compute subgrid properties
+
+                    # Make arrays with indices of cells (and uv points) in this block
+
+                    # First we loop through all the possible cells in this block
+                    index_cells_in_block = np.zeros(nrcb*nrcb, dtype=int)
+                    # index_uv_points_in_block = np.zeros(4*nrcb*nrcb, dtype=int)
+                    # Loop through all cells in this level
+                    nr_cells_in_block = 0
+                    # nr_uv_points_in_block = 0
+                    # Check if cells fall within this block
+                    for ic in range(nr_cells_in_level):
+                        indx = cell_indices_in_level[ic] # index of the whole quadtree
+                        if n[indx]>=bn0 and n[indx]<bn1 and m[indx]>=bm0 and m[indx]<bm1:
+                            # Cell falls inside block
+                            index_cells_in_block[nr_cells_in_block] = indx
+                            nr_cells_in_block += 1
+                            # TO DO indices for uv points
+                            # and nn, mm, dir and type -1,0,1       
+
+                    index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
+
+                    print("Number of active cells in block    : " + str(nr_cells_in_block))
+
+                    # Better to first loop through cells and then through uv points ?
+
+                    # Loop through all active cells in this block
+                    for ic in range(nr_cells_in_block):
+
+                        # Process cell
+
+                        # Index in full quadtree mesh
+                        indx = index_cells_in_block[ic]
+
+                        # Get indices of pixels in block
+                        nn  = (n[indx] - bn0) * refi # First pixel n index in cell
+                        mm  = (m[indx] - bm0) * refi # First pixel m index in cell
+
+                        # Matrix with pixels in cell
+                        zv = da_dep.values[nn : nn + refi, mm : mm + refi].flatten()
+
+                        # Compute pixel size in metres
+                        if is_geographic:
+                            # Compute latitude of cell (Find a better and faster way to do this. Probably just use the cell center).
+                            mean_lat  = ds_mesh.face_coordinates["y"][indx]    # TODO: Check if this is correct
+                            # ygc = yg[nn : nn + refi, mm : mm + refi]
+                            # mean_lat =np.abs(np.mean(ygc))
+                            dxpm = dxp*111111.0*np.cos(np.pi*mean_lat/180.0)
+                            dypm = dyp*111111.0
+                        else:
+                            dxpm = dxp
+                            dypm = dyp
+                        
+                        zvmin = -20.0
+                        z, v, zmin, zmax = subgrid_v_table(zv, dxpm, dypm, nbins, zvmin, max_gradient)
+
+                        self.ds["z_zmin"].values[ic] = zmin
+                        self.ds["z_zmax"].values[ic] = zmax
+                        self.ds["z_volmax"].values[ic]  = v[-1]
+                        self.ds["z_level"].values[:,ic] = z
+                        
+                        # Now the U/V points
+                        # First right
+                        if mu[indx] <= 0:
+                            if mu1[indx] >= 0:
+                                nn  = (n[indx] - bn0)*refi
+                                mm  = (m[indx] - bm0)*refi + int(0.5*refi)
+                                zv  = np.transpose(da_dep.values[nn : nn + refi, mm : mm + refi]).flatten()
+                                mv  = np.transpose(da_man.values[nn : nn + refi, mm : mm + refi]).flatten()
+                                iuv = index_mu1[indx]
+                                if iuv>=0:
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, mv, nbins, huthresh)
+                                    self.ds["uv_zmin"][iuv]   = zmin
+                                    self.ds["uv_zmax"][iuv]   = zmax
+                                    self.ds["uv_havg"][:, iuv] = havg
+                                    self.ds["uv_nrep"][:, iuv] = nrep
+                                    self.ds["uv_pwet"][:, iuv] = pwet
+                                    self.ds["uv_ffit"][iuv]   = ffit
+                                    self.ds["uv_navg"][iuv]   = navg
+                        else:        
+                            if mu1[indx] >= 0:
+                                nn = (n[indx] - bn0)*refi
+                                mm = (m[indx] - bm0)*refi + int(3*refi/4)
+                                zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                zgu = np.transpose(zgu)
+                                zv  = zgu.flatten()
+                                manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                manning = np.transpose(manning)
+                                manning = manning.flatten()
+                                iuv = index_mu1[indx]
+                                if iuv>=0:
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+                                    self.ds["uv_zmin"][iuv]   = zmin
+                                    self.ds["uv_zmax"][iuv]   = zmax
+                                    self.ds["uv_havg"][:, iuv] = havg
+                                    self.ds["uv_nrep"][:, iuv] = nrep
+                                    self.ds["uv_pwet"][:, iuv] = pwet
+                                    self.ds["uv_ffit"][iuv]   = ffit
+                                    self.ds["uv_navg"][iuv]   = navg
+                            if mu2[indx] >= 0:
+                                nn = (n[indx] - bn0)*refi + int(refi/2)
+                                mm = (m[indx] - bm0)*refi + int(3*refi/4)
+                                zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                zgu = np.transpose(zgu)
+                                zv  = zgu.flatten()
+                                manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                manning = np.transpose(manning)
+                                manning = manning.flatten()
+                                iuv = index_mu2[indx]
+                                if iuv>=0:
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+                                    self.ds["uv_zmin"][iuv]   = zmin
+                                    self.ds["uv_zmax"][iuv]   = zmax
+                                    self.ds["uv_havg"][:, iuv] = havg
+                                    self.ds["uv_nrep"][:, iuv] = nrep
+                                    self.ds["uv_pwet"][:, iuv] = pwet
+                                    self.ds["uv_ffit"][iuv]   = ffit
+                                    self.ds["uv_navg"][iuv]   = navg
+
+                        # Now above
+                        if nu[indx] <= 0:
+                            if nu1[indx] >= 0:
+                                nn = (n[indx] - bn0)*refi + int(0.5*refi)
+                                mm = (m[indx] - bm0)*refi
+                                zgu = da_dep.values[nn : nn + refi, mm : mm + refi]
+                                zv  = zgu.flatten()
+                                manning = da_man.values[nn : nn + refi, mm : mm + refi]
+                                manning = manning.flatten()
+                                iuv = index_nu1[indx]
+                                if iuv>=0:
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+                                    self.ds["uv_zmin"][iuv]   = zmin
+                                    self.ds["uv_zmax"][iuv]   = zmax
+                                    self.ds["uv_havg"][:, iuv] = havg
+                                    self.ds["uv_nrep"][:, iuv] = nrep
+                                    self.ds["uv_pwet"][:, iuv] = pwet
+                                    self.ds["uv_ffit"][iuv]   = ffit
+                                    self.ds["uv_navg"][iuv]   = navg
+                        else:        
+                            if nu1[indx] >= 0:
+                                nn = (n[indx] - bn0)*refi + int(3*refi/4)
+                                mm = (m[indx] - bm0)*refi
+                                zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                zv  = zgu.flatten()
+                                manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                manning = manning.flatten()
+                                iuv = index_nu1[indx]
+                                if iuv>=0:
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+                                    self.ds["uv_zmin"][iuv]   = zmin
+                                    self.ds["uv_zmax"][iuv]   = zmax
+                                    self.ds["uv_havg"][:, iuv] = havg
+                                    self.ds["uv_nrep"][:, iuv] = nrep
+                                    self.ds["uv_pwet"][:, iuv] = pwet
+                                    self.ds["uv_ffit"][iuv]   = ffit
+                                    self.ds["uv_navg"][iuv]   = navg
+                            if nu2[indx] >= 0:
+                                nn = (n[indx] - bn0)*refi + int(3*refi/4)
+                                mm = (m[indx] - bm0)*refi + int(refi/2)
+                                zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                zv  = zgu.flatten()
+                                manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                manning = manning.flatten()
+                                iuv = index_nu2[indx]
+                                if iuv>=0:
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+                                    self.ds["uv_zmin"][iuv]   = zmin
+                                    self.ds["uv_zmax"][iuv]   = zmax
+                                    self.ds["uv_havg"][:, iuv] = havg
+                                    self.ds["uv_nrep"][:, iuv] = nrep
+                                    self.ds["uv_pwet"][:, iuv] = pwet
+                                    self.ds["uv_ffit"][iuv]   = ffit
+                                    self.ds["uv_navg"][iuv]   = navg
+
+                    if progress_bar:
+                        print(ibt)
+                        progress_bar.set_value(ibt)
+                        if progress_bar.was_canceled():
+                            return
+                        ibt += 1
+
+        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+
 @njit
-def process_tile(
-    mask, zg, manning_grid, dxp, dyp, refi, nbins, yg, max_gradient, is_geographic=False
+def process_tile_regular(
+    mask, zg, manning_grid, dxp, dyp, refi, nbins, yg, max_gradient, huthresh, is_geographic=False
 ):
     """calculate subgrid properties for a single tile"""
     # Z points
     grid_dim = mask.shape
     z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
     z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-    # z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
     z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-    z_depth = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+    z_level = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
 
     # U points
     u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
     u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-    u_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
-    u_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+    u_havg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+    u_nrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+    u_pwet = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+    u_ffit = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+    u_navg = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
 
     # V points
     v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
     v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-    v_hrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
-    v_navg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+    v_havg = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+    v_nrep = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+    v_pwet = np.full((nbins, *grid_dim), fill_value=np.nan, dtype=np.float32)
+    v_ffit = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+    v_navg = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
 
     # Loop through all active cells in this block
     for n in range(mask.shape[0]):  # row
@@ -616,7 +1220,7 @@ def process_tile(
             z_zmin[n, m] = zmin
             z_zmax[n, m] = zmax
             z_volmax[n, m] = v[-1]
-            z_depth[:, n, m] = z[1:]
+            z_level[:, n, m] = z
 
             # Now the U/V points
             # U
@@ -626,42 +1230,244 @@ def process_tile(
             zgu = np.transpose(zgu)
             manning = manning_grid[nn : nn + refi, mm : mm + refi]
             manning = np.transpose(manning)
-            zmin, zmax, hrep, navg, zz = subgrid_q_table(
-                zgu.flatten(), manning.flatten(), nbins
+            zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(
+                zgu.flatten(), manning.flatten(), nbins, huthresh
             )
             u_zmin[n, m] = zmin
             u_zmax[n, m] = zmax
-            u_hrep[:, n, m] = hrep
-            u_navg[:, n, m] = navg
+            u_havg[:, n, m] = havg
+            u_nrep[:, n, m] = nrep
+            u_pwet[:, n, m] = pwet
+            u_ffit[n, m] = ffit
+            u_navg[n, m] = navg
 
             # V
             nn = n * refi + int(0.5 * refi)
             mm = m * refi
             zgu = zg[nn : nn + refi, mm : mm + refi]
             manning = manning_grid[nn : nn + refi, mm : mm + refi]
-            zmin, zmax, hrep, navg, zz = subgrid_q_table(
-                zgu.flatten(), manning.flatten(), nbins
+            zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(
+                zgu.flatten(), manning.flatten(), nbins, huthresh
             )
             v_zmin[n, m] = zmin
             v_zmax[n, m] = zmax
-            v_hrep[:, n, m] = hrep
-            v_navg[:, n, m] = navg
+            v_havg[:, n, m] = havg
+            v_nrep[:, n, m] = nrep
+            v_pwet[:, n, m] = pwet
+            v_ffit[n, m] = ffit
+            v_navg[n, m] = navg
 
     return (
         z_zmin,
         z_zmax,
-        # z_zmean,
         z_volmax,
-        z_depth,
+        z_level,
         u_zmin,
         u_zmax,
-        u_hrep,
+        u_havg,
+        u_nrep,
+        u_pwet,
+        u_ffit,
         u_navg,
         v_zmin,
         v_zmax,
-        v_hrep,
+        v_havg,
+        v_nrep,
+        v_pwet,
+        v_ffit,
         v_navg,
     )
+
+
+### Following code mode be updated and used at some point
+# @njit
+# def process_block_quadtree(ds_mesh,
+#                            ds_sbg,
+#                            da_dep,
+#                            da_man,
+#                            index_cells_in_block,
+#                            bn0,
+#                            bm0,
+#                            refi,
+#                            nbins,
+#                            is_geographic,
+#                            max_gradient
+#                            ):
+
+#     """calculate subgrid properties for a single tile"""
+#     nr_cells_in_block = index_cells_in_block.shape[0]
+
+#     # Loop through all active cells in this block
+#     for ic in range(nr_cells_in_block):
+
+#         # Process cell
+
+#         # Index in full quadtree mesh
+#         indx = index_cells_in_block[ic]
+
+#         # Get indices of pixels in block
+#         nn  = (n[indx] - bn0) * refi # First pixel n index in cell
+#         mm  = (m[indx] - bm0) * refi # First pixel m index in cell
+
+#         # Matrix with pixels in cell
+#         zv = da_dep.values[nn : nn + refi, mm : mm + refi].flatten()
+
+#         # Compute pixel size in metres
+#         if is_geographic:
+#             # Compute latitude of cell
+
+#             ygc = yg[nn : nn + refi, mm : mm + refi]
+
+#             mean_lat =np.abs(np.mean(ygc))
+#             dxpm = dxp*111111.0*np.cos(np.pi*mean_lat/180.0)
+#             dypm = dyp*111111.0
+#         else:
+#             dxpm = dxp
+#             dypm = dyp
+        
+# #        zv  = zgc.flatten()   
+#         zvmin = -20.0
+#         z, v, zmin, zmax = subgrid_v_table(zv, dxpm, dypm, nbins, zvmin, max_gradient)
+
+#         # Check if this is an active point 
+#         ds_sbg["z_zmin"].values[ic] = zmin
+#         z_zmax[ic]    = zmax
+#         z_volmax[ic]  = v[-1]
+#         z_level[:,ic] = z
+        
+#         # Now the U/V points
+#         # First right
+#         if mu[indx] <= 0:
+#             if mu1[indx] >= 0:
+#                 nn  = (n[indx] - bn0)*refi
+#                 mm  = (m[indx] - bm0)*refi + int(0.5*refi)
+#                 zgu = zg[nn : nn + refi, mm : mm + refi]
+#                 zgu = np.transpose(zgu)
+#                 zv  = zgu.flatten()
+#                 manning = manning_grid[nn : nn + refi, mm : mm + refi]
+#                 manning = np.transpose(manning)
+#                 manning = manning.flatten()
+#                 iuv = index_mu1[indx]
+#                 if iuv>=0:
+#                     zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+#                     self.ds["uv_zmin"][iuv]   = zmin
+#                     self.ds["uv_zmax"][iuv]   = zmax
+#                     self.ds["uv_havg"][iuv,:] = havg
+#                     self.ds["uv_nrep"][iuv,:] = nrep
+#                     self.ds["uv_pwet"][iuv,:] = pwet
+#                     self.ds["uv_ffit"][iuv]   = ffit
+#                     self.ds["uv_navg"][iuv]   = navg
+#         else:        
+#             if mu1[indx] >= 0:
+#                 nn = (n[indx] - bn0)*refi
+#                 mm = (m[indx] - bm0)*refi + int(3*refi/4)
+#                 zgu = zg[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+#                 zgu = np.transpose(zgu)
+#                 zv  = zgu.flatten()
+#                 manning = manning_grid[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+#                 manning = np.transpose(manning)
+#                 manning = manning.flatten()
+#                 iuv = index_mu1[indx]
+#                 if iuv>=0:
+#                     zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+#                     self.ds["uv_zmin"][iuv]   = zmin
+#                     self.ds["uv_zmax"][iuv]   = zmax
+#                     self.ds["uv_havg"][iuv,:] = havg
+#                     self.ds["uv_nrep"][iuv,:] = nrep
+#                     self.ds["uv_pwet"][iuv,:] = pwet
+#                     self.ds["uv_ffit"][iuv]   = ffit
+#                     self.ds["uv_navg"][iuv]   = navg
+#             if mu2[indx] >= 0:
+#                 nn = (n[indx] - bn0)*refi + int(refi/2)
+#                 mm = (m[indx] - bm0)*refi + int(3*refi/4)
+#                 zgu = zg[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+#                 zgu = np.transpose(zgu)
+#                 zv  = zgu.flatten()
+#                 manning = manning_grid[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+#                 manning = np.transpose(manning)
+#                 manning = manning.flatten()
+#                 iuv = index_mu2[indx]
+#                 if iuv>=0:
+#                     zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+#                     self.ds["uv_zmin"][iuv]   = zmin
+#                     self.ds["uv_zmax"][iuv]   = zmax
+#                     self.ds["uv_havg"][iuv,:] = havg
+#                     self.ds["uv_nrep"][iuv,:] = nrep
+#                     self.ds["uv_pwet"][iuv,:] = pwet
+#                     self.ds["uv_ffit"][iuv]   = ffit
+#                     self.ds["uv_navg"][iuv]   = navg
+
+#         # Now above
+#         if nu[indx] <= 0:
+#             if nu1[indx] >= 0:
+#                 nn = (n[indx] - bn0)*refi + int(0.5*refi)
+#                 mm = (m[indx] - bm0)*refi
+#                 zgu = zg[nn : nn + refi, mm : mm + refi]
+#                 zv  = zgu.flatten()
+#                 manning = manning_grid[nn : nn + refi, mm : mm + refi]
+#                 manning = manning.flatten()
+#                 iuv = index_nu1[indx]
+#                 if iuv>=0:
+#                     zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+#                     self.ds["uv_zmin"][iuv]   = zmin
+#                     self.ds["uv_zmax"][iuv]   = zmax
+#                     self.ds["uv_havg"][iuv,:] = havg
+#                     self.ds["uv_nrep"][iuv,:] = nrep
+#                     self.ds["uv_pwet"][iuv,:] = pwet
+#                     self.ds["uv_ffit"][iuv]   = ffit
+#                     self.ds["uv_navg"][iuv]   = navg
+#         else:        
+#             if nu1[indx] >= 0:
+#                 nn = (n[indx] - bn0)*refi + int(3*refi/4)
+#                 mm = (m[indx] - bm0)*refi
+#                 zgu = zg[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+#                 zv  = zgu.flatten()
+#                 manning = manning_grid[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+#                 manning = manning.flatten()
+#                 iuv = index_nu1[indx]
+#                 if iuv>=0:
+#                     zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+#                     self.ds["uv_zmin"][iuv]   = zmin
+#                     self.ds["uv_zmax"][iuv]   = zmax
+#                     self.ds["uv_havg"][iuv,:] = havg
+#                     self.ds["uv_nrep"][iuv,:] = nrep
+#                     self.ds["uv_pwet"][iuv,:] = pwet
+#                     self.ds["uv_ffit"][iuv]   = ffit
+#                     self.ds["uv_navg"][iuv]   = navg
+#             if nu2[indx] >= 0:
+#                 nn = (n[indx] - bn0)*refi + int(3*refi/4)
+#                 mm = (m[indx] - bm0)*refi + int(refi/2)
+#                 zgu = zg[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+#                 zv  = zgu.flatten()
+#                 manning = manning_grid[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+#                 manning = manning.flatten()
+#                 iuv = index_nu2[indx]
+#                 if iuv>=0:
+#                     zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+#                     self.ds["uv_zmin"][iuv]   = zmin
+#                     self.ds["uv_zmax"][iuv]   = zmax
+#                     self.ds["uv_havg"][iuv,:] = havg
+#                     self.ds["uv_nrep"][iuv,:] = nrep
+#                     self.ds["uv_pwet"][iuv,:] = pwet
+#                     self.ds["uv_ffit"][iuv]   = ffit
+#                     self.ds["uv_navg"][iuv]   = navg
+
+#     return (
+#         z_zmin,
+#         z_zmax,
+#         # z_zmean,
+#         z_volmax,
+#         z_depth,
+#         u_zmin,
+#         u_zmax,
+#         u_hrep,
+#         u_navg,
+#         v_zmin,
+#         v_zmax,
+#         v_hrep,
+#         v_navg,
+#     )
+
 
 
 @njit
