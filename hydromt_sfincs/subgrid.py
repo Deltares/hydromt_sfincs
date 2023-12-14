@@ -490,7 +490,7 @@ class SubgridTableRegular:
 
                 yg = da_dep.raster.ycoords.values
                 if yg.ndim == 1:
-                    yg = np.repeat(np.atleast_2d(yg), da_dep.raster.shape[0], axis=0)
+                    yg = np.repeat(np.atleast_2d(yg).T, da_dep.raster.shape[1], axis=1)
 
                 # Now compute subgrid properties
                 logger.debug(f"Processing subgrid tables for {nactive} active cells..")
@@ -564,7 +564,7 @@ class SubgridTableRegular:
             setattr(self, name, ds_sbg[name].values)
 
 
-# @njit
+@njit
 def process_tile(
     mask, zg, manning_grid, dxp, dyp, refi, nbins, yg, max_gradient, is_geographic=False
 ):

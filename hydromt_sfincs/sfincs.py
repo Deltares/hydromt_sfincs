@@ -2688,7 +2688,7 @@ class SfincsModel(GridModel):
         """Read the complete model schematization and configuration from file."""
         self.read_config(epsg=epsg)
         if epsg is None and "epsg" not in self.config:
-            raise ValueError(f"Please specify epsg to read this model")
+            raise ValueError("Please specify epsg to read this model")
         self.read_grid()
         self.read_subgrid()
         self.read_geoms()
