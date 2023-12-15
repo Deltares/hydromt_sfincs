@@ -820,7 +820,9 @@ def subgrid_q_table(elevation: np.ndarray, manning: np.ndarray, nbins: int, huth
     pwet = np.zeros(nbins)
     zz   = np.zeros(nbins)
     
-    n   = int(np.size(elevation)) # Nr of pixels in grid cell
+    n = int(elevation.size)  # Nr of pixels in grid cell
+    # n   = int(np.size(elevation)) # Nr of pixels in grid cell
+    
     n05 = int(n/2) # Index of middle pixel
   
     dd_a      = elevation[0:n05] # Pixel elevations side A 
