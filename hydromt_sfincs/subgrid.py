@@ -1555,65 +1555,191 @@ def subgrid_v_table(
         n += 1
     return z, V, elevation.min(), z.max()
 
-
 @njit
-def subgrid_q_table(elevation: np.ndarray, manning: np.ndarray, nbins: int):
+def subgrid_q_table(elevation: np.ndarray, manning: np.ndarray, nbins: int, huthresh:float):
     """
-    map elevation values into a hypsometric hydraulic radius - depth relationship
-
+    map vector of elevation values into a hypsometric hydraulic radius - depth relationship for one u/v point
     Parameters
     ----------
-    elevation: np.ndarray
-        subgrid elevation values for one grid cell [m]
-    manning: np.ndarray
-        subgrid manning roughness values for one grid cell [s m^(-1/3)]
-    nbins: int
-        number of bins to use for the hypsometric curve
-
+    elevation : np.ndarray (nr of pixels in one cell) containing subgrid elevation values for one grid cell [m]
+    manning : np.ndarray (nr of pixels in one cell) containing subgrid manning roughness values for one grid cell [s m^(-1/3)]
+    nbins : int, number of vertical bins [-]
+    huthresh : float, threshold depth [m]
     Returns
     -------
-    zmin, zmax: float
-        minimum and maximum elevation values used for hypsometric curve
-    hrep, navg, zz: np.ndarray
-        conveyance depth, average manning roughness, and elevation values
-        for each bin
+    zmin : float, minimum elevation [m]
+    zmax : float, maximum elevation [m]
+    havg : np.ndarray (nbins) grid-average depth for vertical levels [m]
+    nrep : np.ndarray (nbins) representative roughness for vertical levels [m1/3/s] ?
+    pwet : np.ndarray (nbins) wet fraction for vertical levels [-] ?
+    navg : float, grid-average Manning's n [m 1/3 / s]
+    ffit : float, fitting coefficient [-]
+    zz   : np.ndarray (nbins) elevation of vertical levels [m]
     """
-    hrep = np.zeros(nbins, dtype=np.float32)
-    navg = np.zeros(nbins, dtype=np.float32)
-    zz = np.zeros(nbins, dtype=np.float32)
+    # Initialize output arrays
+    havg = np.zeros(nbins)
+    nrep = np.zeros(nbins)
+    pwet = np.zeros(nbins)
+    zz   = np.zeros(nbins)
 
-    n = int(elevation.size)  # Nr of pixels in grid cell
-    n05 = int(n / 2)
+    
+    n   = int(np.size(elevation)) # Nr of pixels in grid cell
+    n05 = int(n/2) # Index of middle pixel
+  
+    dd_a      = elevation[0:n05] # Pixel elevations side A 
+    dd_b      = elevation[n05:] # Pixel elevations side B
+    manning_a = manning[0:n05] # Pixel manning side A
+    manning_b = manning[n05:] # Pixel manning side B
 
-    zmin_a = np.min(elevation[0:n05])
-    zmax_a = np.max(elevation[0:n05])
+    zmin_a      = np.min(dd_a) # Minimum elevation side A
+    zmax_a      = np.max(dd_a) # Maximum elevation side A
+    
+    zmin_b      = np.min(dd_b) # Minimum elevation side B
+    zmax_b      = np.max(dd_b) # Maximum elevation side B
+    
+    zmin = max(zmin_a, zmin_b) + huthresh # Minimum elevation of uv point
+    zmax = max(zmax_a, zmax_b) # Maximum elevation of uv point
+    
+    # Make sure zmax is always a bit higher than zmin
+    if zmax<zmin + 0.001:
+       zmax = max(zmax, zmin + 0.001)
 
-    zmin_b = np.min(elevation[n05:])
-    zmax_b = np.max(elevation[n05:])
+    # Determine bin size (metres)
+    dbin = (zmax - zmin)/(nbins - 1)
 
-    zmin = max(zmin_a, zmin_b)
-    zmax = max(zmax_a, zmax_b)
-
-    # Make sure zmax is a bit higher than zmin
-    if zmax < zmin + 0.01:
-        zmax += 0.01
-
-    # Determine bin size
-    dbin = (zmax - zmin) / nbins
-
+    # Grid mean roughness
+    navg = np.mean(manning)
+     
     # Loop through bins
     for ibin in range(nbins):
+
         # Top of bin
-        zbin = zmin + (ibin + 1) * dbin
+        zbin = zmin + ibin * dbin
         zz[ibin] = zbin
+        
+        # ibelow = np.where(elevation<=zbin)                           # index of pixels below bin level
+        h      = np.maximum(zbin - elevation, 0.0)    # water depth in each pixel
+        iwet   = np.where(zbin - elevation>-1.0e-6)[0]                           # indices of wet pixels
+        hmean  = np.mean(h)
+        havg[ibin] = hmean                      # conveyance depth
+        pwet[ibin] = len(iwet)/n                # wet fraction
 
-        ibelow = np.where(elevation <= zbin)  # index of pixels below bin level
-        # water depth in each pixel
-        h = np.maximum(zbin - np.maximum(elevation, zmin), 0.0)
-        qi = h ** (5.0 / 3.0) / manning  # unit discharge in each pixel
-        q = np.sum(qi) / n  # combined unit discharge for cell
+        # Side A
+        h_a    = np.maximum(zbin - dd_a, 0.0)       # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        q_a    = h_a**(5.0/3.0)/manning_a           # Determine 'flux' for each pixel
+        q_a    = np.mean(q_a)                       # Wet-average flux through all the pixels
+        
+        # Side B
+        h_b    = np.maximum(zbin - dd_b, 0.0)       # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        q_b    = h_b**(5.0/3.0)/manning_b           # Determine 'flux' for each pixel
+        q_b    = np.mean(q_b)                       # Wet-average flux through all the pixels
+        
+        q_ab   = np.minimum(q_a, q_b)
 
-        navg[ibin] = manning[ibelow].mean()  # mean manning's n
-        hrep[ibin] = (q * navg[ibin]) ** (3.0 / 5.0)  # conveyance depth
+        q_all = h**(5.0/3.0)/manning               # Determine 'flux' for each pixel
+        q_all = np.mean(q_all)                    # Wet-average flux through all the pixels
+        
+        # Weighted average of q_ab and q_all
+        w = (ibin) / (nbins - 1)
+        q = (1.0 - w) * q_ab + w * q_all
 
-    return zmin, zmax, hrep, navg, zz
+        nrep[ibin] = hmean**(5.0/3.0) / q  # Representative n for qmean and hmean
+
+    nrep_top = nrep[-1]    
+    havg_top = havg[-1]
+
+    ### Fitting for nrep above zmax
+
+    # Determine nfit at zfit
+    zfit  = zmax + zmax - zmin
+    h     = np.maximum(zfit - elevation, 0.0)      # water depth in each pixel
+    hfit  = havg_top + zmax - zmin                 # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
+    q     = h**(5.0/3.0)/manning                   # unit discharge in each pixel
+    qmean = np.mean(q)                             # combined unit discharge for cell
+
+    nfit  = hfit**(5.0/3.0) / qmean
+    
+    # Actually apply fit on gn2 (this is what is used in sfincs)
+    gnavg2 = 9.81 * navg**2
+    gnavg_top2 = 9.81 * nrep_top**2
+
+    if gnavg2/gnavg_top2 > 0.99 and gnavg2/gnavg_top2 < 1.01:
+        # gnavg2 and gnavg_top2 are almost identical
+        ffit = 0.0
+    else:
+        if navg > nrep_top:
+            if nfit > navg:
+                nfit = nrep_top + 0.9*(navg - nrep_top)
+            if nfit < nrep_top:
+                nfit = nrep_top + 0.1*(navg - nrep_top)
+        else:
+            if nfit < navg:
+                nfit = nrep_top + 0.9*(navg - nrep_top)
+            if nfit > nrep_top:
+                nfit = nrep_top + 0.1*(navg - nrep_top)
+        gnfit2 = 9.81 * nfit**2
+        ffit = (((gnavg2 - gnavg_top2) / (gnavg2 - gnfit2)) - 1) / (zfit - zmax)
+         
+    return zmin, zmax, havg, nrep, pwet, ffit, navg, zz       
+
+# @njit
+# def subgrid_q_table_old(elevation: np.ndarray, manning: np.ndarray, nbins: int):
+#     """
+#     map elevation values into a hypsometric hydraulic radius - depth relationship
+
+#     Parameters
+#     ----------
+#     elevation: np.ndarray
+#         subgrid elevation values for one grid cell [m]
+#     manning: np.ndarray
+#         subgrid manning roughness values for one grid cell [s m^(-1/3)]
+#     nbins: int
+#         number of bins to use for the hypsometric curve
+
+#     Returns
+#     -------
+#     zmin, zmax: float
+#         minimum and maximum elevation values used for hypsometric curve
+#     hrep, navg, zz: np.ndarray
+#         conveyance depth, average manning roughness, and elevation values
+#         for each bin
+#     """
+#     hrep = np.zeros(nbins, dtype=np.float32)
+#     navg = np.zeros(nbins, dtype=np.float32)
+#     zz = np.zeros(nbins, dtype=np.float32)
+
+#     n = int(elevation.size)  # Nr of pixels in grid cell
+#     n05 = int(n / 2)
+
+#     zmin_a = np.min(elevation[0:n05])
+#     zmax_a = np.max(elevation[0:n05])
+
+#     zmin_b = np.min(elevation[n05:])
+#     zmax_b = np.max(elevation[n05:])
+
+#     zmin = max(zmin_a, zmin_b)
+#     zmax = max(zmax_a, zmax_b)
+
+#     # Make sure zmax is a bit higher than zmin
+#     if zmax < zmin + 0.01:
+#         zmax += 0.01
+
+#     # Determine bin size
+#     dbin = (zmax - zmin) / nbins
+
+#     # Loop through bins
+#     for ibin in range(nbins):
+#         # Top of bin
+#         zbin = zmin + (ibin + 1) * dbin
+#         zz[ibin] = zbin
+
+#         ibelow = np.where(elevation <= zbin)  # index of pixels below bin level
+#         # water depth in each pixel
+#         h = np.maximum(zbin - np.maximum(elevation, zmin), 0.0)
+#         qi = h ** (5.0 / 3.0) / manning  # unit discharge in each pixel
+#         q = np.sum(qi) / n  # combined unit discharge for cell
+
+#         navg[ibin] = manning[ibelow].mean()  # mean manning's n
+#         hrep[ibin] = (q * navg[ibin]) ** (3.0 / 5.0)  # conveyance depth
+
+#     return zmin, zmax, hrep, navg, zz
