@@ -670,6 +670,8 @@ class QuadtreeGrid:
 
     def set_mask(
             self,
+            model="sfincs",  # "sfincs" for SFINCS: data["mask"], "snapwave" for SnapWave: data["snapwavemask"]
+            copy_sfincs_mask2snapwave=False,
             zmin=99999.0,
             zmax=-99999.0,
             include_polygon=None,
@@ -689,330 +691,342 @@ class QuadtreeGrid:
 
         if not quiet:
             print("Building mask ...")
-
-        mask = np.zeros(self.nr_cells, dtype=np.int8)
-        x, y = self.face_coordinates
-        if "z" in self.data:
-            z    = self.data["z"].values[:]
+            
+        if model is "sfincs":
+            varname = "mask"
+        elif model is "snapwave":
+            varname = "snapwave_mask"
         else:
-            z    = None
-
-        mu    = self.data["mu"].values[:]
-        mu1   = self.data["mu1"].values[:]
-        mu2   = self.data["mu2"].values[:]
-        nu    = self.data["nu"].values[:]
-        nu1   = self.data["nu1"].values[:]
-        nu2   = self.data["nu2"].values[:]
-        md    = self.data["md"].values[:]
-        md1   = self.data["md1"].values[:]
-        md2   = self.data["md2"].values[:]
-        nd    = self.data["nd"].values[:]
-        nd1   = self.data["nd1"].values[:]
-        nd2   = self.data["nd2"].values[:]
-
-        if zmin>=zmax:
-            # Do not include any points initially
-            if include_polygon is None:
-                print("WARNING: Entire mask set to zeros! Please ensure zmax is greater than zmin, or provide include polygon(s) !")
-                return
+            print("Requested model to build mask for not recognized! Choose either 'sfincs' or 'snapwave' ...")
+                       
+        if copy_sfincs_mask2snapwave is True and model is "snapwave" and self.data["mask"] is not None: #TODO: check whether the 'self.data["mask"] is not None' is robust in code order
+            print("Using SFINCS mask for Snapwave mask ...")
+            self.data[varname] = self.data["mask"]
         else:
-            if z is not None:                
-                # Set initial mask based on zmin and zmax
-                iok = np.where((z>=zmin) & (z<=zmax))
-                mask[iok] = 1
+            print("Build new mask for: " + model + " ...")
+                       
+            mask = np.zeros(self.nr_cells, dtype=np.int8)
+            x, y = self.face_coordinates
+            if "z" in self.data:
+                z    = self.data["z"].values[:]
             else:
-                print("WARNING: Entire mask set to zeros! No depth values found on grid.")
-                        
-        # Include polygons
-        if include_polygon is not None:
-            for ip, polygon in include_polygon.iterrows():
-                inpol = inpolygon(x, y, polygon["geometry"])
-                iok   = np.where((inpol) & (z>=include_zmin) & (z<=include_zmax))
-                mask[iok] = 1
+                z    = None
 
-        # Exclude polygons
-        if exclude_polygon is not None:
-            for ip, polygon in exclude_polygon.iterrows():
-                inpol = inpolygon(x, y, polygon["geometry"])
-                iok   = np.where((inpol) & (z>=exclude_zmin) & (z<=exclude_zmax))
-                mask[iok] = 0
+            mu    = self.data["mu"].values[:]
+            mu1   = self.data["mu1"].values[:]
+            mu2   = self.data["mu2"].values[:]
+            nu    = self.data["nu"].values[:]
+            nu1   = self.data["nu1"].values[:]
+            nu2   = self.data["nu2"].values[:]
+            md    = self.data["md"].values[:]
+            md1   = self.data["md1"].values[:]
+            md2   = self.data["md2"].values[:]
+            nd    = self.data["nd"].values[:]
+            nd1   = self.data["nd1"].values[:]
+            nd2   = self.data["nd2"].values[:]
 
-        # Open boundary polygons
-        if open_boundary_polygon is not None:
-            for ip, polygon in open_boundary_polygon.iterrows():
-                inpol = inpolygon(x, y, polygon["geometry"])
-                # Only consider points that are:
-                # 1) Inside the polygon
-                # 2) Have a mask > 0
-                # 3) z>=zmin
-                # 4) z<=zmax
-                iok   = np.where((inpol) & (mask>0) & (z>=open_boundary_zmin) & (z<=open_boundary_zmax))
-                for ic in iok[0]:
-                    okay = False
-                    # Check neighbors, cell must have at least one inactive neighbor
-                    # Left
-                    if md[ic]<=0:
-                        # Coarser or equal to the left
-                        if md1[ic]>=0:
-                            # Cell has neighbor to the left
-                            if mask[md1[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                    else:
-                        # Finer to the left
-                        if md1[ic]>=0:
-                            # Cell has neighbor to the left
-                            if mask[md1[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                        if md2[ic]>=0:
-                            # Cell has neighbor to the left
-                            if mask[md2[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                        
-                    # Below
-                    if nd[ic]<=0:
-                        # Coarser or equal below
-                        if nd1[ic]>=0:
-                            # Cell has neighbor below
-                            if mask[nd1[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                    else:
-                        # Finer below
-                        if nd1[ic]>=0:
-                            # Cell has neighbor below
-                            if mask[nd1[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                        if nd2[ic]>=0:
-                            # Cell has neighbor below
-                            if mask[nd2[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
+            if zmin>=zmax:
+                # Do not include any points initially
+                if include_polygon is None:
+                    print("WARNING: Entire mask set to zeros! Please ensure zmax is greater than zmin, or provide include polygon(s) !")
+                    return
+            else:
+                if z is not None:                
+                    # Set initial mask based on zmin and zmax
+                    iok = np.where((z>=zmin) & (z<=zmax))
+                    mask[iok] = 1
+                else:
+                    print("WARNING: Entire mask set to zeros! No depth values found on grid.") #DOTO - question - also/not for only include_polygon case?
+                            
+            # Include polygons
+            if include_polygon is not None:
+                for ip, polygon in include_polygon.iterrows():
+                    inpol = inpolygon(x, y, polygon["geometry"])
+                    # iok   = np.where((inpol) & (z>=include_zmin) & (z<=include_zmax))
+                    iok   = np.where((inpol) ) # TODO: question - do we want include to depend on elevation, or 'overwrite' this?                
+                    mask[iok] = 1
 
-                    # Right
-                    if mu[ic]<=0:
-                        # Coarser or equal to the right
-                        if mu1[ic]>=0:
-                            # Cell has neighbor to the right
-                            if mask[mu1[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                    else:
-                        # Finer to the left
-                        if mu1[ic]>=0:
-                            # Cell has neighbor to the right
-                            if mask[mu1[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                        if mu2[ic]>=0:
-                            # Cell has neighbor to the right
-                            if mask[mu2[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
+            # Exclude polygons
+            if exclude_polygon is not None:
+                for ip, polygon in exclude_polygon.iterrows():
+                    inpol = inpolygon(x, y, polygon["geometry"])
+                    iok   = np.where((inpol) & (z>=exclude_zmin) & (z<=exclude_zmax))
+                    mask[iok] = 0
 
-                    # Above
-                    if nu[ic]<=0:
-                        # Coarser or equal above
-                        if nu1[ic]>=0:
-                            # Cell has neighbor above
-                            if mask[nu1[ic]]==0:
-                                # And it's inactive
+            # Open boundary polygons
+            if open_boundary_polygon is not None:
+                for ip, polygon in open_boundary_polygon.iterrows():
+                    inpol = inpolygon(x, y, polygon["geometry"])
+                    # Only consider points that are:
+                    # 1) Inside the polygon
+                    # 2) Have a mask > 0
+                    # 3) z>=zmin
+                    # 4) z<=zmax
+                    iok   = np.where((inpol) & (mask>0) & (z>=open_boundary_zmin) & (z<=open_boundary_zmax))
+                    for ic in iok[0]:
+                        okay = False
+                        # Check neighbors, cell must have at least one inactive neighbor
+                        # Left
+                        if md[ic]<=0:
+                            # Coarser or equal to the left
+                            if md1[ic]>=0:
+                                # Cell has neighbor to the left
+                                if mask[md1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
                                 okay = True
                         else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                    else:
-                        # Finer below
-                        if nu1[ic]>=0:
-                            # Cell has neighbor above
-                            if mask[nu1[ic]]==0:
-                                # And it's inactive
+                            # Finer to the left
+                            if md1[ic]>=0:
+                                # Cell has neighbor to the left
+                                if mask[md1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
+                                okay = True
+                            if md2[ic]>=0:
+                                # Cell has neighbor to the left
+                                if mask[md2[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
+                                okay = True
+                            
+                        # Below
+                        if nd[ic]<=0:
+                            # Coarser or equal below
+                            if nd1[ic]>=0:
+                                # Cell has neighbor below
+                                if mask[nd1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
                                 okay = True
                         else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                        if nu2[ic]>=0:
-                            # Cell has neighbor above
-                            if mask[nu2[ic]]==0:
-                                # And it's inactive
+                            # Finer below
+                            if nd1[ic]>=0:
+                                # Cell has neighbor below
+                                if mask[nd1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
                                 okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                        
-                    if okay:
-                        mask[ic] = 2
+                            if nd2[ic]>=0:
+                                # Cell has neighbor below
+                                if mask[nd2[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
+                                okay = True
 
-        # Outflow boundary polygons
-        if outflow_boundary_polygon is not None:
-            for ip, polygon in outflow_boundary_polygon.iterrows():
-                inpol = inpolygon(x, y, polygon["geometry"])
-                # Only consider points that are:
-                # 1) Inside the polygon
-                # 2) Have a mask > 0
-                # 3) z>=zmin
-                # 4) z<=zmax
-                iok   = np.where((inpol) & (mask>0) & (z>=outflow_boundary_zmin) & (z<=outflow_boundary_zmax))
-                for ic in iok[0]:
-                    okay = False
-                    # Check neighbors, cell must have at least one inactive neighbor
-                    # Left
-                    if md[ic]<=0:
-                        # Coarser or equal to the left
-                        if md1[ic]>=0:
-                            # Cell has neighbor to the left
-                            if mask[md1[ic]]==0:
-                                # And it's inactive
+                        # Right
+                        if mu[ic]<=0:
+                            # Coarser or equal to the right
+                            if mu1[ic]>=0:
+                                # Cell has neighbor to the right
+                                if mask[mu1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
                                 okay = True
                         else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                    else:
-                        # Finer to the left
-                        if md1[ic]>=0:
-                            # Cell has neighbor to the left
-                            if mask[md1[ic]]==0:
-                                # And it's inactive
+                            # Finer to the left
+                            if mu1[ic]>=0:
+                                # Cell has neighbor to the right
+                                if mask[mu1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
                                 okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                        if md2[ic]>=0:
-                            # Cell has neighbor to the left
-                            if mask[md2[ic]]==0:
-                                # And it's inactive
+                            if mu2[ic]>=0:
+                                # Cell has neighbor to the right
+                                if mask[mu2[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
                                 okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                        
-                    # Below
-                    if nd[ic]<=0:
-                        # Coarser or equal below
-                        if nd1[ic]>=0:
-                            # Cell has neighbor below
-                            if mask[nd1[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                    else:
-                        # Finer below
-                        if nd1[ic]>=0:
-                            # Cell has neighbor below
-                            if mask[nd1[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                        if nd2[ic]>=0:
-                            # Cell has neighbor below
-                            if mask[nd2[ic]]==0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
 
-                    # Right
-                    if mu[ic]<=0:
-                        # Coarser or equal to the right
-                        if mu1[ic]>=0:
-                            # Cell has neighbor to the right
-                            if mask[mu1[ic]]==0:
-                                # And it's inactive
+                        # Above
+                        if nu[ic]<=0:
+                            # Coarser or equal above
+                            if nu1[ic]>=0:
+                                # Cell has neighbor above
+                                if mask[nu1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
                                 okay = True
                         else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                    else:
-                        # Finer to the left
-                        if mu1[ic]>=0:
-                            # Cell has neighbor to the right
-                            if mask[mu1[ic]]==0:
-                                # And it's inactive
+                            # Finer below
+                            if nu1[ic]>=0:
+                                # Cell has neighbor above
+                                if mask[nu1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
                                 okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                        if mu2[ic]>=0:
-                            # Cell has neighbor to the right
-                            if mask[mu2[ic]]==0:
-                                # And it's inactive
+                            if nu2[ic]>=0:
+                                # Cell has neighbor above
+                                if mask[nu2[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 2
                                 okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
+                            
+                        if okay:
+                            mask[ic] = 2
 
-                    # Above
-                    if nu[ic]<=0:
-                        # Coarser or equal above
-                        if nu1[ic]>=0:
-                            # Cell has neighbor above
-                            if mask[nu1[ic]]==0:
-                                # And it's inactive
+            # Outflow boundary polygons
+            if outflow_boundary_polygon is not None:
+                for ip, polygon in outflow_boundary_polygon.iterrows():
+                    inpol = inpolygon(x, y, polygon["geometry"])
+                    # Only consider points that are:
+                    # 1) Inside the polygon
+                    # 2) Have a mask > 0
+                    # 3) z>=zmin
+                    # 4) z<=zmax
+                    iok   = np.where((inpol) & (mask>0) & (z>=outflow_boundary_zmin) & (z<=outflow_boundary_zmax))
+                    for ic in iok[0]:
+                        okay = False
+                        # Check neighbors, cell must have at least one inactive neighbor
+                        # Left
+                        if md[ic]<=0:
+                            # Coarser or equal to the left
+                            if md1[ic]>=0:
+                                # Cell has neighbor to the left
+                                if mask[md1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
                                 okay = True
                         else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                    else:
-                        # Finer below
-                        if nu1[ic]>=0:
-                            # Cell has neighbor above
-                            if mask[nu1[ic]]==0:
-                                # And it's inactive
+                            # Finer to the left
+                            if md1[ic]>=0:
+                                # Cell has neighbor to the left
+                                if mask[md1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
+                                okay = True
+                            if md2[ic]>=0:
+                                # Cell has neighbor to the left
+                                if mask[md2[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
+                                okay = True
+                            
+                        # Below
+                        if nd[ic]<=0:
+                            # Coarser or equal below
+                            if nd1[ic]>=0:
+                                # Cell has neighbor below
+                                if mask[nd1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
                                 okay = True
                         else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                        if nu2[ic]>=0:
-                            # Cell has neighbor above
-                            if mask[nu2[ic]]==0:
-                                # And it's inactive
+                            # Finer below
+                            if nd1[ic]>=0:
+                                # Cell has neighbor below
+                                if mask[nd1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
+                                okay = True
+                            if nd2[ic]>=0:
+                                # Cell has neighbor below
+                                if mask[nd2[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
+                                okay = True
+
+                        # Right
+                        if mu[ic]<=0:
+                            # Coarser or equal to the right
+                            if mu1[ic]>=0:
+                                # Cell has neighbor to the right
+                                if mask[mu1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
                                 okay = True
                         else:
-                            # No neighbor, so set mask = 3
-                            okay = True                        
-                    if okay:
-                        mask[ic] = 3
+                            # Finer to the left
+                            if mu1[ic]>=0:
+                                # Cell has neighbor to the right
+                                if mask[mu1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
+                                okay = True
+                            if mu2[ic]>=0:
+                                # Cell has neighbor to the right
+                                if mask[mu2[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
+                                okay = True
 
-        # Now add the data arrays
-        ugrid2d = self.data.grid
-        self.data["mask"] = xu.UgridDataArray(xr.DataArray(data=mask, dims=[ugrid2d.face_dimension]), ugrid2d)
+                        # Above
+                        if nu[ic]<=0:
+                            # Coarser or equal above
+                            if nu1[ic]>=0:
+                                # Cell has neighbor above
+                                if mask[nu1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
+                                okay = True
+                        else:
+                            # Finer below
+                            if nu1[ic]>=0:
+                                # Cell has neighbor above
+                                if mask[nu1[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
+                                okay = True
+                            if nu2[ic]>=0:
+                                # Cell has neighbor above
+                                if mask[nu2[ic]]==0:
+                                    # And it's inactive
+                                    okay = True
+                            else:
+                                # No neighbor, so set mask = 3
+                                okay = True                        
+                        if okay:
+                            mask[ic] = 3
 
-
+            # Now add the data arrays
+            ugrid2d = self.data.grid
+            self.data[varname] = xu.UgridDataArray(xr.DataArray(data=mask, dims=[ugrid2d.face_dimension]), ugrid2d)
 
     def cut_inactive_cells(self):
         #TODO rewrite with xr.where and less repetition
