@@ -204,7 +204,7 @@ Utilities
    utils.polygon2gdf
    utils.get_bounds_vector
    utils.mask2gdf
-   utils.rotated_grid 
+   utils.rotated_grid
 
 Visualization
 -------------

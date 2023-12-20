@@ -1,4 +1,4 @@
-# Note that these are the developer dependencies, 
+# Note that these are the developer dependencies,
 # you still need to install hydromt-sfincs itself from the package root with:
 # > pip install -e .
 name: hydromt-sfincs-dev
