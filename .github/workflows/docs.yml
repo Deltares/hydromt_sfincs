@@ -1,41 +1,54 @@
-name: Build Docs
+name: Build Documentation
 
-# We don't want pushes (or PRs) to gh-pages to kick anything off
 on:
+  workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
+    paths:
+      - tests/*
+      - hydromt/*
+      - docs/*
+      - examples/*
+      - pyproject.toml
   pull_request:
-    branches: [ main ]
+    branches: [main]
+    paths:
+      - tests/*
+      - hydromt/*
+      - docs/*
+      - examples/*
+      - pyproject.toml
 
 jobs:
   # Build docs on Linux
-  Docs:
-    name: linux docs
-    runs-on: ubuntu-latest
+  test-docs:
     env:
       DOC_VERSION: dev
     defaults:
       run:
         shell: bash -l {0}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v2
-      
-      # - name: Get tags
-      #   run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
 
-      - name: Setup environment
-        uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v5
+        id: py
         with:
-          python-version: "3.10"
-          mamba-version: "*"
-          channels: conda-forge,defaults
-          channel-priority: true
-          environment-file: envs/hydromt-sfincs-dev.yml
-          activate-environment: hydromt-sfincs-dev
+          # caching, see https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
 
+      # true if cache-hit occurred on the primary key
+      - name: Cache hit
+        run: echo '${{ steps.py.outputs.cache-hit }}'
+
+      # build environment with pip
       - name: Install hydromt-sfincs
-        run: flit install
+        run: |
+          pip install --upgrade pip
+          pip install .[full]
 
       # Move examples folder before make html for nbsphinx
       - name: Build docs
