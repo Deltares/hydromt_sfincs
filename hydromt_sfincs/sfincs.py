@@ -2712,7 +2712,7 @@ class SfincsModel(GridModel):
             List of data variables to read, by default None (all)
         """
         if self._grid is None:
-            self._grid = xr.Dataset() # avoid reading grid twice
+            self._grid = xr.Dataset()  # avoid reading grid twice
 
         da_lst = []
         if data_vars is None:

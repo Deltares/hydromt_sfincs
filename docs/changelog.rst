@@ -18,6 +18,7 @@ Changed
 
 Fixed
 -----
+- fix a bug that caused some model files to be read twice (#102)
 
 Deprecated
 ----------
