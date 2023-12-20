@@ -49,7 +49,7 @@ jobs:
       - name: Install hydromt-sfincs
         run: |
           pip install --upgrade pip
-          pip install .[test, examples]
+          pip install .[test,examples]
 
       # run test
       - name: Test
