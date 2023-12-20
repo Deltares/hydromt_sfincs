@@ -369,6 +369,7 @@ def test_model_build(tmpdir, case):
                     check_less_precise=True,  # allow for rounding errors in geoms
                     check_like=True,  # order may be different
                     check_geom_type=True,  # geometry types should be the same
+                    normalize=True,  # normalize geometry
                 )
             except AssertionError:  # re-raise error with geom name
                 invalid_geoms.append(name)
