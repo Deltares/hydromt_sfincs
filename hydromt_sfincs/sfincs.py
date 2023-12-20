@@ -1853,6 +1853,10 @@ class SfincsModel(GridModel):
             ).to_crs(self.crs)
             if "index" in gdf_locs.columns:
                 gdf_locs = gdf_locs.set_index("index")
+            # filter df_ts timeseries based on gdf_locs index
+            # this allows to use a subset of the locations in the timeseries
+            if df_ts is not None and np.isin(gdf_locs.index, df_ts.columns).all():
+                df_ts = df_ts.reindex(gdf_locs.index, axis=1, fill_value=0)
         elif gdf_locs is None and "bzs" in self.forcing:
             gdf_locs = self.forcing["bzs"].vector.to_gdf()
         elif gdf_locs is None:
@@ -2002,6 +2006,10 @@ class SfincsModel(GridModel):
             ).to_crs(self.crs)
             if "index" in gdf_locs.columns:
                 gdf_locs = gdf_locs.set_index("index")
+            # filter df_ts timeseries based on gdf_locs index
+            # this allows to use a subset of the locations in the timeseries
+            if df_ts is not None and np.isin(gdf_locs.index, df_ts.columns).all():
+                df_ts = df_ts.reindex(gdf_locs.index, axis=1, fill_value=0)
         elif gdf_locs is None and "dis" in self.forcing:
             gdf_locs = self.forcing["dis"].vector.to_gdf()
         elif gdf_locs is None:
