@@ -14,7 +14,7 @@ of the repository and an installation of HydroMT-SFINCS including some additiona
 packages required to run the notebooks.
 
 1 - Install HydroMT-SFINCS
-*************************
+**************************
 
 The first step is to install HydroMT-SFINCS and the other Python dependencies in a separate environment,
 see the **Install HydroMT-SFINCS in a new environment** section in the

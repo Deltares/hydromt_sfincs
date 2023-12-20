@@ -24,49 +24,44 @@ jobs:
   test-docs:
     env:
       DOC_VERSION: dev
-    defaults:
-      run:
-        shell: bash -l {0}
-    runs-on: ubuntu-latest
     timeout-minutes: 30
+    runs-on: ubuntu-latest
     steps:
+      - name: checkout code
+        uses: actions/checkout@v3
 
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-python@v5
-        id: py
+      - name: Setup Mambaforge
+        uses: conda-incubator/setup-miniconda@v2
         with:
-          # caching, see https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
+            python-version: '3.11'
+            miniforge-variant: Mambaforge
+            miniforge-version: latest
+            use-mamba: true
 
-      # true if cache-hit occurred on the primary key
-      - name: Cache hit
-        run: echo '${{ steps.py.outputs.cache-hit }}'
-
-      # build environment with pip
-      - name: Install hydromt-sfincs
+      - name: Setup env
         run: |
-          pip install --upgrade pip
-          pip install .[full]
+          python make_env.py full -p 3.11 -n hydromt-sfincs -o environment-doc.yml
+          mamba env create -f environment-doc.yml
+          mamba run -n hydromt pip install -e .
 
-      # Move examples folder before make html for nbsphinx
-      - name: Build docs
+      # if we're not publishing we don't have to write them, so we might as well
+      # save ourself a bunch of IO time
+      - name: Build dummy docs
+        if: ${{ github.event_name == 'pull_request' }}
         run: |
-          pushd docs
-          make html
-          popd
+          mamba run -n hydromt sphinx-build ./docs ./docs/_build -b dummy -W
 
-      # This overrides the version "dev" with the proper version if we're building off a
-      # branch that's not master (which is confined to n.nn.x above) or on a tag.
-      - name: Set doc version
-        run: echo "DOC_VERSION=$(python -c 'from hydromt_sfincs import __version__ as v; print("dev" if "dev" in v else "v"+v)')" >> $GITHUB_ENV
+      - name: Build html docs
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          mamba run -n hydromt sphinx-build -M html ./docs ./docs/_build -W
+          echo "DOC_VERSION=$(mamba run -n hydromt python -c 'from hydromt_sfincs import __version__ as v; print("dev" if "dev" in v else "v"+v)')" >> $GITHUB_ENV
 
       - name: Upload to GitHub Pages
         if: ${{ github.event_name != 'pull_request'}}
         uses: peaceiris/actions-gh-pages@v3.8.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}path
           publish_dir: ./docs/_build/html
           exclude_assets: '.buildinfo,_sources/*,_examples/*.ipynb'
           destination_dir: ./${{ env.DOC_VERSION }}
