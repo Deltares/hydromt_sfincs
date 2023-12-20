@@ -18,13 +18,73 @@ logger = logging.getLogger(__name__)
 
 
 class SubgridTableRegular:
-    def __init__(self, version=0):
+    def __init__(self, version=1):
         # A regular subgrid table contains only for cells with msk>0
         self.version = version
 
-    # Following should soon not me use anymore, but switch to netcdf subgrid file!
-    def load(self, file_name, mask):
+    # new way of reading netcdf subgrid tables
+    def read(self, file_name):
+        """Load subgrid table from netcdf file."""
+        # Read from netcdf file with xarray
+        self.ds = xr.open_dataset(file_name)
+        self.ds.close() # Should this be closed ?
+        # Should we also make self.z_zmin, self.z_zmax, etc. ?
+
+        self.nbins = self.ds.dims["bins"]
+
+    # new way of writing netcdf subgrid tables
+    def write(self, file_name):
+        """Write subgrid table to netcdf file for a regular grid with given mask."""
+       
+        # if isinstance(mask, xr.DataArray):
+        #     mask = mask.values
+
+        # # Array iok where mask > 0 
+        # iok = np.where(np.transpose(mask) > 0)
+        # iok = (iok[1], iok[0])
+
+        # get number of bins and nr of cells
+        nbins = self.nbins
+
+        # Make new xarray dataset
+        ds = xr.Dataset()
+        ds.attrs.update({"_FillValue": np.nan})
+        ds["z_zmin"] = xr.DataArray(self.z_zmin.reshape(-1), dims=("cells"))
+        ds["z_zmax"] = xr.DataArray(self.z_zmax.reshape(-1), dims=("cells"))
+        ds["z_volmax"] = xr.DataArray(self.z_volmax.reshape(-1), dims=("cells"))
+        ds["z_level"] = xr.DataArray(self.z_level.reshape(nbins,-1), dims=("bins", "cells"))
+        ds["u_zmin"] = xr.DataArray(self.u_zmin.reshape(-1), dims=("cells"))
+        ds["u_zmax"] = xr.DataArray(self.u_zmax.reshape(-1), dims=("cells"))
+        ds["u_havg"] = xr.DataArray(self.u_havg.reshape(nbins,-1), dims=("bins", "cells"))
+        ds["u_nrep"] = xr.DataArray(self.u_nrep.reshape(nbins,-1), dims=("bins", "cells"))
+        ds["u_pwet"] = xr.DataArray(self.u_pwet.reshape(nbins,-1), dims=("bins", "cells"))
+        ds["u_ffit"] = xr.DataArray(self.u_ffit.reshape(-1), dims=("cells"))
+        ds["u_navg"] = xr.DataArray(self.u_navg.reshape(-1), dims=("cells"))
+        ds["v_zmin"] = xr.DataArray(self.v_zmin.reshape(-1), dims=("cells"))
+        ds["v_zmax"] = xr.DataArray(self.v_zmax.reshape(-1), dims=("cells"))
+        ds["v_havg"] = xr.DataArray(self.v_havg.reshape(nbins,-1), dims=("bins", "cells"))
+        ds["v_nrep"] = xr.DataArray(self.v_nrep.reshape(nbins,-1), dims=("bins", "cells"))
+        ds["v_pwet"] = xr.DataArray(self.v_pwet.reshape(nbins,-1), dims=("bins", "cells"))
+        ds["v_ffit"] = xr.DataArray(self.v_ffit.reshape(-1), dims=("cells"))
+        ds["v_navg"] = xr.DataArray(self.v_navg.reshape(-1), dims=("cells"))
+
+        # Need to swap the first and second dimensions to match the FORTRAN convention in SFINCS
+        # ds["z_level"] = ds["z_level"].swap_dims({"bins": "cells"})
+        # ds["u_havg"]  = ds["u_havg"].swap_dims({"bins": "cells"})
+        # ds["u_nrep"]  = ds["u_nrep"].swap_dims({"bins": "cells"})
+        # ds["u_pwet"]  = ds["u_pwet"].swap_dims({"bins": "cells"})
+        # ds["v_havg"]  = ds["v_havg"].swap_dims({"bins": "cells"})
+        # ds["v_nrep"]  = ds["v_nrep"].swap_dims({"bins": "cells"})
+        # ds["v_pwet"]  = ds["v_pwet"].swap_dims({"bins": "cells"})
+
+        # Write to netcdf file
+        ds.to_netcdf(file_name)
+
+    # Following remains for backward compatibility, but should soon not be used anymore
+    def read_binary(self, file_name, mask):
         """Load subgrid table from file for a regular grid with given mask."""
+
+        self.version = 0
 
         if isinstance(mask, xr.DataArray):
             mask = mask.values
@@ -50,17 +110,17 @@ class SubgridTableRegular:
         self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         # self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.z_level = np.full(
+        self.z_depth = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
 
         # U points
         self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.u_havg = np.full(
+        self.u_hrep = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
-        self.u_nrep = np.full(
+        self.u_navg = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
         self.u_pwet = np.full(
@@ -72,17 +132,12 @@ class SubgridTableRegular:
         # V points
         self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.v_havg = np.full(
+        self.v_hrep = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
-        self.v_nrep = np.full(
+        self.v_navg = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
-        self.v_pwet = np.full(
-            (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
-        )
-        self.v_nrep = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.v_ffit = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
 
         self.z_zmin[iok[0], iok[1]] = np.fromfile(
             file, dtype=np.float32, count=self.nr_cells
@@ -97,7 +152,7 @@ class SubgridTableRegular:
             file, dtype=np.float32, count=self.nr_cells
         )
         for ibin in range(self.nbins):
-            self.z_level[ibin, iok[0], iok[1]] = np.fromfile(
+            self.z_depth[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
             )
 
@@ -109,11 +164,11 @@ class SubgridTableRegular:
         )
         _ = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
         for ibin in range(self.nbins):
-            self.u_havg[ibin, iok[0], iok[1]] = np.fromfile(
+            self.u_hrep[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
             )
         for ibin in range(self.nbins):
-            self.u_nrep[ibin, iok[0], iok[1]] = np.fromfile(
+            self.u_navg[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
             )
 
@@ -125,18 +180,18 @@ class SubgridTableRegular:
         )
         _ = np.fromfile(file, dtype=np.float32, count=self.nr_cells)  # not used
         for ibin in range(self.nbins):
-            self.v_havg[ibin, iok[0], iok[1]] = np.fromfile(
+            self.v_hrep[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
             )
         for ibin in range(self.nbins):
-            self.v_nrep[ibin, iok[0], iok[1]] = np.fromfile(
+            self.v_navg[ibin, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
             )
 
         file.close()
 
-    # Following should soon not me use anymore, but switch to netcdf subgrid file!
-    def save(self, file_name, mask):
+    # Following remains for backward compatibility, but should soon not be used anymore
+    def write_binary(self, file_name, mask):
         """Save the subgrid data to a binary file."""
         if isinstance(mask, xr.DataArray):
             mask = mask.values
@@ -164,7 +219,7 @@ class SubgridTableRegular:
         v = self.z_volmax[iok]
         file.write(np.float32(v))
         for ibin in range(self.nbins):
-            v = np.squeeze(self.z_level[ibin, :, :])[iok]
+            v = np.squeeze(self.z_depth[ibin, :, :])[iok]
             file.write(np.float32(v))
 
         # U
@@ -175,10 +230,10 @@ class SubgridTableRegular:
         dhdz = np.full(np.shape(v), 1.0)
         file.write(np.float32(dhdz))  # Not used in SFINCS anymore
         for ibin in range(self.nbins):
-            v = np.squeeze(self.u_havg[ibin, :, :])[iok]
+            v = np.squeeze(self.u_hrep[ibin, :, :])[iok]
             file.write(np.float32(v))
         for ibin in range(self.nbins):
-            v = np.squeeze(self.u_nrep[ibin, :, :])[iok]
+            v = np.squeeze(self.u_navg[ibin, :, :])[iok]
             file.write(np.float32(v))
 
         # V
@@ -188,14 +243,15 @@ class SubgridTableRegular:
         file.write(np.float32(v))
         file.write(np.float32(dhdz))  # Not used in SFINCS anymore
         for ibin in range(self.nbins):
-            v = np.squeeze(self.v_havg[ibin, :, :])[iok]
+            v = np.squeeze(self.v_hrep[ibin, :, :])[iok]
             file.write(np.float32(v))
         for ibin in range(self.nbins):
-            v = np.squeeze(self.v_nrep[ibin, :, :])[iok]
+            v = np.squeeze(self.v_navg[ibin, :, :])[iok]
             file.write(np.float32(v))
 
         file.close()
 
+    # This is the new way of building subgrid tables, that will end up in netcdf files
     def build(
         self,
         da_mask: xr.DataArray,
@@ -568,22 +624,18 @@ class SubgridTableRegular:
             )
 
     def to_xarray(self, dims, coords):
-        """Convert subgrid class to xarray dataset."""
+        """Convert old binary subgrid class to xarray dataset."""
         ds_sbg = xr.Dataset(coords={"bins": np.arange(self.nbins), **coords})
         ds_sbg.attrs.update({"_FillValue": np.nan})
 
-        zlst2 = ["z_zmin", "z_zmax", "z_zmin", "z_volmax"]  # "z_zmean",
-        uvlst2 = [
-            "u_zmin",
-            "u_zmax",
-            "u_ffit",
-            "u_navg",
-            "v_zmin",
-            "v_zmax",
-            "v_ffit",
-            "v_navg",
-        ]
-        lst3 = ["z_depth", "u_havg", "u_nrep", "u_pwet", "v_avg", "v_nrep", "v_pwet"]
+        zlst2 = ["z_zmin", "z_zmax", "z_volmax"]
+        if self.version == 0:
+            uvlst2 = ["u_zmin", "u_zmax", "v_zmin", "v_zmax"]
+            lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]
+        elif self.version == 1:
+            uvlst2 = ["u_zmin", "u_zmax", "u_ffit", "u_navg", "v_zmin", "v_zmax", "v_ffit", "v_navg"]
+            lst3 = ["z_level", "u_havg", "u_nrep", "u_pwet", "v_avg", "v_nrep", "v_pwet"]
+
         # 2D arrays
         for name in zlst2 + uvlst2:
             if hasattr(self, name):
