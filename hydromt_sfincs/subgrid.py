@@ -600,7 +600,7 @@ class SubgridTableRegular:
             setattr(self, name, ds_sbg[name].values)
 
 
-# @njit
+@njit
 def process_tile_regular(
     mask,
     zg,
