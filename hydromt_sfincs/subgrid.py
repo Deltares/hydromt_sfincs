@@ -527,7 +527,6 @@ class SubgridTableRegular:
                     self.u_pwet[:, sn, sm],
                     self.u_ffit[sn, sm],
                     self.u_navg[sn, sm],
-                    self.u_zmax[sn, sm],
                     self.v_zmin[sn, sm],
                     self.v_zmax[sn, sm],
                     self.v_havg[:, sn, sm],
@@ -601,7 +600,7 @@ class SubgridTableRegular:
             setattr(self, name, ds_sbg[name].values)
 
 
-@njit
+# @njit
 def process_tile_regular(
     mask,
     zg,
@@ -669,7 +668,7 @@ def process_tile_regular(
             z_zmin[n, m] = zmin
             z_zmax[n, m] = zmax
             z_volmax[n, m] = v[-1]
-            z_level[:, n, m] = z
+            z_level[:, n, m] = z[1:]
 
             # Now the U/V points
             # U
