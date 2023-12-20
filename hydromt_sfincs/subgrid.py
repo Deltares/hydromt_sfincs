@@ -23,7 +23,7 @@ class SubgridTableRegular:
         self.version = version
 
     # Following should soon not me use anymore, but switch to netcdf subgrid file!
-    def load(self, file_name, mask): 
+    def load(self, file_name, mask):
         """Load subgrid table from file for a regular grid with given mask."""
 
         if isinstance(mask, xr.DataArray):
@@ -75,10 +75,10 @@ class SubgridTableRegular:
         self.v_havg = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
-        self.v_nrep= np.full(
+        self.v_nrep = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
-        self.v_pwet= np.full(
+        self.v_pwet = np.full(
             (self.nbins, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
         self.v_nrep = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
@@ -574,7 +574,16 @@ class SubgridTableRegular:
         ds_sbg.attrs.update({"_FillValue": np.nan})
 
         zlst2 = ["z_zmin", "z_zmax", "z_zmin", "z_volmax"]  # "z_zmean",
-        uvlst2 = ["u_zmin", "u_zmax", "u_ffit", "u_navg", "v_zmin", "v_zmax", "v_ffit", "v_navg"]
+        uvlst2 = [
+            "u_zmin",
+            "u_zmax",
+            "u_ffit",
+            "u_navg",
+            "v_zmin",
+            "v_zmax",
+            "v_ffit",
+            "v_navg",
+        ]
         lst3 = ["z_depth", "u_havg", "u_nrep", "u_pwet", "v_avg", "v_nrep", "v_pwet"]
         # 2D arrays
         for name in zlst2 + uvlst2:
@@ -591,9 +600,20 @@ class SubgridTableRegular:
         for name in ds_sbg.data_vars:
             setattr(self, name, ds_sbg[name].values)
 
+
 @njit
 def process_tile_regular(
-    mask, zg, manning_grid, dxp, dyp, refi, nbins, yg, max_gradient, huthresh, is_geographic=False
+    mask,
+    zg,
+    manning_grid,
+    dxp,
+    dyp,
+    refi,
+    nbins,
+    yg,
+    max_gradient,
+    huthresh,
+    is_geographic=False,
 ):
     """calculate subgrid properties for a single tile"""
     # Z points
@@ -707,6 +727,7 @@ def process_tile_regular(
         v_navg,
     )
 
+
 @njit
 def get_dzdh(z, V, a):
     # change in level per unit of volume (m/m)
@@ -794,7 +815,9 @@ def subgrid_v_table(
 
 
 @njit
-def subgrid_q_table(elevation: np.ndarray, manning: np.ndarray, nbins: int, huthresh:float):
+def subgrid_q_table(
+    elevation: np.ndarray, manning: np.ndarray, nbins: int, huthresh: float
+):
     """
     map vector of elevation values into a hypsometric hydraulic radius - depth relationship for one u/v point
     Parameters
@@ -818,108 +841,114 @@ def subgrid_q_table(elevation: np.ndarray, manning: np.ndarray, nbins: int, huth
     havg = np.zeros(nbins)
     nrep = np.zeros(nbins)
     pwet = np.zeros(nbins)
-    zz   = np.zeros(nbins)
-    
+    zz = np.zeros(nbins)
+
     n = int(elevation.size)  # Nr of pixels in grid cell
     # n   = int(np.size(elevation)) # Nr of pixels in grid cell
-    
-    n05 = int(n/2) # Index of middle pixel
-  
-    dd_a      = elevation[0:n05] # Pixel elevations side A 
-    dd_b      = elevation[n05:] # Pixel elevations side B
-    manning_a = manning[0:n05] # Pixel manning side A
-    manning_b = manning[n05:] # Pixel manning side B
 
-    zmin_a      = np.min(dd_a) # Minimum elevation side A
-    zmax_a      = np.max(dd_a) # Maximum elevation side A
-    
-    zmin_b      = np.min(dd_b) # Minimum elevation side B
-    zmax_b      = np.max(dd_b) # Maximum elevation side B
-    
-    zmin = max(zmin_a, zmin_b) + huthresh # Minimum elevation of uv point
-    zmax = max(zmax_a, zmax_b) # Maximum elevation of uv point
-    
+    n05 = int(n / 2)  # Index of middle pixel
+
+    dd_a = elevation[0:n05]  # Pixel elevations side A
+    dd_b = elevation[n05:]  # Pixel elevations side B
+    manning_a = manning[0:n05]  # Pixel manning side A
+    manning_b = manning[n05:]  # Pixel manning side B
+
+    zmin_a = np.min(dd_a)  # Minimum elevation side A
+    zmax_a = np.max(dd_a)  # Maximum elevation side A
+
+    zmin_b = np.min(dd_b)  # Minimum elevation side B
+    zmax_b = np.max(dd_b)  # Maximum elevation side B
+
+    zmin = max(zmin_a, zmin_b) + huthresh  # Minimum elevation of uv point
+    zmax = max(zmax_a, zmax_b)  # Maximum elevation of uv point
+
     # Make sure zmax is always a bit higher than zmin
-    if zmax<zmin + 0.001:
-       zmax = max(zmax, zmin + 0.001)
+    if zmax < zmin + 0.001:
+        zmax = max(zmax, zmin + 0.001)
 
     # Determine bin size (metres)
-    dbin = (zmax - zmin)/(nbins - 1)
+    dbin = (zmax - zmin) / (nbins - 1)
 
     # Grid mean roughness
     navg = np.mean(manning)
-     
+
     # Loop through bins
     for ibin in range(nbins):
-
         # Top of bin
         zbin = zmin + ibin * dbin
         zz[ibin] = zbin
-        
+
         # ibelow = np.where(elevation<=zbin)                           # index of pixels below bin level
-        h      = np.maximum(zbin - elevation, 0.0)    # water depth in each pixel
-        iwet   = np.where(zbin - elevation>-1.0e-6)[0]                           # indices of wet pixels
-        hmean  = np.mean(h)
-        havg[ibin] = hmean                      # conveyance depth
-        pwet[ibin] = len(iwet)/n                # wet fraction
+        h = np.maximum(zbin - elevation, 0.0)  # water depth in each pixel
+        iwet = np.where(zbin - elevation > -1.0e-6)[0]  # indices of wet pixels
+        hmean = np.mean(h)
+        havg[ibin] = hmean  # conveyance depth
+        pwet[ibin] = len(iwet) / n  # wet fraction
 
         # Side A
-        h_a    = np.maximum(zbin - dd_a, 0.0)       # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
-        q_a    = h_a**(5.0/3.0)/manning_a           # Determine 'flux' for each pixel
-        q_a    = np.mean(q_a)                       # Wet-average flux through all the pixels
-        
-        # Side B
-        h_b    = np.maximum(zbin - dd_b, 0.0)       # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
-        q_b    = h_b**(5.0/3.0)/manning_b           # Determine 'flux' for each pixel
-        q_b    = np.mean(q_b)                       # Wet-average flux through all the pixels
-        
-        q_ab   = np.minimum(q_a, q_b)
+        h_a = np.maximum(
+            zbin - dd_a, 0.0
+        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        q_a = h_a ** (5.0 / 3.0) / manning_a  # Determine 'flux' for each pixel
+        q_a = np.mean(q_a)  # Wet-average flux through all the pixels
 
-        q_all = h**(5.0/3.0)/manning               # Determine 'flux' for each pixel
-        q_all = np.mean(q_all)                    # Wet-average flux through all the pixels
-        
+        # Side B
+        h_b = np.maximum(
+            zbin - dd_b, 0.0
+        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        q_b = h_b ** (5.0 / 3.0) / manning_b  # Determine 'flux' for each pixel
+        q_b = np.mean(q_b)  # Wet-average flux through all the pixels
+
+        q_ab = np.minimum(q_a, q_b)
+
+        q_all = h ** (5.0 / 3.0) / manning  # Determine 'flux' for each pixel
+        q_all = np.mean(q_all)  # Wet-average flux through all the pixels
+
         # Weighted average of q_ab and q_all
         w = (ibin) / (nbins - 1)
         q = (1.0 - w) * q_ab + w * q_all
 
-        nrep[ibin] = hmean**(5.0/3.0) / q  # Representative n for qmean and hmean
+        nrep[ibin] = hmean ** (5.0 / 3.0) / q  # Representative n for qmean and hmean
 
-    nrep_top = nrep[-1]    
+    nrep_top = nrep[-1]
     havg_top = havg[-1]
 
     ### Fitting for nrep above zmax
 
     # Determine nfit at zfit
-    zfit  = zmax + zmax - zmin
-    h     = np.maximum(zfit - elevation, 0.0)      # water depth in each pixel
-    hfit  = havg_top + zmax - zmin                 # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
-    q     = h**(5.0/3.0)/manning                   # unit discharge in each pixel
-    qmean = np.mean(q)                             # combined unit discharge for cell
+    zfit = zmax + zmax - zmin
+    h = np.maximum(zfit - elevation, 0.0)  # water depth in each pixel
+    hfit = (
+        havg_top + zmax - zmin
+    )  # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
+    q = h ** (5.0 / 3.0) / manning  # unit discharge in each pixel
+    qmean = np.mean(q)  # combined unit discharge for cell
 
-    nfit  = hfit**(5.0/3.0) / qmean
-    
+    nfit = hfit ** (5.0 / 3.0) / qmean
+
     # Actually apply fit on gn2 (this is what is used in sfincs)
     gnavg2 = 9.81 * navg**2
     gnavg_top2 = 9.81 * nrep_top**2
 
-    if gnavg2/gnavg_top2 > 0.99 and gnavg2/gnavg_top2 < 1.01:
+    if gnavg2 / gnavg_top2 > 0.99 and gnavg2 / gnavg_top2 < 1.01:
         # gnavg2 and gnavg_top2 are almost identical
         ffit = 0.0
     else:
         if navg > nrep_top:
             if nfit > navg:
-                nfit = nrep_top + 0.9*(navg - nrep_top)
+                nfit = nrep_top + 0.9 * (navg - nrep_top)
             if nfit < nrep_top:
-                nfit = nrep_top + 0.1*(navg - nrep_top)
+                nfit = nrep_top + 0.1 * (navg - nrep_top)
         else:
             if nfit < navg:
-                nfit = nrep_top + 0.9*(navg - nrep_top)
+                nfit = nrep_top + 0.9 * (navg - nrep_top)
             if nfit > nrep_top:
-                nfit = nrep_top + 0.1*(navg - nrep_top)
+                nfit = nrep_top + 0.1 * (navg - nrep_top)
         gnfit2 = 9.81 * nfit**2
         ffit = (((gnavg2 - gnavg_top2) / (gnavg2 - gnfit2)) - 1) / (zfit - zmax)
-         
-    return zmin, zmax, havg, nrep, pwet, ffit, navg, zz       
+
+    return zmin, zmax, havg, nrep, pwet, ffit, navg, zz
+
 
 # @njit
 # def subgrid_q_table_old(elevation: np.ndarray, manning: np.ndarray, nbins: int):
