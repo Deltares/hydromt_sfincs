@@ -19,9 +19,9 @@ Changed
 
 Fixed
 -----
+- fixed `SfincsModel.setup_subgrid` for models with geograpgical CRS (#152)
 - fixed masking of elevation and manning datasets when providing mask attribute (#153)
 - fix a bug that caused some model files to be read twice (#161)
-
 
 Deprecated
 ----------
