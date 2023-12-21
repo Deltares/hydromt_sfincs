@@ -15,11 +15,13 @@ Added
 Changed
 -------
 - support for HydroMT core v0.9
+- support for filtering forcing data from timeseries and locations based on model region (#162)
 
 Fixed
 -----
 - fixed `SfincsModel.setup_subgrid` for models with geograpgical CRS (#152)
-- fixed masking of elevation and manning datasets when providing mask attribute
+- fixed masking of elevation and manning datasets when providing mask attribute (#153)
+- fix a bug that caused some model files to be read twice (#161)
 
 Deprecated
 ----------
