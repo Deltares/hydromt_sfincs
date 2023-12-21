@@ -583,7 +583,7 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>datasets_dep</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>]</em>) – List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
-[{‘elevtn’: merit_hydro, ‘zmin’: 0.01}, {‘elevtn’: gebco, ‘offset’: 0, ‘merge_method’: ‘first’, reproj_method: ‘bilinear’}]
+[{‘elevtn’: merit_hydro, ‘zmin’: 0.01}, {‘elevtn’: gebco, ‘offset’: 0, ‘merge_method’: ‘first’, ‘reproj_method’: ‘bilinear’}]
 For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays</p></li>
 <li><p><strong>buffer_cells</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>optional</em>) – Number of cells between datasets to ensure smooth transition of bed levels, by default 0</p></li>
 <li><p><strong>interp_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Interpolation method used to fill the buffer cells , by default “linear”</p></li>

@@ -765,7 +765,7 @@
 <span class="sd">        ----------</span>
 <span class="sd">        datasets_dep : List[dict]</span>
 <span class="sd">            List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:</span>
-<span class="sd">            [{&#39;elevtn&#39;: merit_hydro, &#39;zmin&#39;: 0.01}, {&#39;elevtn&#39;: gebco, &#39;offset&#39;: 0, &#39;merge_method&#39;: &#39;first&#39;, reproj_method: &#39;bilinear&#39;}]</span>
+<span class="sd">            [{&#39;elevtn&#39;: merit_hydro, &#39;zmin&#39;: 0.01}, {&#39;elevtn&#39;: gebco, &#39;offset&#39;: 0, &#39;merge_method&#39;: &#39;first&#39;, &#39;reproj_method&#39;: &#39;bilinear&#39;}]</span>
 <span class="sd">            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays</span>
 <span class="sd">        buffer_cells : int, optional</span>
 <span class="sd">            Number of cells between datasets to ensure smooth transition of bed levels, by default 0</span>
@@ -3233,6 +3233,8 @@
 <span class="sd">        data_vars : Union[List, str], optional</span>
 <span class="sd">            List of data variables to read, by default None (all)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>  <span class="c1"># avoid reading grid twice</span>
 
         <span class="n">da_lst</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -3358,9 +3360,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_assert_write_mode</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subgrid</span><span class="p">:</span>
-            <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;sbgfile&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sbgfile&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.sbg&quot;</span><span class="p">)</span>
-            <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sbgfile&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;sbgfile&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;sbgfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.sbg&quot;</span><span class="p">)</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;sbgfile&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">subgrid</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span></div>
 
 
@@ -3374,6 +3376,9 @@
 <span class="sd">        If other geojson files are present in a &quot;gis&quot; subfolder folder, those are read as well.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_assert_read_mode</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_geoms</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_geoms</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># avoid reading geoms twice</span>
+
         <span class="c1"># read _GEOMS model files</span>
         <span class="k">for</span> <span class="n">gname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GEOMS</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gname</span><span class="si">}</span><span class="s2">file&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
@@ -3465,6 +3470,8 @@
 <span class="sd">            List of data variables to read, by default None (all)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_assert_read_mode</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forcing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_forcing</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># avoid reading forcing twice</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_vars</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">data_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_vars</span><span class="p">)</span>
 
