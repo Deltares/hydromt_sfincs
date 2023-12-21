@@ -330,7 +330,7 @@ class SfincsModel(GridModel):
         ----------
         datasets_dep : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
-            [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
+            [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
             For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
@@ -2711,6 +2711,8 @@ class SfincsModel(GridModel):
         data_vars : Union[List, str], optional
             List of data variables to read, by default None (all)
         """
+        if self._grid is None:
+            self._grid = xr.Dataset()  # avoid reading grid twice
 
         da_lst = []
         if data_vars is None:
@@ -2827,9 +2829,9 @@ class SfincsModel(GridModel):
         self._assert_write_mode
 
         if self.subgrid:
-            if f"sbgfile" not in self.config:
-                self.set_config(f"sbgfile", f"sfincs.sbg")
-            fn = self.get_config(f"sbgfile", abs_path=True)
+            if "sbgfile" not in self.config:
+                self.set_config("sbgfile", "sfincs.sbg")
+            fn = self.get_config("sbgfile", abs_path=True)
             self.reggrid.subgrid.save(file_name=fn, mask=self.mask)
 
     def read_geoms(self):
@@ -2840,6 +2842,9 @@ class SfincsModel(GridModel):
         If other geojson files are present in a "gis" subfolder folder, those are read as well.
         """
         self._assert_read_mode
+        if self._geoms is None:
+            self._geoms = {}  # avoid reading geoms twice
+
         # read _GEOMS model files
         for gname in self._GEOMS.values():
             if f"{gname}file" in self.config:
@@ -2925,6 +2930,8 @@ class SfincsModel(GridModel):
             List of data variables to read, by default None (all)
         """
         self._assert_read_mode
+        if self._forcing is None:
+            self._forcing = {}  # avoid reading forcing twice
         if isinstance(data_vars, str):
             data_vars = list(data_vars)
 
