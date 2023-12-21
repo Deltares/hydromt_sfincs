@@ -18,6 +18,7 @@ Changed
 
 Fixed
 -----
+- fixed masking of elevation and manning datasets when providing mask attribute
 
 Deprecated
 ----------
