@@ -15,7 +15,7 @@ Added
 Changed
 -------
 - support for HydroMT core v0.9
-- support for filtering forcing data from timeseries and locations based on model region (#103)
+- support for filtering forcing data from timeseries and locations based on model region (#162)
 
 Fixed
 -----
