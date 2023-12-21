@@ -1,8 +1,5 @@
 [project]
 name = "hydromt_sfincs"
-version = "0.1.0"
-description = "Add a short description here"
-authors = ["Dirk Eilander <dirk.eilander@gmail.com>"]
 channels = ["conda-forge"]
 platforms = ["linux-64", "win-64"]
 
@@ -13,23 +10,23 @@ dev = { depends_on = [
   "dev-create-mamba-env",
   "dev-install-hydromt",
   "dev-install-pre-commit",
-  "dev-activate",
 ] }
 dev-env-file = "python make_env.py full -n hydromt-sfincs-dev -o envs/hydromt-sfincs-dev.yml"
 min-env-file = "python make_env.py min -n hydromt-sfincs-min -o envs/hydromt-sfincs-min.yml"
 dev-create-mamba-env = "mamba env remove -n hydromt-sfincs-dev; mamba env create -f envs/hydromt-sfincs-dev.yml"
 dev-install-hydromt = "mamba run -n hydromt-sfincs-dev pip install -e ."
 dev-install-pre-commit = "mamba run -n hydromt-sfincs-dev pre-commit install"
-dev-activate = "conda activate hydromt-sfincs-dev"
 
 # linting
-lint = { cmd = ["pre-commit", "run", "--all"] }
+lint = "pre-commit run --all"
 
 # docs
-html = { cmd = ["sphinx-build", "-M", "html", "docs", "docs/_build", "-W"] }
-docs = { depends_on = ["html"] }
-doc = { depends_on = ["html"] }
-serve = { cmd = ["python", "-m", "http.server", "-d", "docs/_build/html"] }
+docs = "sphinx-build -M html docs docs/_build"
+docs-skip-examples = "export SKIP_DOC_EXAMPLES=1; sphinx-build -M html docs docs/_build"
+docs-clean = "python docs/clean.py; sphinx-build -M html docs docs/_build"
+docs-serve = "python -m http.server -d docs/_build/html"
 
+# tests
+tests = "pytest -v --cov=hydromt_sfincs -cov-report=term-missing"
 
 [dependencies]

@@ -31,7 +31,7 @@ def test_model_class(case):
     mod = SfincsModel(root=root, mode="r")
     mod.read()
     # run test_model_api() method
-    non_compliant_list = mod.test_model_api()
+    non_compliant_list = mod._test_model_api()
     assert len(non_compliant_list) == 0
     # pass
 

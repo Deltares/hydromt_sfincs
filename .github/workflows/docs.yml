@@ -24,6 +24,7 @@ jobs:
   test-docs:
     env:
       DOC_VERSION: dev
+      PYDEVD_DISABLE_FILE_VALIDATION: 1
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:

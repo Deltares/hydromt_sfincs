@@ -7,7 +7,7 @@ observations:
 discharge:
   data_type: DataFrame
   driver: csv
-  kwargs:
+  driver_kwargs:
     index_col: 0
     parse_dates: true
   path: local_data/discharge.csv

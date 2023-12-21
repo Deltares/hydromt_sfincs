@@ -40,7 +40,7 @@ dynamic = ['version', 'description']
 
 [project.optional-dependencies]
 test = [
-	"black",
+	"black[jupyter]",
 	"pytest>=2.7.3",
 	"pytest-cov",
     "pre-commit",
@@ -81,6 +81,7 @@ exclude = ["docs", "examples", "envs", "tests", "binder", ".github", "sandbox"]
 channels = ["conda-forge"]
 deps_not_in_conda = [
   "sphinx_design",
+  "black[jupyter]",
 ]
 
 [tool.pytest.ini_options]

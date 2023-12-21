@@ -11,16 +11,16 @@ repos:
       - id: check-json
       - id: debug-statements
       - id: mixed-line-ending
-  # Using this mirror lets us use mypyc-compiled black, which is about 2x faster
+  # make sure notebooks are stripped of output before committing
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.6.1
+    hooks:
+      - id: nbstripout
   - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 23.12.0
     hooks:
-      - id: black
-        # It is recommended to specify the latest version of Python
-        # supported by your project here, or alternatively use
-        # pre-commit's default_language_version, see
-        # https://pre-commit.com/#top_level-default_language_version
-        # language_version: python3.11
+      - id: black-jupyter
+        description: Black, with Jupyter Notebook support
   # - repo: https://github.com/astral-sh/ruff-pre-commit
   #   rev: v0.1.2
   #   hooks:
