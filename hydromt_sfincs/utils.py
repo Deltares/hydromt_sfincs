@@ -797,7 +797,7 @@ def read_sfincs_map_results(
             continue
         if "x" in ds_map[var].dims and "y" in ds_map[var].dims:
             # drop to overwrite with ds_like.raster.coords
-            ds_face[var] = ds_map[var].drop_vars(["xc", "yc"])
+            ds_face[var] = ds_map[var].drop(["xc", "yc"])
         elif ds_map[var].ndim == 0:
             ds_face[var] = ds_map[var]
         else:
