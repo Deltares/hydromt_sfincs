@@ -4071,7 +4071,7 @@
             <span class="c1"># read geodataframes describing valid areas</span>
             <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="n">gdf_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                    <span class="n">path_or_key</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">),</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">),</span>
                     <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;gdf_valid&quot;</span><span class="p">:</span> <span class="n">gdf_valid</span><span class="p">})</span>
@@ -4144,7 +4144,7 @@
             <span class="c1"># read geodataframes describing valid areas</span>
             <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="n">gdf_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                    <span class="n">path_or_key</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">),</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">),</span>
                     <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;gdf_valid&quot;</span><span class="p">:</span> <span class="n">gdf_valid</span><span class="p">})</span>
