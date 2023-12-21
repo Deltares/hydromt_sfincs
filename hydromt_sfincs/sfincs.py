@@ -3510,7 +3510,7 @@ class SfincsModel(GridModel):
             # read geodataframes describing valid areas
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
-                    path_or_key=dataset.get("mask"),
+                    dataset.get("mask"),
                     bbox=self.mask.raster.transform_bounds(4326),
                 )
                 dd.update({"gdf_valid": gdf_valid})
@@ -3583,7 +3583,7 @@ class SfincsModel(GridModel):
             # read geodataframes describing valid areas
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
-                    path_or_key=dataset.get("mask"),
+                    dataset.get("mask"),
                     bbox=self.mask.raster.transform_bounds(4326),
                 )
                 dd.update({"gdf_valid": gdf_valid})

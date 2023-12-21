@@ -18,7 +18,9 @@ Changed
 
 Fixed
 -----
-- fix a bug that caused some model files to be read twice (#102)
+- fixed masking of elevation and manning datasets when providing mask attribute (#153)
+- fix a bug that caused some model files to be read twice (#161)
+
 
 Deprecated
 ----------
