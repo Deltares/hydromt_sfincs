@@ -112,7 +112,9 @@ def split_line_equal(gdf: gpd.GeoDataFrame, dist: float) -> gpd.GeoDataFrame:
     def _split_geom(x: gpd.GeoSeries, dist: float = dist) -> MultiLineString:
         return _split_line_equal(x.geometry, dist)
 
-    gdf_splitted = gdf.assign(geometry=gdf.apply(_split_geom, axis=1)).explode()
+    gdf_splitted = gdf.assign(geometry=gdf.apply(_split_geom, axis=1)).explode(
+        index_parts=True
+    )
     return gdf_splitted
 
 
@@ -318,7 +320,7 @@ def burn_river_rect(
         gdf_riv_merged = gpd.GeoDataFrame(
             geometry=[linemerge(gdf_riv.unary_union)], crs=gdf_riv.crs
         )
-        gdf_riv_merged = gdf_riv_merged.explode().reset_index(drop=True)
+        gdf_riv_merged = gdf_riv_merged.explode(index_parts=True).reset_index(drop=True)
     else:
         gdf_riv_merged = gdf_riv
 

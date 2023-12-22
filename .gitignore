@@ -118,3 +118,11 @@ venv.bak/
 
 # dask
 dask-worker-space/
+
+#ruff linting
+.ruff_cache
+.envrc
+pyrightconfig.json
+
+pixi.lock
+.pixi

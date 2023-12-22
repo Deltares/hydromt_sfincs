@@ -29,7 +29,7 @@ class SfincsInput:
         self.dtmapout = None
         self.dthisout = 600.0
         self.dtrstout = 0.0
-        self.dtmaxout = 99999.0
+        self.dtmaxout = 86400
         self.trstout = -999.0
         self.dtwnd = 1800.0
         self.alpha = 0.5
@@ -44,7 +44,7 @@ class SfincsInput:
         self.rhoa = 1.25
         self.rhow = 1024.0
         self.dtmax = 60.0
-        self.advection = 2
+        self.advection = 1
         self.baro = 0
         self.pavbnd = 0
         self.gapres = 101200.0
