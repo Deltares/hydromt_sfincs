@@ -4,16 +4,17 @@ on:
   push:
     branches: [main]
     paths:
+      - .github/workflows/tests.yml
       - tests/*
       - hydromt_sfincs/*
       - pyproject.toml
   pull_request:
     branches: [main]
     paths:
+      - .github/workflows/tests.yml
       - tests/*
       - hydromt_sfincs/*
       - pyproject.toml
-
 
 jobs:
   build:
@@ -35,21 +36,23 @@ jobs:
       - uses: actions/checkout@v3
 
       - uses: actions/setup-python@v5
-        id: py
+        id: pip
         with:
           # caching, see https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
           cache: 'pip'
           cache-dependency-path: pyproject.toml
+          python-version: ${{ matrix.python-version }}
 
       # true if cache-hit occurred on the primary key
       - name: Cache hit
-        run: echo '${{ steps.py.outputs.cache-hit }}'
+        run: echo '${{ steps.pip.outputs.cache-hit }}'
 
       # build environment with pip
       - name: Install hydromt-sfincs
         run: |
           pip install --upgrade pip
           pip install .[test,examples]
+          pip list
 
       # run test
       - name: Test
