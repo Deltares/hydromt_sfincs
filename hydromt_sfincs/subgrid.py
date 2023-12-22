@@ -4,6 +4,7 @@ SubgridTableRegular class to create, read and write sfincs subgrid (sbg) files.
 import gc
 import logging
 import os
+import time
 
 import numpy as np
 import rasterio
@@ -33,52 +34,94 @@ class SubgridTableRegular:
         self.nbins = self.ds.dims["bins"]
 
     # new way of writing netcdf subgrid tables
-    def write(self, file_name):
+    def write(self, file_name, mask):
         """Write subgrid table to netcdf file for a regular grid with given mask."""
-       
-        # if isinstance(mask, xr.DataArray):
-        #     mask = mask.values
 
-        # # Array iok where mask > 0 
-        # iok = np.where(np.transpose(mask) > 0)
-        # iok = (iok[1], iok[0])
+        ds = self.to_xarray(dims=mask.raster.dims, coords=mask.raster.coords)
 
-        # get number of bins and nr of cells
+        # Need to transpose to match the FORTRAN convention in SFINCS
+        ds = ds.transpose("bins", "x", "y")
+
+        start_time = time.time()
+
+        # find indices of active cells
+        index_nm, index_mu1, index_nu1 = utils.find_uv_indices(mask)       
+
+        end_time = time.time()
+        print(f"Elapsed time for finding uv indices: {end_time - start_time} seconds")
+
+        # get number of bins
         nbins = self.nbins
 
-        # Make new xarray dataset
-        ds = xr.Dataset()
-        ds.attrs.update({"_FillValue": np.nan})
-        ds["z_zmin"] = xr.DataArray(self.z_zmin.reshape(-1), dims=("cells"))
-        ds["z_zmax"] = xr.DataArray(self.z_zmax.reshape(-1), dims=("cells"))
-        ds["z_volmax"] = xr.DataArray(self.z_volmax.reshape(-1), dims=("cells"))
-        ds["z_level"] = xr.DataArray(self.z_level.reshape(nbins,-1), dims=("bins", "cells"))
-        ds["u_zmin"] = xr.DataArray(self.u_zmin.reshape(-1), dims=("cells"))
-        ds["u_zmax"] = xr.DataArray(self.u_zmax.reshape(-1), dims=("cells"))
-        ds["u_havg"] = xr.DataArray(self.u_havg.reshape(nbins,-1), dims=("bins", "cells"))
-        ds["u_nrep"] = xr.DataArray(self.u_nrep.reshape(nbins,-1), dims=("bins", "cells"))
-        ds["u_pwet"] = xr.DataArray(self.u_pwet.reshape(nbins,-1), dims=("bins", "cells"))
-        ds["u_ffit"] = xr.DataArray(self.u_ffit.reshape(-1), dims=("cells"))
-        ds["u_navg"] = xr.DataArray(self.u_navg.reshape(-1), dims=("cells"))
-        ds["v_zmin"] = xr.DataArray(self.v_zmin.reshape(-1), dims=("cells"))
-        ds["v_zmax"] = xr.DataArray(self.v_zmax.reshape(-1), dims=("cells"))
-        ds["v_havg"] = xr.DataArray(self.v_havg.reshape(nbins,-1), dims=("bins", "cells"))
-        ds["v_nrep"] = xr.DataArray(self.v_nrep.reshape(nbins,-1), dims=("bins", "cells"))
-        ds["v_pwet"] = xr.DataArray(self.v_pwet.reshape(nbins,-1), dims=("bins", "cells"))
-        ds["v_ffit"] = xr.DataArray(self.v_ffit.reshape(-1), dims=("cells"))
-        ds["v_navg"] = xr.DataArray(self.v_navg.reshape(-1), dims=("cells"))
+        # get nr of active points (where index_nm > -1)
+        nr_points = max(index_mu1.max(), index_nu1.max()) + 1
 
-        # Need to swap the first and second dimensions to match the FORTRAN convention in SFINCS
-        # ds["z_level"] = ds["z_level"].swap_dims({"bins": "cells"})
-        # ds["u_havg"]  = ds["u_havg"].swap_dims({"bins": "cells"})
-        # ds["u_nrep"]  = ds["u_nrep"].swap_dims({"bins": "cells"})
-        # ds["u_pwet"]  = ds["u_pwet"].swap_dims({"bins": "cells"})
-        # ds["v_havg"]  = ds["v_havg"].swap_dims({"bins": "cells"})
-        # ds["v_nrep"]  = ds["v_nrep"].swap_dims({"bins": "cells"})
-        # ds["v_pwet"]  = ds["v_pwet"].swap_dims({"bins": "cells"})
+        # Make a new xarray dataset where we only keep the values of the active cells (index_nm > -1)
+        start_time = time.time()
+        z_zmin = np.array([value for index, value in zip(index_nm, ds["z_zmin"].values.flatten()) if index > -1])
+        z_zmax = np.array([value for index, value in zip(index_nm, ds["z_zmax"].values.flatten()) if index > -1])
+        z_volmax = np.array([value for index, value in zip(index_nm, ds["z_volmax"].values.flatten()) if index > -1])
+
+        z_level = []
+        for ibin in range(self.nbins):
+            z_level.append(np.array([value for index, value in zip(index_nm, ds["z_level"][ibin].values.flatten()) if index > -1]))        
+        z_level = np.array(z_level)
+        stop_time = time.time()
+        print(f"Elapsed time for z variables: {stop_time - start_time} seconds")
+
+        start_time = time.time()
+        # Per variable, combine u and v points into one array of length 2*npuv using index_mu1 and index_nu1
+        var_list = ["zmin", "zmax", "ffit", "navg"	]
+        for var in var_list:
+            # create empty array of length 2*npuv
+            locals()["uv_" + var] = np.zeros(nr_points)
+
+            # for all cells, check if index_nm > -1, if so, store the value of the u point in the uv array using index_mu1 and index nu1
+            for index in range(len(index_nm)):
+                if index_nm[index] > -1:
+                    locals()["uv_" + var][index_mu1[index]] = ds["u_" + var].values.flatten()[index]
+                    locals()["uv_" + var][index_nu1[index]] = ds["v_" + var].values.flatten()[index]
+        stop_time = time.time()
+        print(f"Elapsed time for u and v variables: {stop_time - start_time} seconds")
+
+        start_time = time.time()
+        var_list_bins = ["havg", "nrep", "pwet"]
+        for var in var_list_bins:
+            # create empty array of length 2*npuv
+            locals()["uv_" + var] = np.zeros((nbins, nr_points))
+
+            for ibin in range(nbins):
+                for index in range(len(index_nm)):
+                    if index_nm[index] > -1:
+                        locals()["uv_" + var][ibin, index_mu1[index]] = ds["u_" + var][ibin].values.flatten()[index]
+                        locals()["uv_" + var][ibin, index_nu1[index]] = ds["v_" + var][ibin].values.flatten()[index]
+        stop_time = time.time()
+        print(f"Elapsed time for u and v variables: {stop_time - start_time} seconds")
+
+        # Make new xarray dataset
+        ds_new = xr.Dataset()
+        ds_new.attrs.update({"_FillValue": np.nan})
+
+        # use index_nm to put the values of the active cells in the new dataset
+        ds_new["z_zmin"] = xr.DataArray(z_zmin, dims=("np"))
+        ds_new["z_zmax"] = xr.DataArray(z_zmax, dims=("np"))
+        ds_new["z_volmax"] = xr.DataArray(z_volmax, dims=("np"))
+        ds_new["z_level"] = xr.DataArray(z_level, dims=("bins", "np"))
+
+        for var in var_list:
+            ds_new["uv_" + var] = xr.DataArray(locals()["uv_" + var], dims=("npuv"))
+        
+        for var in var_list_bins:
+            ds_new["uv_" + var] = xr.DataArray(locals()["uv_" + var], dims=("bins", "npuv"))
+
+        # fix names to match SFINCS convention
+        ds_new = ds_new.rename_vars({"uv_navg": "uv_navg_w", "uv_ffit": "uv_fnfit"})
+
+        # ensure bins is last dimension
+        ds_new = ds_new.transpose("npuv", "np", "bins")
 
         # Write to netcdf file
-        ds.to_netcdf(file_name)
+        ds_new.to_netcdf(file_name)
 
     # Following remains for backward compatibility, but should soon not be used anymore
     def read_binary(self, file_name, mask):
@@ -634,7 +677,7 @@ class SubgridTableRegular:
             lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]
         elif self.version == 1:
             uvlst2 = ["u_zmin", "u_zmax", "u_ffit", "u_navg", "v_zmin", "v_zmax", "v_ffit", "v_navg"]
-            lst3 = ["z_level", "u_havg", "u_nrep", "u_pwet", "v_avg", "v_nrep", "v_pwet"]
+            lst3 = ["z_level", "u_havg", "u_nrep", "u_pwet", "v_havg", "v_nrep", "v_pwet"]
 
         # 2D arrays
         for name in zlst2 + uvlst2:

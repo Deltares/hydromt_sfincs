@@ -2844,7 +2844,7 @@ class SfincsModel(GridModel):
                 self.reggrid.subgrid.write_binary(file_name=fn, mask=self.mask)
             else:
                 # write netcdf file
-                self.reggrid.subgrid.write(file_name=fn)
+                self.reggrid.subgrid.write(file_name=fn, mask=self.mask)
 
     def read_geoms(self):
         """Read geometry files and save to `geoms` attribute.
