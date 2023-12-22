@@ -4,7 +4,6 @@ SubgridTableRegular class to create, read and write sfincs subgrid (sbg) files.
 import gc
 import logging
 import os
-import time
 
 import numpy as np
 import rasterio
@@ -42,61 +41,38 @@ class SubgridTableRegular:
         # Need to transpose to match the FORTRAN convention in SFINCS
         ds = ds.transpose("bins", "x", "y")
 
-        start_time = time.time()
-
         # find indices of active cells
         index_nm, index_mu1, index_nu1 = utils.find_uv_indices(mask)       
-
-        end_time = time.time()
-        print(f"Elapsed time for finding uv indices: {end_time - start_time} seconds")
 
         # get number of bins
         nbins = self.nbins
 
+        active_cells = index_nm > -1
+        active_indices = np.where(active_cells)[0]
+
+        # Make a new xarray dataset where we only keep the values of the active cells (index_nm > -1)
+        z_zmin = ds["z_zmin"].values.flatten()[active_cells]
+        z_zmax = ds["z_zmax"].values.flatten()[active_cells]
+        z_volmax = ds["z_volmax"].values.flatten()[active_cells]
+        z_level = np.array([ds["z_level"][ibin].values.flatten()[active_cells] for ibin in range(self.nbins)])
+     
         # get nr of active points (where index_nm > -1)
         nr_points = max(index_mu1.max(), index_nu1.max()) + 1
 
-        # Make a new xarray dataset where we only keep the values of the active cells (index_nm > -1)
-        start_time = time.time()
-        z_zmin = np.array([value for index, value in zip(index_nm, ds["z_zmin"].values.flatten()) if index > -1])
-        z_zmax = np.array([value for index, value in zip(index_nm, ds["z_zmax"].values.flatten()) if index > -1])
-        z_volmax = np.array([value for index, value in zip(index_nm, ds["z_volmax"].values.flatten()) if index > -1])
-
-        z_level = []
-        for ibin in range(self.nbins):
-            z_level.append(np.array([value for index, value in zip(index_nm, ds["z_level"][ibin].values.flatten()) if index > -1]))        
-        z_level = np.array(z_level)
-        stop_time = time.time()
-        print(f"Elapsed time for z variables: {stop_time - start_time} seconds")
-
-        start_time = time.time()
-        # Per variable, combine u and v points into one array of length 2*npuv using index_mu1 and index_nu1
-        var_list = ["zmin", "zmax", "ffit", "navg"	]
+        var_list = ["zmin", "zmax", "ffit", "navg"]
         for var in var_list:
-            # create empty array of length 2*npuv
-            locals()["uv_" + var] = np.zeros(nr_points)
+            uv_var = np.zeros(nr_points)
+            uv_var[index_mu1[active_indices]] = ds["u_" + var].values.flatten()[active_cells]
+            uv_var[index_nu1[active_indices]] = ds["v_" + var].values.flatten()[active_cells]
+            locals()["uv_" + var] = uv_var
 
-            # for all cells, check if index_nm > -1, if so, store the value of the u point in the uv array using index_mu1 and index nu1
-            for index in range(len(index_nm)):
-                if index_nm[index] > -1:
-                    locals()["uv_" + var][index_mu1[index]] = ds["u_" + var].values.flatten()[index]
-                    locals()["uv_" + var][index_nu1[index]] = ds["v_" + var].values.flatten()[index]
-        stop_time = time.time()
-        print(f"Elapsed time for u and v variables: {stop_time - start_time} seconds")
-
-        start_time = time.time()
         var_list_bins = ["havg", "nrep", "pwet"]
         for var in var_list_bins:
-            # create empty array of length 2*npuv
-            locals()["uv_" + var] = np.zeros((nbins, nr_points))
-
+            uv_var = np.zeros((nbins, nr_points))
             for ibin in range(nbins):
-                for index in range(len(index_nm)):
-                    if index_nm[index] > -1:
-                        locals()["uv_" + var][ibin, index_mu1[index]] = ds["u_" + var][ibin].values.flatten()[index]
-                        locals()["uv_" + var][ibin, index_nu1[index]] = ds["v_" + var][ibin].values.flatten()[index]
-        stop_time = time.time()
-        print(f"Elapsed time for u and v variables: {stop_time - start_time} seconds")
+                uv_var[ibin, index_mu1[active_indices]] = ds["u_" + var][ibin].values.flatten()[active_cells]
+                uv_var[ibin, index_nu1[active_indices]] = ds["v_" + var][ibin].values.flatten()[active_cells]
+            locals()["uv_" + var] = uv_var
 
         # Make new xarray dataset
         ds_new = xr.Dataset()
@@ -116,7 +92,6 @@ class SubgridTableRegular:
 
         # fix names to match SFINCS convention
         ds_new = ds_new.rename_vars({"uv_navg": "uv_navg_w", "uv_ffit": "uv_fnfit"})
-
         # ensure bins is last dimension
         ds_new = ds_new.transpose("npuv", "np", "bins")
 
