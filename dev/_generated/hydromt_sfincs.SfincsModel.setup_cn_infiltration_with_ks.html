@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>hydromt_sfincs.SfincsModel.setup_tiles &#8212; HydroMT SFINCS  documentation</title>
+    <title>hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=36754332"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.SfincsModel.setup_tiles';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.SfincsModel.plot_basemap" href="hydromt_sfincs.SfincsModel.plot_basemap.html" />
-    <link rel="prev" title="hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid" href="hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid.html" />
+    <link rel="next" title="hydromt_sfincs.SfincsModel.setup_subgrid" href="hydromt_sfincs.SfincsModel.setup_subgrid.html" />
+    <link rel="prev" title="hydromt_sfincs.SfincsModel.setup_cn_infiltration" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -393,7 +393,7 @@
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_manning_roughness.html">hydromt_sfincs.SfincsModel.setup_manning_roughness</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_constant_infiltration.html">hydromt_sfincs.SfincsModel.setup_constant_infiltration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html">hydromt_sfincs.SfincsModel.setup_cn_infiltration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks.html">hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_subgrid.html">hydromt_sfincs.SfincsModel.setup_subgrid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_inflow.html">hydromt_sfincs.SfincsModel.setup_river_inflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_river_outflow.html">hydromt_sfincs.SfincsModel.setup_river_outflow</a></li>
@@ -411,7 +411,7 @@
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid.html">hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_wind_forcing.html">hydromt_sfincs.SfincsModel.setup_wind_forcing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid.html">hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.SfincsModel.setup_tiles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_tiles.html">hydromt_sfincs.SfincsModel.setup_tiles</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_basemap.html">hydromt_sfincs.SfincsModel.plot_basemap</a></li>
@@ -570,29 +570,22 @@
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="hydromt-sfincs-sfincsmodel-setup-tiles">
-<h1>hydromt_sfincs.SfincsModel.setup_tiles<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-tiles" title="Link to this heading">#</a></h1>
+  <section id="hydromt-sfincs-sfincsmodel-setup-cn-infiltration-with-ks">
+<h1>hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-setup-cn-infiltration-with-ks" title="Link to this heading">#</a></h1>
 <dl class="py method">
-<dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_tiles">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_tiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><span class="pre">dict</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasets_dep</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[0,</span> <span class="pre">13]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[-20000.0,</span> <span class="pre">20000.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_index_tiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_topobathy_tiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'bin'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_tiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_tiles" title="Link to this definition">#</a></dt>
-<dd><p>Create both index and topobathy tiles in webmercator format.</p>
+<dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks">
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">setup_cn_infiltration_with_ks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lulc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hsg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ksat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reclass_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">effective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.setup_cn_infiltration_with_ks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks" title="Link to this definition">#</a></dt>
+<dd><p>Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
+including recovery term based on the soil saturation</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>path</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>Path</em><em>]</em>) – Directory in which to store the index tiles, if None, the model root + tiles is used.</p></li>
-<li><p><strong>region</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a>) – Dictionary describing region of interest, e.g.:
-* {‘bbox’: [xmin, ymin, xmax, ymax]}. Note bbox should be provided in WGS 84
-* {‘geom’: ‘path/to/polygon_geometry’}
-If None, the model region is used.</p></li>
-<li><p><strong>datasets_dep</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>]</em>) – List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
-[{‘elevtn’: merit_hydro, ‘zmin’: 0.01}, {‘elevtn’: gebco, ‘offset’: 0, ‘merge_method’: ‘first’, reproj_method: ‘bilinear’}]
-For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
-Note that subgrid/dep_subgrid.tif is automatically used if present and datasets_dep is left empty.</p></li>
-<li><p><strong>zoom_range</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>]</em><em>]</em><em>, </em><em>optional</em>) – Range of zoom levels for which tiles are created, by default [0,13]</p></li>
-<li><p><strong>z_range</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>]</em><em>, </em><em>optional</em>) – Range of valid elevations that are included in the topobathy tiles, by default [-20000.0, 20000.0]</p></li>
-<li><p><strong>create_index_tiles</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, index tiles are created, by default True</p></li>
-<li><p><strong>create_topobathy_tiles</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, topobathy tiles are created, by default True.</p></li>
-<li><p><strong>fmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – Format of the tiles: “bin” (binary, default), or “png”.</p></li>
+<li><p><strong>lulc</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>Path</em><em>, or </em><em>RasterDataset</em>) – Landuse/landcover data set</p></li>
+<li><p><strong>hsg</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>Path</em><em>, or </em><em>RasterDataset</em>) – HSG (Hydrological Similarity Group) in integers</p></li>
+<li><p><strong>ksat</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>Path</em><em>, or </em><em>RasterDataset</em>) – Ksat (saturated hydraulic conductivity) [mm/hr]</p></li>
+<li><p><strong>reclass_table</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>Path</em><em>, or </em><em>RasterDataset</em>) – reclass table to relate landcover with soiltype</p></li>
+<li><p><strong>effective</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – estimate of percentage effective soil, e.g. 0.50 for 50%</p></li>
+<li><p><strong>block_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – maximum block size - use larger values will get more data in memory but can be faster, default=2000</p></li>
 </ul>
 </dd>
 </dl>
@@ -611,20 +604,20 @@ Note that subgrid/dep_subgrid.tif is automatically used if present and datasets_
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid.html"
+       href="hydromt_sfincs.SfincsModel.setup_cn_infiltration.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid</p>
+        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_cn_infiltration</p>
       </div>
     </a>
     <a class="right-next"
-       href="hydromt_sfincs.SfincsModel.plot_basemap.html"
+       href="hydromt_sfincs.SfincsModel.setup_subgrid.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">hydromt_sfincs.SfincsModel.plot_basemap</p>
+        <p class="prev-next-title">hydromt_sfincs.SfincsModel.setup_subgrid</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -644,14 +637,14 @@ Note that subgrid/dep_subgrid.tif is automatically used if present and datasets_
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.SfincsModel.setup_tiles"><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_tiles()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks"><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_cn_infiltration_with_ks()</span></code></a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../_sources/_generated/hydromt_sfincs.SfincsModel.setup_tiles.rst.txt">
+    <a href="../_sources/_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

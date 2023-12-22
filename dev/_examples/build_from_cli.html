@@ -31,7 +31,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=9d31670e" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=17060807" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
@@ -387,7 +387,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/sfincs_model_setup.html">Model components and methods</a></li>
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../user_guide/sfincs_build_update.html">Building or updating a model</a><input checked class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">Example: Build from CLI</a></li>
-<li class="toctree-l3"><a class="reference internal" href="build_from_script.html">Example: Build from Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build_from_script.html">Example: Build from script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="example_forcing.html">Example: Setup model forcing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="example_datasources.html">Example: Working with data</a></li>
 </ul>
 </li>
@@ -490,13 +491,12 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-model plugins:
- - sfincs (hydromt_sfincs 1.0.3.dev0)
-generic models (hydromt 0.9.1):
- - grid_model
- - vector_model
- - network_model
-
+Traceback (most recent call last):
+  File &#34;/usr/share/miniconda3/envs/hydromt-sfincs/bin/hydromt&#34;, line 6, in &lt;module&gt;
+    from hydromt.cli.main import main
+  File &#34;/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/cli/main.py&#34;, line 12, in &lt;module&gt;
+    from pydantic import ValidationError
+ImportError: cannot import name &#39;ValidationError&#39; from &#39;pydantic&#39; (/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/pydantic/__init__.py)
 
 </pre></div></div>
 </div>
@@ -540,56 +540,12 @@ generic models (hydromt 0.9.1):
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-12-21 17:19:33,216 - build - log - INFO - HydroMT version: 0.9.1
-2023-12-21 17:19:33,217 - build - main - INFO - Building instance of sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base.
-2023-12-21 17:19:33,217 - build - main - INFO - User settings:
-2023-12-21 17:19:33,248 - build - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.3.dev0).
-2023-12-21 17:19:33,248 - build - model_api - INFO - setup_grid_from_region.region: {&#39;geom&#39;: &#39;data/region.geojson&#39;}
-2023-12-21 17:19:33,249 - build - model_api - INFO - setup_grid_from_region.res: 50
-2023-12-21 17:19:33,249 - build - model_api - INFO - setup_grid_from_region.crs: utm
-2023-12-21 17:19:33,249 - build - model_api - INFO - setup_grid_from_region.rotated: True
-2023-12-21 17:19:33,249 - build - model_api - INFO - setup_grid_from_region.hydrography_fn: None
-2023-12-21 17:19:33,249 - build - model_api - INFO - setup_grid_from_region.basin_index_fn: None
-2023-12-21 17:19:33,249 - build - model_api - INFO - setup_grid_from_region.align: False
-2023-12-21 17:19:33,249 - build - model_api - INFO - setup_grid_from_region.dec_origin: 0
-2023-12-21 17:19:33,249 - build - model_api - INFO - setup_grid_from_region.dec_rotation: 3
-2023-12-21 17:19:33,290 - build - data_catalog - INFO - Reading data catalog archive artifact_data v0.0.8
-2023-12-21 17:19:34,892 - build - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
-2023-12-21 17:19:34,948 - build - geodataframe - INFO - Reading  vector data from data/region.geojson
-2023-12-21 17:19:34,984 - build - model_api - INFO - setup_dep.datasets_dep: [{&#39;elevtn&#39;: &#39;merit_hydro&#39;, &#39;zmin&#39;: 0.001}, {&#39;elevtn&#39;: &#39;gebco&#39;}]
-2023-12-21 17:19:34,984 - build - model_api - INFO - setup_dep.buffer_cells: 0
-2023-12-21 17:19:34,984 - build - model_api - INFO - setup_dep.interp_method: linear
-2023-12-21 17:19:34,998 - build - rasterdataset - INFO - Reading merit_hydro raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/merit_hydro/{variable}.tif
-2023-12-21 17:19:35,098 - build - rasterdataset - INFO - Reading gebco raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gebco.tif
-2023-12-21 17:19:35,267 - build - model_api - INFO - setup_mask_active.mask: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2023-12-21 17:19:35,267 - build - model_api - INFO - setup_mask_active.include_mask: None
-2023-12-21 17:19:35,267 - build - model_api - INFO - setup_mask_active.exclude_mask: None
-2023-12-21 17:19:35,267 - build - model_api - INFO - setup_mask_active.mask_buffer: 0
-2023-12-21 17:19:35,267 - build - model_api - INFO - setup_mask_active.zmin: -5
-2023-12-21 17:19:35,267 - build - model_api - INFO - setup_mask_active.zmax: None
-2023-12-21 17:19:35,267 - build - model_api - INFO - setup_mask_active.fill_area: 10.0
-2023-12-21 17:19:35,267 - build - model_api - INFO - setup_mask_active.drop_area: 0.0
-2023-12-21 17:19:35,267 - build - model_api - INFO - setup_mask_active.connectivity: 8
-2023-12-21 17:19:35,268 - build - model_api - INFO - setup_mask_active.all_touched: True
-2023-12-21 17:19:35,268 - build - model_api - INFO - setup_mask_active.reset_mask: True
-2023-12-21 17:19:35,270 - build - geodataframe - INFO - Reading  vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2023-12-21 17:19:35,307 - build - regulargrid - INFO - 4 gaps outside valid elevation range &lt; 10.0 km2.
-2023-12-21 17:19:35,311 - build - sfincs - INFO - Derive region geometry based on active cells.
-2023-12-21 17:19:35,317 - build - model_api - WARNING - Replacing geom: region
-2023-12-21 17:19:35,317 - build - model_api - INFO - setup_mask_bounds.btype: waterlevel
-2023-12-21 17:19:35,317 - build - model_api - INFO - setup_mask_bounds.include_mask: None
-2023-12-21 17:19:35,317 - build - model_api - INFO - setup_mask_bounds.exclude_mask: None
-2023-12-21 17:19:35,317 - build - model_api - INFO - setup_mask_bounds.include_mask_buffer: 0
-2023-12-21 17:19:35,317 - build - model_api - INFO - setup_mask_bounds.zmin: None
-2023-12-21 17:19:35,317 - build - model_api - INFO - setup_mask_bounds.zmax: -1
-2023-12-21 17:19:35,317 - build - model_api - INFO - setup_mask_bounds.connectivity: 8
-2023-12-21 17:19:35,317 - build - model_api - INFO - setup_mask_bounds.all_touched: False
-2023-12-21 17:19:35,317 - build - model_api - INFO - setup_mask_bounds.reset_bounds: False
-2023-12-21 17:19:35,334 - build - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
-2023-12-21 17:19:35,336 - build - sfincs - INFO - Write raster file(s) for grid to &#39;gis&#39; subfolder
-2023-12-21 17:19:35,354 - build - sfincs - INFO - Write geom files
-2023-12-21 17:19:35,354 - build - sfincs - INFO - Write vector file(s) for geoms to &#39;gis&#39; subfolder
-2023-12-21 17:19:35,361 - build - sfincs - WARNING - zsini not in states, skipping
+Traceback (most recent call last):
+  File &#34;/usr/share/miniconda3/envs/hydromt-sfincs/bin/hydromt&#34;, line 6, in &lt;module&gt;
+    from hydromt.cli.main import main
+  File &#34;/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/cli/main.py&#34;, line 12, in &lt;module&gt;
+    from pydantic import ValidationError
+ImportError: cannot import name &#39;ValidationError&#39; from &#39;pydantic&#39; (/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/pydantic/__init__.py)
 
 </pre></div></div>
 </div>
@@ -623,37 +579,12 @@ generic models (hydromt 0.9.1):
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Usage: hydromt build [OPTIONS] MODEL MODEL_ROOT
-
-  Build models from scratch.
-
-  Example usage: --------------
-
-  To build a wflow model for a subbasin using a point coordinates snapped to
-  cells with upstream area &gt;= 50 km2 hydromt build wflow /path/to/model_root
-  -i /path/to/wflow_config.ini  -r &#34;{&#39;subbasin&#39;: [-7.24, 62.09], &#39;uparea&#39;:
-  50}&#34; -d deltares_data -d /path/to/data_catalog.yml -v
-
-  To build a sfincs model based on a bbox hydromt build sfincs
-  /path/to/model_root  -i /path/to/sfincs_config.ini  -r &#34;{&#39;bbox&#39;:
-  [4.6891,52.9750,4.9576,53.1994]}&#34;  -d /path/to/data_catalog.yml -v
-
-Options:
-  --opt TEXT               Method specific keyword arguments, see the method
-                           documentation of the specific model for more
-                           information about the arguments.
-  -i, --config PATH        Path to hydroMT configuration file, for the model
-                           specific implementation.
-  -r, --region TEXT        Set the region for which to build the model, e.g.
-                           {&#39;subbasin&#39;: [-7.24, 62.09]}
-  -d, --data TEXT          Path to local yaml data catalog file OR name of
-                           predefined data catalog.
-  --dd, --deltares-data    Flag: Shortcut to add the &#34;deltares_data&#34; catalog
-  --fo, --force-overwrite  Flag: If provided overwrite existing model files
-  --cache                  Flag: If provided cache tiled rasterdatasets
-  -v, --verbose            Increase verbosity.
-  -q, --quiet              Decrease verbosity.
-  --help                   Show this message and exit.
+Traceback (most recent call last):
+  File &#34;/usr/share/miniconda3/envs/hydromt-sfincs/bin/hydromt&#34;, line 6, in &lt;module&gt;
+    from hydromt.cli.main import main
+  File &#34;/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/cli/main.py&#34;, line 12, in &lt;module&gt;
+    from pydantic import ValidationError
+ImportError: cannot import name &#39;ValidationError&#39; from &#39;pydantic&#39; (/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/pydantic/__init__.py)
 
 </pre></div></div>
 </div>
@@ -676,7 +607,14 @@ Options:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;hydromt_data.yml&#39;, &#39;gis&#39;, &#39;hydromt.log&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.inp&#39;]
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">FileNotFoundError</span>                         Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[5], line 3</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">os</span>
+<span class="ansi-green-fg">----&gt; 3</span> dir_list <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">os</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">listdir</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">      4</span> <span style="color: rgb(0,135,0)">print</span>(dir_list)
+
+<span class="ansi-red-fg">FileNotFoundError</span>: [Errno 2] No such file or directory: &#39;./tmp_sfincs_base&#39;
 </pre></div></div>
 </div>
 </section>
@@ -703,7 +641,7 @@ Options:
 </section>
 <section id="4.-Plot-current-base-model">
 <h2>4. Plot current base model<a class="headerlink" href="#4.-Plot-current-base-model" title="Link to this heading">#</a></h2>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
@@ -714,6 +652,70 @@ Options:
 <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">OSError</span>                                   Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[6], line 4</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">hydromt_sfincs</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> SfincsModel
+<span class="ansi-green-intense-fg ansi-bold">      3</span> <span style="color: rgb(95,135,135)"># read the model with hydromt methods</span>
+<span class="ansi-green-fg">----&gt; 4</span> sf <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">SfincsModel</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">r</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">      5</span> sf<span style="color: rgb(98,98,98)">.</span>read()
+
+File <span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:126</span>, in <span class="ansi-cyan-fg">SfincsModel.__init__</span><span class="ansi-blue-fg">(self, root, mode, config_fn, write_gis, data_libs, logger)</span>
+<span class="ansi-green-intense-fg ansi-bold">    123</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> write_gis <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">gis</span><span style="color: rgb(175,0,0)">&#34;</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_FOLDERS:
+<span class="ansi-green-intense-fg ansi-bold">    124</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_FOLDERS<span style="color: rgb(98,98,98)">.</span>append(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">gis</span><span style="color: rgb(175,0,0)">&#34;</span>)
+<span class="ansi-green-fg">--&gt; 126</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">super</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg" style="color: rgb(0,0,255)">__init__</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    127</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    128</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    129</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    130</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">data_libs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">data_libs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    131</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    132</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    134</span> <span style="color: rgb(95,135,135)"># placeholder grid classes</span>
+<span class="ansi-green-intense-fg ansi-bold">    135</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>grid_type <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/models/model_grid.py:449</span>, in <span class="ansi-cyan-fg">GridModel.__init__</span><span class="ansi-blue-fg">(self, root, mode, config_fn, data_libs, logger)</span>
+<span class="ansi-green-intense-fg ansi-bold">    440</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(
+<span class="ansi-green-intense-fg ansi-bold">    441</span>     <span style="color: rgb(0,135,0)">self</span>,
+<span class="ansi-green-intense-fg ansi-bold">    442</span>     root: <span style="color: rgb(0,135,0)">str</span> <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>,
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">    446</span>     logger<span style="color: rgb(98,98,98)">=</span>logger,
+<span class="ansi-green-intense-fg ansi-bold">    447</span> ):
+<span class="ansi-green-intense-fg ansi-bold">    448</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;Initialize a GridModel for distributed models with a regular grid.&#34;&#34;&#34;</span>
+<span class="ansi-green-fg">--&gt; 449</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">super</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg" style="color: rgb(0,0,255)">__init__</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    450</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    451</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    452</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    453</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">data_libs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">data_libs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    454</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    455</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/models/model_grid.py:30</span>, in <span class="ansi-cyan-fg">GridMixin.__init__</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">     29</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,135,0)">self</span>, <span style="color: rgb(98,98,98)">*</span>args, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-fg">---&gt; 30</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">super</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg" style="color: rgb(0,0,255)">__init__</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     31</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_grid <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/models/model_api.py:132</span>, in <span class="ansi-cyan-fg">Model.__init__</span><span class="ansi-blue-fg">(self, root, mode, config_fn, data_libs, logger, **artifact_keys)</span>
+<span class="ansi-green-intense-fg ansi-bold">    130</span> <span style="color: rgb(95,135,135)"># model paths</span>
+<span class="ansi-green-intense-fg ansi-bold">    131</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config_fn <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_CONF <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> config_fn <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span> config_fn
+<span class="ansi-green-fg">--&gt; 132</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">set_root</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">)</span>  <span style="color: rgb(95,135,135)"># also creates hydromt.log file</span>
+<span class="ansi-green-intense-fg ansi-bold">    133</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>logger<span style="color: rgb(98,98,98)">.</span>info(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Initializing </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_NAME<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)"> model from </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>dist<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)"> (v</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>version<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">).</span><span style="color: rgb(175,0,0)">&#34;</span>)
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/models/model_api.py:489</span>, in <span class="ansi-cyan-fg">Model.set_root</span><span class="ansi-blue-fg">(self, root, mode)</span>
+<span class="ansi-green-intense-fg ansi-bold">    487</span> <span style="color: rgb(95,135,135)"># check directory</span>
+<span class="ansi-green-intense-fg ansi-bold">    488</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> isdir(<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_root):
+<span class="ansi-green-fg">--&gt; 489</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">model root not found at </span><span style="color: rgb(175,0,0)">&#34;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_root<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">&#39;</span>)
+<span class="ansi-green-intense-fg ansi-bold">    490</span> <span style="color: rgb(95,135,135)"># remove old logging file handler and add new filehandler</span>
+<span class="ansi-green-intense-fg ansi-bold">    491</span> <span style="color: rgb(95,135,135)"># in root if it does not exist</span>
+<span class="ansi-green-intense-fg ansi-bold">    492</span> has_log_file <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">False</span>
+
+<span class="ansi-red-fg">OSError</span>: model root not found at &#34;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base&#34;
+</pre></div></div>
 </div>
 <p>Here in the plot you see the following: - Background geoimage of the region - Spatial colourplot of the elevation (dep) - In the red line of ‘waterlevel bnd’ the boundary cells along which SFINCS will later force input water levels</p>
 <div class="nbinput docutils container">
@@ -729,8 +731,15 @@ Options:
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_build_from_cli_19_0.png" src="../_images/_examples_build_from_cli_19_0.png" />
-</div>
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[7], line 2</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(95,135,135)"># plot the model with satelite basemap (see hydromt_sfincs.plot_basemap for more options)</span>
+<span class="ansi-green-fg">----&gt; 2</span> _ <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">sf</span><span style="color: rgb(98,98,98)">.</span>plot_basemap(shaded<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">False</span>, bmap<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">sat</span><span style="color: rgb(175,0,0)">&#34;</span>, zoomlevel<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">12</span>)
+
+<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+</pre></div></div>
 </div>
 </section>
 <section id="5.-Explanation-of-HydroMT's-.yml-file:">
@@ -778,6 +787,7 @@ setup_mask_active:
 setup_mask_bounds:
   btype: waterlevel            # Set waterlevel boundaries
   zmax: -1                     # only cells below zmax can be waterlevel boundaries
+
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -786,6 +796,7 @@ setup_mask_bounds:
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># in case you want to see how hydromt interprets the config file, you can use the following:</span>
 <span class="kn">from</span> <span class="nn">hydromt.config</span> <span class="kn">import</span> <span class="n">configread</span>
+
 <span class="n">config</span> <span class="o">=</span> <span class="n">configread</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
 <span class="n">config</span>
 </pre></div>
@@ -839,41 +850,12 @@ setup_mask_bounds:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2023-12-21 17:19:44,053 - update - log - INFO - HydroMT version: 0.9.1
-2023-12-21 17:19:44,053 - update - main - INFO - Updating sfincs model at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base (r+).
-2023-12-21 17:19:44,053 - update - main - INFO - Output dir: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
-2023-12-21 17:19:44,053 - update - main - INFO - User settings:
-2023-12-21 17:19:44,081 - update - model_api - WARNING - Model dir already exists and files might be overwritten: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/gis.
-2023-12-21 17:19:44,081 - update - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.3.dev0).
-2023-12-21 17:19:44,110 - update - model_api - INFO - setup_observation_points.locations: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
-2023-12-21 17:19:44,110 - update - model_api - INFO - setup_observation_points.merge: True
-2023-12-21 17:19:44,132 - update - data_catalog - INFO - Reading data catalog archive artifact_data v0.0.8
-2023-12-21 17:19:44,133 - update - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
-2023-12-21 17:19:44,190 - update - geodataframe - INFO - Reading  vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
-2023-12-21 17:19:44,206 - update - model_api - INFO - setup_waterlevel_forcing.geodataset: gtsmv3_eu_era5
-2023-12-21 17:19:44,206 - update - model_api - INFO - setup_waterlevel_forcing.timeseries: None
-2023-12-21 17:19:44,206 - update - model_api - INFO - setup_waterlevel_forcing.locations: None
-2023-12-21 17:19:44,206 - update - model_api - INFO - setup_waterlevel_forcing.offset: None
-2023-12-21 17:19:44,206 - update - model_api - INFO - setup_waterlevel_forcing.buffer: 2000
-2023-12-21 17:19:44,206 - update - model_api - INFO - setup_waterlevel_forcing.merge: True
-2023-12-21 17:19:44,559 - update - model_api - INFO - setup_discharge_forcing.geodataset: None
-2023-12-21 17:19:44,559 - update - model_api - INFO - setup_discharge_forcing.timeseries: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
-2023-12-21 17:19:44,559 - update - model_api - INFO - setup_discharge_forcing.locations: /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
-2023-12-21 17:19:44,559 - update - model_api - INFO - setup_discharge_forcing.merge: True
-2023-12-21 17:19:44,559 - update - model_api - INFO - setup_discharge_forcing.buffer: None
-2023-12-21 17:19:44,560 - update - dataframe - INFO - Reading  csv data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
-2023-12-21 17:19:44,563 - update - geodataframe - INFO - Reading  vector data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
-2023-12-21 17:19:44,575 - update - sfincs - INFO - Setting gdf_locs index to ID
-2023-12-21 17:19:44,575 - update - sfincs - INFO - No matching index column found in gdf_locs; assuming the order is correct
-2023-12-21 17:19:44,582 - update - sfincs - INFO - Writing model data to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base
-2023-12-21 17:19:44,584 - update - sfincs - INFO - Write raster file(s) for grid to &#39;gis&#39; subfolder
-2023-12-21 17:19:44,610 - update - sfincs - INFO - Write geom files
-2023-12-21 17:19:44,612 - update - sfincs - INFO - Write vector file(s) for geoms to &#39;gis&#39; subfolder
-2023-12-21 17:19:44,624 - update - sfincs - INFO - Write forcing files
-2023-12-21 17:19:44,635 - update - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
-2023-12-21 17:19:44,666 - update - sfincs - INFO - Write vector file(s) for forcing.dis to &#39;gis&#39; subfolder
-2023-12-21 17:19:44,689 - update - sfincs - WARNING - zsini not in states, skipping
-2023-12-21 17:19:44,689 - update - data_catalog - INFO - Parsing data catalog from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/hydromt_data.yml
+Traceback (most recent call last):
+  File &#34;/usr/share/miniconda3/envs/hydromt-sfincs/bin/hydromt&#34;, line 6, in &lt;module&gt;
+    from hydromt.cli.main import main
+  File &#34;/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/cli/main.py&#34;, line 12, in &lt;module&gt;
+    from pydantic import ValidationError
+ImportError: cannot import name &#39;ValidationError&#39; from &#39;pydantic&#39; (/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/pydantic/__init__.py)
 
 </pre></div></div>
 </div>
@@ -923,7 +905,7 @@ setup_discharge_forcing:
 </section>
 <section id="7.-Plot-model-including-forcing:">
 <h2>7. Plot model including forcing:<a class="headerlink" href="#7.-Plot-model-including-forcing:" title="Link to this heading">#</a></h2>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
@@ -934,6 +916,70 @@ setup_discharge_forcing:
 <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">OSError</span>                                   Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[12], line 4</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">hydromt_sfincs</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> SfincsModel
+<span class="ansi-green-intense-fg ansi-bold">      3</span> <span style="color: rgb(95,135,135)"># read the model with hydromt methods</span>
+<span class="ansi-green-fg">----&gt; 4</span> sf <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">SfincsModel</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">r</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">      5</span> sf<span style="color: rgb(98,98,98)">.</span>read()
+
+File <span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:126</span>, in <span class="ansi-cyan-fg">SfincsModel.__init__</span><span class="ansi-blue-fg">(self, root, mode, config_fn, write_gis, data_libs, logger)</span>
+<span class="ansi-green-intense-fg ansi-bold">    123</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> write_gis <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">gis</span><span style="color: rgb(175,0,0)">&#34;</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_FOLDERS:
+<span class="ansi-green-intense-fg ansi-bold">    124</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_FOLDERS<span style="color: rgb(98,98,98)">.</span>append(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">gis</span><span style="color: rgb(175,0,0)">&#34;</span>)
+<span class="ansi-green-fg">--&gt; 126</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">super</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg" style="color: rgb(0,0,255)">__init__</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    127</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    128</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    129</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    130</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">data_libs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">data_libs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    131</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    132</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    134</span> <span style="color: rgb(95,135,135)"># placeholder grid classes</span>
+<span class="ansi-green-intense-fg ansi-bold">    135</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>grid_type <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/models/model_grid.py:449</span>, in <span class="ansi-cyan-fg">GridModel.__init__</span><span class="ansi-blue-fg">(self, root, mode, config_fn, data_libs, logger)</span>
+<span class="ansi-green-intense-fg ansi-bold">    440</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(
+<span class="ansi-green-intense-fg ansi-bold">    441</span>     <span style="color: rgb(0,135,0)">self</span>,
+<span class="ansi-green-intense-fg ansi-bold">    442</span>     root: <span style="color: rgb(0,135,0)">str</span> <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>,
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">    446</span>     logger<span style="color: rgb(98,98,98)">=</span>logger,
+<span class="ansi-green-intense-fg ansi-bold">    447</span> ):
+<span class="ansi-green-intense-fg ansi-bold">    448</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;Initialize a GridModel for distributed models with a regular grid.&#34;&#34;&#34;</span>
+<span class="ansi-green-fg">--&gt; 449</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">super</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg" style="color: rgb(0,0,255)">__init__</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    450</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    451</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    452</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">config_fn</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    453</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">data_libs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">data_libs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    454</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    455</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/models/model_grid.py:30</span>, in <span class="ansi-cyan-fg">GridMixin.__init__</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">     29</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,135,0)">self</span>, <span style="color: rgb(98,98,98)">*</span>args, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-fg">---&gt; 30</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">super</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg" style="color: rgb(0,0,255)">__init__</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     31</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_grid <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/models/model_api.py:132</span>, in <span class="ansi-cyan-fg">Model.__init__</span><span class="ansi-blue-fg">(self, root, mode, config_fn, data_libs, logger, **artifact_keys)</span>
+<span class="ansi-green-intense-fg ansi-bold">    130</span> <span style="color: rgb(95,135,135)"># model paths</span>
+<span class="ansi-green-intense-fg ansi-bold">    131</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_config_fn <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_CONF <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> config_fn <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span> config_fn
+<span class="ansi-green-fg">--&gt; 132</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">set_root</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">)</span>  <span style="color: rgb(95,135,135)"># also creates hydromt.log file</span>
+<span class="ansi-green-intense-fg ansi-bold">    133</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>logger<span style="color: rgb(98,98,98)">.</span>info(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Initializing </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_NAME<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)"> model from </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>dist<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)"> (v</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>version<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">).</span><span style="color: rgb(175,0,0)">&#34;</span>)
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/models/model_api.py:489</span>, in <span class="ansi-cyan-fg">Model.set_root</span><span class="ansi-blue-fg">(self, root, mode)</span>
+<span class="ansi-green-intense-fg ansi-bold">    487</span> <span style="color: rgb(95,135,135)"># check directory</span>
+<span class="ansi-green-intense-fg ansi-bold">    488</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> isdir(<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_root):
+<span class="ansi-green-fg">--&gt; 489</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">model root not found at </span><span style="color: rgb(175,0,0)">&#34;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_root<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">&#39;</span>)
+<span class="ansi-green-intense-fg ansi-bold">    490</span> <span style="color: rgb(95,135,135)"># remove old logging file handler and add new filehandler</span>
+<span class="ansi-green-intense-fg ansi-bold">    491</span> <span style="color: rgb(95,135,135)"># in root if it does not exist</span>
+<span class="ansi-green-intense-fg ansi-bold">    492</span> has_log_file <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">False</span>
+
+<span class="ansi-red-fg">OSError</span>: model root not found at &#34;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base&#34;
+</pre></div></div>
 </div>
 <p><strong>In the forcing plot you see the following:</strong></p>
 <ul class="simple">
@@ -953,8 +999,15 @@ setup_discharge_forcing:
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_build_from_cli_34_0.png" src="../_images/_examples_build_from_cli_34_0.png" />
-</div>
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[13], line 2</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(95,135,135)"># Plot time-series:</span>
+<span class="ansi-green-fg">----&gt; 2</span> _ <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">sf</span><span style="color: rgb(98,98,98)">.</span>plot_forcing(fn_out<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">forcing.png</span><span style="color: rgb(175,0,0)">&#34;</span>)
+
+<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+</pre></div></div>
 </div>
 <p><strong>In the basemap plot you see the following:</strong></p>
 <ul class="simple">
@@ -979,8 +1032,16 @@ setup_discharge_forcing:
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_build_from_cli_36_0.png" src="../_images/_examples_build_from_cli_36_0.png" />
-</div>
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[14], line 4</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(95,135,135)"># plot the model basemaps</span>
+<span class="ansi-green-intense-fg ansi-bold">      2</span> <span style="color: rgb(95,135,135)"># Note the added obs and forcing points</span>
+<span class="ansi-green-fg">----&gt; 4</span> _ <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">sf</span><span style="color: rgb(98,98,98)">.</span>plot_basemap(fn_out<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">basemap.png</span><span style="color: rgb(175,0,0)">&#34;</span>, bmap<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">sat</span><span style="color: rgb(175,0,0)">&#34;</span>, zoomlevel<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">12</span>)
+
+<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+</pre></div></div>
 </div>
 </section>
 <section id="8.-Check-what-additional-files-have-been-created:">
@@ -999,7 +1060,13 @@ setup_discharge_forcing:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;sfincs.obs&#39;, &#39;figs&#39;, &#39;hydromt_data.yml&#39;, &#39;sfincs.bnd&#39;, &#39;sfincs.src&#39;, &#39;gis&#39;, &#39;hydromt.log&#39;, &#39;sfincs.bzs&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.dis&#39;]
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">FileNotFoundError</span>                         Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[15], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> dir_list <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">os</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">listdir</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">root</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">      2</span> <span style="color: rgb(0,135,0)">print</span>(dir_list)
+
+<span class="ansi-red-fg">FileNotFoundError</span>: [Errno 2] No such file or directory: &#39;./tmp_sfincs_base&#39;
 </pre></div></div>
 </div>
 <p><strong>SFINCS native input files:</strong></p>

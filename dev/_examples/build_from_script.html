@@ -31,7 +31,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=9d31670e" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=17060807" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
@@ -48,7 +48,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = '_examples/build_from_script';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Working with data in HydroMT" href="example_datasources.html" />
+    <link rel="next" title="Working with forcing conditions" href="example_forcing.html" />
     <link rel="prev" title="Build a model from CLI" href="build_from_cli.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -387,7 +387,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/sfincs_model_setup.html">Model components and methods</a></li>
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../user_guide/sfincs_build_update.html">Building or updating a model</a><input checked class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="build_from_cli.html">Example: Build from CLI</a></li>
-<li class="toctree-l3 current active"><a class="current reference internal" href="#">Example: Build from Script</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">Example: Build from script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="example_forcing.html">Example: Setup model forcing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="example_datasources.html">Example: Working with data</a></li>
 </ul>
 </li>
@@ -568,7 +569,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;mmax&#39;: 250, &#39;nmax&#39;: 107, &#39;dx&#39;: 50.0, &#39;dy&#39;: 50.0, &#39;x0&#39;: 318650, &#39;y0&#39;: 5040000, &#39;rotation&#39;: 27, &#39;latitude&#39;: 0.0, &#39;tref&#39;: datetime.datetime(2010, 2, 1, 0, 0), &#39;tstart&#39;: datetime.datetime(2010, 2, 1, 0, 0), &#39;tstop&#39;: datetime.datetime(2010, 2, 2, 0, 0), &#39;tspinup&#39;: 60.0, &#39;dtout&#39;: 3600.0, &#39;dthisout&#39;: 600.0, &#39;dtrstout&#39;: 0.0, &#39;dtmaxout&#39;: 99999.0, &#39;trstout&#39;: -999.0, &#39;dtwnd&#39;: 1800.0, &#39;alpha&#39;: 0.5, &#39;theta&#39;: 1.0, &#39;huthresh&#39;: 0.01, &#39;manning&#39;: 0.04, &#39;manning_land&#39;: 0.04, &#39;manning_sea&#39;: 0.02, &#39;rgh_lev_land&#39;: 0.0, &#39;zsini&#39;: 0.0, &#39;qinf&#39;: 0.0, &#39;rhoa&#39;: 1.25, &#39;rhow&#39;: 1024.0, &#39;dtmax&#39;: 60.0, &#39;advection&#39;: 2, &#39;baro&#39;: 0, &#39;pavbnd&#39;: 0, &#39;gapres&#39;: 101200.0, &#39;stopdepth&#39;: 100.0, &#39;crsgeo&#39;: 0, &#39;btfilter&#39;: 60.0, &#39;viscosity&#39;: 1, &#39;inputformat&#39;: &#39;bin&#39;, &#39;outputformat&#39;: &#39;net&#39;, &#39;cdnrb&#39;: 3, &#39;cdwnd&#39;: [0.0, 28.0, 50.0], &#39;cdval&#39;: [0.001, 0.0025, 0.0015], &#39;epsg&#39;: 32633}
+{&#39;mmax&#39;: 250, &#39;nmax&#39;: 107, &#39;dx&#39;: 50.0, &#39;dy&#39;: 50.0, &#39;x0&#39;: 318650, &#39;y0&#39;: 5040000, &#39;rotation&#39;: 27, &#39;latitude&#39;: 0.0, &#39;tref&#39;: datetime.datetime(2010, 2, 1, 0, 0), &#39;tstart&#39;: datetime.datetime(2010, 2, 1, 0, 0), &#39;tstop&#39;: datetime.datetime(2010, 2, 2, 0, 0), &#39;tspinup&#39;: 60.0, &#39;dtout&#39;: 3600.0, &#39;dthisout&#39;: 600.0, &#39;dtrstout&#39;: 0.0, &#39;dtmaxout&#39;: 86400, &#39;trstout&#39;: -999.0, &#39;dtwnd&#39;: 1800.0, &#39;alpha&#39;: 0.5, &#39;theta&#39;: 1.0, &#39;huthresh&#39;: 0.01, &#39;manning&#39;: 0.04, &#39;manning_land&#39;: 0.04, &#39;manning_sea&#39;: 0.02, &#39;rgh_lev_land&#39;: 0.0, &#39;zsini&#39;: 0.0, &#39;qinf&#39;: 0.0, &#39;rhoa&#39;: 1.25, &#39;rhow&#39;: 1024.0, &#39;dtmax&#39;: 60.0, &#39;advection&#39;: 1, &#39;baro&#39;: 0, &#39;pavbnd&#39;: 0, &#39;gapres&#39;: 101200.0, &#39;stopdepth&#39;: 100.0, &#39;crsgeo&#39;: 0, &#39;btfilter&#39;: 60.0, &#39;viscosity&#39;: 1, &#39;inputformat&#39;: &#39;bin&#39;, &#39;outputformat&#39;: &#39;net&#39;, &#39;cdnrb&#39;: 3, &#39;cdwnd&#39;: [0.0, 28.0, 50.0], &#39;cdval&#39;: [0.001, 0.0025, 0.0015], &#39;epsg&#39;: 32633}
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -637,7 +638,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 
 <span class="c1"># Make a plot of the mask file</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">&quot;msk&quot;</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-<br/></pre></div>
+</pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -687,8 +688,10 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 
 <span class="c1"># Make a plot of the mask file</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">&quot;msk&quot;</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-<span class="n">gdf_include</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span> <span class="c1"># plot the shapefile given by the user as dashed line</span>
-<br/></pre></div>
+<span class="n">gdf_include</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span>
+<span class="p">)</span>  <span class="c1"># plot the shapefile given by the user as dashed line</span>
+</pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -719,10 +722,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 <span class="c1"># and minimum upstream area (river_upa)</span>
 
 <span class="n">sf</span><span class="o">.</span><span class="n">setup_river_inflow</span><span class="p">(</span>
-    <span class="n">hydrography</span><span class="o">=</span><span class="s1">&#39;merit_hydro&#39;</span><span class="p">,</span>
-    <span class="n">river_len</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-    <span class="n">river_upa</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-    <span class="n">keep_rivers_geom</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">hydrography</span><span class="o">=</span><span class="s2">&quot;merit_hydro&quot;</span><span class="p">,</span> <span class="n">river_len</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">river_upa</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">keep_rivers_geom</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
 
 <span class="c1"># Make a plot of model</span>
@@ -747,11 +747,11 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 <span class="c1"># use the derived rivers to burn these into the model subgrid</span>
 <span class="c1"># note that the width and depth are arbitrary here</span>
 
-<span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="s1">&#39;rivers_inflow&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-<span class="n">gdf_riv</span><span class="p">[</span><span class="s1">&#39;rivwth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">]</span> <span class="c1"># width [m]</span>
-<span class="n">gdf_riv</span><span class="p">[</span><span class="s1">&#39;rivdph&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="c1"># depth [m]</span>
+<span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="s2">&quot;rivers_inflow&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">]</span>  <span class="c1"># width [m]</span>
+<span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.5</span>  <span class="c1"># depth [m]</span>
 <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;manning&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.03</span>  <span class="c1"># manning coefficient [s.m-1/3]</span>
-<span class="n">gdf_riv</span><span class="p">[[</span><span class="s1">&#39;geometry&#39;</span><span class="p">,</span> <span class="s1">&#39;rivwth&#39;</span><span class="p">,</span> <span class="s1">&#39;rivdph&#39;</span><span class="p">,</span> <span class="s1">&#39;manning&#39;</span><span class="p">]]</span>
+<span class="n">gdf_riv</span><span class="p">[[</span><span class="s2">&quot;geometry&quot;</span><span class="p">,</span> <span class="s2">&quot;rivwth&quot;</span><span class="p">,</span> <span class="s2">&quot;rivdph&quot;</span><span class="p">,</span> <span class="s2">&quot;manning&quot;</span><span class="p">]]</span>
 
 <span class="c1"># prepare the river dataset for the subgrid</span>
 <span class="c1"># instead of using the derived rivers, you could also use an aribitrary shapefile with centerlines</span>
@@ -759,7 +759,7 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 <span class="c1"># Note that the width is either specified on the river centerline or with a river mask</span>
 <span class="c1"># Also the river bed level (rivbed) can be specified instead of the river depth (rivdph).</span>
 
-<span class="n">datasets_riv</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;centerlines&#39;</span><span class="p">:</span> <span class="n">gdf_riv</span><span class="p">}]</span>
+<span class="n">datasets_riv</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;centerlines&quot;</span><span class="p">:</span> <span class="n">gdf_riv</span><span class="p">}]</span>
 </pre></div>
 </div>
 </div>
@@ -932,7 +932,7 @@ KeysView(Data variables:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;mmax&#39;: 250, &#39;nmax&#39;: 107, &#39;dx&#39;: 50.0, &#39;dy&#39;: 50.0, &#39;x0&#39;: 318650, &#39;y0&#39;: 5040000, &#39;rotation&#39;: 27, &#39;latitude&#39;: 0.0, &#39;tref&#39;: &#39;20100201 000000&#39;, &#39;tstart&#39;: &#39;20100205 000000&#39;, &#39;tstop&#39;: &#39;20100207 000000&#39;, &#39;tspinup&#39;: 60.0, &#39;dtout&#39;: 3600.0, &#39;dthisout&#39;: 600.0, &#39;dtrstout&#39;: 0.0, &#39;dtmaxout&#39;: 99999.0, &#39;trstout&#39;: -999.0, &#39;dtwnd&#39;: 1800.0, &#39;alpha&#39;: 0.5, &#39;theta&#39;: 1.0, &#39;huthresh&#39;: 0.01, &#39;manning&#39;: 0.04, &#39;manning_land&#39;: 0.04, &#39;manning_sea&#39;: 0.02, &#39;rgh_lev_land&#39;: 0.0, &#39;zsini&#39;: 0.0, &#39;rhoa&#39;: 1.25, &#39;rhow&#39;: 1024.0, &#39;dtmax&#39;: 60.0, &#39;advection&#39;: 2, &#39;baro&#39;: 0, &#39;pavbnd&#39;: 0, &#39;gapres&#39;: 101200.0, &#39;stopdepth&#39;: 100.0, &#39;crsgeo&#39;: 0, &#39;btfilter&#39;: 60.0, &#39;viscosity&#39;: 1, &#39;inputformat&#39;: &#39;bin&#39;, &#39;outputformat&#39;: &#39;net&#39;, &#39;cdnrb&#39;: 3, &#39;cdwnd&#39;: [0.0, 28.0, 50.0], &#39;cdval&#39;: [0.001, 0.0025, 0.0015], &#39;epsg&#39;: 32633, &#39;mskfile&#39;: &#39;sfincs.msk&#39;, &#39;indexfile&#39;: &#39;sfincs.ind&#39;, &#39;sbgfile&#39;: &#39;sfincs.sbg&#39;, &#39;scsfile&#39;: &#39;sfincs.scs&#39;}
+{&#39;mmax&#39;: 250, &#39;nmax&#39;: 107, &#39;dx&#39;: 50.0, &#39;dy&#39;: 50.0, &#39;x0&#39;: 318650, &#39;y0&#39;: 5040000, &#39;rotation&#39;: 27, &#39;latitude&#39;: 0.0, &#39;tref&#39;: &#39;20100201 000000&#39;, &#39;tstart&#39;: &#39;20100205 000000&#39;, &#39;tstop&#39;: &#39;20100207 000000&#39;, &#39;tspinup&#39;: 60.0, &#39;dtout&#39;: 3600.0, &#39;dthisout&#39;: 600.0, &#39;dtrstout&#39;: 0.0, &#39;dtmaxout&#39;: 86400, &#39;trstout&#39;: -999.0, &#39;dtwnd&#39;: 1800.0, &#39;alpha&#39;: 0.5, &#39;theta&#39;: 1.0, &#39;huthresh&#39;: 0.01, &#39;manning&#39;: 0.04, &#39;manning_land&#39;: 0.04, &#39;manning_sea&#39;: 0.02, &#39;rgh_lev_land&#39;: 0.0, &#39;zsini&#39;: 0.0, &#39;rhoa&#39;: 1.25, &#39;rhow&#39;: 1024.0, &#39;dtmax&#39;: 60.0, &#39;advection&#39;: 1, &#39;baro&#39;: 0, &#39;pavbnd&#39;: 0, &#39;gapres&#39;: 101200.0, &#39;stopdepth&#39;: 100.0, &#39;crsgeo&#39;: 0, &#39;btfilter&#39;: 60.0, &#39;viscosity&#39;: 1, &#39;inputformat&#39;: &#39;bin&#39;, &#39;outputformat&#39;: &#39;net&#39;, &#39;cdnrb&#39;: 3, &#39;cdwnd&#39;: [0.0, 28.0, 50.0], &#39;cdval&#39;: [0.001, 0.0025, 0.0015], &#39;epsg&#39;: 32633, &#39;mskfile&#39;: &#39;sfincs.msk&#39;, &#39;indexfile&#39;: &#39;sfincs.ind&#39;, &#39;sbgfile&#39;: &#39;sfincs.sbg&#39;, &#39;scsfile&#39;: &#39;sfincs.scs&#39;}
 </pre></div></div>
 </div>
 <p><strong>a. Specify water level input locations:</strong></p>
@@ -1100,12 +1100,8 @@ dict_keys([&#39;dis&#39;, &#39;bzs&#39;])
 <span class="c1"># Alternativly you can also create a new geodataframe with points, similar to the water level forcing points</span>
 
 <span class="c1"># make up some discharge data</span>
-<span class="n">index</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">forcing</span><span class="p">[</span><span class="s1">&#39;dis&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
-<span class="n">dis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-    <span class="p">[[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-    <span class="p">[</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
-    <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]]</span>
-<span class="p">)</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">forcing</span><span class="p">[</span><span class="s2">&quot;dis&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+<span class="n">dis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]])</span>
 <span class="n">dispd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">dis</span><span class="p">)</span>
 
 <span class="c1"># now we call the function setup_discharge_forcing, which adds the discharge forcing to the src points</span>
@@ -1155,7 +1151,7 @@ dict_keys([&#39;dis&#39;, &#39;bzs&#39;, &#39;precip_2d&#39;])
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot combined forcing time-series:</span>
-<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_forcing</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="s1">&#39;forcing.png&#39;</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_forcing</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;forcing.png&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1259,7 +1255,7 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use predefined plotting function &#39;plot_basemap&#39; to show your full SFINCS model setup</span>
-<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;basemap.png&quot;</span> <span class="p">,</span><span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;basemap.png&quot;</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1324,11 +1320,11 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
       </div>
     </a>
     <a class="right-next"
-       href="example_datasources.html"
+       href="example_forcing.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Working with data in HydroMT</p>
+        <p class="prev-next-title">Working with forcing conditions</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

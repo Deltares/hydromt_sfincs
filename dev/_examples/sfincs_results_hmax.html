@@ -31,7 +31,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=9d31670e" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=17060807" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
@@ -387,7 +387,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/sfincs_model_setup.html">Model components and methods</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../user_guide/sfincs_build_update.html">Building or updating a model</a><input checked class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="build_from_cli.html">Example: Build from CLI</a></li>
-<li class="toctree-l3"><a class="reference internal" href="build_from_script.html">Example: Build from Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build_from_script.html">Example: Build from script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="example_forcing.html">Example: Setup model forcing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="example_datasources.html">Example: Working with data</a></li>
 </ul>
 </li>
@@ -476,7 +477,7 @@
 <section id="1.-Determine-maximum-water-depth-for-a-regular-model">
 <h2>1. Determine maximum water depth for a regular model<a class="headerlink" href="#1.-Determine-maximum-water-depth-for-a-regular-model" title="Link to this heading">#</a></h2>
 <p>The first example used in this notebook is based on a regular SFINCS model, i.e. no subgrid tables are used. In the absence of the subgrid tables, SFINCS computes the water depth by simply substracting the bed levels from the water levels. The (maximum) water depth <strong>h(max)</strong> is stored in the NetCDF output (<em>sfincs_map.nc</em>).</p>
-<p>How to derive maximum water depths for a model including subgrid tables is explained later in this notebook.</p>
+<p>How to derive maximum water depths for a model including subgrid tables is explained <a class="reference internal" href="#2.-Determine-maximum-water-depth-for-a-subgrid-model"><span class="std std-ref">later</span></a> in this notebook.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
@@ -632,7 +633,7 @@ path: /home/runner/.hydromt_data/artifact_data/v0.0.8/gswo.tif
     <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="n">vmax</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
     <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">,</span>
-    <span class="n">cbar_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
+    <span class="n">cbar_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)},</span>
 <span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SFINCS maximum water depth&quot;</span><span class="p">)</span>
 <span class="c1"># plt.savefig(join(mod.root, &#39;figs&#39;, &#39;hmax.png&#39;), dpi=225, bbox_inches=&quot;tight&quot;)</span>
@@ -703,8 +704,8 @@ The process of interpolating the water levels onto the higher-resolution elevati
 
 <span class="c1"># now assuming we have a subgrid model, we don&#39;t have hmax available, so we are using zsmax (maximum water levels)</span>
 <span class="c1"># compute the maximum over all time steps</span>
-<span class="n">da_zsmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;zsmax&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;timemax&#39;</span><span class="p">)</span>
-<br/></pre></div>
+<span class="n">da_zsmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;zsmax&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;timemax&quot;</span><span class="p">)</span>
+</pre></div>
 </div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -755,7 +756,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
     <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span>
     <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="n">vmax</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
-    <span class="n">cbar_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
+    <span class="n">cbar_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)},</span>
 <span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SFINCS maximum water depth&quot;</span><span class="p">)</span>
 <span class="c1"># plt.savefig(join(mod.root, &#39;figs&#39;, &#39;hmax.png&#39;), dpi=225, bbox_inches=&quot;tight&quot;)</span>

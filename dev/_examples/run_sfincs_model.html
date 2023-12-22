@@ -31,7 +31,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=9d31670e" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=17060807" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
@@ -387,7 +387,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/sfincs_model_setup.html">Model components and methods</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../user_guide/sfincs_build_update.html">Building or updating a model</a><input checked class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="build_from_cli.html">Example: Build from CLI</a></li>
-<li class="toctree-l3"><a class="reference internal" href="build_from_script.html">Example: Build from Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build_from_script.html">Example: Build from script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="example_forcing.html">Example: Setup model forcing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="example_datasources.html">Example: Working with data</a></li>
 </ul>
 </li>
@@ -629,7 +630,7 @@ call &#34;c:\change_path_of_folder\sfincs.exe&#34;&gt;sfincs_log.txt
 </section>
 <section id="Now-let's-try-to-run-this-batch-file">
 <h2>Now let’s try to run this batch-file<a class="headerlink" href="#Now-let's-try-to-run-this-batch-file" title="Link to this heading">#</a></h2>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
@@ -639,19 +640,12 @@ call &#34;c:\change_path_of_folder\sfincs.exe&#34;&gt;sfincs_log.txt
 
 <span class="n">cur_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
 
-<span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">run_path</span><span class="p">)</span>
-<span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;run.bat&quot;</span><span class="p">)</span>
-<span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cur_dir</span><span class="p">)</span>
+<span class="c1"># uncomment to run sfincs</span>
+<span class="c1"># os.chdir(run_path)</span>
+<span class="c1"># os.system(&quot;run.bat&quot;)</span>
+<span class="c1"># os.chdir(cur_dir)</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-sh: 1: run.bat: not found
-</pre></div></div>
 </div>
 <ul class="simple">
 <li><p>It should now take less than a minute or so for the SFINCS simulation to finish (not available on Binder)</p></li>
