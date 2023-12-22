@@ -62,7 +62,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request'}}
         uses: peaceiris/actions-gh-pages@v3.8.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}path
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/_build/html
           exclude_assets: '.buildinfo,_sources/*,_examples/*.ipynb'
           destination_dir: ./${{ env.DOC_VERSION }}
