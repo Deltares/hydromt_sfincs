@@ -155,7 +155,7 @@ def interp_along_line_to_grid(
     gdf_zb = gdf_zb[["geometry"] + column_names].copy()
     gdf_zb["idx0"], gdf_zb["dist"] = nearest(gdf_zb, gdf_lines)
     nearest_lines = gdf_lines.loc[gdf_zb["idx0"], "geometry"].values
-    gdf_zb["x"] = nearest_lines.project(gdf_zb["geometry"])
+    gdf_zb["x"] = nearest_lines.project(gdf_zb["geometry"].values)
     gdf_zb.set_index("idx0", inplace=True)
     # keep only lines with associated points
     gdf_lines = gdf_lines.loc[np.unique(gdf_zb.index.values)]
@@ -163,7 +163,7 @@ def interp_along_line_to_grid(
     # find nearest line and calculate relative distance along line for all cell centers
     cc["idx0"], cc["dist"] = nearest(cc, gdf_lines)
     nearest_lines = gdf_lines.loc[cc["idx0"], "geometry"].values
-    cc["x"] = nearest_lines.project(cc["geometry"].to_crs(gdf_lines.crs))
+    cc["x"] = nearest_lines.project(cc["geometry"].to_crs(gdf_lines.crs).values)
 
     # interpolate z values per line
     def _interp(cc0, gdf_zb=gdf_zb, column_names=column_names):
