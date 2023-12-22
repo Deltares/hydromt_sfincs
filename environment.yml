@@ -1,5 +1,5 @@
 # This environment installs the latests released version of hydromt-sfincs,
-# including some dependencies to run the examples 
+# including some dependencies to run the examples
 name: hydromt-sfincs
 
 channels:

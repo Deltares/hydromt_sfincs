@@ -27,4 +27,3 @@ For a static (non-interactive) view of the examples follow one of the links belo
 
 *   `SFINCS results: Maximum water depth <../_examples/sfincs_results_hmax.ipynb>`_
 *   `SFINCS results: Animation <../_examples/sfincs_results_animation.ipynb>`_
-
