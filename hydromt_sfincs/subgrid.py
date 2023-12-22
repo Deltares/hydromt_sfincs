@@ -459,11 +459,12 @@ class SubgridTableRegular:
 
                 # optional write tile to file
                 # NOTE tiles have overlap! da_dep[:-refi,:-refi]
+                x_dim_dep, y_dim_dep = da_dep.raster.x_dim, da_dep.raster.y_dim
                 window = Window(
                     bm0 * nr_subgrid_pixels,
                     bn0 * nr_subgrid_pixels,
-                    da_dep[:-refi, :-refi].sizes[x_dim],
-                    da_dep[:-refi, :-refi].sizes[y_dim],
+                    da_dep[:-refi, :-refi].sizes[x_dim_dep],
+                    da_dep[:-refi, :-refi].sizes[y_dim_dep],
                 )
                 if write_dep_tif:
                     # write the block to the output COG
@@ -489,7 +490,7 @@ class SubgridTableRegular:
 
                 yg = da_dep.raster.ycoords.values
                 if yg.ndim == 1:
-                    yg = np.repeat(np.atleast_2d(yg), da_dep.raster.shape[0], axis=0)
+                    yg = np.repeat(np.atleast_2d(yg).T, da_dep.raster.shape[1], axis=1)
 
                 # Now compute subgrid properties
                 logger.debug(f"Processing subgrid tables for {nactive} active cells..")

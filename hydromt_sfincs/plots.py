@@ -202,6 +202,8 @@ def plot_basemap(
             lat = np.array(ds.raster.transform_bounds(4326))[[1, 3]].mean()
             # max 4 x 4 tiles per image
             tile_size = max(bounds[2] - bounds[0], bounds[3] - bounds[1]) / 4
+            if proj_crs.is_geographic:
+                tile_size = tile_size * 111111
             zoomlevel = int(np.log2(c * abs(np.cos(lat)) / tile_size))
             # sensible range is 9 (large metropolitan area) - 16 (street)
             zoomlevel = min(16, max(9, zoomlevel))

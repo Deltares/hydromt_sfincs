@@ -18,11 +18,11 @@ setup_grid_from_region:
   rotated: True                  # allow a rotated grid
 
 setup_dep:
-  datasets_dep: 
+  datasets_dep:
     - elevtn: merit_hydro
       zmin: 0.001
     - elevtn: gebco
-  
+
 setup_mask_active:
   zmin: -5
 
@@ -43,7 +43,7 @@ setup_subgrid:
 
 setup_observation_points:
   locations: observations
-  
+
 setup_observation_lines:
   locations: observation_lines
 
@@ -70,4 +70,3 @@ setup_waterlevel_forcing:
 setup_precip_forcing_from_grid:
   precip: era5_hourly
   aggregate: False
-
