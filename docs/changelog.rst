@@ -15,6 +15,7 @@ Added
 Changed
 -------
 - support for HydroMT core v0.9
+- changed default value of dtmaxout to 86400 (was 99999.0) and for advection to 1 (instead of non-existing 2) in sfincs.inp (#156)
 - support for filtering forcing data from timeseries and locations based on model region (#162)
 
 Fixed
