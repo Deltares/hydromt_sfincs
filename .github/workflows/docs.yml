@@ -5,16 +5,16 @@ on:
   push:
     branches: [main]
     paths:
-      - tests/*
-      - hydromt/*
+      - .github/workflows/docs.yml
+      - hydromt_sfincs/*
       - docs/*
       - examples/*
       - pyproject.toml
   pull_request:
     branches: [main]
     paths:
-      - tests/*
-      - hydromt/*
+      - .github/workflows/docs.yml
+      - hydromt_sfincs/*
       - docs/*
       - examples/*
       - pyproject.toml
