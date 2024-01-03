@@ -1,6 +1,7 @@
 """add global fixtures"""
 
 from os.path import abspath, dirname, join
+import numpy as np
 
 import pytest
 
@@ -47,7 +48,7 @@ def data_catalog():
 def hydrography(data_catalog):
     bbox = [12.64, 45.48, 12.82, 45.59]
     ds_hydro = data_catalog.get_rasterdataset("merit_hydro", variables=['flwdir', 'uparea', 'basins'], bbox=bbox).load()
-    da_mask = (ds_hydro['basins'] == 210000039).astype(int)
+    da_mask = (ds_hydro['basins'] == 210000039).astype(np.uint8)
     da_mask.raster.set_crs(ds_hydro.raster.crs)
     da_mask.raster.set_nodata(0)
     gdf_mask = da_mask.raster.vectorize()
