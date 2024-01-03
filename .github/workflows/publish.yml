@@ -68,22 +68,15 @@ jobs:
           cache-dependency-path: pyproject.toml
           python-version: '3.11'
 
-      - name: upgrade pip
-        run: pip install --upgrade pip
-
-      - name: Verify the built dist/wheel is valid
+      - name: Install wheel
         run: |
+          pip install --upgrade pip
           python -m pip install dist/hydromt_sfincs*.whl
+
+      - name: Verify the built wheel is valid
+        run: |
           python -c 'from hydromt_sfincs import __version__ as v; print(v)'
           echo "$(hydromt --models)"
-
-      - name: pip list
-        run: pip list
-
-      # run test
-      - name: Test
-        run: |
-          python -m pytest --verbose
 
   upload-to-test-pypi:
     needs: test-built-dist
