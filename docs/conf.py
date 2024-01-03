@@ -47,10 +47,12 @@ author = "Dirk Eilander"
 version = hydromt_sfincs.__version__
 
 # -- Copy notebooks to include in docs -------
-if os.path.isdir("_examples"):
+SKIP_DOC_EXAMPLES = bool(os.environ.get("SKIP_DOC_EXAMPLES", False))
+if os.path.isdir("_examples") and SKIP_DOC_EXAMPLES:
     remove_dir_content("_examples")
-os.makedirs("_examples")
-copy_tree("../examples", "_examples")
+elif not os.path.isdir("_examples") and not SKIP_DOC_EXAMPLES:
+    os.makedirs("_examples")
+    copy_tree("../examples", "_examples")
 
 # -- General configuration ------------------------------------------------
 
@@ -274,7 +276,7 @@ nbsphinx_prolog = r"""
     .. raw:: html
 
         <div>
-            For an interactive online version click here: 
+            For an interactive online version click here:
             <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/{{ docname|e }}" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
         </div>
 """

@@ -37,7 +37,7 @@ def add_storage_volume(
     """
 
     # loop over the gdf rows and rasterize each geometry
-    for i, row in gdf.iterrows():
+    for i, _ in gdf.iterrows():
         # create a gdf with only the current row
         single_gdf = gpd.GeoDataFrame(gdf.loc[[i]]).reset_index(drop=True)
 
@@ -45,8 +45,8 @@ def add_storage_volume(
         single_height = single_gdf.get("height", np.nan)
 
         # check if volume or height is provided in the gdf or as input
-        if np.isnan(float(single_vol)):  # volume not provided or nan
-            if np.isnan(float(single_height)):  # height not provided or nan
+        if np.isnan(single_vol).all():  # volume not provided or nan
+            if np.isnan(single_height).all():  # height not provided or nan
                 if volume is not None:  # volume provided as input (list)
                     single_vol = volume if not isinstance(volume, list) else volume[i]
                 elif height is not None:  # height provided as input (list)
@@ -81,12 +81,12 @@ def add_storage_volume(
                 closest_point = da_vol.sel(x=x, y=y, method="nearest")
 
             # add the volume to the grid cell
-            if not np.isnan(float(single_vol)):
+            if not np.isnan(single_vol).all():
                 da_vol.loc[
                     dict(x=closest_point.x.item(), y=closest_point.y.item())
                 ] += single_vol
             else:
-                logger.warning(f"No volume provided for storage location of type Point")
+                logger.warning("No volume provided for storage location of type Point")
 
         elif single_gdf.geometry.type[0] == "Polygon":
             # rasterize the geometry
@@ -94,13 +94,13 @@ def add_storage_volume(
             total_area = area.sum().values
 
             # calculate the volume per cell and add it to the grid
-            if not np.isnan(float(single_vol)):
+            if not np.isnan(single_vol).all():
                 da_vol += area / total_area * single_vol
-            elif not np.isnan(float(single_height)):
+            elif not np.isnan(single_height).all():
                 da_vol += area * single_height
             else:
                 logger.warning(
-                    f"No volume or height provided for storage location of type Polygon"
+                    "No volume or height provided for storage location of type Polygon"
                 )
 
     return da_vol
