@@ -11,14 +11,14 @@ What is the HydroMT-SFINCS plugin?
 HydroMT_ (Hydro Model Tools) is an open-source Python package that facilitates the process of
 building and analyzing spatial geoscientific models with a focus on water system models.
 It does so by automating the workflow to go from raw data to a complete model instance which
-is ready to run and to analyse model results once the simulation has finished. 
+is ready to run and to analyse model results once the simulation has finished.
 This plugin provides an implementation of the model API for the SFINCS_ model.
 
 What is SFINCS?
 ---------------
 SFINCS is Deltares' new open-source reduced-complexity model designed for super-fast modelling of compound flooding events in a dynamic way!
 What HydroMT-SFINCS does provide is a powerful Python based set of tools to help you build and analyse the best possible SFINCS models!
-This HydroMT-SFINCS plugin does not include the SFINCS model or executable itself, for that see the `SFINCS download portal <https://download.deltares.nl/en/download/sfincs/>`_ 
+This HydroMT-SFINCS plugin does not include the SFINCS model or executable itself, for that see the `SFINCS download portal <https://download.deltares.nl/en/download/sfincs/>`_
 or the source code repository on `Github <https://github.com/Deltares/SFINCS>`_.
 For general documentation about the model, how to run it and what the input files are see the `SFINCS documentation <https://sfincs.readthedocs.io/en/latest/>`_.
 
@@ -45,7 +45,7 @@ To reference the software please use the the DOI provided in the Zenodo badge th
 
 The following paper presents a real-world application of HydroMT-SFINCS:
 
-    Eilander, D., Couasnon, A., Leijnse, T., Ikeuchi, H., Yamazaki, D., Muis, S., Dullaart, J., Haag, A., Winsemius, H. C., and Ward, P. J.: 
+    Eilander, D., Couasnon, A., Leijnse, T., Ikeuchi, H., Yamazaki, D., Muis, S., Dullaart, J., Haag, A., Winsemius, H. C., and Ward, P. J.:
     A globally applicable framework for compound flood hazard modeling, Nat. Hazards Earth Syst. Sci., 23, 823–846, https://doi.org/10.5194/nhess-23-823-2023, 2023.
 
 How to contribute?
@@ -89,5 +89,3 @@ happy to discuss how it can be implemented for your model.
 .. |license| image:: https://img.shields.io/conda/l/conda-forge/hydromt_sfincs
     :alt: License
     :target: https://github.com/Deltares/hydromt_sfincs/blob/main/LICENSE
-
-    

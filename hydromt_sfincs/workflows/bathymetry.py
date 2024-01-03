@@ -112,7 +112,9 @@ def split_line_equal(gdf: gpd.GeoDataFrame, dist: float) -> gpd.GeoDataFrame:
     def _split_geom(x: gpd.GeoSeries, dist: float = dist) -> MultiLineString:
         return _split_line_equal(x.geometry, dist)
 
-    gdf_splitted = gdf.assign(geometry=gdf.apply(_split_geom, axis=1)).explode()
+    gdf_splitted = gdf.assign(geometry=gdf.apply(_split_geom, axis=1)).explode(
+        index_parts=True
+    )
     return gdf_splitted
 
 
@@ -153,7 +155,7 @@ def interp_along_line_to_grid(
     gdf_zb = gdf_zb[["geometry"] + column_names].copy()
     gdf_zb["idx0"], gdf_zb["dist"] = nearest(gdf_zb, gdf_lines)
     nearest_lines = gdf_lines.loc[gdf_zb["idx0"], "geometry"].values
-    gdf_zb["x"] = nearest_lines.project(gdf_zb["geometry"])
+    gdf_zb["x"] = nearest_lines.project(gdf_zb["geometry"].values)
     gdf_zb.set_index("idx0", inplace=True)
     # keep only lines with associated points
     gdf_lines = gdf_lines.loc[np.unique(gdf_zb.index.values)]
@@ -161,7 +163,7 @@ def interp_along_line_to_grid(
     # find nearest line and calculate relative distance along line for all cell centers
     cc["idx0"], cc["dist"] = nearest(cc, gdf_lines)
     nearest_lines = gdf_lines.loc[cc["idx0"], "geometry"].values
-    cc["x"] = nearest_lines.project(cc["geometry"].to_crs(gdf_lines.crs))
+    cc["x"] = nearest_lines.project(cc["geometry"].to_crs(gdf_lines.crs).values)
 
     # interpolate z values per line
     def _interp(cc0, gdf_zb=gdf_zb, column_names=column_names):
@@ -318,7 +320,7 @@ def burn_river_rect(
         gdf_riv_merged = gpd.GeoDataFrame(
             geometry=[linemerge(gdf_riv.unary_union)], crs=gdf_riv.crs
         )
-        gdf_riv_merged = gdf_riv_merged.explode().reset_index(drop=True)
+        gdf_riv_merged = gdf_riv_merged.explode(index_parts=True).reset_index(drop=True)
     else:
         gdf_riv_merged = gdf_riv
 

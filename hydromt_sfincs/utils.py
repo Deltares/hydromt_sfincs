@@ -355,7 +355,7 @@ def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
     gdf_msk = gdf_msk[gdf_msk["value"] != 1]
     gdf_msk = gpd.overlay(
         region, gdf_msk, "intersection", keep_geom_type=False
-    ).explode()
+    ).explode(index_parts=True)
     gdf_msk = gdf_msk[gdf_msk.length > 0]
     return gdf_msk
 
@@ -668,7 +668,7 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") 
 
     gdf = copy.deepcopy(gdf_drainage)
     # get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc
-    endpoints = gdf.boundary.explode().unstack()
+    endpoints = gdf.boundary.explode(index_parts=True).unstack()
     gdf["xsnk"] = endpoints[0].x
     gdf["ysnk"] = endpoints[0].y
     gdf["xsrc"] = endpoints[1].x

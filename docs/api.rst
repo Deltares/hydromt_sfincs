@@ -38,7 +38,7 @@ Setup components
    SfincsModel.setup_manning_roughness
    SfincsModel.setup_constant_infiltration
    SfincsModel.setup_cn_infiltration
-   SfincsModel.setup_cn_infiltration_with_kr
+   SfincsModel.setup_cn_infiltration_with_ks
    SfincsModel.setup_subgrid
    SfincsModel.setup_river_inflow
    SfincsModel.setup_river_outflow
@@ -204,7 +204,7 @@ Utilities
    utils.polygon2gdf
    utils.get_bounds_vector
    utils.mask2gdf
-   utils.rotated_grid 
+   utils.rotated_grid
 
 Visualization
 -------------

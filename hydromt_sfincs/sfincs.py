@@ -510,6 +510,7 @@ class SfincsModel(GridModel):
         btype: str = "waterlevel",
         include_mask: Union[str, Path, gpd.GeoDataFrame] = None,
         exclude_mask: Union[str, Path, gpd.GeoDataFrame] = None,
+        include_mask_buffer: int = 0,
         zmin: float = None,
         zmax: float = None,
         connectivity: int = 8,
@@ -569,6 +570,12 @@ class SfincsModel(GridModel):
             else:
                 gdf_include = self.data_catalog.get_geodataframe(
                     include_mask, bbox=bbox
+                )
+            if include_mask_buffer > 0:
+                if self.crs.is_geographic:
+                    include_mask_buffer = include_mask_buffer / 111111.0
+                gdf_include["geometry"] = gdf_include.to_crs(self.crs).buffer(
+                    include_mask_buffer
                 )
         if exclude_mask is not None:
             if not isinstance(exclude_mask, gpd.GeoDataFrame) and str(
@@ -631,39 +638,56 @@ class SfincsModel(GridModel):
         datasets_dep : List[dict]
             List of dictionaries with topobathy data.
             Each should minimally contain a data catalog source name, data file path,
-            or xarray raster object ('elevtn'). Optional merge arguments include:
-            'zmin', 'zmax', 'mask', 'offset', 'reproj_method', and 'merge_method'.
-            e.g.: [
-                {'elevtn': 'merit_hydro', 'zmin': 0.01},
-                {'elevtn': 'gebco', 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}
-            ]
-            For a complete overview of all merge options, see
-            :py:function:~hydromt.workflows.merge_multi_dataarrays
+            or xarray raster object ('elevtn').
+            Optional merge arguments include: 'zmin', 'zmax', 'mask', 'offset', 'reproj_method',
+            and 'merge_method', see example below. For a complete overview of all merge options,
+            see :py:function:~hydromt.workflows.merge_multi_dataarrays
+
+            ::
+
+                [
+                    {'elevtn': 'merit_hydro', 'zmin': 0.01},
+                    {'elevtn': 'gebco', 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}
+                ]
+
         datasets_rgh : List[dict], optional
             List of dictionaries with Manning's n datasets. Each dictionary should at
             least contain one of the following:
-            * (1) manning: filename (or Path) of gridded data with manning values
-            * (2) lulc (and reclass_table) :a combination of a filename of gridded
-            landuse/landcover and a mapping table. In additon, optional merge arguments
-            can be provided, e.g.: [
-                {'manning': 'manning_data'},
-                {'lulc': 'esa_worlcover', 'reclass_table': 'esa_worlcover_mapping'}
-            ]
+
+            * manning: filename (or Path) of gridded data with manning values
+            * lulc (and reclass_table): a combination of a filename of gridded
+              landuse/landcover and a mapping table.
+
+            In additon, optional merge arguments can be provided, e.g.:
+
+            ::
+
+                [
+                    {'manning': 'manning_data'},
+                    {'lulc': 'esa_worlcover', 'reclass_table': 'esa_worlcover_mapping'}
+                ]
+
         datasets_riv : List[dict], optional
             List of dictionaries with river datasets. Each dictionary should at least
             contain a river centerline data and optionally a river mask:
+
             * centerlines: filename (or Path) of river centerline with attributes
-                rivwth (river width [m]; required if not river mask provided),
-                rivdph or rivbed (river depth [m]; river bedlevel [m+REF]),
-                manning (Manning's n [s/m^(1/3)]; optional)
+              rivwth (river width [m]; required if not river mask provided),
+              rivdph or rivbed (river depth [m]; river bedlevel [m+REF]),
+              manning (Manning's n [s/m^(1/3)]; optional)
             * mask (optional): filename (or Path) of river mask
             * river attributes (optional): "rivdph", "rivbed", "rivwth", "manning"
-                to fill missing values
+              to fill missing values
             * arguments to the river burn method (optional):
-                segment_length [m] (default 500m) and riv_bank_q [0-1] (default 0.5)
-                which used to estimate the river bank height in case river depth is provided.
-              For more info see :py:function:~hydromt.workflows.bathymetry.burn_river_rect
-           e.g.: [{'centerlines': 'river_lines', 'mask': 'river_mask', 'manning': 0.035}]
+              segment_length [m] (default 500m) and riv_bank_q [0-1] (default 0.5)
+              which used to estimate the river bank height in case river depth is provided.
+
+            For more info see :py:function:~hydromt.workflows.bathymetry.burn_river_rect
+
+           ::
+
+                [{'centerlines': 'river_lines', 'mask': 'river_mask', 'manning': 0.035}]
+
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels,
             by default 0
@@ -692,7 +716,6 @@ class SfincsModel(GridModel):
             downscaling of the floodmaps. Unlinke the SFINCS files it is written
             to disk at execution of this method. By default False
         """
-
         # retrieve model resolution
         # TODO fix for quadtree
         if not self.mask.raster.crs.is_geographic:
@@ -1463,7 +1486,7 @@ class SfincsModel(GridModel):
         ).to_crs(self.crs)
 
         # make sure MultiLineString are converted to LineString
-        gdf_obs = gdf_obs.explode().reset_index(drop=True)
+        gdf_obs = gdf_obs.explode(index_parts=True).reset_index(drop=True)
 
         if not gdf_obs.geometry.type.isin(["LineString"]).all():
             raise ValueError("Observation lines must be of type LineString.")
@@ -1641,7 +1664,7 @@ class SfincsModel(GridModel):
         # multi to single lines
         lines = gdf_structures.explode(column="geometry").reset_index(drop=True)
         # get start [0] and end [1] points
-        endpoints = lines.boundary.explode().unstack()
+        endpoints = lines.boundary.explode(index_parts=True).unstack()
         # merge start and end points into a single linestring
         gdf_structures["geometry"] = endpoints.apply(
             lambda x: LineString(x.values.tolist()), axis=1
@@ -1657,7 +1680,7 @@ class SfincsModel(GridModel):
 
         # set structures
         self.set_geoms(gdf_structures, "drn")
-        self.set_config("drnfile", f"sfincs.drn")
+        self.set_config("drnfile", "sfincs.drn")
 
     def setup_storage_volume(
         self,
@@ -2748,7 +2771,7 @@ class SfincsModel(GridModel):
         """Read the complete model schematization and configuration from file."""
         self.read_config(epsg=epsg)
         if epsg is None and "epsg" not in self.config:
-            raise ValueError(f"Please specify epsg to read this model")
+            raise ValueError("Please specify epsg to read this model")
         self.read_grid()
         self.read_subgrid()
         self.read_geoms()

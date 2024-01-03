@@ -3,8 +3,8 @@
 User guide
 ==========
 
-With the **HydroMT SFINCS plugin**, users can easily benefit from the rich set of tools of the 
-`HydroMT package <https://github.com/Deltares/hydromt>`_ to build and update 
+With the **HydroMT SFINCS plugin**, users can easily benefit from the rich set of tools of the
+`HydroMT package <https://github.com/Deltares/hydromt>`_ to build and update
 `SFINCS <https://sfincs.readthedocs.io/en/latest/>`_ models from available global and local data.
 
 This plugin assists the SFINCS modeller in:
