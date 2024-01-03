@@ -11,8 +11,9 @@ import xarray as xr
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "river_boundary_points",
+    "river_source_points",
     "river_centerline_from_hydrography",
+    "basin_mask",
 ]
 
 
@@ -21,7 +22,7 @@ def river_centerline_from_hydrography(
     da_uparea: xr.DataArray,
     river_upa: float = 10,
     river_len: float = 1e3,
-    mask: gpd.GeoDataFrame = None,
+    gdf_mask: gpd.GeoDataFrame = None,
 ) -> gpd.GeoDataFrame:
     """Returns the centerline of rivers based on a flow direction
     raster data (`da_flwdir`).
@@ -37,7 +38,7 @@ def river_centerline_from_hydrography(
     river_len: float, optional
         Mimimum river length [m] within the model domain to define river cells,
         by default 1000 m.
-    mask: geopandas.GeoDataFrame, optional
+    gdf_mask: geopandas.GeoDataFrame, optional
         Polygon to clip river center lines before calculating the river length,
         by default None.
 
@@ -47,108 +48,183 @@ def river_centerline_from_hydrography(
         River line vector data.
     """
     # get river network from hydrography based on upstream area mask
-    flwdir = hydromt.flw.flwdir_from_da(da_flwdir, mask=da_uparea >= river_upa)
-    gdf_riv = gpd.GeoDataFrame.from_features(flwdir.streams(), crs=da_flwdir.raster.crs)
+    riv_mask=da_uparea >= river_upa
+    if not riv_mask.any():
+        return gpd.GeoDataFrame()
+    flwdir = hydromt.flw.flwdir_from_da(da_flwdir, mask=riv_mask)
+    feats = flwdir.streams(uparea=da_uparea.values)
+    gdf_riv = gpd.GeoDataFrame.from_features(feats, crs=da_flwdir.raster.crs)
     # clip to mask and remove empty geometries
-    if mask is not None:
-        gdf_riv = gdf_riv.to_crs(mask.crs).clip(mask.unary_union)
+    if gdf_mask is not None and isinstance(gdf_mask, gpd.GeoDataFrame):
+        gdf_riv = gdf_riv.to_crs(gdf_mask.crs).clip(gdf_mask.unary_union)
     gdf_riv = gdf_riv[~gdf_riv.is_empty]
     # create river network from gdf to get distance from outlet 'rivlen'
-    gdf_riv["rivlen"] = gdf_riv.geometry.length
+    # length of river segments
+    if gdf_riv.crs.is_geographic:
+        gdf_riv["seglen"] = gdf_riv.to_crs("epsg:3857").geometry.length
+    else:
+        gdf_riv["seglen"] = gdf_riv.geometry.length
+    gdf_riv = gdf_riv[gdf_riv["seglen"] > 0]
+    if gdf_riv.empty or river_len == 0:
+        return gdf_riv
+    # accumulate to get river length from outlet
     flwdir = pyflwdir.from_dataframe(gdf_riv.set_index("idx"), ds_col="idx_ds")
-    gdf_riv["rivlen"] = flwdir.accuflux(gdf_riv["rivlen"].values, direction="down")
+    gdf_riv["rivdst"] = flwdir.accuflux(gdf_riv["seglen"].values, direction="down")
+    # get maximum river length from outlet (at headwater segments) for each river segment
+    gdf_riv["rivlen"] = flwdir.fillnodata(np.where(flwdir.n_upstream == 0, gdf_riv["rivdst"], 0), 0)
+    # filter river network based on total length
     gdf_riv = gdf_riv[gdf_riv["rivlen"] >= river_len]
     return gdf_riv
 
 
-def river_boundary_points(
-    region: gpd.GeoDataFrame,
-    res: float,
-    gdf_riv: gpd.GeoDataFrame = None,
-    da_flwdir: xr.DataArray = None,
-    da_uparea: xr.DataArray = None,
+def river_source_points(
+    gdf_riv: gpd.GeoDataFrame,
+    gdf_mask: gpd.GeoDataFrame,
+    src_type: str = 'inflow',
+    buffer: float = 100,
     river_upa: float = 10,
     river_len: float = 1e3,
-    inflow: bool = True,
+    da_uparea: xr.DataArray = None,
     reverse_river_geom: bool = False,
     logger: logging.Logger = logger,
 ) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """Returns the locations where a river flows in (`inflow=True`)
-    or out (`inflow=False`) of the model region.
+    or out (`inflow=False`) of the model gdf_mask.
 
     Rivers are based on either a river network vector data (`gdf_riv`) or
     a flow direction raster data (`da_flwdir`).
 
     Parameters
     ----------
-    region: geopandas.GeoDataFrame
-        Polygon of model region of interest.
-    res: float
-        Model resolution [m].
-    gdf_riv: geopandas.GeoDataFrame, optional
+    gdf_riv: geopandas.GeoDataFrame
         River network vector data, by default None.
-    da_flwdir: xarray.DataArray, optional
-        D8 flow direction raster data, by default None.
-    da_uparea: xarray.DataArray, optional
-        River upstream area raster data, by default None.
+        Requires 'uparea' and 'rivlen' attributes to 
+        check for river length and upstream area thresholds.
+    gdf_mask: geopandas.GeoDataFrame
+        Polygon of model gdf_mask of interest.
+    src_type: ['inflow', 'outflow', 'headwater'], optional
+        Type of river source points to return, by default 'inflow'.
+        If 'inflow', return points where the river flows into the model domain.
+        If 'outflow', return points where the river flows out of the model domain.
+        If 'headwater', return all headwater (including inflow) points within the model domain.
+    buffer: float, optional
+        Buffer around gdf_mask to select river source points, by default 100 m.
     river_upa : float, optional
         Minimum upstream area threshold for rivers [km2], by default 10.0
     river_len: float, optional
         Mimimum river length [m] within the model domain to define river cells, by default 1000 m.
-    inflow: bool, optional
-        If True, return inflow otherwise outflow boundary points, by default True.
+    da_uparea: xarray.DataArray, optional
+        River upstream area raster data, by default None.
     reverse_river_geom: bool, optional
         If True, assume that segments in 'rivers' are drawn from downstream to upstream.
         Only used if 'rivers' is not None, By default False
 
     Returns
     -------
-    gdf_src, gdf_riv: geopandas.GeoDataFrame
-        In-/outflow points and river line vector data.
+    gdf_pnt: geopandas.GeoDataFrame
+        Source points
     """
-    if not isinstance(region, (gpd.GeoDataFrame, gpd.GeoSeries)) and np.all(
-        region.geometry.type == "Polygon"
+    # data checks
+    if not (
+        isinstance(gdf_mask, (gpd.GeoDataFrame, gpd.GeoSeries)) 
+        and np.all(np.isin(gdf_mask.geometry.type, ["Polygon", "MultiPolygon"]))
     ):
-        raise ValueError("Boundary must be a GeoDataFrame of LineStrings.")
-    if res > 0.01 and region.crs.is_geographic:
-        # provide warning
-        logger.warning(
-            "The region crs is geographic, while the resolution seems to be in meters."
-        )
+        raise TypeError("gdf_mask must be a GeoDataFrame of Polygons.")
+    if not (
+        isinstance(gdf_riv, (gpd.GeoDataFrame, gpd.GeoSeries)) 
+        and np.all(np.isin(gdf_riv.geometry.type, ["LineString", "MultiLineString"]))
+    ):
+        raise TypeError("gdf_riv must be a GeoDataFrame of LineStrings.")
+    if src_type not in ['inflow', 'outflow', 'headwater']:
+        raise ValueError("src_type must be either 'inflow', 'outflow', or 'headwater'.")
+    if gdf_mask.crs.is_geographic: # to pseudo mercator
+        gdf_mask = gdf_mask.to_crs("epsg:3857")
 
-    if gdf_riv is None and (da_flwdir is None or da_uparea is None):
-        raise ValueError("Either gdf_riv or da_flwdir and da_uparea must be provided.")
-    elif gdf_riv is None:  # get river network from hydrography
-        gdf_riv = river_centerline_from_hydrography(
-            da_flwdir, da_uparea, river_upa, river_len, mask=region
-        )
-    else:
-        # clip river to model region
-        gdf_riv = gdf_riv.to_crs(region.crs).clip(region.unary_union)
-        # filter river network based on uparea and length
-        if "uparea" in gdf_riv.columns:
-            gdf_riv = gdf_riv[gdf_riv["uparea"] >= river_upa]
-        if "rivlen" in gdf_riv.columns:
-            gdf_riv = gdf_riv[gdf_riv["rivlen"] > river_len]
+    # clip river to model gdf_mask
+    gdf_riv = gdf_riv.to_crs(gdf_mask.crs).clip(gdf_mask.unary_union)
+    # filter river network based on uparea and length
+    if "uparea" in gdf_riv.columns:
+        gdf_riv = gdf_riv[gdf_riv["uparea"] >= river_upa]
+    if "rivlen" in gdf_riv.columns:
+        gdf_riv = gdf_riv[gdf_riv["rivlen"] > river_len]
+    if gdf_riv.empty:
+        logger.warning("No rivers matching the uparea and rivlen thresholds found in gdf_riv.")
+        return gpd.GeoDataFrame()
+
+    # get source points 1m before the start/end of the river
     # a positive dx results in a point near the start of the line (inflow)
     # a negative dx results in a point near the end of the line (outflow)
-    dx = res / 5 if inflow else -res / 5
-    if reverse_river_geom:
-        dx = -dx
+    dx = -1 if reverse_river_geom else 1
+    gdf_up = gdf_riv.interpolate(dx).to_frame("geometry")
+    gdf_up['riv_idx'] = gdf_riv.index
+    gdf_ds = gdf_riv.interpolate(-dx).to_frame("geometry")
+    gdf_ds['riv_idx'] = gdf_riv.index
+    
+    # get points that do not intersect with up/downstream end of other river segments
+    # use a small buffer of 5m around these points to account for dx and avoid issues with inprecise river geometries 
+    if src_type in ['inflow', 'headwater']:
+        pnts_ds = gdf_ds.buffer(5).unary_union
+        gdf_pnt = gdf_up[~gdf_up.intersects(pnts_ds)].reset_index(drop=True)
+    elif src_type == 'outflow':
+        pnts_up = gdf_up.buffer(5).unary_union
+        gdf_pnt = gdf_ds[~gdf_ds.intersects(pnts_up)].reset_index(drop=True)
+    
+    # get buffer around gdf_mask, in- and outflow points should be within this buffer
+    if src_type in ['inflow', 'outflow']:
+        bnd = gdf_mask.boundary.buffer(buffer).unary_union
+        gdf_pnt = gdf_pnt[gdf_pnt.intersects(bnd)].reset_index(drop=True)
 
-    # move point a bit into the model domain
-    gdf_pnt = gdf_riv.interpolate(dx).to_frame("geometry")
-    # keep points on boundary cells
-    bnd = region.boundary.buffer(res).unary_union  # NOTE should be single geom
-    gdf_pnt = gdf_pnt[gdf_pnt.within(bnd)].reset_index(drop=True)
+    # log numer of source points
+    logger.info(f"Found {gdf_pnt.index.size} {src_type} points.")
 
     # add uparea attribute if da_uparea is provided
     if da_uparea is not None:
         gdf_pnt["uparea"] = da_uparea.raster.sample(gdf_pnt).values
         gdf_pnt = gdf_pnt.sort_values("uparea", ascending=False).reset_index(drop=True)
-    if "rivwth" in gdf_riv.columns:
-        gdf_pnt = hydromt.gis_utils.nearest_merge(
-            gdf_pnt, gdf_riv, columns=["rivwth"], max_dist=10
-        )
 
-    return gdf_pnt, gdf_riv
+    return gdf_pnt
+
+# NOTE: this function is should be available in hydromt
+def basin_mask(
+    da_flwdir: xr.DataArray,
+    gdf_outlet: gpd.GeoDataFrame,
+    shift_nup: int = 0, 
+) -> tuple[gpd.GeoDataFrame, xr.DataArray]:
+    """Returns a basin mask of all cells upstream from the outlets.
+
+    Parameters
+    ----------
+    da_flwdir: xarray.DataArray
+        D8 flow direction raster data.
+    gdf_outlet: geopandas.GeoDataFrame
+        GeoDataFrame of outlet points.
+
+    Returns
+    -------
+    gdf_bas: geopandas.GeoDataFrame
+        GeoDataFrame of basin polygons.
+    da_bas: xarray.DataArray
+        Raster of basin polygons.
+    """
+    if not (
+        isinstance(gdf_outlet, (gpd.GeoDataFrame, gpd.GeoSeries)) 
+        and np.all(gdf_outlet.geometry.type == "Point")
+    ):
+        raise TypeError("gdf_mask must be a GeoDataFrame of Points.")
+    flwdir = hydromt.flw.flwdir_from_da(da_flwdir)
+    if da_flwdir.raster.crs != gdf_outlet.crs:
+        gdf_outlet = gdf_outlet.to_crs(da_flwdir.raster.crs)
+    xy= gdf_outlet.geometry.x.values, gdf_outlet.geometry.y.values
+    # FIXME
+    # if shift_nup > 0:
+    #     xy = flwdir.main_upstream(xy, n=shift_nup)
+    da_bas = xr.DataArray(
+        data=flwdir.basins(xy=xy).astype(np.int32),
+        dims=da_flwdir.raster.dims,
+        coords=da_flwdir.raster.coords,
+    )
+    da_bas.raster.set_nodata(0)
+    da_bas.raster.set_crs(da_flwdir.raster.crs)
+    gdf_bas = da_bas.raster.vectorize()
+    gdf_bas['idx'] = gdf_bas.index
+    return gdf_bas, da_bas
