@@ -766,8 +766,11 @@ class SfincsModel(GridModel):
         elif self.grid_type == "quadtree":
             pass
 
-        if "sbgfile" not in self.config:  # only add sbgfile if not already present
-            self.config.update({"sbgfile": "sfincs.sbg"})
+        # when building a new subgrid table, always update config
+        # NOTE from now onwards, netcdf subgrid tables are used
+        self.config.update({"sbgfile": "sfincs_subgrid.nc"})
+        # if "sbgfile" not in self.config:  # only add sbgfile if not already present
+        #     self.config.update({"sbgfile": "sfincs.sbg"})
         # subgrid is used so no depfile or manningfile needed
         if "depfile" in self.config:
             self.config.pop("depfile")  # remove depfile from config
@@ -2850,10 +2853,14 @@ class SfincsModel(GridModel):
                 self.logger.warning(f"sbgfile not found at {fn}")
                 return
 
-            self.reggrid.subgrid.load(file_name=fn, mask=self.mask)
-            self.subgrid = self.reggrid.subgrid.to_xarray(
-                dims=self.mask.raster.dims, coords=self.mask.raster.coords
-            )
+            if fn.parts[-1].endswith(".sbg"): # read binary file
+                self.reggrid.subgrid.read_binary(file_name=fn, mask=self.mask)
+                self.subgrid = self.reggrid.subgrid.to_xarray(
+                    dims=self.mask.raster.dims, coords=self.mask.raster.coords
+                )
+            else: # read netcdf file
+                self.reggrid.subgrid.read(file_name=fn)
+                self.subgrid = self.reggrid.subgrid.ds
 
     def write_subgrid(self):
         """Write SFINCS subgrid file."""
@@ -2861,9 +2868,16 @@ class SfincsModel(GridModel):
 
         if self.subgrid:
             if "sbgfile" not in self.config:
-                self.set_config("sbgfile", "sfincs.sbg")
+                # apparently no subgrid was read, so set default filename
+                self.set_config("sbgfile", "sfincs_subgrid.nc")
+            
             fn = self.get_config("sbgfile", abs_path=True)
-            self.reggrid.subgrid.save(file_name=fn, mask=self.mask)
+            if fn.parts[-1].endswith(".sbg"): 
+                # write binary file
+                self.reggrid.subgrid.write_binary(file_name=fn, mask=self.mask)
+            else:
+                # write netcdf file
+                self.reggrid.subgrid.write(file_name=fn, mask=self.mask)
 
     def read_geoms(self):
         """Read geometry files and save to `geoms` attribute.
