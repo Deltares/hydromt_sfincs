@@ -60,26 +60,30 @@ jobs:
           ls -ltrh
           ls -ltrh dist
 
-      - name: Setup environment
-        uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/setup-python@v5
+        id: pip
         with:
-          python-version: "3.9"
-          mamba-version: "*"
-          channels: conda-forge,defaults
-          channel-priority: true
-          environment-file: envs/hydromt-sfincs-min.yml
-          activate-environment: hydromt-sfincs-min
+          # caching, see https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+          python-version: '3.11'
 
-      - name: Conda info
-        run: |
-          conda info
-          conda list
+      - name: upgrade pip
+        run: pip install --upgrade pip
 
       - name: Verify the built dist/wheel is valid
         run: |
           python -m pip install dist/hydromt_sfincs*.whl
           python -c 'from hydromt_sfincs import __version__ as v; print(v)'
           echo "$(hydromt --models)"
+
+      - name: pip list
+        run: pip list
+
+      # run test
+      - name: Test
+        run: |
+          python -m pytest --verbose
 
   upload-to-test-pypi:
     needs: test-built-dist
