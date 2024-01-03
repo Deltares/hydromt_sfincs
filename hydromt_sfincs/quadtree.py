@@ -654,7 +654,7 @@ class QuadtreeGrid:
     def set_bathymetry(
             self,
             da_dep: xr.DataArray,
-            resampling_method: str = "mean",
+            resampling_method: str = "barycentric",
             # buffer_cells: int = 0,  # not in list
             # interp_method: str = "linear",  # used for buffer cells only):
             logger=logger,
