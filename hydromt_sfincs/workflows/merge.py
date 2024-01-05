@@ -5,13 +5,15 @@ from typing import Dict, List, Union
 import geopandas as gpd
 import numpy as np
 import xarray as xr
+import xugrid as xu
 from scipy import ndimage
+from hydromt import workflows
 
 from .bathymetry import burn_river_rect
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["merge_multi_dataarrays", "merge_dataarrays"]
+__all__ = ["merge_multi_dataarrays", "merge_dataarrays", "merge_multi_dataarrays_on_mesh"]
 
 
 def merge_multi_dataarrays(
@@ -286,6 +288,131 @@ def merge_dataarrays(
     da_out.raster.set_nodata(nodata)
     return da_out
 
+
+def merge_multi_dataarrays_on_mesh(
+    da_list: List[dict],
+    mesh2d: xu.Ugrid2d,
+    resampling_method: str = "barycentric",
+    # buffer_cells: int = 0,  # not in list
+    # interp_method: str = "linear",  # not in list
+    logger=logger,
+) -> xu.UgridDataArray:
+    """Merge a list of data arrays by reprojecting these to a common destination grid
+    and combine valid values.
+
+    Parameters
+    ----------
+    da_list : List[dict]
+        list of dicts with xr.DataArrays and optional merge arguments.
+        Possible merge arguments are:
+
+        * reproj_method: str, optional
+            Reprojection method, if not provided, method is based on resolution (average when resolution of destination grid is coarser then data reosltuion, else bilinear).
+        * offset: xr.DataArray, float, optional
+            Dataset with spatially varying offset or float with uniform offset
+        * zmin, zmax : float, optional
+            Range of valid elevations for da2 -  only valid cells are not merged.
+            Note: applied after offset!
+        * gdf_valid: gpd.GeoDataFrame, optional
+            Geometry of the valid region for da2
+    mesh2d: xu.Ugrid2d
+        Destination grid to which the data is projected.
+    buffer_cells : int, optional
+        Number of cells between datasets to ensure smooth transition of bed levels, by default 0
+    interp_method : str, optional
+        Interpolation method used to fill the buffer cells , by default "linear"
+
+    Returns
+    -------
+    xu.UgridDataArray
+        merged data array
+
+    See Also:
+    ---------
+    :py:func:`~hydromt.workflows.mesh.mesh2d_from_rasterdataset`
+
+    """
+
+    # make an empty data array
+    da0 = xr.DataArray(
+        data=np.full(shape=len(mesh2d.face_coordinates), fill_value=np.nan),
+        dims=mesh2d.face_dimension,
+    )
+    uda_out = xu.UgridDataArray(da0, mesh2d)
+
+    # get extent of mesh
+    bbox = uda_out.ugrid.to_crs(4326).ugrid.total_bounds
+
+    # combine with next dataset
+    for i in range(0, len(da_list)):
+        merge_method = da_list[i].get("merge_method", "first")
+        if merge_method == "first" and not np.any(np.isnan(uda_out.values)):
+            continue
+
+        # get reprojection method
+        # TODO base this on resolution of datasets
+        # NOTE for now the default is barycentric
+        reproj_method = da_list[i].get("reproj_method", resampling_method)
+        da = da_list[i].get("da")
+
+        # clip before reproject
+        da = da.raster.clip_bbox(bbox, buffer=2)
+        if np.any(np.array(da.shape) <= 2):
+            logger.debug(f"No data in dataset within bbox [{bbox}], skip")
+
+        # TODO should we add a load() here as well?
+            
+        # set nodata to np.nan, Note this might change the dtype to float
+        da = da.raster.mask_nodata()
+
+        # get valid cells of dataset
+        da = _add_offset_mask_invalid(
+            da,
+            offset=da_list[i].get("offset", None),
+            min_valid=da_list[i].get("zmin", None),
+            max_valid=da_list[i].get("zmax", None),
+            gdf_valid=da_list[i].get("gdf_valid", None),
+            reproj_method=reproj_method,
+        )
+
+        # reproject single-dataset to mesh
+        mesh = workflows.mesh.mesh2d_from_rasterdataset(
+            ds = da,
+            mesh2d = mesh2d,
+            resampling_method = reproj_method,
+        )
+
+        # merge based merge_method
+        da1 = uda_out
+        da2 = mesh["elevtn"]
+        if merge_method == "first":
+            mask = ~np.isnan(da1)
+        elif merge_method == "last":
+            mask = np.isnan(da2)
+        elif merge_method == "mean":
+            mask = np.isnan(da1)
+            da2 = (da1 + da2) / 2
+        elif merge_method == "max":
+            mask = da1 >= da2
+        elif merge_method == "min":
+            mask = da1 <= da2
+        else:
+            raise ValueError(f"Unknown merge_method: {merge_method}")
+        uda_out = da1.where(mask, da2)
+        
+        # TODO add buffer cells and interpolation
+        # if buffer_cells > 0 and interp_method:
+        #     mask_dilated = da1.ugrid.binary_dilation(
+        #         mask, iterations=buffer_cells
+        #     )
+        #     mask_buf = np.logical_xor(mask, mask_dilated)
+        #     da_out = da_out.where(~mask_buf, np.nan)
+        #     da_out_interp = da_out.raster.interpolate_na(method=interp_method)
+        #     da_out = da_out.where(~mask_buf, da_out_interp)
+
+        # da_out = da_out.fillna(nodata).astype(dtype)
+        
+    return uda_out
 
 ## Helper functions
 def _add_offset_mask_invalid(

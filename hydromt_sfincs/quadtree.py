@@ -27,6 +27,7 @@ except ImportError:
     raise ImportError("datashader is not installed. Please install it first.")
 
 from hydromt import workflows
+from hydromt_sfincs.workflows.merge import merge_multi_dataarrays_on_mesh
 
 
 logger = logging.getLogger(__name__)
@@ -34,15 +35,16 @@ logger = logging.getLogger(__name__)
 
 class QuadtreeGrid:
     def __init__(self,
-                 x0=None, 
-                 y0=None, 
-                 dx=None, 
-                 dy=None, 
-                 nmax=None, 
-                 mmax=None, 
+                 x0, 
+                 y0, 
+                 dx, 
+                 dy, 
+                 nmax, 
+                 mmax, 
                  epsg=None, 
                  rotation=0,
-                 refinement_polygons=None):
+                 gdf_refinement=None,
+                 logger=logger):
         
         self.x0 = x0
         self.y0 = y0
@@ -51,7 +53,7 @@ class QuadtreeGrid:
         self.nmax = nmax
         self.mmax = mmax
         self.rotation = rotation
-        self.refinement_polygons = refinement_polygons
+        self.gdf_refinement = gdf_refinement
         if epsg is not None:
             self.crs = CRS.from_user_input(epsg)
 
@@ -88,6 +90,16 @@ class QuadtreeGrid:
         
         return gpd.GeoDataFrame(geometry=list(polygons), crs=self.crs) 
     
+    @property
+    def empty_mask(self):
+        if self.data is None:
+            return None
+        # create empty mask
+        da0 = xr.DataArray(
+            data=np.zeros(shape=len(self.data.grid.face_coordinates)),
+            dims=self.data.grid.face_dimension,
+        )
+        return xu.UgridDataArray(da0, self.data.grid)
 
     def read(self, file_name:Union[str, Path] = "sfincs.nc"):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object."""
@@ -107,24 +119,16 @@ class QuadtreeGrid:
     def write(self, file_name: Union[str, Path] = "sfincs.nc", version:int=0):
         """Writes a quadtree SFINCS netcdf file."""
        
+       # TODO do we want to cut inactive cells here? Or already when creating the mask?
+        
         attrs = self.data.attrs
         ds = self.data.ugrid.to_dataset()
         ds.attrs = attrs
         ds.to_netcdf(file_name)
 
-    def build(self,
-              x0: float,
-              y0: float,
-              nmax: int,
-              mmax: int,
-              dx: float,
-              dy: float,
-              rotation: float,
-              epsg: int = None,
-              refinement_polygons=None):
+    def build(self):
         """Builds a quadtree SFINCS grid."""
         
-
         print("Building mesh ...")
 
         # if refinement_polygons is None:
@@ -132,24 +136,15 @@ class QuadtreeGrid:
 
         start = time.time()
 
-        self.x0 = x0
-        self.y0 = y0
-        self.dx = dx
-        self.dy = dy
-        self.nmax = nmax
-        self.mmax = mmax
-        self.rotation = rotation
-        if epsg is not None:
-            self.crs = CRS.from_user_input(epsg)
-        cosrot = np.cos(rotation*np.pi/180)
-        sinrot = np.sin(rotation*np.pi/180)
+        cosrot = np.cos(self.rotation*np.pi/180)
+        sinrot = np.sin(self.rotation*np.pi/180)
         
         refmax = 0
 
         # Loop through rows in gdf and create list of polygons
         ref_pols = []
-        if refinement_polygons is not None:
-            for irow, row in refinement_polygons.iterrows():
+        if self.gdf_refinement is not None:
+            for irow, row in self.gdf_refinement.iterrows():
                 iref = row["refinement_level"]
                 refmax = max(refmax, iref)
                 polygon = {"geometry": row["geometry"], "refinement_level": iref}
@@ -171,10 +166,10 @@ class QuadtreeGrid:
         
         # Loop through refinement levels to set some constants per level
         for ilev in range(nlev):
-            nmx.append(nmax*2**(ilev))
-            mmx.append(mmax*2**(ilev))
-            dxb.append(dx/2**(ilev))
-            dyb.append(dy/2**(ilev))
+            nmx.append(self.nmax*2**(ilev))
+            mmx.append(self.mmax*2**(ilev))
+            dxb.append(self.dx/2**(ilev))
+            dyb.append(self.dy/2**(ilev))
             refmsk.append(np.zeros((nmx[ilev], mmx[ilev]), dtype=int))
             inirefmsk.append(np.zeros((nmx[ilev], mmx[ilev]), dtype=int))
             isrefined.append(np.zeros((nmx[ilev], mmx[ilev]), dtype=int))
@@ -197,8 +192,8 @@ class QuadtreeGrid:
                         # Rotate polygon to grid in order to get n0, n1, m0 and m1
                         coords = polygon["geometry"].exterior.coords[:]
                         for ipoint, point in enumerate(coords):
-                            xp =   cosrot*(point[0] - x0) + sinrot*(point[1] - y0)
-                            yp = - sinrot*(point[0] - x0) + cosrot*(point[1] - y0)
+                            xp =   cosrot*(point[0] - self.x0) + sinrot*(point[1] - self.y0)
+                            yp = - sinrot*(point[0] - self.x0) + cosrot*(point[1] - self.y0)
                             n0 = min(n0, int(np.floor(yp / dyb[ilev])))
                             n1 = max(n1, int(np.ceil(yp / dyb[ilev])))
                             m0 = min(m0, int(np.floor(xp / dxb[ilev])))
@@ -226,14 +221,14 @@ class QuadtreeGrid:
                             for nn in range(nmxx):
                                 n = nn + n0
                                 # 4 corner points of this cell
-                                xcor[0, nn, mm] = x0 + cosrot*((m    )*dxb[ilev]) - sinrot*((n    )*dyb[ilev])
-                                ycor[0, nn, mm] = y0 + sinrot*((m    )*dxb[ilev]) + cosrot*((n    )*dyb[ilev])
-                                xcor[1, nn, mm] = x0 + cosrot*((m + 1)*dxb[ilev]) - sinrot*((n    )*dyb[ilev])
-                                ycor[1, nn, mm] = y0 + sinrot*((m + 1)*dxb[ilev]) + cosrot*((n    )*dyb[ilev])
-                                xcor[2, nn, mm] = x0 + cosrot*((m + 1)*dxb[ilev]) - sinrot*((n + 1)*dyb[ilev])
-                                ycor[2, nn, mm] = y0 + sinrot*((m + 1)*dxb[ilev]) + cosrot*((n + 1)*dyb[ilev])
-                                xcor[3, nn, mm] = x0 + cosrot*((m    )*dxb[ilev]) - sinrot*((n + 1)*dyb[ilev])
-                                ycor[3, nn, mm] = y0 + sinrot*((m    )*dxb[ilev]) + cosrot*((n + 1)*dyb[ilev])
+                                xcor[0, nn, mm] = self.x0 + cosrot*((m    )*dxb[ilev]) - sinrot*((n    )*dyb[ilev])
+                                ycor[0, nn, mm] = self.y0 + sinrot*((m    )*dxb[ilev]) + cosrot*((n    )*dyb[ilev])
+                                xcor[1, nn, mm] = self.x0 + cosrot*((m + 1)*dxb[ilev]) - sinrot*((n    )*dyb[ilev])
+                                ycor[1, nn, mm] = self.y0 + sinrot*((m + 1)*dxb[ilev]) + cosrot*((n    )*dyb[ilev])
+                                xcor[2, nn, mm] = self.x0 + cosrot*((m + 1)*dxb[ilev]) - sinrot*((n + 1)*dyb[ilev])
+                                ycor[2, nn, mm] = self.y0 + sinrot*((m + 1)*dxb[ilev]) + cosrot*((n + 1)*dyb[ilev])
+                                xcor[3, nn, mm] = self.x0 + cosrot*((m    )*dxb[ilev]) - sinrot*((n + 1)*dyb[ilev])
+                                ycor[3, nn, mm] = self.y0 + sinrot*((m    )*dxb[ilev]) + cosrot*((n + 1)*dyb[ilev])
                         for j in range(4):
                             inp0 = inpolygon(np.squeeze(xcor[j,:,:]),
                                              np.squeeze(ycor[j,:,:]),
@@ -651,24 +646,181 @@ class QuadtreeGrid:
 
         print("Time elapsed : " + str(time.time() - start) + " s")
 
-    def set_bathymetry(
+    def setup_dep(
             self,
-            da_dep: xr.DataArray,
-            resampling_method: str = "barycentric",
+            datasets_dep: List[dict],
             # buffer_cells: int = 0,  # not in list
             # interp_method: str = "linear",  # used for buffer cells only):
             logger=logger,
     ):
+        # TODO add buffer cells and interpolation, see merge function for more info
         
-        mesh = workflows.mesh.mesh2d_from_rasterdataset(
-            ds = da_dep,
-            mesh2d = self.data.grid,
-            resampling_method = resampling_method,
-            )
-            
-        self.data["z"] = mesh["elevtn"]
+        # merge multiple datasets on mesh
+        uda = merge_multi_dataarrays_on_mesh(da_list = datasets_dep, 
+                                             mesh2d = self.data.grid,
+                                             logger=logger)
+        # add data to grid    
+        self.data["dep"] = uda
 
-    def set_mask(
+    def setup_mask_active(
+            self,
+            model: str = "sfincs",
+            gdf_mask: gpd.GeoDataFrame = None,
+            gdf_include: gpd.GeoDataFrame = None,
+            gdf_exclude: gpd.GeoDataFrame = None,
+            zmin: float = None,
+            zmax: float = None,
+            all_touched: bool = False,
+            reset_mask: bool = True,
+            copy_sfincsmask: bool = False,
+            logger=logger,
+    ):
+        logger.info("Building mask ...")
+
+        assert model in ["sfincs", "snapwave"], "Model must be either 'sfincs' or 'snapwave'!"
+
+        if model is "sfincs":
+            varname = "msk"
+        elif model is "snapwave":
+            varname = "snapwave_msk"
+
+        if copy_sfincsmask is True and model is "snapwave": 
+            assert "msk" in self.data, "SFINCS mask not found!"
+            logger.info("Using SFINCS mask for SnapWave mask ...")
+            self.data[varname] = self.data["msk"]
+            return
+        
+        logger.info("Build new mask for: " + model + " ...")
+
+        uda_mask0 = None
+        if not reset_mask and varname in self.data:
+            # use current active mask
+            uda_mask0 = self.data[varname] > 0
+        elif gdf_mask is not None:
+            # initialize mask with given geodataframe
+            uda_mask0 = xu.burn_vector_geometry(gdf_mask, self.data, fill=0, all_touched=all_touched) > 0
+
+        # always initialize an inactive mask
+        uda_mask = self.empty_mask > 0
+
+        if "dep" not in self.data and (zmin is not None or zmax is not None):
+            raise ValueError("dep required in combination with zmin / zmax")
+
+        uda_dep = self.data["dep"]
+        if zmin is not None or zmax is not None:
+            _msk = uda_dep != np.nan
+            if zmin is not None:
+                _msk = np.logical_and(_msk, uda_dep >= zmin)
+            if zmax is not None:
+                _msk = np.logical_and(_msk, uda_dep <= zmax)
+            if uda_mask0 is not None:
+                # if mask was provided; keep active mask only within valid elevations
+                uda_mask = np.logical_and(uda_mask0, _msk)
+            else:
+                # no mask provided; set mask to valid elevations
+                uda_mask = _msk
+        elif zmin is None and zmax is None and uda_mask0 is not None:
+            # in case a mask/region was provided, but you didn't want to update the mask based on elevation
+            # just continue with the provided mask
+            uda_mask = uda_mask0
+        
+        # TODO add fill and drop area?
+
+        if gdf_include is not None:
+            try:
+                _msk = xu.burn_vector_geometry(gdf_include, self.data, fill=0, all_touched=all_touched) > 0
+                uda_mask = np.logical_or(uda_mask, _msk)  # NOTE logical OR statement
+            except:
+                logger.debug(f"No mask cells found within include polygon!")
+        if gdf_exclude is not None:
+            try:
+                _msk = xu.burn_vector_geometry(gdf_exclude, self.data, fill=0, all_touched=all_touched) > 0
+                uda_mask = np.logical_and(uda_mask, ~_msk)
+            except:
+                logger.debug(f"No mask cells found within exclude polygon!")
+
+        # add mask to grid
+        self.data[varname] = xu.UgridDataArray(xr.DataArray(data=uda_mask, dims=[self.data.grid.face_dimension]), self.data.grid)    
+
+    def setup_mask_bounds(
+            self,
+            model: str = "sfincs",
+            btype: str = "waterlevel",
+            gdf_include: gpd.GeoDataFrame = None,
+            gdf_exclude: gpd.GeoDataFrame = None,
+            zmin: float = None,
+            zmax: float = None,
+            all_touched: bool = True,
+            reset_bounds: bool = True,
+            copy_sfincsmask: bool = False,
+            logger=logger,
+    ):
+        assert model in ["sfincs", "snapwave"], "Model must be either 'sfincs' or 'snapwave'!"
+
+        if model is "sfincs":
+            varname = "msk"
+        elif model is "snapwave":
+            varname = "snapwave_msk"
+
+        if copy_sfincsmask is True and model is "snapwave": 
+            assert "msk" in self.data, "SFINCS mask not found!"
+            logger.info("Using SFINCS mask for SnapWave mask ...")
+            self.data[varname] = self.data["msk"]
+            return
+        
+        if "msk" not in self.data:
+            raise ValueError("First setup active mask")
+        else:
+            uda_mask = self.data["msk"]
+        
+        if "dep" not in self.data and (zmin is not None or zmax is not None):
+            raise ValueError("dep required in combination with zmin / zmax")
+        else:
+            uda_dep = self.data["dep"]
+
+        
+        btype = btype.lower()
+        bvalues = {"waterlevel": 2, "outflow": 3}
+        if btype not in bvalues:
+            raise ValueError('btype must be one of "waterlevel", "outflow"')
+        bvalue = bvalues[btype]
+
+        if reset_bounds:  # reset existing boundary cells
+            logger.debug(f"{btype} (mask={bvalue:d}) boundary cells reset.")
+            uda_mask = uda_mask.where(uda_mask != np.uint8(bvalue), np.uint8(1))
+            if (
+                zmin is None
+                and zmax is None
+                and gdf_include is None
+                and gdf_exclude is None
+            ):
+                return uda_mask
+
+        # find boundary cells of the active mask
+        bounds = self.find_boundary_cells()
+
+        if zmin is not None:
+            bounds = np.logical_and(bounds, uda_dep >= zmin)
+        if zmax is not None:
+            bounds = np.logical_and(bounds, uda_dep <= zmax)
+        if gdf_include is not None:
+            uda_include = xu.burn_vector_geometry(gdf_include, self.data, fill=0, all_touched=all_touched) > 0
+            bounds = np.logical_and(bounds, uda_include)
+        if gdf_exclude is not None:
+            uda_exclude = xu.burn_vector_geometry(gdf_exclude, self.data, fill=0, all_touched=all_touched) > 0
+            bounds = np.logical_and(bounds, ~uda_exclude)  
+
+        # TODO avoid any msk3 cells neighboring msk2 cells
+            
+        ncells = np.count_nonzero(bounds.values)
+        if ncells > 0:
+            uda_mask = uda_mask.where(~bounds, np.uint8(bvalue))
+
+        # add mask to grid
+        self.data[varname] = xu.UgridDataArray(xr.DataArray(data=uda_mask, dims=[self.data.grid.face_dimension]), self.data.grid)    
+
+
+    def setup_mask(
             self,
             model="sfincs",  # "sfincs" for SFINCS: data["mask"], "snapwave" for SnapWave: data["snapwavemask"]
             copy_sfincs_mask2snapwave=False,
@@ -704,11 +856,12 @@ class QuadtreeGrid:
             self.data[varname] = self.data["mask"]
         else:
             print("Build new mask for: " + model + " ...")
-                       
+
+            time_start = time.time()           
             mask = np.zeros(self.nr_cells, dtype=np.int8)
             x, y = self.face_coordinates
-            if "z" in self.data:
-                z    = self.data["z"].values[:]
+            if "dep" in self.data:
+                z    = self.data["dep"].values[:]
             else:
                 z    = None
 
@@ -753,6 +906,9 @@ class QuadtreeGrid:
                     iok   = np.where((inpol) & (z>=exclude_zmin) & (z<=exclude_zmax))
                     mask[iok] = 0
 
+            print("Time elapsed for creating active mask: " + str(time.time() - time_start) + " s")
+
+            time_start = time.time()
             # Open boundary polygons
             if open_boundary_polygon is not None:
                 for ip, polygon in open_boundary_polygon.iterrows():
@@ -1023,13 +1179,13 @@ class QuadtreeGrid:
                                 okay = True                        
                         if okay:
                             mask[ic] = 3
+            print("Time elapsed for creating mask boundaries : " + str(time.time() - time_start) + " s")
 
             # Now add the data arrays
             ugrid2d = self.data.grid
             self.data[varname] = xu.UgridDataArray(xr.DataArray(data=mask, dims=[ugrid2d.face_dimension]), ugrid2d)
 
     def cut_inactive_cells(self):
-        #TODO rewrite with xr.where and less repetition
         print("Removing inactive cells ...")
 
         n = self.data["n"].values[:]
@@ -1415,7 +1571,73 @@ class QuadtreeGrid:
         snapped_gdf = snapped_gdf.set_crs(self.crs)
         return snapped_gdf
 
+    def find_boundary_cells(self):
 
+        mu = self.data["mu"].values[:]
+        mu1 = self.data["mu1"].values[:]
+        mu2 = self.data["mu2"].values[:]
+        nu = self.data["nu"].values[:]
+        nu1 = self.data["nu1"].values[:]
+        nu2 = self.data["nu2"].values[:]
+        md = self.data["md"].values[:]
+        md1 = self.data["md1"].values[:]
+        md2 = self.data["md2"].values[:]
+        nd = self.data["nd"].values[:]
+        nd1 = self.data["nd1"].values[:]
+        nd2 = self.data["nd2"].values[:]
+
+        mask = self.data["msk"].values[:]
+
+        bounds = np.zeros(self.nr_cells, dtype=bool)
+
+        # Check left neighbors
+        left_coarser = md <= 0 # Coarser or equal to the left
+        left_finer1 = (md1 >= 0) & (mask[md1] == 0) # Cell to the left and inactive
+        left_finer2 = (md2 >= 0) & (mask[md2] == 0) # (Finer) cell to the left and inactive
+        bounds |= (
+            (left_coarser & (left_finer1)) | # cell to the left is inactive
+            (~left_coarser & (left_finer1 | left_finer2)) # one of the finer cells to the left is inactive
+        )
+
+        # Check right neighbors
+        right_coarser = mu <= 0
+        right_finer1 = (mu1 >= 0) & (mask[mu1] == 0)
+        right_finer2 = (mu2 >= 0) & (mask[mu2] == 0)
+        bounds |= (
+            (right_coarser & (right_finer1 | right_finer2)) |
+            (~right_coarser & (right_finer1 | right_finer2))
+        )
+
+        # Check bottom neighbors
+        below_coarser = nd <= 0
+        below_finer1 = (nd1 >= 0) & (mask[nd1] == 0)
+        below_finer2 = (nd2 >= 0) & (mask[nd2] == 0)
+        bounds |= (
+            (below_coarser & (below_finer1 | below_finer2)) |
+            (~below_coarser & (below_finer1 | below_finer2))
+        )
+
+        # Check top neighbors
+        above_coarser = nu <= 0
+        above_finer1 = (nu1 >= 0) & (mask[nu1] == 0)
+        above_finer2 = (nu2 >= 0) & (mask[nu2] == 0)
+        bounds |= (
+            (above_coarser & (above_finer1 | above_finer2)) |
+            (~above_coarser & (above_finer1 | above_finer2))
+        )
+
+        # Handling boundary cells
+        bounds[md1 == -1] = True  # Left boundary
+        bounds[mu1 == -1] = True  # Right boundary
+        bounds[nd1 == -1] = True  # Bottom boundary
+        bounds[nu1 == -1] = True  # Top boundary
+
+        # Get rid of the inactive boundary cells that were added
+        # in the previous step
+        bounds[mask == 0] = False
+
+        return bounds
+    
 ## Internal functions
 
 def get_neighbors_in_larger_cell(n, m):    
@@ -1492,4 +1714,4 @@ def gdf2list(gdf_in):
    gdf_out = []
    for feature in gdf_in.iterfeatures():
       gdf_out.append(gpd.GeoDataFrame.from_features([feature]))
-   return gdf_out
+   return gdf_out    
