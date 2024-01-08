@@ -103,6 +103,13 @@ class QuadtreeGrid:
         
         attrs = self.data.attrs
         ds = self.data.ugrid.to_dataset()
+
+        # TODO make similar to fortran conventions
+        # RENAME TO FORTRAN CONVENTION
+        ds = ds.rename({"dep": "z"})
+        ds = ds.rename({"msk": "mask"})
+        ds = ds.rename({"snapwave_msk": "snapwave_mask"})
+
         ds.attrs = attrs
         ds.to_netcdf(file_name)
 

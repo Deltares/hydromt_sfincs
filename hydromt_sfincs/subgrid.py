@@ -711,6 +711,9 @@ class SubgridTableQuadtree:
         # ensure bins is last dimension to match the FORTRAN convention in SFINCS
         ds = self.data.transpose("npuv", "np", "bins")
 
+        # fix names to match SFINCS convention
+        ds = ds.rename_vars({"uv_navg": "uv_navg_w", "uv_ffit": "uv_fnfit"})
+
         ds.to_netcdf(file_name)
 
     def build(

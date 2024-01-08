@@ -1973,7 +1973,8 @@ class SfincsModel(GridModel):
         gdf_locs, df_ts = None, None
         tstart, tstop = self.get_model_time()  # model time
         # buffer around msk==2 values
-        if np.any(self.mask == 2):
+        if np.any(self.mask == 2) and not self.grid_type == "quadtree":
+            # TODO fix for quadtree
             region = self.mask.where(self.mask == 2, 0).raster.vectorize()
         else:
             region = self.region
