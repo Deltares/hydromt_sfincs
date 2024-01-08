@@ -27,6 +27,7 @@ except ImportError:
     raise ImportError("datashader is not installed. Please install it first.")
 
 from hydromt import workflows
+from hydromt_sfincs.subgrid import SubgridTableQuadtree
 from hydromt_sfincs.workflows.merge import merge_multi_dataarrays_on_mesh
 
 
@@ -34,35 +35,14 @@ logger = logging.getLogger(__name__)
 
 
 class QuadtreeGrid:
-    def __init__(self,
-                 x0, 
-                 y0, 
-                 dx, 
-                 dy, 
-                 nmax, 
-                 mmax, 
-                 epsg=None, 
-                 rotation=0,
-                 gdf_refinement=None,
-                 logger=logger):
+    def __init__(self, logger=logger):
         
-        self.x0 = x0
-        self.y0 = y0
-        self.dx = dx
-        self.dy = dy
-        self.nmax = nmax
-        self.mmax = mmax
-        self.rotation = rotation
-        self.gdf_refinement = gdf_refinement
-        if epsg is not None:
-            self.crs = CRS.from_user_input(epsg)
-
         self.nr_cells = 0
         self.nr_refinement_levels = 1
         self.version = 0
         
         self.data = None
-        # self.subgrid = SubgridTableQuadtree()
+        self.subgrid = SubgridTableQuadtree()
         self.df = None
 
     @property
@@ -126,9 +106,31 @@ class QuadtreeGrid:
         ds.attrs = attrs
         ds.to_netcdf(file_name)
 
-    def build(self):
+    def build(
+        self,
+        x0, 
+        y0, 
+        dx, 
+        dy, 
+        nmax, 
+        mmax, 
+        epsg=None, 
+        rotation=0,
+        gdf_refinement=None
+    ):
         """Builds a quadtree SFINCS grid."""
-        
+
+        self.x0 = x0
+        self.y0 = y0
+        self.dx = dx
+        self.dy = dy
+        self.nmax = nmax
+        self.mmax = mmax
+        self.rotation = rotation
+        self.gdf_refinement = gdf_refinement
+        if epsg is not None:
+            self.crs = CRS.from_user_input(epsg)
+
         print("Building mesh ...")
 
         # if refinement_polygons is None:
@@ -819,7 +821,7 @@ class QuadtreeGrid:
         # add mask to grid
         self.data[varname] = xu.UgridDataArray(xr.DataArray(data=uda_mask, dims=[self.data.grid.face_dimension]), self.data.grid)    
 
-
+    # TODO, this method can be removed, as it is replaced by setup_mask_active and setup_mask_bounds
     def setup_mask(
             self,
             model="sfincs",  # "sfincs" for SFINCS: data["mask"], "snapwave" for SnapWave: data["snapwavemask"]
@@ -1185,6 +1187,51 @@ class QuadtreeGrid:
             ugrid2d = self.data.grid
             self.data[varname] = xu.UgridDataArray(xr.DataArray(data=mask, dims=[ugrid2d.face_dimension]), ugrid2d)
 
+    def setup_subgrid(
+        self,
+        datasets_dep: list[dict],
+        datasets_rgh: list[dict] = [],
+        datasets_riv: list[dict] = [],
+        nbins=10,
+        nr_subgrid_pixels=20,
+        nrmax=2000,
+        max_gradient=5.0,
+        z_minimum=-99999.0,
+        z_multiply=1.0,
+        manning_land: float = 0.04,
+        manning_sea: float = 0.02,
+        rgh_lev_land: float = 0.0,
+        huthresh: float = 0.01,
+        buffer_cells: int = 0,
+        write_dep_tif: bool = False,
+        write_man_tif: bool = False,
+        highres_dir: str = None,
+        logger=logger,
+        progress_bar=None,        
+    ):
+        self.subgrid.build(
+            ds_mesh = self.data,
+            datasets_dep = datasets_dep,
+            datasets_rgh = datasets_rgh,
+            datasets_riv = datasets_riv,
+            nbins = nbins,
+            nr_subgrid_pixels = nr_subgrid_pixels,
+            nrmax = nrmax,
+            max_gradient = max_gradient,
+            z_minimum = z_minimum,
+            z_multiply = z_multiply,
+            manning_land = manning_land,
+            manning_sea = manning_sea,
+            rgh_lev_land = rgh_lev_land,
+            huthresh = huthresh,
+            buffer_cells = buffer_cells,
+            write_dep_tif = write_dep_tif,
+            write_man_tif = write_man_tif,
+            highres_dir = highres_dir,
+            logger = logger,
+            progress_bar = None,
+        )
+
     def cut_inactive_cells(self):
         print("Removing inactive cells ...")
 
@@ -1369,141 +1416,141 @@ class QuadtreeGrid:
         export_image(img, name, export_path=path)
         return True
 
-    def make_index_tiles(self, path, zoom_range=None, format=0):
+    # def make_index_tiles(self, path, zoom_range=None, format=0):
         
-        import math
-        from hydromt_sfincs.workflows.tiling import deg2num
-        from hydromt_sfincs.workflows.tiling import num2deg
-        import cht.misc.fileops as fo
+    #     import math
+    #     from hydromt_sfincs.workflows.tiling import deg2num
+    #     from hydromt_sfincs.workflows.tiling import num2deg
+    #     import cht.misc.fileops as fo
         
-        npix = 256
+    #     npix = 256
         
-        if not zoom_range:
-            zoom_range = [0, 13]
+    #     if not zoom_range:
+    #         zoom_range = [0, 13]
 
-        cosrot = math.cos(-self.rotation*math.pi/180)
-        sinrot = math.sin(-self.rotation*math.pi/180)       
+    #     cosrot = math.cos(-self.rotation*math.pi/180)
+    #     sinrot = math.sin(-self.rotation*math.pi/180)       
 
-        # Compute lon/lat range
-        xmin = np.amin(self.x) - 10*self.dx
-        xmax = np.amax(self.x) + 10*self.dx
-        ymin = np.amin(self.y) - 10*self.dy
-        ymax = np.amax(self.y) + 10*self.dy
-        transformer = Transformer.from_crs(self.crs,
-                                            CRS.from_epsg(4326),
-                                            always_xy=True)
-        lon_min, lat_min = transformer.transform(xmin, ymin)
-        lon_max, lat_max = transformer.transform(xmax, ymax)
-        lon_range = [lon_min, lon_max]
-        lat_range = [lat_min, lat_max]        
+    #     # Compute lon/lat range
+    #     xmin = np.amin(self.x) - 10*self.dx
+    #     xmax = np.amax(self.x) + 10*self.dx
+    #     ymin = np.amin(self.y) - 10*self.dy
+    #     ymax = np.amax(self.y) + 10*self.dy
+    #     transformer = Transformer.from_crs(self.crs,
+    #                                         CRS.from_epsg(4326),
+    #                                         always_xy=True)
+    #     lon_min, lat_min = transformer.transform(xmin, ymin)
+    #     lon_max, lat_max = transformer.transform(xmax, ymax)
+    #     lon_range = [lon_min, lon_max]
+    #     lat_range = [lat_min, lat_max]        
         
-        transformer_a = Transformer.from_crs(CRS.from_epsg(4326),
-                                                CRS.from_epsg(3857),
-                                                always_xy=True)
-        transformer_b = Transformer.from_crs(CRS.from_epsg(3857),
-                                                self.crs,
-                                                always_xy=True)
+    #     transformer_a = Transformer.from_crs(CRS.from_epsg(4326),
+    #                                             CRS.from_epsg(3857),
+    #                                             always_xy=True)
+    #     transformer_b = Transformer.from_crs(CRS.from_epsg(3857),
+    #                                             self.crs,
+    #                                             always_xy=True)
         
-        i0_lev = []
-        i1_lev = []
-        nmax_lev = []
-        mmax_lev = []
-        nm_lev = []
-        for level in range(self.nr_refinement_levels):
-            i0 = self.level_index[level]
-            if level<self.nr_refinement_levels - 1:
-                i1 = self.level_index[level + 1]
-            else:
-                i1 = self.nr_cells   
-            i0_lev.append(i0)    
-            i1_lev.append(i1)    
-            nmax_lev.append(np.amax(self.n[i0:i1]) + 1)
-            mmax_lev.append(np.amax(self.m[i0:i1]) + 1)
-            mm = self.m[i0:i1]
-            nn = self.n[i0:i1]
-            nm_lev.append(mm*nmax_lev[level] + nn)
+    #     i0_lev = []
+    #     i1_lev = []
+    #     nmax_lev = []
+    #     mmax_lev = []
+    #     nm_lev = []
+    #     for level in range(self.nr_refinement_levels):
+    #         i0 = self.level_index[level]
+    #         if level<self.nr_refinement_levels - 1:
+    #             i1 = self.level_index[level + 1]
+    #         else:
+    #             i1 = self.nr_cells   
+    #         i0_lev.append(i0)    
+    #         i1_lev.append(i1)    
+    #         nmax_lev.append(np.amax(self.n[i0:i1]) + 1)
+    #         mmax_lev.append(np.amax(self.m[i0:i1]) + 1)
+    #         mm = self.m[i0:i1]
+    #         nn = self.n[i0:i1]
+    #         nm_lev.append(mm*nmax_lev[level] + nn)
 
-        for izoom in range(zoom_range[0], zoom_range[1] + 1):
+    #     for izoom in range(zoom_range[0], zoom_range[1] + 1):
             
-            print("Processing zoom level " + str(izoom))
+    #         print("Processing zoom level " + str(izoom))
         
-            zoom_path = os.path.join(path, str(izoom))
+    #         zoom_path = os.path.join(path, str(izoom))
         
-            dxy = (40075016.686/npix) / 2 ** izoom
-            xx = np.linspace(0.0, (npix - 1)*dxy, num=npix)
-            yy = xx[:]
-            xv, yv = np.meshgrid(xx, yy)
+    #         dxy = (40075016.686/npix) / 2 ** izoom
+    #         xx = np.linspace(0.0, (npix - 1)*dxy, num=npix)
+    #         yy = xx[:]
+    #         xv, yv = np.meshgrid(xx, yy)
         
-            ix0, iy0 = deg2num(lat_range[0], lon_range[0], izoom)
-            ix1, iy1 = deg2num(lat_range[1], lon_range[1], izoom)
+    #         ix0, iy0 = deg2num(lat_range[0], lon_range[0], izoom)
+    #         ix1, iy1 = deg2num(lat_range[1], lon_range[1], izoom)
         
-            for i in range(ix0, ix1 + 1):
+    #         for i in range(ix0, ix1 + 1):
             
-                path_okay = False
-                zoom_path_i = os.path.join(zoom_path, str(i))
+    #             path_okay = False
+    #             zoom_path_i = os.path.join(zoom_path, str(i))
             
-                for j in range(iy0, iy1 + 1):
+    #             for j in range(iy0, iy1 + 1):
             
-                    file_name = os.path.join(zoom_path_i, str(j) + ".dat")
+    #                 file_name = os.path.join(zoom_path_i, str(j) + ".dat")
             
-                    # Compute lat/lon at ll corner of tile
-                    lat, lon = num2deg(i, j, izoom)
+    #                 # Compute lat/lon at ll corner of tile
+    #                 lat, lon = num2deg(i, j, izoom)
             
-                    # Convert to Global Mercator
-                    xo, yo   = transformer_a.transform(lon,lat)
+    #                 # Convert to Global Mercator
+    #                 xo, yo   = transformer_a.transform(lon,lat)
             
-                    # Tile grid on local mercator
-                    x = xv[:] + xo + 0.5*dxy
-                    y = yv[:] + yo + 0.5*dxy
+    #                 # Tile grid on local mercator
+    #                 x = xv[:] + xo + 0.5*dxy
+    #                 y = yv[:] + yo + 0.5*dxy
             
-                    # Convert tile grid to crs of SFINCS model
-                    x, y = transformer_b.transform(x, y)
+    #                 # Convert tile grid to crs of SFINCS model
+    #                 x, y = transformer_b.transform(x, y)
 
-                    # Now rotate around origin of SFINCS model
-                    x00 = x - self.x0
-                    y00 = y - self.y0
-                    xg  = x00*cosrot - y00*sinrot
-                    yg  = x00*sinrot + y00*cosrot
+    #                 # Now rotate around origin of SFINCS model
+    #                 x00 = x - self.x0
+    #                 y00 = y - self.y0
+    #                 xg  = x00*cosrot - y00*sinrot
+    #                 yg  = x00*sinrot + y00*cosrot
 
-                    indx = np.full((npix, npix), -999, dtype=int)
+    #                 indx = np.full((npix, npix), -999, dtype=int)
 
-                    for ilev in range(self.nr_refinement_levels):
-                        nmax = nmax_lev[ilev]
-                        mmax = mmax_lev[ilev]
-                        i0   = i0_lev[ilev]
-                        i1   = i1_lev[ilev]
-                        dx   = self.dx/2**ilev
-                        dy   = self.dy/2**ilev
-                        iind = np.floor(xg/dx).astype(int)
-                        jind = np.floor(yg/dy).astype(int)
-                        # Now check whether this cell exists on this level
-                        ind  = iind*nmax + jind
-                        ind[iind<0]   = -999
-                        ind[jind<0]   = -999
-                        ind[iind>=mmax] = -999
-                        ind[jind>=nmax] = -999
+    #                 for ilev in range(self.nr_refinement_levels):
+    #                     nmax = nmax_lev[ilev]
+    #                     mmax = mmax_lev[ilev]
+    #                     i0   = i0_lev[ilev]
+    #                     i1   = i1_lev[ilev]
+    #                     dx   = self.dx/2**ilev
+    #                     dy   = self.dy/2**ilev
+    #                     iind = np.floor(xg/dx).astype(int)
+    #                     jind = np.floor(yg/dy).astype(int)
+    #                     # Now check whether this cell exists on this level
+    #                     ind  = iind*nmax + jind
+    #                     ind[iind<0]   = -999
+    #                     ind[jind<0]   = -999
+    #                     ind[iind>=mmax] = -999
+    #                     ind[jind>=nmax] = -999
 
-                        ingrid = np.isin(ind, nm_lev[ilev], assume_unique=False) # return boolean for each pixel that falls inside a grid cell
-                        incell = np.where(ingrid)                                # tuple of arrays of pixel indices that fall in a cell
+    #                     ingrid = np.isin(ind, nm_lev[ilev], assume_unique=False) # return boolean for each pixel that falls inside a grid cell
+    #                     incell = np.where(ingrid)                                # tuple of arrays of pixel indices that fall in a cell
 
-                        if incell[0].size>0:
-                            # Now find the cell indices
-                            try:
-                                cell_indices = np.searchsorted(nm_lev[ilev], ind[incell[0], incell[1]]) + i0_lev[ilev]
-                                indx[incell[0], incell[1]] = cell_indices
-                            except:
-                                pass
+    #                     if incell[0].size>0:
+    #                         # Now find the cell indices
+    #                         try:
+    #                             cell_indices = np.searchsorted(nm_lev[ilev], ind[incell[0], incell[1]]) + i0_lev[ilev]
+    #                             indx[incell[0], incell[1]] = cell_indices
+    #                         except:
+    #                             pass
 
-                    if np.any(indx>=0):                        
-                        if not path_okay:
-                            if not os.path.exists(zoom_path_i):
-                                fo.mkdir(zoom_path_i)
-                                path_okay = True
+    #                 if np.any(indx>=0):                        
+    #                     if not path_okay:
+    #                         if not os.path.exists(zoom_path_i):
+    #                             fo.mkdir(zoom_path_i)
+    #                             path_okay = True
                                 
-                        # And write indices to file
-                        fid = open(file_name, "wb")
-                        fid.write(indx)
-                        fid.close()
+    #                     # And write indices to file
+    #                     fid = open(file_name, "wb")
+    #                     fid.write(indx)
+    #                     fid.close()
 
     def get_uv_points(self):
 
@@ -1693,15 +1740,9 @@ def inpolygon(xq, yq, p):
     shape = xq.shape
     xq = xq.reshape(-1)
     yq = yq.reshape(-1)
-#    xv = xv.reshape(-1)
-#    yv = yv.reshape(-1)
     q = [(xq[i], yq[i]) for i in range(xq.shape[0])]
-#    q = [Point(xq[i], yq[i]) for i in range(xq.shape[0])]
-#    mp = MultiPoint(q)
     p = path.Path([(crds[0], crds[1]) for i, crds in enumerate(p.exterior.coords)])
-#    p = path.Path([(xv[i], yv[i]) for i in range(xv.shape[0])])
     return p.contains_points(q).reshape(shape)
-#    return mp.within(p)
 
 def binary_search(vals, val):    
     indx = np.searchsorted(vals, val)

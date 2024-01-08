@@ -173,7 +173,6 @@ class SfincsModel(GridModel):
     @property
     def bbox(self) -> tuple:
         """Returns the bounding box of the active model cells."""
-        # NOTE overwrites property in GridModel
         if self.grid_type == "regular":
             return self.mask.raster.transform_bounds(4326)
         elif self.grid_type == "quadtree":
@@ -244,7 +243,8 @@ class SfincsModel(GridModel):
             )
             self.update_grid_from_config()
         elif self.grid_type == "quadtree":
-            self.quadtree = QuadtreeGrid(
+            self.quadtree = QuadtreeGrid(logger=self.logger)
+            self.quadtree.build(
                 x0=x0,
                 y0=y0,
                 dx=dx,
@@ -253,10 +253,20 @@ class SfincsModel(GridModel):
                 mmax=mmax,
                 rotation=rotation,
                 epsg=epsg,
-                gdf_refinement=gdf_refinement,
-                logger=self.logger,
+                gdf_refinement=gdf_refinement
             )
-            self.quadtree.build()
+
+            # remove all grid layers from the config (now stored in qtrfile)
+            for layers in self._MAPS:
+                self.config.pop(layers, None)
+            # remove grid properties from the config as well
+            for item in ["x0", "y0", "dx", "dy", "nmax", "mmax", "rotation"]:
+                self.config.pop(item, None)
+
+            # add qtrfile to config
+            self.config.update({"qtrfile": "sfincs.nc"})
+            # TODO check why grid_type changes mysteriously to regular
+            self.grid_type = "quadtree"
 
     def setup_grid_from_region(
         self,
@@ -822,12 +832,23 @@ class SfincsModel(GridModel):
             downscaling of the floodmaps. Unlinke the SFINCS files it is written
             to disk at execution of this method. By default False
         """
-        # retrieve model resolution
-        # TODO fix for quadtree
-        if not self.mask.raster.crs.is_geographic:
-            res = np.abs(self.mask.raster.res[0]) / nr_subgrid_pixels
-        else:
-            res = np.abs(self.mask.raster.res[0]) * 111111.0 / nr_subgrid_pixels
+        # retrieve model resolution to determine zoom level for xyz-datasets
+        if self.grid_type == "regular":
+            if not self.mask.raster.crs.is_geographic:
+                res = np.abs(self.mask.raster.res[0])
+            else:
+                res = np.abs(self.mask.raster.res[0]) * 111111.0
+        elif self.grid_type == "quadtree":
+            # TODO make dependent on refinement level?
+            res = self.quadtree.dx # coarsest level
+            nrlevels = self.quadtree.nr_refinement_levels
+            res = res / 2 ** (nrlevels-1) # finest level
+
+            if self.quadtree.crs.is_geographic:
+                res = res * 111111.0
+
+        # convert to subgrid resolution
+        res = res / nr_subgrid_pixels
 
         datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
 
@@ -870,7 +891,8 @@ class SfincsModel(GridModel):
                 dims=self.mask.raster.dims, coords=self.mask.raster.coords
             )
         elif self.grid_type == "quadtree":
-            pass
+            self.quadtree.setup_subgrid(datasets_dep=datasets_dep)
+            # pass
 
         # when building a new subgrid table, always update config
         # NOTE from now onwards, netcdf subgrid tables are used
@@ -2001,7 +2023,7 @@ class SfincsModel(GridModel):
             else:
                 da_offset = self.data_catalog.get_rasterdataset(
                     offset,
-                    bbox=self.mask.raster.transform_bounds(4326),
+                    bbox=self.bbox,
                     buffer=5,
                 )
                 offset_pnts = da_offset.raster.sample(gdf_locs)
@@ -2822,8 +2844,11 @@ class SfincsModel(GridModel):
         self.read_config(epsg=epsg)
         if epsg is None and "epsg" not in self.config:
             raise ValueError("Please specify epsg to read this model")
-        self.read_grid()
-        self.read_subgrid()
+        if self.grid_type == "regular":
+            self.read_grid()
+            self.read_subgrid()
+        elif self.grid_type == "quadtree":
+            self.quadtree.read()
         self.read_geoms()
         self.read_forcing()
         self.logger.info("Model read")
@@ -2835,7 +2860,8 @@ class SfincsModel(GridModel):
         if self.grid_type == "regular":
             self.write_grid()
         elif self.grid_type == "quadtree":
-            self.quadtree.write()
+            fn = self.get_config(f"qtrfile", abs_path=True)
+            self.quadtree.write(file_name = fn)
         self.write_subgrid()
         self.write_geoms()
         self.write_forcing()
@@ -2975,7 +3001,7 @@ class SfincsModel(GridModel):
         """Write SFINCS subgrid file."""
         self._assert_write_mode
 
-        if self.subgrid:
+        if self.grid_type == "regular" and self.subgrid:
             if "sbgfile" not in self.config:
                 # apparently no subgrid was read, so set default filename
                 self.set_config("sbgfile", "sfincs_subgrid.nc")
@@ -2987,6 +3013,13 @@ class SfincsModel(GridModel):
             else:
                 # write netcdf file
                 self.reggrid.subgrid.write(file_name=fn, mask=self.mask)
+        elif self.grid_type == "quadtree" and hasattr(self.quadtree.subgrid, "data"):
+            if "sbgfile" not in self.config:
+                # apparently no subgrid was read, so set default filename
+                self.set_config("sbgfile", "sfincs_subgrid.nc")
+            
+            fn = self.get_config("sbgfile", abs_path=True)
+            self.quadtree.subgrid.write(file_name=fn)
 
     def read_geoms(self):
         """Read geometry files and save to `geoms` attribute.
@@ -3597,8 +3630,8 @@ class SfincsModel(GridModel):
                 epsg=self.config.get("epsg"),
             )
         else:
-            raise not NotImplementedError("Quadtree grid not implemented yet")
-            # self.quadtree = QuadtreeGrid()
+            self.quadtree = QuadtreeGrid(logger=self.logger)
+            # raise not NotImplementedError("Quadtree grid not implemented yet")
 
     def get_model_time(self):
         """Return (tstart, tstop) tuple with parsed model start and end time"""
