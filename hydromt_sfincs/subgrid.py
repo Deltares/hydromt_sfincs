@@ -683,7 +683,7 @@ class SubgridTableQuadtree:
         """Read XArray dataset from netcdf file"""
 
         if not os.path.isfile(file_name):
-            print("File " + file_name + " does not exist!")
+            logger.info("File " + file_name + " does not exist!")
             return
 
         # Read from netcdf file with xarray
@@ -886,8 +886,7 @@ class SubgridTableQuadtree:
         # Loop through all levels
         for ilev in range(nlevs):
 
-            print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-            print("Processing level " + str(ilev + 1) + " of " + str(nlevs) + " ...")
+            logger.info("Processing level " + str(ilev + 1) + " of " + str(nlevs) + " ...")
             
             # Make blocks off cells in this level only
             cell_indices_in_level = np.arange(ifirst[ilev], ilast[ilev] + 1, dtype=int)
@@ -910,12 +909,12 @@ class SubgridTableQuadtree:
             nrbn = int(np.ceil((n1 - n0 + 1)/nrcb))  # nr of blocks in n direction
             nrbm = int(np.ceil((m1 - m0 + 1)/nrcb))  # nr of blocks in m direction
 
-            print("Number of regular cells in a block : " + str(nrcb))
-            print("Number of blocks in n direction    : " + str(nrbn))
-            print("Number of blocks in m direction    : " + str(nrbm))
+            logger.info("Number of regular cells in a block : " + str(nrcb))
+            logger.info("Number of blocks in n direction    : " + str(nrbn))
+            logger.info("Number of blocks in m direction    : " + str(nrbm))
             
-            print("Grid size of flux grid             : dx= " + str(dx) + ", dy= " + str(dy))
-            print("Grid size of subgrid pixels        : dx= " + str(dxp) + ", dy= " + str(dyp))
+            logger.info("Grid size of flux grid             : dx= " + str(dx) + ", dy= " + str(dy))
+            logger.info("Grid size of subgrid pixels        : dx= " + str(dxp) + ", dy= " + str(dyp))
 
             ib = -1
             ibt = 1
@@ -936,8 +935,7 @@ class SubgridTableQuadtree:
                     bm0 = m0  + ii*nrcb               # Index of first m in block
                     bm1 = min(bm0 + nrcb - 1, m1) + 1 # Index of last m in block (cut off excess to the right, but add extra cell to compute u and v in the last column)
 
-                    print("--------------------------------------------------------------")
-                    print("Processing block " + str(ib + 1) + " of " + str(nrbn*nrbm) + " ...")
+                    logger.debug("Processing block " + str(ib + 1) + " of " + str(nrbn*nrbm) + " ...")
 
                     # Now build the pixel matrix
                     x00 = 0.5*dxp + bm0*refi*dyp
@@ -1046,7 +1044,7 @@ class SubgridTableQuadtree:
 
                     index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
 
-                    print("Number of active cells in block    : " + str(nr_cells_in_block))
+                    logger.debug("Number of active cells in block    : " + str(nr_cells_in_block))
 
                     # Better to first loop through cells and then through uv points ?
 
@@ -1080,11 +1078,11 @@ class SubgridTableQuadtree:
                         zvmin = -20.0
                         z, v, zmin, zmax = subgrid_v_table(zv, dxpm, dypm, nbins, zvmin, max_gradient)
 
-                        self.data["z_zmin"].values[ic] = zmin
-                        self.data["z_zmax"].values[ic] = zmax
-                        self.data["z_volmax"].values[ic]  = v[-1]
+                        self.data["z_zmin"].values[indx] = zmin
+                        self.data["z_zmax"].values[indx] = zmax
+                        self.data["z_volmax"].values[indx]  = v[-1]
                         #TODO check with maarten if this is correct
-                        self.data["z_level"].values[:,ic] = z[1:]
+                        self.data["z_level"].values[:,indx] = z[1:]
                         
                         # Now the U/V points
                         # First right
@@ -1199,14 +1197,12 @@ class SubgridTableQuadtree:
                                     self.data["uv_ffit"][iuv]   = ffit
                                     self.data["uv_navg"][iuv]   = navg
 
-                    if progress_bar:
-                        print(ibt)
-                        progress_bar.set_value(ibt)
-                        if progress_bar.was_canceled():
-                            return
-                        ibt += 1
-
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+                    # if progress_bar:
+                    #     print(ibt)
+                    #     progress_bar.set_value(ibt)
+                    #     if progress_bar.was_canceled():
+                    #         return
+                    #     ibt += 1
 
 
 @njit

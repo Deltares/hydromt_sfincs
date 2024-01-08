@@ -263,8 +263,8 @@ class SfincsModel(GridModel):
             for item in ["x0", "y0", "dx", "dy", "nmax", "mmax", "rotation"]:
                 self.config.pop(item, None)
 
-            # add qtrfile to config
-            self.config.update({"qtrfile": "sfincs.nc"})
+            # add qtrfile and epsg-code to config
+            self.config.update({"qtrfile": "sfincs.nc", "epsg": self.crs.to_epsg()})
             # TODO check why grid_type changes mysteriously to regular
             self.grid_type = "quadtree"
 
@@ -733,6 +733,7 @@ class SfincsModel(GridModel):
         nrmax: int = 2000,  # blocksize
         max_gradient: float = 5.0,
         z_minimum: float = -99999.0,
+        huthresh: float = 0.01,
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
@@ -819,6 +820,8 @@ class SfincsModel(GridModel):
             to prevent numerical stability problems, by default 5.0
         z_minimum : float, optional
             Minimum depth in the subgrid tables, by default -99999.0
+        huthresh : float, optional
+            Threshold depth in SFINCS model, by default 0.01 m
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
             Note that these values are only used when no Manning's n datasets are provided,
@@ -882,6 +885,7 @@ class SfincsModel(GridModel):
                 manning_land=manning_land,
                 manning_sea=manning_sea,
                 rgh_lev_land=rgh_lev_land,
+                huthresh=huthresh,
                 write_dep_tif=write_dep_tif,
                 write_man_tif=write_man_tif,
                 highres_dir=highres_dir,
@@ -891,7 +895,25 @@ class SfincsModel(GridModel):
                 dims=self.mask.raster.dims, coords=self.mask.raster.coords
             )
         elif self.grid_type == "quadtree":
-            self.quadtree.setup_subgrid(datasets_dep=datasets_dep)
+            self.quadtree.setup_subgrid(
+                datasets_dep=datasets_dep,
+                datasets_rgh=datasets_rgh,
+                datasets_riv=datasets_riv,
+                buffer_cells=buffer_cells,
+                nbins=nbins,
+                nr_subgrid_pixels=nr_subgrid_pixels,
+                nrmax=nrmax,
+                max_gradient=max_gradient,
+                z_minimum=z_minimum,
+                manning_land=manning_land,
+                manning_sea=manning_sea,
+                rgh_lev_land=rgh_lev_land,
+                huthresh=huthresh,
+                write_dep_tif=write_dep_tif,
+                write_man_tif=write_man_tif,
+                highres_dir=highres_dir,
+                logger=self.logger,
+                )
             # pass
 
         # when building a new subgrid table, always update config
