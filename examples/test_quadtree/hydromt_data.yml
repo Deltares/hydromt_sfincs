@@ -1,0 +1,25 @@
+gebco:
+  data_type: RasterDataset
+  path: C:\Users\goede_rl\.hydromt_data\artifact_data\v0.0.8\gebco.tif
+  driver: raster
+  meta:
+    category: topography
+    paper_doi: 10.5285/a29c5465-b138-234d-e053-6c86abc040b9
+    paper_ref: Weatherall et al (2020)
+    source_license: https://www.gebco.net/data_and_products/gridded_bathymetry_data/#a1
+    source_url: https://www.bodc.ac.uk/data/open_download/gebco/gebco_2020/geotiff/
+    source_version: 2020
+    unit: m+MSL
+  crs: 4326
+merit_hydro:
+  data_type: RasterDataset
+  path: C:\Users\goede_rl\.hydromt_data\artifact_data\v0.0.8\merit_hydro\{variable}.tif
+  driver: raster
+  meta:
+    category: topography
+    paper_doi: 10.1029/2019WR024873
+    paper_ref: Yamazaki et al. (2019)
+    source_license: CC-BY-NC 4.0 or ODbL 1.0
+    source_url: http://hydro.iis.u-tokyo.ac.jp/~yamadai/MERIT_Hydro
+    source_version: 1.0
+  crs: 4326

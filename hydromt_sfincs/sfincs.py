@@ -264,7 +264,11 @@ class SfincsModel(GridModel):
                 self.config.pop(item, None)
 
             # add qtrfile and epsg-code to config
-            self.config.update({"qtrfile": "sfincs.nc", "epsg": self.crs.to_epsg()})
+            self.config.update({"qtrfile": "sfincs.nc"})
+                   
+            if epsg is not None: #is this needed?
+                self.config.update({"epsg": epsg})
+
             # TODO check why grid_type changes mysteriously to regular
             self.grid_type = "quadtree"
 
