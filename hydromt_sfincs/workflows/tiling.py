@@ -381,6 +381,6 @@ def tile_window(zl, minx, miny, maxx, maxy):
     # Create window generator
     lu = product(np.arange(minx, maxx, dxy), np.arange(maxy, miny, -dxy))
     for l, u in lu:
-        col = int(1.0e-3 + odx + (l - minx) / dxy)
-        row = int(1.0e-3 + ody + (maxy - u) / dxy)
+        col = round(odx + (l - minx) / dxy)
+        row = round(ody + (maxy - u) / dxy)
         yield Affine(dxy / 256, 0, l, 0, -dxy / 256, u), col, row
