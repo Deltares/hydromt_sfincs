@@ -458,7 +458,7 @@ class RegularGrid:
             Format of index tiles, either "bin" (binary, default) or "png"
         """
 
-        index_path = os.path.join(root, "index")
+        index_path = os.path.join(root, "indices")
         npix = 256
 
         # for binary format, use .dat extension
