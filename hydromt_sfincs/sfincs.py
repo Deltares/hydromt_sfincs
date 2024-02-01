@@ -2894,6 +2894,8 @@ class SfincsModel(GridModel):
                     gdf = utils.read_drn(fn, crs=self.crs)
                 else:
                     gdf = utils.read_xy(fn, crs=self.crs)
+                # this seems to be required for new pandas versions
+                gdf.set_geometry("geometry", inplace=True)
                 self.set_geoms(gdf, name=gname)
         # read additional geojson files from gis directory
         for fn in glob.glob(join(self.root, "gis", "*.geojson")):
@@ -3596,7 +3598,7 @@ class SfincsModel(GridModel):
                     reclass_table = join(DATADIR, "lulc", f"{lulc}_mapping.csv")
                 if reclass_table is None:
                     raise IOError(
-                        f"Manning roughness mapping file not found: {reclass_table}"
+                        f"Manning roughness 'reclass_table' csv file must be provided"
                     )
                 da_lulc = self.data_catalog.get_rasterdataset(
                     lulc,
