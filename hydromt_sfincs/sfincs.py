@@ -239,8 +239,11 @@ class SfincsModel(GridModel):
             * {'bbox': [xmin, ymin, xmax, ymax]}
             * {'geom': 'path/to/polygon_geometry'}
 
+            For the ``bbox`` option the coordinates for the bottom-left and top-right corners
+            need to be provided in WG84/EPSG:4326.
+            
             For a complete overview of all region options,
-            see :py:function:~hydromt.workflows.basin_mask.parse_region
+            see :py:function:: hydromt.workflows.basin_mask.parse_region
         res : float, optional
             grid resolution, by default 100 m
         crs : Union[str, int], optional
