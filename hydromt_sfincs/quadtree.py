@@ -46,6 +46,12 @@ class QuadtreeGrid:
         self.df = None
 
     @property
+    def crs(self):
+        if self.data is None:
+            return None
+        return self.data.grid.crs
+
+    @property
     def face_coordinates(self):
         if self.data is None:
             return None
@@ -87,14 +93,15 @@ class QuadtreeGrid:
         self.data = xu.open_dataset(file_name)
         #TODO check if close works/is needed
         self.data.close()
-        
+
         self.nr_cells = self.data.dims['mesh2d_nFaces']
 
+        # set CRS (not sure if that should be stored in the netcdf in this way)
+        # self.data.crs = CRS.from_wkt(self.data["crs"].crs_wkt)
+        self.data.grid.set_crs(CRS.from_wkt(self.data["crs"].crs_wkt))     
+
         for key, value in self.data.attrs.items():
-            if key == "epsg":
-                self.crs = CRS.from_user_input(value)
-            else:
-                setattr(self, key, value)
+            setattr(self, key, value)
 
     def write(self, file_name: Union[str, Path] = "sfincs.nc", version:int=0):
         """Writes a quadtree SFINCS netcdf file."""
@@ -135,8 +142,8 @@ class QuadtreeGrid:
         self.mmax = mmax
         self.rotation = rotation
         self.gdf_refinement = gdf_refinement
-        if epsg is not None:
-            self.crs = CRS.from_user_input(epsg)
+        # if epsg is not None:
+        #     self.crs = CRS.from_user_input(epsg)
 
         print("Building mesh ...")
 
@@ -365,12 +372,13 @@ class QuadtreeGrid:
                  "dx": self.dx,
                  "dy": self.dy,
                  "rotation": self.rotation,
-                 "epsg": self.crs.to_epsg(),
+                #  "epsg": self.crs.to_epsg(),
                  "nr_levels": self.nr_refinement_levels}
         self.data.attrs = attrs
 
         # Add the crs
-        self.data.ugrid.set_crs(self.crs)
+        if epsg is not None:
+            self.data.grid.set_crs(CRS.from_user_input(epsg))
 
         # Now add the data arrays
         #TODO check if this is the best way to add data to xu.UgridDataset?

@@ -184,7 +184,7 @@ class SfincsModel(GridModel):
         if self.grid_type == "regular":
             return self.reggrid.crs
         elif self.grid_type == "quadtree":
-            return self.quadtree.crs
+            return self.quadtree.data.grid.crs
 
     def set_crs(self, crs: Any) -> None:
         """Sets the model crs"""
@@ -192,7 +192,7 @@ class SfincsModel(GridModel):
             self.reggrid.crs = CRS.from_user_input(crs)
             self.grid.raster.set_crs(self.reggrid.crs)
         elif self.grid_type == "quadtree":
-            self.quadtree.crs = CRS.from_user_input(crs)
+            self.quadtree.data.grid.set_crs(CRS.from_user_input(crs))
 
     def setup_grid(
         self,
@@ -2875,7 +2875,10 @@ class SfincsModel(GridModel):
             self.read_grid()
             self.read_subgrid()
         elif self.grid_type == "quadtree":
-            self.quadtree.read()
+            fn = self.get_config("qtrfile", fallback="sfincs.nc", abs_path=True)
+            if not isfile(fn):
+                raise IOError(f".nc path {fn} does not exist")
+            self.quadtree.read(file_name = fn)
         self.read_geoms()
         self.read_forcing()
         self.logger.info("Model read")
