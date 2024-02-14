@@ -90,8 +90,6 @@ class SubgridTableRegular:
         for var in var_list_levels:
             ds_new["uv_" + var] = xr.DataArray(locals()["uv_" + var], dims=("levels", "npuv"))
 
-        # fix names to match SFINCS convention
-        ds_new = ds_new.rename_vars({"uv_navg": "uv_navg_w", "uv_ffit": "uv_fnfit"})
         # ensure levels is last dimension
         ds_new = ds_new.transpose("npuv", "np", "levels")
 
@@ -278,11 +276,10 @@ class SubgridTableRegular:
         datasets_rgh: list[dict] = [],
         datasets_riv: list[dict] = [],
         nlevels: int = 10,
-        nbins=None, # backward compatibility
-        nr_subgrid_pixels=20,
-        nrmax=2000,
-        max_gradient=5.0,
-        z_minimum=-99999.0,
+        nr_subgrid_pixels = 20,
+        nrmax = 2000,
+        max_gradient = 5.0,
+        z_minimum = -99999.0,
         huthresh: float = 0.01,
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
@@ -362,12 +359,6 @@ class SubgridTableRegular:
 
         if write_dep_tif or write_man_tif:
             assert highres_dir is not None, "highres_dir must be specified"
-
-        if nbins:
-            logger.warning(
-                "Keyword nbins is deprecated and will be removed in future versions. Please use nlevels instead."
-            )
-            nlevels = nbins 
 
         refi = nr_subgrid_pixels
         self.nlevels = nlevels

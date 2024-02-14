@@ -612,7 +612,8 @@ class SfincsModel(GridModel):
         datasets_rgh: List[dict] = [],
         datasets_riv: List[dict] = [],
         buffer_cells: int = 0,
-        nbins: int = 10,
+        nlevels: int = 10,
+        nbins: int = None,
         nr_subgrid_pixels: int = 20,
         nrmax: int = 2000,  # blocksize
         max_gradient: float = 5.0,
@@ -693,6 +694,8 @@ class SfincsModel(GridModel):
             by default 0
         nbins : int, optional
             Number of bins in which hypsometry is subdivided, by default 10
+        nlevels: int, optional
+            Number of levels to describe hypsometry, by default 10
         nr_subgrid_pixels : int, optional
             Number of subgrid pixels per computational cell, by default 20
         nrmax : int, optional
@@ -740,6 +743,12 @@ class SfincsModel(GridModel):
         else:
             highres_dir = None
 
+        if nbins is not None:
+            logger.warning(
+                "Keyword nbins is deprecated and will be removed in future versions. Please use nlevels instead."
+            )
+            nlevels = nbins 
+        
         if self.grid_type == "regular":
             self.reggrid.subgrid.build(
                 da_mask=self.mask,
@@ -747,7 +756,7 @@ class SfincsModel(GridModel):
                 datasets_rgh=datasets_rgh,
                 datasets_riv=datasets_riv,
                 buffer_cells=buffer_cells,
-                nbins=nbins,
+                nlevels=nlevels,
                 nr_subgrid_pixels=nr_subgrid_pixels,
                 nrmax=nrmax,
                 max_gradient=max_gradient,
