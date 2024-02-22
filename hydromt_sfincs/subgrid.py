@@ -677,6 +677,7 @@ class SubgridTableQuadtree:
         # A quadtree subgrid table contains data for EACH cell, u and v point in the quadtree mesh,
         # regardless of the mask value!
         self.version = version
+        self.data = None
 
     def read(self, file_name):
         """Read XArray dataset from netcdf file"""
@@ -688,30 +689,17 @@ class SubgridTableQuadtree:
         # Read from netcdf file with xarray
         ds = xr.open_dataset(file_name)
         # Transpose to ensure bins is first dimension (convert from FORTRAN convention in SFINCS to Python)
-        ds = ds.transpose("bins", "npuv", "np")
+        ds = ds.transpose("levels", "npuv", "np")
         ds.close() # Should this be closed ?
         self.data = ds
 
-        # Swap the first and second dimensions to convert from FORTRAN convention in SFINCS to Python
-        # self.data["z_level"] = self.data["z_level"].swap_dims({"bins": "np"})
-        # self.data["uv_havg"] = self.data["uv_havg"].swap_dims({"bins": "npuv"})
-        # self.data["uv_nrep"] = self.data["uv_nrep"].swap_dims({"bins": "npuv"})
-        # self.data["uv_pwet"] = self.data["uv_pwet"].swap_dims({"bins": "npuv"})
-        # self.data.close() # Should this be closed ?
-
     def write(self, file_name):
         """Write XArray dataset to netcdf file"""	
-        # # Need to switch the first and second dimensions to match the FORTRAN convention in SFINCS
-        # self.data["z_level"] = self.data["z_level"].swap_dims({"bins": "np"})
-        # self.data["uv_havg"] = self.data["uv_havg"].swap_dims({"bins": "npuv"})
-        # self.data["uv_nrep"] = self.data["uv_nrep"].swap_dims({"bins": "npuv"})
-        # self.data["uv_pwet"] = self.data["uv_pwet"].swap_dims({"bins": "npuv"})
-
-        # ensure bins is last dimension to match the FORTRAN convention in SFINCS
-        ds = self.data.transpose("npuv", "np", "bins")
+        # ensure levels is last dimension to match the FORTRAN convention in SFINCS
+        ds = self.data.transpose("npuv", "np", "levels")
 
         # fix names to match SFINCS convention
-        ds = ds.rename_vars({"uv_navg": "uv_navg_w", "uv_ffit": "uv_fnfit"})
+        # ds = ds.rename_vars({"uv_navg": "uv_navg_w", "uv_ffit": "uv_fnfit"})
 
         ds.to_netcdf(file_name)
 
@@ -721,7 +709,7 @@ class SubgridTableQuadtree:
         datasets_dep: list[dict],
         datasets_rgh: list[dict] = [],
         datasets_riv: list[dict] = [],
-        nbins=10,
+        nlevels=10,
         nr_subgrid_pixels=20,
         nrmax=2000,
         max_gradient=5.0,
@@ -768,8 +756,8 @@ class SubgridTableQuadtree:
               "rivwth" in river is not used and can be omitted.
             * arguments for :py:function:~hydromt.workflows.bathymetry.burn_river_rect
             e.g.: [{'gdf_riv': <gpd.GeoDataFrame>, 'gdf_riv_mask': <gpd.GeoDataFrame>}]
-        nbins : int, optional
-            Number of bins in which hypsometry is subdivided, by default 10
+        nlevels : int, optional
+            Number of levels on which hypsometry is discretized, by default 10
         nr_subgrid_pixels : int, optional
             Number of subgrid pixels per computational cell, by default 20
         nrmax : int, optional
@@ -858,12 +846,12 @@ class SubgridTableQuadtree:
         self.data["z_zmin"] = xr.DataArray(np.zeros(nr_cells), dims=["np"])
         self.data["z_zmax"] = xr.DataArray(np.zeros(nr_cells), dims=["np"])
         self.data["z_volmax"] = xr.DataArray(np.zeros(nr_cells), dims=["np"])
-        self.data["z_level"] = xr.DataArray(np.zeros((nbins, nr_cells)), dims=["bins", "np"])
+        self.data["z_level"] = xr.DataArray(np.zeros((nlevels, nr_cells)), dims=["levels", "np"])
         self.data["uv_zmin"] = xr.DataArray(np.zeros(npuv), dims=["npuv"])
         self.data["uv_zmax"] = xr.DataArray(np.zeros(npuv), dims=["npuv"])
-        self.data["uv_havg"] = xr.DataArray(np.zeros((nbins, npuv)), dims=["bins", "npuv"])
-        self.data["uv_nrep"] = xr.DataArray(np.zeros((nbins, npuv)), dims=["bins", "npuv"])
-        self.data["uv_pwet"] = xr.DataArray(np.zeros((nbins, npuv)), dims=["bins", "npuv"])
+        self.data["uv_havg"] = xr.DataArray(np.zeros((nlevels, npuv)), dims=["levels", "npuv"])
+        self.data["uv_nrep"] = xr.DataArray(np.zeros((nlevels, npuv)), dims=["levels", "npuv"])
+        self.data["uv_pwet"] = xr.DataArray(np.zeros((nlevels, npuv)), dims=["levels", "npuv"])
         self.data["uv_ffit"] = xr.DataArray(np.zeros(npuv), dims=["npuv"])
         self.data["uv_navg"] = xr.DataArray(np.zeros(npuv), dims=["npuv"])
         
@@ -1075,13 +1063,12 @@ class SubgridTableQuadtree:
                             dypm = dyp
                         
                         zvmin = -20.0
-                        z, v, zmin, zmax = subgrid_v_table(zv, dxpm, dypm, nbins, zvmin, max_gradient)
+                        z, v, zmin, zmax = subgrid_v_table(zv, dxpm, dypm, nlevels, zvmin, max_gradient)
 
                         self.data["z_zmin"].values[indx] = zmin
                         self.data["z_zmax"].values[indx] = zmax
                         self.data["z_volmax"].values[indx]  = v[-1]
-                        #TODO check with maarten if this is correct
-                        self.data["z_level"].values[:,indx] = z[1:]
+                        self.data["z_level"].values[:,indx] = z
                         
                         # Now the U/V points
                         # First right
@@ -1093,7 +1080,7 @@ class SubgridTableQuadtree:
                                 mv  = np.transpose(da_man.values[nn : nn + refi, mm : mm + refi]).flatten()
                                 iuv = index_mu1[indx]
                                 if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, mv, nbins, huthresh)
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, mv, nlevels, huthresh)
                                     self.data["uv_zmin"][iuv]   = zmin
                                     self.data["uv_zmax"][iuv]   = zmax
                                     self.data["uv_havg"][:, iuv] = havg
@@ -1113,7 +1100,7 @@ class SubgridTableQuadtree:
                                 manning = manning.flatten()
                                 iuv = index_mu1[indx]
                                 if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
                                     self.data["uv_zmin"][iuv]   = zmin
                                     self.data["uv_zmax"][iuv]   = zmax
                                     self.data["uv_havg"][:, iuv] = havg
@@ -1132,7 +1119,7 @@ class SubgridTableQuadtree:
                                 manning = manning.flatten()
                                 iuv = index_mu2[indx]
                                 if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
                                     self.data["uv_zmin"][iuv]   = zmin
                                     self.data["uv_zmax"][iuv]   = zmax
                                     self.data["uv_havg"][:, iuv] = havg
@@ -1152,7 +1139,7 @@ class SubgridTableQuadtree:
                                 manning = manning.flatten()
                                 iuv = index_nu1[indx]
                                 if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
                                     self.data["uv_zmin"][iuv]   = zmin
                                     self.data["uv_zmax"][iuv]   = zmax
                                     self.data["uv_havg"][:, iuv] = havg
@@ -1170,7 +1157,7 @@ class SubgridTableQuadtree:
                                 manning = manning.flatten()
                                 iuv = index_nu1[indx]
                                 if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
                                     self.data["uv_zmin"][iuv]   = zmin
                                     self.data["uv_zmax"][iuv]   = zmax
                                     self.data["uv_havg"][:, iuv] = havg
@@ -1187,7 +1174,7 @@ class SubgridTableQuadtree:
                                 manning = manning.flatten()
                                 iuv = index_nu2[indx]
                                 if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nbins, huthresh)
+                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
                                     self.data["uv_zmin"][iuv]   = zmin
                                     self.data["uv_zmax"][iuv]   = zmax
                                     self.data["uv_havg"][:, iuv] = havg
