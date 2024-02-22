@@ -113,9 +113,9 @@ class QuadtreeGrid:
 
         # TODO make similar to fortran conventions
         # RENAME TO FORTRAN CONVENTION
-        ds = ds.rename({"dep": "z"})
-        ds = ds.rename({"msk": "mask"})
-        ds = ds.rename({"snapwave_msk": "snapwave_mask"})
+        ds = ds.rename({"dep": "z"}) if "dep" in ds else ds
+        ds = ds.rename({"msk": "mask"}) if "msk" in ds else ds
+        ds = ds.rename({"snapwave_msk": "snapwave_mask"}) if "snapwave_msk" in ds else ds
 
         ds.attrs = attrs
         ds.to_netcdf(file_name)
@@ -1408,29 +1408,34 @@ class QuadtreeGrid:
         if self.data is None:
             # No grid (yet)
             return False
-        if not hasattr(self, "df"):
-            self.df = None
-        if self.df is None: 
-            self.get_datashader_dataframe()
+        try:
+            if not hasattr(self, "df"):
+                self.df = None
+            if self.df is None: 
+                self.get_datashader_dataframe()
 
-        transformer = Transformer.from_crs(4326,
-                                    3857,
-                                    always_xy=True)
-        xl0, yl0 = transformer.transform(xlim[0], ylim[0])
-        xl1, yl1 = transformer.transform(xlim[1], ylim[1])
-        xlim = [xl0, xl1]
-        ylim = [yl0, yl1]
-        ratio = (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
-        height = int(width * ratio)
-        cvs = ds.Canvas(x_range=xlim, y_range=ylim, plot_height=height, plot_width=width)
-        agg = cvs.line(self.df, x=['x1', 'x2'], y=['y1', 'y2'], axis=1)
-        img = tf.shade(agg)
-        path = os.path.dirname(file_name)
-        name = os.path.basename(file_name)
-        name = os.path.splitext(name)[0]
-        export_image(img, name, export_path=path)
-        return True
-
+            transformer = Transformer.from_crs(4326,
+                                        3857,
+                                        always_xy=True)
+            xl0, yl0 = transformer.transform(xlim[0], ylim[0])
+            xl1, yl1 = transformer.transform(xlim[1], ylim[1])
+            xlim = [xl0, xl1]
+            ylim = [yl0, yl1]
+            ratio = (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
+            height = int(width * ratio)
+            cvs = ds.Canvas(x_range=xlim, y_range=ylim, plot_height=height, plot_width=width)
+            agg = cvs.line(self.df, x=['x1', 'x2'], y=['y1', 'y2'], axis=1)
+            img = tf.shade(agg)
+            path = os.path.dirname(file_name)
+            if not path:
+                path = os.getcwd()
+            name = os.path.basename(file_name)
+            name = os.path.splitext(name)[0]
+            export_image(img, name, export_path=path)
+            return True
+        except Exception as e:
+            return False
+        
     # def make_index_tiles(self, path, zoom_range=None, format=0):
         
     #     import math
