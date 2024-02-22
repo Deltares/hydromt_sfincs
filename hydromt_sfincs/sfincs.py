@@ -15,6 +15,7 @@ import hydromt
 import numpy as np
 import pandas as pd
 import xarray as xr
+from xugrid.core.wrap import UgridDataArray
 from hydromt.models.model_grid import GridModel
 from hydromt.vector import GeoDataArray, GeoDataset
 from hydromt.workflows.forcing import da_to_timedelta
@@ -1007,7 +1008,7 @@ class SfincsModel(GridModel):
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
-                bbox=self.mask.raster.transform_bounds(4326),
+                bbox=self.bbox,
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
@@ -1136,7 +1137,7 @@ class SfincsModel(GridModel):
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
-                bbox=self.mask.raster.transform_bounds(4326),
+                bbox=self.bbox,
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
@@ -1230,7 +1231,7 @@ class SfincsModel(GridModel):
         if qinf is not None:
             da_inf = self.data_catalog.get_rasterdataset(
                 qinf,
-                bbox=self.mask.raster.transform_bounds(4326),
+                bbox=self.bbox,
                 buffer=10,
             )
         elif lulc is not None:
@@ -1241,7 +1242,7 @@ class SfincsModel(GridModel):
                 )
             da_lulc = self.data_catalog.get_rasterdataset(
                 lulc,
-                bbox=self.mask.raster.transform_bounds(4326),
+                bbox=self.bbox,
                 buffer=10,
                 variables=["lulc"],
             )
@@ -1302,7 +1303,7 @@ class SfincsModel(GridModel):
         """
         # get data
         da_org = self.data_catalog.get_rasterdataset(
-            cn, bbox=self.mask.raster.transform_bounds(4326), buffer=10
+            cn, bbox=self.bbox, buffer=10
         )
         # read variable
         v = "cn"
@@ -1352,13 +1353,13 @@ class SfincsModel(GridModel):
 
         # Read the datafiles
         da_landuse = self.data_catalog.get_rasterdataset(
-            lulc, bbox=self.mask.raster.transform_bounds(4326), buffer=10
+            lulc, bbox=self.bbox, buffer=10
         )
         da_HSG = self.data_catalog.get_rasterdataset(
-            hsg, bbox=self.mask.raster.transform_bounds(4326), buffer=10
+            hsg, bbox=self.bbox, buffer=10
         )
         da_Ksat = self.data_catalog.get_rasterdataset(
-            ksat, bbox=self.mask.raster.transform_bounds(4326), buffer=10
+            ksat, bbox=self.bbox, buffer=10
         )
         df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
 
@@ -2274,7 +2275,7 @@ class SfincsModel(GridModel):
         # read data
         ds = self.data_catalog.get_rasterdataset(
             discharge,
-            bbox=self.mask.raster.transform_bounds(4326),
+            bbox=self.bbox,
             buffer=2,
             time_tuple=self.get_model_time(),  # model time
             variables=["discharge"],
@@ -2283,7 +2284,7 @@ class SfincsModel(GridModel):
         if uparea is not None and "uparea" in gdf.columns:
             da_upa = self.data_catalog.get_rasterdataset(
                 uparea,
-                bbox=self.mask.raster.transform_bounds(4326),
+                bbox=self.bbox,
                 buffer=2,
                 variables=["uparea"],
             )
@@ -2345,7 +2346,7 @@ class SfincsModel(GridModel):
         # get data for model domain and config time range
         precip = self.data_catalog.get_rasterdataset(
             precip,
-            bbox=self.mask.raster.transform_bounds(4326),
+            bbox=self.bbox,
             buffer=2,
             time_tuple=self.get_model_time(),
             variables=["precip"],
@@ -2882,12 +2883,12 @@ class SfincsModel(GridModel):
             raise ValueError("Please specify epsg to read this model")
         if self.grid_type == "regular":
             self.read_grid()
-            self.read_subgrid()
         elif self.grid_type == "quadtree":
             fn = self.get_config("qtrfile", fallback="sfincs.nc", abs_path=True)
             if not isfile(fn):
                 raise IOError(f".nc path {fn} does not exist")
             self.quadtree.read(file_name = fn)
+        self.read_subgrid()
         self.read_geoms()
         self.read_forcing()
         self.logger.info("Model read")
@@ -2955,6 +2956,19 @@ class SfincsModel(GridModel):
             if epsg is not None:
                 ds.raster.set_crs(epsg)
             self.set_grid(ds)
+
+            # TODO - fix this properly; but to create overlays in GUIs, 
+            # we always convert regular grids to a UgridDataArray
+            self.quadtree = QuadtreeGrid(logger=self.logger)
+            if self.config.get("rotation", 0) != 0:  # This is a rotated regular grid
+                self.quadtree.data = UgridDataArray.from_structured(
+                    self.mask, "xc", "yc"
+                )
+            else:
+                self.quadtree.data = UgridDataArray.from_structured(
+                    self.mask
+                )
+            self.quadtree.data.grid.set_crs(self.crs)
 
             # keep some metadata maps from gis directory
             fns = glob.glob(join(self.root, "gis", "*.tif"))
@@ -3027,14 +3041,17 @@ class SfincsModel(GridModel):
                 self.logger.warning(f"sbgfile not found at {fn}")
                 return
 
-            if fn.parts[-1].endswith(".sbg"): # read binary file
-                self.reggrid.subgrid.read_binary(file_name=fn, mask=self.mask)
-                self.subgrid = self.reggrid.subgrid.to_xarray(
-                    dims=self.mask.raster.dims, coords=self.mask.raster.coords
-                )
-            else: # read netcdf file
-                self.reggrid.subgrid.read(file_name=fn)
-                self.subgrid = self.reggrid.subgrid.ds
+            if self.grid_type == "regular":
+                if fn.parts[-1].endswith(".sbg"): # read binary file
+                    self.reggrid.subgrid.read_binary(file_name=fn, mask=self.mask)
+                    self.subgrid = self.reggrid.subgrid.to_xarray(
+                        dims=self.mask.raster.dims, coords=self.mask.raster.coords
+                    )
+                else: # read netcdf file
+                    self.reggrid.subgrid.read(file_name=fn)
+                    self.subgrid = self.reggrid.subgrid.ds
+            else:
+                self.quadtree.subgrid.read(file_name=fn)    
 
     def write_subgrid(self):
         """Write SFINCS subgrid file."""
@@ -3328,6 +3345,20 @@ class SfincsModel(GridModel):
                 if len(rename) == 0:
                     continue
                 ds = xr.merge([self.forcing[v] for v in rename.keys()]).rename(rename)
+
+                # Rename latitude/lat to 'y' and longitude/lon to 'x' if present in ds_coords 
+                # NOTE: this is to match SFINCS conventions
+                coordinates_to_rename = {
+                    "latitude": "y",
+                    "lat": "y",
+                    "longitude": "x",
+                    "lon": "x"
+                }
+
+                for coord_name, new_name in coordinates_to_rename.items():
+                    if coord_name in ds.coords:
+                        ds = ds.rename({coord_name: new_name})
+
                 # get filename from config
                 if f"{fname}file" not in self.config:
                     self.set_config(f"{fname}file", f"{name}.nc")
