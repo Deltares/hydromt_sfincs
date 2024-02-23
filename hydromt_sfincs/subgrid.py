@@ -67,24 +67,24 @@ class SubgridTableRegular:
         var_list = ["zmin", "zmax", "ffit", "navg"]
         for var in var_list:
             uv_var = np.zeros(nr_points)
-            uv_var[index_mu1[active_indices]] = (
-                ds["u_" + var].values.flatten()[active_cells]
-            )
-            uv_var[index_nu1[active_indices]] = (
-                ds["v_" + var].values.flatten()[active_cells]
-            )
+            uv_var[index_mu1[active_indices]] = ds["u_" + var].values.flatten()[
+                active_cells
+            ]
+            uv_var[index_nu1[active_indices]] = ds["v_" + var].values.flatten()[
+                active_cells
+            ]
             locals()["uv_" + var] = uv_var
 
         var_list_levels = ["havg", "nrep", "pwet"]
         for var in var_list_levels:
             uv_var = np.zeros((nlevels, nr_points))
             for ilevel in range(nlevels):
-                uv_var[ilevel, index_mu1[active_indices]] = (
-                    ds["u_" + var][ilevel].values.flatten()[active_cells]
-                )
-                uv_var[ilevel, index_nu1[active_indices]] = (
-                    ds["v_" + var][ilevel].values.flatten()[active_cells]
-                )
+                uv_var[ilevel, index_mu1[active_indices]] = ds["u_" + var][
+                    ilevel
+                ].values.flatten()[active_cells]
+                uv_var[ilevel, index_nu1[active_indices]] = ds["v_" + var][
+                    ilevel
+                ].values.flatten()[active_cells]
             locals()["uv_" + var] = uv_var
 
         # Make new xarray dataset
@@ -669,13 +669,23 @@ class SubgridTableRegular:
             lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]
         elif self.version == 1:
             uvlst2 = [
-                "u_zmin", "u_zmax","u_ffit","u_navg",
-                "v_zmin","v_zmax","v_ffit","v_navg",
+                "u_zmin",
+                "u_zmax",
+                "u_ffit",
+                "u_navg",
+                "v_zmin",
+                "v_zmax",
+                "v_ffit",
+                "v_navg",
             ]
             lst3 = [
-                "z_level", 
-                "u_havg", "u_nrep", "u_pwet",
-                "v_havg","v_nrep","v_pwet",
+                "z_level",
+                "u_havg",
+                "u_nrep",
+                "u_pwet",
+                "v_havg",
+                "v_nrep",
+                "v_pwet",
             ]
 
         # 2D arrays
