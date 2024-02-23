@@ -132,6 +132,8 @@ class SubgridTableRegular:
 
         # File version
         # self.version = np.fromfile(file, dtype=np.int32, count=1)[0]
+
+        # Initialize the data-arrays
         self.nr_cells = np.fromfile(file, dtype=np.int32, count=1)[0]
         self.nr_uv_points = np.fromfile(file, dtype=np.int32, count=1)[0]
         self.nlevels = np.fromfile(file, dtype=np.int32, count=1)[0]
@@ -154,11 +156,6 @@ class SubgridTableRegular:
         self.u_navg = np.full(
             (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
-        self.u_pwet = np.full(
-            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
-        )
-        self.u_nrep = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.u_ffit = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
 
         # V points
         self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
@@ -170,19 +167,17 @@ class SubgridTableRegular:
             (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
         )
 
+        # Now read the data
         self.z_zmin[iok[0], iok[1]] = np.fromfile(
             file, dtype=np.float32, count=self.nr_cells
         )
         self.z_zmax[iok[0], iok[1]] = np.fromfile(
             file, dtype=np.float32, count=self.nr_cells
         )
-        # self.z_zmean[iok[0], iok[1]] = np.fromfile(
-        #     file, dtype=np.float32, count=self.nr_cells
-        # )
         self.z_volmax[iok[0], iok[1]] = np.fromfile(
             file, dtype=np.float32, count=self.nr_cells
         )
-        for ilevel in range(self.nlevels - 1):
+        for ilevel in range(self.nlevels):
             self.z_depth[ilevel, iok[0], iok[1]] = np.fromfile(
                 file, dtype=np.float32, count=self.nr_cells
             )
