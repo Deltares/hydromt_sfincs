@@ -296,8 +296,10 @@ class SfincsModel(GridModel):
             * {'bbox': [xmin, ymin, xmax, ymax]}
             * {'geom': 'path/to/polygon_geometry'}
 
+            Note: For the 'bbox' option the coordinates need to be provided in WG84/EPSG:4326.
+
             For a complete overview of all region options,
-            see :py:function:~hydromt.workflows.basin_mask.parse_region
+            see :py:func:`hydromt.workflows.basin_mask.parse_region`
         res : float, optional
             grid resolution, by default 100 m
         crs : Union[str, int], optional
@@ -388,7 +390,7 @@ class SfincsModel(GridModel):
         datasets_dep : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
             [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
-            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+            For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         interp_method : str, optional
@@ -764,7 +766,7 @@ class SfincsModel(GridModel):
             or xarray raster object ('elevtn').
             Optional merge arguments include: 'zmin', 'zmax', 'mask', 'offset', 'reproj_method',
             and 'merge_method', see example below. For a complete overview of all merge options,
-            see :py:function:~hydromt.workflows.merge_multi_dataarrays
+            see :py:func:`hydromt.workflows.merge_multi_dataarrays`
 
             ::
 
@@ -805,7 +807,7 @@ class SfincsModel(GridModel):
               segment_length [m] (default 500m) and riv_bank_q [0-1] (default 0.5)
               which used to estimate the river bank height in case river depth is provided.
 
-            For more info see :py:function:~hydromt.workflows.bathymetry.burn_river_rect
+            For more info see :py:func:`hydromt.workflows.bathymetry.burn_river_rect`
 
            ::
 
@@ -882,8 +884,8 @@ class SfincsModel(GridModel):
             logger.warning(
                 "Keyword nbins is deprecated and will be removed in future versions. Please use nlevels instead."
             )
-            nlevels = nbins 
-        
+            nlevels = nbins
+
         if self.grid_type == "regular":
             self.reggrid.subgrid.build(
                 da_mask=self.mask,
@@ -2396,7 +2398,7 @@ class SfincsModel(GridModel):
 
         Parameters
         ----------
-        timeseries, str, Path
+        timeseries: str, Path
             Path to tabulated timeseries csv file with time index in first column
             and location IDs in the first row,
             see :py:meth:`hydromt.open_timeseries_from_table`, for details.
@@ -2621,7 +2623,7 @@ class SfincsModel(GridModel):
         datasets_dep : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
             [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
-            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+            For a complete overview of all merge options, see :py:func:`~hydromt.workflows.merge_multi_dataarrays`
             Note that subgrid/dep_subgrid.tif is automatically used if present and datasets_dep is left empty.
         zoom_range : Union[int, List[int]], optional
             Range of zoom levels for which tiles are created, by default [0,13]
@@ -3042,12 +3044,12 @@ class SfincsModel(GridModel):
                 return
 
             if self.grid_type == "regular":
-                if fn.parts[-1].endswith(".sbg"): # read binary file
+                if fn.parts[-1].endswith(".sbg"):  # read binary file
                     self.reggrid.subgrid.read_binary(file_name=fn, mask=self.mask)
                     self.subgrid = self.reggrid.subgrid.to_xarray(
                         dims=self.mask.raster.dims, coords=self.mask.raster.coords
                     )
-                else: # read netcdf file
+                else:  # read netcdf file
                     self.reggrid.subgrid.read(file_name=fn)
                     self.subgrid = self.reggrid.subgrid.ds
             else:
@@ -3061,9 +3063,9 @@ class SfincsModel(GridModel):
             if "sbgfile" not in self.config:
                 # apparently no subgrid was read, so set default filename
                 self.set_config("sbgfile", "sfincs_subgrid.nc")
-            
+
             fn = self.get_config("sbgfile", abs_path=True)
-            if fn.parts[-1].endswith(".sbg"): 
+            if fn.parts[-1].endswith(".sbg"):
                 # write binary file
                 self.reggrid.subgrid.write_binary(file_name=fn, mask=self.mask)
             else:
@@ -3106,6 +3108,8 @@ class SfincsModel(GridModel):
                     gdf = utils.read_drn(fn, crs=self.crs)
                 else:
                     gdf = utils.read_xy(fn, crs=self.crs)
+                # this seems to be required for new pandas versions
+                gdf.set_geometry("geometry", inplace=True)
                 self.set_geoms(gdf, name=gname)
         # read additional geojson files from gis directory
         for fn in glob.glob(join(self.root, "gis", "*.geojson")):
@@ -3822,7 +3826,7 @@ class SfincsModel(GridModel):
                     reclass_table = join(DATADIR, "lulc", f"{lulc}_mapping.csv")
                 if reclass_table is None:
                     raise IOError(
-                        f"Manning roughness mapping file not found: {reclass_table}"
+                        f"Manning roughness 'reclass_table' csv file must be provided"
                     )
                 da_lulc = self.data_catalog.get_rasterdataset(
                     lulc,

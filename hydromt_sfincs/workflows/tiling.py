@@ -1,4 +1,5 @@
 """Tiling functions for fast visualization of the SFINCS model in- and output data."""
+import logging
 import math
 import os
 from itertools import product
@@ -15,6 +16,8 @@ from pyproj import Transformer
 from .merge import merge_multi_dataarrays
 
 __all__ = ["create_topobathy_tiles", "downscale_floodmap_webmercator"]
+
+logger = logging.getLogger(__name__)
 
 
 def downscale_floodmap_webmercator(
@@ -133,6 +136,7 @@ def create_topobathy_tiles(
     zoom_range: Union[int, List[int]] = [0, 13],
     z_range: List[int] = [-20000.0, 20000.0],
     fmt="bin",
+    logger=logger,
 ):
     """Create webmercator topobathy tiles for a given region.
 
@@ -189,7 +193,7 @@ def create_topobathy_tiles(
         maxx, maxy = map(min, zip(transformer.transform(maxx, maxy), [20037508.34] * 2))
 
     for izoom in range(zoom_range[0], zoom_range[1] + 1):
-        print("Processing zoom level " + str(izoom))
+        logger.debug("Processing zoom level " + str(izoom))
 
         zoom_path = os.path.join(topobathy_path, str(izoom))
 
@@ -381,6 +385,6 @@ def tile_window(zl, minx, miny, maxx, maxy):
     # Create window generator
     lu = product(np.arange(minx, maxx, dxy), np.arange(maxy, miny, -dxy))
     for l, u in lu:
-        col = int(odx + (l - minx) / dxy)
-        row = int(ody + (maxy - u) / dxy)
+        col = round(odx + (l - minx) / dxy)
+        row = round(ody + (maxy - u) / dxy)
         yield Affine(dxy / 256, 0, l, 0, -dxy / 256, u), col, row
