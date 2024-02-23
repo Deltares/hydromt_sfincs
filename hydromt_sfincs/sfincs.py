@@ -749,8 +749,8 @@ class SfincsModel(GridModel):
             logger.warning(
                 "Keyword nbins is deprecated and will be removed in future versions. Please use nlevels instead."
             )
-            nlevels = nbins 
-        
+            nlevels = nbins
+
         if self.grid_type == "regular":
             self.reggrid.subgrid.build(
                 da_mask=self.mask,
@@ -2864,12 +2864,12 @@ class SfincsModel(GridModel):
                 self.logger.warning(f"sbgfile not found at {fn}")
                 return
 
-            if fn.parts[-1].endswith(".sbg"): # read binary file
+            if fn.parts[-1].endswith(".sbg"):  # read binary file
                 self.reggrid.subgrid.read_binary(file_name=fn, mask=self.mask)
                 self.subgrid = self.reggrid.subgrid.to_xarray(
                     dims=self.mask.raster.dims, coords=self.mask.raster.coords
                 )
-            else: # read netcdf file
+            else:  # read netcdf file
                 self.reggrid.subgrid.read(file_name=fn)
                 self.subgrid = self.reggrid.subgrid.ds
 
@@ -2881,9 +2881,9 @@ class SfincsModel(GridModel):
             if "sbgfile" not in self.config:
                 # apparently no subgrid was read, so set default filename
                 self.set_config("sbgfile", "sfincs_subgrid.nc")
-            
+
             fn = self.get_config("sbgfile", abs_path=True)
-            if fn.parts[-1].endswith(".sbg"): 
+            if fn.parts[-1].endswith(".sbg"):
                 # write binary file
                 self.reggrid.subgrid.write_binary(file_name=fn, mask=self.mask)
             else:

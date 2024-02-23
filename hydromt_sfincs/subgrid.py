@@ -27,7 +27,7 @@ class SubgridTableRegular:
         """Load subgrid table from netcdf file."""
         # Read from netcdf file with xarray
         self.ds = xr.open_dataset(file_name)
-        self.ds.close() # Should this be closed ?
+        self.ds.close()  # Should this be closed ?
         # Should we also make self.z_zmin, self.z_zmax, etc. ?
 
         self.nlevels = self.ds.dims["levels"]
@@ -42,7 +42,7 @@ class SubgridTableRegular:
         ds = ds.transpose("levels", "x", "y")
 
         # find indices of active cells
-        index_nm, index_mu1, index_nu1 = utils.find_uv_indices(mask)       
+        index_nm, index_mu1, index_nu1 = utils.find_uv_indices(mask)
 
         # get number of levels
         nlevels = self.nlevels
@@ -54,24 +54,37 @@ class SubgridTableRegular:
         z_zmin = ds["z_zmin"].values.flatten()[active_cells]
         z_zmax = ds["z_zmax"].values.flatten()[active_cells]
         z_volmax = ds["z_volmax"].values.flatten()[active_cells]
-        z_level = np.array([ds["z_level"][ilevel].values.flatten()[active_cells] for ilevel in range(nlevels)])
-     
+        z_level = np.array(
+            [
+                ds["z_level"][ilevel].values.flatten()[active_cells]
+                for ilevel in range(nlevels)
+            ]
+        )
+
         # get nr of active points (where index_nm > -1)
         nr_points = max(index_mu1.max(), index_nu1.max()) + 1
 
         var_list = ["zmin", "zmax", "ffit", "navg"]
         for var in var_list:
             uv_var = np.zeros(nr_points)
-            uv_var[index_mu1[active_indices]] = ds["u_" + var].values.flatten()[active_cells]
-            uv_var[index_nu1[active_indices]] = ds["v_" + var].values.flatten()[active_cells]
+            uv_var[index_mu1[active_indices]] = (
+                ds["u_" + var].values.flatten()[active_cells]
+            )
+            uv_var[index_nu1[active_indices]] = (
+                ds["v_" + var].values.flatten()[active_cells]
+            )
             locals()["uv_" + var] = uv_var
 
         var_list_levels = ["havg", "nrep", "pwet"]
         for var in var_list_levels:
             uv_var = np.zeros((nlevels, nr_points))
             for ilevel in range(nlevels):
-                uv_var[ilevel, index_mu1[active_indices]] = ds["u_" + var][ilevel].values.flatten()[active_cells]
-                uv_var[ilevel, index_nu1[active_indices]] = ds["v_" + var][ilevel].values.flatten()[active_cells]
+                uv_var[ilevel, index_mu1[active_indices]] = (
+                    ds["u_" + var][ilevel].values.flatten()[active_cells]
+                )
+                uv_var[ilevel, index_nu1[active_indices]] = (
+                    ds["v_" + var][ilevel].values.flatten()[active_cells]
+                )
             locals()["uv_" + var] = uv_var
 
         # Make new xarray dataset
@@ -86,9 +99,11 @@ class SubgridTableRegular:
 
         for var in var_list:
             ds_new["uv_" + var] = xr.DataArray(locals()["uv_" + var], dims=("npuv"))
-        
+
         for var in var_list_levels:
-            ds_new["uv_" + var] = xr.DataArray(locals()["uv_" + var], dims=("levels", "npuv"))
+            ds_new["uv_" + var] = xr.DataArray(
+                locals()["uv_" + var], dims=("levels", "npuv")
+            )
 
         # ensure levels is last dimension
         ds_new = ds_new.transpose("npuv", "np", "levels")
@@ -276,10 +291,10 @@ class SubgridTableRegular:
         datasets_rgh: list[dict] = [],
         datasets_riv: list[dict] = [],
         nlevels: int = 10,
-        nr_subgrid_pixels = 20,
-        nrmax = 2000,
-        max_gradient = 5.0,
-        z_minimum = -99999.0,
+        nr_subgrid_pixels: int = 20,
+        nrmax: int = 2000,
+        max_gradient: float = 5.0,
+        z_minimum: float = -99999.0,
         huthresh: float = 0.01,
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
@@ -408,7 +423,9 @@ class SubgridTableRegular:
         self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         # self.z_zmean = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.z_level = np.full((nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.z_level = np.full(
+            (nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
 
         # U points
         self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
@@ -651,8 +668,15 @@ class SubgridTableRegular:
             uvlst2 = ["u_zmin", "u_zmax", "v_zmin", "v_zmax"]
             lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]
         elif self.version == 1:
-            uvlst2 = ["u_zmin", "u_zmax", "u_ffit", "u_navg", "v_zmin", "v_zmax", "v_ffit", "v_navg"]
-            lst3 = ["z_level", "u_havg", "u_nrep", "u_pwet", "v_havg", "v_nrep", "v_pwet"]
+            uvlst2 = [
+                "u_zmin", "u_zmax","u_ffit","u_navg",
+                "v_zmin","v_zmax","v_ffit","v_navg",
+            ]
+            lst3 = [
+                "z_level", 
+                "u_havg", "u_nrep", "u_pwet",
+                "v_havg","v_nrep","v_pwet",
+            ]
 
         # 2D arrays
         for name in zlst2 + uvlst2:
@@ -943,7 +967,6 @@ def subgrid_q_table(
 
     # Loop through levels
     for ilevel in range(nlevels):
-
         # Top of level
         zlevel = zmin + ilevel * dlevel
         zz[ilevel] = zlevel

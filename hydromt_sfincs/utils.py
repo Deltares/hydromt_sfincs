@@ -1185,6 +1185,7 @@ def _downscale_floodmap_da(
 
     return hmax
 
+
 def find_uv_indices(mask: xr.DataArray):
     """Find the where the properties of the u and v points are stored in the subgrid file for a regular grid."""
 
@@ -1197,10 +1198,10 @@ def find_uv_indices(mask: xr.DataArray):
     mu1 = np.zeros(nr_cells, dtype=int) - 1
     nu1 = np.zeros(nr_cells, dtype=int) - 1
 
-    ms = np.linspace(0, mask.shape[1]-1, mask.shape[1], dtype=int)
-    ns = np.linspace(0, mask.shape[0]-1, mask.shape[0], dtype=int)
+    ms = np.linspace(0, mask.shape[1] - 1, mask.shape[1], dtype=int)
+    ns = np.linspace(0, mask.shape[0] - 1, mask.shape[0], dtype=int)
 
-    m,n = np.meshgrid(ms, ns)
+    m, n = np.meshgrid(ms, ns)
 
     m = np.transpose(m).flatten()
     n = np.transpose(n).flatten()
@@ -1215,20 +1216,20 @@ def find_uv_indices(mask: xr.DataArray):
         nn = n[ic] + 1
         if nn < nmax:
             mm = m[ic]
-            nm = mm*nmax + nn
+            nm = mm * nmax + nn
             j = binary_search(nms, nm)
             if j is not None:
-                nu1[ic] = j            
+                nu1[ic] = j
         # mu1
         nn = n[ic]
         mm = m[ic] + 1
-        nm = mm*nmax + nn
+        nm = mm * nmax + nn
         j = binary_search(nms, nm)
         if j is not None:
             mu1[ic] = j
 
     # For regular grids, only the points with mask>0 are stored
-    index_nm  = np.zeros(nr_cells, dtype=int) - 1
+    index_nm = np.zeros(nr_cells, dtype=int) - 1
     index_mu1 = np.zeros(nr_cells, dtype=int) - 1
     index_nu1 = np.zeros(nr_cells, dtype=int) - 1
     npuv = 0
@@ -1239,20 +1240,21 @@ def find_uv_indices(mask: xr.DataArray):
         if mask[ip] > 0:
             index_nm[ip] = npc
             npc += 1
-            if mu1[ip]>=0:
+            if mu1[ip] >= 0:
                 if mask[mu1[ip]] > 0:
                     index_mu1[ip] = npuv
                     npuv += 1
-            if nu1[ip]>=0:
+            if nu1[ip] >= 0:
                 if mask[nu1[ip]] > 0:
                     index_nu1[ip] = npuv
                     npuv += 1
 
     return index_nm, index_mu1, index_nu1
 
-def binary_search(vals, val):    
+
+def binary_search(vals, val):
     indx = np.searchsorted(vals, val)
-    if indx<np.size(vals):
+    if indx < np.size(vals):
         if vals[indx] == val:
             return indx
-    return None    
+    return None
