@@ -2530,7 +2530,7 @@ class SfincsModel(GridModel):
                 root=path,
                 region=region,
                 datasets_dep=datasets_dep,
-                index_path=os.path.join(path, "index"),
+                index_path=os.path.join(path, "indices"),
                 zoom_range=zoom_range,
                 z_range=z_range,
                 fmt=fmt,
