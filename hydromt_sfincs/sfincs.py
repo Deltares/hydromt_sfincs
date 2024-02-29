@@ -1917,7 +1917,7 @@ class SfincsModel(GridModel):
                     gdf_locs = gdf_locs.set_index(col)
                     self.logger.info(f"Setting gdf_locs index to {col}")
                     break
-            if not (gdf_locs.index) == set(df_ts.columns):
+            if not set(gdf_locs.index) == set(df_ts.columns):
                 gdf_locs = gdf_locs.set_index(df_ts.columns)
                 self.logger.info(
                     f"No matching index column found in gdf_locs; assuming the order is correct"
@@ -2698,7 +2698,7 @@ class SfincsModel(GridModel):
                 root=path,
                 region=region,
                 datasets_dep=datasets_dep,
-                index_path=os.path.join(path, "index"),
+                index_path=os.path.join(path, "indices"),
                 zoom_range=zoom_range,
                 z_range=z_range,
                 fmt=fmt,
