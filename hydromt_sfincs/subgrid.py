@@ -829,21 +829,21 @@ class SubgridTableQuadtree:
         refi   = nr_subgrid_pixels
         # nr_cells is length of dimension "cells" in ds_mesh. CHECK IF THIS IS CORRECT
         nr_cells = ds_mesh.dims['mesh2d_nFaces']
-        is_geographic = ds_mesh.ugrid.grid.crs.is_geographic # TO DO crs
+        is_geographic = ds_mesh.ugrid.grid.crs.is_geographic
         nlevs  = ds_mesh.attrs["nr_levels"]
         cosrot = np.cos(ds_mesh.attrs["rotation"]*np.pi/180)
         sinrot = np.sin(ds_mesh.attrs["rotation"]*np.pi/180)
 
         # Grid neighbors
-        level = ds_mesh["level"].values[:]
-        n   = ds_mesh["n"].values[:]
-        m   = ds_mesh["m"].values[:]
+        level = ds_mesh["level"].values[:] - 1
+        n   = ds_mesh["n"].values[:] - 1
+        m   = ds_mesh["m"].values[:] - 1
         nu  = ds_mesh["nu"].values[:]
-        nu1 = ds_mesh["nu1"].values[:]
-        nu2 = ds_mesh["nu2"].values[:]
+        nu1 = ds_mesh["nu1"].values[:] - 1
+        nu2 = ds_mesh["nu2"].values[:] - 1
         mu  = ds_mesh["mu"].values[:]
-        mu1 = ds_mesh["mu1"].values[:]
-        mu2 = ds_mesh["mu2"].values[:]
+        mu1 = ds_mesh["mu1"].values[:] - 1
+        mu2 = ds_mesh["mu2"].values[:] - 1
 
         # U/V points 
         # Need to count the number of uv points in order allocate arrays (probably better to store this in the grid)
@@ -1055,14 +1055,11 @@ class SubgridTableQuadtree:
                             # Cell falls inside block
                             index_cells_in_block[nr_cells_in_block] = indx
                             nr_cells_in_block += 1
-                            # TO DO indices for uv points
-                            # and nn, mm, dir and type -1,0,1       
-
                     index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
 
                     logger.debug("Number of active cells in block    : " + str(nr_cells_in_block))
 
-                    # Better to first loop through cells and then through uv points ?
+                    # TODO: Parallelize from here
 
                     # Loop through all active cells in this block
                     for ic in range(nr_cells_in_block):
@@ -1081,10 +1078,8 @@ class SubgridTableQuadtree:
 
                         # Compute pixel size in metres
                         if is_geographic:
-                            # Compute latitude of cell (Find a better and faster way to do this. Probably just use the cell center).
-                            mean_lat  = ds_mesh.face_coordinates["y"][indx]    # TODO: Check if this is correct
-                            # ygc = yg[nn : nn + refi, mm : mm + refi]
-                            # mean_lat =np.abs(np.mean(ygc))
+                            ygc = yg[nn : nn + refi, mm : mm + refi]
+                            mean_lat =np.abs(np.mean(ygc))
                             dxpm = dxp*111111.0*np.cos(np.pi*mean_lat/180.0)
                             dypm = dyp*111111.0
                         else:
