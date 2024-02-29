@@ -1,37 +1,35 @@
-# Note that these are the developer dependencies, 
-# you still need to install hydromt-sfincs itself from the package root with:
-# > pip install -e .
 name: hydromt-sfincs-dev
 
 channels:
-  - conda-forge
+- conda-forge
 
 dependencies:
-  - black # formatting
-  - cartopy>=0.20 # to run examples
-  - descartes # to run examples
-  - ffmpeg  # to run examples (animation)
-  - flit>=3.4
-  - geopandas>=0.8
-  - hydromt>=0.9.1
-  - jupyterlab  # to run examples
-  - matplotlib # to run examples
-  - nbsphinx  # docs
-  - numba
-  - numpy
-  - pandas
-  - pillow
-  - pip
-  - pydata-sphinx-theme # docs
-  - pyflwdir>=0.5.5
-  - pyproj
-  - python>=3.9
-  - pytest # tests
-  - pytest-cov # tests
-  - rasterio
-  - scipy
-  - shapely
-  - sphinx # docs
-  - xarray
-  - pip:
-    - sphinx_design  # docs
+- affine
+- cartopy
+- descartes
+- ffmpeg
+- geopandas>=0.8
+- hydromt>=0.9.1
+- jupyterlab
+- matplotlib
+- nbsphinx
+- numba
+- numpy
+- pandas
+- pillow
+- pip
+- pre-commit
+- pydata-sphinx-theme
+- pyflwdir>=0.5.5
+- pyproj
+- pytest-cov
+- pytest>=2.7.3
+- python~=3.11.0
+- rasterio
+- scipy
+- shapely
+- sphinx
+- xarray
+- pip:
+  - black[jupyter]
+  - sphinx_design

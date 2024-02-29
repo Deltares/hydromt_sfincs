@@ -7,7 +7,7 @@ observations:
 discharge:
   data_type: DataFrame
   driver: csv
-  kwargs:
+  driver_kwargs:
     index_col: 0
     parse_dates: true
   path: local_data/discharge.csv
@@ -21,7 +21,7 @@ drainage:
   data_type: GeoDataFrame
   driver: vector
   path: local_data/drainage.geojson
-  
+
 observation_lines:
   data_type: GeoDataFrame
   driver: vector

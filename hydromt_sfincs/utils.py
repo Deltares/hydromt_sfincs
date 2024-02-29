@@ -52,6 +52,7 @@ __all__ = [
     "downscale_floodmap",
     "rotated_grid",
     "build_overviews",
+    "find_uv_indices",
 ]
 
 logger = logging.getLogger(__name__)
@@ -355,7 +356,7 @@ def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
     gdf_msk = gdf_msk[gdf_msk["value"] != 1]
     gdf_msk = gpd.overlay(
         region, gdf_msk, "intersection", keep_geom_type=False
-    ).explode()
+    ).explode(index_parts=True)
     gdf_msk = gdf_msk[gdf_msk.length > 0]
     return gdf_msk
 
@@ -496,6 +497,7 @@ def linestring2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDat
         feat.update({"geometry": LineString(list(zip(*xyz)))})
         records.append(feat)
     gdf = gpd.GeoDataFrame.from_records(records)
+    gdf.set_geometry("geometry", inplace=True)
     if crs is not None:
         gdf.set_crs(crs, inplace=True)
     return gdf
@@ -668,7 +670,7 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") 
 
     gdf = copy.deepcopy(gdf_drainage)
     # get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc
-    endpoints = gdf.boundary.explode().unstack()
+    endpoints = gdf.boundary.explode(index_parts=True).unstack()
     gdf["xsnk"] = endpoints[0].x
     gdf["ysnk"] = endpoints[0].y
     gdf["xsrc"] = endpoints[1].x
@@ -901,6 +903,10 @@ def downscale_floodmap(
     if timedim:
         zsmax = zsmax.max(timedim)
 
+    # Hydromt expects a string so if a Path is provided, convert to str
+    if isinstance(floodmap_fn, Path):
+        floodmap_fn = str(floodmap_fn)
+
     if isinstance(dep, xr.DataArray):
         hmax = _downscale_floodmap_da(
             zsmax=zsmax,
@@ -1107,6 +1113,10 @@ def build_overviews(
         overview levels are determined based on the size of the dataset.
     """
 
+    # Endswith is not a method of Path so convert to str
+    if isinstance(fn, Path):
+        fn = str(fn)
+
     # check if fn is a geotiff file
     extensions = [".tif", ".tiff"]
     assert any(
@@ -1174,3 +1184,77 @@ def _downscale_floodmap_da(
         hmax = hmax.where(mask)
 
     return hmax
+
+
+def find_uv_indices(mask: xr.DataArray):
+    """Find the where the properties of the u and v points are stored in the subgrid file for a regular grid."""
+
+    mask = mask.values
+
+    # nr of cells
+    nr_cells = mask.shape[0] * mask.shape[1]
+
+    # get the index of the u and v points in a combined array
+    mu1 = np.zeros(nr_cells, dtype=int) - 1
+    nu1 = np.zeros(nr_cells, dtype=int) - 1
+
+    ms = np.linspace(0, mask.shape[1] - 1, mask.shape[1], dtype=int)
+    ns = np.linspace(0, mask.shape[0] - 1, mask.shape[0], dtype=int)
+
+    m, n = np.meshgrid(ms, ns)
+
+    m = np.transpose(m).flatten()
+    n = np.transpose(n).flatten()
+
+    mask = mask.transpose().flatten()
+
+    nmax = n.max() + 1
+    nms = m * nmax + n
+
+    for ic in range(nr_cells):
+        # nu1
+        nn = n[ic] + 1
+        if nn < nmax:
+            mm = m[ic]
+            nm = mm * nmax + nn
+            j = binary_search(nms, nm)
+            if j is not None:
+                nu1[ic] = j
+        # mu1
+        nn = n[ic]
+        mm = m[ic] + 1
+        nm = mm * nmax + nn
+        j = binary_search(nms, nm)
+        if j is not None:
+            mu1[ic] = j
+
+    # For regular grids, only the points with mask>0 are stored
+    index_nm = np.zeros(nr_cells, dtype=int) - 1
+    index_mu1 = np.zeros(nr_cells, dtype=int) - 1
+    index_nu1 = np.zeros(nr_cells, dtype=int) - 1
+    npuv = 0
+    npc = 0
+    # Loop through all cells
+    for ip in range(nr_cells):
+        # Check if this cell is active
+        if mask[ip] > 0:
+            index_nm[ip] = npc
+            npc += 1
+            if mu1[ip] >= 0:
+                if mask[mu1[ip]] > 0:
+                    index_mu1[ip] = npuv
+                    npuv += 1
+            if nu1[ip] >= 0:
+                if mask[nu1[ip]] > 0:
+                    index_nu1[ip] = npuv
+                    npuv += 1
+
+    return index_nm, index_mu1, index_nu1
+
+
+def binary_search(vals, val):
+    indx = np.searchsorted(vals, val)
+    if indx < np.size(vals):
+        if vals[indx] == val:
+            return indx
+    return None

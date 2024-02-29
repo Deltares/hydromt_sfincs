@@ -31,7 +31,7 @@ def test_model_class(case):
     mod = SfincsModel(root=root, mode="r")
     mod.read()
     # run test_model_api() method
-    non_compliant_list = mod.test_model_api()
+    non_compliant_list = mod._test_model_api()
     assert len(non_compliant_list) == 0
     # pass
 
@@ -107,9 +107,13 @@ def test_subgrid_rivers(mod):
     gdf_riv = mod.data_catalog.get_geodataframe(
         "rivers_lin2019_v1", geom=mod.region, buffer=1e3
     )
+
+    # create dummy depths for the river based on the width
     rivdph = gdf_riv["rivwth"].values / 100
-    rivdph[-1] = np.nan
     gdf_riv["rivdph"] = rivdph
+
+    # set the depth of the river with "COMID": 21002062 to nan
+    gdf_riv.loc[gdf_riv["COMID"] == 21002062, "rivdph"] = np.nan
 
     sbg_org = mod.subgrid.copy()
 
@@ -369,6 +373,7 @@ def test_model_build(tmpdir, case):
                     check_less_precise=True,  # allow for rounding errors in geoms
                     check_like=True,  # order may be different
                     check_geom_type=True,  # geometry types should be the same
+                    normalize=True,  # normalize geometry
                 )
             except AssertionError:  # re-raise error with geom name
                 invalid_geoms.append(name)

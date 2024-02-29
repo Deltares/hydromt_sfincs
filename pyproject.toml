@@ -13,7 +13,7 @@ authors = [
 dependencies = [
     "affine",
     "geopandas>=0.8",
-    "hydromt>=0.9.1",
+    "hydromt>=0.9.1, <0.10",
     "numba",
     "numpy",
     "pandas",
@@ -25,7 +25,7 @@ dependencies = [
     "shapely",
     "xarray",
 ]
-requires-python = ">=3.8" # fix tests to support older versions
+requires-python = ">=3.9" # fix tests to support older versions
 readme = "README.rst"
 classifiers = [
     # https://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -40,16 +40,18 @@ dynamic = ['version', 'description']
 
 [project.optional-dependencies]
 test = [
-	"black",
+	"black[jupyter]",
 	"pytest>=2.7.3",
 	"pytest-cov",
+    "pre-commit",
 ]
 doc = [
     "nbsphinx",
 	"pydata-sphinx-theme",
 	"sphinx",
+    "sphinx_design",
 ]
-full = [
+examples = [
     "cartopy",
     "descartes",
     "ffmpeg",
@@ -57,6 +59,8 @@ full = [
     "matplotlib",
     "pillow",
 ]
+
+full = ["hydromt_sfincs[test, doc, examples]"]
 
 [project.urls]
 Documentation = "https://deltares.github.io/hydromt_sfincs/"
@@ -67,11 +71,18 @@ sfincs = "hydromt_sfincs.sfincs:SfincsModel"
 
 [tool.black]
 line-length = 88
-target-version = ['py38']
+target-version = ['py311']
 
 [tool.flit.sdist]
 include = ["hydromt_sfincs"]
 exclude = ["docs", "examples", "envs", "tests", "binder", ".github", "sandbox"]
+
+[tool.make_env]
+channels = ["conda-forge"]
+deps_not_in_conda = [
+  "sphinx_design",
+  "black[jupyter]",
+]
 
 [tool.pytest.ini_options]
 filterwarnings = [

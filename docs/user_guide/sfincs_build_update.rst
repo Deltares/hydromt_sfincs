@@ -4,8 +4,8 @@
 Building or updating a model
 =============================
 
-This plugin allows users to build or update a SFINCS model from available data using 
-the :ref:`command line interface <sfincs_cli>` or :ref:`Python scripting <sfincs_python>`. 
+This plugin allows users to build or update a SFINCS model from available data using
+the :ref:`command line interface <sfincs_cli>` or :ref:`Python scripting <sfincs_python>`.
 For a brief overview of the differences, see :ref:`Working with the SFINCS model <working_with_sfincs>`.
 
 In the following sections, examples are provided how to build your SFINCS model with HydroMT using either the CLI or Python scripting.
@@ -15,8 +15,8 @@ In the following sections, examples are provided how to build your SFINCS model 
 Command Line Interface (CLI) - Basic
 =====================================
 
-This plugin allows users to **build** a complete SFINCS model from available data for your area of interest. The model region_ is typically defined by a bounding box, 
-see example below, or a geometry file. Once the configuration and data libraries are set, you can build a model by using: 
+This plugin allows users to **build** a complete SFINCS model from available data for your area of interest. The model region_ is typically defined by a bounding box,
+see example below, or a geometry file. Once the configuration and data libraries are set, you can build a model by using:
 
 .. code-block:: console
 
@@ -52,19 +52,19 @@ in its corresponding section. See the HydroMT core documentation for more info a
 
   setup_dep:
     datasets_dep:
-    - elevtn: merit_hydro       # 1st elevation dataset	
+    - elevtn: merit_hydro       # 1st elevation dataset
       zmin: 0.001               # only use where values > 0.001
     - elevtn: gebco             # 2nd eleveation dataset (to be merged with the first)
 
   setup_mask_active:
     mask: data//region.geojson  # Note that this is local data and only valid for this example
-    zmin: -5                    # set cells with an elevation <-5 to inactive	
+    zmin: -5                    # set cells with an elevation <-5 to inactive
 
   setup_mask_bounds:
     btype: waterlevel           # Set waterlevel boundaries
     zmax: -1                    # only cells with an elevation <-1 can be waterlevel boundaries
 
-Note that the order in which the components are listed in the yml-file is important (methods are executed from top to bottom): 
+Note that the order in which the components are listed in the yml-file is important (methods are executed from top to bottom):
 
 - :py:func:`~hydromt_sfincs.SfincsModel.setup_grid` or :py:func:`~hydromt_sfincs.SfincsModel.setup_grid_from_region` should always be run first to define the model grid.
 - Many methods (e.g., :py:func:`~hydromt_sfincs.SfincsModel.setup_mask_active`) need elevation data to work properly, hence :py:func:`~hydromt_sfincs.SfincsModel.setup_dep` should be run before most other methods.
@@ -74,13 +74,13 @@ Note that the order in which the components are listed in the yml-file is import
 Data Catalogs
 -------------
 
-Data sources are provided to HydroMT in one or more user-definfed data catalog (yaml) files 
-or from pre-defined data catalogs. These data catalogs contain required information on the 
-different data sources so that HydroMT can process them for the different models. 
+Data sources are provided to HydroMT in one or more user-definfed data catalog (yaml) files
+or from pre-defined data catalogs. These data catalogs contain required information on the
+different data sources so that HydroMT can process them for the different models.
 There are three ways for the user to select which data catalog to use:
 
-- There are several `pre-defined data catalog <https://deltares.github.io/hydromt/latest/user_guide/data_existing_cat.html>`_ 
-  Amongst other, these include the `deltares_data` data catalog for Deltares users which requires access to the Deltares P-drive. 
+- There are several `pre-defined data catalog <https://deltares.github.io/hydromt/latest/user_guide/data_existing_cat.html>`_
+  Amongst other, these include the `deltares_data` data catalog for Deltares users which requires access to the Deltares P-drive.
   More pre-defined data catalogs will be added in the future.
 - Furthermore, the user can prepare its own yaml libary (or libraries) (see
   `HydroMT documentation <https://deltares.github.io/hydromt/latest/index>`_ to check the guidelines).
@@ -101,19 +101,19 @@ and options to use for compound flooding applications.
 Python scripting - Advanced
 ===========================
 
-Next to the command line interface, HydroMT-SFINCS also allows to setup (or interact with) a SFINCS model from Python scripting. 
+Next to the command line interface, HydroMT-SFINCS also allows to setup (or interact with) a SFINCS model from Python scripting.
 The main advantage of this approach is that you can work with in-memory datasets, e.g. datasets that you have modified, next to datasets that are defined in the data catalog.
 
 Typical applications where this approach can be useful are:
 
 - when you want to modify gridded data (e.g. elevation or manning) before creating a model
-- when you want to modify the forcing conditions (e.g. discharge or precipitation) while creating multiple scenarios 
+- when you want to modify the forcing conditions (e.g. discharge or precipitation) while creating multiple scenarios
 - when you want to remove one of the forcing locations (e.g. a river inflow point) from the model
 
 .. code-block:: python
 
     from hydromt_sfincs import SfincsModel
-  
+
     sf = SfincsModel(data_libs=["artifact_data"], root="sfincs_compound")
 
     sf.setup_grid(x0=318650, y0=5040000, dx=50.0, dy=50.0, nmax=107, mmax=250, rotation=27, epsg=32633)
@@ -143,7 +143,8 @@ See `Example: Build from Script <../_examples/build_from_script.ipynb>`_ for a m
 
 .. toctree::
     :hidden:
-    
+
     Example: Build from CLI <../_examples/build_from_cli.ipynb>
-    Example: Build from Script <../_examples/build_from_script.ipynb>
+    Example: Build from script <../_examples/build_from_script.ipynb>
+    Example: Setup model forcing <../_examples/example_forcing.ipynb>
     Example: Working with data <../_examples/example_datasources.ipynb>

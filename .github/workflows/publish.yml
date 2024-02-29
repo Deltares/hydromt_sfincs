@@ -16,11 +16,11 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
- 
-      - uses: actions/setup-python@v4
+
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
-          python-version: 3.8
+          python-version: 3.11
 
       - name: Install dependencies
         run: |
@@ -60,24 +60,21 @@ jobs:
           ls -ltrh
           ls -ltrh dist
 
-      - name: Setup environment
-        uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/setup-python@v5
+        id: pip
         with:
-          python-version: "3.9"
-          mamba-version: "*"
-          channels: conda-forge,defaults
-          channel-priority: true
-          environment-file: envs/hydromt-sfincs-min.yml
-          activate-environment: hydromt-sfincs-min
+          # caching, see https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+          python-version: '3.11'
 
-      - name: Conda info
+      - name: Install wheel
         run: |
-          conda info
-          conda list
-
-      - name: Verify the built dist/wheel is valid
-        run: |
+          pip install --upgrade pip
           python -m pip install dist/hydromt_sfincs*.whl
+
+      - name: Verify the built wheel is valid
+        run: |
           python -c 'from hydromt_sfincs import __version__ as v; print(v)'
           echo "$(hydromt --models)"
 
