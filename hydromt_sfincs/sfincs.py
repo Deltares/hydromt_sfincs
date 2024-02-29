@@ -916,7 +916,7 @@ class SfincsModel(GridModel):
                 datasets_rgh=datasets_rgh,
                 datasets_riv=datasets_riv,
                 buffer_cells=buffer_cells,
-                nbins=nbins,
+                nlevels=nlevels,
                 nr_subgrid_pixels=nr_subgrid_pixels,
                 nrmax=nrmax,
                 max_gradient=max_gradient,

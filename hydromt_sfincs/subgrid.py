@@ -829,7 +829,7 @@ class SubgridTableQuadtree:
         refi   = nr_subgrid_pixels
         # nr_cells is length of dimension "cells" in ds_mesh. CHECK IF THIS IS CORRECT
         nr_cells = ds_mesh.dims['mesh2d_nFaces']
-        is_geographic = ds_mesh.raster.crs.is_geographic # TO DO crs
+        is_geographic = ds_mesh.ugrid.grid.crs.is_geographic # TO DO crs
         nlevs  = ds_mesh.attrs["nr_levels"]
         cosrot = np.cos(ds_mesh.attrs["rotation"]*np.pi/180)
         sinrot = np.sin(ds_mesh.attrs["rotation"]*np.pi/180)
@@ -981,7 +981,7 @@ class SubgridTableQuadtree:
                                           dims=("y", "x"), 
                                           coords=coords)
                     # Make sure da_sbg has the correct CRS
-                    da_sbg.raster.set_crs(ds_mesh.raster.crs)             
+                    da_sbg.raster.set_crs(ds_mesh.ugrid.grid.crs)             
 
                     # get subgrid bathymetry tile
                     da_dep = workflows.merge_multi_dataarrays(
