@@ -12,6 +12,7 @@ authors = [
 ]
 dependencies = [
     "affine",
+    "datashader",
     "geopandas>=0.8",
     "hydromt>=0.9.1, <0.10",
     "numba",
@@ -24,6 +25,7 @@ dependencies = [
     "scipy",
     "shapely",
     "xarray",
+    "xugrid",
 ]
 requires-python = ">=3.9" # fix tests to support older versions
 readme = "README.rst"
