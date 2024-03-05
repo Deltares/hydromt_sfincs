@@ -24,6 +24,7 @@ dependencies = [
     "scipy",
     "shapely",
     "xarray",
+    "xugrid",
 ]
 requires-python = ">=3.9" # fix tests to support older versions
 readme = "README.rst"
