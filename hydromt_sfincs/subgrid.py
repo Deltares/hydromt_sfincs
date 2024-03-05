@@ -754,6 +754,7 @@ class SubgridTableQuadtree:
         highres_dir: str = None,
         logger=logger,
         progress_bar=None,
+        parallel=False,
     ):
         """Create subgrid tables for regular grid based on a list of depth,
         Manning's rougnhess and river datasets.
@@ -1060,152 +1061,176 @@ class SubgridTableQuadtree:
                     logger.debug("Number of active cells in block    : " + str(nr_cells_in_block))
 
                     # TODO: Parallelize from here
+                    if parallel:
+                        # Parallelize this loop
 
-                    # Loop through all active cells in this block
-                    for ic in range(nr_cells_in_block):
+                        (
+                            z_zmin,
+                            z_zmax,
+                            z_volmax,
+                            z_level,
+                            uv_zmin,
+                            uv_zmax,
+                            uv_havg,
+                            uv_nrep,
+                            uv_pwet,
+                            uv_ffit,
+                            uv_navg,
+                            z_index,
+                            uv_index,
+                        ) = process_tile_quadtree(
+                                index_cells_in_block = index_cells_in_block,
+                                n = n,
+                                m = m,
+                                bn0 = bn0,
+                                bm0 = bm0,
+                                mu = mu,
+                                mu1 = mu1,
+                                mu2 = mu2,
+                                nu = nu,
+                                nu1 = nu1,
+                                nu2 = nu2,
+                                index_mu1 = index_mu1,
+                                index_mu2 = index_mu2,
+                                index_nu1 = index_nu1,
+                                index_nu2 = index_nu2,
+                                zg = da_dep.values,
+                                manning_grid = da_man.values,
+                                dxp = dxp,
+                                dyp = dxp,
+                                refi = refi,
+                                nlevels = nlevels,
+                                yg = yg,
+                                max_gradient = max_gradient,
+                                huthresh = huthresh,
+                                is_geographic=is_geographic,
+                        )
+                        # Assign data to self.data
+                        self.data["z_zmin"].values[index_cells_in_block] = z_zmin
+                        self.data["z_zmax"].values[z_index] = z_zmax
+                        self.data["z_volmax"].values[z_index] = z_volmax
+                        self.data["z_level"].values[:,z_index] = z_level
+                        self.data["uv_zmin"][uv_index] = uv_zmin
+                        self.data["uv_zmax"][uv_index] = uv_zmax
+                        self.data["uv_havg"][:, uv_index] = uv_havg
+                        self.data["uv_nrep"][:, uv_index] = uv_nrep
+                        self.data["uv_pwet"][:, uv_index] = uv_pwet
+                        self.data["uv_ffit"][uv_index] = uv_ffit
+                        self.data["uv_navg"][uv_index] = uv_navg
 
-                        # Process cell
+                    else:
+                        # Loop through all active cells in this block
+                        for ic in range(nr_cells_in_block):
 
-                        # Index in full quadtree mesh
-                        indx = index_cells_in_block[ic]
+                            # Process cell
 
-                        # Get indices of pixels in block
-                        nn  = (n[indx] - bn0) * refi # First pixel n index in cell
-                        mm  = (m[indx] - bm0) * refi # First pixel m index in cell
+                            # Index in full quadtree mesh
+                            indx = index_cells_in_block[ic]
 
-                        # Matrix with pixels in cell
-                        zv = da_dep.values[nn : nn + refi, mm : mm + refi].flatten()
+                            # Get indices of pixels in block
+                            nn  = (n[indx] - bn0) * refi # First pixel n index in cell
+                            mm  = (m[indx] - bm0) * refi # First pixel m index in cell
 
-                        # Compute pixel size in metres
-                        if is_geographic:
-                            ygc = yg[nn : nn + refi, mm : mm + refi]
-                            mean_lat =np.abs(np.mean(ygc))
-                            dxpm = dxp*111111.0*np.cos(np.pi*mean_lat/180.0)
-                            dypm = dyp*111111.0
-                        else:
-                            dxpm = dxp
-                            dypm = dyp
-                        
-                        zvmin = -20.0
-                        z, v, zmin, zmax = subgrid_v_table(zv, dxpm, dypm, nlevels, zvmin, max_gradient)
+                            # Matrix with pixels in cell
+                            zv = da_dep.values[nn : nn + refi, mm : mm + refi].flatten()
 
-                        self.data["z_zmin"].values[indx] = zmin
-                        self.data["z_zmax"].values[indx] = zmax
-                        self.data["z_volmax"].values[indx]  = v[-1]
-                        self.data["z_level"].values[:,indx] = z
-                        
-                        # Now the U/V points
-                        # First right
-                        if mu[indx] <= 0:
-                            if mu1[indx] >= 0:
-                                nn  = (n[indx] - bn0)*refi
-                                mm  = (m[indx] - bm0)*refi + int(0.5*refi)
-                                zv  = np.transpose(da_dep.values[nn : nn + refi, mm : mm + refi]).flatten()
-                                mv  = np.transpose(da_man.values[nn : nn + refi, mm : mm + refi]).flatten()
-                                iuv = index_mu1[indx]
-                                if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, mv, nlevels, huthresh)
-                                    self.data["uv_zmin"][iuv]   = zmin
-                                    self.data["uv_zmax"][iuv]   = zmax
-                                    self.data["uv_havg"][:, iuv] = havg
-                                    self.data["uv_nrep"][:, iuv] = nrep
-                                    self.data["uv_pwet"][:, iuv] = pwet
-                                    self.data["uv_ffit"][iuv]   = ffit
-                                    self.data["uv_navg"][iuv]   = navg
-                        else:        
-                            if mu1[indx] >= 0:
-                                nn = (n[indx] - bn0)*refi
-                                mm = (m[indx] - bm0)*refi + int(3*refi/4)
-                                zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
-                                zgu = np.transpose(zgu)
-                                zv  = zgu.flatten()
-                                manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
-                                manning = np.transpose(manning)
-                                manning = manning.flatten()
-                                iuv = index_mu1[indx]
-                                if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
-                                    self.data["uv_zmin"][iuv]   = zmin
-                                    self.data["uv_zmax"][iuv]   = zmax
-                                    self.data["uv_havg"][:, iuv] = havg
-                                    self.data["uv_nrep"][:, iuv] = nrep
-                                    self.data["uv_pwet"][:, iuv] = pwet
-                                    self.data["uv_ffit"][iuv]   = ffit
-                                    self.data["uv_navg"][iuv]   = navg
-                            if mu2[indx] >= 0:
-                                nn = (n[indx] - bn0)*refi + int(refi/2)
-                                mm = (m[indx] - bm0)*refi + int(3*refi/4)
-                                zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
-                                zgu = np.transpose(zgu)
-                                zv  = zgu.flatten()
-                                manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
-                                manning = np.transpose(manning)
-                                manning = manning.flatten()
-                                iuv = index_mu2[indx]
-                                if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
-                                    self.data["uv_zmin"][iuv]   = zmin
-                                    self.data["uv_zmax"][iuv]   = zmax
-                                    self.data["uv_havg"][:, iuv] = havg
-                                    self.data["uv_nrep"][:, iuv] = nrep
-                                    self.data["uv_pwet"][:, iuv] = pwet
-                                    self.data["uv_ffit"][iuv]   = ffit
-                                    self.data["uv_navg"][iuv]   = navg
+                            # Compute pixel size in metres
+                            if is_geographic:
+                                ygc = yg[nn : nn + refi, mm : mm + refi]
+                                mean_lat =np.abs(np.mean(ygc))
+                                dxpm = dxp*111111.0*np.cos(np.pi*mean_lat/180.0)
+                                dypm = dyp*111111.0
+                            else:
+                                dxpm = dxp
+                                dypm = dyp
+                            
+                            zvmin = -20.0
+                            z, v, zmin, zmax = subgrid_v_table(zv, dxpm, dypm, nlevels, zvmin, max_gradient)
 
-                        # Now above
-                        if nu[indx] <= 0:
-                            if nu1[indx] >= 0:
-                                nn = (n[indx] - bn0)*refi + int(0.5*refi)
-                                mm = (m[indx] - bm0)*refi
-                                zgu = da_dep.values[nn : nn + refi, mm : mm + refi]
-                                zv  = zgu.flatten()
-                                manning = da_man.values[nn : nn + refi, mm : mm + refi]
-                                manning = manning.flatten()
-                                iuv = index_nu1[indx]
-                                if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
-                                    self.data["uv_zmin"][iuv]   = zmin
-                                    self.data["uv_zmax"][iuv]   = zmax
-                                    self.data["uv_havg"][:, iuv] = havg
-                                    self.data["uv_nrep"][:, iuv] = nrep
-                                    self.data["uv_pwet"][:, iuv] = pwet
-                                    self.data["uv_ffit"][iuv]   = ffit
-                                    self.data["uv_navg"][iuv]   = navg
-                        else:        
-                            if nu1[indx] >= 0:
-                                nn = (n[indx] - bn0)*refi + int(3*refi/4)
-                                mm = (m[indx] - bm0)*refi
-                                zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
-                                zv  = zgu.flatten()
-                                manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
-                                manning = manning.flatten()
-                                iuv = index_nu1[indx]
-                                if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
-                                    self.data["uv_zmin"][iuv]   = zmin
-                                    self.data["uv_zmax"][iuv]   = zmax
-                                    self.data["uv_havg"][:, iuv] = havg
-                                    self.data["uv_nrep"][:, iuv] = nrep
-                                    self.data["uv_pwet"][:, iuv] = pwet
-                                    self.data["uv_ffit"][iuv]   = ffit
-                                    self.data["uv_navg"][iuv]   = navg
-                            if nu2[indx] >= 0:
-                                nn = (n[indx] - bn0)*refi + int(3*refi/4)
-                                mm = (m[indx] - bm0)*refi + int(refi/2)
-                                zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
-                                zv  = zgu.flatten()
-                                manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
-                                manning = manning.flatten()
-                                iuv = index_nu2[indx]
-                                if iuv>=0:
-                                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
-                                    self.data["uv_zmin"][iuv]   = zmin
-                                    self.data["uv_zmax"][iuv]   = zmax
-                                    self.data["uv_havg"][:, iuv] = havg
-                                    self.data["uv_nrep"][:, iuv] = nrep
-                                    self.data["uv_pwet"][:, iuv] = pwet
-                                    self.data["uv_ffit"][iuv]   = ffit
-                                    self.data["uv_navg"][iuv]   = navg
+                            self.data["z_zmin"].values[indx] = zmin
+                            self.data["z_zmax"].values[indx] = zmax
+                            self.data["z_volmax"].values[indx]  = v[-1]
+                            self.data["z_level"].values[:,indx] = z
+                                                                
+                            # Now the U/V points
+                            # First right
+                            if mu[indx] <= 0:
+                                if mu1[indx] >= 0:
+                                    nn  = (n[indx] - bn0)*refi
+                                    mm  = (m[indx] - bm0)*refi + int(0.5*refi)
+                                    zv  = np.transpose(da_dep.values[nn : nn + refi, mm : mm + refi]).flatten()
+                                    mv  = np.transpose(da_man.values[nn : nn + refi, mm : mm + refi]).flatten()
+                                    iuv = index_mu1[indx]
+                                    if iuv>=0:
+                                        zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, mv, nlevels, huthresh)
+                                        self._assign_uv_data(iuv, zmin, zmax, havg, nrep, pwet, ffit, navg)
+                            else:        
+                                if mu1[indx] >= 0:
+                                    nn = (n[indx] - bn0)*refi
+                                    mm = (m[indx] - bm0)*refi + int(3*refi/4)
+                                    zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                    zgu = np.transpose(zgu)
+                                    zv  = zgu.flatten()
+                                    manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                    manning = np.transpose(manning)
+                                    manning = manning.flatten()
+                                    iuv = index_mu1[indx]
+                                    if iuv>=0:
+                                        zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
+                                        self._assign_uv_data(iuv, zmin, zmax, havg, nrep, pwet, ffit, navg)
+
+                                if mu2[indx] >= 0:
+                                    nn = (n[indx] - bn0)*refi + int(refi/2)
+                                    mm = (m[indx] - bm0)*refi + int(3*refi/4)
+                                    zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                    zgu = np.transpose(zgu)
+                                    zv  = zgu.flatten()
+                                    manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                    manning = np.transpose(manning)
+                                    manning = manning.flatten()
+                                    iuv = index_mu2[indx]
+                                    if iuv>=0:
+                                        zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
+                                        self._assign_uv_data(iuv, zmin, zmax, havg, nrep, pwet, ffit, navg)
+
+                            # Now above
+                            if nu[indx] <= 0:
+                                if nu1[indx] >= 0:
+                                    nn = (n[indx] - bn0)*refi + int(0.5*refi)
+                                    mm = (m[indx] - bm0)*refi
+                                    zgu = da_dep.values[nn : nn + refi, mm : mm + refi]
+                                    zv  = zgu.flatten()
+                                    manning = da_man.values[nn : nn + refi, mm : mm + refi]
+                                    manning = manning.flatten()
+                                    iuv = index_nu1[indx]
+                                    if iuv>=0:
+                                        zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
+                                        self._assign_uv_data(iuv, zmin, zmax, havg, nrep, pwet, ffit, navg)
+
+                            else:        
+                                if nu1[indx] >= 0:
+                                    nn = (n[indx] - bn0)*refi + int(3*refi/4)
+                                    mm = (m[indx] - bm0)*refi
+                                    zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                    zv  = zgu.flatten()
+                                    manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                    manning = manning.flatten()
+                                    iuv = index_nu1[indx]
+                                    if iuv>=0:
+                                        zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
+                                        self._assign_uv_data(iuv, zmin, zmax, havg, nrep, pwet, ffit, navg)
+
+                                if nu2[indx] >= 0:
+                                    nn = (n[indx] - bn0)*refi + int(3*refi/4)
+                                    mm = (m[indx] - bm0)*refi + int(refi/2)
+                                    zgu = da_dep.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                    zv  = zgu.flatten()
+                                    manning = da_man.values[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                                    manning = manning.flatten()
+                                    iuv = index_nu2[indx]
+                                    if iuv>=0:
+                                        zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
+                                        self._assign_uv_data(iuv, zmin, zmax, havg, nrep, pwet, ffit, navg)
 
                     # if progress_bar:
                     #     print(ibt)
@@ -1214,6 +1239,22 @@ class SubgridTableQuadtree:
                     #         return
                     #     ibt += 1
 
+    def _assign_uv_data(self, iuv, zmin, zmax, havg, nrep, pwet, ffit, navg):
+        """assign u/v point data to the subgrid object
+        
+        Parameters
+        ----------
+        iuv : int
+            index of the u/v point
+        """
+
+        self.data["uv_zmin"][iuv] = zmin
+        self.data["uv_zmax"][iuv] = zmax
+        self.data["uv_havg"][:, iuv] = havg
+        self.data["uv_nrep"][:, iuv] = nrep
+        self.data["uv_pwet"][:, iuv] = pwet
+        self.data["uv_ffit"][iuv] = ffit
+        self.data["uv_navg"][iuv] = navg
 
 @njit
 def process_tile_regular(
@@ -1341,6 +1382,255 @@ def process_tile_regular(
         v_navg,
     )
 
+
+@njit
+def process_tile_quadtree(
+    index_cells_in_block,
+    n,
+    m,
+    bn0,
+    bm0,
+    mu,
+    mu1,
+    mu2,
+    nu,
+    nu1,
+    nu2,
+    index_mu1,
+    index_mu2,
+    index_nu1,
+    index_nu2,
+    zg,
+    manning_grid,
+    dxp,
+    dyp,
+    refi,
+    nlevels,
+    yg,
+    max_gradient,
+    huthresh,
+    is_geographic=False,
+):
+    """calculate subgrid properties for a single tile"""
+
+    # Loop through all active cells in this block
+    nr_cells_in_block = len(index_cells_in_block)
+
+    npuv = 0
+    for ip in index_cells_in_block:
+        if mu1[ip]>=0:
+            npuv += 1
+        if mu2[ip]>=0:
+            npuv += 1
+        if nu1[ip]>=0:
+            npuv += 1
+        if nu2[ip]>=0:
+            npuv += 1
+    # set counter to 0
+    i_npuv = 0
+
+    # Initialize arrays
+    # Z points
+    z_zmin = np.full(nr_cells_in_block, fill_value=np.nan, dtype=np.float32)
+    z_zmax = np.full(nr_cells_in_block, fill_value=np.nan, dtype=np.float32)
+    z_volmax = np.full(nr_cells_in_block, fill_value=np.nan, dtype=np.float32)
+    z_level = np.full((nlevels, nr_cells_in_block), fill_value=np.nan, dtype=np.float32)
+
+    # U/V points
+    uv_zmin = np.full(npuv, fill_value=np.nan, dtype=np.float32)
+    uv_zmax = np.full(npuv, fill_value=np.nan, dtype=np.float32)
+    uv_havg = np.full((nlevels, npuv), fill_value=np.nan, dtype=np.float32)
+    uv_nrep = np.full((nlevels, npuv), fill_value=np.nan, dtype=np.float32)
+    uv_pwet = np.full((nlevels, npuv), fill_value=np.nan, dtype=np.float32)
+    uv_ffit = np.full(npuv, fill_value=np.nan, dtype=np.float32)
+    uv_navg = np.full(npuv, fill_value=np.nan, dtype=np.float32)
+
+    # Indices in full quadtree mesh
+    z_index = np.zeros(nr_cells_in_block, dtype=np.int64)
+    uv_index = np.zeros(npuv, dtype=np.int64)
+
+    for ic in range(nr_cells_in_block):
+
+        # Process cell
+
+        # Index in full quadtree mesh
+        indx = index_cells_in_block[ic]
+
+        # Get indices of pixels in block
+        nn  = (n[indx] - bn0) * refi # First pixel n index in cell
+        mm  = (m[indx] - bm0) * refi # First pixel m index in cell
+
+        # Matrix with pixels in cell
+        zv = zg[nn : nn + refi, mm : mm + refi].flatten()
+
+        # Compute pixel size in metres
+        if is_geographic:
+            ygc = yg[nn : nn + refi, mm : mm + refi]
+            mean_lat =np.abs(np.mean(ygc))
+            dxpm = dxp*111111.0*np.cos(np.pi*mean_lat/180.0)
+            dypm = dyp*111111.0
+        else:
+            dxpm = dxp
+            dypm = dyp
+        
+        zvmin = -20.0
+        z, v, zmin, zmax = subgrid_v_table(zv, dxpm, dypm, nlevels, zvmin, max_gradient)
+
+        z_zmin[ic] = zmin
+        z_zmax[ic] = zmax
+        z_volmax[ic] = v[-1]
+        z_level[:, ic] = z
+        z_index[ic] = indx
+                
+        # Now the U/V points
+        # First right
+        if mu[indx] <= 0:
+            if mu1[indx] >= 0:
+                nn  = (n[indx] - bn0)*refi
+                mm  = (m[indx] - bm0)*refi + int(0.5*refi)
+                zv  = np.transpose(zg[nn : nn + refi, mm : mm + refi]).flatten()
+                mv  = np.transpose(manning_grid[nn : nn + refi, mm : mm + refi]).flatten()
+                iuv = index_mu1[indx]
+                if iuv>=0:
+                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, mv, nlevels, huthresh)
+
+                    uv_zmin[i_npuv] = zmin
+                    uv_zmax[i_npuv] = zmax
+                    uv_havg[:, i_npuv] = havg
+                    uv_nrep[:, i_npuv] = nrep
+                    uv_pwet[:, i_npuv] = pwet
+                    uv_ffit[i_npuv] = ffit
+                    uv_navg[i_npuv] = navg
+                    uv_index[i_npuv] = iuv
+                    i_npuv += 1
+
+        else:        
+            if mu1[indx] >= 0:
+                nn = (n[indx] - bn0)*refi
+                mm = (m[indx] - bm0)*refi + int(3*refi/4)
+                zgu = zg[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                zgu = np.transpose(zgu)
+                zv  = zgu.flatten()
+                manning = manning_grid[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                manning = np.transpose(manning)
+                manning = manning.flatten()
+                iuv = index_mu1[indx]
+                if iuv>=0:
+                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
+
+                    uv_zmin[i_npuv] = zmin
+                    uv_zmax[i_npuv] = zmax
+                    uv_havg[:, i_npuv] = havg
+                    uv_nrep[:, i_npuv] = nrep
+                    uv_pwet[:, i_npuv] = pwet
+                    uv_ffit[i_npuv] = ffit
+                    uv_navg[i_npuv] = navg
+                    uv_index[i_npuv] = iuv
+                    i_npuv += 1
+
+            if mu2[indx] >= 0:
+                nn = (n[indx] - bn0)*refi + int(refi/2)
+                mm = (m[indx] - bm0)*refi + int(3*refi/4)
+                zgu = zg[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                zgu = np.transpose(zgu)
+                zv  = zgu.flatten()
+                manning = manning_grid[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                manning = np.transpose(manning)
+                manning = manning.flatten()
+                iuv = index_mu2[indx]
+                if iuv>=0:
+                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
+
+                    uv_zmin[i_npuv] = zmin
+                    uv_zmax[i_npuv] = zmax
+                    uv_havg[:, i_npuv] = havg
+                    uv_nrep[:, i_npuv] = nrep
+                    uv_pwet[:, i_npuv] = pwet
+                    uv_ffit[i_npuv] = ffit
+                    uv_navg[i_npuv] = navg
+                    uv_index[i_npuv] = iuv
+                    i_npuv += 1
+
+        # Now above
+        if nu[indx] <= 0:
+            if nu1[indx] >= 0:
+                nn = (n[indx] - bn0)*refi + int(0.5*refi)
+                mm = (m[indx] - bm0)*refi
+                zgu = zg[nn : nn + refi, mm : mm + refi]
+                zv  = zgu.flatten()
+                manning = manning_grid[nn : nn + refi, mm : mm + refi]
+                manning = manning.flatten()
+                iuv = index_nu1[indx]
+                if iuv>=0:
+                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
+
+                    uv_zmin[i_npuv] = zmin
+                    uv_zmax[i_npuv] = zmax
+                    uv_havg[:, i_npuv] = havg
+                    uv_nrep[:, i_npuv] = nrep
+                    uv_pwet[:, i_npuv] = pwet
+                    uv_ffit[i_npuv] = ffit
+                    uv_navg[i_npuv] = navg
+                    uv_index[i_npuv] = iuv
+                    i_npuv += 1                    
+        else:        
+            if nu1[indx] >= 0:
+                nn = (n[indx] - bn0)*refi + int(3*refi/4)
+                mm = (m[indx] - bm0)*refi
+                zgu = zg[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                zv  = zgu.flatten()
+                manning = manning_grid[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                manning = manning.flatten()
+                iuv = index_nu1[indx]
+                if iuv>=0:
+                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
+
+                    uv_zmin[i_npuv] = zmin
+                    uv_zmax[i_npuv] = zmax
+                    uv_havg[:, i_npuv] = havg
+                    uv_nrep[:, i_npuv] = nrep
+                    uv_pwet[:, i_npuv] = pwet
+                    uv_ffit[i_npuv] = ffit
+                    uv_navg[i_npuv] = navg
+                    uv_index[i_npuv] = iuv
+                    i_npuv += 1
+
+            if nu2[indx] >= 0:
+                nn = (n[indx] - bn0)*refi + int(3*refi/4)
+                mm = (m[indx] - bm0)*refi + int(refi/2)
+                zgu = zg[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                zv  = zgu.flatten()
+                manning = manning_grid[nn : nn + int(refi/2), mm : mm + int(refi/2)]
+                manning = manning.flatten()
+                iuv = index_nu2[indx]
+                if iuv>=0:
+                    zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
+
+                    uv_zmin[i_npuv] = zmin
+                    uv_zmax[i_npuv] = zmax
+                    uv_havg[:, i_npuv] = havg
+                    uv_nrep[:, i_npuv] = nrep
+                    uv_pwet[:, i_npuv] = pwet
+                    uv_ffit[i_npuv] = ffit
+                    uv_navg[i_npuv] = navg
+                    uv_index[i_npuv] = iuv
+                    i_npuv += 1                   
+
+    return (
+        z_zmin,
+        z_zmax,
+        z_volmax,
+        z_level,
+        uv_zmin,
+        uv_zmax,
+        uv_havg,
+        uv_nrep,
+        uv_pwet,
+        uv_ffit,
+        uv_navg,
+        z_index,
+        uv_index,
+    )
 
 @njit
 def get_dzdh(z, V, a):
@@ -1562,3 +1852,4 @@ def subgrid_q_table(
         ffit = (((gnavg2 - gnavg_top2) / (gnavg2 - gnfit2)) - 1) / (zfit - zmax)
 
     return zmin, zmax, havg, nrep, pwet, ffit, navg, zz
+

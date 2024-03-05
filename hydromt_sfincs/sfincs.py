@@ -747,6 +747,7 @@ class SfincsModel(GridModel):
         rgh_lev_land: float = 0.0,
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
+        parallel: bool = False,
     ):
         """Setup method for subgrid tables based on a list of
         elevation and Manning's roughness datasets.
@@ -929,6 +930,7 @@ class SfincsModel(GridModel):
                 write_man_tif=write_man_tif,
                 highres_dir=highres_dir,
                 logger=self.logger,
+                parallel=parallel,
                 )
             # pass
 

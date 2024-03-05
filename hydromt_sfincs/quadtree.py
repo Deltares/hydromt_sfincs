@@ -736,7 +736,8 @@ class QuadtreeGrid:
         write_man_tif: bool = False,
         highres_dir: str = None,
         logger=logger,
-        progress_bar=None,        
+        progress_bar=None,
+        parallel=False,        
     ):
         self.subgrid.build(
             ds_mesh = self.data,
@@ -759,6 +760,7 @@ class QuadtreeGrid:
             highres_dir = highres_dir,
             logger = logger,
             progress_bar = None,
+            parallel = parallel,
         )
 
 
