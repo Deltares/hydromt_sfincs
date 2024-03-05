@@ -531,7 +531,7 @@ def polygon2gdf(
     gdf = gpd.GeoDataFrame.from_records(records)
     gdf["zmin"] = zmin
     gdf["zmax"] = zmax
-    gdf.set_geometry("geometry", inplace=True)    
+    gdf.set_geometry("geometry", inplace=True)
     if crs is not None:
         gdf.set_crs(crs, inplace=True)
     return gdf
