@@ -45,11 +45,11 @@ class QuadtreeGrid:
         self.subgrid = SubgridTableQuadtree()
         self.df = None
 
-    @property
-    def crs(self):
-        if self.data is None:
-            return None
-        return self.data.grid.crs
+    # @property
+    # def crs(self):
+    #     if self.data is None:
+    #         return None
+    #     return self.data.grid.crs
 
     @property
     def face_coordinates(self):
@@ -142,8 +142,8 @@ class QuadtreeGrid:
         self.mmax = mmax
         self.rotation = rotation
         self.gdf_refinement = gdf_refinement
-        # if epsg is not None:
-        #     self.crs = CRS.from_user_input(epsg)
+        if epsg is not None:
+            self.crs = CRS.from_user_input(epsg)
 
         print("Building mesh ...")
 
@@ -377,8 +377,8 @@ class QuadtreeGrid:
         self.data.attrs = attrs
 
         # Add the crs
-        if epsg is not None:
-            self.data.grid.set_crs(CRS.from_user_input(epsg))
+        # if epsg is not None:
+        #     self.data.grid.set_crs(CRS.from_user_input(epsg))
 
         # Now add the data arrays
         #TODO check if this is the best way to add data to xu.UgridDataset?

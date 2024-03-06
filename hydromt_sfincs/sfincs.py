@@ -61,7 +61,7 @@ class SfincsModel(GridModel):
         "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
         "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
         "wind_2d": ("netamuamv", {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
-        "snapwave": ("netsnapwave", {"wave_height", "wave_period", "wave_direction", "wave_spreading"}),   
+        "snapwave": ("netsnapwave", {"hs":"hs", "tp":"tp", "wd":"wd", "ds": "ds"}),   
         "wavemaker": ("netwavemaker", {"whi":"wavemaker_wave_height","wti":"wavemaker_wave_period","wst":"wavemaker_wave_setup"}),                                             
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
@@ -1921,7 +1921,7 @@ class SfincsModel(GridModel):
                     gdf_locs = gdf_locs.set_index(col)
                     self.logger.info(f"Setting gdf_locs index to {col}")
                     break
-            if not (gdf_locs.index) == set(df_ts.columns):
+            if not set(gdf_locs.index) == set(df_ts.columns):
                 gdf_locs = gdf_locs.set_index(df_ts.columns)
                 self.logger.info(
                     f"No matching index column found in gdf_locs; assuming the order is correct"
@@ -2605,7 +2605,7 @@ class SfincsModel(GridModel):
     def setup_wave_forcing(
         self,
         geodataset: Union[str, Path, xr.Dataset] = None,
-        timeseries: Union[str, Path, pd.DataFrame] = None,
+        timeseries: list = None, #Union[str, Path, pd.DataFrame] = None, #This should now be a list with dataframes, or could we do that anotherway?
         locations: Union[str, Path, gpd.GeoDataFrame] = None,
         buffer: float = 5e3,
         merge: bool = True,
@@ -2647,55 +2647,107 @@ class SfincsModel(GridModel):
         gdf_locs, df_ts = None, None
         
         # If we wouldn't do any clipping, but just parse a geodataset directly:
-        self.set_forcing(geodataset, name="snapwave", split_dataset=False)
+        # self.set_forcing(geodataset, name="snapwave", split_dataset=False)
 
         # TODO: add this back in later
-        # tstart, tstop = self.get_model_time()  # model time
+        tstart, tstop = self.get_model_time()  # model time
         # buffer around snapwave msk==2 values
+        
         # if np.any(self.snapwave_msk == 2):
         #     region = self.mask.where(self.snapwave_msk == 2, 0).raster.vectorize() 
         #     #TODO: check if will be 'snapwave_msk' or 'wave_mask' or 'snapwave.msk' or ...
         # else:
-            # region = self.region
-        # read waterlevel data from geodataset or geodataframe
-        # region = self.region
+        #     region = self.region
+
+        #read wave data from geodataset or geodataframe
+        region = self.region
         
-        # if geodataset is not None:
-        #     # read and clip data in time & space
-        #     da = self.data_catalog.get_geodataset(
-        #         geodataset,
-        #         geom=region,
-        #         buffer=buffer,
-        #         variables=["snapwave"], #TODO: Question - is this correct? will the data_catalog then load all 4 required vars?
-        #         time_tuple=(tstart, tstop),
-        #         crs=self.crs,
-        #     )
-        #     df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
-        #     gdf_locs = da.vector.to_gdf()
-        # elif timeseries is not None:
-        #     df_ts = self.data_catalog.get_dataframe(
-        #         timeseries,
-        #         time_tuple=(tstart, tstop),
-        #         # kwargs below only applied if timeseries not in data catalog
-        #         parse_dates=True,
-        #         index_col=0,
-        #     )
-        #     df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
+        if geodataset is not None:
+            # read and clip data in time & space
+            da = self.data_catalog.get_geodataset(
+                geodataset,
+                # geom=region,
+                buffer=buffer,
+                variables=["hs", "tp", "wd", "ds"], #TODO: Question - is this correct? will the data_catalog then load all 4 required vars?
+                # time_tuple=(tstart, tstop),
+                crs=self.crs,
+            )
+            df_ts = da.transpose(..., da.vector.index_dim).to_dataframe()
+            gdf_locs = da.vector.to_gdf()
 
-        # # read location data (if not already read from geodataset)
-        # if gdf_locs is None and locations is not None:
-        #     gdf_locs = self.data_catalog.get_geodataframe(
-        #         locations, geom=region, buffer=buffer, crs=self.crs
-        #     ).to_crs(self.crs)
-        #     if "index" in gdf_locs.columns:
-        #         gdf_locs = gdf_locs.set_index("index")
-        # elif gdf_locs is None and "wave_height" in self.forcing: #TODO: Question - check needed for all 4 vars?
-        #     gdf_locs = self.forcing["wave_height"].vector.to_gdf()
-        # elif gdf_locs is None:
-        #     raise ValueError("No wave boundary (snapwave_bnd) points provided.")
+        elif timeseries is not None:
 
-        # # set/ update forcing
-        # self.set_forcing(df_ts=df_ts, gdf_locs=gdf_locs, name=["snapwave"], merge=merge) #TODO: Question - split_dataset instead of merge? en True or False?
+            # Check if timeseries is a list with length = 4
+
+            if len(timeseries) == 4:
+
+                # We could probably do this way faster!
+
+                #Waveheight
+                df_hs = self.data_catalog.get_dataframe(
+                    timeseries[0],
+                    time_tuple=(tstart, tstop),
+                    # kwargs below only applied if timeseries not in data catalog
+                    parse_dates=True,
+                    index_col=0,
+                )
+                df_hs.columns = df_hs.columns.map(int)  # parse column names to integers
+
+
+                #Waveperiod
+                df_tp = self.data_catalog.get_dataframe(
+                    timeseries[1],
+                    time_tuple=(tstart, tstop),
+                    # kwargs below only applied if timeseries not in data catalog
+                    parse_dates=True,
+                    index_col=0,
+                )
+                df_tp.columns = df_tp.columns.map(int)  # parse column names to integers
+
+
+                #Wavedirection
+                df_dir = self.data_catalog.get_dataframe(
+                    timeseries[2],
+                    time_tuple=(tstart, tstop),
+                    # kwargs below only applied if timeseries not in data catalog
+                    parse_dates=True,
+                    index_col=0,
+                )
+                df_dir.columns = df_dir.columns.map(int)  # parse column names to integers
+
+                #Directional spreading
+                df_ds = self.data_catalog.get_dataframe(
+                    timeseries[3],
+                    time_tuple=(tstart, tstop),
+                    # kwargs below only applied if timeseries not in data catalog
+                    parse_dates=True,
+                    index_col=0,
+                )
+                df_ds.columns = df_ds.columns.map(int)  # parse column names to integers
+
+            else:
+                raise ValueError("Not enough wave variables provided. Length should be equal to 4 (hs, tp, dir, ds)")
+
+        # read location data (if not already read from geodataset)
+        if gdf_locs is None and locations is not None:
+            gdf_locs = self.data_catalog.get_geodataframe(
+                locations, geom=region, buffer=buffer, crs=self.crs
+            ).to_crs(self.crs)
+            if "index" in gdf_locs.columns:
+                gdf_locs = gdf_locs.set_index("index")
+        elif gdf_locs is None and "wave_height" in self.forcing: #TODO: Question - check needed for all 4 vars?
+            gdf_locs = self.forcing["wave_height"].vector.to_gdf()
+        elif gdf_locs is None:
+            raise ValueError("No wave boundary (snapwave_bnd) points provided.")
+
+        if geodataset is not None:
+            self.set_forcing(da, name="snapwave")
+
+        if timeseries is not None:
+            self.set_forcing_1d(df_ts=df_hs, gdf_locs=gdf_locs, name="hs", merge=merge)
+            self.set_forcing_1d(df_ts=df_tp, gdf_locs=gdf_locs, name="tp", merge=merge)
+            self.set_forcing_1d(df_ts=df_dir, gdf_locs=gdf_locs, name="wd", merge=merge)
+            self.set_forcing_1d(df_ts=df_ds, gdf_locs=gdf_locs, name="ds", merge=merge)
 
     def setup_wavemaker(
         self,
@@ -2714,7 +2766,7 @@ class SfincsModel(GridModel):
         wavemaker : str, Path
             Path, data source name, or geopandas object to wavemaker line geometry file.          
         merge : bool, optional
-            If True, merge with existing'stype' structures, by default True.
+            If True, merge with existing 'stype' structures, by default True.
         """
         name = self._GEOMS["wavemaker"]
 
