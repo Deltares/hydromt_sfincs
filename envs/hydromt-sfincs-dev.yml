@@ -30,6 +30,9 @@ dependencies:
 - shapely
 - sphinx
 - xarray
+- xugrid
+- mapbox-earcut
+- datashader
 - pip:
   - black[jupyter]
   - sphinx_design
