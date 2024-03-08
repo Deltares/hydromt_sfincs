@@ -3073,7 +3073,7 @@ class SfincsModel(GridModel):
             else:
                 # write netcdf file
                 self.reggrid.subgrid.write(file_name=fn, mask=self.mask)
-        elif self.grid_type == "quadtree" and hasattr(self.quadtree.subgrid, "data"):
+        elif self.grid_type == "quadtree" and self.quadtree.subgrid.data is not None:
             if "sbgfile" not in self.config:
                 # apparently no subgrid was read, so set default filename
                 self.set_config("sbgfile", "sfincs_subgrid.nc")
