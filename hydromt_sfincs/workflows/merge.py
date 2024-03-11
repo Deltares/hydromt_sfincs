@@ -340,9 +340,6 @@ def merge_multi_dataarrays_on_mesh(
     )
     uda_out = xu.UgridDataArray(da0, mesh2d)
 
-    # get extent of mesh
-    bbox = uda_out.ugrid.to_crs(4326).ugrid.total_bounds
-
     # combine with next dataset
     for i in range(0, len(da_list)):
         merge_method = da_list[i].get("merge_method", "first")
@@ -354,6 +351,9 @@ def merge_multi_dataarrays_on_mesh(
         # NOTE for now the default is barycentric
         reproj_method = da_list[i].get("reproj_method", resampling_method)
         da = da_list[i].get("da")
+
+        # get extent of mesh
+        bbox = uda_out.ugrid.to_crs(da.raster.crs).ugrid.total_bounds
 
         # clip before reproject
         da = da.raster.clip_bbox(bbox, buffer=2)

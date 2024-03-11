@@ -751,6 +751,7 @@ class SfincsModel(GridModel):
         rgh_lev_land: float = 0.0,
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
+        parallel: bool = False,
     ):
         """Setup method for subgrid tables based on a list of
         elevation and Manning's roughness datasets.
@@ -920,7 +921,7 @@ class SfincsModel(GridModel):
                 datasets_rgh=datasets_rgh,
                 datasets_riv=datasets_riv,
                 buffer_cells=buffer_cells,
-                nbins=nbins,
+                nlevels=nlevels,
                 nr_subgrid_pixels=nr_subgrid_pixels,
                 nrmax=nrmax,
                 max_gradient=max_gradient,
@@ -933,6 +934,7 @@ class SfincsModel(GridModel):
                 write_man_tif=write_man_tif,
                 highres_dir=highres_dir,
                 logger=self.logger,
+                parallel=parallel,
                 )
             # pass
 
@@ -2885,7 +2887,7 @@ class SfincsModel(GridModel):
                 root=path,
                 region=region,
                 datasets_dep=datasets_dep,
-                index_path=os.path.join(path, "index"),
+                index_path=os.path.join(path, "indices"),
                 zoom_range=zoom_range,
                 z_range=z_range,
                 fmt=fmt,
@@ -3258,7 +3260,7 @@ class SfincsModel(GridModel):
             else:
                 # write netcdf file
                 self.reggrid.subgrid.write(file_name=fn, mask=self.mask)
-        elif self.grid_type == "quadtree" and hasattr(self.quadtree.subgrid, "data"):
+        elif self.grid_type == "quadtree" and self.quadtree.subgrid.data is not None:
             if "sbgfile" not in self.config:
                 # apparently no subgrid was read, so set default filename
                 self.set_config("sbgfile", "sfincs_subgrid.nc")

@@ -72,7 +72,6 @@ class QuadtreeGrid:
         merged = shapely.ops.linemerge(linestrings)
         # Merge polygons
         polygons = shapely.ops.polygonize(merged)
-#        polygons = shapely.simplify(polygons, self.dx)
         
         return gpd.GeoDataFrame(geometry=list(polygons), crs=self.crs) 
     
@@ -91,8 +90,7 @@ class QuadtreeGrid:
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object."""
 
         self.data = xu.open_dataset(file_name)
-        #TODO check if close works/is needed
-        self.data.close()
+        self.data.close()#TODO check if close works/is needed
 
         self.nr_cells = self.data.dims['mesh2d_nFaces']
 
@@ -122,15 +120,15 @@ class QuadtreeGrid:
 
     def build(
         self,
-        x0, 
-        y0, 
-        dx, 
-        dy, 
-        nmax, 
-        mmax, 
-        epsg=None, 
-        rotation=0,
-        gdf_refinement=None
+        x0: float, 
+        y0: float, 
+        dx: float, 
+        dy: float, 
+        nmax: int, 
+        mmax: int, 
+        epsg: int = None, 
+        rotation: float = 0,
+        gdf_refinement: gpd.GeoDataFrame = None
     ):
         """Builds a quadtree SFINCS grid."""
 
@@ -143,523 +141,39 @@ class QuadtreeGrid:
         self.rotation = rotation
         self.gdf_refinement = gdf_refinement
         if epsg is not None:
-            self.crs = CRS.from_user_input(epsg)
+            self.epsg = epsg
+
+        # create cos and sin of rotation
+        self.cosrot = np.cos(self.rotation*np.pi/180)
+        self.sinrot = np.sin(self.rotation*np.pi/180)
 
         print("Building mesh ...")
 
-        # if refinement_polygons is None:
-        #     refinement_polygons = []
-
         start = time.time()
 
-        cosrot = np.cos(self.rotation*np.pi/180)
-        sinrot = np.sin(self.rotation*np.pi/180)
-        
-        refmax = 0
+        # Make regular grid
+        self._get_regular_grid()
+ 
+        # Initialize data arrays 
+        self._initialize_data_arrays()
 
-        # Loop through rows in gdf and create list of polygons
-        ref_pols = []
+        # Refine all cells 
         if self.gdf_refinement is not None:
-            for irow, row in self.gdf_refinement.iterrows():
-                iref = row["refinement_level"]
-                refmax = max(refmax, iref)
-                polygon = {"geometry": row["geometry"], "refinement_level": iref}
-                ref_pols.append(polygon)
-      
-        # Number of refinement levels
-        nlev = refmax + 1
-        self.nr_refinement_levels = nlev
-        self.ifirst = np.zeros(nlev, dtype=int)
+            self._refine_mesh()
 
-        # Set refinement mask
-        nmx       = []
-        mmx       = []
-        dxb       = []
-        dyb       = []
-        refmsk    = []
-        inirefmsk = []
-        isrefined = []
+        # Initialize data arrays
+        self._initialize_data_arrays()
+
+        # Get all neighbor arrays (mu, mu1, mu2, nu, nu1, nu2)
+        self._get_neighbors()
+
+        # Get uv points
+        self._get_uv_points()
+
+        # Create xugrid dataset 
+        self._to_xugrid()
         
-        # Loop through refinement levels to set some constants per level
-        for ilev in range(nlev):
-            nmx.append(self.nmax*2**(ilev))
-            mmx.append(self.mmax*2**(ilev))
-            dxb.append(self.dx/2**(ilev))
-            dyb.append(self.dy/2**(ilev))
-            refmsk.append(np.zeros((nmx[ilev], mmx[ilev]), dtype=int))
-            inirefmsk.append(np.zeros((nmx[ilev], mmx[ilev]), dtype=int))
-            isrefined.append(np.zeros((nmx[ilev], mmx[ilev]), dtype=int))
-        
-        inirefmsk[0] += 1
-
-        # First set initial refinement levels based on polygons
-        print("Finding points in polygons ...")
-        if ref_pols:
-            for ilev in reversed(range(nlev)):
-                print("Level " + str(ilev + 1) + " ...")
-                # Loop through polygons
-                for ipol, polygon in enumerate(ref_pols):
-                    # Check if this refinement level ilev matches refinement levels of this polygon
-                    if polygon["refinement_level"] == ilev:
-                        n0 = 1e9
-                        n1 = -1e9
-                        m0 = 1e9
-                        m1 = -1e9
-                        # Rotate polygon to grid in order to get n0, n1, m0 and m1
-                        coords = polygon["geometry"].exterior.coords[:]
-                        for ipoint, point in enumerate(coords):
-                            xp =   cosrot*(point[0] - self.x0) + sinrot*(point[1] - self.y0)
-                            yp = - sinrot*(point[0] - self.x0) + cosrot*(point[1] - self.y0)
-                            n0 = min(n0, int(np.floor(yp / dyb[ilev])))
-                            n1 = max(n1, int(np.ceil(yp / dyb[ilev])))
-                            m0 = min(m0, int(np.floor(xp / dxb[ilev])))
-                            m1 = max(m1, int(np.ceil(xp / dxb[ilev])))
-
-                        n0 = max(n0, 0)
-                        n1 = max(n1, 0)
-                        m0 = max(m0, 0)
-                        m1 = max(m1, 0)
-
-                        n0 = min(n0, nmx[ilev] - 1)
-                        n1 = min(n1, nmx[ilev] - 1)
-                        m0 = min(m0, mmx[ilev] - 1)
-                        m1 = min(m1, mmx[ilev] - 1)
-
-                        if m0 == m1 or n0 == n1:
-                            continue
-
-                        nmxx = n1 - n0 + 1
-                        mmxx = m1 - m0 + 1
-                        xcor = np.zeros((4, nmxx, mmxx))
-                        ycor = np.zeros((4, nmxx, mmxx))
-                        for mm in range(mmxx):
-                            m = mm + m0
-                            for nn in range(nmxx):
-                                n = nn + n0
-                                # 4 corner points of this cell
-                                xcor[0, nn, mm] = self.x0 + cosrot*((m    )*dxb[ilev]) - sinrot*((n    )*dyb[ilev])
-                                ycor[0, nn, mm] = self.y0 + sinrot*((m    )*dxb[ilev]) + cosrot*((n    )*dyb[ilev])
-                                xcor[1, nn, mm] = self.x0 + cosrot*((m + 1)*dxb[ilev]) - sinrot*((n    )*dyb[ilev])
-                                ycor[1, nn, mm] = self.y0 + sinrot*((m + 1)*dxb[ilev]) + cosrot*((n    )*dyb[ilev])
-                                xcor[2, nn, mm] = self.x0 + cosrot*((m + 1)*dxb[ilev]) - sinrot*((n + 1)*dyb[ilev])
-                                ycor[2, nn, mm] = self.y0 + sinrot*((m + 1)*dxb[ilev]) + cosrot*((n + 1)*dyb[ilev])
-                                xcor[3, nn, mm] = self.x0 + cosrot*((m    )*dxb[ilev]) - sinrot*((n + 1)*dyb[ilev])
-                                ycor[3, nn, mm] = self.y0 + sinrot*((m    )*dxb[ilev]) + cosrot*((n + 1)*dyb[ilev])
-                        for j in range(4):
-                            inp0 = inpolygon(np.squeeze(xcor[j,:,:]),
-                                             np.squeeze(ycor[j,:,:]),
-                                             polygon["geometry"])
-                            iok = np.where(inp0)
-                            nok = iok[0] + n0
-                            mok = iok[1] + m0
-                            inirefmsk[ilev][nok, mok] = 1
-
-        # Highest levels have now been set        
-        if nlev == 1:
-            # Activate all cells
-            refmsk[0] = refmsk[0] + 1
-        else:    
-            # Loop through levels in reverse order to refine cells
-            print("Refining cells ...")
-            for ilev in reversed(range(nlev)):
-                print("Level " + str(ilev + 1) + " ...")
-                # Get n0, n1, m0 and m1
-                for m in range(mmx[ilev]):
-                    for n in range(nmx[ilev]):
-                        if not isrefined[ilev][n, m]:
-                            # Two reasons to use this block
-                            # 1) Neighbor is refined
-                            # 2) Initial minimum level is ilev
-                            iok = False                          
-                            if inirefmsk[ilev][n, m] == 1:
-                                # This cell lies within a refinement polygon at this level
-                                iok = True
-                            else:
-                                # Check for neighbors (only for coarser levels)
-                                if ilev<nlev - 1:
-                                    # Left
-                                    if m>0:
-                                        if isrefined[ilev][n, m - 1]:
-                                            iok = True
-                                    # Right
-                                    if m<mmx[ilev] - 1:
-                                        if isrefined[ilev][n, m + 1]:
-                                            iok = True
-                                    # Top
-                                    if n>0:
-                                        if isrefined[ilev][n - 1, m]:
-                                            iok = True
-                                    # Bottom
-                                    if n<nmx[ilev] - 1:
-                                        if isrefined[ilev][n + 1, m]:
-                                            iok = True
-
-                            if iok:                            
-                                # Should use this cell
-                                refmsk[ilev][n, m] = 1
-                                # Set lower level cells to refined so that we know in lower
-                                # refinement levels that they should not be used
-                                nn = n
-                                mm = m
-                                for jlev in reversed(range(ilev)):
-                                    if odd(nn):
-                                        nnu = int((nn + 1)/2 - 1)
-                                    else:
-                                        nnu = int((nn)/2)
-                                    if odd(mm):
-                                        mmu = int((mm + 1)/2 - 1)
-                                    else:
-                                        mmu = int((mm)/2)
-                                    isrefined[jlev][nnu, mmu] = 1
-                                    nn = nnu
-                                    mm = mmu                        
-
-                                # Also set 3 other blocks also to 1, unless already refined
-                                [nnbr,mnbr] = get_neighbors_in_larger_cell(n, m)
-                                for j in range(4):
-                                    if nnbr[j]>-1 and nnbr[j]<=nmx[ilev] - 1 and mnbr[j]>-1 and mnbr[j]<=mmx[ilev] - 1:
-                                        if not isrefined[ilev][nnbr[j], mnbr[j]]:
-                                            refmsk[ilev][nnbr[j], mnbr[j]] = 1
-
-
-        # Count total number of cells
-        if nlev == 1:
-            nb = mmx[ilev] * nmx[ilev]
-            level = np.zeros(nb, dtype=int)
-        else:    
-            print("Counting number of cells ...")
-            nb = 0
-            for ilev in range(nlev):
-                for m in range(mmx[ilev]):
-                    for n in range(nmx[ilev]):
-                            if refmsk[ilev][n, m]:
-                                nb = nb + 1                    
-            level = np.empty(nb, dtype=int)
-
-        n     = np.empty(nb, dtype=int)
-        m     = np.empty(nb, dtype=int)
-        z     = np.full(nb, np.nan)
-        self.nr_cells = nb
-
-        if nlev == 1:
-            ns = np.linspace(0, nmx[0] - 1, nmx[0], dtype=int)
-            ms = np.linspace(0, mmx[0] - 1, mmx[0], dtype=int)
-            m, n = np.meshgrid(ms, ns)
-            n = np.transpose(n).flatten()
-            m = np.transpose(m).flatten()
-
-        else:    
-            print("Setting cell indices ...")
-            nb = 0
-            for ilev in range(nlev):
-                for mmm in range(mmx[ilev]):
-                    for nnn in range(nmx[ilev]):
-                            if refmsk[ilev][nnn, mmm]:
-                                level[nb] = ilev
-                                n[nb] = nnn
-                                m[nb] = mmm
-                                nb = nb + 1
-        
-        # We obtained all the n's, m's and levels. Now build the ugrid.
-        print("Making XUGrid ...")
-        ugrid2d = self.get_ugrid2d(n, m, level)
-        self.data = xu.UgridDataset(grids=ugrid2d)
-
-        attrs = {"x0": self.x0,
-                 "y0": self.y0,
-                 "nmax": self.nmax,
-                 "mmax": self.mmax,
-                 "dx": self.dx,
-                 "dy": self.dy,
-                 "rotation": self.rotation,
-                #  "epsg": self.crs.to_epsg(),
-                 "nr_levels": self.nr_refinement_levels}
-        self.data.attrs = attrs
-
-        # Add the crs
-        # if epsg is not None:
-        #     self.data.grid.set_crs(CRS.from_user_input(epsg))
-
-        # Now add the data arrays
-        #TODO check if this is the best way to add data to xu.UgridDataset?
-        self.data["n"] = xu.UgridDataArray(xr.DataArray(data=n, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["m"] = xu.UgridDataArray(xr.DataArray(data=m, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["level"] = xu.UgridDataArray(xr.DataArray(data=level, dims=[ugrid2d.face_dimension]), ugrid2d)
-        
-        # # Set initial bathymetry to zeros
-        # self.data["z"] = xu.UgridDataArray(xr.DataArray(data=z, dims=[ugrid2d.face_dimension]), ugrid2d)
-        
-        # # Set initial SFINCS mask to zeros
-        # mask = np.zeros(np.shape(z), dtype=np.int8)
-        # self.data["mask"] = xu.UgridDataArray(xr.DataArray(data=mask, dims=[ugrid2d.face_dimension]), ugrid2d)
-        # # Set initial SnapWave mask to zeros
-        # swmask = np.zeros(np.shape(z), dtype=np.int8)
-        # self.data["snapwave_mask"] = xu.UgridDataArray(xr.DataArray(data=swmask, dims=[ugrid2d.face_dimension]), ugrid2d)
-
-        print("Number of cells : " + str(nb))
-        print("Time elapsed : " + str(time.time() - start) + " s")
-
-        self.find_neighbors()
-
-    def find_neighbors(self):        
-
-        print("Finding neighbors ...")
-
-        start = time.time()
-
-        n = self.data["n"].values[:] 
-        m = self.data["m"].values[:] 
-        # Initialize neighbor arrays
-        # Set indices of neighbors to -1
-        mu  = np.zeros(self.nr_cells, dtype=np.int8)
-        mu1 = np.zeros(self.nr_cells, dtype=int) - 1
-        mu2 = np.zeros(self.nr_cells, dtype=int) - 1
-        md  = np.zeros(self.nr_cells, dtype=np.int8)
-        md1 = np.zeros(self.nr_cells, dtype=int) - 1
-        md2 = np.zeros(self.nr_cells, dtype=int) - 1
-        nu  = np.zeros(self.nr_cells, dtype=np.int8)
-        nu1 = np.zeros(self.nr_cells, dtype=int) - 1
-        nu2 = np.zeros(self.nr_cells, dtype=int) - 1
-        nd  = np.zeros(self.nr_cells, dtype=np.int8)
-        nd1 = np.zeros(self.nr_cells, dtype=int) - 1
-        nd2 = np.zeros(self.nr_cells, dtype=int) - 1
-        nmx = np.zeros(self.nr_refinement_levels, dtype=int)
-
-        if self.nr_refinement_levels == 1:
-            # Regular grid
-            nmax = n.max() + 1
-            nms  = m*nmax + n
-            for ic in range(self.nr_cells):
-                # nd1
-                nn = n[ic] - 1
-                if nn >= 0:
-                    mm = m[ic]
-                    nm = mm*nmax + nn
-                    j = binary_search(nms, nm)
-                    if j is not None:
-                        nd1[ic] = j
-                # nu1
-                nn = n[ic] + 1
-                if nn < nmax:
-                    mm = m[ic]
-                    nm = mm*nmax + nn
-                    j = binary_search(nms, nm)
-                    if j is not None:
-                        nu1[ic] = j
-                # md1
-                nn = n[ic]
-                mm = m[ic] - 1
-                nm = mm*nmax + nn
-                j = binary_search(nms, nm)
-                if j is not None:
-                    md1[ic] = j
-                # mu1
-                nn = n[ic]
-                mm = m[ic] + 1
-                nm = mm*nmax + nn
-                j = binary_search(nms, nm)
-                if j is not None:
-                    mu1[ic] = j
-        else: 
-            # Quadtree with refinement
-            # Determine maximum n index for each level
-            for ilev in range(self.nr_refinement_levels):
-                ifirst = self.ifirst[ilev]
-                # Now find index of last point in this level
-                if ilev<self.nr_refinement_levels - 1:
-                    ilast = self.ifirst[ilev + 1] - 1
-                else:
-                    ilast = self.nr_cells - 1
-                ns  = n[ifirst:ilast + 1] # All the n indices in this level
-                nmx[ilev] = ns.max()
-            for ilev in range(self.nr_refinement_levels):
-                # Find neighbors in same level
-                # Index of first point in this level
-                ifirst = self.ifirst[ilev]
-                # Now find index of last point in this level
-                if ilev<self.nr_refinement_levels - 1:
-                    ilast = self.ifirst[ilev + 1] - 1
-                else:
-                    ilast = self.nr_cells - 1            
-                nr = ilast - ifirst + 1         # number of cells in this level
-                ns  = n[ifirst:ilast + 1] # All the n indices in this level
-                ms  = m[ifirst:ilast + 1] # All the m indices in this level
-                nms = ms*(nmx[ilev] + 1) + ns  # nm indices for this level
-                
-                for ic in range(nr):    
-                    ib = ifirst + ic                
-                    # Right
-                    nm  = (m[ib] + 1)*(nmx[ilev] + 1) + n[ib]
-                    j = binary_search(nms, nm)
-                    if j is not None:
-                        indxn = j + ifirst # index of neighbor
-                        mu[ib]     = 0
-                        mu1[ib]    = indxn
-                        md[indxn]  = 0
-                        md1[indxn] = ib                    
-                    # Above (make sure we don't look neighbor in column to the right)
-                    if n[ib] < nmx[ilev]:
-                        nm  = m[ib]*(nmx[ilev] + 1) + n[ib] + 1
-                        j = binary_search(nms, nm)
-                        if j is not None:
-                            indxn = j + ifirst # index of neighbor
-                            nu[ib]     = 0
-                            nu1[ib]    = indxn
-                            nd[indxn]  = 0
-                            nd1[indxn] = ib
-                
-                # Find neighbors in coarser level            
-                if ilev>0:        
-                    # Index of first point in the coarser level
-                    ifirstc = self.ifirst[ilev - 1]
-                    # Now find index of last point in the coarser level
-                    ilastc = self.ifirst[ilev] - 1                
-                    nsc  = n[ifirstc:ilastc + 1] # All the n indices in coarser level
-                    msc  = m[ifirstc:ilastc + 1] # All the m indices in coarser level
-                    nmxc = nmx[ilev - 1]
-                    nmsc = msc*(nmxc + 1) + nsc             # nm indices for coarser level                
-                    for ic in range(nr):                    
-                        ib = ifirst + ic                    
-                        # Only need to check if we haven't already found a neighbor at the same level
-                        if mu1[ib]<0:                    
-                            # Right
-                            if odd(m[ib]):
-                                if even(n[ib]):
-                                    # Finer cell is the lower one
-                                    nc  = int(n[ib]/2)
-                                    mc  = int((m[ib] + 1) / 2)
-                                    nmc = mc*(nmxc + 1) + nc
-                                    j = binary_search(nmsc, nmc)
-                                    if j is not None:
-                                        indxn = j + ifirstc # index of neighbor
-                                        mu[ib]     = -1
-                                        mu1[ib]    = indxn
-                                        md[indxn]  = 1
-                                        md1[indxn] = ib
-                                else:    
-                                    # Finer cell is the upper one
-                                    nc  = int((n[ib] - 1) / 2)
-                                    mc  = int((m[ib] + 1) / 2)
-                                    nmc = mc*(nmxc + 1) + nc
-                                    j = binary_search(nmsc, nmc)
-                                    if j is not None:
-                                        indxn = j + ifirstc # index of neighbor
-                                        mu[ib]     = -1
-                                        mu1[ib]    = indxn
-                                        md[indxn]  = 1
-                                        md2[indxn] = ib                
-                        if nu1[ib]<0:    
-                            # Above
-                            if odd(n[ib]):
-                                if even(m[ib]):
-                                    # Finer cell is the left one
-                                    nc  = int((n[ib] + 1) / 2)
-                                    if nc<=nmxc:
-                                        mc  = int(m[ib]/2)
-                                        nmc = mc*(nmxc + 1) + nc
-                                        j = binary_search(nmsc, nmc)
-                                        if j is not None:
-                                            indxn = j + ifirstc # index of neighbor
-                                            nu[ib]     = -1
-                                            nu1[ib]    = indxn
-                                            nd[indxn]  = 1
-                                            nd1[indxn] = ib
-                                else:    
-                                    # Finer cell is the right one
-                                    nc  = int((n[ib] + 1) / 2)
-                                    if nc<=nmxc:
-                                        mc  = int((m[ib] - 1) / 2)
-                                        nmc = mc*(nmxc + 1) + nc
-                                        j = binary_search(nmsc, nmc)
-                                        if j is not None:
-                                            indxn = j + ifirstc # index of neighbor
-                                            nu[ib]     = -1
-                                            nu1[ib]    = indxn
-                                            nd[indxn]  = 1
-                                            nd2[indxn] = ib
-
-                # Find neighbors in finer level
-                if ilev<self.nr_refinement_levels - 1:        
-                    # Index of first point in the finer level
-                    ifirstf = self.ifirst[ilev + 1]
-                    # Now find index of last point in the finer level
-                    if ilev<self.nr_refinement_levels - 2:                
-                        ilastf = self.ifirst[ilev + 2] - 1
-                    else:
-                        ilastf = self.nr_cells - 1                
-                    nsf  = n[ifirstf:ilastf + 1] # All the n indices in finer level
-                    msf  = m[ifirstf:ilastf + 1] # All the m indices in finer level
-                    nmxf = nmx[ilev + 1]
-                    nmsf = msf*(nmxf + 1) + nsf        # nm indices for finer level
-                    
-                    for ic in range(nr):                    
-                        ib = ifirst + ic
-                        # Only need to check if we haven't already found a neighbor at the same level                        
-                        if mu1[ib]<0:                    
-                            # Right
-                            # Finer cell is the lower one
-                            nf  = int(n[ib]*2)
-                            mf  = int((m[ib] + 1)*2)
-                            nmf = mf*(nmxf + 1) + nf
-                            j = binary_search(nmsf, nmf)
-                            if j is not None:
-                                indxn = j + ifirstf # index of neighbor
-                                mu[ib]     = 1
-                                mu1[ib]    = indxn
-                                md[indxn]  = -1
-                                md1[indxn] = ib
-                            # Finer cell is the upper one
-                            nf  = int(n[ib]*2) + 1
-                            mf  = int((m[ib] + 1)*2)
-                            nmf = mf*(nmxf + 1) + nf
-                            j = binary_search(nmsf, nmf)
-                            if j is not None:
-                                indxn = j + ifirstf # index of neighbor
-                                mu[ib]     = 1
-                                mu2[ib]    = indxn
-                                md[indxn]  = -1
-                                md1[indxn] = ib
-
-                        if nu1[ib]<0:                
-                            # Above
-                            # Finer cell is the left one
-                            nf  = int((n[ib] + 1)*2)
-                            if nf<=nmxf:
-                                mf  = int(m[ib]*2)
-                                nmf = mf*(nmxf + 1) + nf
-                                j = binary_search(nmsf, nmf)
-                                if j is not None:
-                                    indxn = j + ifirstf # index of neighbor
-                                    nu[ib]     = 1
-                                    nu1[ib]    = indxn
-                                    nd[indxn]  = -1
-                                    nd1[indxn] = ib
-                            # Finer cell is the right one
-                            nf  = int((n[ib] + 1)*2)
-                            if nf<=nmxf:
-                                mf  = int(m[ib]*2) + 1
-                                nmf = mf*(nmxf + 1) + nf
-                                j = binary_search(nmsf, nmf)
-                                if j is not None:
-                                    indxn = j + ifirstf # index of neighbor
-                                    nu[ib]     = 1
-                                    nu2[ib]    = indxn               
-                                    nd[indxn]  = -1
-                                    nd1[indxn] = ib
-
-        ugrid2d = self.data.grid
-        self.data["nu"]  = xu.UgridDataArray(xr.DataArray(data=nu, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["nu1"] = xu.UgridDataArray(xr.DataArray(data=nu1, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["nu2"] = xu.UgridDataArray(xr.DataArray(data=nu2, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["nd"]  = xu.UgridDataArray(xr.DataArray(data=nd, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["nd1"] = xu.UgridDataArray(xr.DataArray(data=nd1, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["nd2"] = xu.UgridDataArray(xr.DataArray(data=nd2, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["mu"]  = xu.UgridDataArray(xr.DataArray(data=mu, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["mu1"] = xu.UgridDataArray(xr.DataArray(data=mu1, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["mu2"] = xu.UgridDataArray(xr.DataArray(data=mu2, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["md"]  = xu.UgridDataArray(xr.DataArray(data=md, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["md1"] = xu.UgridDataArray(xr.DataArray(data=md1, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["md2"] = xu.UgridDataArray(xr.DataArray(data=md2, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self._clear_temporary_arrays()
 
         print("Time elapsed : " + str(time.time() - start) + " s")
 
@@ -785,16 +299,15 @@ class QuadtreeGrid:
             self.data[varname] = self.data["msk"]
             return
         
-        if "msk" not in self.data:
-            raise ValueError("First setup active mask")
+        if varname not in self.data:
+            raise ValueError("First setup active mask for model: " + model)
         else:
-            uda_mask = self.data["msk"]
+            uda_mask = self.data[varname]
         
         if "dep" not in self.data and (zmin is not None or zmax is not None):
             raise ValueError("dep required in combination with zmin / zmax")
         else:
             uda_dep = self.data["dep"]
-
         
         btype = btype.lower()
         bvalues = {"waterlevel": 2, "outflow": 3}
@@ -814,7 +327,7 @@ class QuadtreeGrid:
                 return uda_mask
 
         # find boundary cells of the active mask
-        bounds = self.find_boundary_cells()
+        bounds = self._find_boundary_cells()
 
         if zmin is not None:
             bounds = np.logical_and(bounds, uda_dep >= zmin)
@@ -883,17 +396,17 @@ class QuadtreeGrid:
                 z    = None
 
             mu    = self.data["mu"].values[:]
-            mu1   = self.data["mu1"].values[:]
-            mu2   = self.data["mu2"].values[:]
+            mu1   = self.data["mu1"].values[:] - 1
+            mu2   = self.data["mu2"].values[:] - 1
             nu    = self.data["nu"].values[:]
-            nu1   = self.data["nu1"].values[:]
-            nu2   = self.data["nu2"].values[:]
+            nu1   = self.data["nu1"].values[:] - 1 
+            nu2   = self.data["nu2"].values[:] - 1
             md    = self.data["md"].values[:]
-            md1   = self.data["md1"].values[:]
-            md2   = self.data["md2"].values[:]
+            md1   = self.data["md1"].values[:] - 1
+            md2   = self.data["md2"].values[:] - 1
             nd    = self.data["nd"].values[:]
-            nd1   = self.data["nd1"].values[:]
-            nd2   = self.data["nd2"].values[:]
+            nd1   = self.data["nd1"].values[:] - 1
+            nd2   = self.data["nd2"].values[:] - 1 
 
             if zmin>=zmax:
                 # Do not include any points initially
@@ -1207,7 +720,7 @@ class QuadtreeGrid:
         datasets_dep: list[dict],
         datasets_rgh: list[dict] = [],
         datasets_riv: list[dict] = [],
-        nbins=10,
+        nlevels=10,
         nr_subgrid_pixels=20,
         nrmax=2000,
         max_gradient=5.0,
@@ -1222,14 +735,15 @@ class QuadtreeGrid:
         write_man_tif: bool = False,
         highres_dir: str = None,
         logger=logger,
-        progress_bar=None,        
+        progress_bar=None,
+        parallel=False,        
     ):
         self.subgrid.build(
             ds_mesh = self.data,
             datasets_dep = datasets_dep,
             datasets_rgh = datasets_rgh,
             datasets_riv = datasets_riv,
-            nbins = nbins,
+            nlevels = nlevels,
             nr_subgrid_pixels = nr_subgrid_pixels,
             nrmax = nrmax,
             max_gradient = max_gradient,
@@ -1245,153 +759,11 @@ class QuadtreeGrid:
             highres_dir = highres_dir,
             logger = logger,
             progress_bar = None,
+            parallel = parallel,
         )
 
-    def cut_inactive_cells(self):
-        print("Removing inactive cells ...")
 
-        n = self.data["n"].values[:]
-        m = self.data["m"].values[:]
-        level = self.data["level"].values[:]
-        z = self.data["z"].values[:]
-        mask = self.data["mask"].values[:]
-        swmask = self.data["snapwave_mask"].values[:]
-
-        indx = np.where((mask + swmask)>0)
-            
-        self.nr_cells = np.size(indx)
-        n        = n[indx]
-        m        = m[indx]
-        level    = level[indx]
-        z        = z[indx] 
-        mask     = mask[indx]
-        swmask   = swmask[indx]        
-
-        # We obtained all the n's, m's and levels. Now build the ugrid.
-        ugrid2d = self.get_ugrid2d(n, m, level)
-        self.data = xu.UgridDataset(grids=ugrid2d)
-        attrs = {"x0": self.x0,
-                 "y0": self.y0,
-                 "nmax": self.nmax,
-                 "mmax": self.mmax,
-                 "dx": self.dx,
-                 "dy": self.dy,
-                 "rotation": self.rotation,
-                 "nr_levels": self.nr_refinement_levels}
-        self.data.attrs = attrs
-
-        # Now add the data arrays
-        self.data["crs"] = 0
-        self.data["crs"].attrs = self.crs.to_cf()
-        self.data["n"] = xu.UgridDataArray(xr.DataArray(data=n, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["m"] = xu.UgridDataArray(xr.DataArray(data=m, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["level"] = xu.UgridDataArray(xr.DataArray(data=level, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["z"] = xu.UgridDataArray(xr.DataArray(data=z, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["mask"] = xu.UgridDataArray(xr.DataArray(data=mask, dims=[ugrid2d.face_dimension]), ugrid2d)
-        self.data["snapwave_mask"] = xu.UgridDataArray(xr.DataArray(data=swmask, dims=[ugrid2d.face_dimension]), ugrid2d)
-
-        self.find_neighbors()
-
-    def get_ugrid2d(self, n, m, level):
-
-        cosrot = np.cos(self.rotation*np.pi/180)
-        sinrot = np.sin(self.rotation*np.pi/180)
-        nlev = self.nr_refinement_levels
-        nm_nodes   = np.full(4*self.nr_cells, 1e9, dtype=int)
-        face_nodes = np.full((4, self.nr_cells), -1, dtype=int)
-        node_x     = np.full(4*self.nr_cells, 1e9, dtype=float)
-        node_y     = np.full(4*self.nr_cells, 1e9, dtype=float)
-        ifac = []
-        nmax = 0
-
-        self.ifirst = np.zeros(self.nr_refinement_levels, dtype=int)
-        last_lev = -1
-        for ic in range(self.nr_cells):
-            ilev = level[ic]
-            if ilev>last_lev:
-                # Found new level
-                self.ifirst[ilev] = ic
-                last_lev = ilev
-
-        for ilev in range(nlev):
-            ifac.append(2**(nlev - ilev - 1))
-            i0 = self.ifirst[ilev]
-            if ilev<nlev - 1:
-                i1 = self.ifirst[ilev + 1]
-            else:
-                i1 = self.nr_cells    
-            nmax = max(nmax, (np.amax(n[i0:i1]) + 1) * ifac[ilev])
-
-        fac = 2**level
-        ifac = 2**(nlev - level - 1)
-        dxf = self.dx / 2**level
-        dyf = self.dy / 2**level
-        fac = 1
-
-        tic = time.perf_counter()
-
-        for icel in range(self.nr_cells):
-            face_nodes[0, icel] = 4*icel
-            face_nodes[1, icel] = 4*icel + 1
-            face_nodes[2, icel] = 4*icel + 2
-            face_nodes[3, icel] = 4*icel + 3
-
-        ## Lower left
-        nf = (n   )
-        mf = (m   )
-        nm_nodes[0:4*self.nr_cells:4] = ifac * (mf * (nmax + 1) + nf)
-        node_x[0:4*self.nr_cells:4]   = self.x0 + cosrot*(mf*dxf) - sinrot*(nf*dyf)
-        node_y[0:4*self.nr_cells:4]   = self.y0 + sinrot*(mf*dxf) + cosrot*(nf*dyf)
-        ## Lower right
-        nf = (n    )*fac
-        mf = (m + 1)*fac
-        nm_nodes[1:4*self.nr_cells:4] = ifac * (mf * (nmax + 1) + nf)
-        node_x[1:4*self.nr_cells:4]   = self.x0 + cosrot*(mf*dxf) - sinrot*(nf*dyf)
-        node_y[1:4*self.nr_cells:4]   = self.y0 + sinrot*(mf*dxf) + cosrot*(nf*dyf)
-        ## Upper right
-        nf = (n + 1)*fac
-        mf = (m + 1)*fac
-        nm_nodes[2:4*self.nr_cells:4] = ifac * (mf * (nmax + 1) + nf)
-        node_x[2:4*self.nr_cells:4]   = self.x0 + cosrot*(mf*dxf) - sinrot*(nf*dyf)
-        node_y[2:4*self.nr_cells:4]   = self.y0 + sinrot*(mf*dxf) + cosrot*(nf*dyf)
-        ## Upper left
-        nf = (n + 1)*fac
-        mf = (m   )*fac
-        nm_nodes[3:4*self.nr_cells:4] = ifac * (mf * (nmax + 1) + nf)
-        node_x[3:4*self.nr_cells:4]   = self.x0 + cosrot*(mf*dxf) - sinrot*(nf*dyf)
-        node_y[3:4*self.nr_cells:4]   = self.y0 + sinrot*(mf*dxf) + cosrot*(nf*dyf)
-
-        toc = time.perf_counter()
-        print(f"Found nodes in {toc - tic:0.4f} seconds")
-
-        # Get rid of duplicates
-        tic = time.perf_counter()
-
-        xxx, indx, irev = np.unique(nm_nodes, return_index=True, return_inverse=True)
-        node_x = node_x[indx]
-        node_y = node_y[indx]
-
-        for icel in range(self.nr_cells):
-            for j in range(4):
-                face_nodes[j, icel] = irev[face_nodes[j, icel]]
-
-        toc = time.perf_counter()
-        print(f"Get rid of duplicates {toc - tic:0.4f} seconds")
-
-        nodes = np.transpose(np.vstack((node_x, node_y)))
-        faces = np.transpose(face_nodes)
-        fill_value = -1
-
-        ugrid2d = xu.Ugrid2d(nodes[:, 0], nodes[:, 1], fill_value, faces)
-        ugrid2d.set_crs(self.crs)
-
-        # Set datashader df to None
-        self.df = None 
-
-        return ugrid2d
-
-
-    def get_datashader_dataframe(self):
+    def _get_datashader_dataframe(self):
         # Create a dataframe with line elements
         x1 = self.data.grid.edge_node_coordinates[:,0,0]
         x2 = self.data.grid.edge_node_coordinates[:,1,0]
@@ -1412,7 +784,7 @@ class QuadtreeGrid:
             if not hasattr(self, "df"):
                 self.df = None
             if self.df is None: 
-                self.get_datashader_dataframe()
+                self._get_datashader_dataframe()
 
             transformer = Transformer.from_crs(4326,
                                         3857,
@@ -1435,193 +807,7 @@ class QuadtreeGrid:
             return True
         except Exception as e:
             return False
-        
-    # def make_index_tiles(self, path, zoom_range=None, format=0):
-        
-    #     import math
-    #     from hydromt_sfincs.workflows.tiling import deg2num
-    #     from hydromt_sfincs.workflows.tiling import num2deg
-    #     import cht.misc.fileops as fo
-        
-    #     npix = 256
-        
-    #     if not zoom_range:
-    #         zoom_range = [0, 13]
 
-    #     cosrot = math.cos(-self.rotation*math.pi/180)
-    #     sinrot = math.sin(-self.rotation*math.pi/180)       
-
-    #     # Compute lon/lat range
-    #     xmin = np.amin(self.x) - 10*self.dx
-    #     xmax = np.amax(self.x) + 10*self.dx
-    #     ymin = np.amin(self.y) - 10*self.dy
-    #     ymax = np.amax(self.y) + 10*self.dy
-    #     transformer = Transformer.from_crs(self.crs,
-    #                                         CRS.from_epsg(4326),
-    #                                         always_xy=True)
-    #     lon_min, lat_min = transformer.transform(xmin, ymin)
-    #     lon_max, lat_max = transformer.transform(xmax, ymax)
-    #     lon_range = [lon_min, lon_max]
-    #     lat_range = [lat_min, lat_max]        
-        
-    #     transformer_a = Transformer.from_crs(CRS.from_epsg(4326),
-    #                                             CRS.from_epsg(3857),
-    #                                             always_xy=True)
-    #     transformer_b = Transformer.from_crs(CRS.from_epsg(3857),
-    #                                             self.crs,
-    #                                             always_xy=True)
-        
-    #     i0_lev = []
-    #     i1_lev = []
-    #     nmax_lev = []
-    #     mmax_lev = []
-    #     nm_lev = []
-    #     for level in range(self.nr_refinement_levels):
-    #         i0 = self.level_index[level]
-    #         if level<self.nr_refinement_levels - 1:
-    #             i1 = self.level_index[level + 1]
-    #         else:
-    #             i1 = self.nr_cells   
-    #         i0_lev.append(i0)    
-    #         i1_lev.append(i1)    
-    #         nmax_lev.append(np.amax(self.n[i0:i1]) + 1)
-    #         mmax_lev.append(np.amax(self.m[i0:i1]) + 1)
-    #         mm = self.m[i0:i1]
-    #         nn = self.n[i0:i1]
-    #         nm_lev.append(mm*nmax_lev[level] + nn)
-
-    #     for izoom in range(zoom_range[0], zoom_range[1] + 1):
-            
-    #         print("Processing zoom level " + str(izoom))
-        
-    #         zoom_path = os.path.join(path, str(izoom))
-        
-    #         dxy = (40075016.686/npix) / 2 ** izoom
-    #         xx = np.linspace(0.0, (npix - 1)*dxy, num=npix)
-    #         yy = xx[:]
-    #         xv, yv = np.meshgrid(xx, yy)
-        
-    #         ix0, iy0 = deg2num(lat_range[0], lon_range[0], izoom)
-    #         ix1, iy1 = deg2num(lat_range[1], lon_range[1], izoom)
-        
-    #         for i in range(ix0, ix1 + 1):
-            
-    #             path_okay = False
-    #             zoom_path_i = os.path.join(zoom_path, str(i))
-            
-    #             for j in range(iy0, iy1 + 1):
-            
-    #                 file_name = os.path.join(zoom_path_i, str(j) + ".dat")
-            
-    #                 # Compute lat/lon at ll corner of tile
-    #                 lat, lon = num2deg(i, j, izoom)
-            
-    #                 # Convert to Global Mercator
-    #                 xo, yo   = transformer_a.transform(lon,lat)
-            
-    #                 # Tile grid on local mercator
-    #                 x = xv[:] + xo + 0.5*dxy
-    #                 y = yv[:] + yo + 0.5*dxy
-            
-    #                 # Convert tile grid to crs of SFINCS model
-    #                 x, y = transformer_b.transform(x, y)
-
-    #                 # Now rotate around origin of SFINCS model
-    #                 x00 = x - self.x0
-    #                 y00 = y - self.y0
-    #                 xg  = x00*cosrot - y00*sinrot
-    #                 yg  = x00*sinrot + y00*cosrot
-
-    #                 indx = np.full((npix, npix), -999, dtype=int)
-
-    #                 for ilev in range(self.nr_refinement_levels):
-    #                     nmax = nmax_lev[ilev]
-    #                     mmax = mmax_lev[ilev]
-    #                     i0   = i0_lev[ilev]
-    #                     i1   = i1_lev[ilev]
-    #                     dx   = self.dx/2**ilev
-    #                     dy   = self.dy/2**ilev
-    #                     iind = np.floor(xg/dx).astype(int)
-    #                     jind = np.floor(yg/dy).astype(int)
-    #                     # Now check whether this cell exists on this level
-    #                     ind  = iind*nmax + jind
-    #                     ind[iind<0]   = -999
-    #                     ind[jind<0]   = -999
-    #                     ind[iind>=mmax] = -999
-    #                     ind[jind>=nmax] = -999
-
-    #                     ingrid = np.isin(ind, nm_lev[ilev], assume_unique=False) # return boolean for each pixel that falls inside a grid cell
-    #                     incell = np.where(ingrid)                                # tuple of arrays of pixel indices that fall in a cell
-
-    #                     if incell[0].size>0:
-    #                         # Now find the cell indices
-    #                         try:
-    #                             cell_indices = np.searchsorted(nm_lev[ilev], ind[incell[0], incell[1]]) + i0_lev[ilev]
-    #                             indx[incell[0], incell[1]] = cell_indices
-    #                         except:
-    #                             pass
-
-    #                 if np.any(indx>=0):                        
-    #                     if not path_okay:
-    #                         if not os.path.exists(zoom_path_i):
-    #                             fo.mkdir(zoom_path_i)
-    #                             path_okay = True
-                                
-    #                     # And write indices to file
-    #                     fid = open(file_name, "wb")
-    #                     fid.write(indx)
-    #                     fid.close()
-
-    def get_uv_points(self):
-
-        # xz,yz = self.face_coordinates()
-
-        # level = self.data["level"].values[:]
-        # n   = self.data["n"].values[:]
-        # m   = self.data["m"].values[:]
-        # nu  = self.data["nu"].values[:]
-        nu1 = self.data["nu1"].values[:]
-        nu2 = self.data["nu2"].values[:]
-        # mu  = self.data["mu"].values[:]
-        mu1 = self.data["mu1"].values[:]
-        mu2 = self.data["mu2"].values[:]
-
-        # U/V points        
-        # index_nu1 = np.zeros(self.nr_cells, dtype=int)
-        # index_nu2 = np.zeros(self.nr_cells, dtype=int)
-        # index_mu1 = np.zeros(self.nr_cells, dtype=int)
-        # index_mu2 = np.zeros(self.nr_cells, dtype=int)     
-        # index_nu1 = np.zeros(self.nr_cells, dtype=int)
-        # index_nu2 = np.zeros(self.nr_cells, dtype=int)
-        uv_index  = np.zeros((2, self.nr_cells*4), dtype=int)
-
-        # Count points   
-        nuv = 0
-        for ip in range(self.nr_cells):
-            if mu1[ip]>=0:
-#                index_mu1[ip] = nuv
-                uv_index[0, nuv] = ip        
-                uv_index[1, nuv] = mu1[ip]     
-                nuv += 1
-            if mu2[ip]>=0:
-#                index_mu2[ip] = nuv
-                uv_index[0, nuv] = ip        
-                uv_index[1, nuv] = mu2[ip]     
-                nuv += 1
-            if nu1[ip]>=0:
-#                index_nu1[ip] = nuv
-                uv_index[0, nuv] = ip        
-                uv_index[1, nuv] = nu1[ip]     
-                nuv += 1
-            if nu2[ip]>=0:
-#                index_nu2[ip] = nuv
-                uv_index[0, nuv] = ip        
-                uv_index[1, nuv] = nu2[ip]     
-                nuv += 1
-
-        uv_index = uv_index[:, 0 : nuv - 1]        
-
-        return uv_index
 
     def snap_to_grid(self, polyline, max_snap_distance=1.0):
         if len(polyline) == 0:
@@ -1638,20 +824,709 @@ class QuadtreeGrid:
         snapped_gdf = snapped_gdf.set_crs(self.crs)
         return snapped_gdf
 
-    def find_boundary_cells(self):
+## Quadtree helper functions
+    def _get_regular_grid(self):
+        # Build initial grid with one level
+        ns = np.linspace(0, self.nmax - 1, self.nmax, dtype=int)
+        ms = np.linspace(0, self.mmax - 1, self.mmax, dtype=int)
+        self.m, self.n = np.meshgrid(ms, ns)
+        self.n = np.transpose(self.n).flatten()
+        self.m = np.transpose(self.m).flatten()
+        self.nr_cells = self.nmax * self.mmax
+        self.level = np.zeros(self.nr_cells, dtype=int)
+        self.nr_refinement_levels = 1
+        # Determine ifirst and ilast for each level
+        self._find_first_cells_in_level()
+        # Compute cell center coordinates self.x and self.y
+        self._compute_cell_center_coordinates()
+
+
+    def _find_first_cells_in_level(self):
+        # Find first cell in each level
+        self.ifirst = np.zeros(self.nr_refinement_levels, dtype=int)
+        self.ilast = np.zeros(self.nr_refinement_levels, dtype=int)
+        for ilev in range(0, self.nr_refinement_levels):
+            # Find index of first cell with this level
+            self.ifirst[ilev] = np.where(self.level == ilev)[0][0]
+            # Find index of last cell with this level
+            if ilev<self.nr_refinement_levels - 1:
+                self.ilast[ilev] = np.where(self.level == ilev + 1)[0][0] - 1
+            else:
+                self.ilast[ilev] = self.nr_cells - 1
+
+    def _compute_cell_center_coordinates(self):
+        # Compute cell center coordinates
+        # Loop through refinement levels
+        dx = self.dx/2**self.level
+        dy = self.dy/2**self.level
+        self.x = self.x0 + self.cosrot * (self.m + 0.5) * dx - self.sinrot * (self.n + 0.5) * dy
+        self.y = self.y0 + self.sinrot * (self.m + 0.5) * dx + self.cosrot * (self.n + 0.5) * dy
+
+    def _get_ugrid2d(self):
+
+        tic = time.perf_counter()
+
+        n = self.n
+        m = self.m
+        level = self.level
+
+        nmax       = self.nmax * 2**(self.nr_refinement_levels - 1) + 1
+
+        face_nodes_n = np.full((8,self.nr_cells), -1, dtype=int)
+        face_nodes_m = np.full((8,self.nr_cells), -1, dtype=int)
+        face_nodes_nm = np.full((8,self.nr_cells), -1, dtype=int)
+
+        # HIghest refinement level 
+        ifac = 2**(self.nr_refinement_levels - level - 1)
+        dxf = self.dx / 2**(self.nr_refinement_levels - 1)
+        dyf = self.dy / 2**(self.nr_refinement_levels - 1)
+
+        face_n = n * ifac
+        face_m = m * ifac
+
+        # First do the 4 corner points
+        face_nodes_n[0, :] = face_n
+        face_nodes_m[0, :] = face_m
+        face_nodes_n[2, :] = face_n
+        face_nodes_m[2, :] = face_m + ifac
+        face_nodes_n[4, :] = face_n + ifac
+        face_nodes_m[4, :] = face_m + ifac
+        face_nodes_n[6, :] = face_n + ifac
+        face_nodes_m[6, :] = face_m
+
+        # Find cells with refinement below
+        i = np.where(self.nd==1)
+        face_nodes_n[1, i] = face_n[i]
+        face_nodes_m[1, i] = face_m[i] + ifac[i]/2
+        # Find cells with refinement to the right
+        i = np.where(self.mu==1)
+        face_nodes_n[3, i] = face_n[i] + ifac[i]/2
+        face_nodes_m[3, i] = face_m[i] + ifac[i]
+        # Find cells with refinement above
+        i = np.where(self.nu==1)
+        face_nodes_n[5, i] = face_n[i] + ifac[i]
+        face_nodes_m[5, i] = face_m[i] + ifac[i]/2
+        # Find cells with refinement to the left
+        i = np.where(self.md==1)
+        face_nodes_n[7, i] = face_n[i] + ifac[i]/2
+        face_nodes_m[7, i] = face_m[i]
+
+        # Flatten
+        face_nodes_n = face_nodes_n.transpose().flatten()
+        face_nodes_m = face_nodes_m.transpose().flatten()
+
+        # Compute nm value of nodes        
+        face_nodes_nm = nmax * face_nodes_m + face_nodes_n
+        nopoint = max(face_nodes_nm) + 1
+        # Set missing points to very high number
+        face_nodes_nm[np.where(face_nodes_n==-1)] = nopoint
+
+        # Get the unique nm values
+        xxx, index, irev = np.unique(face_nodes_nm, return_index=True, return_inverse=True)
+        j = np.where(xxx==nopoint)[0][0] # Index of very high number
+        # irev2 = np.reshape(irev, (self.nr_cells, 8))
+        # face_nodes_all = irev2.transpose()
+        face_nodes_all = np.reshape(irev, (self.nr_cells, 8)).transpose()
+        face_nodes_all[np.where(face_nodes_all==j)] = -1
+
+        face_nodes = np.full(face_nodes_all.shape, -1)  # Create a new array filled with -1
+        for i in range(face_nodes.shape[1]):
+            idx = np.where(face_nodes_all[:,i] != -1)[0]
+            face_nodes[:len(idx), i] = face_nodes_all[idx, i]  
+
+        # Now get rid of all the rows where all values are -1
+        # Create a mask where each row is True if not all elements in the row are -1
+        mask = (face_nodes != -1).any(axis=1)
+
+        # Use this mask to index face_nodes
+        face_nodes = face_nodes[mask]
+
+        node_n = face_nodes_n[index[:j]]
+        node_m = face_nodes_m[index[:j]]
+        node_x = self.x0 + self.cosrot*(node_m*dxf) - self.sinrot*(node_n*dyf)
+        node_y = self.y0 + self.sinrot*(node_m*dxf) + self.cosrot*(node_n*dyf)
+
+        toc = time.perf_counter()
+
+        print(f"Got rid of duplicates in {toc - tic:0.4f} seconds")
+
+        tic = time.perf_counter()
+
+        nodes = np.transpose(np.vstack((node_x, node_y)))
+        faces = np.transpose(face_nodes)
+        fill_value = -1
+
+        ugrid2d = xu.Ugrid2d(nodes[:, 0], nodes[:, 1], fill_value, faces)
+
+        if self.epsg is not None:
+            ugrid2d.set_crs(CRS.from_user_input(self.epsg))
+
+        # Set datashader df to None
+        self.df = None 
+
+        toc = time.perf_counter()
+
+        print(f"Made XUGrid in {toc - tic:0.4f} seconds")
+
+        return ugrid2d
+
+    def _cut_inactive_cells(self):
+
+        print("Removing inactive cells ...")
+
+        # In the xugrid data, the indices are 1-based, so we need to subtract 1 
+        n = self.data["n"].values[:] - 1
+        m = self.data["m"].values[:] - 1
+        level = self.data["level"].values[:] - 1
+        dep = self.data["dep"].values[:]
+        mask = self.data["msk"].values[:]
+        swmask = self.data["snapwave_msk"].values[:]
+
+        indx = np.where((mask + swmask)>0)
+            
+        self.nr_cells = np.size(indx)
+        self.n        = n[indx]
+        self.m        = m[indx]
+        self.level    = level[indx]
+        self.dep        = dep[indx] 
+        self.mask     = mask[indx]
+        self.snapwave_mask = swmask[indx]
+
+        # Set indices of neighbors to -1
+        self.mu  = np.zeros(self.nr_cells, dtype=np.int8)
+        self.mu1 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.mu2 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.md  = np.zeros(self.nr_cells, dtype=np.int8)
+        self.md1 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.md2 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.nu  = np.zeros(self.nr_cells, dtype=np.int8)
+        self.nu1 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.nu2 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.nd  = np.zeros(self.nr_cells, dtype=np.int8)
+        self.nd1 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.nd2 = np.zeros(self.nr_cells, dtype=int) - 1
+
+        self._find_first_cells_in_level()
+        self._get_neighbors() 
+        self._get_uv_points()
+        self._to_xugrid()
+
+    def _initialize_data_arrays(self):
+        # Set indices of neighbors to -1
+        self.mu  = np.zeros(self.nr_cells, dtype=np.int8)
+        self.mu1 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.mu2 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.md  = np.zeros(self.nr_cells, dtype=np.int8)
+        self.md1 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.md2 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.nu  = np.zeros(self.nr_cells, dtype=np.int8)
+        self.nu1 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.nu2 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.nd  = np.zeros(self.nr_cells, dtype=np.int8)
+        self.nd1 = np.zeros(self.nr_cells, dtype=int) - 1
+        self.nd2 = np.zeros(self.nr_cells, dtype=int) - 1
+
+    def _refine_mesh(self): 
+        # Loop through rows in gdf and create list of polygons
+        # Determine maximum refinement level
+
+        start = time.time()
+        print("Refining ...")
+
+        self.ref_pols = []
+        for irow, row in self.gdf_refinement.iterrows():
+            iref = row["refinement_level"]
+            polygon = {"geometry": row["geometry"], "refinement_level": iref}
+            self.ref_pols.append(polygon)
+
+        # Loop through refinement polygons and start refining
+        for polygon in self.ref_pols:
+            # Refine, reorder, find first cells in level
+            self._refine_in_polygon(polygon)
+
+        print("Time elapsed : " + str(time.time() - start) + " s")
+
+    def _refine_in_polygon(self, polygon):
+        # Finds cell to refine and calls refine_cells
+
+        # Loop through refinement levels for this polygon
+        for ilev in range(polygon["refinement_level"]):
+
+            # Refine cells in refinement polygons
+            # Compute grid spacing for this level
+            dx = self.dx/2**ilev
+            dy = self.dy/2**ilev
+            nmax = self.nmax * 2**ilev
+            mmax = self.mmax * 2**ilev
+            # Add buffer of 0.5*dx around polygon
+            polbuf = polygon["geometry"]
+            # Rotate polbuf to grid (this is needed to find cells that could fall within polbuf)
+            coords = polbuf.exterior.coords[:]
+            npoints = len(coords)
+            polx = np.zeros(npoints)
+            poly = np.zeros(npoints)
+
+            for ipoint, point in enumerate(polbuf.exterior.coords[:]):
+                # Cell centres
+                polx[ipoint] =   self.cosrot*(point[0] - self.x0) + self.sinrot*(point[1] - self.y0)
+                poly[ipoint] = - self.sinrot*(point[0] - self.x0) + self.cosrot*(point[1] - self.y0)
+
+            # Find cells cells in grid that could fall within polbuf 
+            n0 = int(np.floor(np.min(poly) / dy)) - 1
+            n1 = int(np.ceil(np.max(poly) / dy)) + 1
+            m0 = int(np.floor(np.min(polx) / dx)) - 1
+            m1 = int(np.ceil(np.max(polx) / dx)) + 1
+
+            n0 = min(max(n0, 0), nmax - 1)
+            n1 = min(max(n1, 0), nmax - 1)
+            m0 = min(max(m0, 0), mmax - 1)
+            m1 = min(max(m1, 0), mmax - 1)
+
+            # Compute cell centre coordinates of cells in this level in this block
+            nn, mm = np.meshgrid(np.arange(n0, n1 + 1), np.arange(m0, m1 + 1))
+            nn = np.transpose(nn).flatten()
+            mm = np.transpose(mm).flatten()
+
+            xcor = np.zeros((4, np.size(nn)))
+            ycor = np.zeros((4, np.size(nn)))
+            xcor[0,:] = self.x0 + self.cosrot * (mm + 0) * dx - self.sinrot * (nn + 0) * dy
+            ycor[0,:] = self.y0 + self.sinrot * (mm + 0) * dx + self.cosrot * (nn + 0) * dy
+            xcor[1,:] = self.x0 + self.cosrot * (mm + 1) * dx - self.sinrot * (nn + 0) * dy
+            ycor[1,:] = self.y0 + self.sinrot * (mm + 1) * dx + self.cosrot * (nn + 0) * dy
+            xcor[2,:] = self.x0 + self.cosrot * (mm + 1) * dx - self.sinrot * (nn + 1) * dy
+            ycor[2,:] = self.y0 + self.sinrot * (mm + 1) * dx + self.cosrot * (nn + 1) * dy
+            xcor[3,:] = self.x0 + self.cosrot * (mm + 0) * dx - self.sinrot * (nn + 1) * dy
+            ycor[3,:] = self.y0 + self.sinrot * (mm + 0) * dx + self.cosrot * (nn + 1) * dy
+
+            # Create np array with False for all cells
+            inp = np.zeros(np.size(nn), dtype=bool)
+            # Loop through 4 corner points
+            # If any corner points falls within the polygon, inp is set to True
+            for j in range(4):
+                inp0 = inpolygon(np.squeeze(xcor[j,:]),
+                                 np.squeeze(ycor[j,:]),
+                                 polygon["geometry"])
+                inp[np.where(inp0)] = True
+            in_polygon = np.where(inp)[0]
+
+            # Indices of cells in level within polbuf
+            nn_in = nn[in_polygon]
+            mm_in = mm[in_polygon]
+            nm_in = nmax * mm_in + nn_in
+
+            # Find existing cells of this level in nmi array
+            n_level = self.n[self.ifirst[ilev]:self.ilast[ilev] + 1]
+            m_level = self.m[self.ifirst[ilev]:self.ilast[ilev] + 1]
+            nm_level = m_level * nmax + n_level
+
+            # Find indices all cells to be refined
+            ind_ref = binary_search(nm_level, nm_in)
+
+            ind_ref=ind_ref[ind_ref>=0]
+
+            # ind_ref = ind_ref[ind_ref < np.size(nm_level)]
+            if not np.any(ind_ref):
+                continue
+            # Index of cells to refine
+            ind_ref += self.ifirst[ilev]
+
+            self._refine_cells(ind_ref, ilev)
+
+    def _refine_cells(self, ind_ref, ilev):
+        # Refine cells with index ind_ref
+
+        # First find lower-level neighbors (these will be refined in the next iteration)
+        if ilev>0:
+            ind_nbr = self._find_lower_level_neighbors(ind_ref, ilev)
+        else:
+            ind_nbr = np.empty(0, dtype=int)    
+
+        # n and m indices of cells to be refined
+        n = self.n[ind_ref]
+        m = self.m[ind_ref]
+
+        # New cells
+        nnew = np.zeros(4 * len(ind_ref), dtype=int)
+        mnew = np.zeros(4 * len(ind_ref), dtype=int)
+        lnew = np.zeros(4 * len(ind_ref), dtype=int) + ilev + 1
+        nnew[0::4] = n*2      # lower left
+        nnew[1::4] = n*2 + 1  # upper left
+        nnew[2::4] = n*2      # lower right
+        nnew[3::4] = n*2 + 1  # upper right
+        mnew[0::4] = m*2      # lower left
+        mnew[1::4] = m*2      # upper left
+        mnew[2::4] = m*2 + 1  # lower right
+        mnew[3::4] = m*2 + 1  # upper right
+        # Add new cells to grid
+        self.n = np.append(self.n, nnew)
+        self.m = np.append(self.m, mnew)
+        self.level = np.append(self.level, lnew)
+        # Remove old cells from grid
+        self.n = np.delete(self.n, ind_ref)
+        self.m = np.delete(self.m, ind_ref)
+        self.level = np.delete(self.level, ind_ref)        
+        self.nr_cells = len(self.n)
+        # Update nr_refinement_levels at max of ilev + 2 and self.nr_refinement_levels
+        self.nr_refinement_levels = np.maximum(self.nr_refinement_levels, ilev + 2)
+        # Reorder cells
+        self._reorder()
+        # Update ifirst and ilast
+        self._find_first_cells_in_level()
+        # Compute cell center coordinates self.x and self.y
+        self._compute_cell_center_coordinates()
+
+        if np.any(ind_nbr):
+            self._refine_cells(ind_nbr, ilev - 1)
+
+    def _reorder(self):
+        # Reorder cells
+        # Sort cells by level, then m, then n
+        i = np.lexsort((self.n, self.m, self.level))
+        self.n = self.n[i]
+        self.m = self.m[i]
+        self.level = self.level[i]
+
+    def _get_uv_points(self):
+
+        start = time.time()
+        print("Getting uv points ...")
+
+        # Get uv points (do we actually need to do this?)
+        self.uv_index_z_nm  = np.zeros((self.nr_cells*4), dtype=int)
+        self.uv_index_z_nmu = np.zeros((self.nr_cells*4), dtype=int)
+        self.uv_dir         = np.zeros((self.nr_cells*4), dtype=int)
+        # Loop through points (SHOULD TRY TO VECTORIZE THIS, but try to keep same order of uv points
+        nuv = 0
+        for ip in range(self.nr_cells):
+            if self.mu1[ip]>=0:
+                self.uv_index_z_nm[nuv] = ip        
+                self.uv_index_z_nmu[nuv] = self.mu1[ip]     
+                self.uv_dir[nuv] = 0
+                nuv += 1
+            if self.mu2[ip]>=0:
+                self.uv_index_z_nm[nuv] = ip        
+                self.uv_index_z_nmu[nuv] = self.mu2[ip]     
+                self.uv_dir[nuv] = 0     
+                nuv += 1
+            if self.nu1[ip]>=0:
+                self.uv_index_z_nm[nuv] = ip        
+                self.uv_index_z_nmu[nuv] = self.nu1[ip]     
+                self.uv_dir[nuv] = 1     
+                nuv += 1
+            if self.nu2[ip]>=0:
+                self.uv_index_z_nm[nuv] = ip
+                self.uv_index_z_nmu[nuv] = self.nu2[ip]
+                self.uv_dir[nuv] = 1
+                nuv += 1
+        self.uv_index_z_nm  = self.uv_index_z_nm[0 : nuv]
+        self.uv_index_z_nmu = self.uv_index_z_nmu[0 : nuv]
+        self.uv_dir         = self.uv_dir[0 : nuv]
+        self.nr_uv_points   = nuv
+
+        print("Time elapsed : " + str(time.time() - start) + " s")
+
+    def _get_neighbors(self):
+        # Get mu, mu1, mu2, nu, nu1, nu2 for all cells   
+
+        start = time.time()
+
+        print("Finding neighbors ...")
+
+        # Get nm indices for all cells
+        nm_all = np.zeros(self.nr_cells, dtype=int)
+        for ilev in range(self.nr_refinement_levels):
+            nmax = self.nmax * 2**ilev + 1
+            i0 = self.ifirst[ilev]
+            i1 = self.ilast[ilev] + 1
+            n = self.n[i0:i1]
+            m = self.m[i0:i1]
+            nm_all[i0:i1] = m * nmax + n
+
+        # Loop over levels
+        for ilev in range(self.nr_refinement_levels):
+
+            nmax = self.nmax * 2**ilev + 1
+
+            # First and last cell in this level
+            i0 = self.ifirst[ilev]
+            i1 = self.ilast[ilev] + 1
+
+            # Initialize arrays for this level
+            mu = np.zeros(i1 - i0, dtype=int)
+            mu1 = np.zeros(i1 - i0, dtype=int) - 1
+            mu2 = np.zeros(i1 - i0, dtype=int) - 1
+            nu = np.zeros(i1 - i0, dtype=int)
+            nu1 = np.zeros(i1 - i0, dtype=int) - 1
+            nu2 = np.zeros(i1 - i0, dtype=int) - 1
+
+            # Get n and m indices for this level
+            n = self.n[i0:i1]
+            m = self.m[i0:i1]
+            nm = nm_all[i0:i1]
+
+            # Now look for neighbors 
+                           
+            # Same level
+
+            # Right
+            nm_to_find = nm + nmax
+            inb = binary_search(nm, nm_to_find)
+            mu1[inb>=0] = inb[inb>=0] + i0
+
+            # Above
+            nm_to_find = nm + 1
+            inb = binary_search(nm, nm_to_find)
+            nu1[inb>=0] = inb[inb>=0] + i0
+
+            ## Coarser level neighbors
+            if ilev>0:
+
+                nmaxc = self.nmax * 2**(ilev - 1) + 1   # Number of cells in coarser level in n direction 
+
+                i0c = self.ifirst[ilev - 1]  # First cell in coarser level                
+                i1c = self.ilast[ilev - 1] + 1 # Last cell in coarser level
+
+                nmc = nm_all[i0c:i1c] # Coarser level nm indices
+                nc = n // 2 # Coarser level n index of this cells in this level
+                mc = m // 2 # Coarser level m index of this cells in this level 
+
+                # Right
+                nmc_to_find = (mc + 1) * nmaxc + nc
+                inb = binary_search(nmc, nmc_to_find)
+                inb[np.where(even(m))[0]] = -1
+                # Set mu and mu1 for inb>=0
+                mu1[inb>=0] = inb[inb>=0] + i0c
+                mu[inb>=0] = -1
+
+                # Above
+                nmc_to_find = mc * nmaxc + nc + 1
+                inb = binary_search(nmc, nmc_to_find)
+                inb[np.where(even(n))[0]] = -1
+                # Set nu and nu1 for inb>=0
+                nu1[inb>=0] = inb[inb>=0] + i0c
+                nu[inb>=0] = -1
+
+            # Finer level neighbors
+            if ilev<self.nr_refinement_levels - 1:
+
+                nmaxf = self.nmax * 2**(ilev + 1) + 1 # Number of cells in finer level in n direction
+
+                i0f = self.ifirst[ilev + 1]  # First cell in finer level
+                i1f = self.ilast[ilev + 1] + 1 # Last cell in finer level
+                nmf = nm_all[i0f:i1f] # Finer level nm indices
+
+                # Right
+
+                # Lower row
+                nf = n * 2 # Finer level n index of this cells in this level
+                mf = m * 2 + 1 # Finer level m index of this cells in this level
+                nmf_to_find = (mf + 1) * nmaxf + nf
+                inb = binary_search(nmf, nmf_to_find)
+                mu1[inb>=0] = inb[inb>=0] + i0f
+                mu[inb>=0] = 1
+
+                # Upper row
+                nf = n * 2 + 1# Finer level n index of this cells in this level
+                mf = m * 2 + 1 # Finer level m index of this cells in this level
+                nmf_to_find = (mf + 1) * nmaxf + nf
+                inb = binary_search(nmf, nmf_to_find)
+                mu2[inb>=0] = inb[inb>=0] + i0f
+                mu[inb>=0] = 1
+
+                # Above
+
+                # Left column
+                nf = n * 2 + 1 # Finer level n index of this cells in this level
+                mf = m * 2 # Finer level m index of this cells in this level
+                nmf_to_find = mf * nmaxf + nf + 1
+                inb = binary_search(nmf, nmf_to_find)
+                nu1[inb>=0] = inb[inb>=0] + i0f
+                nu[inb>=0] = 1
+
+                # Right column
+                nf = n * 2 + 1 # Finer level n index of this cells in this level
+                mf = m * 2 + 1 # Finer level m index of this cells in this level
+                nmf_to_find = mf * nmaxf + nf + 1
+                inb = binary_search(nmf, nmf_to_find)
+                nu2[inb>=0] = inb[inb>=0] + i0f
+                nu[inb>=0] = 1
+
+            # Fill in mu, mu1, mu2, nu, nu1, nu2 for this level
+            self.mu[i0:i1] = mu
+            self.mu1[i0:i1] = mu1
+            self.mu2[i0:i1] = mu2
+            self.nu[i0:i1] = nu
+            self.nu1[i0:i1] = nu1
+            self.nu2[i0:i1] = nu2
+
+        print("Time elapsed : " + str(time.time() - start) + " s")
+
+        print("Setting neighbors left and below ...")
+
+        # Right
+       
+        iok1 = np.where(self.mu1>=0)[0]
+        # Same level
+        iok2 = np.where(self.mu==0)[0]
+        # Indices of cells that have a same level neighbor to the right
+        iok = np.intersect1d(iok1, iok2)
+        # Indices of neighbors
+        imu = self.mu1[iok]
+        self.md[imu] = 0
+        self.md1[imu] = iok
+
+        # Coarser
+        iok2 = np.where(self.mu==-1)[0]
+        # Indices of cells that have a coarse level neighbor to the right
+        iok = np.intersect1d(iok1, iok2)
+        # Odd
+        iok_odd  = iok[np.where(odd(self.n[iok]))]
+        iok_even = iok[np.where(even(self.n[iok]))]
+        imu = self.mu1[iok_odd]
+        self.md[imu] = 1
+        self.md1[imu] = iok_odd
+        imu = self.mu1[iok_even]
+        self.md[imu] = 1
+        self.md2[imu] = iok_even
+
+        # Finer
+        # Lower
+        iok1 = np.where(self.mu1>=0)[0]
+        # Same level
+        iok2 = np.where(self.mu==1)[0]
+        # Indices of cells that have finer level neighbor to the right
+        iok = np.intersect1d(iok1, iok2)
+        imu = self.mu1[iok]
+        self.md[imu] = -1
+        self.md1[imu] = iok
+        # Upper
+        iok1 = np.where(self.mu2>=0)[0]
+        # Same level
+        iok2 = np.where(self.mu==1)[0]
+        # Indices of cells that have finer level neighbor to the right
+        iok = np.intersect1d(iok1, iok2)
+        imu = self.mu2[iok]
+        self.md[imu] = -1
+        self.md1[imu] = iok
+
+        # Above
+        iok1 = np.where(self.nu1>=0)[0]
+        # Same level
+        iok2 = np.where(self.nu==0)[0]
+        # Indices of cells that have a same level neighbor above
+        iok = np.intersect1d(iok1, iok2)
+        # Indices of neighbors
+        inu = self.nu1[iok]
+        self.nd[inu] = 0
+        self.nd1[inu] = iok
+
+        # Coarser
+        iok2 = np.where(self.nu==-1)[0]
+        # Indices of cells that have a coarse level neighbor to the right
+        iok = np.intersect1d(iok1, iok2)
+        # Odd
+        iok_odd  = iok[np.where(odd(self.m[iok]))]
+        iok_even = iok[np.where(even(self.m[iok]))]
+        inu = self.nu1[iok_odd]
+        self.nd[inu] = 1
+        self.nd1[inu] = iok_odd
+        inu = self.nu1[iok_even]
+        self.nd[inu] = 1
+        self.nd2[inu] = iok_even
+
+        # Finer
+        # Left
+        iok1 = np.where(self.nu1>=0)[0]
+        # Same level
+        iok2 = np.where(self.nu==1)[0]
+        # Indices of cells that have finer level neighbor above
+        iok = np.intersect1d(iok1, iok2)
+        inu = self.nu1[iok]
+        self.nd[inu] = -1
+        self.nd1[inu] = iok
+        # Upper
+        iok1 = np.where(self.nu2>=0)[0]
+        # Same level
+        iok2 = np.where(self.nu==1)[0]
+        # Indices of cells that have finer level neighbor to the right
+        iok = np.intersect1d(iok1, iok2)
+        inu = self.nu2[iok]
+        self.nd[inu] = -1
+        self.nd1[inu] = iok
+
+        print("Time elapsed : " + str(time.time() - start) + " s")
+
+    def _to_xugrid(self):    
+
+        print("Making XUGrid ...")
+
+        # Create the grid
+        ugrid2d = self._get_ugrid2d()
+
+        # Create the dataset
+        self.data = xu.UgridDataset(grids=ugrid2d)
+
+        # Add attributes
+        attrs = {"x0": self.x0,
+                 "y0": self.y0,
+                 "nmax": self.nmax,
+                 "mmax": self.mmax,
+                 "dx": self.dx,
+                 "dy": self.dy,
+                 "rotation": self.rotation,
+                 "nr_levels": self.nr_refinement_levels}
+        self.data.attrs = attrs
+
+        # Now add the data arrays
+        self.data["crs"] = ugrid2d.crs.to_epsg()
+        self.data["crs"].attrs = ugrid2d.crs.to_cf()
+        self.data["level"] = xu.UgridDataArray(xr.DataArray(data=self.level + 1, dims=[ugrid2d.face_dimension]), ugrid2d)
+
+        # add dep, msk and snapwave_msk if they exist in self
+        if hasattr(self, "dep"):
+            self.data["dep"] = xu.UgridDataArray(xr.DataArray(data=self.dep, dims=[ugrid2d.face_dimension]), ugrid2d)
+        if hasattr(self, "mask"):
+            self.data["msk"] = xu.UgridDataArray(xr.DataArray(data=self.mask, dims=[ugrid2d.face_dimension]), ugrid2d)
+        if hasattr(self, "snapwave_mask"):
+            self.data["snapwave_msk"] = xu.UgridDataArray(xr.DataArray(data=self.snapwave_mask, dims=[ugrid2d.face_dimension]), ugrid2d)
+
+        self.data["n"] = xu.UgridDataArray(xr.DataArray(data=self.n + 1, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["m"] = xu.UgridDataArray(xr.DataArray(data=self.m + 1, dims=[ugrid2d.face_dimension]), ugrid2d)
+
+        self.data["mu"]  = xu.UgridDataArray(xr.DataArray(data=self.mu, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["mu1"] = xu.UgridDataArray(xr.DataArray(data=self.mu1 + 1, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["mu2"] = xu.UgridDataArray(xr.DataArray(data=self.mu2 + 1, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["md"]  = xu.UgridDataArray(xr.DataArray(data=self.md, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["md1"] = xu.UgridDataArray(xr.DataArray(data=self.md1 + 1, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["md2"] = xu.UgridDataArray(xr.DataArray(data=self.md2 + 1, dims=[ugrid2d.face_dimension]), ugrid2d)
+
+        self.data["nu"]  = xu.UgridDataArray(xr.DataArray(data=self.nu, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["nu1"] = xu.UgridDataArray(xr.DataArray(data=self.nu1 + 1, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["nu2"] = xu.UgridDataArray(xr.DataArray(data=self.nu2 + 1, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["nd"]  = xu.UgridDataArray(xr.DataArray(data=self.nd, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["nd1"] = xu.UgridDataArray(xr.DataArray(data=self.nd1 + 1, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["nd2"] = xu.UgridDataArray(xr.DataArray(data=self.nd2 + 1, dims=[ugrid2d.face_dimension]), ugrid2d)
+
+        # Get rid of temporary arrays
+        self._clear_temporary_arrays()
+
+    def _clear_temporary_arrays(self):
+        pass
+
+    def _find_boundary_cells(self):
 
         mu = self.data["mu"].values[:]
-        mu1 = self.data["mu1"].values[:]
-        mu2 = self.data["mu2"].values[:]
+        mu1 = self.data["mu1"].values[:] - 1
+        mu2 = self.data["mu2"].values[:] - 1
         nu = self.data["nu"].values[:]
-        nu1 = self.data["nu1"].values[:]
-        nu2 = self.data["nu2"].values[:]
+        nu1 = self.data["nu1"].values[:] - 1
+        nu2 = self.data["nu2"].values[:] - 1
         md = self.data["md"].values[:]
-        md1 = self.data["md1"].values[:]
-        md2 = self.data["md2"].values[:]
+        md1 = self.data["md1"].values[:] - 1
+        md2 = self.data["md2"].values[:] - 1
         nd = self.data["nd"].values[:]
-        nd1 = self.data["nd1"].values[:]
-        nd2 = self.data["nd2"].values[:]
+        nd1 = self.data["nd1"].values[:] - 1
+        nd2 = self.data["nd2"].values[:] - 1
 
         mask = self.data["msk"].values[:]
 
@@ -1704,57 +1579,84 @@ class QuadtreeGrid:
         bounds[mask == 0] = False
 
         return bounds
-    
+
+ 
+    def _find_lower_level_neighbors(self, ind_ref, ilev):
+        # ind_ref are the indices of the cells that need to be refined
+
+        n = self.n[ind_ref]
+        m = self.m[ind_ref]
+
+        n_odd = np.where(odd(n))
+        m_odd = np.where(odd(m))
+        n_even = np.where(even(n))
+        m_even = np.where(even(m))
+        
+        ill   = np.intersect1d(n_even, m_even)
+        iul   = np.intersect1d(n_odd, m_even)
+        ilr   = np.intersect1d(n_even, m_odd)
+        iur   = np.intersect1d(n_odd, m_odd)
+
+        n_nbr = np.zeros((2, np.size(n)), dtype=int)        
+        m_nbr = np.zeros((2, np.size(n)), dtype=int)
+
+        # LL
+        n0 = np.int32(n[ill] / 2)
+        m0 = np.int32(m[ill] / 2)
+        n_nbr[0, ill] = n0 - 1
+        m_nbr[0, ill] = m0
+        n_nbr[1, ill] = n0
+        m_nbr[1, ill] = m0 - 1
+        # UL
+        n0 = np.int32((n[iul] - 1) / 2)
+        m0 = np.int32(m[iul] / 2)
+        n_nbr[0, iul] = n0 + 1
+        m_nbr[0, iul] = m0
+        n_nbr[1, iul] = n0
+        m_nbr[1, iul] = m0 - 1
+        # LR
+        n0 = np.int32(n[ilr] / 2)
+        m0 = np.int32((m[ilr] - 1) / 2)
+        n_nbr[0, ilr] = n0 - 1
+        m_nbr[0, ilr] = m0
+        n_nbr[1, ilr] = n0
+        m_nbr[1, ilr] = m0 + 1
+        # UR
+        n0 = np.int32((n[iur] - 1) / 2)
+        m0 = np.int32((m[iur] - 1) / 2)
+        n_nbr[0, iur] = n0 + 1
+        m_nbr[0, iur] = m0
+        n_nbr[1, iur] = n0
+        m_nbr[1, iur] = m0 + 1
+
+        nmax = self.nmax * 2**(ilev - 1) + 1
+
+        n_nbr = n_nbr.flatten()
+        m_nbr = m_nbr.flatten()
+        nm_nbr = m_nbr * nmax + n_nbr
+        nm_nbr = np.sort(np.unique(nm_nbr, return_index=False))
+
+        # Actual cells in the coarser level 
+        n_level = self.n[self.ifirst[ilev - 1]:self.ilast[ilev - 1] + 1]
+        m_level = self.m[self.ifirst[ilev - 1]:self.ilast[ilev - 1] + 1]
+        nm_level = m_level * nmax + n_level
+
+        # Find  
+        ind_nbr = binary_search(nm_level, nm_nbr)
+        ind_nbr = ind_nbr[ind_nbr>=0]
+
+        if np.any(ind_nbr):
+            ind_nbr += self.ifirst[ilev - 1]
+
+        return ind_nbr
+
 ## Internal functions
 
-def get_neighbors_in_larger_cell(n, m):    
-    nnbr = [-1, -1, -1, -1]
-    mnbr = [-1, -1, -1, -1]
-    if not odd(n) and not odd(m):
-        # lower left
-        nnbr[0] = n + 1
-        mnbr[0] = m
-        nnbr[1] = n
-        mnbr[1] = m + 1
-        nnbr[2] = n + 1
-        mnbr[2] = m + 1
-    elif not odd(n) and odd(m):
-        # lower right
-        nnbr[1] = n
-        mnbr[1] = m - 1
-        nnbr[2] = n + 1
-        mnbr[2] = m - 1
-        nnbr[3] = n + 1
-        mnbr[3] = m
-    elif odd(n) and not odd(m):
-        # upper left
-        nnbr[1] = n - 1
-        mnbr[1] = m
-        nnbr[2] = n - 1
-        mnbr[2] = m + 1
-        nnbr[3] = n
-        mnbr[3] = m + 1
-    else:
-        # upper right
-        nnbr[1] = n - 1
-        mnbr[1] = m - 1
-        nnbr[2] = n - 1
-        mnbr[2] = m
-        nnbr[3] = n
-        mnbr[3] = m - 1    
-    return nnbr,mnbr
-
 def odd(num):
-    if (num % 2) == 1:  
-        return True
-    else:  
-        return False
+    return np.mod(num, 2) == 1
 
 def even(num):
-    if (num % 2) == 0:  
-        return True
-    else:  
-        return False
+    return np.mod(num, 2) == 0
 
 def inpolygon(xq, yq, p):
     shape = xq.shape
@@ -1764,12 +1666,15 @@ def inpolygon(xq, yq, p):
     p = path.Path([(crds[0], crds[1]) for i, crds in enumerate(p.exterior.coords)])
     return p.contains_points(q).reshape(shape)
 
-def binary_search(vals, val):    
-    indx = np.searchsorted(vals, val)
-    if indx<np.size(vals):
-        if vals[indx] == val:
-            return indx
-    return None
+def binary_search(val_array, vals):    
+    indx = np.searchsorted(val_array, vals) # ind is size of vals 
+    not_ok = np.where(indx==len(val_array))[0] # size of vals, points that are out of bounds
+    indx[np.where(indx==len(val_array))[0]] = 0 # Set to zero to avoid out of bounds error
+    is_ok = np.where(val_array[indx] == vals)[0] # size of vals
+    indices = np.zeros(len(vals), dtype=int) - 1
+    indices[is_ok] = indx[is_ok]
+    indices[not_ok] = -1
+    return indices
 
 def gdf2list(gdf_in):
    gdf_out = []
