@@ -1964,11 +1964,11 @@ class SfincsModel(GridModel):
         # set forcing with consistent names
         if not set(gdf_locs.index) == set(df_ts.columns):
             raise ValueError("The gdf_locs index and df_ts columns must be the same")
-        gdf_locs.index.name = "index"
-        df_ts.columns.name = "index"
+        gdf_locs.index.name = "stations"
+        df_ts.columns.name = "stations"
         df_ts.index.name = "time"
         da = GeoDataArray.from_gdf(gdf_locs.to_crs(self.crs), data=df_ts, name=name)
-        self.set_forcing(da.transpose("time", "index"))
+        self.set_forcing(da.transpose("time", "stations"))
 
     def setup_waterlevel_forcing(
         self,
@@ -2773,9 +2773,15 @@ class SfincsModel(GridModel):
         name = self._GEOMS["wavemaker"]
 
         # read, clip and reproject
-        gdf_wavemaker = self.data_catalog.get_geodataframe(
-            wavemaker, geom=self.region, **kwargs
-        ).to_crs(self.crs)
+        if not isinstance(wavemaker, gpd.GeoDataFrame) and str(wavemaker).endswith(".pol"):
+            # NOTE polygons should be in same CRS as model
+            gdf_wavemaker = utils.linestring2gdf(
+                feats=utils.read_geoms(fn=wavemaker), crs=self.region.crs
+            )
+        else:
+            gdf_wavemaker = self.data_catalog.get_geodataframe(
+            wavemaker, geom=self.region, **kwargs).to_crs(self.crs)
+
 
         # combine with existing structures if present
         if merge and name in self.geoms:
