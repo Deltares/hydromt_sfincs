@@ -45,11 +45,11 @@ class QuadtreeGrid:
         self.subgrid = SubgridTableQuadtree()
         self.df = None
 
-    # @property
-    # def crs(self):
-    #     if self.data is None:
-    #         return None
-    #     return self.data.grid.crs
+    @property
+    def crs(self):
+        if self.data is None:
+            return None
+        return self.data.grid.crs
 
     @property
     def face_coordinates(self):
