@@ -299,16 +299,15 @@ class QuadtreeGrid:
             self.data[varname] = self.data["msk"]
             return
         
-        if "msk" not in self.data:
-            raise ValueError("First setup active mask")
+        if varname not in self.data:
+            raise ValueError("First setup active mask for model: " + model)
         else:
-            uda_mask = self.data["msk"]
+            uda_mask = self.data[varname]
         
         if "dep" not in self.data and (zmin is not None or zmax is not None):
             raise ValueError("dep required in combination with zmin / zmax")
         else:
             uda_dep = self.data["dep"]
-
         
         btype = btype.lower()
         bvalues = {"waterlevel": 2, "outflow": 3}
