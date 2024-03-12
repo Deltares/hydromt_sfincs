@@ -786,7 +786,6 @@ class SfincsModel(GridModel):
         keep_rivers_geom: bool = False,
         reverse_river_geom: bool = False,
         src_type: str = "inflow",
-        mask_upstream_cells: bool = False,
     ):
         """Setup discharge (src) points where a river enters the model domain.
 
@@ -837,9 +836,6 @@ class SfincsModel(GridModel):
             Source type, by default 'inflow'
             If 'inflow', return points where the river flows into the model domain.
             If 'headwater', return all headwater (including inflow) points within the model domain.
-        mask_upstream_cells: bool, optional
-            If True, mask upstream cells of the river source points, by default False.
-            Note that this requires hydrography data and is only used if `src_type='headwater'`. 
 
         See Also
         --------
@@ -856,10 +852,6 @@ class SfincsModel(GridModel):
                 buffer=5,
             )
             da_uparea = ds["uparea"]  # reused in river_source_points
-        elif mask_upstream_cells:
-            raise ValueError(
-                "Masking of upstream cells requires hydrography data to be provided."
-            )
 
         # get river centerlines
         if (
@@ -875,11 +867,11 @@ class SfincsModel(GridModel):
             ).to_crs(self.crs)
         elif hydrography is not None:
             gdf_riv = workflows.river_centerline_from_hydrography(
-                da_flwdir = ds["flwdir"],
-                da_uparea = da_uparea,
+                da_flwdir=ds["flwdir"],
+                da_uparea=da_uparea,
                 river_upa=river_upa,
                 river_len=river_len,
-                gdf_mask=self.region
+                gdf_mask=self.region,
             )
         elif hydrography is None:
             raise ValueError("Either hydrography or rivers must be provided.")
@@ -889,7 +881,7 @@ class SfincsModel(GridModel):
         if self.crs.is_geographic:
             buffer = buffer * 111111.0
 
-        # get river inflow / headwater source points 
+        # get river inflow / headwater source points
         gdf_src = workflows.river_source_points(
             gdf_riv=gdf_riv,
             gdf_mask=self.region,
@@ -904,23 +896,6 @@ class SfincsModel(GridModel):
         if gdf_src.empty:
             return
 
-        # mask upstream cells
-        # FIXME basin mask should be based on shifted outlet cells
-        if mask_upstream_cells and src_type == "headwater":
-            gdf_bas, _ = workflows.basin_mask(
-                da_flwdir=ds["flwdir"],
-                gdf_outlet=gdf_src,
-            )
-            self.setup_mask_active(
-                exclude_mask=gdf_bas,
-                reset_mask=False,
-            )
-            # make sure that the river source points are not masked !   
-            self.setup_mask_active(
-                include_mask=gdf_src,
-                reset_mask=False,
-            )
-            
         # set forcing src pnts
         gdf_src.index = gdf_src.index + first_index
         self.set_forcing_1d(gdf_locs=gdf_src.copy(), name="dis", merge=merge)
@@ -1034,11 +1009,11 @@ class SfincsModel(GridModel):
             ).to_crs(self.crs)
         elif hydrography is not None:
             gdf_riv = workflows.river_centerline_from_hydrography(
-                da_flwdir = ds["flwdir"],
-                da_uparea = da_uparea,
+                da_flwdir=ds["flwdir"],
+                da_uparea=da_uparea,
                 river_upa=river_upa,
                 river_len=river_len,
-                gdf_mask=self.region
+                gdf_mask=self.region,
             )
         else:
             raise ValueError("Either hydrography or rivers must be provided.")
@@ -1048,7 +1023,7 @@ class SfincsModel(GridModel):
         if self.crs.is_geographic:
             buffer = buffer * 111111.0
 
-        # get river inflow / headwater source points 
+        # get river inflow / headwater source points
         gdf_out = workflows.river_source_points(
             gdf_riv=gdf_riv,
             gdf_mask=self.region,
