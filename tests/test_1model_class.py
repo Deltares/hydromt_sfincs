@@ -107,9 +107,13 @@ def test_subgrid_rivers(mod):
     gdf_riv = mod.data_catalog.get_geodataframe(
         "rivers_lin2019_v1", geom=mod.region, buffer=1e3
     )
+
+    # create dummy depths for the river based on the width
     rivdph = gdf_riv["rivwth"].values / 100
-    rivdph[-1] = np.nan
     gdf_riv["rivdph"] = rivdph
+
+    # set the depth of the river with "COMID": 21002062 to nan
+    gdf_riv.loc[gdf_riv["COMID"] == 21002062, "rivdph"] = np.nan
 
     sbg_org = mod.subgrid.copy()
 
