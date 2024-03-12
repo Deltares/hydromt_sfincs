@@ -48,7 +48,7 @@ def river_centerline_from_hydrography(
         River line vector data.
     """
     # get river network from hydrography based on upstream area mask
-    riv_mask=da_uparea >= river_upa
+    riv_mask = da_uparea >= river_upa
     if not riv_mask.any():
         return gpd.GeoDataFrame()
     flwdir = hydromt.flw.flwdir_from_da(da_flwdir, mask=riv_mask)
@@ -71,7 +71,9 @@ def river_centerline_from_hydrography(
     flwdir = pyflwdir.from_dataframe(gdf_riv.set_index("idx"), ds_col="idx_ds")
     gdf_riv["rivdst"] = flwdir.accuflux(gdf_riv["seglen"].values, direction="down")
     # get maximum river length from outlet (at headwater segments) for each river segment
-    gdf_riv["rivlen"] = flwdir.fillnodata(np.where(flwdir.n_upstream == 0, gdf_riv["rivdst"], 0), 0)
+    gdf_riv["rivlen"] = flwdir.fillnodata(
+        np.where(flwdir.n_upstream == 0, gdf_riv["rivdst"], 0), 0
+    )
     # filter river network based on total length
     gdf_riv = gdf_riv[gdf_riv["rivlen"] >= river_len]
     return gdf_riv
@@ -80,7 +82,7 @@ def river_centerline_from_hydrography(
 def river_source_points(
     gdf_riv: gpd.GeoDataFrame,
     gdf_mask: gpd.GeoDataFrame,
-    src_type: str = 'inflow',
+    src_type: str = "inflow",
     buffer: float = 100,
     river_upa: float = 10,
     river_len: float = 1e3,
@@ -98,7 +100,7 @@ def river_source_points(
     ----------
     gdf_riv: geopandas.GeoDataFrame
         River network vector data, by default None.
-        Requires 'uparea' and 'rivlen' attributes to 
+        Requires 'uparea' and 'rivlen' attributes to
         check for river length and upstream area thresholds.
     gdf_mask: geopandas.GeoDataFrame
         Polygon of model gdf_mask of interest.
@@ -126,18 +128,18 @@ def river_source_points(
     """
     # data checks
     if not (
-        isinstance(gdf_mask, (gpd.GeoDataFrame, gpd.GeoSeries)) 
+        isinstance(gdf_mask, (gpd.GeoDataFrame, gpd.GeoSeries))
         and np.all(np.isin(gdf_mask.geometry.type, ["Polygon", "MultiPolygon"]))
     ):
         raise TypeError("gdf_mask must be a GeoDataFrame of Polygons.")
     if not (
-        isinstance(gdf_riv, (gpd.GeoDataFrame, gpd.GeoSeries)) 
+        isinstance(gdf_riv, (gpd.GeoDataFrame, gpd.GeoSeries))
         and np.all(np.isin(gdf_riv.geometry.type, ["LineString", "MultiLineString"]))
     ):
         raise TypeError("gdf_riv must be a GeoDataFrame of LineStrings.")
-    if src_type not in ['inflow', 'outflow', 'headwater']:
+    if src_type not in ["inflow", "outflow", "headwater"]:
         raise ValueError("src_type must be either 'inflow', 'outflow', or 'headwater'.")
-    if gdf_mask.crs.is_geographic: # to pseudo mercator
+    if gdf_mask.crs.is_geographic:  # to pseudo mercator
         gdf_mask = gdf_mask.to_crs("epsg:3857")
 
     # clip river to model gdf_mask
@@ -148,7 +150,9 @@ def river_source_points(
     if "rivlen" in gdf_riv.columns:
         gdf_riv = gdf_riv[gdf_riv["rivlen"] > river_len]
     if gdf_riv.empty:
-        logger.warning("No rivers matching the uparea and rivlen thresholds found in gdf_riv.")
+        logger.warning(
+            "No rivers matching the uparea and rivlen thresholds found in gdf_riv."
+        )
         return gpd.GeoDataFrame()
 
     # get source points 1m before the start/end of the river
@@ -156,21 +160,21 @@ def river_source_points(
     # a negative dx results in a point near the end of the line (outflow)
     dx = -1 if reverse_river_geom else 1
     gdf_up = gdf_riv.interpolate(dx).to_frame("geometry")
-    gdf_up['riv_idx'] = gdf_riv.index
+    gdf_up["riv_idx"] = gdf_riv.index
     gdf_ds = gdf_riv.interpolate(-dx).to_frame("geometry")
-    gdf_ds['riv_idx'] = gdf_riv.index
-    
+    gdf_ds["riv_idx"] = gdf_riv.index
+
     # get points that do not intersect with up/downstream end of other river segments
-    # use a small buffer of 5m around these points to account for dx and avoid issues with inprecise river geometries 
-    if src_type in ['inflow', 'headwater']:
+    # use a small buffer of 5m around these points to account for dx and avoid issues with inprecise river geometries
+    if src_type in ["inflow", "headwater"]:
         pnts_ds = gdf_ds.buffer(5).unary_union
         gdf_pnt = gdf_up[~gdf_up.intersects(pnts_ds)].reset_index(drop=True)
-    elif src_type == 'outflow':
+    elif src_type == "outflow":
         pnts_up = gdf_up.buffer(5).unary_union
         gdf_pnt = gdf_ds[~gdf_ds.intersects(pnts_up)].reset_index(drop=True)
-    
+
     # get buffer around gdf_mask, in- and outflow points should be within this buffer
-    if src_type in ['inflow', 'outflow']:
+    if src_type in ["inflow", "outflow"]:
         bnd = gdf_mask.boundary.buffer(buffer).unary_union
         gdf_pnt = gdf_pnt[gdf_pnt.intersects(bnd)].reset_index(drop=True)
 
@@ -184,11 +188,12 @@ def river_source_points(
 
     return gdf_pnt
 
+
 # NOTE: this function is should be available in hydromt
 def basin_mask(
     da_flwdir: xr.DataArray,
     gdf_outlet: gpd.GeoDataFrame,
-    shift_nup: int = 0, 
+    shift_nup: int = 0,
 ) -> tuple[gpd.GeoDataFrame, xr.DataArray]:
     """Returns a basin mask of all cells upstream from the outlets.
 
@@ -207,14 +212,14 @@ def basin_mask(
         Raster of basin polygons.
     """
     if not (
-        isinstance(gdf_outlet, (gpd.GeoDataFrame, gpd.GeoSeries)) 
+        isinstance(gdf_outlet, (gpd.GeoDataFrame, gpd.GeoSeries))
         and np.all(gdf_outlet.geometry.type == "Point")
     ):
         raise TypeError("gdf_mask must be a GeoDataFrame of Points.")
     flwdir = hydromt.flw.flwdir_from_da(da_flwdir)
     if da_flwdir.raster.crs != gdf_outlet.crs:
         gdf_outlet = gdf_outlet.to_crs(da_flwdir.raster.crs)
-    xy= gdf_outlet.geometry.x.values, gdf_outlet.geometry.y.values
+    xy = gdf_outlet.geometry.x.values, gdf_outlet.geometry.y.values
     # FIXME
     # if shift_nup > 0:
     #     xy = flwdir.main_upstream(xy, n=shift_nup)
@@ -226,5 +231,5 @@ def basin_mask(
     da_bas.raster.set_nodata(0)
     da_bas.raster.set_crs(da_flwdir.raster.crs)
     gdf_bas = da_bas.raster.vectorize()
-    gdf_bas['idx'] = gdf_bas.index
+    gdf_bas["idx"] = gdf_bas.index
     return gdf_bas, da_bas
