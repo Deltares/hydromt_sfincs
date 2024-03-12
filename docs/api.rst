@@ -154,7 +154,7 @@ SFINCS workflows
    workflows.merge_dataarrays
    workflows.burn_river_rect
    workflows.snap_discharge
-   workflows.river_boundary_points
+   workflows.river_source_points
    workflows.river_centerline_from_hydrography
    workflows.landuse
    workflows.cn_to_s
