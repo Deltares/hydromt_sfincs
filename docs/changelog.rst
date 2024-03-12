@@ -6,11 +6,10 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
-v1.0.3 (in development)
+v1.0.3 (3 January 2024)
 =======================
-
-Added
------
+This release contains several changes and fixes. Most notably, models with a geographical CRS can now be build.
+Also note the changes in the default values in the sfincs.inp file.
 
 Changed
 -------
@@ -24,10 +23,6 @@ Fixed
 - fixed masking of elevation and manning datasets when providing mask attribute (#153)
 - fix a bug that caused some model files to be read twice (#161)
 - bugfix in workflows.bathymetry that was encountered while burning in rivers (#166)
-
-Deprecated
-----------
-
 
 
 v1.0.2 (9 November 2023)
