@@ -496,6 +496,7 @@ def linestring2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDat
         feat.update({"geometry": LineString(list(zip(*xyz)))})
         records.append(feat)
     gdf = gpd.GeoDataFrame.from_records(records)
+    gdf.set_geometry("geometry", inplace=True)
     if crs is not None:
         gdf.set_crs(crs, inplace=True)
     return gdf
@@ -530,6 +531,7 @@ def polygon2gdf(
     gdf = gpd.GeoDataFrame.from_records(records)
     gdf["zmin"] = zmin
     gdf["zmax"] = zmax
+    gdf.set_geometry("geometry", inplace=True)
     if crs is not None:
         gdf.set_crs(crs, inplace=True)
     return gdf
