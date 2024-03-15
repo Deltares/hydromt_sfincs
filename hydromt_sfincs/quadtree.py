@@ -327,7 +327,7 @@ class QuadtreeGrid:
                 return uda_mask
 
         # find boundary cells of the active mask
-        bounds = self._find_boundary_cells()
+        bounds = self._find_boundary_cells(varname)
 
         if zmin is not None:
             bounds = np.logical_and(bounds, uda_dep >= zmin)
@@ -1513,7 +1513,7 @@ class QuadtreeGrid:
     def _clear_temporary_arrays(self):
         pass
 
-    def _find_boundary_cells(self):
+    def _find_boundary_cells(self, varname):
 
         mu = self.data["mu"].values[:]
         mu1 = self.data["mu1"].values[:] - 1
@@ -1528,7 +1528,8 @@ class QuadtreeGrid:
         nd1 = self.data["nd1"].values[:] - 1
         nd2 = self.data["nd2"].values[:] - 1
 
-        mask = self.data["msk"].values[:]
+        # mask = self.data["msk"].values[:]
+        mask = self.data[varname].values[:] # TL: can be both sfincs or snapwave msk        
 
         bounds = np.zeros(self.nr_cells, dtype=bool)
 
