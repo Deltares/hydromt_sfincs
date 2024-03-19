@@ -25,6 +25,9 @@ class SubgridTableRegular:
     # new way of reading netcdf subgrid tables
     def read(self, file_name):
         """Load subgrid table from netcdf file."""
+
+        self.version = 1
+
         # Read from netcdf file with xarray
         self.ds = xr.open_dataset(file_name)
         self.ds.close()  # Should this be closed ?
@@ -367,6 +370,8 @@ class SubgridTableRegular:
             are stored, by default None
         """
 
+        self.version = 1
+        
         if write_dep_tif or write_man_tif:
             assert highres_dir is not None, "highres_dir must be specified"
 
