@@ -71,18 +71,30 @@ class SubgridTableRegular:
         # U points
         self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.u_havg = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
-        self.u_nrep = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
-        self.u_pwet = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_havg = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.u_nrep = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.u_pwet = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
         self.u_ffit = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
         self.u_navg = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
 
         # V points
         self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
         self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
-        self.v_havg = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
-        self.v_nrep = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
-        self.v_pwet = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_havg = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.v_nrep = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.v_pwet = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
         self.v_ffit = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
         self.v_navg = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
 
@@ -92,7 +104,9 @@ class SubgridTableRegular:
         self.z_zmax[active_z] = self.ds["z_zmax"].values.flatten()
         self.z_volmax[active_z] = self.ds["z_volmax"].values.flatten()
         for ilevel in range(self.nlevels):
-            self.z_level[ilevel, active_z[0], active_z[1]] = self.ds["z_level"][ilevel].values.flatten()
+            self.z_level[ilevel, active_z[0], active_z[1]] = self.ds["z_level"][
+                ilevel
+            ].values.flatten()
 
         # now use index_mu1 and index_nu1 to put the values of the active cells in the new dataset
         var_list = ["zmin", "zmax", "ffit", "navg"]
@@ -100,14 +114,17 @@ class SubgridTableRegular:
             uv_var = self.ds["uv_" + var].values.flatten()
             self.u_zmin[active_u] = uv_var[index_mu1[active_indices_u]]
             self.v_zmin[active_v] = uv_var[index_nu1[active_indices_v]]
-        
+
         var_list_levels = ["havg", "nrep", "pwet"]
         for var in var_list_levels:
             for ilevel in range(self.nlevels):
                 uv_var = self.ds["uv_" + var][ilevel].values.flatten()
-                self.u_havg[ilevel, active_u[0], active_u[1]] = uv_var[index_mu1[active_indices_u]]
-                self.v_havg[ilevel, active_v[0], active_v[1]] = uv_var[index_nu1[active_indices_v]]
-
+                self.u_havg[ilevel, active_u[0], active_u[1]] = uv_var[
+                    index_mu1[active_indices_u]
+                ]
+                self.v_havg[ilevel, active_v[0], active_v[1]] = uv_var[
+                    index_nu1[active_indices_v]
+                ]
 
     # new way of writing netcdf subgrid tables
     def write(self, file_name, mask):
@@ -446,7 +463,7 @@ class SubgridTableRegular:
         """
 
         self.version = 1
-        
+
         if write_dep_tif or write_man_tif:
             assert highres_dir is not None, "highres_dir must be specified"
 
@@ -742,7 +759,7 @@ class SubgridTableRegular:
         if self.version == 0:
             uvlst2 = ["u_zmin", "u_zmax", "v_zmin", "v_zmax"]
             lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]
-            
+
         elif self.version == 1:
             uvlst2 = [
                 "u_zmin",

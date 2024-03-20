@@ -102,6 +102,7 @@ def test_infiltration(mod):
     )
     assert np.isclose(mod1.grid["ks"].where(mod.mask > 0).sum(), 351.10803)
 
+
 def test_subgrid_io(tmpdir):
     # test the backward compatibility of reading/writing subgrid
     root = TESTMODELDIR
@@ -112,7 +113,7 @@ def test_subgrid_io(tmpdir):
     mod0.read()
     # check version and new parameter
     assert mod0.reggrid.subgrid.version == 1
-    # u and v paramters should be separated internally 
+    # u and v paramters should be separated internally
     assert "u_pwet" in mod0.subgrid
     assert "uv_pwet" not in mod0.subgrid
     sbg_net = mod0.subgrid.copy()
@@ -150,7 +151,8 @@ def test_subgrid_io(tmpdir):
     assert np.isclose(np.sum(sbg_net["z_zmin"] - sbg_bin["z_zmin"]), 0.0)
     # TODO: check with Maarten whether this is meant to be different
     # difference comes from different discretization of volume bins
-    assert np.isclose(np.sum(sbg_net["z_zmax"] - sbg_bin["z_zmax"]),  1.0714283)
+    assert np.isclose(np.sum(sbg_net["z_zmax"] - sbg_bin["z_zmax"]), 1.0714283)
+
 
 def test_subgrid_rivers(mod):
     gdf_riv = mod.data_catalog.get_geodataframe(
