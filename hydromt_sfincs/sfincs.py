@@ -23,6 +23,7 @@ from shapely.geometry import LineString, box
 
 from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
+from .subgrid import SubgridTableRegular
 from .sfincs_input import SfincsInput
 
 __all__ = ["SfincsModel"]
@@ -2864,14 +2865,18 @@ class SfincsModel(GridModel):
                 self.logger.warning(f"sbgfile not found at {fn}")
                 return
 
+            # re-initialize subgrid (different variables for old/new version)
+            self.reggrid.subgrid = SubgridTableRegular()
+            self.subgrid = xr.Dataset()
+
+            # read subgrid file
             if fn.parts[-1].endswith(".sbg"):  # read binary file
                 self.reggrid.subgrid.read_binary(file_name=fn, mask=self.mask)
-                self.subgrid = self.reggrid.subgrid.to_xarray(
-                    dims=self.mask.raster.dims, coords=self.mask.raster.coords
-                )
             else:  # read netcdf file
-                self.reggrid.subgrid.read(file_name=fn)
-                self.subgrid = self.reggrid.subgrid.ds
+                self.reggrid.subgrid.read(file_name=fn, mask=self.mask)
+            self.subgrid = self.reggrid.subgrid.to_xarray(
+                dims=self.mask.raster.dims, coords=self.mask.raster.coords
+            )
 
     def write_subgrid(self):
         """Write SFINCS subgrid file."""

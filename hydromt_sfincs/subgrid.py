@@ -23,21 +23,96 @@ class SubgridTableRegular:
         self.version = version
 
     # new way of reading netcdf subgrid tables
-    def read(self, file_name):
+    def read(self, file_name, mask):
         """Load subgrid table from netcdf file."""
 
         self.version = 1
 
-        # Read from netcdf file with xarray
+        # Read data from netcdf file with xarray
         self.ds = xr.open_dataset(file_name)
         self.ds.close()  # Should this be closed ?
-        # Should we also make self.z_zmin, self.z_zmax, etc. ?
 
-        self.nlevels = self.ds.dims["levels"]
+        # transpose to have level as first dimension
+        self.ds = self.ds.transpose("levels", "npuv", "np")
+
+        # grid dimensions
+        grid_dim = mask.shape
+
+        # get number of levels, point and uv points
+        self.nlevels, self.nr_cells, self.nr_uv_points = (
+            self.ds.dims["levels"],
+            self.ds.dims["np"],
+            self.ds.dims["npuv"],
+        )
+
+        # find indices of active cells
+        index_nm, index_mu1, index_nu1 = utils.find_uv_indices(mask)
+        active_indices = np.where(index_nm > -1)[0]
+        active_indices_u = np.where(index_mu1 > -1)[0]
+        active_indices_v = np.where(index_nu1 > -1)[0]
+
+        iok = np.where(np.transpose(mask.values) > 0)
+        iok = (iok[1], iok[0])
+
+        # convert 1D indices to 2D indices
+        active_z = np.unravel_index(active_indices, grid_dim, order="F")
+        active_u = np.unravel_index(active_indices_u, grid_dim, order="F")
+        active_v = np.unravel_index(active_indices_v, grid_dim, order="F")
+
+        # Initialize the data-arrays
+        # Z points
+        self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_level = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+
+        # U points
+        self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.u_havg = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_nrep = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_pwet = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_ffit = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_navg = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
+
+        # V points
+        self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.v_havg = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_nrep = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_pwet = np.full((self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_ffit = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_navg = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
+
+        # Now read the data and add it to the data-arrays
+        # use index_nm of the active cells in the new dataset
+        self.z_zmin[active_z] = self.ds["z_zmin"].values.flatten()
+        self.z_zmax[active_z] = self.ds["z_zmax"].values.flatten()
+        self.z_volmax[active_z] = self.ds["z_volmax"].values.flatten()
+        for ilevel in range(self.nlevels):
+            self.z_level[ilevel, active_z[0], active_z[1]] = self.ds["z_level"][ilevel].values.flatten()
+
+        # now use index_mu1 and index_nu1 to put the values of the active cells in the new dataset
+        var_list = ["zmin", "zmax", "ffit", "navg"]
+        for var in var_list:
+            uv_var = self.ds["uv_" + var].values.flatten()
+            self.u_zmin[active_u] = uv_var[index_mu1[active_indices_u]]
+            self.v_zmin[active_v] = uv_var[index_nu1[active_indices_v]]
+        
+        var_list_levels = ["havg", "nrep", "pwet"]
+        for var in var_list_levels:
+            for ilevel in range(self.nlevels):
+                uv_var = self.ds["uv_" + var][ilevel].values.flatten()
+                self.u_havg[ilevel, active_u[0], active_u[1]] = uv_var[index_mu1[active_indices_u]]
+                self.v_havg[ilevel, active_v[0], active_v[1]] = uv_var[index_nu1[active_indices_v]]
+
 
     # new way of writing netcdf subgrid tables
     def write(self, file_name, mask):
-        """Write subgrid table to netcdf file for a regular grid with given mask."""
+        """Write subgrid table to netcdf file for a regular grid with given mask.
+        Values are only written for active cells (mask > 0)."""
 
         ds = self.to_xarray(dims=mask.raster.dims, coords=mask.raster.coords)
 
@@ -667,6 +742,7 @@ class SubgridTableRegular:
         if self.version == 0:
             uvlst2 = ["u_zmin", "u_zmax", "v_zmin", "v_zmax"]
             lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]
+            
         elif self.version == 1:
             uvlst2 = [
                 "u_zmin",
