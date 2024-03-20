@@ -2866,6 +2866,7 @@ class SfincsModel(GridModel):
                 return
 
             # re-initialize subgrid (different variables for old/new version)
+            # TODO: come up with a better way to handle this
             self.reggrid.subgrid = SubgridTableRegular()
             self.subgrid = xr.Dataset()
 
