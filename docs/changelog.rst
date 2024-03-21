@@ -15,7 +15,7 @@ Added
 
 Changed
 -------
-- imprpved subgrid tables are saved as NetCDF (#160)
+- improved subgrid tables are saved as NetCDF (#160)
 
 Fixed
 -----
