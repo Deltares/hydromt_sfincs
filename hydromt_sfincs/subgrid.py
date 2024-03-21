@@ -29,20 +29,19 @@ class SubgridTableRegular:
         self.version = 1
 
         # Read data from netcdf file with xarray
-        self.ds = xr.open_dataset(file_name)
-        self.ds.close()  # Should this be closed ?
+        ds = xr.open_dataset(file_name)
 
         # transpose to have level as first dimension
-        self.ds = self.ds.transpose("levels", "npuv", "np")
+        ds = ds.transpose("levels", "npuv", "np")
 
         # grid dimensions
         grid_dim = mask.shape
 
         # get number of levels, point and uv points
         self.nlevels, self.nr_cells, self.nr_uv_points = (
-            self.ds.dims["levels"],
-            self.ds.dims["np"],
-            self.ds.dims["npuv"],
+            ds.dims["levels"],
+            ds.dims["np"],
+            ds.dims["npuv"],
         )
 
         # find indices of active cells
@@ -50,9 +49,6 @@ class SubgridTableRegular:
         active_indices = np.where(index_nm > -1)[0]
         active_indices_u = np.where(index_mu1 > -1)[0]
         active_indices_v = np.where(index_nu1 > -1)[0]
-
-        iok = np.where(np.transpose(mask.values) > 0)
-        iok = (iok[1], iok[0])
 
         # convert 1D indices to 2D indices
         active_z = np.unravel_index(active_indices, grid_dim, order="F")
@@ -100,31 +96,34 @@ class SubgridTableRegular:
 
         # Now read the data and add it to the data-arrays
         # use index_nm of the active cells in the new dataset
-        self.z_zmin[active_z] = self.ds["z_zmin"].values.flatten()
-        self.z_zmax[active_z] = self.ds["z_zmax"].values.flatten()
-        self.z_volmax[active_z] = self.ds["z_volmax"].values.flatten()
+        self.z_zmin[active_z] = ds["z_zmin"].values.flatten()
+        self.z_zmax[active_z] = ds["z_zmax"].values.flatten()
+        self.z_volmax[active_z] = ds["z_volmax"].values.flatten()
         for ilevel in range(self.nlevels):
-            self.z_level[ilevel, active_z[0], active_z[1]] = self.ds["z_level"][
+            self.z_level[ilevel, active_z[0], active_z[1]] = ds["z_level"][
                 ilevel
             ].values.flatten()
 
         # now use index_mu1 and index_nu1 to put the values of the active cells in the new dataset
         var_list = ["zmin", "zmax", "ffit", "navg"]
         for var in var_list:
-            uv_var = self.ds["uv_" + var].values.flatten()
+            uv_var = ds["uv_" + var].values.flatten()
             self.u_zmin[active_u] = uv_var[index_mu1[active_indices_u]]
             self.v_zmin[active_v] = uv_var[index_nu1[active_indices_v]]
 
         var_list_levels = ["havg", "nrep", "pwet"]
         for var in var_list_levels:
             for ilevel in range(self.nlevels):
-                uv_var = self.ds["uv_" + var][ilevel].values.flatten()
+                uv_var = ds["uv_" + var][ilevel].values.flatten()
                 self.u_havg[ilevel, active_u[0], active_u[1]] = uv_var[
                     index_mu1[active_indices_u]
                 ]
                 self.v_havg[ilevel, active_v[0], active_v[1]] = uv_var[
                     index_nu1[active_indices_v]
                 ]
+
+        # close the dataset
+        ds.close()
 
     # new way of writing netcdf subgrid tables
     def write(self, file_name, mask):
@@ -145,34 +144,41 @@ class SubgridTableRegular:
         active_cells = index_nm > -1
         active_indices = np.where(active_cells)[0]
 
-        # Make a new xarray dataset where we only keep the values of the active cells (index_nm > -1)
-        z_zmin = ds["z_zmin"].values.flatten()[active_cells]
-        z_zmax = ds["z_zmax"].values.flatten()[active_cells]
-        z_volmax = ds["z_volmax"].values.flatten()[active_cells]
-        z_level = np.array(
-            [
-                ds["z_level"][ilevel].values.flatten()[active_cells]
-                for ilevel in range(nlevels)
-            ]
-        )
-
         # get nr of active points (where index_nm > -1)
-        nr_points = max(index_mu1.max(), index_nu1.max()) + 1
+        nr_z_points = index_nm.max() + 1
+        nr_uv_points = max(index_mu1.max(), index_nu1.max()) + 1
 
+        # Make a new xarray dataset where we only keep the values of the active cells (index_nm > -1)
+        # use index_nm to put the values of the active cells in the new dataset
+        ds_new = xr.Dataset(attrs={"_FillValue": np.nan})
+
+        # Z points
+        variables = ["z_zmin", "z_zmax", "z_volmax"]
+        for var in variables:
+            ds_new[var] = xr.DataArray(
+                ds[var].values.flatten()[active_cells], dims=("np")
+            )
+
+        z_level = np.zeros((nlevels, nr_z_points))
+        for ilevel in range(nlevels):
+            z_level[ilevel] = ds["z_level"][ilevel].values.flatten()[active_cells]
+        ds_new["z_level"] = xr.DataArray(z_level, dims=("levels", "np"))
+
+        # u and v points
         var_list = ["zmin", "zmax", "ffit", "navg"]
         for var in var_list:
-            uv_var = np.zeros(nr_points)
+            uv_var = np.zeros(nr_uv_points)
             uv_var[index_mu1[active_indices]] = ds["u_" + var].values.flatten()[
                 active_cells
             ]
             uv_var[index_nu1[active_indices]] = ds["v_" + var].values.flatten()[
                 active_cells
             ]
-            locals()["uv_" + var] = uv_var
+            ds_new[f"uv_{var}"] = xr.DataArray(uv_var, dims=("npuv"))
 
         var_list_levels = ["havg", "nrep", "pwet"]
         for var in var_list_levels:
-            uv_var = np.zeros((nlevels, nr_points))
+            uv_var = np.zeros((nlevels, nr_uv_points))
             for ilevel in range(nlevels):
                 uv_var[ilevel, index_mu1[active_indices]] = ds["u_" + var][
                     ilevel
@@ -180,25 +186,7 @@ class SubgridTableRegular:
                 uv_var[ilevel, index_nu1[active_indices]] = ds["v_" + var][
                     ilevel
                 ].values.flatten()[active_cells]
-            locals()["uv_" + var] = uv_var
-
-        # Make new xarray dataset
-        ds_new = xr.Dataset()
-        ds_new.attrs.update({"_FillValue": np.nan})
-
-        # use index_nm to put the values of the active cells in the new dataset
-        ds_new["z_zmin"] = xr.DataArray(z_zmin, dims=("np"))
-        ds_new["z_zmax"] = xr.DataArray(z_zmax, dims=("np"))
-        ds_new["z_volmax"] = xr.DataArray(z_volmax, dims=("np"))
-        ds_new["z_level"] = xr.DataArray(z_level, dims=("levels", "np"))
-
-        for var in var_list:
-            ds_new["uv_" + var] = xr.DataArray(locals()["uv_" + var], dims=("npuv"))
-
-        for var in var_list_levels:
-            ds_new["uv_" + var] = xr.DataArray(
-                locals()["uv_" + var], dims=("levels", "npuv")
-            )
+            ds_new[f"uv_{var}"] = xr.DataArray(uv_var, dims=("levels", "npuv"))
 
         # ensure levels is last dimension
         ds_new = ds_new.transpose("npuv", "np", "levels")

@@ -697,6 +697,7 @@ class SfincsModel(GridModel):
             by default 0
         nbins : int, optional
             Number of bins in which hypsometry is subdivided, by default 10
+            Note that this keyword is deprecated and will be removed in future versions.
         nlevels: int, optional
             Number of levels to describe hypsometry, by default 10
         nr_subgrid_pixels : int, optional

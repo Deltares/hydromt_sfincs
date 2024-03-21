@@ -1188,7 +1188,31 @@ def _downscale_floodmap_da(
 
 
 def find_uv_indices(mask: xr.DataArray):
-    """Find the where the properties of the u and v points are stored in the subgrid file for a regular grid."""
+    """The subgrid tables for a regular SFINCS grid are organized as flattened arrays, meaning
+    2D arrays (y,x) are transformed into 1D arrays, only containing values for active cells.
+
+    For the cell centers, this is straightforward, we just find the indices of the active cells.
+    However, the u and v points are saved in combined arrays. Since u and v points are absent
+    at the boundaries of the domain, the index arrays are used to determine the location of the
+    u and v points in the combined flattened arrays.
+
+
+
+    Parameters
+    ----------
+    mask: xr.DataArray
+        Mask with integer values specifying the active cells of the SFINCS domain.
+
+    Returns
+    -------
+    index_nm: np.ndarray
+        Index array for the active cell centers.
+    index_mu1: np.ndarray
+        Index of upstream u-point in combined uv-array.
+    index_nu1: np.ndarray
+        Index of upstream v-point in combined uv-array.
+
+    """
 
     mask = mask.values
 
@@ -1229,7 +1253,9 @@ def find_uv_indices(mask: xr.DataArray):
         if j is not None:
             mu1[ic] = j
 
-    # For regular grids, only the points with mask>0 are stored
+    # For regular grids, only the points with mask > 0 are stored
+    # The index arrays determine the location in the flattened arrays (with values for all active points)
+    # Initialize index arrays with -1, inactive cells will remain -1
     index_nm = np.zeros(nr_cells, dtype=int) - 1
     index_mu1 = np.zeros(nr_cells, dtype=int) - 1
     index_nu1 = np.zeros(nr_cells, dtype=int) - 1
