@@ -2668,10 +2668,10 @@ class SfincsModel(GridModel):
             # read and clip data in time & space
             da = self.data_catalog.get_geodataset(
                 geodataset,
-                # geom=region,
+                geom=self.region,
                 buffer=buffer,
                 variables=["hs", "tp", "wd", "ds"], #TODO: Question - is this correct? will the data_catalog then load all 4 required vars?
-                # time_tuple=(tstart, tstop),
+                time_tuple=(tstart, tstop),
                 crs=self.crs,
             )
             df_ts = da.transpose(..., da.vector.index_dim).to_dataframe()
