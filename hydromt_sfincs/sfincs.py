@@ -726,7 +726,7 @@ class SfincsModel(GridModel):
                 gdf_exclude=gdf_exclude,
                 zmin=zmin,
                 zmax=zmax,
-                # connectivity=connectivity,
+                connectivity=connectivity,
                 all_touched=all_touched,
                 reset_bounds=reset_bounds,
                 copy_sfincsmask=copy_sfincsmask,
