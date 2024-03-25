@@ -281,6 +281,7 @@ class QuadtreeGrid:
             gdf_exclude: gpd.GeoDataFrame = None,
             zmin: float = None,
             zmax: float = None,
+            connectivity: int = 8,
             all_touched: bool = True,
             reset_bounds: bool = True,
             copy_sfincsmask: bool = False,
@@ -326,8 +327,20 @@ class QuadtreeGrid:
             ):
                 return uda_mask
 
-        # find boundary cells of the active mask
-        bounds = self._find_boundary_cells(varname)
+        # find boundary cells of the active mask        
+        bounds_org = self._find_boundary_cells(varname)
+
+        #same with Xugrid functionality:
+        # s = None if connectivity == 4 else np.ones((3, 3), int)
+        # da_mask = self.data[varname] > 0
+        # bounds0 = np.logical_xor(
+        #     da_mask, da_mask.ugrid.binary_erosion(iterations=2)#border_value=True)#da_mask.values>0)#self.data[varname] > 0)#, structure=s)
+        # )
+        # bounds0 = np.logical_xor(
+        #     self.data[varname] > 0, self.data[varname].ugrid.binary_erosion(self.data[varname] > 0)#, structure=s)
+        # )        
+        # bounds = bounds0.copy()
+        bounds = bounds_org.copy()
 
         if zmin is not None:
             bounds = np.logical_and(bounds, uda_dep >= zmin)
@@ -346,6 +359,15 @@ class QuadtreeGrid:
         if ncells > 0:
             uda_mask = uda_mask.where(~bounds, np.uint8(bvalue))
 
+        # try to include 'diagonally connected msk=2 neighbouring cells'
+        if connectivity == 4:
+            self.bounds_msk2 = uda_mask.copy()
+            bounds_msk2 = self._find_boundary_cells_msk2()#uda_mask)
+
+            ncells = bounds_msk2.sum()#np.count_nonzero(bounds_msk2.sum())
+            if ncells > 0:
+                uda_mask = uda_mask.where(~bounds_msk2, np.uint8(bvalue))
+            
         # add mask to grid
         self.data[varname] = xu.UgridDataArray(xr.DataArray(data=uda_mask, dims=[self.data.grid.face_dimension]), self.data.grid)    
 
@@ -1581,6 +1603,76 @@ class QuadtreeGrid:
 
         return bounds
 
+    def _find_boundary_cells_msk2(self):
+
+        mu = self.data["mu"].values[:]
+        mu1 = self.data["mu1"].values[:] - 1
+        mu2 = self.data["mu2"].values[:] - 1
+        nu = self.data["nu"].values[:]
+        nu1 = self.data["nu1"].values[:] - 1
+        nu2 = self.data["nu2"].values[:] - 1
+        md = self.data["md"].values[:]
+        md1 = self.data["md1"].values[:] - 1
+        md2 = self.data["md2"].values[:] - 1
+        nd = self.data["nd"].values[:]
+        nd1 = self.data["nd1"].values[:] - 1
+        nd2 = self.data["nd2"].values[:] - 1
+
+        mask = self.bounds_msk2.values[:]
+        
+        bounds = np.zeros(self.nr_cells, dtype=bool)
+
+        # When upper and right are msk=2
+        above_coarser = nu <= 0
+        right_coarser = mu <= 0        
+        above_finer1 = (nu1 >= 0) & (mask[nu1] == 2)
+        right_finer1 = (mu1 >= 0) & (mask[mu1] == 2)
+        bounds |= (
+            ((mask == 1) & (above_coarser & right_coarser) & (above_finer1 & right_finer1)) #|
+            # (~below_coarser & (below_finer1 | below_finer2))
+        )
+
+        # When upper and left are msk=2
+        above_coarser = nu <= 0
+        left_coarser = md <= 0        
+        above_finer1 = (nu1 >= 0) & (mask[nu1] == 2)
+        left_finer1 = (md1 >= 0) & (mask[md1] == 2)
+        bounds |= (
+            ((mask == 1) & (above_coarser & left_coarser) & (above_finer1 & left_finer1)) #|
+            # (~below_coarser & (below_finer1 | below_finer2))
+        )
+
+        # When lower and left are msk=2
+        lower_coarser = nd <= 0
+        left_coarser = md <= 0        
+        below_finer1 = (nd1 >= 0) & (mask[nd1] == 2)
+        left_finer1 = (md1 >= 0) & (mask[md1] == 2)
+        bounds |= (
+            ((mask == 1) & (lower_coarser & left_coarser) & (below_finer1 & left_finer1)) #|
+            # (~below_coarser & (below_finer1 | below_finer2))
+        )
+
+        # When lower and right are msk=2
+        lower_coarser = nd <= 0
+        right_coarser = mu <= 0        
+        below_finer1 = (nd1 >= 0) & (mask[nd1] == 2)
+        right_finer1 = (mu1 >= 0) & (mask[mu1] == 2)
+        bounds |= (
+            ((mask == 1) & (lower_coarser & right_coarser) & (below_finer1 & right_finer1)) #|
+            # (~below_coarser & (below_finer1 | below_finer2))
+        )    
+
+        # # Handling boundary cells
+        # bounds[md1 == -1] = True  # Left boundary
+        # bounds[mu1 == -1] = True  # Right boundary
+        # bounds[nd1 == -1] = True  # Bottom boundary
+        # bounds[nu1 == -1] = True  # Top boundary
+
+        # # Get rid of the inactive boundary cells that were added
+        # # in the previous step
+        # bounds[mask == 0] = False
+
+        return bounds
  
     def _find_lower_level_neighbors(self, ind_ref, ilev):
         # ind_ref are the indices of the cells that need to be refined
