@@ -614,7 +614,7 @@ class SubgridTableRegular:
                     )
                 # always interpolate/extrapolate to avoid NaN values
                 da_dep = da_dep.raster.interpolate_na(
-                    method="rio_idw"
+                    method="rio_idw", extrapolate=True
                 )
 
                 # get subgrid manning roughness tile
