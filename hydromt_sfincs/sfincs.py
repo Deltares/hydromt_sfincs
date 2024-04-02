@@ -2676,6 +2676,7 @@ class SfincsModel(GridModel):
             )
             df_ts = da.transpose(..., da.vector.index_dim).to_dataframe()
             gdf_locs = da.vector.to_gdf()
+            gdf_locs.to_crs(self.crs)
 
         elif timeseries is not None:
 
