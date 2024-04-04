@@ -2672,12 +2672,19 @@ class SfincsModel(GridModel):
                 buffer=buffer,
                 variables=["hs", "tp", "wd", "ds"], #TODO: Question - is this correct? will the data_catalog then load all 4 required vars?
                 time_tuple=(tstart, tstop),
-                crs=self.crs,
+                 crs=self.crs,
             )
-            df_ts = da.transpose(..., da.vector.index_dim).to_dataframe()
+            # df_ts = da.transpose(..., da.vector.index_dim).to_dataframe()
             gdf_locs = da.vector.to_gdf()
-            gdf_locs.to_crs(self.crs)
-
+            gdf_locs = gdf_locs.to_crs(self.crs) 
+            gdf_locs2 = gdf_locs.copy()
+            gdf_locs2 = gdf_locs2.to_crs(self.crs)
+ 
+            df_hs = da['hs'].transpose(..., da.vector.index_dim).to_pandas()  
+            df_tp = da['tp'].transpose(..., da.vector.index_dim).to_pandas()         
+            df_dir = da['wd'].transpose(..., da.vector.index_dim).to_pandas()         
+            df_ds = da['ds'].transpose(..., da.vector.index_dim).to_pandas()         
+                   
         elif timeseries is not None:
 
             # Check if timeseries is a list with length = 4
@@ -2744,7 +2751,12 @@ class SfincsModel(GridModel):
             raise ValueError("No wave boundary (snapwave_bnd) points provided.")
 
         if geodataset is not None:
-            self.set_forcing(da, name="snapwave")
+            # self.set_forcing(da, name="snapwave")
+            self.set_forcing_1d(df_ts=df_hs, gdf_locs=gdf_locs2, name="hs", merge=merge)
+            self.set_forcing_1d(df_ts=df_tp, gdf_locs=gdf_locs2, name="tp", merge=merge)
+            self.set_forcing_1d(df_ts=df_dir, gdf_locs=gdf_locs2, name="wd", merge=merge)
+            self.set_forcing_1d(df_ts=df_ds, gdf_locs=gdf_locs2, name="ds", merge=merge)
+            
 
         if timeseries is not None:
             self.set_forcing_1d(df_ts=df_hs, gdf_locs=gdf_locs, name="hs", merge=merge)
