@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "river_source_points",
     "river_centerline_from_hydrography",
-    "basin_mask",
 ]
 
 
