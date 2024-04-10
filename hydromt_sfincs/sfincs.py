@@ -787,6 +787,7 @@ class SfincsModel(GridModel):
         first_index: int = 1,
         keep_rivers_geom: bool = False,
         reverse_river_geom: bool = False,
+        src_type: str = "inflow",
     ):
         """Setup discharge (src) points where a river enters the model domain.
 
@@ -833,13 +834,18 @@ class SfincsModel(GridModel):
         reverse_river_geom: bool, optional
             If True, assume that segments in 'rivers' are drawn from downstream to upstream.
             Only used if 'rivers' is not None, By default False
+        src_type: {'inflow', 'headwater'}, optional
+            Source type, by default 'inflow'
+            If 'inflow', return points where the river flows into the model domain.
+            If 'headwater', return all headwater (including inflow) points within the model domain.
 
         See Also
         --------
         setup_discharge_forcing
         setup_discharge_forcing_from_grid
         """
-        da_flwdir, da_uparea, gdf_riv = None, None, None
+        # get hydrography data
+        da_uparea = None
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
@@ -847,9 +853,10 @@ class SfincsModel(GridModel):
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
-            da_flwdir = ds["flwdir"]
-            da_uparea = ds["uparea"]
-        elif (
+            da_uparea = ds["uparea"]  # reused in river_source_points
+
+        # get river centerlines
+        if (
             isinstance(rivers, str)
             and rivers == "rivers_outflow"
             and rivers in self.geoms
@@ -860,24 +867,35 @@ class SfincsModel(GridModel):
             gdf_riv = self.data_catalog.get_geodataframe(
                 rivers, geom=self.region
             ).to_crs(self.crs)
-        else:
+        elif hydrography is not None:
+            gdf_riv = workflows.river_centerline_from_hydrography(
+                da_flwdir=ds["flwdir"],
+                da_uparea=da_uparea,
+                river_upa=river_upa,
+                river_len=river_len,
+                gdf_mask=self.region,
+            )
+        elif hydrography is None:
             raise ValueError("Either hydrography or rivers must be provided.")
 
-        gdf_src, gdf_riv = workflows.river_boundary_points(
-            region=self.region,
-            res=self.reggrid.dx,
+        # estimate buffer based on model resolution
+        buffer = self.reggrid.dx
+        if self.crs.is_geographic:
+            buffer = buffer * 111111.0
+
+        # get river inflow / headwater source points
+        gdf_src = workflows.river_source_points(
             gdf_riv=gdf_riv,
-            da_flwdir=da_flwdir,
-            da_uparea=da_uparea,
-            river_len=river_len,
+            gdf_mask=self.region,
+            src_type=src_type,
+            buffer=buffer,
             river_upa=river_upa,
-            inflow=True,
+            river_len=river_len,
+            da_uparea=da_uparea,
             reverse_river_geom=reverse_river_geom,
             logger=self.logger,
         )
-        n = len(gdf_src.index)
-        self.logger.info(f"Found {n} river inflow points.")
-        if n == 0:
+        if gdf_src.empty:
             return
 
         # set forcing src pnts
@@ -968,7 +986,8 @@ class SfincsModel(GridModel):
         --------
         setup_mask_bounds
         """
-        da_flwdir, da_uparea, gdf_riv = None, None, None
+        # get hydrography data
+        da_uparea = None
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
@@ -976,9 +995,10 @@ class SfincsModel(GridModel):
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
-            da_flwdir = ds["flwdir"]
-            da_uparea = ds["uparea"]
-        elif (
+            da_uparea = ds["uparea"]  # reused in river_source_points
+
+        # get river centerlines
+        if (
             isinstance(rivers, str)
             and rivers == "rivers_inflow"
             and rivers in self.geoms
@@ -989,22 +1009,36 @@ class SfincsModel(GridModel):
             gdf_riv = self.data_catalog.get_geodataframe(
                 rivers, geom=self.region
             ).to_crs(self.crs)
+        elif hydrography is not None:
+            gdf_riv = workflows.river_centerline_from_hydrography(
+                da_flwdir=ds["flwdir"],
+                da_uparea=da_uparea,
+                river_upa=river_upa,
+                river_len=river_len,
+                gdf_mask=self.region,
+            )
         else:
             raise ValueError("Either hydrography or rivers must be provided.")
 
-        # TODO reproject region and gdf_riv to utm zone if model crs is geographic
-        gdf_out, gdf_riv = workflows.river_boundary_points(
-            region=self.region,
-            res=self.reggrid.dx,
+        # estimate buffer based on model resolution
+        buffer = self.reggrid.dx
+        if self.crs.is_geographic:
+            buffer = buffer * 111111.0
+
+        # get river inflow / headwater source points
+        gdf_out = workflows.river_source_points(
             gdf_riv=gdf_riv,
-            da_flwdir=da_flwdir,
-            da_uparea=da_uparea,
-            river_len=river_len,
+            gdf_mask=self.region,
+            src_type="outflow",
+            buffer=buffer,
             river_upa=river_upa,
-            inflow=False,
+            river_len=river_len,
+            da_uparea=da_uparea,
             reverse_river_geom=reverse_river_geom,
             logger=self.logger,
         )
+        if gdf_out.empty:
+            return
 
         if len(gdf_out) > 0:
             if "rivwth" in gdf_out.columns:
