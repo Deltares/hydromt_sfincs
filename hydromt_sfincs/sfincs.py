@@ -23,6 +23,7 @@ from shapely.geometry import LineString, box
 
 from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
+from .subgrid import SubgridTableRegular
 from .sfincs_input import SfincsInput
 
 __all__ = ["SfincsModel"]
@@ -614,7 +615,8 @@ class SfincsModel(GridModel):
         datasets_rgh: List[dict] = [],
         datasets_riv: List[dict] = [],
         buffer_cells: int = 0,
-        nbins: int = 10,
+        nlevels: int = 10,
+        nbins: int = None,
         nr_subgrid_pixels: int = 20,
         nrmax: int = 2000,  # blocksize
         max_gradient: float = 5.0,
@@ -695,6 +697,9 @@ class SfincsModel(GridModel):
             by default 0
         nbins : int, optional
             Number of bins in which hypsometry is subdivided, by default 10
+            Note that this keyword is deprecated and will be removed in future versions.
+        nlevels: int, optional
+            Number of levels to describe hypsometry, by default 10
         nr_subgrid_pixels : int, optional
             Number of subgrid pixels per computational cell, by default 20
         nrmax : int, optional
@@ -742,6 +747,12 @@ class SfincsModel(GridModel):
         else:
             highres_dir = None
 
+        if nbins is not None:
+            logger.warning(
+                "Keyword nbins is deprecated and will be removed in future versions. Please use nlevels instead."
+            )
+            nlevels = nbins
+
         if self.grid_type == "regular":
             self.reggrid.subgrid.build(
                 da_mask=self.mask,
@@ -749,7 +760,7 @@ class SfincsModel(GridModel):
                 datasets_rgh=datasets_rgh,
                 datasets_riv=datasets_riv,
                 buffer_cells=buffer_cells,
-                nbins=nbins,
+                nlevels=nlevels,
                 nr_subgrid_pixels=nr_subgrid_pixels,
                 nrmax=nrmax,
                 max_gradient=max_gradient,
@@ -768,8 +779,11 @@ class SfincsModel(GridModel):
         elif self.grid_type == "quadtree":
             pass
 
-        if "sbgfile" not in self.config:  # only add sbgfile if not already present
-            self.config.update({"sbgfile": "sfincs.sbg"})
+        # when building a new subgrid table, always update config
+        # NOTE from now onwards, netcdf subgrid tables are used
+        self.config.update({"sbgfile": "sfincs_subgrid.nc"})
+        # if "sbgfile" not in self.config:  # only add sbgfile if not already present
+        #     self.config.update({"sbgfile": "sfincs.sbg"})
         # subgrid is used so no depfile or manningfile needed
         if "depfile" in self.config:
             self.config.pop("depfile")  # remove depfile from config
@@ -2886,7 +2900,16 @@ class SfincsModel(GridModel):
                 self.logger.warning(f"sbgfile not found at {fn}")
                 return
 
-            self.reggrid.subgrid.load(file_name=fn, mask=self.mask)
+            # re-initialize subgrid (different variables for old/new version)
+            # TODO: come up with a better way to handle this
+            self.reggrid.subgrid = SubgridTableRegular()
+            self.subgrid = xr.Dataset()
+
+            # read subgrid file
+            if fn.parts[-1].endswith(".sbg"):  # read binary file
+                self.reggrid.subgrid.read_binary(file_name=fn, mask=self.mask)
+            else:  # read netcdf file
+                self.reggrid.subgrid.read(file_name=fn, mask=self.mask)
             self.subgrid = self.reggrid.subgrid.to_xarray(
                 dims=self.mask.raster.dims, coords=self.mask.raster.coords
             )
@@ -2897,9 +2920,16 @@ class SfincsModel(GridModel):
 
         if self.subgrid:
             if "sbgfile" not in self.config:
-                self.set_config("sbgfile", "sfincs.sbg")
+                # apparently no subgrid was read, so set default filename
+                self.set_config("sbgfile", "sfincs_subgrid.nc")
+
             fn = self.get_config("sbgfile", abs_path=True)
-            self.reggrid.subgrid.save(file_name=fn, mask=self.mask)
+            if fn.parts[-1].endswith(".sbg"):
+                # write binary file
+                self.reggrid.subgrid.write_binary(file_name=fn, mask=self.mask)
+            else:
+                # write netcdf file
+                self.reggrid.subgrid.write(file_name=fn, mask=self.mask)
 
     def read_geoms(self):
         """Read geometry files and save to `geoms` attribute.
