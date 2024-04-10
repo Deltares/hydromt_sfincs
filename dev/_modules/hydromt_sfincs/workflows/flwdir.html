@@ -17,24 +17,24 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
-<link href="../../../_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
 
   
-  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+  <link href="../../../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="../../../_static/theme-deltares.css?v=17060807" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
-  <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
     <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
@@ -53,10 +53,9 @@
 
   
   
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
   
   <div id="pst-scroll-pixel-helper"></div>
-
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>
@@ -97,7 +96,7 @@
 </form></div>
   </div>
   
-    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
 <div class="bd-header__inner bd-page-width">
   <label class="sidebar-toggle primary-toggle" for="__primary">
     <span class="fa-solid fa-bars"></span>
@@ -135,12 +134,6 @@
       
         <div class="navbar-item">
 <nav class="navbar-nav">
-  <p class="sidebar-header-items__title"
-     role="heading"
-     aria-level="1"
-     aria-label="Site Navigation">
-    Site Navigation
-  </p>
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
@@ -259,10 +252,15 @@
   
 </div>
 
-    </nav>
+    </header>
   
+
   <div class="bd-container">
     <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
       
       <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
         
@@ -275,12 +273,6 @@
         
           <div class="navbar-item">
 <nav class="navbar-nav">
-  <p class="sidebar-header-items__title"
-     role="heading"
-     aria-level="1"
-     aria-label="Site Navigation">
-    Site Navigation
-  </p>
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
@@ -417,7 +409,7 @@
               
                 
 <div id="searchbox"></div>
-                <article class="bd-article" role="main">
+                <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.workflows.flwdir</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Flow direction and river network workflows for SFINCS models.&quot;&quot;&quot;</span>
@@ -433,7 +425,7 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;river_boundary_points&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;river_source_points&quot;</span><span class="p">,</span>
     <span class="s2">&quot;river_centerline_from_hydrography&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
@@ -445,7 +437,7 @@
     <span class="n">da_uparea</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">river_upa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">river_len</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e3</span><span class="p">,</span>
-    <span class="n">mask</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the centerline of rivers based on a flow direction</span>
 <span class="sd">    raster data (`da_flwdir`).</span>
@@ -461,7 +453,7 @@
 <span class="sd">    river_len: float, optional</span>
 <span class="sd">        Mimimum river length [m] within the model domain to define river cells,</span>
 <span class="sd">        by default 1000 m.</span>
-<span class="sd">    mask: geopandas.GeoDataFrame, optional</span>
+<span class="sd">    gdf_mask: geopandas.GeoDataFrame, optional</span>
 <span class="sd">        Polygon to clip river center lines before calculating the river length,</span>
 <span class="sd">        by default None.</span>
 
@@ -471,114 +463,148 @@
 <span class="sd">        River line vector data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># get river network from hydrography based on upstream area mask</span>
-    <span class="n">flwdir</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">flw</span><span class="o">.</span><span class="n">flwdir_from_da</span><span class="p">(</span><span class="n">da_flwdir</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">da_uparea</span> <span class="o">&gt;=</span> <span class="n">river_upa</span><span class="p">)</span>
-    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="o">.</span><span class="n">from_features</span><span class="p">(</span><span class="n">flwdir</span><span class="o">.</span><span class="n">streams</span><span class="p">(),</span> <span class="n">crs</span><span class="o">=</span><span class="n">da_flwdir</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+    <span class="n">riv_mask</span> <span class="o">=</span> <span class="n">da_uparea</span> <span class="o">&gt;=</span> <span class="n">river_upa</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">riv_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
+    <span class="n">flwdir</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">flw</span><span class="o">.</span><span class="n">flwdir_from_da</span><span class="p">(</span><span class="n">da_flwdir</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">riv_mask</span><span class="p">)</span>
+    <span class="n">feats</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">streams</span><span class="p">(</span><span class="n">uparea</span><span class="o">=</span><span class="n">da_uparea</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="o">.</span><span class="n">from_features</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">da_flwdir</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
     <span class="c1"># clip to mask and remove empty geometries</span>
-    <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">unary_union</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">gdf_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gdf_mask</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">):</span>
+        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">gdf_mask</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">gdf_mask</span><span class="o">.</span><span class="n">unary_union</span><span class="p">)</span>
     <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="o">~</span><span class="n">gdf_riv</span><span class="o">.</span><span class="n">is_empty</span><span class="p">]</span>
     <span class="c1"># create river network from gdf to get distance from outlet &#39;rivlen&#39;</span>
-    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivlen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">length</span>
+    <span class="c1"># length of river segments</span>
+    <span class="k">if</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
+        <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;seglen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="s2">&quot;epsg:3857&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">length</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;seglen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">length</span>
+    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;seglen&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">empty</span> <span class="ow">or</span> <span class="n">river_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">gdf_riv</span>
+    <span class="c1"># accumulate to get river length from outlet</span>
     <span class="n">flwdir</span> <span class="o">=</span> <span class="n">pyflwdir</span><span class="o">.</span><span class="n">from_dataframe</span><span class="p">(</span><span class="n">gdf_riv</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;idx&quot;</span><span class="p">),</span> <span class="n">ds_col</span><span class="o">=</span><span class="s2">&quot;idx_ds&quot;</span><span class="p">)</span>
-    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivlen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">accuflux</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivlen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s2">&quot;down&quot;</span><span class="p">)</span>
+    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdst&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">accuflux</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;seglen&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s2">&quot;down&quot;</span><span class="p">)</span>
+    <span class="c1"># get maximum river length from outlet (at headwater segments) for each river segment</span>
+    <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivlen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">flwdir</span><span class="o">.</span><span class="n">fillnodata</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">flwdir</span><span class="o">.</span><span class="n">n_upstream</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivdst&quot;</span><span class="p">],</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">0</span>
+    <span class="p">)</span>
+    <span class="c1"># filter river network based on total length</span>
     <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivlen&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">river_len</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">gdf_riv</span></div>
 
 
 
-<div class="viewcode-block" id="river_boundary_points">
-<a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.river_boundary_points.html#hydromt_sfincs.workflows.river_boundary_points">[docs]</a>
-<span class="k">def</span> <span class="nf">river_boundary_points</span><span class="p">(</span>
-    <span class="n">region</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
-    <span class="n">res</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">gdf_riv</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">da_flwdir</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">da_uparea</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<div class="viewcode-block" id="river_source_points">
+<a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.river_source_points.html#hydromt_sfincs.workflows.river_source_points">[docs]</a>
+<span class="k">def</span> <span class="nf">river_source_points</span><span class="p">(</span>
+    <span class="n">gdf_riv</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
+    <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
+    <span class="n">src_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;inflow&quot;</span><span class="p">,</span>
+    <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="n">river_upa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">river_len</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e3</span><span class="p">,</span>
-    <span class="n">inflow</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">da_uparea</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">reverse_river_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the locations where a river flows in (`inflow=True`)</span>
-<span class="sd">    or out (`inflow=False`) of the model region.</span>
+<span class="sd">    or out (`inflow=False`) of the model gdf_mask.</span>
 
 <span class="sd">    Rivers are based on either a river network vector data (`gdf_riv`) or</span>
 <span class="sd">    a flow direction raster data (`da_flwdir`).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    region: geopandas.GeoDataFrame</span>
-<span class="sd">        Polygon of model region of interest.</span>
-<span class="sd">    res: float</span>
-<span class="sd">        Model resolution [m].</span>
-<span class="sd">    gdf_riv: geopandas.GeoDataFrame, optional</span>
+<span class="sd">    gdf_riv: geopandas.GeoDataFrame</span>
 <span class="sd">        River network vector data, by default None.</span>
-<span class="sd">    da_flwdir: xarray.DataArray, optional</span>
-<span class="sd">        D8 flow direction raster data, by default None.</span>
-<span class="sd">    da_uparea: xarray.DataArray, optional</span>
-<span class="sd">        River upstream area raster data, by default None.</span>
+<span class="sd">        Requires &#39;uparea&#39; and &#39;rivlen&#39; attributes to</span>
+<span class="sd">        check for river length and upstream area thresholds.</span>
+<span class="sd">    gdf_mask: geopandas.GeoDataFrame</span>
+<span class="sd">        Polygon of model gdf_mask of interest.</span>
+<span class="sd">    src_type: [&#39;inflow&#39;, &#39;outflow&#39;, &#39;headwater&#39;], optional</span>
+<span class="sd">        Type of river source points to return, by default &#39;inflow&#39;.</span>
+<span class="sd">        If &#39;inflow&#39;, return points where the river flows into the model domain.</span>
+<span class="sd">        If &#39;outflow&#39;, return points where the river flows out of the model domain.</span>
+<span class="sd">        If &#39;headwater&#39;, return all headwater (including inflow) points within the model domain.</span>
+<span class="sd">    buffer: float, optional</span>
+<span class="sd">        Buffer around gdf_mask to select river source points, by default 100 m.</span>
 <span class="sd">    river_upa : float, optional</span>
 <span class="sd">        Minimum upstream area threshold for rivers [km2], by default 10.0</span>
 <span class="sd">    river_len: float, optional</span>
 <span class="sd">        Mimimum river length [m] within the model domain to define river cells, by default 1000 m.</span>
-<span class="sd">    inflow: bool, optional</span>
-<span class="sd">        If True, return inflow otherwise outflow boundary points, by default True.</span>
+<span class="sd">    da_uparea: xarray.DataArray, optional</span>
+<span class="sd">        River upstream area raster data, by default None.</span>
 <span class="sd">    reverse_river_geom: bool, optional</span>
 <span class="sd">        If True, assume that segments in &#39;rivers&#39; are drawn from downstream to upstream.</span>
 <span class="sd">        Only used if &#39;rivers&#39; is not None, By default False</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    gdf_src, gdf_riv: geopandas.GeoDataFrame</span>
-<span class="sd">        In-/outflow points and river line vector data.</span>
+<span class="sd">    gdf_pnt: geopandas.GeoDataFrame</span>
+<span class="sd">        Source points</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="p">(</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoSeries</span><span class="p">))</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
-        <span class="n">region</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;Polygon&quot;</span>
+    <span class="c1"># data checks</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">gdf_mask</span><span class="p">,</span> <span class="p">(</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoSeries</span><span class="p">))</span>
+        <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">gdf_mask</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;Polygon&quot;</span><span class="p">,</span> <span class="s2">&quot;MultiPolygon&quot;</span><span class="p">]))</span>
     <span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Boundary must be a GeoDataFrame of LineStrings.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">res</span> <span class="o">&gt;</span> <span class="mf">0.01</span> <span class="ow">and</span> <span class="n">region</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-        <span class="c1"># provide warning</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s2">&quot;The region crs is geographic, while the resolution seems to be in meters.&quot;</span>
-        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;gdf_mask must be a GeoDataFrame of Polygons.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="p">(</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoSeries</span><span class="p">))</span>
+        <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">gdf_riv</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;LineString&quot;</span><span class="p">,</span> <span class="s2">&quot;MultiLineString&quot;</span><span class="p">]))</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;gdf_riv must be a GeoDataFrame of LineStrings.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">src_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;inflow&quot;</span><span class="p">,</span> <span class="s2">&quot;outflow&quot;</span><span class="p">,</span> <span class="s2">&quot;headwater&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;src_type must be either &#39;inflow&#39;, &#39;outflow&#39;, or &#39;headwater&#39;.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">gdf_mask</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>  <span class="c1"># to pseudo mercator</span>
+        <span class="n">gdf_mask</span> <span class="o">=</span> <span class="n">gdf_mask</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="s2">&quot;epsg:3857&quot;</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">gdf_riv</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">da_flwdir</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">da_uparea</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either gdf_riv or da_flwdir and da_uparea must be provided.&quot;</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">gdf_riv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># get river network from hydrography</span>
-        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">river_centerline_from_hydrography</span><span class="p">(</span>
-            <span class="n">da_flwdir</span><span class="p">,</span> <span class="n">da_uparea</span><span class="p">,</span> <span class="n">river_upa</span><span class="p">,</span> <span class="n">river_len</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">region</span>
+    <span class="c1"># clip river to model gdf_mask</span>
+    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">gdf_mask</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">gdf_mask</span><span class="o">.</span><span class="n">unary_union</span><span class="p">)</span>
+    <span class="c1"># filter river network based on uparea and length</span>
+    <span class="k">if</span> <span class="s2">&quot;uparea&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">river_upa</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s2">&quot;rivlen&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivlen&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">river_len</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;No rivers matching the uparea and rivlen thresholds found in gdf_riv.&quot;</span>
         <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># clip river to model region</span>
-        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">region</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">region</span><span class="o">.</span><span class="n">unary_union</span><span class="p">)</span>
-        <span class="c1"># filter river network based on uparea and length</span>
-        <span class="k">if</span> <span class="s2">&quot;uparea&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">river_upa</span><span class="p">]</span>
-        <span class="k">if</span> <span class="s2">&quot;rivlen&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivlen&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">river_len</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
+
+    <span class="c1"># get source points 1m before the start/end of the river</span>
     <span class="c1"># a positive dx results in a point near the start of the line (inflow)</span>
     <span class="c1"># a negative dx results in a point near the end of the line (outflow)</span>
-    <span class="n">dx</span> <span class="o">=</span> <span class="n">res</span> <span class="o">/</span> <span class="mi">5</span> <span class="k">if</span> <span class="n">inflow</span> <span class="k">else</span> <span class="o">-</span><span class="n">res</span> <span class="o">/</span> <span class="mi">5</span>
-    <span class="k">if</span> <span class="n">reverse_river_geom</span><span class="p">:</span>
-        <span class="n">dx</span> <span class="o">=</span> <span class="o">-</span><span class="n">dx</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">reverse_river_geom</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="n">gdf_up</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">)</span>
+    <span class="n">gdf_up</span><span class="p">[</span><span class="s2">&quot;riv_idx&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">gdf_ds</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="o">-</span><span class="n">dx</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">)</span>
+    <span class="n">gdf_ds</span><span class="p">[</span><span class="s2">&quot;riv_idx&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">index</span>
 
-    <span class="c1"># move point a bit into the model domain</span>
-    <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">)</span>
-    <span class="c1"># keep points on boundary cells</span>
-    <span class="n">bnd</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">unary_union</span>  <span class="c1"># NOTE should be single geom</span>
-    <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_pnt</span><span class="p">[</span><span class="n">gdf_pnt</span><span class="o">.</span><span class="n">within</span><span class="p">(</span><span class="n">bnd</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># get points that do not intersect with up/downstream end of other river segments</span>
+    <span class="c1"># use a small buffer of 5m around these points to account for dx and avoid issues with inprecise river geometries</span>
+    <span class="k">if</span> <span class="n">src_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;inflow&quot;</span><span class="p">,</span> <span class="s2">&quot;headwater&quot;</span><span class="p">]:</span>
+        <span class="n">pnts_ds</span> <span class="o">=</span> <span class="n">gdf_ds</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">unary_union</span>
+        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_up</span><span class="p">[</span><span class="o">~</span><span class="n">gdf_up</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">pnts_ds</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">src_type</span> <span class="o">==</span> <span class="s2">&quot;outflow&quot;</span><span class="p">:</span>
+        <span class="n">pnts_up</span> <span class="o">=</span> <span class="n">gdf_up</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">unary_union</span>
+        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_ds</span><span class="p">[</span><span class="o">~</span><span class="n">gdf_ds</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">pnts_up</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># get buffer around gdf_mask, in- and outflow points should be within this buffer</span>
+    <span class="k">if</span> <span class="n">src_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;inflow&quot;</span><span class="p">,</span> <span class="s2">&quot;outflow&quot;</span><span class="p">]:</span>
+        <span class="n">bnd</span> <span class="o">=</span> <span class="n">gdf_mask</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span><span class="o">.</span><span class="n">unary_union</span>
+        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_pnt</span><span class="p">[</span><span class="n">gdf_pnt</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">bnd</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># log numer of source points</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="n">gdf_pnt</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">src_type</span><span class="si">}</span><span class="s2"> points.&quot;</span><span class="p">)</span>
 
     <span class="c1"># add uparea attribute if da_uparea is provided</span>
     <span class="k">if</span> <span class="n">da_uparea</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">gdf_pnt</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_uparea</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">gdf_pnt</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
         <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_pnt</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s2">&quot;rivwth&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">gis_utils</span><span class="o">.</span><span class="n">nearest_merge</span><span class="p">(</span>
-            <span class="n">gdf_pnt</span><span class="p">,</span> <span class="n">gdf_riv</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">],</span> <span class="n">max_dist</span><span class="o">=</span><span class="mi">10</span>
-        <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">gdf_pnt</span><span class="p">,</span> <span class="n">gdf_riv</span></div>
+    <span class="k">return</span> <span class="n">gdf_pnt</span></div>
 
 </pre></div>
 
@@ -598,6 +624,8 @@
             
             
               
+                <div class="bd-sidebar-secondary bd-toc"></div>
+              
             
           </div>
           <footer class="bd-footer-content">
@@ -609,8 +637,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
-<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+  <script src="../../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -643,7 +671,7 @@
       
         <div class="footer-item">
 <p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.4.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.2.
 </p></div>
       
     </div>
