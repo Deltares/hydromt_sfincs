@@ -1,6 +1,5 @@
 import pytest
 from hydromt_sfincs.workflows.flwdir import (
-    basin_mask,
     river_centerline_from_hydrography,
     river_source_points,
 )
@@ -64,23 +63,3 @@ def test_river_source_points(hydrography, data_catalog):
         gdf_src = river_source_points(gdf_riv=gdf_riv, gdf_mask=gdf_riv)
     with pytest.raises(TypeError, match="gdf_riv must be"):
         gdf_src = river_source_points(gdf_riv=gdf_mask, gdf_mask=gdf_mask)
-
-
-def test_basin_mask(hydrography):
-    # get data and create outlet point
-    da_flwdir = hydrography[0]
-    points = gpd.points_from_xy([12.72375], [45.53625])
-    gdf_outlet = gpd.GeoDataFrame(geometry=points, crs="EPSG:4326")
-    gdf_outlet = gdf_outlet.to_crs("EPSG:32633")
-    # test basin mask
-    gdf_bas, da_bas = basin_mask(da_flwdir, gdf_outlet)
-    assert gdf_bas.index.size == 1
-    assert (gdf_bas["idx"].values == gdf_outlet.index.values).all()
-    assert gdf_bas.crs == da_flwdir.raster.crs
-    assert np.isin(np.unique(da_bas.values), [0, 1]).all()
-    #
-    gdf_outlet.to_file("outlet.geojson", driver="GeoJSON")
-    gdf_bas.to_file("basin.geojson", driver="GeoJSON")
-    # test errors
-    with pytest.raises(TypeError):
-        basin_mask(da_flwdir, gdf_outlet.buffer(1).to_frame("geometry"))
