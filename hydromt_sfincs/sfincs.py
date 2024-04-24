@@ -2622,15 +2622,16 @@ class SfincsModel(GridModel):
 
         Adds model forcing layers:
 
-        * **wave_height** forcing: significant wave height time series [m]
-        * **wave_period** forcing: peak wave period time series [s]
-        * **wave_direction** forcing: mean wave direction time series [coming from degree wrt North]
-        * **wave_spreading** forcing: wave spreading time series [degree]            
+        * **wave_height** forcing: 'hs' - significant wave height time series [m]
+        * **wave_period** forcing: 'tp' - peak wave period time series [s]
+        * **wave_direction** forcing: 'wd' - mean wave direction time series [coming from degree wrt North]
+        * **wave_spreading** forcing: 'ds' - wave spreading time series [degree]            
 
         Parameters
         ----------
         geodataset: str, Path, xr.Dataset, optional
-            Path, data source name, or xarray data object for geospatial point timeseries.
+            Path, data source name, or xarray data object for geospatial point timeseries,
+            expected are variables: hs, tp, wd, ds.
         timeseries: str, Path, pd.DataFrame, optional
             Path, data source name, or pandas data object for tabular timeseries.
         locations: str, Path, gpd.GeoDataFrame, optional
