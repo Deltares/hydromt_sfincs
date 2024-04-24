@@ -2666,24 +2666,17 @@ class SfincsModel(GridModel):
         
         if geodataset is not None:
             # read and clip data in time & space
-            da = self.data_catalog.get_geodataset(
+            ds = self.data_catalog.get_geodataset(
                 geodataset,
                 geom=self.region,
                 buffer=buffer,
-                variables=["hs", "tp", "wd", "ds"], #TODO: Question - is this correct? will the data_catalog then load all 4 required vars?
+                variables=["hs", "tp", "wd", "ds"], 
                 time_tuple=(tstart, tstop),
-                 crs=self.crs,
             )
-            # df_ts = da.transpose(..., da.vector.index_dim).to_dataframe()
-            gdf_locs = da.vector.to_gdf()
-            gdf_locs = gdf_locs.to_crs(self.crs) 
-            gdf_locs2 = gdf_locs.copy()
-            gdf_locs2 = gdf_locs2.to_crs(self.crs)
- 
-            df_hs = da['hs'].transpose(..., da.vector.index_dim).to_pandas()  
-            df_tp = da['tp'].transpose(..., da.vector.index_dim).to_pandas()         
-            df_dir = da['wd'].transpose(..., da.vector.index_dim).to_pandas()         
-            df_ds = da['ds'].transpose(..., da.vector.index_dim).to_pandas()         
+     
+            gdf = ds.vector.to_gdf()
+            gdf = gdf.to_crs(self.crs)
+            ds = GeoDataset.from_gdf(gdf, ds, index_dim=gdf.index.name)
                    
         elif timeseries is not None:
 
