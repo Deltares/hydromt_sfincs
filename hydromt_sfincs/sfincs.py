@@ -2607,7 +2607,7 @@ class SfincsModel(GridModel):
     def setup_wave_forcing(
         self,
         geodataset: Union[str, Path, xr.Dataset] = None,
-        timeseries: list = None, #Union[str, Path, pd.DataFrame] = None, #This should now be a list with dataframes, or could we do that anotherway?
+        timeseries: List[Union[str, Path, pd.DataFrame]] = None, 
         locations: Union[str, Path, gpd.GeoDataFrame] = None,
         buffer: float = 5e3,
         merge: bool = True,
@@ -2745,11 +2745,7 @@ class SfincsModel(GridModel):
             raise ValueError("No wave boundary (snapwave_bnd) points provided.")
 
         if geodataset is not None:
-            # self.set_forcing(da, name="snapwave")
-            self.set_forcing_1d(df_ts=df_hs, gdf_locs=gdf_locs2, name="hs", merge=merge)
-            self.set_forcing_1d(df_ts=df_tp, gdf_locs=gdf_locs2, name="tp", merge=merge)
-            self.set_forcing_1d(df_ts=df_dir, gdf_locs=gdf_locs2, name="wd", merge=merge)
-            self.set_forcing_1d(df_ts=df_ds, gdf_locs=gdf_locs2, name="ds", merge=merge)
+            self.set_forcing(ds, name="snapwave")
             
 
         if timeseries is not None:
