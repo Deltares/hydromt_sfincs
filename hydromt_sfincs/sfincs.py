@@ -2744,11 +2744,7 @@ class SfincsModel(GridModel):
             raise ValueError("No wave boundary (snapwave_bnd) points provided.")
 
         if geodataset is not None:
-            # self.set_forcing(da, name="snapwave")
-            self.set_forcing_1d(df_ts=df_hs, gdf_locs=gdf_locs2, name="hs", merge=merge)
-            self.set_forcing_1d(df_ts=df_tp, gdf_locs=gdf_locs2, name="tp", merge=merge)
-            self.set_forcing_1d(df_ts=df_dir, gdf_locs=gdf_locs2, name="wd", merge=merge)
-            self.set_forcing_1d(df_ts=df_ds, gdf_locs=gdf_locs2, name="ds", merge=merge)
+            self.set_forcing(ds, name="snapwave")
             
 
         if timeseries is not None:
