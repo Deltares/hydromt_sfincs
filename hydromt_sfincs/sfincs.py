@@ -2690,7 +2690,8 @@ class SfincsModel(GridModel):
                         index_col=0,
                         )
                     df.index.name = "time"
-                    da = xr.DataArray(df[df.columns[0]], dims=("time"), name=var)
+                    df.columns.name = "index"
+                    da = xr.DataArray(df, dims=("time", "index"), name=var)
                     da_lst.append(da)
                 ds = xr.merge(da_lst[:])   
                 
@@ -2708,6 +2709,8 @@ class SfincsModel(GridModel):
                 gdf_locs = self.forcing["wave_height"].vector.to_gdf()
             else:
                 raise ValueError("No wave boundary (snapwave_bnd) points provided.")                       
+            
+            ds = ds.assign_coords(index=gdf_locs.index.values)
 
         ds = GeoDataset.from_gdf(gdf_locs, ds, index_dim=gdf_locs.index.name)
         self.set_forcing(ds, name="snapwave") 
