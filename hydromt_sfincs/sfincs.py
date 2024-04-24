@@ -2607,7 +2607,7 @@ class SfincsModel(GridModel):
     def setup_wave_forcing(
         self,
         geodataset: Union[str, Path, xr.Dataset] = None,
-        timeseries: list = None, #Union[str, Path, pd.DataFrame] = None, #This should now be a list with dataframes, or could we do that anotherway?
+        timeseries: List[Union[str, Path, pd.DataFrame]] = None, 
         locations: Union[str, Path, gpd.GeoDataFrame] = None,
         buffer: float = 5e3,
         merge: bool = True,
