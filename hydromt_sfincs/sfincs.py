@@ -2609,7 +2609,7 @@ class SfincsModel(GridModel):
         geodataset: Union[str, Path, xr.Dataset] = None,
         timeseries: List[Union[str, Path, pd.DataFrame]] = None, 
         locations: Union[str, Path, gpd.GeoDataFrame] = None,
-        buffer: float = 5e3,
+        buffer: float = 5e4,
         merge: bool = True,
     ):
         """Setup wave forcing.
@@ -2639,7 +2639,7 @@ class SfincsModel(GridModel):
             It should contain a 'index' column matching the column names in `timeseries`.
         buffer: float, optional
             Buffer [m] around model wave boundary cells to select wave gauges,
-            by default 5 km.
+            by default 50 km.
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
 
@@ -2648,22 +2648,16 @@ class SfincsModel(GridModel):
         set_forcing
         """        
         tstart, tstop = self.get_model_time()  # model time
-        # buffer around snapwave msk==2 values
-        
-        # if np.any(self.snapwave_msk == 2):
-        #     region = self.mask.where(self.snapwave_msk == 2, 0).raster.vectorize() 
-        #     #TODO: check if will be 'snapwave_msk' or 'wave_mask' or 'snapwave.msk' or ...
-        # else:
-        #     region = self.region
 
         #read wave data from geodataset or geodataframe
         region = self.region
+        # TODO - change to vector of snapwave boundary msk2 cells 
         
         if geodataset is not None:
             # read and clip data in time & space
             ds = self.data_catalog.get_geodataset(
                 geodataset,
-                geom=self.region,
+                geom=region,
                 buffer=buffer,
                 variables=["hs", "tp", "wd", "ds"], 
                 time_tuple=(tstart, tstop),
@@ -2679,7 +2673,7 @@ class SfincsModel(GridModel):
             if len(timeseries) == 4:
 
                 # We could probably do this way faster!
-                vars = ["hs","tp","dir","ds"]
+                vars = ["hs", "tp", "wd", "ds"]
                 da_lst = []
                 for i,var in enumerate(vars):
                     df = self.data_catalog.get_dataframe(
@@ -2691,10 +2685,21 @@ class SfincsModel(GridModel):
                         )
                     df.index.name = "time"
                     df.columns.name = "index"
+                    #
+                    if df is not None and df.index.is_numeric():
+                        if "tref" not in self.config:
+                            raise ValueError(
+                                "tref must be set in config to convert numeric index to datetime index"
+                            )
+                        tref = utils.parse_datetime(self.config["tref"])
+                        df.index = tref + pd.to_timedelta(df.index, unit="sec")  
+                    #
                     da = xr.DataArray(df, dims=("time", "index"), name=var)
-                    da_lst.append(da)
+                    da_lst.append(da)      
+                    #                       
                 ds = xr.merge(da_lst[:])   
-                
+                # parse datetime index
+
             else:
                 raise ValueError("Not enough wave variables provided. Length should be equal to 4 (hs, tp, dir, ds)")
 
@@ -2712,7 +2717,7 @@ class SfincsModel(GridModel):
             
             ds = ds.assign_coords(index=gdf_locs.index.values)
 
-        ds = GeoDataset.from_gdf(gdf_locs, ds, index_dim=gdf_locs.index.name)
+        ds = GeoDataset.from_gdf(gdf_locs, ds, index_dim=gdf_locs.index.name)      
         self.set_forcing(ds, name="snapwave") 
             
     def setup_wavemaker(
