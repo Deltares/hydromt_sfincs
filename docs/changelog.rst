@@ -12,6 +12,7 @@ v1.0.4 (Unreleased)
 Added
 -----
 - improved subgrid tables that account for the wet fraction of the cell (#160)
+- add source points at headwater locations with `SfincsModel.setup_river_inflow` (#170)
 
 Changed
 -------
