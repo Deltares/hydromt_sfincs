@@ -1,12 +1,14 @@
-import time
-import os
 import logging
-from matplotlib import path
-import numpy as np
-from pyproj import CRS, Transformer
-from pathlib import Path
-from typing import List, Optional, Union
+import os
+import time
 import warnings
+from pathlib import Path
+from typing import List, Union
+
+import numpy as np
+from matplotlib import path
+from pyproj import CRS, Transformer
+
 np.warnings = warnings
 
 import geopandas as gpd
@@ -26,10 +28,8 @@ try:
 except ImportError:
     raise ImportError("datashader is not installed. Please install it first.")
 
-from hydromt import workflows
 from hydromt_sfincs.subgrid import SubgridTableQuadtree
 from hydromt_sfincs.workflows.merge import merge_multi_dataarrays_on_mesh
-
 
 logger = logging.getLogger(__name__)
 
@@ -696,12 +696,12 @@ class QuadtreeGrid:
 
         assert model in ["sfincs", "snapwave"], "Model must be either 'sfincs' or 'snapwave'!"
 
-        if model is "sfincs":
+        if model == "sfincs":
             varname = "msk"
-        elif model is "snapwave":
+        elif model == "snapwave":
             varname = "snapwave_msk"
 
-        if copy_sfincsmask is True and model is "snapwave": 
+        if copy_sfincsmask and model == "snapwave": 
             assert "msk" in self.data, "SFINCS mask not found!"
             logger.info("Using SFINCS mask for SnapWave mask ...")
             self.data[varname] = self.data["msk"]
@@ -748,13 +748,13 @@ class QuadtreeGrid:
                 _msk = xu.burn_vector_geometry(gdf_include, self.data, fill=0, all_touched=all_touched) > 0
                 uda_mask = np.logical_or(uda_mask, _msk)  # NOTE logical OR statement
             except:
-                logger.debug(f"No mask cells found within include polygon!")
+                logger.debug("No mask cells found within include polygon!")
         if gdf_exclude is not None:
             try:
                 _msk = xu.burn_vector_geometry(gdf_exclude, self.data, fill=0, all_touched=all_touched) > 0
                 uda_mask = np.logical_and(uda_mask, ~_msk)
             except:
-                logger.debug(f"No mask cells found within exclude polygon!")
+                logger.debug("No mask cells found within exclude polygon!")
 
         # add mask to grid
         self.data[varname] = xu.UgridDataArray(xr.DataArray(data=uda_mask, dims=[self.data.grid.face_dimension]), self.data.grid)    
@@ -774,12 +774,12 @@ class QuadtreeGrid:
     ):
         assert model in ["sfincs", "snapwave"], "Model must be either 'sfincs' or 'snapwave'!"
 
-        if model is "sfincs":
+        if model == "sfincs":
             varname = "msk"
-        elif model is "snapwave":
+        elif model == "snapwave":
             varname = "snapwave_msk"
 
-        if copy_sfincsmask is True and model is "snapwave": 
+        if copy_sfincsmask and model == "snapwave": 
             assert "msk" in self.data, "SFINCS mask not found!"
             logger.info("Using SFINCS mask for SnapWave mask ...")
             self.data[varname] = self.data["msk"]
@@ -861,14 +861,14 @@ class QuadtreeGrid:
         if not quiet:
             print("Building mask ...")
             
-        if model is "sfincs":
+        if model == "sfincs":
             varname = "mask"
-        elif model is "snapwave":
+        elif model == "snapwave":
             varname = "snapwave_mask"
         else:
             print("Requested model to build mask for not recognized! Choose either 'sfincs' or 'snapwave' ...")
                        
-        if copy_sfincs_mask2snapwave is True and model is "snapwave" and self.data["mask"] is not None: #TODO: check whether the 'self.data["mask"] is not None' is robust in code order
+        if copy_sfincs_mask2snapwave and model == "snapwave" and self.data["mask"] is not None: #TODO: check whether the 'self.data["mask"] is not None' is robust in code order
             print("Using SFINCS mask for Snapwave mask ...")
             self.data[varname] = self.data["mask"]
         else:
@@ -1433,7 +1433,7 @@ class QuadtreeGrid:
             name = os.path.splitext(name)[0]
             export_image(img, name, export_path=path)
             return True
-        except Exception as e:
+        except Exception:
             return False
         
     # def make_index_tiles(self, path, zoom_range=None, format=0):
