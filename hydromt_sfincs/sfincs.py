@@ -1382,6 +1382,8 @@ class SfincsModel(GridModel):
         )
         df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
 
+        self.logger.debug("setup_cn_infiltration_with_ks - Pass 1 ")
+
         # Define outputs
         if self.grid_type == "regular":        
             da_smax = xr.full_like(self.mask, -9999, dtype=np.float32)
@@ -1396,8 +1398,6 @@ class SfincsModel(GridModel):
                 dims=mesh2d.face_dimension,
             ) 
             da_ks = da_smax.copy()                       
-            # self.quadtree.data['smax'] = 
-            # self.quadtree.data['ks'] = 
     
         # Compute resolution land use (we are assuming that is the finest)
         resolution_landuse = np.mean(
@@ -1410,6 +1410,8 @@ class SfincsModel(GridModel):
 
         # Define the blocks
         nrmax = block_size
+        
+        self.logger.debug("setup_cn_infiltration_with_ks - Pass 2 ")
         
         #%% Looping over regular grid blocks      
         if self.grid_type == "regular":         
@@ -1490,21 +1492,28 @@ class SfincsModel(GridModel):
             ifirst = np.zeros(nlevs, dtype=int)
             ilast  = np.zeros(nlevs, dtype=int)
             nr_cells_per_level = np.zeros(nlevs, dtype=int)
-            ireflast = -1
-            for ic in range(nr_cells):
-                if level[ic]>ireflast:
-                    ifirst[level[ic]] = ic
-                    ireflast = level[ic]
+            self.logger.debug(f"setup_cn_infiltration_with_ks - Pass 3.")
+            
+            # Dind first index of new refinement level:
+            # Significantly faster TL version
+            level_unique = np.unique(level)
+            for ilevel in level_unique:
+                ifirst[ilevel] = np.where(level == ilevel)[0][0]                    
+            self.logger.debug(f"setup_cn_infiltration_with_ks - Pass 4.")
+            
             for ilev in range(nlevs - 1):
                 ilast[ilev] = ifirst[ilev + 1] - 1
             ilast[nlevs - 1] = nr_cells - 1
+            self.logger.debug(f"setup_cn_infiltration_with_ks - Pass 5.")
+            
             for ilev in range(nlevs):
-                nr_cells_per_level[ilev] = ilast[ilev] - ifirst[ilev] + 1 
+                nr_cells_per_level[ilev] = ilast[ilev] - ifirst[ilev] + 1             
+            self.logger.debug(f"setup_cn_infiltration_with_ks - Pass 6.")
             
             # Loop through all levels
             for ilev in range(nlevs):
 
-                logger.info("Processing level " + str(ilev + 1) + " of " + str(nlevs) + " ...")
+                self.logger.info("Processing level " + str(ilev + 1) + " of " + str(nlevs) + " ...")
                 
                 # Make blocks off cells in this level only
                 cell_indices_in_level = np.arange(ifirst[ilev], ilast[ilev] + 1, dtype=int)
@@ -1527,12 +1536,12 @@ class SfincsModel(GridModel):
                 nrbn = int(np.ceil((n1 - n0 + 1)/nrcb))  # nr of blocks in n direction
                 nrbm = int(np.ceil((m1 - m0 + 1)/nrcb))  # nr of blocks in m direction
 
-                logger.info("Number of regular cells in a block : " + str(nrcb))
-                logger.info("Number of blocks in n direction    : " + str(nrbn))
-                logger.info("Number of blocks in m direction    : " + str(nrbm))
+                self.logger.info("Number of regular cells in a block : " + str(nrcb))
+                self.logger.info("Number of blocks in n direction    : " + str(nrbn))
+                self.logger.info("Number of blocks in m direction    : " + str(nrbm))
                 
-                logger.info("Grid size of flux grid             : dx= " + str(dx) + ", dy= " + str(dy))
-                logger.info("Grid size of subgrid pixels        : dx= " + str(dxp) + ", dy= " + str(dyp))
+                self.logger.info("Grid size of flux grid             : dx= " + str(dx) + ", dy= " + str(dy))
+                self.logger.info("Grid size of subgrid pixels        : dx= " + str(dxp) + ", dy= " + str(dyp))
 
                 ib = -1
                 ibt = 1
@@ -1553,7 +1562,7 @@ class SfincsModel(GridModel):
                         bm0 = m0  + ii*nrcb               # Index of first m in block
                         bm1 = min(bm0 + nrcb - 1, m1) + 1 # Index of last m in block (cut off excess to the right, but add extra cell to compute u and v in the last column)
 
-                        logger.debug("Processing block " + str(ib + 1) + " of " + str(nrbn*nrbm) + " ...")
+                        self.logger.debug("Processing block " + str(ib + 1) + " of " + str(nrbn*nrbm) + " ...")
 
                         # Now build the pixel matrix
                         x00 = 0.5*dxp + bm0*refi*dyp
@@ -1612,7 +1621,7 @@ class SfincsModel(GridModel):
                                 nr_cells_in_block += 1
                         index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
 
-                        logger.debug("Number of active cells in block    : " + str(nr_cells_in_block))
+                        self.logger.debug("Number of active cells in block    : " + str(nr_cells_in_block))
                     
                         # nn = n[index_cells_in_block]
                         # mm = m[index_cells_in_block]

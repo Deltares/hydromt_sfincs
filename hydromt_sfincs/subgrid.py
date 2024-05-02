@@ -889,11 +889,13 @@ class SubgridTableQuadtree:
         ifirst = np.zeros(nlevs, dtype=int)
         ilast  = np.zeros(nlevs, dtype=int)
         nr_cells_per_level = np.zeros(nlevs, dtype=int)
-        ireflast = -1
-        for ic in range(nr_cells):
-            if level[ic]>ireflast:
-                ifirst[level[ic]] = ic
-                ireflast = level[ic]
+
+        # Dind first index of new refinement level:
+        # Significantly faster TL version
+        level_unique = np.unique(level)
+        for ilevel in level_unique:
+            ifirst[ilevel] = np.where(level == ilevel)[0][0]  
+                                
         for ilev in range(nlevs - 1):
             ilast[ilev] = ifirst[ilev + 1] - 1
         ilast[nlevs - 1] = nr_cells - 1
