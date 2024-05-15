@@ -1053,62 +1053,72 @@ def subgrid_q_table(
     # Determine level size (metres)
     dlevel = (zmax - zmin) / (nlevels - 1)
 
-    # Grid mean roughness
-    navg = np.mean(manning)
+    # Option can be either 1 ("old") or 2 ("new")
+    option = 2
 
     # Loop through levels
-    for ilevel in range(nlevels):
-        # Top of level
-        zlevel = zmin + ilevel * dlevel
-        zz[ilevel] = zlevel
+    for ibin in range(nlevels):
 
-        # ibelow = np.where(elevation<=zlevel)                           # index of pixels below level level
-        h = np.maximum(zlevel - elevation, 0.0)  # water depth in each pixel
-        iwet = np.where(zlevel - elevation > -1.0e-6)[0]  # indices of wet pixels
-        hmean = np.mean(h)
-        havg[ilevel] = hmean  # conveyance depth
-        pwet[ilevel] = len(iwet) / n  # wet fraction
+        # Top of bin
+        zbin = zmin + ibin * dlevel
+        zz[ibin] = zbin
+
+        h = np.maximum(zbin - elevation, 0.0)  # water depth in each pixel
+
+
+        pwet[ibin] = (zbin - elevation > -1.0e-6).sum() / n
 
         # Side A
-        h_a = np.maximum(
-            zlevel - dd_a, 0.0
-        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
-        q_a = h_a ** (5.0 / 3.0) / manning_a  # Determine 'flux' for each pixel
-        q_a = np.mean(q_a)  # Wet-average flux through all the pixels
-
+        h_a   = np.maximum(zbin - dd_a, 0.0)  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        q_a   = h_a**(5.0 / 3.0) / manning_a  # Determine 'flux' for each pixel
+        q_a   = np.mean(q_a)                  # Grid-average flux through all the pixels
+        h_a   = np.mean(h_a)                  # Grid-average depth through all the pixels
+        
         # Side B
-        h_b = np.maximum(
-            zlevel - dd_b, 0.0
-        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
-        q_b = h_b ** (5.0 / 3.0) / manning_b  # Determine 'flux' for each pixel
-        q_b = np.mean(q_b)  # Wet-average flux through all the pixels
+        h_b   = np.maximum(zbin - dd_b, 0.0)  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        q_b   = h_b**(5.0 / 3.0) / manning_b  # Determine 'flux' for each pixel
+        q_b   = np.mean(q_b)                  # Grid-average flux through all the pixels
+        h_b   = np.mean(h_b)                  # Grid-average depth through all the pixels
 
-        q_ab = np.minimum(q_a, q_b)
+        # Compute q and h
+        q_all = np.mean(h**(5.0 / 3.0) / manning)   # Determine grid average 'flux' for each pixel
+        h_all = np.mean(h)                          # grid averaged depth of A and B combined
+        q_min = np.minimum(q_a, q_b)
+        h_min = np.minimum(h_a, h_b)
 
-        q_all = h ** (5.0 / 3.0) / manning  # Determine 'flux' for each pixel
-        q_all = np.mean(q_all)  # Wet-average flux through all the pixels
+        if option == 1:
+            # Use old 1 option (weighted average of q_ab and q_all) option (min at bottom bin, mean at top bin) 
+            w     = (ibin) / (nlevels - 1)              # Weight (increase from 0 to 1 from bottom to top bin)
+            q     = (1.0 - w) * q_min + w * q_all        # Weighted average of q_min and q_all
+            hmean = h_all
 
-        # Weighted average of q_ab and q_all
-        w = (ilevel) / (nlevels - 1)
-        q = (1.0 - w) * q_ab + w * q_all
+        elif option == 2:
+            # Use newer 2 option (minimum of q_a an q_b, minimum of h_a and h_b increasing to h_all, using pwet for weighting) option
+            pwet_a = (zbin - dd_a > -1.0e-6).sum() / (n / 2) 
+            pwet_b = (zbin - dd_b > -1.0e-6).sum() / (n / 2) 
+            # Weight increases linearly from 0 to 1 from bottom to top bin use percentage wet in sides A and B
+            w = 2 * np.minimum(pwet_a, pwet_b) / (pwet_a + pwet_b)
+            q     = (1.0 - w) * q_min + w * q_all        # Weighted average of q_min and q_all
+            hmean = (1.0 - w) * h_min + w * h_all        # Weighted average of h_min and h_all
 
-        nrep[ilevel] = hmean ** (5.0 / 3.0) / q  # Representative n for qmean and hmean
+        havg[ibin] = hmean                          # conveyance depth
+        nrep[ibin] = hmean**(5.0 / 3.0) / q           # Representative n for qmean and hmean
 
-    nrep_top = nrep[-1]
+    nrep_top = nrep[-1]    
     havg_top = havg[-1]
 
     ### Fitting for nrep above zmax
 
     # Determine nfit at zfit
-    zfit = zmax + zmax - zmin
-    h = np.maximum(zfit - elevation, 0.0)  # water depth in each pixel
-    hfit = (
-        havg_top + zmax - zmin
-    )  # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
-    q = h ** (5.0 / 3.0) / manning  # unit discharge in each pixel
-    qmean = np.mean(q)  # combined unit discharge for cell
+    zfit  = zmax + zmax - zmin
+    hfit  = havg_top + zmax - zmin                 # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
 
-    nfit = hfit ** (5.0 / 3.0) / qmean
+    # Compute q and navg
+    h     = np.maximum(zfit - elevation, 0.0)      # water depth in each pixel
+    q     = np.mean(h**(5.0 / 3.0) / manning)          # combined unit discharge for cell
+    navg  = np.mean(manning)
+
+    nfit = hfit**(5.0 / 3.0) / q
 
     # Actually apply fit on gn2 (this is what is used in sfincs)
     gnavg2 = 9.81 * navg**2
@@ -1130,5 +1140,5 @@ def subgrid_q_table(
                 nfit = nrep_top + 0.1 * (navg - nrep_top)
         gnfit2 = 9.81 * nfit**2
         ffit = (((gnavg2 - gnavg_top2) / (gnavg2 - gnfit2)) - 1) / (zfit - zmax)
-
-    return zmin, zmax, havg, nrep, pwet, ffit, navg, zz
+         
+    return zmin, zmax, havg, nrep, pwet, ffit, navg, zz       
