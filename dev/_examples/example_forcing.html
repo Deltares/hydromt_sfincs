@@ -29,7 +29,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=87e54e7c" />
     <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
     <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=17060807" />
   
@@ -41,7 +41,7 @@
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../_static/design-tabs.js?v=36754332"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -489,36 +489,15 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:51,609 - root - log - INFO - HydroMT version: 0.9.4
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:51,656 - root - data_catalog - INFO - Reading data catalog archive artifact_data v0.0.8
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:51,656 - root - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2024-04-24 10:08:51,700 - root - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.4.dev0).
+2024-05-24 09:03:25,409 - root - log - INFO - HydroMT version: 0.9.4
+2024-05-24 09:03:25,452 - root - data_catalog - INFO - Reading data catalog archive artifact_data v0.0.8
+2024-05-24 09:03:25,453 - root - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt_data/artifact_data/v0.0.8/data_catalog.yml
+2024-05-24 09:03:25,496 - root - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.4.dev0).
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -563,20 +542,13 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:51,729 - root - rasterdataset - INFO - Reading era5_hourly netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/era5_hourly.nc
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2024-04-24 10:08:51,929 - root - sfincs - INFO - Write forcing files
+2024-05-24 09:03:25,525 - root - rasterdataset - INFO - Reading era5_hourly netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/era5_hourly.nc
+2024-05-24 09:03:25,730 - root - sfincs - INFO - Write forcing files
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -591,20 +563,13 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:51,941 - root - rasterdataset - INFO - Reading era5_hourly netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/era5_hourly.nc
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2024-04-24 10:08:52,009 - root - model_api - WARNING - Replacing forcing: precip
+2024-05-24 09:03:25,740 - root - rasterdataset - INFO - Reading era5_hourly netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/era5_hourly.nc
+2024-05-24 09:03:25,806 - root - model_api - WARNING - Replacing forcing: precip
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -625,7 +590,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2024-04-24 10:08:52,016 - root - dataframe - INFO - Reading  csv data from precip.csv
+2024-05-24 09:03:25,814 - root - dataframe - INFO - Reading  csv data from precip.csv
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -705,15 +670,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2024-04-24 10:08:52,663 - root - rasterdataset - INFO - Reading dtu10mdt raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/dtu10mdt.tif
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:52,701 - root - model_api - WARNING - Replacing forcing: bzs
+2024-05-24 09:03:26,463 - root - rasterdataset - INFO - Reading dtu10mdt raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/dtu10mdt.tif
+2024-05-24 09:03:26,504 - root - model_api - WARNING - Replacing forcing: bzs
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -730,7 +688,7 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_example_forcing_9_3.png" src="../_images/_examples_example_forcing_9_3.png" />
+<img alt="../_images/_examples_example_forcing_9_2.png" src="../_images/_examples_example_forcing_9_2.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -752,15 +710,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2024-04-24 10:08:52,870 - root - dataframe - INFO - Reading  csv data from waterlevel.csv
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:52,891 - root - model_api - WARNING - Replacing forcing: bzs
+2024-05-24 09:03:26,680 - root - dataframe - INFO - Reading  csv data from waterlevel.csv
+2024-05-24 09:03:26,700 - root - model_api - WARNING - Replacing forcing: bzs
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -777,7 +728,7 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_example_forcing_10_3.png" src="../_images/_examples_example_forcing_10_3.png" />
+<img alt="../_images/_examples_example_forcing_10_2.png" src="../_images/_examples_example_forcing_10_2.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -799,23 +750,9 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2024-04-24 10:08:53,061 - hydromt.data_adapter.geodataset - geodataset - INFO - Reading gtsmv3_eu_era5 netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gtsmv3_eu_era5.nc
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:53,189 - root - rasterdataset - INFO - Reading dtu10mdt raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/dtu10mdt.tif
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:53,217 - root - model_api - WARNING - Replacing forcing: bzs
+2024-05-24 09:03:26,876 - hydromt.data_adapter.geodataset - geodataset - INFO - Reading gtsmv3_eu_era5 netcdf data from /home/runner/.hydromt_data/artifact_data/v0.0.8/gtsmv3_eu_era5.nc
+2024-05-24 09:03:27,004 - root - rasterdataset - INFO - Reading dtu10mdt raster data from /home/runner/.hydromt_data/artifact_data/v0.0.8/dtu10mdt.tif
+2024-05-24 09:03:27,034 - root - model_api - WARNING - Replacing forcing: bzs
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -832,7 +769,7 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_example_forcing_11_4.png" src="../_images/_examples_example_forcing_11_4.png" />
+<img alt="../_images/_examples_example_forcing_11_2.png" src="../_images/_examples_example_forcing_11_2.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -844,20 +781,13 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:53,503 - root - sfincs - INFO - Write forcing files
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2024-04-24 10:08:53,520 - root - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
+2024-05-24 09:03:27,326 - root - sfincs - INFO - Write forcing files
+2024-05-24 09:03:27,342 - root - sfincs - INFO - Write vector file(s) for forcing.bzs to &#39;gis&#39; subfolder
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -877,23 +807,9 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2024-04-24 10:08:53,561 - hydromt_sfincs.sfincs - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.4.dev0).
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:53,575 - hydromt_sfincs.sfincs - sfincs - WARNING - Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_example/gis/bnd.geojson
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2024-04-24 10:08:53,587 - hydromt_sfincs.sfincs - sfincs - WARNING - Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_example/gis/bnd.geojson
+2024-05-24 09:03:27,385 - hydromt_sfincs.sfincs - model_api - INFO - Initializing sfincs model from hydromt_sfincs (v1.0.4.dev0).
+2024-05-24 09:03:27,400 - hydromt_sfincs.sfincs - sfincs - WARNING - Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_example/gis/bnd.geojson
+2024-05-24 09:03:27,413 - hydromt_sfincs.sfincs - sfincs - WARNING - Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_example/gis/bnd.geojson
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -912,7 +828,7 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_example_forcing_13_4.png" src="../_images/_examples_example_forcing_13_4.png" />
+<img alt="../_images/_examples_example_forcing_13_2.png" src="../_images/_examples_example_forcing_13_2.png" />
 </div>
 </div>
 </section>
