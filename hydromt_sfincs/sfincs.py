@@ -1476,7 +1476,7 @@ class SfincsModel(GridModel):
         #%% Same for looping over quadtree mesh, but including levels
         elif self.grid_type == "quadtree":
             
-            refi   = 1 #TODO: this piece is overhead, because we don't need subgrid pixel accuracy for this
+            refi   = 20 #1 #TODO: this piece is overhead, because we don't need subgrid pixel accuracy for this
             
             nr_cells = mesh2d.n_face            
             nlevs = self.quadtree.data.nr_levels
