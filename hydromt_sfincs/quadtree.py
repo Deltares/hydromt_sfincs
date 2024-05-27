@@ -129,10 +129,16 @@ class QuadtreeGrid:
             # drop these from grid quadtree file
             ds = ds.drop_vars(["smax", "seff", "ks"])                    
             
-            # # write quadtree infiltration netcdf             
-            dsinfiltration.to_netcdf("sfincs_infiltration.nc")
+            # Add a new infiltration_type attribute
+            attrs["infiltration_type"] = "cnb"
+            
+            dsinfiltration.attrs = attrs
+                        
             # TODO - add root when writing, or change 'file_name' including "_infiltration"
-
+                        
+            # write quadtree infiltration netcdf             
+            dsinfiltration.to_netcdf("sfincs_infiltration.nc")
+                         
         # write quadtree grid netcdf            
         ds.to_netcdf(file_name)
 
