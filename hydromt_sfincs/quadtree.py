@@ -1246,11 +1246,13 @@ class QuadtreeGrid:
         # Loop through refinement polygons and start refining
         for polygon in self.ref_pols:
             # Refine, reorder, find first cells in level
-            self._refine_in_polygon(polygon)
+            self._refine_in_polygon_per_level(polygon)
 
         print("Time elapsed : " + str(time.time() - start) + " s")
 
-    def _refine_in_polygon(self, polygon):
+    def _refine_in_polygon_per_level(self, polygon):
+        from shapely.geometry import Polygon, MultiPolygon
+
         # Finds cell to refine and calls refine_cells
 
         # Loop through refinement levels for this polygon
@@ -1262,98 +1264,112 @@ class QuadtreeGrid:
             nmax = self.nmax * 2**ilev
             mmax = self.mmax * 2**ilev
             # Add buffer of 0.5*dx around polygon
-            polbuf = polygon["geometry"]
-            # Rotate polbuf to grid (this is needed to find cells that could fall within polbuf)
-            coords = polbuf.exterior.coords[:]
-            npoints = len(coords)
-            polx = np.zeros(npoints)
-            poly = np.zeros(npoints)
+            polgeom = polygon["geometry"]
+            
+            # Check if it's a Polygon or MultiPolygon
+            if isinstance(polgeom, Polygon):
+                print("It's a Polygon")
+                self._refine_in_polygon(polgeom, dx, dy, nmax, mmax, ilev)
+                
+            elif isinstance(polgeom, MultiPolygon):
+                print("It's a MultiPolygon")
+                for polbuf in polgeom.geoms:
+                    self._refine_in_polygon(polbuf, dx, dy, nmax, mmax, ilev)
+            else:
+                print("It's neither a Polygon nor a MultiPolygon")                   
+                
+    def _refine_in_polygon(self, polbuf, dx, dy, nmax, mmax, ilev):                
+        # Rotate polbuf to grid (this is needed to find cells that could fall within polbuf)
+        coords = polbuf.exterior.coords[:]
+        npoints = len(coords)
+        polx = np.zeros(npoints)
+        poly = np.zeros(npoints)
 
-            for ipoint, point in enumerate(polbuf.exterior.coords[:]):
-                # Cell centres
-                polx[ipoint] = self.cosrot * (point[0] - self.x0) + self.sinrot * (
-                    point[1] - self.y0
-                )
-                poly[ipoint] = -self.sinrot * (point[0] - self.x0) + self.cosrot * (
-                    point[1] - self.y0
-                )
-
-            # Find cells cells in grid that could fall within polbuf
-            n0 = int(np.floor(np.min(poly) / dy)) - 1
-            n1 = int(np.ceil(np.max(poly) / dy)) + 1
-            m0 = int(np.floor(np.min(polx) / dx)) - 1
-            m1 = int(np.ceil(np.max(polx) / dx)) + 1
-
-            n0 = min(max(n0, 0), nmax - 1)
-            n1 = min(max(n1, 0), nmax - 1)
-            m0 = min(max(m0, 0), mmax - 1)
-            m1 = min(max(m1, 0), mmax - 1)
-
-            # Compute cell centre coordinates of cells in this level in this block
-            nn, mm = np.meshgrid(np.arange(n0, n1 + 1), np.arange(m0, m1 + 1))
-            nn = np.transpose(nn).flatten()
-            mm = np.transpose(mm).flatten()
-
-            xcor = np.zeros((4, np.size(nn)))
-            ycor = np.zeros((4, np.size(nn)))
-            xcor[0, :] = (
-                self.x0 + self.cosrot * (mm + 0) * dx - self.sinrot * (nn + 0) * dy
+        for ipoint, point in enumerate(polbuf.exterior.coords[:]):
+            # Cell centres
+            polx[ipoint] = self.cosrot * (point[0] - self.x0) + self.sinrot * (
+                point[1] - self.y0
             )
-            ycor[0, :] = (
-                self.y0 + self.sinrot * (mm + 0) * dx + self.cosrot * (nn + 0) * dy
-            )
-            xcor[1, :] = (
-                self.x0 + self.cosrot * (mm + 1) * dx - self.sinrot * (nn + 0) * dy
-            )
-            ycor[1, :] = (
-                self.y0 + self.sinrot * (mm + 1) * dx + self.cosrot * (nn + 0) * dy
-            )
-            xcor[2, :] = (
-                self.x0 + self.cosrot * (mm + 1) * dx - self.sinrot * (nn + 1) * dy
-            )
-            ycor[2, :] = (
-                self.y0 + self.sinrot * (mm + 1) * dx + self.cosrot * (nn + 1) * dy
-            )
-            xcor[3, :] = (
-                self.x0 + self.cosrot * (mm + 0) * dx - self.sinrot * (nn + 1) * dy
-            )
-            ycor[3, :] = (
-                self.y0 + self.sinrot * (mm + 0) * dx + self.cosrot * (nn + 1) * dy
+            poly[ipoint] = -self.sinrot * (point[0] - self.x0) + self.cosrot * (
+                point[1] - self.y0
             )
 
-            # Create np array with False for all cells
-            inp = np.zeros(np.size(nn), dtype=bool)
-            # Loop through 4 corner points
-            # If any corner points falls within the polygon, inp is set to True
-            for j in range(4):
-                inp0 = inpolygon(
-                    np.squeeze(xcor[j, :]), np.squeeze(ycor[j, :]), polygon["geometry"]
-                )
-                inp[np.where(inp0)] = True
-            in_polygon = np.where(inp)[0]
+        # Find cells cells in grid that could fall within polbuf
+        n0 = int(np.floor(np.min(poly) / dy)) - 1
+        n1 = int(np.ceil(np.max(poly) / dy)) + 1
+        m0 = int(np.floor(np.min(polx) / dx)) - 1
+        m1 = int(np.ceil(np.max(polx) / dx)) + 1
 
-            # Indices of cells in level within polbuf
-            nn_in = nn[in_polygon]
-            mm_in = mm[in_polygon]
-            nm_in = nmax * mm_in + nn_in
+        n0 = min(max(n0, 0), nmax - 1)
+        n1 = min(max(n1, 0), nmax - 1)
+        m0 = min(max(m0, 0), mmax - 1)
+        m1 = min(max(m1, 0), mmax - 1)
 
-            # Find existing cells of this level in nmi array
-            n_level = self.n[self.ifirst[ilev] : self.ilast[ilev] + 1]
-            m_level = self.m[self.ifirst[ilev] : self.ilast[ilev] + 1]
-            nm_level = m_level * nmax + n_level
+        # Compute cell centre coordinates of cells in this level in this block
+        nn, mm = np.meshgrid(np.arange(n0, n1 + 1), np.arange(m0, m1 + 1))
+        nn = np.transpose(nn).flatten()
+        mm = np.transpose(mm).flatten()
 
-            # Find indices all cells to be refined
-            ind_ref = binary_search(nm_level, nm_in)
+        xcor = np.zeros((4, np.size(nn)))
+        ycor = np.zeros((4, np.size(nn)))
+        xcor[0, :] = (
+            self.x0 + self.cosrot * (mm + 0) * dx - self.sinrot * (nn + 0) * dy
+        )
+        ycor[0, :] = (
+            self.y0 + self.sinrot * (mm + 0) * dx + self.cosrot * (nn + 0) * dy
+        )
+        xcor[1, :] = (
+            self.x0 + self.cosrot * (mm + 1) * dx - self.sinrot * (nn + 0) * dy
+        )
+        ycor[1, :] = (
+            self.y0 + self.sinrot * (mm + 1) * dx + self.cosrot * (nn + 0) * dy
+        )
+        xcor[2, :] = (
+            self.x0 + self.cosrot * (mm + 1) * dx - self.sinrot * (nn + 1) * dy
+        )
+        ycor[2, :] = (
+            self.y0 + self.sinrot * (mm + 1) * dx + self.cosrot * (nn + 1) * dy
+        )
+        xcor[3, :] = (
+            self.x0 + self.cosrot * (mm + 0) * dx - self.sinrot * (nn + 1) * dy
+        )
+        ycor[3, :] = (
+            self.y0 + self.sinrot * (mm + 0) * dx + self.cosrot * (nn + 1) * dy
+        )
 
-            ind_ref = ind_ref[ind_ref >= 0]
+        # Create np array with False for all cells
+        inp = np.zeros(np.size(nn), dtype=bool)
+        # Loop through 4 corner points
+        # If any corner points falls within the polygon, inp is set to True
+        for j in range(4):
+            inp0 = inpolygon(
+                np.squeeze(xcor[j, :]), np.squeeze(ycor[j, :]), polbuf
+            )
+            inp[np.where(inp0)] = True
+        in_polygon = np.where(inp)[0]
 
-            # ind_ref = ind_ref[ind_ref < np.size(nm_level)]
-            if not np.any(ind_ref):
-                continue
-            # Index of cells to refine
-            ind_ref += self.ifirst[ilev]
+        # Indices of cells in level within polbuf
+        nn_in = nn[in_polygon]
+        mm_in = mm[in_polygon]
+        nm_in = nmax * mm_in + nn_in
 
-            self._refine_cells(ind_ref, ilev)
+        # Find existing cells of this level in nmi array
+        n_level = self.n[self.ifirst[ilev] : self.ilast[ilev] + 1]
+        m_level = self.m[self.ifirst[ilev] : self.ilast[ilev] + 1]
+        nm_level = m_level * nmax + n_level
+
+        # Find indices all cells to be refined
+        ind_ref = binary_search(nm_level, nm_in)
+
+        ind_ref = ind_ref[ind_ref >= 0]
+
+        # ind_ref = ind_ref[ind_ref < np.size(nm_level)]
+        # if not np.any(ind_ref):
+        #     continue
+        # Index of cells to refine
+        ind_ref += self.ifirst[ilev]
+
+        self._refine_cells(ind_ref, ilev)
 
     def _refine_cells(self, ind_ref, ilev):
         # Refine cells with index ind_ref
