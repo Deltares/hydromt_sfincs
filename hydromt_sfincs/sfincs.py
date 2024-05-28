@@ -3397,7 +3397,7 @@ class SfincsModel(GridModel):
                         self.logger.warning(
                             f"Variable {attr}.{layer} has more than 2 dimensions: skipping."
                         )
-                        continue            
+                        continue
                 # If the raster type is float, set nodata to np.nan
                 if da.dtype == "float32" or da.dtype == "float64":
                     da.raster.set_nodata(np.nan)
