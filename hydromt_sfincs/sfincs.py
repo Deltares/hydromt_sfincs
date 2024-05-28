@@ -2934,6 +2934,7 @@ class SfincsModel(GridModel):
             ds = ds.assign_coords(index=gdf_locs.index.values)
 
         ds = GeoDataset.from_gdf(gdf_locs, ds, index_dim=gdf_locs.index.name)
+        flipped_ds = ds.transpose('time', 'stations') #TL: SFINCS+SnapWave expects arrays of [time, stations]      
         self.set_forcing(flipped_ds, name="snapwave") 
             
     def setup_wavemaker(
