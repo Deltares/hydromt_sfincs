@@ -382,6 +382,7 @@ class SfincsModel(GridModel):
         datasets_dep: List[dict],
         buffer_cells: int = 0,  # not in list
         interp_method: str = "linear",  # used for buffer cells only
+        use_refinement_level: int = None, #option to specify what refinement level resolution should be used
     ):
         """Interpolate topobathy (dep) data to the model grid.
 
@@ -409,10 +410,14 @@ class SfincsModel(GridModel):
                 res = np.abs(self.mask.raster.res[0]) * 111111.0
         elif self.grid_type == "quadtree":
             # TODO make dependent on refinement levle?
-            # NOTE for now we always use the resolution of the finest level
+            # NOTE for now we always use the resolution of the finest level                
             res = self.quadtree.dx # coarsest level
             nrlevels = self.quadtree.nr_refinement_levels
-            res = res / 2 ** (nrlevels-1) # finest level
+            
+            if refinement_level is None:
+                res = res / 2 ** (nrlevels-1) # finest level
+            else:
+                res = res / 2 ** (use_refinement_level-1) # user defined level                
 
             if self.quadtree.crs.is_geographic:
                 res = res * 111111.0
@@ -2928,8 +2933,8 @@ class SfincsModel(GridModel):
             
             ds = ds.assign_coords(index=gdf_locs.index.values)
 
-        ds = GeoDataset.from_gdf(gdf_locs, ds, index_dim=gdf_locs.index.name)      
-        self.set_forcing(ds, name="snapwave") 
+        ds = GeoDataset.from_gdf(gdf_locs, ds, index_dim=gdf_locs.index.name)
+        self.set_forcing(flipped_ds, name="snapwave") 
             
     def setup_wavemaker(
         self,
