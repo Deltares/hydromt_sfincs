@@ -863,9 +863,16 @@ class SfincsModel(GridModel):
                 res = np.abs(self.mask.raster.res[0]) * 111111.0
         elif self.grid_type == "quadtree":
             # TODO make dependent on refinement level?
-            res = self.quadtree.dx # coarsest level
+            res = min(self.quadtree.dx, self.quadtree.dy) # coarsest level
             nrlevels = self.quadtree.nr_refinement_levels
-            res = res / 2 ** (nrlevels-1) # finest level
+            
+            # datasets_dep_per_level = [[col for col in range(4)] for row in range(nrlevels)]
+            datasets_dep_per_level = []
+            for ilev in range(nrlevels):
+                res = res / 2 ** (ilev) # per level
+                datasets_dep_tmp = self._parse_datasets_dep(datasets_dep, res=res)
+                datasets_dep_per_level.append(datasets_dep_tmp)
+                
 
             if self.quadtree.crs.is_geographic:
                 res = res * 111111.0
@@ -873,8 +880,9 @@ class SfincsModel(GridModel):
         # convert to subgrid resolution
         res = res / nr_subgrid_pixels
 
-        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res) 
-        #TODO - QUESTION - TL: do we want this also in the case of quadtree? Or better to load per level separately, data memory wise?
+        if self.grid_type == "regular":
+            datasets_dep = self._parse_datasets_dep(datasets_dep, res=res) 
+            #TODO - QUESTION - TL: do we want this also in the case of quadtree? Or better to load per level separately, data memory wise?
 
         if len(datasets_rgh) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
@@ -923,7 +931,7 @@ class SfincsModel(GridModel):
             )
         elif self.grid_type == "quadtree":
             self.quadtree.setup_subgrid(
-                datasets_dep=datasets_dep,
+                datasets_dep=datasets_dep_per_level,
                 datasets_rgh=datasets_rgh,
                 datasets_riv=datasets_riv,
                 buffer_cells=buffer_cells,

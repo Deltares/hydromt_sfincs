@@ -764,7 +764,7 @@ class SubgridTableQuadtree:
         ds_mesh : xr.Dataset
             Quadtree mesh of the SFINCS domain.
         datasets_dep : List[dict]
-            List of dictionaries with topobathy data, each containing an xarray.DataSet
+            List of dictionaries with topobathy data per level, each containing an xarray.DataSet
             and optional merge arguments e.g.:
             [
                 {'da': <xr.Dataset>, 'zmin': 0.01},
@@ -965,6 +965,27 @@ class SubgridTableQuadtree:
 
                     logger.debug("Processing block " + str(ib + 1) + " of " + str(nrbn*nrbm) + " ...")
 
+                    # First we loop through all the possible cells in this block
+                    index_cells_in_block = np.zeros(nrcb*nrcb, dtype=int)
+                    # index_uv_points_in_block = np.zeros(4*nrcb*nrcb, dtype=int)
+                    # Loop through all cells in this level
+                    nr_cells_in_block = 0
+                    # nr_uv_points_in_block = 0
+                    # Check if cells fall within this block
+                    for ic in range(nr_cells_in_level):
+                        indx = cell_indices_in_level[ic] # index of the whole quadtree
+                        if n[indx]>=bn0 and n[indx]<bn1 and m[indx]>=bm0 and m[indx]<bm1:
+                            # Cell falls inside block
+                            index_cells_in_block[nr_cells_in_block] = indx
+                            nr_cells_in_block += 1
+                    index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
+
+                    logger.debug("Number of active cells in block    : " + str(nr_cells_in_block))
+                    
+                    if nr_cells_in_block == 0:  # no active cells in block
+                        logger.debug("Skip block - No active cells")                        
+                        continue
+
                     # Now build the pixel matrix
                     x00 = 0.5*dxp + bm0*refi*dyp
                     x01 = x00 + (bm1 - bm0 + 1)*refi*dxp
@@ -997,7 +1018,7 @@ class SubgridTableQuadtree:
 
                     # get subgrid bathymetry tile
                     da_dep = workflows.merge_multi_dataarrays(
-                        da_list=datasets_dep,
+                        da_list=datasets_dep[ilev],
                         da_like=da_sbg,
                         interp_method="linear",
                         buffer_cells=buffer_cells,
@@ -1051,25 +1072,7 @@ class SubgridTableQuadtree:
                             )
                                         
                     # Now compute subgrid properties
-
                     # Make arrays with indices of cells (and uv points) in this block
-
-                    # First we loop through all the possible cells in this block
-                    index_cells_in_block = np.zeros(nrcb*nrcb, dtype=int)
-                    # index_uv_points_in_block = np.zeros(4*nrcb*nrcb, dtype=int)
-                    # Loop through all cells in this level
-                    nr_cells_in_block = 0
-                    # nr_uv_points_in_block = 0
-                    # Check if cells fall within this block
-                    for ic in range(nr_cells_in_level):
-                        indx = cell_indices_in_level[ic] # index of the whole quadtree
-                        if n[indx]>=bn0 and n[indx]<bn1 and m[indx]>=bm0 and m[indx]<bm1:
-                            # Cell falls inside block
-                            index_cells_in_block[nr_cells_in_block] = indx
-                            nr_cells_in_block += 1
-                    index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
-
-                    logger.debug("Number of active cells in block    : " + str(nr_cells_in_block))
 
                     # TODO: Parallelize from here
                     if parallel:
