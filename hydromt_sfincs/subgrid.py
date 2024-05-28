@@ -846,6 +846,9 @@ class SubgridTableQuadtree:
         mu1 = ds_mesh["mu1"].values[:] - 1
         mu2 = ds_mesh["mu2"].values[:] - 1
 
+        # SFINCS mask
+        msk  = ds_mesh["msk"].values[:]
+
         # U/V points 
         # Need to count the number of uv points in order allocate arrays (probably better to store this in the grid)
         # For quadtree grids, all points are stored
@@ -890,8 +893,7 @@ class SubgridTableQuadtree:
         ilast  = np.zeros(nlevs, dtype=int)
         nr_cells_per_level = np.zeros(nlevs, dtype=int)
 
-        # Dind first index of new refinement level:
-        # Significantly faster TL version
+        # Find first index of new refinement level:
         level_unique = np.unique(level)
         for ilevel in level_unique:
             ifirst[ilevel] = np.where(level == ilevel)[0][0]  
@@ -912,6 +914,13 @@ class SubgridTableQuadtree:
             nr_cells_in_level = np.size(cell_indices_in_level)
             
             if nr_cells_in_level == 0:
+                logger.debug("Skip level - No cells in level")
+                continue
+
+            # Check if active SFINCS cells exist in mask
+            msktmp = msk[cell_indices_in_level]        
+            if np.max(msktmp) == 0:
+                logger.debug("Skip level - No active SFINCS cells in level")                
                 continue
 
             n0 = np.min(n[ifirst[ilev]:ilast[ilev] + 1])

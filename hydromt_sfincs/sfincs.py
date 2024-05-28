@@ -873,7 +873,8 @@ class SfincsModel(GridModel):
         # convert to subgrid resolution
         res = res / nr_subgrid_pixels
 
-        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res) 
+        #TODO - QUESTION - TL: do we want this also in the case of quadtree? Or better to load per level separately, data memory wise?
 
         if len(datasets_rgh) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
@@ -1493,14 +1494,16 @@ class SfincsModel(GridModel):
             n   = self.quadtree.data.n.values - 1 #We want values, not the xarray.DataArray
             m   = self.quadtree.data.m.values - 1
                             
+            # SFINCS mask
+            msk  = self.quadtree.data.msk.values
+                                    
             # Determine first indices and number of cells per refinement level
             ifirst = np.zeros(nlevs, dtype=int)
             ilast  = np.zeros(nlevs, dtype=int)
             nr_cells_per_level = np.zeros(nlevs, dtype=int)
             self.logger.debug(f"setup_cn_infiltration_with_ks - Pass 3.")
             
-            # Dind first index of new refinement level:
-            # Significantly faster TL version
+            # Find first index of new refinement level:
             level_unique = np.unique(level)
             for ilevel in level_unique:
                 ifirst[ilevel] = np.where(level == ilevel)[0][0]                    
@@ -1525,6 +1528,13 @@ class SfincsModel(GridModel):
                 nr_cells_in_level = np.size(cell_indices_in_level)
                 
                 if nr_cells_in_level == 0:
+                    logger.debug("Skip level - No cells in level")
+                    continue
+
+                # Check if active SFINCS cells exist in mask
+                msktmp = msk[cell_indices_in_level]        
+                if np.max(msktmp) == 0:
+                    logger.debug("Skip level - No active SFINCS cells in level")                
                     continue
 
                 n0 = np.min(n[ifirst[ilev]:ilast[ilev] + 1])
