@@ -3399,6 +3399,7 @@ class SfincsModel(GridModel):
                         )
                         continue
                 # only write active cells to gis files
+                da.raster.set_nodata(np.nan)
                 da = da.where(self.mask > 0, da.raster.nodata).raster.mask_nodata()
                 if da.raster.res[1] > 0:  # make sure orientation is N->S
                     da = da.raster.flipud()
