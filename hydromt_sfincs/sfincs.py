@@ -3399,7 +3399,7 @@ class SfincsModel(GridModel):
                         )
                         continue            
                 # If the raster type is float, set nodata to np.nan
-                if da.dtype == "float32" or da.dtype == "float64":                    
+                if da.dtype == "float32" or da.dtype == "float64":
                     da.raster.set_nodata(np.nan)
                 # only write active cells to gis files
                 da = da.where(self.mask > 0, da.raster.nodata).raster.mask_nodata()
