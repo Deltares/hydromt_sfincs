@@ -414,7 +414,7 @@ class SfincsModel(GridModel):
             res = self.quadtree.dx # coarsest level
             nrlevels = self.quadtree.nr_refinement_levels
             
-            if refinement_level is None:
+            if use_refinement_level is None:
                 res = res / 2 ** (nrlevels-1) # finest level
             else:
                 res = res / 2 ** (use_refinement_level-1) # user defined level                
