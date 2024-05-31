@@ -982,10 +982,19 @@ class SubgridTableQuadtree:
 
                     logger.debug("Number of active cells in block    : " + str(nr_cells_in_block))
                     
+                    #TODO: check also for mask > 0
+                    
+                    # TODO - (later cut active cells???)
+                    
                     if nr_cells_in_block == 0:  # no active cells in block
                         logger.debug("Skip block - No active cells")                        
                         continue
-
+                    
+                    msktmp = msk[index_cells_in_block]
+                    if np.max(msktmp) == 0:
+                        logger.debug("Skip level - No active SFINCS cells in block")                
+                        continue                    
+                                        
                     # Now build the pixel matrix
                     x00 = 0.5*dxp + bm0*refi*dyp
                     x01 = x00 + (bm1 - bm0 + 1)*refi*dxp

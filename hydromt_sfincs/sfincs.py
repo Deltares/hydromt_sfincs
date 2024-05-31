@@ -861,28 +861,29 @@ class SfincsModel(GridModel):
                 res = np.abs(self.mask.raster.res[0])
             else:
                 res = np.abs(self.mask.raster.res[0]) * 111111.0
-        elif self.grid_type == "quadtree":
-            # TODO make dependent on refinement level?
-            res = min(self.quadtree.dx, self.quadtree.dy) # coarsest level
-            nrlevels = self.quadtree.nr_refinement_levels
-            
-            # datasets_dep_per_level = [[col for col in range(4)] for row in range(nrlevels)]
-            datasets_dep_per_level = []
-            for ilev in range(nrlevels):
-                res = res / 2 ** (ilev) # per level
-                datasets_dep_tmp = self._parse_datasets_dep(datasets_dep, res=res)
-                datasets_dep_per_level.append(datasets_dep_tmp)
-                
+            # convert to subgrid resolution
+            res = res / nr_subgrid_pixels
 
-            if self.quadtree.crs.is_geographic:
-                res = res * 111111.0
-
-        # convert to subgrid resolution
-        res = res / nr_subgrid_pixels
-
-        if self.grid_type == "regular":
             datasets_dep = self._parse_datasets_dep(datasets_dep, res=res) 
             #TODO - QUESTION - TL: do we want this also in the case of quadtree? Or better to load per level separately, data memory wise?
+                        
+        elif self.grid_type == "quadtree":
+
+            res = min(self.quadtree.dx, self.quadtree.dy) # coarsest level
+            
+            nrlevels = self.quadtree.nr_refinement_levels
+            
+            if self.quadtree.crs.is_geographic:
+                res = res * 111111.0
+                            
+            # convert to subgrid resolution
+            res = res / nr_subgrid_pixels
+                                    
+            datasets_dep_per_level = []
+            for ilev in range(nrlevels):
+                res2 = res / 2 ** (ilev)
+                datasets_dep_tmp = self._parse_datasets_dep(datasets_dep, res=res2)
+                datasets_dep_per_level.append(datasets_dep_tmp)             
 
         if len(datasets_rgh) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
