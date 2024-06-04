@@ -209,7 +209,31 @@ class QuadtreeGrid:
         logger=logger,
     ):
         # TODO add buffer cells and interpolation, see merge function for more info
+        #%% attempt using xugrid:           
+        # levels = self.data.level
+        # # partitions = self.quadtree.grid.partition_by_label(levels)
+        # partitions = self.data.ugrid.partition_by_label(levels)
+        
+        # # partitions2 = partitions[6].ugrid.partition(n_part=100) 
+        # #TL: with this got error that module 'pymetis' was missing in xugrid
+        # >added this one now locally in environment 'mamba install pymetis', pip didn't work
 
+        # # ilev=0
+        # ilev = self.data.nr_levels-1
+        
+        # for partition in reversed(range(len(partitions)-1)):
+        #     # merge multiple datasets on mesh
+        #     uda = merge_multi_dataarrays_on_mesh(
+        #         da_list=datasets_dep[ilev], mesh2d=partitions[partition].grid, logger=logger
+        #     )
+        #     partitions[partition].dep = uda
+        #     ilev = ilev - 1 #because reversed
+        
+        # merged = xu.merge_partitions(partitions)["dep"]            
+        # # add data to grid
+        # self.data["dep"] = merged["dep"]                         
+                
+        #%% original
         # merge multiple datasets on mesh
         uda = merge_multi_dataarrays_on_mesh(
             da_list=datasets_dep, mesh2d=self.data.grid, logger=logger
@@ -217,6 +241,38 @@ class QuadtreeGrid:
         # add data to grid
         self.data["dep"] = uda
 
+    def setup_dep_from_subgrid(
+        self,
+        sbgfile_fn: Path,
+        interp_method: str = "mean",
+        logger=logger,
+    ):
+        uda = xu.open_dataset(sbgfile_fn) #sfincs_subgrid.nc file
+        
+        # do as in merge_multi_dataarrays_on_mesh:
+        da0 = xr.DataArray(
+            data=np.full(shape=len(self.data.grid.face_coordinates), fill_value=np.nan),
+            dims=self.data.grid.face_dimension,
+        ) # make an empty data array
+        
+        if interp_method == "mean":
+            # uda["dep"] = (uda.z_zmin.values + uda.z_zmax.values) / 2
+            dep = (uda.z_zmin.values + uda.z_zmax.values) / 2
+       
+        depmerge = da0
+        mask = self.data.msk == 0
+        da0 = depmerge.where(mask, other=dep) 
+        #Returns elements from depmerge, where msk is True, otherwise fill in ‘other’.
+        # mask2 = np.isnan(da0)
+        mask2 = ~np.isnan(da0)
+        da0 = da0.where(mask2, other=self.data.dep) 
+        # da0 = da0.where(mask, other=self.data.dep) 
+
+        # add data to grid        
+        self.data["dep"] = da0
+        
+        #check needed for only filling in active cells or so?
+                
     def setup_cn_infiltration(
             self,
             datasets_cn: List[dict],

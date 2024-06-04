@@ -408,7 +408,11 @@ class SfincsModel(GridModel):
                 res = np.abs(self.mask.raster.res[0])
             else:
                 res = np.abs(self.mask.raster.res[0]) * 111111.0
+                
+            datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+                
         elif self.grid_type == "quadtree":
+            #%% Original:
             # TODO make dependent on refinement levle?
             # NOTE for now we always use the resolution of the finest level                
             res = self.quadtree.dx # coarsest level
@@ -422,7 +426,25 @@ class SfincsModel(GridModel):
             if self.quadtree.crs.is_geographic:
                 res = res * 111111.0
 
-        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+            datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+
+            #%% Attempt to do setup_dep for mesh using partitioned xugrid per level:
+            # from hydromt_sfincs.workflows.merge import merge_multi_dataarrays_on_mesh
+            # import xugrid as xu
+            
+            # res = min(self.quadtree.dx, self.quadtree.dy) # coarsest level            
+            # nrlevels = self.quadtree.nr_refinement_levels            
+            # if self.quadtree.crs.is_geographic:
+            #     res = res * 111111.0
+                            
+            # # no conversion to subgrid resolution needed here                                    
+            # datasets_dep_per_level = []
+            # for ilev in range(nrlevels):
+            #     res2 = res / 2 ** (ilev)
+            #     datasets_dep_tmp = self._parse_datasets_dep(datasets_dep, res=res2)
+            #     datasets_dep_per_level.append(datasets_dep_tmp)                                    
+            
+            #%%
 
         if self.grid_type == "regular":
             da_dep = workflows.merge_multi_dataarrays(
@@ -449,15 +471,45 @@ class SfincsModel(GridModel):
             if "depfile" not in self.config:
                 self.config.update({"depfile": "sfincs.dep"})
         elif self.grid_type == "quadtree":
+            print("already done")
             #TODO change default config values for quadtree models
             self.quadtree.setup_dep(
                 datasets_dep=datasets_dep,
+                # datasets_dep=datasets_dep_per_level,
                 # buffer_cells=buffer_cells,
                 # interp_method=interp_method,
             )
             #TODO check interpolation methods for missing values in xugrid
 
+    def setup_dep_from_subgrid(
+        self,
+        sbgfile_fn: Path,
+        interp_method: str = "mean",
+    ):
+        """Interpolate topobathy (dep) data to the model grid.
+        Data taken from existing subgrid file!
 
+        Adds model grid layers:
+
+        * **dep**: combined elevation/bathymetry [m+ref]
+
+        Parameters
+        ----------
+        sbgfile_fn: Path
+            Path of existing subgrid file (netcdf), on the same grid
+        interp_method : str, optional
+            Interpolation method used to fill the buffer cells , by default "mean"
+        """        
+        if self.grid_type == "regular":
+            print("WARNING - setup_dep_from_subgrid for regular grid has not been added yet!")
+            
+        elif self.grid_type == "quadtree":
+        
+            self.quadtree.setup_dep_from_subgrid(
+                sbgfile_fn=sbgfile_fn,
+                interp_method=interp_method,
+            )   
+                 
     def setup_mask_active(
         self,
         model: str = "sfincs",	
