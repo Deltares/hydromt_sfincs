@@ -754,7 +754,7 @@ class SubgridTableQuadtree:
         highres_dir: str = None,
         logger=logger,
         progress_bar=None,
-        parallel=False,
+        parallel=True,
     ):
         """Create subgrid tables for regular grid based on a list of depth,
         Manning's rougnhess and river datasets.
@@ -824,6 +824,9 @@ class SubgridTableQuadtree:
             are stored, by default None
         progress_bar : Object, optional
             Guitares progress bar object
+        parallel : bool, optional
+            Process subgrid data per block to derive subgrid properties in parallel
+            by default True 
         """
 
         # Dimensions etc
@@ -904,8 +907,9 @@ class SubgridTableQuadtree:
         for ilev in range(nlevs):
             nr_cells_per_level[ilev] = ilast[ilev] - ifirst[ilev] + 1 
 
-        # Loop through all levels
-        for ilev in range(nlevs):
+        # Loop through all levels - finest first 
+        # (for the case that out of memory error occurs, better to have that directly)
+        for ilev in reversed(range(nlevs)):
 
             logger.info("Processing level " + str(ilev + 1) + " of " + str(nlevs) + " ...")
             
@@ -981,9 +985,7 @@ class SubgridTableQuadtree:
                     index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
 
                     logger.debug("Number of active cells in block    : " + str(nr_cells_in_block))
-                    
-                    #TODO: check also for mask > 0
-                    
+                                        
                     # TODO - (later cut active cells???)
                     
                     if nr_cells_in_block == 0:  # no active cells in block
@@ -1254,6 +1256,9 @@ class SubgridTableQuadtree:
                                     if iuv>=0:
                                         zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(zv, manning, nlevels, huthresh)
                                         self._assign_uv_data(iuv, zmin, zmax, havg, nrep, pwet, ffit, navg)
+
+                    # clean up temporary arrays:
+                    del da_sbg, da_man, da_dep
 
                     # if progress_bar:
                     #     print(ibt)
