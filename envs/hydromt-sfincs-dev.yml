@@ -9,7 +9,7 @@ dependencies:
 - descartes
 - ffmpeg
 - geopandas>=0.8
-- hydromt>=0.9.1
+- hydromt>=0.9.1, <0.10
 - jupyterlab
 - matplotlib
 - nbsphinx

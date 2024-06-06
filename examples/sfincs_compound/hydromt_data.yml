@@ -1,0 +1,111 @@
+Global_Ksat_1Km_s0:
+  data_type: RasterDataset
+  path: p:\11206085-onr-fhics\02_models\SFINCS_flooding\02_modelsetup\soil\Global_Ksat_1Km_s0....0cm_v1.0.tif
+  driver: raster
+  driver_kwargs:
+    chunks:
+      x: 3600
+      y: 3600
+  unit_mult:
+    Global_Ksat_1Km_s0: 0.115740741
+  meta:
+    category: soil
+    paper_doi: 10.5281/zenodo.3935359
+    paper_ref: Gupta. et al (2020)
+    source_url: https://zenodo.org/record/3935359#.ZFyyT3ZByUk
+    source_version: v2.0
+  crs: 4326
+HYSOGs250m:
+  data_type: RasterDataset
+  path: p:\11206085-onr-fhics\02_models\SFINCS_flooding\02_modelsetup\soil\Global_Hydrologic_Soil_Group_1566\Global_Hydrologic_Soil_Group_1566\data\HYSOGs250m.tif
+  driver: raster
+  driver_kwargs:
+    chunks:
+      x: 3600
+      y: 3600
+  meta:
+    category: soil
+    paper_doi: 10.3334/ORNLDAAC/1566
+    paper_ref: Ross. et al (2018)
+    source_url: https://daac.ornl.gov/cgi-bin/dsviewer.pl?ds_id=1566
+    source_version: v1.0
+  crs: 4326
+esa_worldcover:
+  data_type: RasterDataset
+  path: p:\wflow_global\hydromt\landuse\esa_worldcover\esa-worldcover.vrt
+  driver: raster
+  driver_kwargs:
+    chunks:
+      x: 36000
+      y: 36000
+  meta:
+    category: landuse
+    source_license: CC BY 4.0
+    source_url: https://doi.org/10.5281/zenodo.5571936
+    source_version: v100
+  crs: 4326
+esa_worldcover_HSG.csv:
+  data_type: DataFrame
+  provider: user
+  path: d:\repos\hydromt_sfincs\hydromt_sfincs\hydromt_sfincs\data\lulc\esa_worldcover_HSG.csv
+  driver: csv
+  driver_kwargs:
+    index_col: 0
+gebco:
+  data_type: RasterDataset
+  path: p:\wflow_global\hydromt\bathymetry\gebco\gebco.vrt
+  driver: raster
+  driver_kwargs:
+    chunks:
+      x: 3600
+      y: 3600
+  rename:
+    gebco: elevtn
+  meta:
+    category: topography
+    paper_doi: 10.5285/a29c5465-b138-234d-e053-6c86abc040b9
+    paper_ref: Weatherall et al (2020)
+    source_license: https://www.gebco.net/data_and_products/gridded_bathymetry_data/#a1
+    source_url: https://www.bodc.ac.uk/data/open_download/gebco/gebco_2020/geotiff/
+    source_version: 2020
+    unit: m+MSL
+  crs: 4326
+merit_hydro:
+  data_type: RasterDataset
+  path: p:\wflow_global\hydromt\topography\merit_hydro\*.vrt
+  driver: raster
+  driver_kwargs:
+    chunks:
+      x: 6000
+      y: 6000
+  rename:
+    bas: basins
+    dir: flwdir
+    elv: elevtn
+    slp: lndslp
+    sto: strord
+    upa: uparea
+    upg: upgrid
+    wth: rivwth
+  meta:
+    category: topography
+    paper_doi: 10.1029/2019WR024873
+    paper_ref: Yamazaki et al. (2019)
+    source_license: CC-BY-NC 4.0 or ODbL 1.0
+    source_url: http://hydro.iis.u-tokyo.ac.jp/~yamadai/MERIT_Hydro
+    source_version: 1.0
+  crs: 4326
+osm_coastlines:
+  data_type: GeoDataFrame
+  path: p:\wflow_global\hydromt\geography\osm\osm_coastlines-db.fgb
+  driver: vector
+  rename:
+    fid: coastline_id
+  meta:
+    category: geography
+    notes: OpenStreetMap coastlines water polygons, last updated 2020-01-09T05:29
+    source_author: OpenStreetMap
+    source_license: ODbL
+    source_url: https://osmdata.openstreetmap.de/data/coastlines.html
+    source_version: 1.0
+  crs: 4326

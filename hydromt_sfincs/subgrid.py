@@ -23,18 +23,112 @@ class SubgridTableRegular:
         self.version = version
 
     # new way of reading netcdf subgrid tables
-    def read(self, file_name):
+    def read(self, file_name, mask):
         """Load subgrid table from netcdf file."""
-        # Read from netcdf file with xarray
-        self.ds = xr.open_dataset(file_name)
-        self.ds.close()  # Should this be closed ?
-        # Should we also make self.z_zmin, self.z_zmax, etc. ?
 
-        self.nlevels = self.ds.dims["levels"]
+        self.version = 1
+
+        # Read data from netcdf file with xarray
+        ds = xr.open_dataset(file_name)
+
+        # transpose to have level as first dimension
+        ds = ds.transpose("levels", "npuv", "np")
+
+        # grid dimensions
+        grid_dim = mask.shape
+
+        # get number of levels, point and uv points
+        self.nlevels, self.nr_cells, self.nr_uv_points = (
+            ds.dims["levels"],
+            ds.dims["np"],
+            ds.dims["npuv"],
+        )
+
+        # find indices of active cells
+        index_nm, index_mu1, index_nu1 = utils.find_uv_indices(mask)
+        active_indices = np.where(index_nm > -1)[0]
+        active_indices_u = np.where(index_mu1 > -1)[0]
+        active_indices_v = np.where(index_nu1 > -1)[0]
+
+        # convert 1D indices to 2D indices
+        active_z = np.unravel_index(active_indices, grid_dim, order="F")
+        active_u = np.unravel_index(active_indices_u, grid_dim, order="F")
+        active_v = np.unravel_index(active_indices_v, grid_dim, order="F")
+
+        # Initialize the data-arrays
+        # Z points
+        self.z_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_volmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.z_level = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+
+        # U points
+        self.u_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.u_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.u_havg = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.u_nrep = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.u_pwet = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.u_ffit = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.u_navg = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
+
+        # V points
+        self.v_zmin = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.v_zmax = np.full(grid_dim, fill_value=np.nan, dtype=np.float32)
+        self.v_havg = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.v_nrep = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.v_pwet = np.full(
+            (self.nlevels, *grid_dim), fill_value=np.nan, dtype=np.float32
+        )
+        self.v_ffit = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
+        self.v_navg = np.full((grid_dim), fill_value=np.nan, dtype=np.float32)
+
+        # Now read the data and add it to the data-arrays
+        # use index_nm of the active cells in the new dataset
+        self.z_zmin[active_z] = ds["z_zmin"].values.flatten()
+        self.z_zmax[active_z] = ds["z_zmax"].values.flatten()
+        self.z_volmax[active_z] = ds["z_volmax"].values.flatten()
+        for ilevel in range(self.nlevels):
+            self.z_level[ilevel, active_z[0], active_z[1]] = ds["z_level"][
+                ilevel
+            ].values.flatten()
+
+        # now use index_mu1 and index_nu1 to put the values of the active cells in the new dataset
+        var_list = ["zmin", "zmax", "ffit", "navg"]
+        for var in var_list:
+            uv_var = ds["uv_" + var].values.flatten()
+            self.u_zmin[active_u] = uv_var[index_mu1[active_indices_u]]
+            self.v_zmin[active_v] = uv_var[index_nu1[active_indices_v]]
+
+        var_list_levels = ["havg", "nrep", "pwet"]
+        for var in var_list_levels:
+            for ilevel in range(self.nlevels):
+                uv_var = ds["uv_" + var][ilevel].values.flatten()
+                self.u_havg[ilevel, active_u[0], active_u[1]] = uv_var[
+                    index_mu1[active_indices_u]
+                ]
+                self.v_havg[ilevel, active_v[0], active_v[1]] = uv_var[
+                    index_nu1[active_indices_v]
+                ]
+
+        # close the dataset
+        ds.close()
 
     # new way of writing netcdf subgrid tables
     def write(self, file_name, mask):
-        """Write subgrid table to netcdf file for a regular grid with given mask."""
+        """Write subgrid table to netcdf file for a regular grid with given mask.
+        Values are only written for active cells (mask > 0)."""
 
         ds = self.to_xarray(dims=mask.raster.dims, coords=mask.raster.coords)
 
@@ -50,34 +144,41 @@ class SubgridTableRegular:
         active_cells = index_nm > -1
         active_indices = np.where(active_cells)[0]
 
-        # Make a new xarray dataset where we only keep the values of the active cells (index_nm > -1)
-        z_zmin = ds["z_zmin"].values.flatten()[active_cells]
-        z_zmax = ds["z_zmax"].values.flatten()[active_cells]
-        z_volmax = ds["z_volmax"].values.flatten()[active_cells]
-        z_level = np.array(
-            [
-                ds["z_level"][ilevel].values.flatten()[active_cells]
-                for ilevel in range(nlevels)
-            ]
-        )
-
         # get nr of active points (where index_nm > -1)
-        nr_points = max(index_mu1.max(), index_nu1.max()) + 1
+        nr_z_points = index_nm.max() + 1
+        nr_uv_points = max(index_mu1.max(), index_nu1.max()) + 1
 
+        # Make a new xarray dataset where we only keep the values of the active cells (index_nm > -1)
+        # use index_nm to put the values of the active cells in the new dataset
+        ds_new = xr.Dataset(attrs={"_FillValue": np.nan})
+
+        # Z points
+        variables = ["z_zmin", "z_zmax", "z_volmax"]
+        for var in variables:
+            ds_new[var] = xr.DataArray(
+                ds[var].values.flatten()[active_cells], dims=("np")
+            )
+
+        z_level = np.zeros((nlevels, nr_z_points))
+        for ilevel in range(nlevels):
+            z_level[ilevel] = ds["z_level"][ilevel].values.flatten()[active_cells]
+        ds_new["z_level"] = xr.DataArray(z_level, dims=("levels", "np"))
+
+        # u and v points
         var_list = ["zmin", "zmax", "ffit", "navg"]
         for var in var_list:
-            uv_var = np.zeros(nr_points)
+            uv_var = np.zeros(nr_uv_points)
             uv_var[index_mu1[active_indices]] = ds["u_" + var].values.flatten()[
                 active_cells
             ]
             uv_var[index_nu1[active_indices]] = ds["v_" + var].values.flatten()[
                 active_cells
             ]
-            locals()["uv_" + var] = uv_var
+            ds_new[f"uv_{var}"] = xr.DataArray(uv_var, dims=("npuv"))
 
         var_list_levels = ["havg", "nrep", "pwet"]
         for var in var_list_levels:
-            uv_var = np.zeros((nlevels, nr_points))
+            uv_var = np.zeros((nlevels, nr_uv_points))
             for ilevel in range(nlevels):
                 uv_var[ilevel, index_mu1[active_indices]] = ds["u_" + var][
                     ilevel
@@ -85,25 +186,7 @@ class SubgridTableRegular:
                 uv_var[ilevel, index_nu1[active_indices]] = ds["v_" + var][
                     ilevel
                 ].values.flatten()[active_cells]
-            locals()["uv_" + var] = uv_var
-
-        # Make new xarray dataset
-        ds_new = xr.Dataset()
-        ds_new.attrs.update({"_FillValue": np.nan})
-
-        # use index_nm to put the values of the active cells in the new dataset
-        ds_new["z_zmin"] = xr.DataArray(z_zmin, dims=("np"))
-        ds_new["z_zmax"] = xr.DataArray(z_zmax, dims=("np"))
-        ds_new["z_volmax"] = xr.DataArray(z_volmax, dims=("np"))
-        ds_new["z_level"] = xr.DataArray(z_level, dims=("levels", "np"))
-
-        for var in var_list:
-            ds_new["uv_" + var] = xr.DataArray(locals()["uv_" + var], dims=("npuv"))
-
-        for var in var_list_levels:
-            ds_new["uv_" + var] = xr.DataArray(
-                locals()["uv_" + var], dims=("levels", "npuv")
-            )
+            ds_new[f"uv_{var}"] = xr.DataArray(uv_var, dims=("levels", "npuv"))
 
         # ensure levels is last dimension
         ds_new = ds_new.transpose("npuv", "np", "levels")
@@ -366,6 +449,8 @@ class SubgridTableRegular:
             Directory where high-resolution geotiffs for topobathy and manning
             are stored, by default None
         """
+
+        self.version = 1
 
         if write_dep_tif or write_man_tif:
             assert highres_dir is not None, "highres_dir must be specified"
@@ -662,6 +747,7 @@ class SubgridTableRegular:
         if self.version == 0:
             uvlst2 = ["u_zmin", "u_zmax", "v_zmin", "v_zmax"]
             lst3 = ["z_depth", "u_hrep", "u_navg", "v_hrep", "v_navg"]
+
         elif self.version == 1:
             uvlst2 = [
                 "u_zmin",
@@ -1801,62 +1887,72 @@ def subgrid_q_table(
     # Determine level size (metres)
     dlevel = (zmax - zmin) / (nlevels - 1)
 
-    # Grid mean roughness
-    navg = np.mean(manning)
+    # Option can be either 1 ("old") or 2 ("new")
+    option = 2
 
     # Loop through levels
-    for ilevel in range(nlevels):
-        # Top of level
-        zlevel = zmin + ilevel * dlevel
-        zz[ilevel] = zlevel
+    for ibin in range(nlevels):
 
-        # ibelow = np.where(elevation<=zlevel)                           # index of pixels below level level
-        h = np.maximum(zlevel - elevation, 0.0)  # water depth in each pixel
-        iwet = np.where(zlevel - elevation > -1.0e-6)[0]  # indices of wet pixels
-        hmean = np.mean(h)
-        havg[ilevel] = hmean  # conveyance depth
-        pwet[ilevel] = len(iwet) / n  # wet fraction
+        # Top of bin
+        zbin = zmin + ibin * dlevel
+        zz[ibin] = zbin
+
+        h = np.maximum(zbin - elevation, 0.0)  # water depth in each pixel
+
+
+        pwet[ibin] = (zbin - elevation > -1.0e-6).sum() / n
 
         # Side A
-        h_a = np.maximum(
-            zlevel - dd_a, 0.0
-        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
-        q_a = h_a ** (5.0 / 3.0) / manning_a  # Determine 'flux' for each pixel
-        q_a = np.mean(q_a)  # Wet-average flux through all the pixels
-
+        h_a   = np.maximum(zbin - dd_a, 0.0)  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        q_a   = h_a**(5.0 / 3.0) / manning_a  # Determine 'flux' for each pixel
+        q_a   = np.mean(q_a)                  # Grid-average flux through all the pixels
+        h_a   = np.mean(h_a)                  # Grid-average depth through all the pixels
+        
         # Side B
-        h_b = np.maximum(
-            zlevel - dd_b, 0.0
-        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
-        q_b = h_b ** (5.0 / 3.0) / manning_b  # Determine 'flux' for each pixel
-        q_b = np.mean(q_b)  # Wet-average flux through all the pixels
+        h_b   = np.maximum(zbin - dd_b, 0.0)  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        q_b   = h_b**(5.0 / 3.0) / manning_b  # Determine 'flux' for each pixel
+        q_b   = np.mean(q_b)                  # Grid-average flux through all the pixels
+        h_b   = np.mean(h_b)                  # Grid-average depth through all the pixels
 
-        q_ab = np.minimum(q_a, q_b)
+        # Compute q and h
+        q_all = np.mean(h**(5.0 / 3.0) / manning)   # Determine grid average 'flux' for each pixel
+        h_all = np.mean(h)                          # grid averaged depth of A and B combined
+        q_min = np.minimum(q_a, q_b)
+        h_min = np.minimum(h_a, h_b)
 
-        q_all = h ** (5.0 / 3.0) / manning  # Determine 'flux' for each pixel
-        q_all = np.mean(q_all)  # Wet-average flux through all the pixels
+        if option == 1:
+            # Use old 1 option (weighted average of q_ab and q_all) option (min at bottom bin, mean at top bin) 
+            w     = (ibin) / (nlevels - 1)              # Weight (increase from 0 to 1 from bottom to top bin)
+            q     = (1.0 - w) * q_min + w * q_all        # Weighted average of q_min and q_all
+            hmean = h_all
 
-        # Weighted average of q_ab and q_all
-        w = (ilevel) / (nlevels - 1)
-        q = (1.0 - w) * q_ab + w * q_all
+        elif option == 2:
+            # Use newer 2 option (minimum of q_a an q_b, minimum of h_a and h_b increasing to h_all, using pwet for weighting) option
+            pwet_a = (zbin - dd_a > -1.0e-6).sum() / (n / 2) 
+            pwet_b = (zbin - dd_b > -1.0e-6).sum() / (n / 2) 
+            # Weight increases linearly from 0 to 1 from bottom to top bin use percentage wet in sides A and B
+            w = 2 * np.minimum(pwet_a, pwet_b) / (pwet_a + pwet_b)
+            q     = (1.0 - w) * q_min + w * q_all        # Weighted average of q_min and q_all
+            hmean = (1.0 - w) * h_min + w * h_all        # Weighted average of h_min and h_all
 
-        nrep[ilevel] = hmean ** (5.0 / 3.0) / q  # Representative n for qmean and hmean
+        havg[ibin] = hmean                          # conveyance depth
+        nrep[ibin] = hmean**(5.0 / 3.0) / q           # Representative n for qmean and hmean
 
-    nrep_top = nrep[-1]
+    nrep_top = nrep[-1]    
     havg_top = havg[-1]
 
     ### Fitting for nrep above zmax
 
     # Determine nfit at zfit
-    zfit = zmax + zmax - zmin
-    h = np.maximum(zfit - elevation, 0.0)  # water depth in each pixel
-    hfit = (
-        havg_top + zmax - zmin
-    )  # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
-    q = h ** (5.0 / 3.0) / manning  # unit discharge in each pixel
-    qmean = np.mean(q)  # combined unit discharge for cell
+    zfit  = zmax + zmax - zmin
+    hfit  = havg_top + zmax - zmin                 # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
 
-    nfit = hfit ** (5.0 / 3.0) / qmean
+    # Compute q and navg
+    h     = np.maximum(zfit - elevation, 0.0)      # water depth in each pixel
+    q     = np.mean(h**(5.0 / 3.0) / manning)          # combined unit discharge for cell
+    navg  = np.mean(manning)
+
+    nfit = hfit**(5.0 / 3.0) / q
 
     # Actually apply fit on gn2 (this is what is used in sfincs)
     gnavg2 = 9.81 * navg**2
@@ -1878,6 +1974,5 @@ def subgrid_q_table(
                 nfit = nrep_top + 0.1 * (navg - nrep_top)
         gnfit2 = 9.81 * nfit**2
         ffit = (((gnavg2 - gnavg_top2) / (gnavg2 - gnfit2)) - 1) / (zfit - zmax)
-
-    return zmin, zmax, havg, nrep, pwet, ffit, navg, zz
-
+         
+    return zmin, zmax, havg, nrep, pwet, ffit, navg, zz       
