@@ -1633,9 +1633,10 @@ class SfincsModel(GridModel):
                 dx   = self.quadtree.data.dx/2**ilev      # cell size
                 dy   = self.quadtree.data.dy/2**ilev      # cell size
                 
-                refi = self.config["dx"] / resolution_landuse  # finest resolution of landuse > change per level
+                refi = dx / resolution_landuse  # finest resolution of landuse > change per level
                 # refi   = 5 #TODO: use 'resolution_landuse' instead of hardcoded?
-                            
+                refi = int(np.ceil(refi)) #need an even number
+                                            
                 dxp  = dx/refi              # size of subgrid pixel
                 dyp  = dy/refi              # size of subgrid pixel
                 
