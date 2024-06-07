@@ -1485,8 +1485,6 @@ class SfincsModel(GridModel):
         )
         df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
 
-        self.logger.debug("setup_cn_infiltration_with_ks - Pass 1 ")
-
         # Define outputs
         if self.grid_type == "regular":        
             da_smax = xr.full_like(self.mask, -9999, dtype=np.float32)
@@ -1513,9 +1511,7 @@ class SfincsModel(GridModel):
 
         # Define the blocks
         nrmax = block_size
-        
-        self.logger.debug("setup_cn_infiltration_with_ks - Pass 2 ")
-        
+                
         #%% Looping over regular grid blocks      
         if self.grid_type == "regular":         
             nmax = np.shape(self.mask)[0]
@@ -1579,8 +1575,6 @@ class SfincsModel(GridModel):
         #%% Same for looping over quadtree mesh, but including levels
         elif self.grid_type == "quadtree":
             
-            refi   = 20 #1 #TODO: this piece is overhead, because we don't need subgrid pixel accuracy for this
-            
             nr_cells = mesh2d.n_face            
             nlevs = self.quadtree.data.nr_levels
             cosrot = np.cos(self.quadtree.data.rotation*np.pi/180)
@@ -1598,25 +1592,22 @@ class SfincsModel(GridModel):
             ifirst = np.zeros(nlevs, dtype=int)
             ilast  = np.zeros(nlevs, dtype=int)
             nr_cells_per_level = np.zeros(nlevs, dtype=int)
-            self.logger.debug(f"setup_cn_infiltration_with_ks - Pass 3.")
             
             # Find first index of new refinement level:
             level_unique = np.unique(level)
             for ilevel in level_unique:
                 ifirst[ilevel] = np.where(level == ilevel)[0][0]                    
-            self.logger.debug(f"setup_cn_infiltration_with_ks - Pass 4.")
             
             for ilev in range(nlevs - 1):
                 ilast[ilev] = ifirst[ilev + 1] - 1
             ilast[nlevs - 1] = nr_cells - 1
-            self.logger.debug(f"setup_cn_infiltration_with_ks - Pass 5.")
             
             for ilev in range(nlevs):
                 nr_cells_per_level[ilev] = ilast[ilev] - ifirst[ilev] + 1             
-            self.logger.debug(f"setup_cn_infiltration_with_ks - Pass 6.")
             
-            # Loop through all levels
-            for ilev in range(nlevs):
+            # Loop through all levels - finest first 
+            # (for the case that out of memory error occurs, better to have that directly)
+            for ilev in reversed(range(nlevs)):
 
                 self.logger.info("Processing level " + str(ilev + 1) + " of " + str(nlevs) + " ...")
                 
@@ -1641,6 +1632,10 @@ class SfincsModel(GridModel):
                 
                 dx   = self.quadtree.data.dx/2**ilev      # cell size
                 dy   = self.quadtree.data.dy/2**ilev      # cell size
+                
+                refi = self.config["dx"] / resolution_landuse  # finest resolution of landuse > change per level
+                # refi   = 5 #TODO: use 'resolution_landuse' instead of hardcoded?
+                            
                 dxp  = dx/refi              # size of subgrid pixel
                 dyp  = dy/refi              # size of subgrid pixel
                 
@@ -1676,6 +1671,32 @@ class SfincsModel(GridModel):
 
                         self.logger.debug("Processing block " + str(ib + 1) + " of " + str(nrbn*nrbm) + " ...")
 
+                        # First we loop through all the possible cells in this block
+                        index_cells_in_block = np.zeros(nrcb*nrcb, dtype=int)
+                        # index_uv_points_in_block = np.zeros(4*nrcb*nrcb, dtype=int)
+                        # Loop through all cells in this level
+                        nr_cells_in_block = 0
+                        # nr_uv_points_in_block = 0
+                        # Check if cells fall within this block
+                        for ic in range(nr_cells_in_level):
+                            indx = cell_indices_in_level[ic] # index of the whole quadtree
+                            if n[indx]>=bn0 and n[indx]<bn1 and m[indx]>=bm0 and m[indx]<bm1:
+                                # Cell falls inside block
+                                index_cells_in_block[nr_cells_in_block] = indx
+                                nr_cells_in_block += 1
+                        index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
+
+                        self.logger.debug("Number of active cells in block    : " + str(nr_cells_in_block))
+                    
+                        if nr_cells_in_block == 0:  # no active cells in block
+                            logger.debug("Skip block - No active cells")                        
+                            continue
+                        
+                        msktmp = msk[index_cells_in_block]
+                        if np.max(msktmp) == 0:
+                            logger.debug("Skip level - No active SFINCS cells in block")                
+                            continue    
+                                        
                         # Now build the pixel matrix
                         x00 = 0.5*dxp + bm0*refi*dyp
                         x01 = x00 + (bm1 - bm0 + 1)*refi*dxp
@@ -1718,23 +1739,7 @@ class SfincsModel(GridModel):
 
                         # Make arrays with indices of cells (and uv points) in this block
 
-                        # First we loop through all the possible cells in this block
-                        index_cells_in_block = np.zeros(nrcb*nrcb, dtype=int)
-                        # index_uv_points_in_block = np.zeros(4*nrcb*nrcb, dtype=int)
-                        # Loop through all cells in this level
-                        nr_cells_in_block = 0
-                        # nr_uv_points_in_block = 0
-                        # Check if cells fall within this block
-                        for ic in range(nr_cells_in_level):
-                            indx = cell_indices_in_level[ic] # index of the whole quadtree
-                            if n[indx]>=bn0 and n[indx]<bn1 and m[indx]>=bm0 and m[indx]<bm1:
-                                # Cell falls inside block
-                                index_cells_in_block[nr_cells_in_block] = indx
-                                nr_cells_in_block += 1
-                        index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
 
-                        self.logger.debug("Number of active cells in block    : " + str(nr_cells_in_block))
-                    
                         # nn = n[index_cells_in_block]
                         # mm = m[index_cells_in_block]
                     
