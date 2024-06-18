@@ -794,6 +794,7 @@ class SfincsModel(GridModel):
         self,
         rivers: Union[str, Path, gpd.GeoDataFrame] = None,
         hydrography: Union[str, Path, xr.Dataset] = None,
+        buffer: float = 200,
         river_upa: float = 10.0,
         river_len: float = 1e3,
         river_width: float = 500,
@@ -814,7 +815,8 @@ class SfincsModel(GridModel):
         Discharge is set to zero at these points, but can be updated
         using the `setup_discharge_forcing` or `setup_discharge_forcing_from_grid` methods.
 
-        Note: this method assumes the rivers are directed from up- to downstream.
+        Note: this method assumes the rivers are directed from up- to downstream. Use
+        `reverse_river_geom=True` if the rivers are directed from downstream to upstream.
 
         Adds model layers:
 
@@ -831,6 +833,10 @@ class SfincsModel(GridModel):
             Path, data source name, or a xarray raster object for hydrography data.
 
             * Required layers: ['uparea', 'flwdir'].
+        buffer: float, optional
+            Buffer around the model region boundary to define in/outflow points [m],
+            by default 200 m. We suggest to use a buffer of at least twice the hydrography
+            resolution. Inflow points are moved to a downstreawm confluence if within the buffer.
         river_upa : float, optional
             Minimum upstream area threshold for rivers [km2], by default 10.0
         river_len: float, optional
@@ -891,11 +897,6 @@ class SfincsModel(GridModel):
             )
         elif hydrography is None:
             raise ValueError("Either hydrography or rivers must be provided.")
-
-        # estimate buffer based on model resolution
-        buffer = self.reggrid.dx
-        if self.crs.is_geographic:
-            buffer = buffer * 111111.0
 
         # get river inflow / headwater source points
         gdf_src = workflows.river_source_points(
