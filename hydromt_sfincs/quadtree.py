@@ -21,12 +21,12 @@ except ImportError:
     raise ImportError("xugrid is not installed. Please install it first.")
 import xarray as xr
 
-try:
-    import datashader as ds
-    import datashader.transfer_functions as tf
-    from datashader.utils import export_image
-except ImportError:
-    raise ImportError("datashader is not installed. Please install it first.")
+# try:
+import datashader as ds
+import datashader.transfer_functions as tf
+from datashader.utils import export_image
+# except ImportError:
+#     raise ImportError("datashader is not installed. Please install it first.")
 
 from hydromt_sfincs.subgrid import SubgridTableQuadtree
 from hydromt_sfincs.workflows.merge import merge_multi_dataarrays_on_mesh

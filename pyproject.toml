@@ -13,6 +13,7 @@ authors = [
 dependencies = [
     "affine",
     "datashader",
+    "dask[dataframe]",
     "geopandas>=0.8",
     "hydromt>=0.9.1, <0.10",
     "numba",
