@@ -1438,7 +1438,7 @@ class SfincsModel(GridModel):
                 da_ks[sn, sm] = da_ks_block
 
         # Done
-        self.logger.info(f"Done with determination of values (in blocks).")
+        self.logger.info("Done with determination of values (in blocks).")
 
         # Specify the effective soil retention (seff)
         da_seff = da_smax
@@ -1561,7 +1561,7 @@ class SfincsModel(GridModel):
         if merge and name in self.geoms:
             gdf0 = self._geoms.pop(name)
             gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
-            self.logger.info(f"Adding new observation points to existing ones.")
+            self.logger.info("Adding new observation points to existing ones.")
 
         self.set_geoms(gdf_obs, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
@@ -1604,7 +1604,7 @@ class SfincsModel(GridModel):
         if merge and name in self.geoms:
             gdf0 = self._geoms.pop(name)
             gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
-            self.logger.info(f"Adding new observation lines to existing ones.")
+            self.logger.info("Adding new observation lines to existing ones.")
 
         self.set_geoms(gdf_obs, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
@@ -1920,7 +1920,7 @@ class SfincsModel(GridModel):
             if not (gdf_locs.index) == set(df_ts.columns):
                 gdf_locs = gdf_locs.set_index(df_ts.columns)
                 self.logger.info(
-                    f"No matching index column found in gdf_locs; assuming the order is correct"
+                    "No matching index column found in gdf_locs; assuming the order is correct"
                 )
         # merge with existing data
         if name in self.forcing and merge:
@@ -2698,7 +2698,7 @@ class SfincsModel(GridModel):
                 root=path,
                 region=region,
                 datasets_dep=datasets_dep,
-                index_path=os.path.join(path, "index"),
+                index_path=os.path.join(path, "indices"),
                 zoom_range=zoom_range,
                 z_range=z_range,
                 fmt=fmt,
@@ -2902,7 +2902,7 @@ class SfincsModel(GridModel):
         if self.grid_type == "regular":
             self.write_grid()
         elif self.grid_type == "quadtree":
-            fn = self.get_config(f"qtrfile", abs_path=True)
+            fn = self.get_config("qtrfile", abs_path=True)
             self.quadtree.write(file_name = fn)
         self.write_subgrid()
         self.write_geoms()
@@ -3826,7 +3826,7 @@ class SfincsModel(GridModel):
                     reclass_table = join(DATADIR, "lulc", f"{lulc}_mapping.csv")
                 if reclass_table is None:
                     raise IOError(
-                        f"Manning roughness 'reclass_table' csv file must be provided"
+                        "Manning roughness 'reclass_table' csv file must be provided"
                     )
                 da_lulc = self.data_catalog.get_rasterdataset(
                     lulc,
