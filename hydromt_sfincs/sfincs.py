@@ -139,6 +139,13 @@ class SfincsModel(GridModel):
         self.quadtree = None
         self.subgrid = xr.Dataset()
 
+    def __del__(self):
+        """Close the model and remove the logger file handler."""
+        for handler in self.logger.handlers:
+            if isinstance(handler, logging.FileHandler) and 'hydromt.log' in handler.baseFilename:
+                handler.close()
+                self.logger.removeHandler(handler)
+        
     @property
     def mask(self) -> xr.DataArray | None:
         """Returns model mask"""
