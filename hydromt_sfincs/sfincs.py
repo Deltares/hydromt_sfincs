@@ -3646,6 +3646,7 @@ class SfincsModel(GridModel):
             "mask",
             "gdf_riv",
             "gdf_riv_mask",
+            "gdf_z"
         ]
         copy_keys = []
         attrs = ["rivwth", "rivdph", "rivbed", "manning"]
