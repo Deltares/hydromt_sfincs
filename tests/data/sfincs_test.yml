@@ -56,6 +56,7 @@ setup_drainage_structures:
 
 setup_river_inflow:
   hydrography: merit_hydro
+  buffer: 100
   river_upa: 10
   river_len: 1000
   keep_rivers_geom: True
