@@ -258,8 +258,8 @@ def plot_basemap(
             dx, dy = da.raster.res
             _rgb = ls.shade(
                 da.fillna(0).values,
-                norm=kwargs["norm"],
-                cmap=kwargs["cmap"],
+                norm=kwargs0["norm"],
+                cmap=kwargs0["cmap"],
                 blend_mode="soft",
                 dx=dx,
                 dy=dy,
