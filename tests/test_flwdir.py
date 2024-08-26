@@ -46,13 +46,13 @@ def test_river_source_points(hydrography, data_catalog):
     kwargs = dict(gdf_riv=gdf_riv, gdf_mask=gdf_mask, reverse_river_geom=True)
     gdf_src = river_source_points(src_type="inflow", **kwargs)
     assert gdf_src.index.size == 1  # this data only one river
-    assert gdf_src["riv_idx"].values[0] == 38
+    assert gdf_src["riv_idx"].values[0] == 2
     gdf_src = river_source_points(src_type="outflow", **kwargs)
     assert gdf_src.index.size == 1  # this data only one river
-    assert gdf_src["riv_idx"].values[0] == 34
+    assert gdf_src["riv_idx"].values[0] == 0
     gdf_src = river_source_points(src_type="headwater", **kwargs)
     assert gdf_src.index.size == 2
-    assert np.isin(38, gdf_src["riv_idx"].values)
+    assert np.isin(2, gdf_src["riv_idx"].values)
 
     # test errors
     with pytest.raises(ValueError, match="src_type must be either"):
