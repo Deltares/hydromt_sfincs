@@ -23,6 +23,7 @@ from shapely.geometry import LineString, box
 
 from . import DATADIR, plots, utils, workflows
 from .regulargrid import RegularGrid
+from .subgrid import SubgridTableRegular
 from .sfincs_input import SfincsInput
 
 __all__ = ["SfincsModel"]
@@ -239,8 +240,10 @@ class SfincsModel(GridModel):
             * {'bbox': [xmin, ymin, xmax, ymax]}
             * {'geom': 'path/to/polygon_geometry'}
 
+            Note: For the 'bbox' option the coordinates need to be provided in WG84/EPSG:4326.
+
             For a complete overview of all region options,
-            see :py:function:~hydromt.workflows.basin_mask.parse_region
+            see :py:func:`hydromt.workflows.basin_mask.parse_region`
         res : float, optional
             grid resolution, by default 100 m
         crs : Union[str, int], optional
@@ -331,7 +334,7 @@ class SfincsModel(GridModel):
         datasets_dep : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
             [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
-            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+            For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         interp_method : str, optional
@@ -612,7 +615,8 @@ class SfincsModel(GridModel):
         datasets_rgh: List[dict] = [],
         datasets_riv: List[dict] = [],
         buffer_cells: int = 0,
-        nbins: int = 10,
+        nlevels: int = 10,
+        nbins: int = None,
         nr_subgrid_pixels: int = 20,
         nrmax: int = 2000,  # blocksize
         max_gradient: float = 5.0,
@@ -641,7 +645,7 @@ class SfincsModel(GridModel):
             or xarray raster object ('elevtn').
             Optional merge arguments include: 'zmin', 'zmax', 'mask', 'offset', 'reproj_method',
             and 'merge_method', see example below. For a complete overview of all merge options,
-            see :py:function:~hydromt.workflows.merge_multi_dataarrays
+            see :py:func:`hydromt.workflows.merge_multi_dataarrays`
 
             ::
 
@@ -682,7 +686,7 @@ class SfincsModel(GridModel):
               segment_length [m] (default 500m) and riv_bank_q [0-1] (default 0.5)
               which used to estimate the river bank height in case river depth is provided.
 
-            For more info see :py:function:~hydromt.workflows.bathymetry.burn_river_rect
+            For more info see :py:func:`hydromt.workflows.bathymetry.burn_river_rect`
 
            ::
 
@@ -693,6 +697,9 @@ class SfincsModel(GridModel):
             by default 0
         nbins : int, optional
             Number of bins in which hypsometry is subdivided, by default 10
+            Note that this keyword is deprecated and will be removed in future versions.
+        nlevels: int, optional
+            Number of levels to describe hypsometry, by default 10
         nr_subgrid_pixels : int, optional
             Number of subgrid pixels per computational cell, by default 20
         nrmax : int, optional
@@ -740,6 +747,12 @@ class SfincsModel(GridModel):
         else:
             highres_dir = None
 
+        if nbins is not None:
+            logger.warning(
+                "Keyword nbins is deprecated and will be removed in future versions. Please use nlevels instead."
+            )
+            nlevels = nbins
+
         if self.grid_type == "regular":
             self.reggrid.subgrid.build(
                 da_mask=self.mask,
@@ -747,7 +760,7 @@ class SfincsModel(GridModel):
                 datasets_rgh=datasets_rgh,
                 datasets_riv=datasets_riv,
                 buffer_cells=buffer_cells,
-                nbins=nbins,
+                nlevels=nlevels,
                 nr_subgrid_pixels=nr_subgrid_pixels,
                 nrmax=nrmax,
                 max_gradient=max_gradient,
@@ -766,8 +779,11 @@ class SfincsModel(GridModel):
         elif self.grid_type == "quadtree":
             pass
 
-        if "sbgfile" not in self.config:  # only add sbgfile if not already present
-            self.config.update({"sbgfile": "sfincs.sbg"})
+        # when building a new subgrid table, always update config
+        # NOTE from now onwards, netcdf subgrid tables are used
+        self.config.update({"sbgfile": "sfincs_subgrid.nc"})
+        # if "sbgfile" not in self.config:  # only add sbgfile if not already present
+        #     self.config.update({"sbgfile": "sfincs.sbg"})
         # subgrid is used so no depfile or manningfile needed
         if "depfile" in self.config:
             self.config.pop("depfile")  # remove depfile from config
@@ -785,6 +801,7 @@ class SfincsModel(GridModel):
         first_index: int = 1,
         keep_rivers_geom: bool = False,
         reverse_river_geom: bool = False,
+        src_type: str = "inflow",
     ):
         """Setup discharge (src) points where a river enters the model domain.
 
@@ -831,13 +848,18 @@ class SfincsModel(GridModel):
         reverse_river_geom: bool, optional
             If True, assume that segments in 'rivers' are drawn from downstream to upstream.
             Only used if 'rivers' is not None, By default False
+        src_type: {'inflow', 'headwater'}, optional
+            Source type, by default 'inflow'
+            If 'inflow', return points where the river flows into the model domain.
+            If 'headwater', return all headwater (including inflow) points within the model domain.
 
         See Also
         --------
         setup_discharge_forcing
         setup_discharge_forcing_from_grid
         """
-        da_flwdir, da_uparea, gdf_riv = None, None, None
+        # get hydrography data
+        da_uparea = None
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
@@ -845,9 +867,10 @@ class SfincsModel(GridModel):
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
-            da_flwdir = ds["flwdir"]
-            da_uparea = ds["uparea"]
-        elif (
+            da_uparea = ds["uparea"]  # reused in river_source_points
+
+        # get river centerlines
+        if (
             isinstance(rivers, str)
             and rivers == "rivers_outflow"
             and rivers in self.geoms
@@ -858,24 +881,35 @@ class SfincsModel(GridModel):
             gdf_riv = self.data_catalog.get_geodataframe(
                 rivers, geom=self.region
             ).to_crs(self.crs)
-        else:
+        elif hydrography is not None:
+            gdf_riv = workflows.river_centerline_from_hydrography(
+                da_flwdir=ds["flwdir"],
+                da_uparea=da_uparea,
+                river_upa=river_upa,
+                river_len=river_len,
+                gdf_mask=self.region,
+            )
+        elif hydrography is None:
             raise ValueError("Either hydrography or rivers must be provided.")
 
-        gdf_src, gdf_riv = workflows.river_boundary_points(
-            region=self.region,
-            res=self.reggrid.dx,
+        # estimate buffer based on model resolution
+        buffer = self.reggrid.dx
+        if self.crs.is_geographic:
+            buffer = buffer * 111111.0
+
+        # get river inflow / headwater source points
+        gdf_src = workflows.river_source_points(
             gdf_riv=gdf_riv,
-            da_flwdir=da_flwdir,
-            da_uparea=da_uparea,
-            river_len=river_len,
+            gdf_mask=self.region,
+            src_type=src_type,
+            buffer=buffer,
             river_upa=river_upa,
-            inflow=True,
+            river_len=river_len,
+            da_uparea=da_uparea,
             reverse_river_geom=reverse_river_geom,
             logger=self.logger,
         )
-        n = len(gdf_src.index)
-        self.logger.info(f"Found {n} river inflow points.")
-        if n == 0:
+        if gdf_src.empty:
             return
 
         # set forcing src pnts
@@ -966,7 +1000,8 @@ class SfincsModel(GridModel):
         --------
         setup_mask_bounds
         """
-        da_flwdir, da_uparea, gdf_riv = None, None, None
+        # get hydrography data
+        da_uparea = None
         if hydrography is not None:
             ds = self.data_catalog.get_rasterdataset(
                 hydrography,
@@ -974,9 +1009,10 @@ class SfincsModel(GridModel):
                 variables=["uparea", "flwdir"],
                 buffer=5,
             )
-            da_flwdir = ds["flwdir"]
-            da_uparea = ds["uparea"]
-        elif (
+            da_uparea = ds["uparea"]  # reused in river_source_points
+
+        # get river centerlines
+        if (
             isinstance(rivers, str)
             and rivers == "rivers_inflow"
             and rivers in self.geoms
@@ -987,22 +1023,36 @@ class SfincsModel(GridModel):
             gdf_riv = self.data_catalog.get_geodataframe(
                 rivers, geom=self.region
             ).to_crs(self.crs)
+        elif hydrography is not None:
+            gdf_riv = workflows.river_centerline_from_hydrography(
+                da_flwdir=ds["flwdir"],
+                da_uparea=da_uparea,
+                river_upa=river_upa,
+                river_len=river_len,
+                gdf_mask=self.region,
+            )
         else:
             raise ValueError("Either hydrography or rivers must be provided.")
 
-        # TODO reproject region and gdf_riv to utm zone if model crs is geographic
-        gdf_out, gdf_riv = workflows.river_boundary_points(
-            region=self.region,
-            res=self.reggrid.dx,
+        # estimate buffer based on model resolution
+        buffer = self.reggrid.dx
+        if self.crs.is_geographic:
+            buffer = buffer * 111111.0
+
+        # get river inflow / headwater source points
+        gdf_out = workflows.river_source_points(
             gdf_riv=gdf_riv,
-            da_flwdir=da_flwdir,
-            da_uparea=da_uparea,
-            river_len=river_len,
+            gdf_mask=self.region,
+            src_type="outflow",
+            buffer=buffer,
             river_upa=river_upa,
-            inflow=False,
+            river_len=river_len,
+            da_uparea=da_uparea,
             reverse_river_geom=reverse_river_geom,
             logger=self.logger,
         )
+        if gdf_out.empty:
+            return
 
         if len(gdf_out) > 0:
             if "rivwth" in gdf_out.columns:
@@ -1748,7 +1798,7 @@ class SfincsModel(GridModel):
                     gdf_locs = gdf_locs.set_index(col)
                     self.logger.info(f"Setting gdf_locs index to {col}")
                     break
-            if not all((gdf_locs.index) == set(df_ts.columns)):
+            if not set(gdf_locs.index) == set(df_ts.columns):
                 gdf_locs = gdf_locs.set_index(df_ts.columns)
                 self.logger.info(
                     f"No matching index column found in gdf_locs; assuming the order is correct"
@@ -2228,7 +2278,7 @@ class SfincsModel(GridModel):
 
         Parameters
         ----------
-        timeseries, str, Path
+        timeseries: str, Path
             Path to tabulated timeseries csv file with time index in first column
             and location IDs in the first row,
             see :py:meth:`hydromt.open_timeseries_from_table`, for details.
@@ -2453,7 +2503,7 @@ class SfincsModel(GridModel):
         datasets_dep : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
             [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}]
-            For a complete overview of all merge options, see :py:function:~hydromt.workflows.merge_multi_dataarrays
+            For a complete overview of all merge options, see :py:func:`~hydromt.workflows.merge_multi_dataarrays`
             Note that subgrid/dep_subgrid.tif is automatically used if present and datasets_dep is left empty.
         zoom_range : Union[int, List[int]], optional
             Range of zoom levels for which tiles are created, by default [0,13]
@@ -2528,7 +2578,7 @@ class SfincsModel(GridModel):
                 root=path,
                 region=region,
                 datasets_dep=datasets_dep,
-                index_path=os.path.join(path, "index"),
+                index_path=os.path.join(path, "indices"),
                 zoom_range=zoom_range,
                 z_range=z_range,
                 fmt=fmt,
@@ -2850,7 +2900,16 @@ class SfincsModel(GridModel):
                 self.logger.warning(f"sbgfile not found at {fn}")
                 return
 
-            self.reggrid.subgrid.load(file_name=fn, mask=self.mask)
+            # re-initialize subgrid (different variables for old/new version)
+            # TODO: come up with a better way to handle this
+            self.reggrid.subgrid = SubgridTableRegular()
+            self.subgrid = xr.Dataset()
+
+            # read subgrid file
+            if fn.parts[-1].endswith(".sbg"):  # read binary file
+                self.reggrid.subgrid.read_binary(file_name=fn, mask=self.mask)
+            else:  # read netcdf file
+                self.reggrid.subgrid.read(file_name=fn, mask=self.mask)
             self.subgrid = self.reggrid.subgrid.to_xarray(
                 dims=self.mask.raster.dims, coords=self.mask.raster.coords
             )
@@ -2861,9 +2920,16 @@ class SfincsModel(GridModel):
 
         if self.subgrid:
             if "sbgfile" not in self.config:
-                self.set_config("sbgfile", "sfincs.sbg")
+                # apparently no subgrid was read, so set default filename
+                self.set_config("sbgfile", "sfincs_subgrid.nc")
+
             fn = self.get_config("sbgfile", abs_path=True)
-            self.reggrid.subgrid.save(file_name=fn, mask=self.mask)
+            if fn.parts[-1].endswith(".sbg"):
+                # write binary file
+                self.reggrid.subgrid.write_binary(file_name=fn, mask=self.mask)
+            else:
+                # write netcdf file
+                self.reggrid.subgrid.write(file_name=fn, mask=self.mask)
 
     def read_geoms(self):
         """Read geometry files and save to `geoms` attribute.
@@ -2894,6 +2960,8 @@ class SfincsModel(GridModel):
                     gdf = utils.read_drn(fn, crs=self.crs)
                 else:
                     gdf = utils.read_xy(fn, crs=self.crs)
+                # this seems to be required for new pandas versions
+                gdf.set_geometry("geometry", inplace=True)
                 self.set_geoms(gdf, name=gname)
         # read additional geojson files from gis directory
         for fn in glob.glob(join(self.root, "gis", "*.geojson")):
@@ -3330,6 +3398,9 @@ class SfincsModel(GridModel):
                             f"Variable {attr}.{layer} has more than 2 dimensions: skipping."
                         )
                         continue
+                # If the raster type is float, set nodata to np.nan
+                if da.dtype == "float32" or da.dtype == "float64":
+                    da.raster.set_nodata(np.nan)
                 # only write active cells to gis files
                 da = da.where(self.mask > 0, da.raster.nodata).raster.mask_nodata()
                 if da.raster.res[1] > 0:  # make sure orientation is N->S
@@ -3596,7 +3667,7 @@ class SfincsModel(GridModel):
                     reclass_table = join(DATADIR, "lulc", f"{lulc}_mapping.csv")
                 if reclass_table is None:
                     raise IOError(
-                        f"Manning roughness mapping file not found: {reclass_table}"
+                        f"Manning roughness 'reclass_table' csv file must be provided"
                     )
                 da_lulc = self.data_catalog.get_rasterdataset(
                     lulc,

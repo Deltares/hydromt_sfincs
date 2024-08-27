@@ -103,9 +103,7 @@ class RegularGrid:
     def ind(self, mask: np.ndarray) -> np.ndarray:
         """Return indices of active cells in mask."""
         assert mask.shape == (self.nmax, self.mmax)
-        iok = np.where(np.transpose(mask) > 0)
-        iok = (iok[1], iok[0])
-        ind = np.ravel_multi_index(iok, (self.nmax, self.mmax), order="F")
+        ind = np.where(mask.ravel(order="F"))[0]
         return ind
 
     def write_ind(
@@ -458,7 +456,7 @@ class RegularGrid:
             Format of index tiles, either "bin" (binary, default) or "png"
         """
 
-        index_path = os.path.join(root, "index")
+        index_path = os.path.join(root, "indices")
         npix = 256
 
         # for binary format, use .dat extension

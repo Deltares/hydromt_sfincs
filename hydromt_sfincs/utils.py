@@ -52,6 +52,7 @@ __all__ = [
     "downscale_floodmap",
     "rotated_grid",
     "build_overviews",
+    "find_uv_indices",
 ]
 
 logger = logging.getLogger(__name__)
@@ -496,6 +497,7 @@ def linestring2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDat
         feat.update({"geometry": LineString(list(zip(*xyz)))})
         records.append(feat)
     gdf = gpd.GeoDataFrame.from_records(records)
+    gdf.set_geometry("geometry", inplace=True)
     if crs is not None:
         gdf.set_crs(crs, inplace=True)
     return gdf
@@ -530,6 +532,7 @@ def polygon2gdf(
     gdf = gpd.GeoDataFrame.from_records(records)
     gdf["zmin"] = zmin
     gdf["zmax"] = zmax
+    gdf.set_geometry("geometry", inplace=True)
     if crs is not None:
         gdf.set_crs(crs, inplace=True)
     return gdf
@@ -1182,3 +1185,103 @@ def _downscale_floodmap_da(
         hmax = hmax.where(mask)
 
     return hmax
+
+
+def find_uv_indices(mask: xr.DataArray):
+    """The subgrid tables for a regular SFINCS grid are organized as flattened arrays, meaning
+    2D arrays (y,x) are transformed into 1D arrays, only containing values for active cells.
+
+    For the cell centers, this is straightforward, we just find the indices of the active cells.
+    However, the u and v points are saved in combined arrays. Since u and v points are absent
+    at the boundaries of the domain, the index arrays are used to determine the location of the
+    u and v points in the combined flattened arrays.
+
+
+
+    Parameters
+    ----------
+    mask: xr.DataArray
+        Mask with integer values specifying the active cells of the SFINCS domain.
+
+    Returns
+    -------
+    index_nm: np.ndarray
+        Index array for the active cell centers.
+    index_mu1: np.ndarray
+        Index of upstream u-point in combined uv-array.
+    index_nu1: np.ndarray
+        Index of upstream v-point in combined uv-array.
+
+    """
+
+    mask = mask.values
+
+    # nr of cells
+    nr_cells = mask.shape[0] * mask.shape[1]
+
+    # get the index of the u and v points in a combined array
+    mu1 = np.zeros(nr_cells, dtype=int) - 1
+    nu1 = np.zeros(nr_cells, dtype=int) - 1
+
+    ms = np.linspace(0, mask.shape[1] - 1, mask.shape[1], dtype=int)
+    ns = np.linspace(0, mask.shape[0] - 1, mask.shape[0], dtype=int)
+
+    m, n = np.meshgrid(ms, ns)
+
+    m = np.transpose(m).flatten()
+    n = np.transpose(n).flatten()
+
+    mask = mask.transpose().flatten()
+
+    nmax = n.max() + 1
+    nms = m * nmax + n
+
+    for ic in range(nr_cells):
+        # nu1
+        nn = n[ic] + 1
+        if nn < nmax:
+            mm = m[ic]
+            nm = mm * nmax + nn
+            j = binary_search(nms, nm)
+            if j is not None:
+                nu1[ic] = j
+        # mu1
+        nn = n[ic]
+        mm = m[ic] + 1
+        nm = mm * nmax + nn
+        j = binary_search(nms, nm)
+        if j is not None:
+            mu1[ic] = j
+
+    # For regular grids, only the points with mask > 0 are stored
+    # The index arrays determine the location in the flattened arrays (with values for all active points)
+    # Initialize index arrays with -1, inactive cells will remain -1
+    index_nm = np.zeros(nr_cells, dtype=int) - 1
+    index_mu1 = np.zeros(nr_cells, dtype=int) - 1
+    index_nu1 = np.zeros(nr_cells, dtype=int) - 1
+    npuv = 0
+    npc = 0
+    # Loop through all cells
+    for ip in range(nr_cells):
+        # Check if this cell is active
+        if mask[ip] > 0:
+            index_nm[ip] = npc
+            npc += 1
+            if mu1[ip] >= 0:
+                if mask[mu1[ip]] > 0:
+                    index_mu1[ip] = npuv
+                    npuv += 1
+            if nu1[ip] >= 0:
+                if mask[nu1[ip]] > 0:
+                    index_nu1[ip] = npuv
+                    npuv += 1
+
+    return index_nm, index_mu1, index_nu1
+
+
+def binary_search(vals, val):
+    indx = np.searchsorted(vals, val)
+    if indx < np.size(vals):
+        if vals[indx] == val:
+            return indx
+    return None

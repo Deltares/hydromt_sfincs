@@ -103,13 +103,68 @@ def test_infiltration(mod):
     assert np.isclose(mod1.grid["ks"].where(mod.mask > 0).sum(), 351.10803)
 
 
+def test_subgrid_io(tmpdir):
+    # test the backward compatibility of reading/writing subgrid
+    root = TESTMODELDIR
+    datadir = TESTDATADIR
+
+    mod0 = SfincsModel(root=root, mode="r")
+    # read-in the current subgrid (netcdf format)
+    mod0.read()
+    # check version and new parameter
+    assert mod0.reggrid.subgrid.version == 1
+    # u and v paramters should be separated internally
+    assert "u_pwet" in mod0.subgrid
+    assert "uv_pwet" not in mod0.subgrid
+    sbg_net = mod0.subgrid.copy()
+
+    # write the subgrid (new format)
+    tmp_root = str(tmpdir.join("subgrid_io_test"))
+    mod0.set_root(tmp_root, mode="w")
+    mod0.write()
+    assert isfile(join(mod0.root, "sfincs_subgrid.nc"))
+
+    # read back-in
+    mod1 = SfincsModel(root=tmp_root, mode="r")
+    mod1.read()
+    # Check if variables are the same
+    assert mod0.subgrid.variables.keys() == mod1.subgrid.variables.keys()
+
+    # Check if values are almost equal
+    for var_name in mod0.subgrid.variables:
+        assert np.isclose(np.sum(mod0.subgrid[var_name] - mod1.subgrid[var_name]), 0.0)
+
+    # copy old sbgfile to new location
+    sbgfile = join(datadir, "sfincs_test", "sfincs.sbg")
+
+    # change the subgrid to the old format (binary format)
+    mod1.set_config("sbgfile", sbgfile)
+    mod1.read_subgrid()
+
+    # check version and new parameter
+    assert mod1.reggrid.subgrid.version == 0
+    assert "u_pwet" not in mod1.subgrid
+    assert "uv_pwet" not in mod1.subgrid
+    sbg_bin = mod1.subgrid.copy()
+
+    # compare z_zmin and z_zmax
+    assert np.isclose(np.sum(sbg_net["z_zmin"] - sbg_bin["z_zmin"]), 0.0)
+    # TODO: check with Maarten whether this is meant to be different
+    # difference comes from different discretization of volume bins
+    assert np.isclose(np.sum(sbg_net["z_zmax"] - sbg_bin["z_zmax"]), 1.0714283)
+
+
 def test_subgrid_rivers(mod):
     gdf_riv = mod.data_catalog.get_geodataframe(
         "rivers_lin2019_v1", geom=mod.region, buffer=1e3
     )
+
+    # create dummy depths for the river based on the width
     rivdph = gdf_riv["rivwth"].values / 100
-    rivdph[-1] = np.nan
     gdf_riv["rivdph"] = rivdph
+
+    # set the depth of the river with "COMID": 21002062 to nan
+    gdf_riv.loc[gdf_riv["COMID"] == 21002062, "rivdph"] = np.nan
 
     sbg_org = mod.subgrid.copy()
 

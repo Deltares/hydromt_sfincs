@@ -6,6 +6,24 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+v1.0.4 (Unreleased)
+===================
+
+Added
+-----
+- improved subgrid tables that account for the wet fraction of the cell (#160)
+- add source points at headwater locations with `SfincsModel.setup_river_inflow` (#170)
+
+Changed
+-------
+- improved subgrid tables are saved as NetCDF (#160)
+
+Fixed
+-----
+- rounding errors in `workflows.tile_window` which resulted in erronuous slippy-tiles (#178)
+- "active geometry column to use has not been set" error for GeoDataFrame (#180)
+
+
 v1.0.3 (3 January 2024)
 =======================
 This release contains several changes and fixes. Most notably, models with a geographical CRS can now be build.
