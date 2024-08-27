@@ -1748,7 +1748,7 @@ class SfincsModel(GridModel):
                     gdf_locs = gdf_locs.set_index(col)
                     self.logger.info(f"Setting gdf_locs index to {col}")
                     break
-            if not (gdf_locs.index) == set(df_ts.columns):
+            if not all((gdf_locs.index) == set(df_ts.columns)):
                 gdf_locs = gdf_locs.set_index(df_ts.columns)
                 self.logger.info(
                     f"No matching index column found in gdf_locs; assuming the order is correct"
@@ -3646,7 +3646,7 @@ class SfincsModel(GridModel):
             "mask",
             "gdf_riv",
             "gdf_riv_mask",
-            "gdf_z"
+            "gdf_zb"
         ]
         copy_keys = []
         attrs = ["rivwth", "rivdph", "rivbed", "manning"]
@@ -3674,7 +3674,7 @@ class SfincsModel(GridModel):
                             gdf_riv[key] = value
                         elif np.any(np.isnan(gdf_riv[key])):  # fill na
                             gdf_riv[key] = gdf_riv[key].fillna(value)
-                if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any():
+                if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any() and datasets_riv[0]["gdf_zb"] is None:
                     raise ValueError("No 'rivbed' or 'rivdph' attribute found.")
             else:
                 raise ValueError("No 'centerlines' dataset provided.")
@@ -3692,6 +3692,16 @@ class SfincsModel(GridModel):
                     "Either mask must be provided or centerlines "
                     "should contain a 'rivwth' attribute."
                 )
+            # parse bedlevel
+
+            if "gdf_zb" in dataset:
+                gdf_zb = self.data_catalog.get_geodataframe(
+                    dataset.get("gdf_zb"),
+                    geom=self.mask.raster.box,
+                )
+                dd.update({"gdf_zb": gdf_zb})
+            elif not gdf_riv.columns.isin(["rivbed", "rivdph"]).any():
+                raise ValueError("No 'rivbed' or 'rivdph' attribute found.")
 
             # copy remaining keys
             for key, value in dataset.items():
