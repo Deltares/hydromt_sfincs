@@ -3122,7 +3122,6 @@ class SfincsModel(GridModel):
             List of data variables to write, by default None (all)
         fmt : str, optional
             Format string for timeseries data, by default "%7.2f".
-            If "auto", the format is derived from the data.
         """
         self._assert_write_mode
 
@@ -3167,13 +3166,8 @@ class SfincsModel(GridModel):
                     if f"{ts_name}file" not in self.config:
                         self.set_config(f"{ts_name}file", f"sfincs.{ts_name}")
                     fn = self.get_config(f"{ts_name}file", abs_path=True)
-                    # derive timeseries format from data if not provided
-                    if fmt is "auto":
-                        fmt_ts = utils.derive_format_string(df.values)
-                    else:
-                        fmt_ts = fmt
                     # write timeseries
-                    utils.write_timeseries(fn, df, tref, fmt=fmt_ts)
+                    utils.write_timeseries(fn, df, tref, fmt=fmt)
                 # write xy
                 if xy_name and da is not None:
                     # parse data to geodataframe
