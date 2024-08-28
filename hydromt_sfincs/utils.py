@@ -1285,3 +1285,24 @@ def binary_search(vals, val):
         if vals[indx] == val:
             return indx
     return None
+
+
+def derive_format_string(arr):
+    """Derive a format string for an array of numbers."""
+    # Flatten the array to 1D to handle all elements uniformly
+    arr = arr.flatten()
+
+    # Get the maximum number of decimal places
+    def count_decimal_places(x):
+        if "." in str(x):
+            return len(str(x).split(".")[-1].rstrip("0"))
+        return 0
+
+    max_decimal_places = max(count_decimal_places(x) for x in arr)
+
+    # Get the maximum width required
+    max_width = max(len(str(x)) for x in arr)
+
+    # Construct format string
+    format_string = f"%{max_width}.{max_decimal_places}f"
+    return format_string
