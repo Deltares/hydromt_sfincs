@@ -379,7 +379,7 @@ def test_forcing_io(tmpdir):
     # now change the timeseries-format and write again
     tmp_root = str(tmpdir.join("forcing_test2"))
     mod1.set_root(tmp_root, mode="w+")
-    mod1.write_forcing(fmt_ts="%7.1f")
+    mod1.write_forcing(fmt="%7.1f")
     mod1.write_config()
 
     # read and check if identical
