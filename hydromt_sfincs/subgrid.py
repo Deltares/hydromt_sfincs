@@ -371,9 +371,10 @@ class SubgridTableRegular:
         nlevels: int = 10,
         nr_subgrid_pixels: int = 20,
         nrmax: int = 2000,
-        max_gradient: float = 5.0,
+        max_gradient: float = 999.0,
         z_minimum: float = -99999.0,
         huthresh: float = 0.01,
+        q_table_option: int = 2,
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
@@ -428,6 +429,10 @@ class SubgridTableRegular:
             Minimum depth in the subgrid tables, by default -99999.0
         huthresh : float, optional
             Threshold depth in SFINCS model, by default 0.01 m
+        q_table_option : int, optional
+            Option for the computation of the conveyance depth at u/v points, by default 2.
+            1: "old" method, compliant with SFINCS < v2.1.0
+            2: "new" method, recommended for SFINCS >= v2.1.0
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea,
             by default 0.04 and 0.02 s.m-1/3
@@ -716,6 +721,7 @@ class SubgridTableRegular:
                     yg,
                     max_gradient,
                     huthresh,
+                    q_table_option,
                     da_mask.raster.crs.is_geographic,
                 )
 
@@ -797,6 +803,7 @@ def process_tile_regular(
     yg,
     max_gradient,
     huthresh,
+    q_table_option,
     is_geographic=False,
 ):
     """calculate subgrid properties for a single tile"""
@@ -864,7 +871,7 @@ def process_tile_regular(
             manning = manning_grid[nn : nn + refi, mm : mm + refi]
             manning = np.transpose(manning)
             zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(
-                zgu.flatten(), manning.flatten(), nlevels, huthresh
+                zgu.flatten(), manning.flatten(), nlevels, huthresh, q_table_option
             )
             u_zmin[n, m] = zmin
             u_zmax[n, m] = zmax
@@ -880,7 +887,7 @@ def process_tile_regular(
             zgu = zg[nn : nn + refi, mm : mm + refi]
             manning = manning_grid[nn : nn + refi, mm : mm + refi]
             zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(
-                zgu.flatten(), manning.flatten(), nlevels, huthresh
+                zgu.flatten(), manning.flatten(), nlevels, huthresh, q_table_option
             )
             v_zmin[n, m] = zmin
             v_zmax[n, m] = zmax
@@ -1000,7 +1007,11 @@ def subgrid_v_table(
 
 @njit
 def subgrid_q_table(
-    elevation: np.ndarray, manning: np.ndarray, nlevels: int, huthresh: float
+    elevation: np.ndarray,
+    manning: np.ndarray,
+    nlevels: int,
+    huthresh: float,
+    option: int,
 ):
     """
     map vector of elevation values into a hypsometric hydraulic radius - depth relationship for one u/v point
@@ -1010,6 +1021,8 @@ def subgrid_q_table(
     manning : np.ndarray (nr of pixels in one cell) containing subgrid manning roughness values for one grid cell [s m^(-1/3)]
     nlevels : int, number of vertical levels [-]
     huthresh : float, threshold depth [m]
+    option : int, option to use "old" or "new" method for computing conveyance depth at u/v points
+
     Returns
     -------
     zmin : float, minimum elevation [m]
@@ -1053,8 +1066,8 @@ def subgrid_q_table(
     # Determine level size (metres)
     dlevel = (zmax - zmin) / (nlevels - 1)
 
-    # Option can be either 1 ("old") or 2 ("new")
-    option = 2
+    # Option can be either 1 ("old, compliant with SFINCS < v2.1.0") or 2 ("new", recommended SFINCS >= v2.1.0)
+    option = option
 
     # Loop through levels
     for ibin in range(nlevels):
