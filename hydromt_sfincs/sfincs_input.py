@@ -45,7 +45,7 @@ class SfincsInput:
         self.rhow = 1024.0
         self.dtmax = 60.0
         self.advection = 1
-        self.baro = 0
+        self.baro = 1
         self.pavbnd = 0
         self.gapres = 101200.0
         self.stopdepth = 100.0
