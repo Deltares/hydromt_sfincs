@@ -680,7 +680,7 @@ class SfincsModel(GridModel):
               rivdph or rivbed (river depth [m]; river bedlevel [m+REF]),
               manning (Manning's n [s/m^(1/3)]; optional)
             * mask (optional): filename (or Path) of river mask
-            * points_zb (optional): filename (or Path) of river points with bed (z) values
+            * point_zb (optional): filename (or Path) of river points with bed (z) values
             * river attributes (optional): "rivdph", "rivbed", "rivwth", "manning"
               to fill missing values
             * arguments to the river burn method (optional):
@@ -3758,7 +3758,7 @@ class SfincsModel(GridModel):
                     dd.update({"gdf_zb": gdf_zb})
     
             if "gdf_riv" in dd:
-                if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any() and dd["gdf_zb"] is None:
+                if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any() and "gdf_zb" not in dd:
                     raise ValueError("No 'rivbed' or 'rivdph' attribute found.")
             else:
                 raise ValueError("No 'centerlines' dataset provided.")
