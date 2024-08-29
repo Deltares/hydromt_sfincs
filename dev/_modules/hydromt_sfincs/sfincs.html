@@ -2825,7 +2825,7 @@
 <span class="sd">        press, str, Path, xr.Dataset, xr.DataArray</span>
 <span class="sd">            Path to pressure rasterdataset netcdf file or xarray dataset.</span>
 
-<span class="sd">            * Required variables: [&#39;press&#39; (Pa)]</span>
+<span class="sd">            * Required variables: [&#39;press_msl&#39; (Pa)]</span>
 <span class="sd">            * Required coordinates: [&#39;time&#39;, &#39;y&#39;, &#39;x&#39;]</span>
 
 <span class="sd">        dst_res: float</span>
@@ -2841,7 +2841,7 @@
             <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
             <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="n">time_tuple</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>
-            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;press&quot;</span><span class="p">],</span>
+            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;press_msl&quot;</span><span class="p">],</span>
         <span class="p">)</span>
 
         <span class="c1"># reproject to model utm crs</span>
@@ -2886,7 +2886,7 @@
 <span class="sd">        wind, str, Path, xr.Dataset</span>
 <span class="sd">            Path to wind rasterdataset (including eastward and northward components) netcdf file or xarray dataset.</span>
 
-<span class="sd">            * Required variables: [&#39;wind_u&#39; (m/s), &#39;wind_v&#39; (m/s)]</span>
+<span class="sd">            * Required variables: [&#39;wind10_u&#39; (m/s), &#39;wind10_v&#39; (m/s)]</span>
 <span class="sd">            * Required coordinates: [&#39;time&#39;, &#39;y&#39;, &#39;x&#39;]</span>
 
 <span class="sd">        dst_res: float</span>
@@ -2898,7 +2898,7 @@
             <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
             <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="n">time_tuple</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>
-            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;wind_u&quot;</span><span class="p">,</span> <span class="s2">&quot;wind_v&quot;</span><span class="p">],</span>
+            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;wind10_u&quot;</span><span class="p">,</span> <span class="s2">&quot;wind10_v&quot;</span><span class="p">],</span>
         <span class="p">)</span>
 
         <span class="c1"># reproject to model utm crs</span>
