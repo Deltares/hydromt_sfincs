@@ -680,6 +680,7 @@ class SfincsModel(GridModel):
               rivdph or rivbed (river depth [m]; river bedlevel [m+REF]),
               manning (Manning's n [s/m^(1/3)]; optional)
             * mask (optional): filename (or Path) of river mask
+            * point_zb (optional): filename (or Path) of river points with bed (z) values
             * river attributes (optional): "rivdph", "rivbed", "rivwth", "manning"
               to fill missing values
             * arguments to the river burn method (optional):
@@ -3720,6 +3721,8 @@ class SfincsModel(GridModel):
             "mask",
             "gdf_riv",
             "gdf_riv_mask",
+            "gdf_zb",
+            "point_zb",
         ]
         copy_keys = []
         attrs = ["rivwth", "rivdph", "rivbed", "manning"]
@@ -3747,11 +3750,24 @@ class SfincsModel(GridModel):
                             gdf_riv[key] = value
                         elif np.any(np.isnan(gdf_riv[key])):  # fill na
                             gdf_riv[key] = gdf_riv[key].fillna(value)
-                if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any():
+                dd.update({"gdf_riv": gdf_riv})
+
+            # parse bed_level on points
+            if "point_zb" in dataset:
+                gdf_zb = self.data_catalog.get_geodataframe(
+                    dataset.get("point_zb"),
+                    geom=self.mask.raster.box,
+                )
+                dd.update({"gdf_zb": gdf_zb})
+
+            if "gdf_riv" in dd:
+                if (
+                    not gdf_riv.columns.isin(["rivbed", "rivdph"]).any()
+                    and "gdf_zb" not in dd
+                ):
                     raise ValueError("No 'rivbed' or 'rivdph' attribute found.")
             else:
                 raise ValueError("No 'centerlines' dataset provided.")
-            dd.update({"gdf_riv": gdf_riv})
 
             # parse mask
             if "mask" in dataset:
@@ -3765,7 +3781,6 @@ class SfincsModel(GridModel):
                     "Either mask must be provided or centerlines "
                     "should contain a 'rivwth' attribute."
                 )
-
             # copy remaining keys
             for key, value in dataset.items():
                 if key in copy_keys and key not in dd:

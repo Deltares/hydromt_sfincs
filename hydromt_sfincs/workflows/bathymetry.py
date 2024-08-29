@@ -311,6 +311,7 @@ def burn_river_rect(
         if np.any(np.isnan(gdf_zb[manning_name])):
             gdf_zb["idx0"], _ = nearest(gdf_zb, gdf_riv)
             man_nearest = gdf_riv.loc[gdf_zb["idx0"], manning_name]
+            man_nearest.index = gdf_zb.index
             gdf_zb[manning_name] = gdf_zb[manning_name].fillna(man_nearest)
     elif rivbed_name not in gdf_zb.columns:
         raise ValueError(f"Missing {rivbed_name} or {rivdph_name} attributes")
