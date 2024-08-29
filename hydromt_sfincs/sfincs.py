@@ -3719,7 +3719,7 @@ class SfincsModel(GridModel):
             "gdf_riv",
             "gdf_riv_mask",
             "gdf_zb",
-            "point_zb"
+            "point_zb",
         ]
         copy_keys = []
         attrs = ["rivwth", "rivdph", "rivbed", "manning"]
@@ -3756,9 +3756,12 @@ class SfincsModel(GridModel):
                         geom=self.mask.raster.box,
                     )
                     dd.update({"gdf_zb": gdf_zb})
-    
+
             if "gdf_riv" in dd:
-                if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any() and "gdf_zb" not in dd:
+                if (
+                    not gdf_riv.columns.isin(["rivbed", "rivdph"]).any()
+                    and "gdf_zb" not in dd
+                ):
                     raise ValueError("No 'rivbed' or 'rivdph' attribute found.")
             else:
                 raise ValueError("No 'centerlines' dataset provided.")
