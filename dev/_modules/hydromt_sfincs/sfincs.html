@@ -3657,7 +3657,7 @@
 
 <div class="viewcode-block" id="SfincsModel.write_forcing">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_forcing.html#hydromt_sfincs.SfincsModel.write_forcing">[docs]</a>
-    <span class="k">def</span> <span class="nf">write_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">write_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%7.2f</span><span class="s2">&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write forcing to ascii or netcdf (netampr) files.</span>
 <span class="sd">        Filenames are based on the `config` attribute.</span>
 
@@ -3665,14 +3665,16 @@
 <span class="sd">        ----------</span>
 <span class="sd">        data_vars : list of str, optional</span>
 <span class="sd">            List of data variables to write, by default None (all)</span>
+<span class="sd">        fmt : str, optional</span>
+<span class="sd">            Format string for timeseries data, by default &quot;%7.2f&quot;.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_assert_write_mode</span>
 
         <span class="c1"># change precision of coordinates according to crs</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.6f</span><span class="s2">&quot;</span>
+            <span class="n">fmt_xy</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.6f</span><span class="s2">&quot;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span>
+            <span class="n">fmt_xy</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Write forcing files&quot;</span><span class="p">)</span>
@@ -3710,7 +3712,7 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ts_name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">ts_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ts_name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                     <span class="c1"># write timeseries</span>
-                    <span class="n">utils</span><span class="o">.</span><span class="n">write_timeseries</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">tref</span><span class="p">)</span>
+                    <span class="n">utils</span><span class="o">.</span><span class="n">write_timeseries</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">tref</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
                 <span class="c1"># write xy</span>
                 <span class="k">if</span> <span class="n">xy_name</span> <span class="ow">and</span> <span class="n">da</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="c1"># parse data to geodataframe</span>
@@ -3723,7 +3725,7 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">xy_name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">xy_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="n">fn_xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">xy_name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                     <span class="c1"># write xy</span>
-                    <span class="n">hydromt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_xy</span><span class="p">(</span><span class="n">fn_xy</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+                    <span class="n">hydromt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_xy</span><span class="p">(</span><span class="n">fn_xy</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt_xy</span><span class="p">)</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>  <span class="c1"># write geojson file to gis folder</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;forcing.</span><span class="si">{</span><span class="n">ts_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
