@@ -2326,7 +2326,7 @@ class SfincsModel(GridModel):
         press, str, Path, xr.Dataset, xr.DataArray
             Path to pressure rasterdataset netcdf file or xarray dataset.
 
-            * Required variables: ['press' (Pa)]
+            * Required variables: ['press_msl' (Pa)]
             * Required coordinates: ['time', 'y', 'x']
 
         dst_res: float
@@ -2342,7 +2342,7 @@ class SfincsModel(GridModel):
             geom=self.region,
             buffer=2,
             time_tuple=self.get_model_time(),
-            variables=["press"],
+            variables=["press_msl"],
         )
 
         # reproject to model utm crs
@@ -2384,7 +2384,7 @@ class SfincsModel(GridModel):
         wind, str, Path, xr.Dataset
             Path to wind rasterdataset (including eastward and northward components) netcdf file or xarray dataset.
 
-            * Required variables: ['wind_u' (m/s), 'wind_v' (m/s)]
+            * Required variables: ['wind10_u' (m/s), 'wind10_v' (m/s)]
             * Required coordinates: ['time', 'y', 'x']
 
         dst_res: float
@@ -2396,7 +2396,7 @@ class SfincsModel(GridModel):
             geom=self.region,
             buffer=2,
             time_tuple=self.get_model_time(),
-            variables=["wind_u", "wind_v"],
+            variables=["wind10_u", "wind10_v"],
         )
 
         # reproject to model utm crs
