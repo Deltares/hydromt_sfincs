@@ -371,7 +371,7 @@ class SubgridTableRegular:
         nlevels: int = 10,
         nr_subgrid_pixels: int = 20,
         nrmax: int = 2000,
-        max_gradient: float = 999.0,
+        max_gradient: float = 99999.0,
         z_minimum: float = -99999.0,
         huthresh: float = 0.01,
         q_table_option: int = 2,
@@ -430,9 +430,9 @@ class SubgridTableRegular:
         huthresh : float, optional
             Threshold depth in SFINCS model, by default 0.01 m
         q_table_option : int, optional
-            Option for the computation of the conveyance depth at u/v points, by default 2.
-            1: "old" method, compliant with SFINCS < v2.1.0
-            2: "new" method, recommended for SFINCS >= v2.1.0
+            Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.
+            1: "old" weighting method, compliant with SFINCS < v2.1.0, taking the avarage of the adjecent cells
+            2: "improved" weighting method, recommended for SFINCS >= v2.1.0, that takes into account the wet fractions of the adjacent cells
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea,
             by default 0.04 and 0.02 s.m-1/3
@@ -959,7 +959,7 @@ def subgrid_v_table(
     zvolmin: float
         minimum elevation value to use for volume calculation (typically -20 m)
     max_gradient: float
-        maximum gradient to use for volume calculation (typically 0.1)
+        maximum gradient to use for volume calculation
 
     Return
     ------
