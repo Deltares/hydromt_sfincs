@@ -466,6 +466,8 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 <h2>Changed<a class="headerlink" href="#changed" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>improved subgrid tables are saved as NetCDF (#160)</p></li>
+<li><p>In <cite>SfincsModel.setup_river_inflow</cite>, in case of a confluence within a user-defined buffer of the
+model boundary the confluence rather than both tributaries is selected as inflow point. (#202)</p></li>
 </ul>
 </section>
 <section id="fixed">

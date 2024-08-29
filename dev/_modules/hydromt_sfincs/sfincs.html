@@ -1239,6 +1239,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">rivers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">hydrography</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
         <span class="n">river_upa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
         <span class="n">river_len</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e3</span><span class="p">,</span>
         <span class="n">river_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
@@ -1259,7 +1260,8 @@
 <span class="sd">        Discharge is set to zero at these points, but can be updated</span>
 <span class="sd">        using the `setup_discharge_forcing` or `setup_discharge_forcing_from_grid` methods.</span>
 
-<span class="sd">        Note: this method assumes the rivers are directed from up- to downstream.</span>
+<span class="sd">        Note: this method assumes the rivers are directed from up- to downstream. Use</span>
+<span class="sd">        `reverse_river_geom=True` if the rivers are directed from downstream to upstream.</span>
 
 <span class="sd">        Adds model layers:</span>
 
@@ -1276,6 +1278,10 @@
 <span class="sd">            Path, data source name, or a xarray raster object for hydrography data.</span>
 
 <span class="sd">            * Required layers: [&#39;uparea&#39;, &#39;flwdir&#39;].</span>
+<span class="sd">        buffer: float, optional</span>
+<span class="sd">            Buffer around the model region boundary to define in/outflow points [m],</span>
+<span class="sd">            by default 200 m. We suggest to use a buffer of at least twice the hydrography</span>
+<span class="sd">            resolution. Inflow points are moved to a downstreawm confluence if within the buffer.</span>
 <span class="sd">        river_upa : float, optional</span>
 <span class="sd">            Minimum upstream area threshold for rivers [km2], by default 10.0</span>
 <span class="sd">        river_len: float, optional</span>
@@ -1336,11 +1342,6 @@
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either hydrography or rivers must be provided.&quot;</span><span class="p">)</span>
-
-        <span class="c1"># estimate buffer based on model resolution</span>
-        <span class="n">buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">dx</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-            <span class="n">buffer</span> <span class="o">=</span> <span class="n">buffer</span> <span class="o">*</span> <span class="mf">111111.0</span>
 
         <span class="c1"># get river inflow / headwater source points</span>
         <span class="n">gdf_src</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">river_source_points</span><span class="p">(</span>
