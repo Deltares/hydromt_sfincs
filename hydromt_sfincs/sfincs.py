@@ -3749,13 +3749,13 @@ class SfincsModel(GridModel):
                             gdf_riv[key] = gdf_riv[key].fillna(value)
                 dd.update({"gdf_riv": gdf_riv})
 
-                # parse bed_level on points
-                if "point_zb" in dataset:
-                    gdf_zb = self.data_catalog.get_geodataframe(
-                        dataset.get("point_zb"),
-                        geom=self.mask.raster.box,
-                    )
-                    dd.update({"gdf_zb": gdf_zb})
+            # parse bed_level on points
+            if "point_zb" in dataset:
+                gdf_zb = self.data_catalog.get_geodataframe(
+                    dataset.get("point_zb"),
+                    geom=self.mask.raster.box,
+                )
+                dd.update({"gdf_zb": gdf_zb})
 
             if "gdf_riv" in dd:
                 if (
