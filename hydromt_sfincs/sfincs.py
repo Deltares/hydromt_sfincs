@@ -292,7 +292,7 @@ class SfincsModel(GridModel):
         # create grid from region
         # NOTE keyword rotated is added to still have the possibility to create unrotated grids if needed (e.g. for FEWS?)
         if rotated:
-            geom = self.geoms["region"].unary_union
+            geom = self.geoms["region"].union_all()
             x0, y0, mmax, nmax, rot = utils.rotated_grid(
                 geom, res, dec_origin=dec_origin, dec_rotation=dec_rotation
             )
@@ -1072,11 +1072,11 @@ class SfincsModel(GridModel):
             if np.any(self.mask == 2) and btype == "outflow":
                 gdf_msk2 = utils.get_bounds_vector(self.mask)
                 # NOTE: this should be a single geom
-                geom = gdf_msk2[gdf_msk2["value"] == 2].unary_union
+                geom = gdf_msk2[gdf_msk2["value"] == 2].union_all()
                 gdf_out = gdf_out[~gdf_out.intersects(geom)]
             # remove outflow points near source points
             if "dis" in self.forcing and len(gdf_out) > 0:
-                geom = self.forcing["dis"].vector.to_gdf().unary_union
+                geom = self.forcing["dis"].vector.to_gdf().union_all()
                 gdf_out = gdf_out[~gdf_out.intersects(geom)]
 
         # update mask

@@ -39,9 +39,9 @@ class SubgridTableRegular:
 
         # get number of levels, point and uv points
         self.nlevels, self.nr_cells, self.nr_uv_points = (
-            ds.dims["levels"],
-            ds.dims["np"],
-            ds.dims["npuv"],
+            ds.sizes["levels"],
+            ds.sizes["np"],
+            ds.sizes["npuv"],
         )
 
         # find indices of active cells
