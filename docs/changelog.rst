@@ -6,22 +6,28 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
-v1.0.4 (Unreleased)
+v1.1.0 (Unreleased)
 ===================
 
 Added
 -----
 - improved subgrid tables that account for the wet fraction of the cell (#160)
 - add source points at headwater locations with `SfincsModel.setup_river_inflow` (#170)
+- it's now possible to provide a format/precision in `SfincsModel.write_forcing` (#197)
+- river bed levels for burn-in can now be provided at point locations in `SfincsModel.setup_subgrid` (#209)
 
 Changed
 -------
 - improved subgrid tables are saved as NetCDF (#160)
+- improved weighting of adjacent cells in u/v points for determining representative Manning roughness and conveyance depth (#200)
+- turned on "baro", the atmospheric pressure term in the momentum equation, in sfincs.inp by default (#208)
+- the expected variable names for wind and pressure forcing have been changed to "wind10_u", "wind10_v" and "press_msl" to match hydromt-core conventions (#211)
 
 Fixed
 -----
 - rounding errors in `workflows.tile_window` which resulted in erronuous slippy-tiles (#178)
 - "active geometry column to use has not been set" error for GeoDataFrame (#180)
+- added nodata value to raster before writing (#199)
 
 
 v1.0.3 (3 January 2024)
