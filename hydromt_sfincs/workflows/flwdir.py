@@ -1,4 +1,5 @@
 """Flow direction and river network workflows for SFINCS models."""
+
 import logging
 from typing import Tuple
 
@@ -82,7 +83,7 @@ def river_source_points(
     gdf_riv: gpd.GeoDataFrame,
     gdf_mask: gpd.GeoDataFrame,
     src_type: str = "inflow",
-    buffer: float = 100,
+    buffer: float = 200,
     river_upa: float = 10,
     river_len: float = 1e3,
     da_uparea: xr.DataArray = None,
@@ -109,7 +110,8 @@ def river_source_points(
         If 'outflow', return points where the river flows out of the model domain.
         If 'headwater', return all headwater (including inflow) points within the model domain.
     buffer: float, optional
-        Buffer around gdf_mask to select river source points, by default 100 m.
+        Buffer around gdf_mask to select river source points, by default 200 m.
+        Inflow points are moved to a downstream confluence if within the buffer.
     river_upa : float, optional
         Minimum upstream area threshold for rivers [km2], by default 10.0
     river_len: float, optional
@@ -143,6 +145,11 @@ def river_source_points(
 
     # clip river to model gdf_mask
     gdf_riv = gdf_riv.to_crs(gdf_mask.crs).clip(gdf_mask.union_all())
+    # keep only lines
+    gdf_riv = gdf_riv[
+        [t.endswith("LineString") for t in gdf_riv.geom_type]
+    ].reset_index(drop=True)
+
     # filter river network based on uparea and length
     if "uparea" in gdf_riv.columns:
         gdf_riv = gdf_riv[gdf_riv["uparea"] >= river_upa]
@@ -154,17 +161,19 @@ def river_source_points(
         )
         return gpd.GeoDataFrame()
 
+    # remove lines that fully are within the buffer of the mask boundary
+    bnd = gdf_mask.boundary.buffer(buffer).unary_union
+    gdf_riv = gdf_riv[~gdf_riv.within(bnd)]
+
     # get source points 1m before the start/end of the river
     # a positive dx results in a point near the start of the line (inflow)
     # a negative dx results in a point near the end of the line (outflow)
     dx = -1 if reverse_river_geom else 1
     gdf_up = gdf_riv.interpolate(dx).to_frame("geometry")
-    gdf_up["riv_idx"] = gdf_riv.index
     gdf_ds = gdf_riv.interpolate(-dx).to_frame("geometry")
-    gdf_ds["riv_idx"] = gdf_riv.index
 
     # get points that do not intersect with up/downstream end of other river segments
-    # use a small buffer of 5m around these points to account for dx and avoid issues with inprecise river geometries
+    # use a small buffer of 5m around these points to account for dx and avoid issues with imprecise river geometries
     if src_type in ["inflow", "headwater"]:
         pnts_ds = gdf_ds.buffer(5).union_all()
         gdf_pnt = gdf_up[~gdf_up.intersects(pnts_ds)].reset_index(drop=True)
@@ -174,7 +183,6 @@ def river_source_points(
 
     # get buffer around gdf_mask, in- and outflow points should be within this buffer
     if src_type in ["inflow", "outflow"]:
-        bnd = gdf_mask.boundary.buffer(buffer).union_all()
         gdf_pnt = gdf_pnt[gdf_pnt.intersects(bnd)].reset_index(drop=True)
 
     # log numer of source points

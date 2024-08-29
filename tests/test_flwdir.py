@@ -39,20 +39,20 @@ def test_river_source_points(hydrography, data_catalog):
     assert gdf_src.index.size == 6
     gdf_src = river_source_points(src_type="outflow", da_uparea=da_uparea, **kwargs)
     assert gdf_src.index.size == 1
-    assert np.isin(["geometry", "riv_idx", "uparea"], gdf_src.columns).all()
+    assert np.isin(["geometry", "uparea"], gdf_src.columns).all()
+    np.allclose(gdf_src.geometry[0].coords[:], [(322650.3, 5044385.7)])
 
     # test reverse oriented line
     gdf_riv = data_catalog.get_geodataframe("rivers_lin2019_v1")
     kwargs = dict(gdf_riv=gdf_riv, gdf_mask=gdf_mask, reverse_river_geom=True)
     gdf_src = river_source_points(src_type="inflow", **kwargs)
     assert gdf_src.index.size == 1  # this data only one river
-    assert gdf_src["riv_idx"].values[0] == 38
+    np.allclose(gdf_src.geometry[0].coords[:], [(322650.3, 5044385.7)])
     gdf_src = river_source_points(src_type="outflow", **kwargs)
+    np.allclose(gdf_src.geometry[0].coords[:], [(322554.0, 5044434.7)])
     assert gdf_src.index.size == 1  # this data only one river
-    assert gdf_src["riv_idx"].values[0] == 34
     gdf_src = river_source_points(src_type="headwater", **kwargs)
     assert gdf_src.index.size == 2
-    assert np.isin(38, gdf_src["riv_idx"].values)
 
     # test errors
     with pytest.raises(ValueError, match="src_type must be either"):

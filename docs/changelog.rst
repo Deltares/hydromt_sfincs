@@ -20,6 +20,8 @@ Changed
 -------
 - improved subgrid tables are saved as NetCDF (#160)
 - improved weighting of adjacent cells in u/v points for determining representative Manning roughness and conveyance depth (#200)
+- In `SfincsModel.setup_river_inflow`, in case of a confluence within a user-defined buffer of the
+  model boundary, the confluence rather than both tributaries is selected as inflow point. (#202)
 - turned on "baro", the atmospheric pressure term in the momentum equation, in sfincs.inp by default (#208)
 - the expected variable names for wind and pressure forcing have been changed to "wind10_u", "wind10_v" and "press_msl" to match hydromt-core conventions (#211)
 
