@@ -3718,6 +3718,7 @@ class SfincsModel(GridModel):
             "mask",
             "gdf_riv",
             "gdf_riv_mask",
+            "gdf_zb",
             "point_zb"
         ]
         copy_keys = []
@@ -3746,11 +3747,21 @@ class SfincsModel(GridModel):
                             gdf_riv[key] = value
                         elif np.any(np.isnan(gdf_riv[key])):  # fill na
                             gdf_riv[key] = gdf_riv[key].fillna(value)
-                if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any() and dataset["point_zb"] is None:
+                dd.update({"gdf_riv": gdf_riv})
+
+                # parse bed_level on points
+                if "point_zb" in dataset:
+                    gdf_zb = self.data_catalog.get_geodataframe(
+                        dataset.get("point_zb"),
+                        geom=self.mask.raster.box,
+                    )
+                    dd.update({"gdf_zb": gdf_zb})
+    
+            if "gdf_riv" in dd:
+                if not gdf_riv.columns.isin(["rivbed", "rivdph"]).any() and dd["gdf_zb"] is None:
                     raise ValueError("No 'rivbed' or 'rivdph' attribute found.")
             else:
                 raise ValueError("No 'centerlines' dataset provided.")
-            dd.update({"gdf_riv": gdf_riv})
 
             # parse mask
             if "mask" in dataset:
@@ -3764,17 +3775,6 @@ class SfincsModel(GridModel):
                     "Either mask must be provided or centerlines "
                     "should contain a 'rivwth' attribute."
                 )
-            # parse bedlevel
-
-            if "point_zb" in dataset:
-                gdf_zb = self.data_catalog.get_geodataframe(
-                    dataset.get("point_zb"),
-                    geom=self.mask.raster.box,
-                )
-                dd.update({"gdf_zb": gdf_zb})
-            elif not gdf_riv.columns.isin(["rivbed", "rivdph"]).any():
-                raise ValueError("No 'rivbed' or 'rivdph' attribute found.")
-
             # copy remaining keys
             for key, value in dataset.items():
                 if key in copy_keys and key not in dd:
