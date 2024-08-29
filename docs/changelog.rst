@@ -17,6 +17,8 @@ Added
 Changed
 -------
 - improved subgrid tables are saved as NetCDF (#160)
+- In `SfincsModel.setup_river_inflow`, in case of a confluence within a user-defined buffer of the
+  model boundary the confluence rather than both tributaries is selected as inflow point. (#202)
 
 Fixed
 -----

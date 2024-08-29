@@ -1,4 +1,5 @@
 """Flow direction and river network workflows for SFINCS models."""
+
 import logging
 from typing import Tuple
 
@@ -169,9 +170,7 @@ def river_source_points(
     # a negative dx results in a point near the end of the line (outflow)
     dx = -1 if reverse_river_geom else 1
     gdf_up = gdf_riv.interpolate(dx).to_frame("geometry")
-    gdf_up["riv_idx"] = gdf_riv.index
     gdf_ds = gdf_riv.interpolate(-dx).to_frame("geometry")
-    gdf_ds["riv_idx"] = gdf_riv.index
 
     # get points that do not intersect with up/downstream end of other river segments
     # use a small buffer of 5m around these points to account for dx and avoid issues with imprecise river geometries
