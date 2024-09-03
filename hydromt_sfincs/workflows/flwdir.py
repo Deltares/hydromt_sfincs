@@ -162,7 +162,7 @@ def river_source_points(
         return gpd.GeoDataFrame()
 
     # remove lines that fully are within the buffer of the mask boundary
-    bnd = gdf_mask.boundary.buffer(buffer).unary_union
+    bnd = gdf_mask.boundary.buffer(buffer).union_all()
     gdf_riv = gdf_riv[~gdf_riv.within(bnd)]
 
     # get source points 1m before the start/end of the river
