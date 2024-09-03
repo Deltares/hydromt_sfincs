@@ -3597,7 +3597,8 @@ class SfincsModel(GridModel):
                 try:
                     da_elv = self.data_catalog.get_rasterdataset(
                         dataset.get("elevtn", dataset.get("da")),
-                        bbox=self.mask.raster.transform_bounds(4326),
+                        # bbox=self.mask.raster.transform_bounds(4326),
+                        geom=self.region,
                         buffer=10,
                         variables=["elevtn"],
                         zoom_level=(res, "meter"),

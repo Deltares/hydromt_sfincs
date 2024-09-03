@@ -8,6 +8,7 @@ from typing import List, Union
 
 import geopandas as gpd
 import numpy as np
+import matplotlib.pyplot as plt
 import xarray as xr
 from affine import Affine
 from PIL import Image
@@ -30,6 +31,7 @@ def downscale_floodmap_webmercator(
     fmt_in: str = "bin",
     fmt_out: str = "png",
     merge: bool = True,  # FIXME: this is not implemented yet
+    interpreter: str = "terrarium",
 ):
     """Create a downscaled floodmap for (model) region in webmercator tile format
 
@@ -55,6 +57,9 @@ def downscale_floodmap_webmercator(
         Merge floodmap tiles with existing floodmap tiles
         (this could for example happen when there is overlap between models),
         by default True
+    interpreter : str, optional
+        The interpreter used to convert between elevation and RGB values,
+        by default "terrarium". Other option, "blues", is also available.
     """
 
     # if zsmax is an xarray, convert to numpy array
@@ -125,7 +130,10 @@ def downscale_floodmap_webmercator(
                     fid.write(hmax)
                     fid.close()
                 elif fmt_out == "png":
-                    elevation2png(hmax, floodmap_fn)
+                    if interpreter == "terrarium":
+                        elevation2png(hmax, floodmap_fn)
+                    elif interpreter == "blues":
+                        flood_depth2png(hmax, floodmap_fn, max_value=2)
 
 
 def create_topobathy_tiles(
@@ -357,14 +365,57 @@ def png2elevation(png_file):
 def elevation2png(val, png_file):
     """Convert elevation array to png using terrarium interpretation"""
 
-    rgb = np.zeros((256 * 256, 3), "uint8")
+    rgb = np.zeros((256 * 256, 4), "uint8")
     r, g, b = elevation2rgb(val)
 
     rgb[:, 0] = r.values.flatten()
     rgb[:, 1] = g.values.flatten()
     rgb[:, 2] = b.values.flatten()
+    rgb[:, 3] = 255
 
-    rgb = rgb.reshape([256, 256, 3])
+    rgb = rgb.reshape([256, 256, 4])
+
+    # Create PIL Image from RGB values and save as PNG
+    img = Image.fromarray(rgb)
+    img.save(png_file)
+
+
+def flood_depth2rgb(val, max_value):
+    """Convert flood depth to RGB tuple using the Blues colormap"""
+    # Ensure the value is within the 0 to 2 range
+    val = np.clip(val, 0, max_value)
+
+    # Normalize the value to be within the 0 to 1 range
+    normalized_val = val / max_value
+
+    # Get the RGB values from the Blues colormap
+    colormap = plt.cm.Blues
+    rgba = colormap(normalized_val)
+
+    # Convert the RGBA values to 8-bit RGB values
+    r = np.floor(rgba[0] * 255)
+    g = np.floor(rgba[1] * 255)
+    b = np.floor(rgba[2] * 255)
+
+    return (r, g, b)
+
+
+def flood_depth2png(val, png_file, max_value=2):
+    """Convert flood depth array to PNG using Blues colormap interpretation"""
+    # Initialize RGB array
+    rgb = np.zeros((256 * 256, 4), "uint8")
+
+    # Get RGB values for the flood depth array
+    r, g, b = flood_depth2rgb(val, max_value=max_value)
+
+    # Flatten and assign RGB values
+    rgb[:, 0] = r.flatten()
+    rgb[:, 1] = g.flatten()
+    rgb[:, 2] = b.flatten()
+    rgb[:, 3] = 255
+
+    # Reshape to 256x256 image
+    rgb = rgb.reshape([256, 256, 4])
 
     # Create PIL Image from RGB values and save as PNG
     img = Image.fromarray(rgb)
