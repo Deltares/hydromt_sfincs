@@ -431,8 +431,8 @@ class SubgridTableRegular:
             Threshold depth in SFINCS model, by default 0.01 m
         q_table_option : int, optional
             Option for the computation of the conveyance depth at u/v points, by default 2.
-            1: "old" method, compliant with SFINCS < v2.1.0
-            2: "new" method, recommended for SFINCS >= v2.1.0
+            1: "old" method, compliant with SFINCS < v2.1.
+            2: "new" method, recommended for SFINCS >= v2.1.
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea,
             by default 0.04 and 0.02 s.m-1/3
@@ -1066,7 +1066,7 @@ def subgrid_q_table(
     # Determine level size (metres)
     dlevel = (zmax - zmin) / (nlevels - 1)
 
-    # Option can be either 1 ("old, compliant with SFINCS < v2.1.0") or 2 ("new", recommended SFINCS >= v2.1.0)
+    # Option can be either 1 ("old, compliant with SFINCS < v2.1.") or 2 ("new", recommended SFINCS >= v2.1.)
     option = option
 
     # Loop through levels
