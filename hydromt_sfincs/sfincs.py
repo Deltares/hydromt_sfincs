@@ -61,7 +61,7 @@ class SfincsModel(GridModel):
         "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
         "wind_2d": (
             "netamuamv",
-            {"eastward_wind": "wind_u", "northward_wind": "wind_v"},
+            {"eastward_wind": "wind10_u", "northward_wind": "wind10_v"},
         ),
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
@@ -87,8 +87,8 @@ class SfincsModel(GridModel):
         "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
         "precip_2d": {"standard_name": "precipitation", "unit": "mm.hr-1"},
         "press_2d": {"standard_name": "barometric pressure", "unit": "Pa"},
-        "wind_u": {"standard_name": "eastward wind", "unit": "m/s"},
-        "wind_v": {"standard_name": "northward wind", "unit": "m/s"},
+        "wind10_u": {"standard_name": "eastward wind", "unit": "m/s"},
+        "wind10_v": {"standard_name": "northward wind", "unit": "m/s"},
         "wnd": {"standard_name": "wind", "unit": "m/s"},
     }
 
