@@ -619,7 +619,7 @@ class SfincsModel(GridModel):
         nbins: int = None,
         nr_subgrid_pixels: int = 20,
         nrmax: int = 2000,  # blocksize
-        max_gradient: float = 999.0,
+        max_gradient: float = 99999.0,
         z_minimum: float = -99999.0,
         huthresh: float = 0.01,
         q_table_option: int = 2,
@@ -716,9 +716,9 @@ class SfincsModel(GridModel):
         huthresh : float, optional
             Threshold depth in SFINCS model, by default 0.01 m
         q_table_option : int, optional
-            Option for the computation of the conveyance depth at u/v points, by default 2.
-            1: "old" method, compliant with SFINCS < v2.1.
-            2: "new" method, recommended for SFINCS >= v2.1.
+            Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.
+            1: "old" weighting method, compliant with SFINCS < v2.1.1, taking the avarage of the adjacent cells
+            2: "improved" weighting method, recommended for SFINCS >= v2.1.1, that takes into account the wet fractions of the adjacent cells
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
             Note that these values are only used when no Manning's n datasets are provided,
@@ -761,6 +761,11 @@ class SfincsModel(GridModel):
                 "Keyword nbins is deprecated and will be removed in future versions. Please use nlevels instead."
             )
             nlevels = nbins
+
+        if q_table_option == 1 and max_gradient > 20.0:
+            raise ValueError(
+                "For the old q_table_option, a max_gradient of 5.0 is recommended to improve numerical stability"
+            )
 
         if self.grid_type == "regular":
             self.reggrid.subgrid.build(
