@@ -371,9 +371,10 @@ class SubgridTableRegular:
         nlevels: int = 10,
         nr_subgrid_pixels: int = 20,
         nrmax: int = 2000,
-        max_gradient: float = 5.0,
+        max_gradient: float = 99999.0,
         z_minimum: float = -99999.0,
         huthresh: float = 0.01,
+        q_table_option: int = 2,
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
@@ -428,6 +429,10 @@ class SubgridTableRegular:
             Minimum depth in the subgrid tables, by default -99999.0
         huthresh : float, optional
             Threshold depth in SFINCS model, by default 0.01 m
+        q_table_option : int, optional
+            Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.
+            1: "old" weighting method, compliant with SFINCS < v2.1.0, taking the avarage of the adjecent cells
+            2: "improved" weighting method, recommended for SFINCS >= v2.1.0, that takes into account the wet fractions of the adjacent cells
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea,
             by default 0.04 and 0.02 s.m-1/3
@@ -716,6 +721,7 @@ class SubgridTableRegular:
                     yg,
                     max_gradient,
                     huthresh,
+                    q_table_option,
                     da_mask.raster.crs.is_geographic,
                 )
 
@@ -797,6 +803,7 @@ def process_tile_regular(
     yg,
     max_gradient,
     huthresh,
+    q_table_option,
     is_geographic=False,
 ):
     """calculate subgrid properties for a single tile"""
@@ -864,7 +871,7 @@ def process_tile_regular(
             manning = manning_grid[nn : nn + refi, mm : mm + refi]
             manning = np.transpose(manning)
             zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(
-                zgu.flatten(), manning.flatten(), nlevels, huthresh
+                zgu.flatten(), manning.flatten(), nlevels, huthresh, q_table_option
             )
             u_zmin[n, m] = zmin
             u_zmax[n, m] = zmax
@@ -880,7 +887,7 @@ def process_tile_regular(
             zgu = zg[nn : nn + refi, mm : mm + refi]
             manning = manning_grid[nn : nn + refi, mm : mm + refi]
             zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(
-                zgu.flatten(), manning.flatten(), nlevels, huthresh
+                zgu.flatten(), manning.flatten(), nlevels, huthresh, q_table_option
             )
             v_zmin[n, m] = zmin
             v_zmax[n, m] = zmax
@@ -952,7 +959,7 @@ def subgrid_v_table(
     zvolmin: float
         minimum elevation value to use for volume calculation (typically -20 m)
     max_gradient: float
-        maximum gradient to use for volume calculation (typically 0.1)
+        maximum gradient to use for volume calculation
 
     Return
     ------
@@ -1000,7 +1007,11 @@ def subgrid_v_table(
 
 @njit
 def subgrid_q_table(
-    elevation: np.ndarray, manning: np.ndarray, nlevels: int, huthresh: float
+    elevation: np.ndarray,
+    manning: np.ndarray,
+    nlevels: int,
+    huthresh: float,
+    option: int,
 ):
     """
     map vector of elevation values into a hypsometric hydraulic radius - depth relationship for one u/v point
@@ -1010,6 +1021,8 @@ def subgrid_q_table(
     manning : np.ndarray (nr of pixels in one cell) containing subgrid manning roughness values for one grid cell [s m^(-1/3)]
     nlevels : int, number of vertical levels [-]
     huthresh : float, threshold depth [m]
+    option : int, option to use "old" or "new" method for computing conveyance depth at u/v points
+
     Returns
     -------
     zmin : float, minimum elevation [m]
@@ -1053,46 +1066,62 @@ def subgrid_q_table(
     # Determine level size (metres)
     dlevel = (zmax - zmin) / (nlevels - 1)
 
-    # Grid mean roughness
-    navg = np.mean(manning)
+    # Option can be either 1 ("old, compliant with SFINCS < v2.1.0") or 2 ("new", recommended SFINCS >= v2.1.0)
+    option = option
 
     # Loop through levels
-    for ilevel in range(nlevels):
-        # Top of level
-        zlevel = zmin + ilevel * dlevel
-        zz[ilevel] = zlevel
+    for ibin in range(nlevels):
+        # Top of bin
+        zbin = zmin + ibin * dlevel
+        zz[ibin] = zbin
 
-        # ibelow = np.where(elevation<=zlevel)                           # index of pixels below level level
-        h = np.maximum(zlevel - elevation, 0.0)  # water depth in each pixel
-        iwet = np.where(zlevel - elevation > -1.0e-6)[0]  # indices of wet pixels
-        hmean = np.mean(h)
-        havg[ilevel] = hmean  # conveyance depth
-        pwet[ilevel] = len(iwet) / n  # wet fraction
+        h = np.maximum(zbin - elevation, 0.0)  # water depth in each pixel
+
+        pwet[ibin] = (zbin - elevation > -1.0e-6).sum() / n
 
         # Side A
         h_a = np.maximum(
-            zlevel - dd_a, 0.0
+            zbin - dd_a, 0.0
         )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
         q_a = h_a ** (5.0 / 3.0) / manning_a  # Determine 'flux' for each pixel
-        q_a = np.mean(q_a)  # Wet-average flux through all the pixels
+        q_a = np.mean(q_a)  # Grid-average flux through all the pixels
+        h_a = np.mean(h_a)  # Grid-average depth through all the pixels
 
         # Side B
         h_b = np.maximum(
-            zlevel - dd_b, 0.0
+            zbin - dd_b, 0.0
         )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
         q_b = h_b ** (5.0 / 3.0) / manning_b  # Determine 'flux' for each pixel
-        q_b = np.mean(q_b)  # Wet-average flux through all the pixels
+        q_b = np.mean(q_b)  # Grid-average flux through all the pixels
+        h_b = np.mean(h_b)  # Grid-average depth through all the pixels
 
-        q_ab = np.minimum(q_a, q_b)
+        # Compute q and h
+        q_all = np.mean(
+            h ** (5.0 / 3.0) / manning
+        )  # Determine grid average 'flux' for each pixel
+        h_all = np.mean(h)  # grid averaged depth of A and B combined
+        q_min = np.minimum(q_a, q_b)
+        h_min = np.minimum(h_a, h_b)
 
-        q_all = h ** (5.0 / 3.0) / manning  # Determine 'flux' for each pixel
-        q_all = np.mean(q_all)  # Wet-average flux through all the pixels
+        if option == 1:
+            # Use old 1 option (weighted average of q_ab and q_all) option (min at bottom bin, mean at top bin)
+            w = (ibin) / (
+                nlevels - 1
+            )  # Weight (increase from 0 to 1 from bottom to top bin)
+            q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
+            hmean = h_all
 
-        # Weighted average of q_ab and q_all
-        w = (ilevel) / (nlevels - 1)
-        q = (1.0 - w) * q_ab + w * q_all
+        elif option == 2:
+            # Use newer 2 option (minimum of q_a an q_b, minimum of h_a and h_b increasing to h_all, using pwet for weighting) option
+            pwet_a = (zbin - dd_a > -1.0e-6).sum() / (n / 2)
+            pwet_b = (zbin - dd_b > -1.0e-6).sum() / (n / 2)
+            # Weight increases linearly from 0 to 1 from bottom to top bin use percentage wet in sides A and B
+            w = 2 * np.minimum(pwet_a, pwet_b) / (pwet_a + pwet_b)
+            q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
+            hmean = (1.0 - w) * h_min + w * h_all  # Weighted average of h_min and h_all
 
-        nrep[ilevel] = hmean ** (5.0 / 3.0) / q  # Representative n for qmean and hmean
+        havg[ibin] = hmean  # conveyance depth
+        nrep[ibin] = hmean ** (5.0 / 3.0) / q  # Representative n for qmean and hmean
 
     nrep_top = nrep[-1]
     havg_top = havg[-1]
@@ -1101,14 +1130,16 @@ def subgrid_q_table(
 
     # Determine nfit at zfit
     zfit = zmax + zmax - zmin
-    h = np.maximum(zfit - elevation, 0.0)  # water depth in each pixel
     hfit = (
         havg_top + zmax - zmin
     )  # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
-    q = h ** (5.0 / 3.0) / manning  # unit discharge in each pixel
-    qmean = np.mean(q)  # combined unit discharge for cell
 
-    nfit = hfit ** (5.0 / 3.0) / qmean
+    # Compute q and navg
+    h = np.maximum(zfit - elevation, 0.0)  # water depth in each pixel
+    q = np.mean(h ** (5.0 / 3.0) / manning)  # combined unit discharge for cell
+    navg = np.mean(manning)
+
+    nfit = hfit ** (5.0 / 3.0) / q
 
     # Actually apply fit on gn2 (this is what is used in sfincs)
     gnavg2 = 9.81 * navg**2
