@@ -716,8 +716,8 @@ class SfincsModel(GridModel):
             Threshold depth in SFINCS model, by default 0.01 m
         q_table_option : int, optional
             Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.
-            1: "old" weighting method, compliant with SFINCS < v2.1.0, taking the avarage of the adjacent cells
-            2: "improved" weighting method, recommended for SFINCS >= v2.1.0, that takes into account the wet fractions of the adjacent cells
+            1: "old" weighting method, compliant with SFINCS < v2.1.1, taking the avarage of the adjacent cells
+            2: "improved" weighting method, recommended for SFINCS >= v2.1.1, that takes into account the wet fractions of the adjacent cells
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
             Note that these values are only used when no Manning's n datasets are provided,
