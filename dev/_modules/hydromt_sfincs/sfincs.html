@@ -1061,8 +1061,10 @@
         <span class="n">nbins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">nr_subgrid_pixels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">nrmax</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>  <span class="c1"># blocksize</span>
-        <span class="n">max_gradient</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
+        <span class="n">max_gradient</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">99999.0</span><span class="p">,</span>
         <span class="n">z_minimum</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">99999.0</span><span class="p">,</span>
+        <span class="n">huthresh</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">q_table_option</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
         <span class="n">manning_land</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.04</span><span class="p">,</span>
         <span class="n">manning_sea</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
         <span class="n">rgh_lev_land</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
@@ -1153,6 +1155,12 @@
 <span class="sd">            to prevent numerical stability problems, by default 5.0</span>
 <span class="sd">        z_minimum : float, optional</span>
 <span class="sd">            Minimum depth in the subgrid tables, by default -99999.0</span>
+<span class="sd">        huthresh : float, optional</span>
+<span class="sd">            Threshold depth in SFINCS model, by default 0.01 m</span>
+<span class="sd">        q_table_option : int, optional</span>
+<span class="sd">            Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.</span>
+<span class="sd">            1: &quot;old&quot; weighting method, compliant with SFINCS &lt; v2.1.1, taking the avarage of the adjacent cells</span>
+<span class="sd">            2: &quot;improved&quot; weighting method, recommended for SFINCS &gt;= v2.1.1, that takes into account the wet fractions of the adjacent cells</span>
 <span class="sd">        manning_land, manning_sea : float, optional</span>
 <span class="sd">            Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3</span>
 <span class="sd">            Note that these values are only used when no Manning&#39;s n datasets are provided,</span>
@@ -1196,6 +1204,11 @@
             <span class="p">)</span>
             <span class="n">nlevels</span> <span class="o">=</span> <span class="n">nbins</span>
 
+        <span class="k">if</span> <span class="n">q_table_option</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">max_gradient</span> <span class="o">&gt;</span> <span class="mf">20.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;For the old q_table_option, a max_gradient of 5.0 is recommended to improve numerical stability&quot;</span>
+            <span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">subgrid</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
                 <span class="n">da_mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
@@ -1208,6 +1221,8 @@
                 <span class="n">nrmax</span><span class="o">=</span><span class="n">nrmax</span><span class="p">,</span>
                 <span class="n">max_gradient</span><span class="o">=</span><span class="n">max_gradient</span><span class="p">,</span>
                 <span class="n">z_minimum</span><span class="o">=</span><span class="n">z_minimum</span><span class="p">,</span>
+                <span class="n">huthresh</span><span class="o">=</span><span class="n">huthresh</span><span class="p">,</span>
+                <span class="n">q_table_option</span><span class="o">=</span><span class="n">q_table_option</span><span class="p">,</span>
                 <span class="n">manning_land</span><span class="o">=</span><span class="n">manning_land</span><span class="p">,</span>
                 <span class="n">manning_sea</span><span class="o">=</span><span class="n">manning_sea</span><span class="p">,</span>
                 <span class="n">rgh_lev_land</span><span class="o">=</span><span class="n">rgh_lev_land</span><span class="p">,</span>
