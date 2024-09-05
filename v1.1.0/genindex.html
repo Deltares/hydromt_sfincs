@@ -1,0 +1,831 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index &#8212; HydroMT SFINCS  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="_static/theme-deltares.css?v=17060807" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="_static/hydromt-icon.svg" class="logo__image only-light" alt=""/>
+    <script>document.write(`<img src="_static/hydromt-icon.svg" class="logo__image only-dark" alt=""/>`);</script>
+  
+  
+    <p class="title logo__title">HydroMT SFINCS</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none"></div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#_"><strong>_</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#W"><strong>W</strong></a>
+ 
+</div>
+<h2 id="_">_</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel.__init__">__init__() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.build.html#hydromt_sfincs.SfincsModel.build">build() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.workflows.burn_river_rect.html#hydromt_sfincs.workflows.burn_river_rect">burn_river_rect() (in module hydromt_sfincs.workflows)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.workflows.cn_to_s.html#hydromt_sfincs.workflows.cn_to_s">cn_to_s() (in module hydromt_sfincs.workflows)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.config.html#hydromt_sfincs.SfincsModel.config">config (hydromt_sfincs.SfincsModel property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.workflows.create_topobathy_tiles.html#hydromt_sfincs.workflows.create_topobathy_tiles">create_topobathy_tiles() (in module hydromt_sfincs.workflows)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.crs.html#hydromt_sfincs.SfincsModel.crs">crs (hydromt_sfincs.SfincsModel property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.utils.downscale_floodmap.html#hydromt_sfincs.utils.downscale_floodmap">downscale_floodmap() (in module hydromt_sfincs.utils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.workflows.downscale_floodmap_webmercator.html#hydromt_sfincs.workflows.downscale_floodmap_webmercator">downscale_floodmap_webmercator() (in module hydromt_sfincs.workflows)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.forcing.html#hydromt_sfincs.SfincsModel.forcing">forcing (hydromt_sfincs.SfincsModel property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.utils.gdf2linestring.html#hydromt_sfincs.utils.gdf2linestring">gdf2linestring() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.gdf2polygon.html#hydromt_sfincs.utils.gdf2polygon">gdf2polygon() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.geoms.html#hydromt_sfincs.SfincsModel.geoms">geoms (hydromt_sfincs.SfincsModel property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.utils.get_bounds_vector.html#hydromt_sfincs.utils.get_bounds_vector">get_bounds_vector() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.get_config.html#hydromt_sfincs.SfincsModel.get_config">get_config() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.get_model_time.html#hydromt_sfincs.SfincsModel.get_model_time">get_model_time() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.grid.html#hydromt_sfincs.SfincsModel.grid">grid (hydromt_sfincs.SfincsModel property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    hydromt_sfincs.workflows.landuse
+
+      <ul>
+        <li><a href="_generated/hydromt_sfincs.workflows.landuse.html#module-hydromt_sfincs.workflows.landuse">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.utils.linestring2gdf.html#hydromt_sfincs.utils.linestring2gdf">linestring2gdf() (in module hydromt_sfincs.utils)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.mask.html#hydromt_sfincs.SfincsModel.mask">mask (hydromt_sfincs.SfincsModel property)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.mask2gdf.html#hydromt_sfincs.utils.mask2gdf">mask2gdf() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.workflows.merge_dataarrays.html#hydromt_sfincs.workflows.merge_dataarrays">merge_dataarrays() (in module hydromt_sfincs.workflows)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.workflows.merge_multi_dataarrays.html#hydromt_sfincs.workflows.merge_multi_dataarrays">merge_multi_dataarrays() (in module hydromt_sfincs.workflows)</a>
+</li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="_generated/hydromt_sfincs.workflows.landuse.html#module-hydromt_sfincs.workflows.landuse">hydromt_sfincs.workflows.landuse</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.utils.parse_datetime.html#hydromt_sfincs.utils.parse_datetime">parse_datetime() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.plot_basemap.html#hydromt_sfincs.SfincsModel.plot_basemap">plot_basemap() (hydromt_sfincs.SfincsModel method)</a>
+
+      <ul>
+        <li><a href="_generated/hydromt_sfincs.plots.plot_basemap.html#hydromt_sfincs.plots.plot_basemap">(in module hydromt_sfincs.plots)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing">plot_forcing() (hydromt_sfincs.SfincsModel method)</a>
+
+      <ul>
+        <li><a href="_generated/hydromt_sfincs.plots.plot_forcing.html#hydromt_sfincs.plots.plot_forcing">(in module hydromt_sfincs.plots)</a>
+</li>
+      </ul></li>
+      <li><a href="_generated/hydromt_sfincs.utils.polygon2gdf.html#hydromt_sfincs.utils.polygon2gdf">polygon2gdf() (in module hydromt_sfincs.utils)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.read.html#hydromt_sfincs.SfincsModel.read">read() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.read_ascii_map.html#hydromt_sfincs.utils.read_ascii_map">read_ascii_map() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.read_binary_map.html#hydromt_sfincs.utils.read_binary_map">read_binary_map() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.read_binary_map_index.html#hydromt_sfincs.utils.read_binary_map_index">read_binary_map_index() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.read_config.html#hydromt_sfincs.SfincsModel.read_config">read_config() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.read_drn.html#hydromt_sfincs.utils.read_drn">read_drn() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.read_forcing.html#hydromt_sfincs.SfincsModel.read_forcing">read_forcing() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.read_geoms.html#hydromt_sfincs.SfincsModel.read_geoms">read_geoms() (hydromt_sfincs.SfincsModel method)</a>
+
+      <ul>
+        <li><a href="_generated/hydromt_sfincs.utils.read_geoms.html#hydromt_sfincs.utils.read_geoms">(in module hydromt_sfincs.utils)</a>
+</li>
+      </ul></li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.read_grid.html#hydromt_sfincs.SfincsModel.read_grid">read_grid() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.read_results.html#hydromt_sfincs.SfincsModel.read_results">read_results() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.read_sfincs_his_results.html#hydromt_sfincs.utils.read_sfincs_his_results">read_sfincs_his_results() (in module hydromt_sfincs.utils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.utils.read_sfincs_map_results.html#hydromt_sfincs.utils.read_sfincs_map_results">read_sfincs_map_results() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.read_states.html#hydromt_sfincs.SfincsModel.read_states">read_states() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.read_subgrid.html#hydromt_sfincs.SfincsModel.read_subgrid">read_subgrid() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.read_timeseries.html#hydromt_sfincs.utils.read_timeseries">read_timeseries() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.read_xy.html#hydromt_sfincs.utils.read_xy">read_xy() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.read_xyn.html#hydromt_sfincs.utils.read_xyn">read_xyn() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.region.html#hydromt_sfincs.SfincsModel.region">region (hydromt_sfincs.SfincsModel property)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.res.html#hydromt_sfincs.SfincsModel.res">res (hydromt_sfincs.SfincsModel property)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.results.html#hydromt_sfincs.SfincsModel.results">results (hydromt_sfincs.SfincsModel property)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.workflows.river_centerline_from_hydrography.html#hydromt_sfincs.workflows.river_centerline_from_hydrography">river_centerline_from_hydrography() (in module hydromt_sfincs.workflows)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.workflows.river_source_points.html#hydromt_sfincs.workflows.river_source_points">river_source_points() (in module hydromt_sfincs.workflows)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.root.html#hydromt_sfincs.SfincsModel.root">root (hydromt_sfincs.SfincsModel property)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.rotated_grid.html#hydromt_sfincs.utils.rotated_grid">rotated_grid() (in module hydromt_sfincs.utils)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.set_config.html#hydromt_sfincs.SfincsModel.set_config">set_config() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.set_forcing.html#hydromt_sfincs.SfincsModel.set_forcing">set_forcing() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.set_forcing_1d.html#hydromt_sfincs.SfincsModel.set_forcing_1d">set_forcing_1d() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.set_geoms.html#hydromt_sfincs.SfincsModel.set_geoms">set_geoms() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.set_grid.html#hydromt_sfincs.SfincsModel.set_grid">set_grid() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.set_results.html#hydromt_sfincs.SfincsModel.set_results">set_results() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.set_root.html#hydromt_sfincs.SfincsModel.set_root">set_root() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.set_states.html#hydromt_sfincs.SfincsModel.set_states">set_states() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration">setup_cn_infiltration() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks">setup_cn_infiltration_with_ks() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_config.html#hydromt_sfincs.SfincsModel.setup_config">setup_config() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_constant_infiltration.html#hydromt_sfincs.SfincsModel.setup_constant_infiltration">setup_constant_infiltration() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_dep.html#hydromt_sfincs.SfincsModel.setup_dep">setup_dep() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing">setup_discharge_forcing() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid">setup_discharge_forcing_from_grid() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_drainage_structures.html#hydromt_sfincs.SfincsModel.setup_drainage_structures">setup_drainage_structures() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_grid.html#hydromt_sfincs.SfincsModel.setup_grid">setup_grid() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_grid_from_region.html#hydromt_sfincs.SfincsModel.setup_grid_from_region">setup_grid_from_region() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_manning_roughness.html#hydromt_sfincs.SfincsModel.setup_manning_roughness">setup_manning_roughness() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_mask_active.html#hydromt_sfincs.SfincsModel.setup_mask_active">setup_mask_active() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_mask_bounds.html#hydromt_sfincs.SfincsModel.setup_mask_bounds">setup_mask_bounds() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_observation_lines.html#hydromt_sfincs.SfincsModel.setup_observation_lines">setup_observation_lines() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_observation_points.html#hydromt_sfincs.SfincsModel.setup_observation_points">setup_observation_points() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing.html#hydromt_sfincs.SfincsModel.setup_precip_forcing">setup_precip_forcing() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid">setup_precip_forcing_from_grid() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_pressure_forcing_from_grid">setup_pressure_forcing_from_grid() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_region.html#hydromt_sfincs.SfincsModel.setup_region">setup_region() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_river_inflow.html#hydromt_sfincs.SfincsModel.setup_river_inflow">setup_river_inflow() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_river_outflow.html#hydromt_sfincs.SfincsModel.setup_river_outflow">setup_river_outflow() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_storage_volume.html#hydromt_sfincs.SfincsModel.setup_storage_volume">setup_storage_volume() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures">setup_structures() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_subgrid.html#hydromt_sfincs.SfincsModel.setup_subgrid">setup_subgrid() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_tiles.html#hydromt_sfincs.SfincsModel.setup_tiles">setup_tiles() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask.html#hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask">setup_waterlevel_bnd_from_mask() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html#hydromt_sfincs.SfincsModel.setup_waterlevel_forcing">setup_waterlevel_forcing() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_wind_forcing.html#hydromt_sfincs.SfincsModel.setup_wind_forcing">setup_wind_forcing() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid">setup_wind_forcing_from_grid() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel">SfincsModel (class in hydromt_sfincs)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.workflows.snap_discharge.html#hydromt_sfincs.workflows.snap_discharge">snap_discharge() (in module hydromt_sfincs.workflows)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.states.html#hydromt_sfincs.SfincsModel.states">states (hydromt_sfincs.SfincsModel property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.update.html#hydromt_sfincs.SfincsModel.update">update() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.update_grid_from_config.html#hydromt_sfincs.SfincsModel.update_grid_from_config">update_grid_from_config() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.update_spatial_attrs.html#hydromt_sfincs.SfincsModel.update_spatial_attrs">update_spatial_attrs() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.write.html#hydromt_sfincs.SfincsModel.write">write() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.write_ascii_map.html#hydromt_sfincs.utils.write_ascii_map">write_ascii_map() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.write_binary_map.html#hydromt_sfincs.utils.write_binary_map">write_binary_map() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.write_binary_map_index.html#hydromt_sfincs.utils.write_binary_map_index">write_binary_map_index() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.write_config.html#hydromt_sfincs.SfincsModel.write_config">write_config() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.write_drn.html#hydromt_sfincs.utils.write_drn">write_drn() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.write_forcing.html#hydromt_sfincs.SfincsModel.write_forcing">write_forcing() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.write_geoms.html#hydromt_sfincs.SfincsModel.write_geoms">write_geoms() (hydromt_sfincs.SfincsModel method)</a>
+
+      <ul>
+        <li><a href="_generated/hydromt_sfincs.utils.write_geoms.html#hydromt_sfincs.utils.write_geoms">(in module hydromt_sfincs.utils)</a>
+</li>
+      </ul></li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.write_grid.html#hydromt_sfincs.SfincsModel.write_grid">write_grid() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.write_states.html#hydromt_sfincs.SfincsModel.write_states">write_states() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.SfincsModel.write_subgrid.html#hydromt_sfincs.SfincsModel.write_subgrid">write_subgrid() (hydromt_sfincs.SfincsModel method)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.write_timeseries.html#hydromt_sfincs.utils.write_timeseries">write_timeseries() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.write_xy.html#hydromt_sfincs.utils.write_xy">write_xy() (in module hydromt_sfincs.utils)</a>
+</li>
+      <li><a href="_generated/hydromt_sfincs.utils.write_xyn.html#hydromt_sfincs.utils.write_xyn">write_xyn() (in module hydromt_sfincs.utils)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright Deltares.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.4.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
