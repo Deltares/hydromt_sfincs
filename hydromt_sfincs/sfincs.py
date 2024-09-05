@@ -61,7 +61,7 @@ class SfincsModel(GridModel):
         "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
         "wind_2d": (
             "netamuamv",
-            {"eastward_wind": "wind_u", "northward_wind": "wind_v"},
+            {"eastward_wind": "wind10_u", "northward_wind": "wind10_v"},
         ),
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
@@ -87,8 +87,8 @@ class SfincsModel(GridModel):
         "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
         "precip_2d": {"standard_name": "precipitation", "unit": "mm.hr-1"},
         "press_2d": {"standard_name": "barometric pressure", "unit": "Pa"},
-        "wind_u": {"standard_name": "eastward wind", "unit": "m/s"},
-        "wind_v": {"standard_name": "northward wind", "unit": "m/s"},
+        "wind10_u": {"standard_name": "eastward wind", "unit": "m/s"},
+        "wind10_v": {"standard_name": "northward wind", "unit": "m/s"},
         "wnd": {"standard_name": "wind", "unit": "m/s"},
     }
 
@@ -292,7 +292,7 @@ class SfincsModel(GridModel):
         # create grid from region
         # NOTE keyword rotated is added to still have the possibility to create unrotated grids if needed (e.g. for FEWS?)
         if rotated:
-            geom = self.geoms["region"].unary_union
+            geom = self.geoms["region"].union_all()
             x0, y0, mmax, nmax, rot = utils.rotated_grid(
                 geom, res, dec_origin=dec_origin, dec_rotation=dec_rotation
             )
@@ -1079,11 +1079,11 @@ class SfincsModel(GridModel):
             if np.any(self.mask == 2) and btype == "outflow":
                 gdf_msk2 = utils.get_bounds_vector(self.mask)
                 # NOTE: this should be a single geom
-                geom = gdf_msk2[gdf_msk2["value"] == 2].unary_union
+                geom = gdf_msk2[gdf_msk2["value"] == 2].union_all()
                 gdf_out = gdf_out[~gdf_out.intersects(geom)]
             # remove outflow points near source points
             if "dis" in self.forcing and len(gdf_out) > 0:
-                geom = self.forcing["dis"].vector.to_gdf().unary_union
+                geom = self.forcing["dis"].vector.to_gdf().union_all()
                 gdf_out = gdf_out[~gdf_out.intersects(geom)]
 
         # update mask

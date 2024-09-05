@@ -56,7 +56,7 @@ def river_centerline_from_hydrography(
     gdf_riv = gpd.GeoDataFrame.from_features(feats, crs=da_flwdir.raster.crs)
     # clip to mask and remove empty geometries
     if gdf_mask is not None and isinstance(gdf_mask, gpd.GeoDataFrame):
-        gdf_riv = gdf_riv.to_crs(gdf_mask.crs).clip(gdf_mask.unary_union)
+        gdf_riv = gdf_riv.to_crs(gdf_mask.crs).clip(gdf_mask.union_all())
     gdf_riv = gdf_riv[~gdf_riv.is_empty]
     # create river network from gdf to get distance from outlet 'rivlen'
     # length of river segments
@@ -144,7 +144,7 @@ def river_source_points(
         gdf_mask = gdf_mask.to_crs("epsg:3857")
 
     # clip river to model gdf_mask
-    gdf_riv = gdf_riv.to_crs(gdf_mask.crs).clip(gdf_mask.unary_union)
+    gdf_riv = gdf_riv.to_crs(gdf_mask.crs).clip(gdf_mask.union_all())
     # keep only lines
     gdf_riv = gdf_riv[
         [t.endswith("LineString") for t in gdf_riv.geom_type]
@@ -162,7 +162,7 @@ def river_source_points(
         return gpd.GeoDataFrame()
 
     # remove lines that fully are within the buffer of the mask boundary
-    bnd = gdf_mask.boundary.buffer(buffer).unary_union
+    bnd = gdf_mask.boundary.buffer(buffer).union_all()
     gdf_riv = gdf_riv[~gdf_riv.within(bnd)]
 
     # get source points 1m before the start/end of the river
@@ -175,10 +175,10 @@ def river_source_points(
     # get points that do not intersect with up/downstream end of other river segments
     # use a small buffer of 5m around these points to account for dx and avoid issues with imprecise river geometries
     if src_type in ["inflow", "headwater"]:
-        pnts_ds = gdf_ds.buffer(5).unary_union
+        pnts_ds = gdf_ds.buffer(5).union_all()
         gdf_pnt = gdf_up[~gdf_up.intersects(pnts_ds)].reset_index(drop=True)
     elif src_type == "outflow":
-        pnts_up = gdf_up.buffer(5).unary_union
+        pnts_up = gdf_up.buffer(5).union_all()
         gdf_pnt = gdf_ds[~gdf_ds.intersects(pnts_up)].reset_index(drop=True)
 
     # get buffer around gdf_mask, in- and outflow points should be within this buffer

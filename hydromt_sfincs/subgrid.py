@@ -39,21 +39,17 @@ class SubgridTableRegular:
 
         # get number of levels, point and uv points
         self.nlevels, self.nr_cells, self.nr_uv_points = (
-            ds.dims["levels"],
-            ds.dims["np"],
-            ds.dims["npuv"],
+            ds.sizes["levels"],
+            ds.sizes["np"],
+            ds.sizes["npuv"],
         )
 
         # find indices of active cells
         index_nm, index_mu1, index_nu1 = utils.find_uv_indices(mask)
         active_indices = np.where(index_nm > -1)[0]
-        active_indices_u = np.where(index_mu1 > -1)[0]
-        active_indices_v = np.where(index_nu1 > -1)[0]
 
         # convert 1D indices to 2D indices
-        active_z = np.unravel_index(active_indices, grid_dim, order="F")
-        active_u = np.unravel_index(active_indices_u, grid_dim, order="F")
-        active_v = np.unravel_index(active_indices_v, grid_dim, order="F")
+        active_cells = np.unravel_index(active_indices, grid_dim, order="F")
 
         # Initialize the data-arrays
         # Z points
@@ -96,11 +92,11 @@ class SubgridTableRegular:
 
         # Now read the data and add it to the data-arrays
         # use index_nm of the active cells in the new dataset
-        self.z_zmin[active_z] = ds["z_zmin"].values.flatten()
-        self.z_zmax[active_z] = ds["z_zmax"].values.flatten()
-        self.z_volmax[active_z] = ds["z_volmax"].values.flatten()
+        self.z_zmin[active_cells] = ds["z_zmin"].values.flatten()
+        self.z_zmax[active_cells] = ds["z_zmax"].values.flatten()
+        self.z_volmax[active_cells] = ds["z_volmax"].values.flatten()
         for ilevel in range(self.nlevels):
-            self.z_level[ilevel, active_z[0], active_z[1]] = ds["z_level"][
+            self.z_level[ilevel, active_cells[0], active_cells[1]] = ds["z_level"][
                 ilevel
             ].values.flatten()
 
@@ -108,19 +104,47 @@ class SubgridTableRegular:
         var_list = ["zmin", "zmax", "ffit", "navg"]
         for var in var_list:
             uv_var = ds["uv_" + var].values.flatten()
-            self.u_zmin[active_u] = uv_var[index_mu1[active_indices_u]]
-            self.v_zmin[active_v] = uv_var[index_nu1[active_indices_v]]
+
+            # Dynamically set the attribute for self.u_var and self.v_var
+            u_attr_name = f"u_{var}"
+            v_attr_name = f"v_{var}"
+
+            # Retrieve the current attribute values
+            u_array = getattr(self, u_attr_name)
+            v_array = getattr(self, v_attr_name)
+
+            # Update only the active indices
+            u_array[active_cells] = uv_var[index_mu1[active_indices]]
+            v_array[active_cells] = uv_var[index_nu1[active_indices]]
+
+            # Set the modified arrays back to the attributes
+            setattr(self, u_attr_name, u_array)
+            setattr(self, v_attr_name, v_array)
 
         var_list_levels = ["havg", "nrep", "pwet"]
         for var in var_list_levels:
             for ilevel in range(self.nlevels):
                 uv_var = ds["uv_" + var][ilevel].values.flatten()
-                self.u_havg[ilevel, active_u[0], active_u[1]] = uv_var[
-                    index_mu1[active_indices_u]
+
+                # Dynamically set the attribute for self.u_var and self.v_var
+                u_attr_name = f"u_{var}"
+                v_attr_name = f"v_{var}"
+
+                # Retrieve the current attribute values
+                u_array = getattr(self, u_attr_name)
+                v_array = getattr(self, v_attr_name)
+
+                # Update only the active indices
+                u_array[ilevel, active_cells[0], active_cells[1]] = uv_var[
+                    index_mu1[active_indices]
                 ]
-                self.v_havg[ilevel, active_v[0], active_v[1]] = uv_var[
-                    index_nu1[active_indices_v]
+                v_array[ilevel, active_cells[0], active_cells[1]] = uv_var[
+                    index_nu1[active_indices]
                 ]
+
+                # Set the modified arrays back to the attributes
+                setattr(self, u_attr_name, u_array)
+                setattr(self, v_attr_name, v_array)
 
         # close the dataset
         ds.close()
@@ -431,8 +455,8 @@ class SubgridTableRegular:
             Threshold depth in SFINCS model, by default 0.01 m
         q_table_option : int, optional
             Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.
-            1: "old" weighting method, compliant with SFINCS < v2.1.0, taking the avarage of the adjecent cells
-            2: "improved" weighting method, recommended for SFINCS >= v2.1.0, that takes into account the wet fractions of the adjacent cells
+            1: "old" weighting method, compliant with SFINCS < v2.1.1, taking the avarage of the adjecent cells
+            2: "improved" weighting method, recommended for SFINCS >= v2.1.1, that takes into account the wet fractions of the adjacent cells
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea,
             by default 0.04 and 0.02 s.m-1/3
@@ -1066,7 +1090,7 @@ def subgrid_q_table(
     # Determine level size (metres)
     dlevel = (zmax - zmin) / (nlevels - 1)
 
-    # Option can be either 1 ("old, compliant with SFINCS < v2.1.0") or 2 ("new", recommended SFINCS >= v2.1.0)
+    # Option can be either 1 ("old, compliant with SFINCS < v2.1.") or 2 ("new", recommended SFINCS >= v2.1.)
     option = option
 
     # Loop through levels
