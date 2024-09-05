@@ -6,8 +6,15 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
-v1.1.0 (Unreleased)
+v1.1.0 (05-09-2024)
 ===================
+**This release contains some breaking changes and can only be used in combination with SFINCS versions ≥ 2.1.1
+`SFINCS model <https://github.com/Deltares/SFINCS/releases/tag/v2.1.1_Dollerup_release>`_.**
+
+The most important change is the implementation of a new subgrid methodology including wet fraction as in Van Ormondt et al. (2024, in review),
+which is now written as a NetCDF file! The old implementation is still available when providing the original binary file, but then all wet fractions are assumed to be 1.
+
+Next to this, some minor additions and bugfixes are made that improve the overall functionality of the package.
 
 Added
 -----
