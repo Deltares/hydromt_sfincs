@@ -6,6 +6,20 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+unreleased
+==========
+
+Added
+-----
+
+Changed
+-------
+
+Fixed
+-----
+- fixed a bug in `river_centerline_from_hydrography` in case there is only one river with a single segment
+
+
 v1.1.0 (05-09-2024)
 ===================
 **This release contains some breaking changes and can only be used in combination with
