@@ -43,7 +43,7 @@ class SfincsModel(GridModel):
         "weirs": "weir",
         "thin_dams": "thd",
         "drainage_structures": "drn",
-        "wavemaker": "wvm",        
+        "wavemaker": "wvm",
     }  # parsed to dict of geopandas.GeoDataFrame
     _FORCING_1D = {
         # timeseries (can be multiple), locations tuple
@@ -51,7 +51,7 @@ class SfincsModel(GridModel):
         "discharge": (["dis"], "src"),
         "precip": (["precip"], None),
         "wind": (["wnd"], None),
-        # "waves": (["bzi"], "bnd"), #--> #TODO: don't do that anymore for msk=2 cells   
+        # "waves": (["bzi"], "bnd"), #--> #TODO: don't do that anymore for msk=2 cells
         # "wavemaker_timeseries": (["wzi"], "wvm"),          # TODO check names and test > Question - is wvm here a multi polyline as a weir, or points as bnd?
     }
     _FORCING_NET = {
@@ -60,9 +60,19 @@ class SfincsModel(GridModel):
         "discharge": ("netsrcdis", {"discharge": "dis"}),
         "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
         "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
-        "wind_2d": ("netamuamv", {"eastward_wind": "wind_u", "northward_wind": "wind_v"}),
-        "snapwave": ("netsnapwave", {"hs":"hs", "tp":"tp", "wd":"wd", "ds": "ds"}),   
-        "wavemaker": ("netwavemaker", {"whi":"wavemaker_wave_height","wti":"wavemaker_wave_period","wst":"wavemaker_wave_setup"}),                                             
+        "wind_2d": (
+            "netamuamv",
+            {"eastward_wind": "wind_u", "northward_wind": "wind_v"},
+        ),
+        "snapwave": ("netsnapwave", {"hs": "hs", "tp": "tp", "wd": "wd", "ds": "ds"}),
+        "wavemaker": (
+            "netwavemaker",
+            {
+                "whi": "wavemaker_wave_height",
+                "wti": "wavemaker_wave_period",
+                "wst": "wavemaker_wave_setup",
+            },
+        ),
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
@@ -91,10 +101,22 @@ class SfincsModel(GridModel):
         "wind_u": {"standard_name": "eastward wind", "unit": "m/s"},
         "wind_v": {"standard_name": "northward wind", "unit": "m/s"},
         "wnd": {"standard_name": "wind", "unit": "m/s"},
-        "wave_height": {"standard_name": "sea_surface_wave_significant_height", "unit": "m"},  #https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html
-        "wave_period": {"standard_name": "sea_surface_wind_wave_period_at_variance_spectral_density_maximum", "unit": "s"},
-        "wave_direction": {"standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum", "unit": "coming from degree wrt North"},
-        "wave_spreading": {"standard_name": "sea_surface_wave_directional_spread", "unit": "degree"},                        
+        "wave_height": {
+            "standard_name": "sea_surface_wave_significant_height",
+            "unit": "m",
+        },  # https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html
+        "wave_period": {
+            "standard_name": "sea_surface_wind_wave_period_at_variance_spectral_density_maximum",
+            "unit": "s",
+        },
+        "wave_direction": {
+            "standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum",
+            "unit": "coming from degree wrt North",
+        },
+        "wave_spreading": {
+            "standard_name": "sea_surface_wave_directional_spread",
+            "unit": "degree",
+        },
     }
 
     def __init__(
@@ -143,6 +165,16 @@ class SfincsModel(GridModel):
         self.quadtree = None
         self.subgrid = xr.Dataset()
 
+    def __del__(self):
+        """Close the model and remove the logger file handler."""
+        for handler in self.logger.handlers:
+            if (
+                isinstance(handler, logging.FileHandler)
+                and "hydromt.log" in handler.baseFilename
+            ):
+                handler.close()
+                self.logger.removeHandler(handler)
+
     @property
     def mask(self) -> xr.DataArray | None:
         """Returns model mask"""
@@ -164,7 +196,7 @@ class SfincsModel(GridModel):
         region = gpd.GeoDataFrame()
         if "region" in self.geoms:
             region = self.geoms["region"]
-        elif self.grid_type == "regular":    
+        elif self.grid_type == "regular":
             if "msk" in self.grid and np.any(self.grid["msk"] > 0):
                 da = xr.where(self.mask > 0, 1, 0).astype(np.int16)
                 da.raster.set_nodata(0)
@@ -228,9 +260,7 @@ class SfincsModel(GridModel):
         """
 
         if refinement_polygons is not None:
-            gdf_refinement = self.data_catalog.get_geodataframe(
-                refinement_polygons
-            )
+            gdf_refinement = self.data_catalog.get_geodataframe(refinement_polygons)
             self.grid_type = "quadtree"
         else:
             self.grid_type = "regular"
@@ -258,7 +288,7 @@ class SfincsModel(GridModel):
                 mmax=mmax,
                 rotation=rotation,
                 epsg=epsg,
-                gdf_refinement=gdf_refinement
+                gdf_refinement=gdf_refinement,
             )
 
             # remove all grid layers from the config (now stored in qtrfile)
@@ -270,8 +300,8 @@ class SfincsModel(GridModel):
 
             # add qtrfile and epsg-code to config
             self.config.update({"qtrfile": "sfincs.nc"})
-                   
-            if epsg is not None: #is this needed?
+
+            if epsg is not None:  # is this needed?
                 self.config.update({"epsg": epsg})
 
             # TODO check why grid_type changes mysteriously to regular
@@ -410,9 +440,9 @@ class SfincsModel(GridModel):
         elif self.grid_type == "quadtree":
             # TODO make dependent on refinement levle?
             # NOTE for now we always use the resolution of the finest level
-            res = self.quadtree.dx # coarsest level
+            res = self.quadtree.dx  # coarsest level
             nrlevels = self.quadtree.nr_refinement_levels
-            res = res / 2 ** (nrlevels-1) # finest level
+            res = res / 2 ** (nrlevels - 1)  # finest level
 
             if self.quadtree.crs.is_geographic:
                 res = res * 111111.0
@@ -444,18 +474,17 @@ class SfincsModel(GridModel):
             if "depfile" not in self.config:
                 self.config.update({"depfile": "sfincs.dep"})
         elif self.grid_type == "quadtree":
-            #TODO change default config values for quadtree models
+            # TODO change default config values for quadtree models
             self.quadtree.setup_dep(
                 datasets_dep=datasets_dep,
                 # buffer_cells=buffer_cells,
                 # interp_method=interp_method,
             )
-            #TODO check interpolation methods for missing values in xugrid
-
+            # TODO check interpolation methods for missing values in xugrid
 
     def setup_mask_active(
         self,
-        model: str = "sfincs",	
+        model: str = "sfincs",
         mask: Union[str, Path, gpd.GeoDataFrame] = None,
         include_mask: Union[str, Path, gpd.GeoDataFrame] = None,
         exclude_mask: Union[str, Path, gpd.GeoDataFrame] = None,
@@ -606,7 +635,6 @@ class SfincsModel(GridModel):
             )
             # update region
             # TODO
-
 
     def setup_mask_bounds(
         self,
@@ -858,9 +886,9 @@ class SfincsModel(GridModel):
                 res = np.abs(self.mask.raster.res[0]) * 111111.0
         elif self.grid_type == "quadtree":
             # TODO make dependent on refinement level?
-            res = self.quadtree.dx # coarsest level
+            res = self.quadtree.dx  # coarsest level
             nrlevels = self.quadtree.nr_refinement_levels
-            res = res / 2 ** (nrlevels-1) # finest level
+            res = res / 2 ** (nrlevels - 1)  # finest level
 
             if self.quadtree.crs.is_geographic:
                 res = res * 111111.0
@@ -935,7 +963,7 @@ class SfincsModel(GridModel):
                 highres_dir=highres_dir,
                 logger=self.logger,
                 parallel=parallel,
-                )
+            )
             # pass
 
         # when building a new subgrid table, always update config
@@ -1310,9 +1338,7 @@ class SfincsModel(GridModel):
             By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
         """
         # get data
-        da_org = self.data_catalog.get_rasterdataset(
-            cn, bbox=self.bbox, buffer=10
-        )
+        da_org = self.data_catalog.get_rasterdataset(cn, bbox=self.bbox, buffer=10)
         # read variable
         v = "cn"
         if antecedent_moisture:
@@ -1363,12 +1389,8 @@ class SfincsModel(GridModel):
         da_landuse = self.data_catalog.get_rasterdataset(
             lulc, bbox=self.bbox, buffer=10
         )
-        da_HSG = self.data_catalog.get_rasterdataset(
-            hsg, bbox=self.bbox, buffer=10
-        )
-        da_Ksat = self.data_catalog.get_rasterdataset(
-            ksat, bbox=self.bbox, buffer=10
-        )
+        da_HSG = self.data_catalog.get_rasterdataset(hsg, bbox=self.bbox, buffer=10)
+        da_Ksat = self.data_catalog.get_rasterdataset(ksat, bbox=self.bbox, buffer=10)
         df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
 
         # Define outputs
@@ -1444,7 +1466,7 @@ class SfincsModel(GridModel):
                 da_ks[sn, sm] = da_ks_block
 
         # Done
-        self.logger.info(f"Done with determination of values (in blocks).")
+        self.logger.info("Done with determination of values (in blocks).")
 
         # Specify the effective soil retention (seff)
         da_seff = da_smax
@@ -1567,7 +1589,7 @@ class SfincsModel(GridModel):
         if merge and name in self.geoms:
             gdf0 = self._geoms.pop(name)
             gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
-            self.logger.info(f"Adding new observation points to existing ones.")
+            self.logger.info("Adding new observation points to existing ones.")
 
         self.set_geoms(gdf_obs, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
@@ -1610,7 +1632,7 @@ class SfincsModel(GridModel):
         if merge and name in self.geoms:
             gdf0 = self._geoms.pop(name)
             gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
-            self.logger.info(f"Adding new observation lines to existing ones.")
+            self.logger.info("Adding new observation lines to existing ones.")
 
         self.set_geoms(gdf_obs, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
@@ -1926,7 +1948,7 @@ class SfincsModel(GridModel):
             if not set(gdf_locs.index) == set(df_ts.columns):
                 gdf_locs = gdf_locs.set_index(df_ts.columns)
                 self.logger.info(
-                    f"No matching index column found in gdf_locs; assuming the order is correct"
+                    "No matching index column found in gdf_locs; assuming the order is correct"
                 )
         # merge with existing data
         if name in self.forcing and merge:
@@ -2607,7 +2629,7 @@ class SfincsModel(GridModel):
     def setup_wave_forcing(
         self,
         geodataset: Union[str, Path, xr.Dataset] = None,
-        timeseries: List[Union[str, Path, pd.DataFrame]] = None, 
+        timeseries: List[Union[str, Path, pd.DataFrame]] = None,
         locations: Union[str, Path, gpd.GeoDataFrame] = None,
         buffer: float = 5e4,
         merge: bool = True,
@@ -2625,7 +2647,7 @@ class SfincsModel(GridModel):
         * **wave_height** forcing: 'hs' - significant wave height time series [m]
         * **wave_period** forcing: 'tp' - peak wave period time series [s]
         * **wave_direction** forcing: 'wd' - mean wave direction time series [coming from degree wrt North]
-        * **wave_spreading** forcing: 'ds' - wave spreading time series [degree]            
+        * **wave_spreading** forcing: 'ds' - wave spreading time series [degree]
 
         Parameters
         ----------
@@ -2646,43 +2668,41 @@ class SfincsModel(GridModel):
         See Also
         --------
         set_forcing
-        """        
+        """
         tstart, tstop = self.get_model_time()  # model time
 
-        #read wave data from geodataset or geodataframe
+        # read wave data from geodataset or geodataframe
         region = self.region
-        # TODO - change to vector of snapwave boundary msk2 cells 
-        
+        # TODO - change to vector of snapwave boundary msk2 cells
+
         if geodataset is not None:
             # read and clip data in time & space
             ds = self.data_catalog.get_geodataset(
                 geodataset,
                 geom=region,
                 buffer=buffer,
-                variables=["hs", "tp", "wd", "ds"], 
+                variables=["hs", "tp", "wd", "ds"],
                 time_tuple=(tstart, tstop),
             )
-     
+
             gdf_locs = ds.vector.to_gdf()
             gdf_locs = gdf_locs.to_crs(self.crs)
-                   
-        elif timeseries is not None:
 
+        elif timeseries is not None:
             # Check if timeseries is a list with length = 4
 
             if len(timeseries) == 4:
-
                 # We could probably do this way faster!
                 vars = ["hs", "tp", "wd", "ds"]
                 da_lst = []
-                for i,var in enumerate(vars):
+                for i, var in enumerate(vars):
                     df = self.data_catalog.get_dataframe(
                         timeseries[i],
                         time_tuple=(tstart, tstop),
                         # kwargs below only applied if timeseries not in data catalog
                         parse_dates=True,
                         index_col=0,
-                        )
+                    )
                     df.index.name = "time"
                     df.columns.name = "index"
                     #
@@ -2692,16 +2712,18 @@ class SfincsModel(GridModel):
                                 "tref must be set in config to convert numeric index to datetime index"
                             )
                         tref = utils.parse_datetime(self.config["tref"])
-                        df.index = tref + pd.to_timedelta(df.index, unit="sec")  
+                        df.index = tref + pd.to_timedelta(df.index, unit="sec")
                     #
                     da = xr.DataArray(df, dims=("time", "index"), name=var)
-                    da_lst.append(da)      
-                    #                       
-                ds = xr.merge(da_lst[:])   
+                    da_lst.append(da)
+                    #
+                ds = xr.merge(da_lst[:])
                 # parse datetime index
 
             else:
-                raise ValueError("Not enough wave variables provided. Length should be equal to 4 (hs, tp, dir, ds)")
+                raise ValueError(
+                    "Not enough wave variables provided. Length should be equal to 4 (hs, tp, dir, ds)"
+                )
 
             # read location data (if not already read from geodataset)
             if locations is not None:
@@ -2710,16 +2732,16 @@ class SfincsModel(GridModel):
                 ).to_crs(self.crs)
                 if "index" in gdf_locs.columns:
                     gdf_locs = gdf_locs.set_index("index")
-            elif "wave_height" in self.forcing: 
+            elif "wave_height" in self.forcing:
                 gdf_locs = self.forcing["wave_height"].vector.to_gdf()
             else:
-                raise ValueError("No wave boundary (snapwave_bnd) points provided.")                       
-            
+                raise ValueError("No wave boundary (snapwave_bnd) points provided.")
+
             ds = ds.assign_coords(index=gdf_locs.index.values)
 
-        ds = GeoDataset.from_gdf(gdf_locs, ds, index_dim=gdf_locs.index.name)      
-        self.set_forcing(ds, name="snapwave") 
-            
+        ds = GeoDataset.from_gdf(gdf_locs, ds, index_dim=gdf_locs.index.name)
+        self.set_forcing(ds, name="snapwave")
+
     def setup_wavemaker(
         self,
         wavemaker: Union[str, Path, gpd.GeoDataFrame],
@@ -2735,33 +2757,37 @@ class SfincsModel(GridModel):
         Parameters
         ----------
         wavemaker : str, Path
-            Path, data source name, or geopandas object to wavemaker line geometry file.          
+            Path, data source name, or geopandas object to wavemaker line geometry file.
         merge : bool, optional
             If True, merge with existing 'stype' structures, by default True.
         """
         name = self._GEOMS["wavemaker"]
 
         # read, clip and reproject
-        if not isinstance(wavemaker, gpd.GeoDataFrame) and str(wavemaker).endswith(".pol"):
+        if not isinstance(wavemaker, gpd.GeoDataFrame) and str(wavemaker).endswith(
+            ".pol"
+        ):
             # NOTE polygons should be in same CRS as model
             gdf_wavemaker = utils.linestring2gdf(
                 feats=utils.read_geoms(fn=wavemaker), crs=self.region.crs
             )
         else:
             gdf_wavemaker = self.data_catalog.get_geodataframe(
-            wavemaker, geom=self.region, **kwargs).to_crs(self.crs)
-
+                wavemaker, geom=self.region, **kwargs
+            ).to_crs(self.crs)
 
         # combine with existing structures if present
         if merge and name in self.geoms:
             gdf0 = self._geoms.pop(name)
-            gdf_wavemaker = gpd.GeoDataFrame(pd.concat([gdf_wavemaker, gdf0], ignore_index=True))
-            self.logger.info(f"Adding wavemaker polyline to existing ones.")
+            gdf_wavemaker = gpd.GeoDataFrame(
+                pd.concat([gdf_wavemaker, gdf0], ignore_index=True)
+            )
+            self.logger.info("Adding wavemaker polyline to existing ones.")
 
         # set structures
         self.set_geoms(gdf_wavemaker, name)
         self.set_config(f"{name}file", f"sfincs.{name}")
-        
+
     def setup_tiles(
         self,
         path: Union[str, Path] = None,
@@ -3053,7 +3079,7 @@ class SfincsModel(GridModel):
             fn = self.get_config("qtrfile", fallback="sfincs.nc", abs_path=True)
             if not isfile(fn):
                 raise IOError(f".nc path {fn} does not exist")
-            self.quadtree.read(file_name = fn)
+            self.quadtree.read(file_name=fn)
         self.read_subgrid()
         self.read_geoms()
         self.read_forcing()
@@ -3066,8 +3092,8 @@ class SfincsModel(GridModel):
         if self.grid_type == "regular":
             self.write_grid()
         elif self.grid_type == "quadtree":
-            fn = self.get_config(f"qtrfile", abs_path=True)
-            self.quadtree.write(file_name = fn)
+            fn = self.get_config("qtrfile", abs_path=True)
+            self.quadtree.write(file_name=fn)
         self.write_subgrid()
         self.write_geoms()
         self.write_forcing()
@@ -3123,7 +3149,7 @@ class SfincsModel(GridModel):
                 ds.raster.set_crs(epsg)
             self.set_grid(ds)
 
-            # TODO - fix this properly; but to create overlays in GUIs, 
+            # TODO - fix this properly; but to create overlays in GUIs,
             # we always convert regular grids to a UgridDataArray
             self.quadtree = QuadtreeGrid(logger=self.logger)
             if self.config.get("rotation", 0) != 0:  # This is a rotated regular grid
@@ -3131,9 +3157,7 @@ class SfincsModel(GridModel):
                     self.mask, "xc", "yc"
                 )
             else:
-                self.quadtree.data = UgridDataArray.from_structured(
-                    self.mask
-                )
+                self.quadtree.data = UgridDataArray.from_structured(self.mask)
             self.quadtree.data.grid.set_crs(self.crs)
 
             # keep some metadata maps from gis directory
@@ -3217,7 +3241,7 @@ class SfincsModel(GridModel):
                     self.reggrid.subgrid.read(file_name=fn)
                     self.subgrid = self.reggrid.subgrid.ds
             else:
-                self.quadtree.subgrid.read(file_name=fn)    
+                self.quadtree.subgrid.read(file_name=fn)
 
     def write_subgrid(self):
         """Write SFINCS subgrid file."""
@@ -3239,7 +3263,7 @@ class SfincsModel(GridModel):
             if "sbgfile" not in self.config:
                 # apparently no subgrid was read, so set default filename
                 self.set_config("sbgfile", "sfincs_subgrid.nc")
-            
+
             fn = self.get_config("sbgfile", abs_path=True)
             self.quadtree.subgrid.write(file_name=fn)
 
@@ -3514,13 +3538,13 @@ class SfincsModel(GridModel):
                     continue
                 ds = xr.merge([self.forcing[v] for v in rename.keys()]).rename(rename)
 
-                # Rename latitude/lat to 'y' and longitude/lon to 'x' if present in ds_coords 
+                # Rename latitude/lat to 'y' and longitude/lon to 'x' if present in ds_coords
                 # NOTE: this is to match SFINCS conventions
                 coordinates_to_rename = {
                     "latitude": "y",
                     "lat": "y",
                     "longitude": "x",
-                    "lon": "x"
+                    "lon": "x",
                 }
 
                 for coord_name, new_name in coordinates_to_rename.items():
@@ -3532,7 +3556,12 @@ class SfincsModel(GridModel):
                     self.set_config(f"{fname}file", f"{name}.nc")
                 fn = self.get_config(f"{fname}file", abs_path=True)
                 # write 1D timeseries
-                if fname in ["netbndbzsbzi", "netsrcdis", "netsnapwave", "netwavemaker"]:
+                if fname in [
+                    "netbndbzsbzi",
+                    "netsrcdis",
+                    "netsnapwave",
+                    "netwavemaker",
+                ]:
                     ds.vector.to_xy().to_netcdf(fn, encoding=encoding)
                     if self._write_gis:  # write geojson file to gis folder
                         self.write_vector(variables=f"forcing.{list(rename.keys())[0]}")
@@ -3990,7 +4019,7 @@ class SfincsModel(GridModel):
                     reclass_table = join(DATADIR, "lulc", f"{lulc}_mapping.csv")
                 if reclass_table is None:
                     raise IOError(
-                        f"Manning roughness 'reclass_table' csv file must be provided"
+                        "Manning roughness 'reclass_table' csv file must be provided"
                     )
                 da_lulc = self.data_catalog.get_rasterdataset(
                     lulc,
@@ -4056,7 +4085,7 @@ class SfincsModel(GridModel):
                 else:
                     gdf_riv = self.data_catalog.get_geodataframe(
                         rivers,
-                        bbox = self.bbox,
+                        bbox=self.bbox,
                         # geom=self.mask.raster.box,
                         buffer=1e3,  # 1km
                     ).to_crs(self.crs)
@@ -4078,7 +4107,7 @@ class SfincsModel(GridModel):
             if "mask" in dataset:
                 gdf_riv_mask = self.data_catalog.get_geodataframe(
                     dataset.get("mask"),
-                    bbox = self.bbox,
+                    bbox=self.bbox,
                     # geom=self.mask.raster.box,
                 )
                 dd.update({"gdf_riv_mask": gdf_riv_mask})
