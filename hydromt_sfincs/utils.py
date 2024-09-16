@@ -221,7 +221,7 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
 
 
 def read_xyn(fn: str, crs: int = None):
-    df = pd.read_csv(fn, index_col=False, header=None, delim_whitespace=True).rename(
+    df = pd.read_csv(fn, index_col=False, header=None, sep="\s+").rename(
         columns={0: "x", 1: "y"}
     )
     if len(df.columns) > 2:
@@ -280,7 +280,7 @@ def read_timeseries(fn: Union[str, Path], tref: Union[str, datetime]) -> pd.Data
         Dataframe of timeseries with parsed time index.
     """
     tref = parse_datetime(tref)
-    df = pd.read_csv(fn, delim_whitespace=True, index_col=0, header=None)
+    df = pd.read_csv(fn, index_col=0, header=None, sep="\s+")
     df.index = pd.to_datetime(df.index.values, unit="s", origin=tref)
     df.columns = df.columns.values.astype(int)
     df.index.name = "time"
@@ -556,7 +556,7 @@ def write_geoms(
         For pli, pol, thd anc crs files "x" and "y" are required, "name" is optional.
         For weir files "x", "y" and "z" are required, "name" and "par1" are optional.
     stype: {'pli', 'pol', 'thd', 'weir', 'crs', 'wvm'}
-        Geom type polylines (pli), polygons (pol) thin dams (thd), weirs (weir), 
+        Geom type polylines (pli), polygons (pol) thin dams (thd), weirs (weir),
         cross-sections (crs) or wavemaker (wvm).
     fmt: str
         format for "x" and "y" fields.
@@ -800,7 +800,7 @@ def read_sfincs_map_results(
             continue
         if "x" in ds_map[var].dims and "y" in ds_map[var].dims:
             # drop to overwrite with ds_like.raster.coords
-            ds_face[var] = ds_map[var].drop(["xc", "yc"])
+            ds_face[var] = ds_map[var].drop_vars(["xc", "yc"])
         elif ds_map[var].ndim == 0:
             ds_face[var] = ds_map[var]
         else:
@@ -1188,7 +1188,31 @@ def _downscale_floodmap_da(
 
 
 def find_uv_indices(mask: xr.DataArray):
-    """Find the where the properties of the u and v points are stored in the subgrid file for a regular grid."""
+    """The subgrid tables for a regular SFINCS grid are organized as flattened arrays, meaning
+    2D arrays (y,x) are transformed into 1D arrays, only containing values for active cells.
+
+    For the cell centers, this is straightforward, we just find the indices of the active cells.
+    However, the u and v points are saved in combined arrays. Since u and v points are absent
+    at the boundaries of the domain, the index arrays are used to determine the location of the
+    u and v points in the combined flattened arrays.
+
+
+
+    Parameters
+    ----------
+    mask: xr.DataArray
+        Mask with integer values specifying the active cells of the SFINCS domain.
+
+    Returns
+    -------
+    index_nm: np.ndarray
+        Index array for the active cell centers.
+    index_mu1: np.ndarray
+        Index of upstream u-point in combined uv-array.
+    index_nu1: np.ndarray
+        Index of upstream v-point in combined uv-array.
+
+    """
 
     mask = mask.values
 
@@ -1229,7 +1253,9 @@ def find_uv_indices(mask: xr.DataArray):
         if j is not None:
             mu1[ic] = j
 
-    # For regular grids, only the points with mask>0 are stored
+    # For regular grids, only the points with mask > 0 are stored
+    # The index arrays determine the location in the flattened arrays (with values for all active points)
+    # Initialize index arrays with -1, inactive cells will remain -1
     index_nm = np.zeros(nr_cells, dtype=int) - 1
     index_mu1 = np.zeros(nr_cells, dtype=int) - 1
     index_nu1 = np.zeros(nr_cells, dtype=int) - 1

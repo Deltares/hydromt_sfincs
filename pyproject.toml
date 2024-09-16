@@ -13,10 +13,10 @@ authors = [
 dependencies = [
     "affine",
     "datashader",
-    "geopandas>=0.8",
-    "hydromt>=0.9.1, <0.10",
+    "geopandas>=1.0",
+    "hydromt>=0.10, <0.11",
     "numba",
-    "numpy",
+    "numpy<2.0", # temp pin until bottleneck release v1.4
     "pandas",
     "pillow",
     "pyflwdir>=0.5.5",

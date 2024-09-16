@@ -73,8 +73,8 @@ def plot_forcing(forcing: Dict, **kwargs):
             df.plot(drawstyle="steps", ax=axes[i])
         elif (
             name.startswith("press")
-            or name.startswith("wind_u")
-            or name.startswith("wind_v")
+            or name.startswith("wind10_u")
+            or name.startswith("wind10_v")
         ):
             df.plot.line(ax=axes[i])
         elif name.startswith("wnd"):
@@ -258,8 +258,8 @@ def plot_basemap(
             dx, dy = da.raster.res
             _rgb = ls.shade(
                 da.fillna(0).values,
-                norm=kwargs["norm"],
-                cmap=kwargs["cmap"],
+                norm=kwargs0["norm"],
+                cmap=kwargs0["cmap"],
                 blend_mode="soft",
                 dx=dx,
                 dy=dy,
