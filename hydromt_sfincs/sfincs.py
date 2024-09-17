@@ -949,7 +949,6 @@ class SfincsModel(GridModel):
                 manning_land=manning_land,
                 manning_sea=manning_sea,
                 rgh_lev_land=rgh_lev_land,
-                huthresh=huthresh,
                 write_dep_tif=write_dep_tif,
                 write_man_tif=write_man_tif,
                 highres_dir=highres_dir,

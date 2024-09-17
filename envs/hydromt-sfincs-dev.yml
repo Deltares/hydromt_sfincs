@@ -31,8 +31,9 @@ dependencies:
 - sphinx
 - xarray
 - xugrid
-- mapbox-earcut
 - datashader
 - pip:
   - black[jupyter]
+  - mapbox-earcut
+  - prec-commit
   - sphinx_design
