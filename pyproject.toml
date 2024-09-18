@@ -12,7 +12,7 @@ authors = [
 ]
 dependencies = [
     "affine",
-    "geopandas>=1.0",
+    "geopandas>1.0",
     "hydromt>=0.10, <0.11",
     "numba",
     "numpy<2.0", # temp pin until bottleneck release v1.4
