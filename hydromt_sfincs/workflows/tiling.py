@@ -65,7 +65,7 @@ def downscale_floodmap_webmercator(
     # if zsmax is an xarray, convert to numpy array
     if isinstance(zsmax, xr.DataArray):
         zsmax = zsmax.values
-    zsmax = zsmax.flatten()
+    zsmax = zsmax.transpose().flatten()
 
     # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
     if isinstance(zoom_range, int):
@@ -100,12 +100,15 @@ def downscale_floodmap_webmercator(
                 elif fmt_in == "png":
                     ind = png2int(index_fn)
 
-                # read the topobathy file
-                dep_fn = os.path.join(topobathy_path, str(izoom), x, y_file)
-                if fmt_in == "bin":
-                    dep = np.fromfile(dep_fn, dtype="f4")
-                elif fmt_in == "png":
-                    dep = png2elevation(dep_fn)
+                try:
+                    # read the topobathy file
+                    dep_fn = os.path.join(topobathy_path, str(izoom), x, y_file)
+                    if fmt_in == "bin":
+                        dep = np.fromfile(dep_fn, dtype="f4")
+                    elif fmt_in == "png":
+                        dep = png2elevation(dep_fn).flatten()
+                except:
+                    continue
 
                 # create the floodmap
                 hmax = zsmax[ind]
@@ -133,7 +136,7 @@ def downscale_floodmap_webmercator(
                     if interpreter == "terrarium":
                         elevation2png(hmax, floodmap_fn)
                     elif interpreter == "blues":
-                        flood_depth2png(hmax, floodmap_fn, max_value=2)
+                        flooding2png(hmax, floodmap_fn, max_value=2)
 
 
 def create_topobathy_tiles(
@@ -261,7 +264,7 @@ def create_topobathy_tiles(
                 fid.write(da_dep.values)
                 fid.close()
             elif fmt == "png":
-                elevation2png(da_dep, file_name)
+                elevation2png(da_dep.values, file_name)
             elif fmt == "tif":
                 da_dep.raster.to_raster(file_name)
 
@@ -284,104 +287,69 @@ def num2deg(xtile, ytile, zoom):
     return (lat_deg, lon_deg)
 
 
-def rgba2int(rgba):
-    """Convert rgba tuple to int"""
-    r, g, b, a = rgba
-    return (r * 256**3) + (g * 256**2) + (b * 256) + a
+def png2elevation(png_file):
+    """Convert png to elevation array based on terrarium interpretation"""
+    img = Image.open(png_file)
+    rgb = np.array(img.convert("RGB"))
+    # Convert RGB values to elevation values
+    elevation = (rgb[:, :, 0] * 256 + rgb[:, :, 1] + rgb[:, :, 2] / 256) - 32768.0
+    # where val is less than -32767, set to NaN
+    elevation[elevation < -32767.0] = np.NaN
+    return elevation
 
 
-def int2rgba(int_val):
-    """Convert int to rgba tuple"""
-    r = (int_val // 256**3) % 256
-    g = (int_val // 256**2) % 256
-    b = (int_val // 256) % 256
-    a = int_val % 256
-    return (r, g, b, a)
-
-
-def elevation2rgb(val):
-    """Convert elevation to rgb tuple"""
-    val += 32768
-    r = np.floor(val / 256)
-    g = np.floor(val % 256)
-    b = np.floor((val - np.floor(val)) * 256)
-
-    return (r, g, b)
-
-
-def rgb2elevation(r, g, b):
-    """Convert rgb tuple to elevation"""
-    val = (r * 256 + g + b / 256) - 32768
-    return val
+def elevation2png(val, png_file):
+    """Convert elevation array to png using terrarium interpretation"""
+    rgb = np.zeros((256 * 256, 3), "uint8")
+    # r, g, b = elevation2rgb(val)
+    val += 32768.0
+    rgb[:, 0] = np.floor(val / 256).flatten()
+    rgb[:, 1] = np.floor(val % 256).flatten()
+    rgb[:, 2] = np.floor((val - np.floor(val)) * 256).flatten()
+    rgb = rgb.reshape([256, 256, 3])
+    # Create PIL Image from RGB values and save as PNG
+    img = Image.fromarray(rgb)
+    img.save(png_file)
 
 
 def png2int(png_file):
     """Convert png to int array"""
     # Open the PNG image
     image = Image.open(png_file)
-
-    # Convert the image to RGBA mode if it's not already in RGBN mode
-    if image.mode != "RGBA":
-        image = image.convert("RGBA")
-
-    # Get the pixel data from the image
-    pixel_data = list(image.getdata())
-
-    # Convert RGBA values to unique integers
-    val = []
-    for rgba in pixel_data:
-        val.append(rgba2int(rgba))
-
-    return val
-
+    rgba = np.array(image.convert("RGBA"))
+    return (
+        (rgba[:, :, 0] * 256**3)
+        + (rgba[:, :, 1] * 256**2)
+        + (rgba[:, :, 2] * 256)
+        + rgba[:, :, 3]
+    )
 
 def int2png(val, png_file):
     """Convert int array to png"""
     # Convert index integers to RGBA values
-    rgba = np.zeros((256 * 256, 4), "uint8")
-    r, g, b, a = int2rgba(val)
+    rgba = np.zeros((256, 256, 4), "uint8")
 
-    rgba[:, 0] = r.flatten()
-    rgba[:, 1] = g.flatten()
-    rgba[:, 2] = b.flatten()
-    rgba[:, 3] = a.flatten()
+    # Extract RGBA values from index integer
+    r = (val // 256**3) % 256
+    g = (val // 256**2) % 256
+    b = (val // 256) % 256
+    a = val % 256
 
-    rgba = rgba.reshape([256, 256, 4])
+    # Assign RGB values to RGBA array
+    rgba[:, :, 0] = r
+    rgba[:, :, 1] = g
+    rgba[:, :, 2] = b
+    rgba[:, :, 3] = a
 
     # Create PIL Image from RGB values and save as PNG
     img = Image.fromarray(rgba)
     img.save(png_file)
 
+def flooding2png(val, png_file, max_value):
+    """Convert flood depth array to PNG using Blues colormap interpretation"""
+    # Initialize RGB array
+    rgb = np.zeros((256 * 256, 3), "uint8")
 
-def png2elevation(png_file):
-    """Convert png to elevation array based on terrarium interpretation"""
-    img = Image.open(png_file)
-    arr = np.array(img.convert("RGB"))
-    # Convert RGB values to elevation values
-    elevations = np.apply_along_axis(rgb2elevation, 2, arr)
-    return elevations
-
-
-def elevation2png(val, png_file):
-    """Convert elevation array to png using terrarium interpretation"""
-
-    rgb = np.zeros((256 * 256, 4), "uint8")
-    r, g, b = elevation2rgb(val)
-
-    rgb[:, 0] = r.values.flatten()
-    rgb[:, 1] = g.values.flatten()
-    rgb[:, 2] = b.values.flatten()
-    rgb[:, 3] = 255
-
-    rgb = rgb.reshape([256, 256, 4])
-
-    # Create PIL Image from RGB values and save as PNG
-    img = Image.fromarray(rgb)
-    img.save(png_file)
-
-
-def flood_depth2rgb(val, max_value):
-    """Convert flood depth to RGB tuple using the Blues colormap"""
     # Ensure the value is within the 0 to 2 range
     val = np.clip(val, 0, max_value)
 
@@ -392,30 +360,10 @@ def flood_depth2rgb(val, max_value):
     colormap = plt.cm.Blues
     rgba = colormap(normalized_val)
 
-    # Convert the RGBA values to 8-bit RGB values
-    r = np.floor(rgba[0] * 255)
-    g = np.floor(rgba[1] * 255)
-    b = np.floor(rgba[2] * 255)
-
-    return (r, g, b)
-
-
-def flood_depth2png(val, png_file, max_value=2):
-    """Convert flood depth array to PNG using Blues colormap interpretation"""
-    # Initialize RGB array
-    rgb = np.zeros((256 * 256, 4), "uint8")
-
-    # Get RGB values for the flood depth array
-    r, g, b = flood_depth2rgb(val, max_value=max_value)
-
     # Flatten and assign RGB values
-    rgb[:, 0] = r.flatten()
-    rgb[:, 1] = g.flatten()
-    rgb[:, 2] = b.flatten()
-    rgb[:, 3] = 255
-
-    # Reshape to 256x256 image
-    rgb = rgb.reshape([256, 256, 4])
+    rgb[:, 0] = np.floor(rgba[:,:,0] * 255).flatten()
+    rgb[:, 1] = np.floor(rgba[:,:,1] * 255).flatten()
+    rgb[:, 2] = np.floor(rgba[:,:,2] * 255).flatten()
 
     # Create PIL Image from RGB values and save as PNG
     img = Image.fromarray(rgb)
