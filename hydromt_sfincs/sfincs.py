@@ -9,6 +9,7 @@ import logging
 import os
 from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
+from tempfile import TemporaryFile
 from typing import Any, Dict, List, Tuple, Union
 
 import geopandas as gpd
@@ -126,12 +127,16 @@ class SfincsModel(GridModel):
         if write_gis and "gis" not in self._FOLDERS:
             self._FOLDERS.append("gis")
 
+        # If data_libs is None, old HydroMT code fails.
+        # TODO: upgrade to HydroMT v1 ;)
+        if data_libs is None:
+            data_libs = "artifact_data=v0.0.8"
+
         super().__init__(
             root=root,
             mode=mode,
             config_fn=config_fn,
             data_libs=data_libs,
-            fallback_lib=None,
             logger=logger,
         )
 
