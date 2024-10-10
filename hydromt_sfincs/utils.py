@@ -939,7 +939,7 @@ def downscale_floodmap(
         return hmax
 
     elif isinstance(dep, (str, Path)):
-        if floodmap_fn is not None:
+        if floodmap_fn is None:
             raise ValueError(
                 "floodmap_fn should be provided when dep is a Path or str."
             )
@@ -984,6 +984,7 @@ def downscale_floodmap(
 
             ## Loop through blocks
             for ii in range(nrbm):
+                print(ii, nrbm)
                 bm0 = ii * nrcb  # Index of first m in block
                 bm1 = min(bm0 + nrcb, m1)  # last m in block
                 if merge_last_col and ii == (nrbm - 1):
@@ -1019,7 +1020,7 @@ def downscale_floodmap(
                             "xc": (("y", "x"), x_coords),
                         },
                     )
-                    block_dep.raster.set_crs(src.crs)
+                    block_dep.raster.set_crs(src.crs.to_string())
 
                     block_hmax = _downscale_floodmap_da(
                         zsmax=zsmax,
