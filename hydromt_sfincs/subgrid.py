@@ -1080,7 +1080,7 @@ def subgrid_q_table(
     zmin_b = np.min(dd_b)  # Minimum elevation side B
     zmax_b = np.max(dd_b)  # Maximum elevation side B
 
-    zmin = max(zmin_a, zmin_b) + huthresh  # Minimum elevation of uv point
+    zmin = min(zmin_a, zmin_b) + huthresh  # Minimum elevation of uv point
     zmax = max(zmax_a, zmax_b)  # Maximum elevation of uv point
 
     # Make sure zmax is always a bit higher than zmin
