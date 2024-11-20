@@ -353,7 +353,7 @@ class SubgridTableRegular:
         v = self.z_volmax[iok]
         file.write(np.float32(v))
         for ilevel in range(self.nlevels):
-            v = np.squeeze(self.z_depth[ilevel, :, :])[iok]
+            v = np.squeeze(self.z_level[ilevel, :, :])[iok]
             file.write(np.float32(v))
 
         # U
@@ -364,10 +364,10 @@ class SubgridTableRegular:
         dhdz = np.full(np.shape(v), 1.0)
         file.write(np.float32(dhdz))  # Not used in SFINCS anymore
         for ilevel in range(self.nlevels):
-            v = np.squeeze(self.u_hrep[ilevel, :, :])[iok]
+            v = np.squeeze(self.u_nrep[ilevel, :, :])[iok]
             file.write(np.float32(v))
         for ilevel in range(self.nlevels):
-            v = np.squeeze(self.u_navg[ilevel, :, :])[iok]
+            v = np.squeeze(self.u_havg[ilevel, :, :])[iok]
             file.write(np.float32(v))
 
         # V
@@ -377,10 +377,10 @@ class SubgridTableRegular:
         file.write(np.float32(v))
         file.write(np.float32(dhdz))  # Not used in SFINCS anymore
         for ilevel in range(self.nlevels):
-            v = np.squeeze(self.v_hrep[ilevel, :, :])[iok]
+            v = np.squeeze(self.v_nrep[ilevel, :, :])[iok]
             file.write(np.float32(v))
         for ilevel in range(self.nlevels):
-            v = np.squeeze(self.v_navg[ilevel, :, :])[iok]
+            v = np.squeeze(self.v_havg[ilevel, :, :])[iok]
             file.write(np.float32(v))
 
         file.close()
