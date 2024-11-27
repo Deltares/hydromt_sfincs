@@ -1019,7 +1019,7 @@ def downscale_floodmap(
                             "xc": (("y", "x"), x_coords),
                         },
                     )
-                    block_dep.raster.set_crs(src.crs.to_string())
+                    block_dep.raster.set_crs(src.crs)
 
                     block_hmax = _downscale_floodmap_da(
                         zsmax=zsmax,
