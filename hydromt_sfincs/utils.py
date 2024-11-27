@@ -983,7 +983,7 @@ def downscale_floodmap(
                 pass
 
             ## Loop through blocks
-            for ii in range(nrbm):         
+            for ii in range(nrbm):
                 bm0 = ii * nrcb  # Index of first m in block
                 bm1 = min(bm0 + nrcb, m1)  # last m in block
                 if merge_last_col and ii == (nrbm - 1):

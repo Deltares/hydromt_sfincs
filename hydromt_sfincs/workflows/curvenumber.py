@@ -1,4 +1,5 @@
 """Workflow for curve number."""
+
 import logging
 
 import numpy as np

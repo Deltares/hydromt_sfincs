@@ -1,6 +1,7 @@
 """
 SubgridTableRegular class to create, read and write sfincs subgrid (sbg) files.
 """
+
 import gc
 import logging
 import os

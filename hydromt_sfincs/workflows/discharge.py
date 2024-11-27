@@ -1,4 +1,5 @@
 """Workflows for discharge boundary conditions."""
+
 import logging
 
 import geopandas as gpd

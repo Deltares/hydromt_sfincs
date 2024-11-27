@@ -1,4 +1,5 @@
 """Workflows, to estimate river bathymetry and burn these in a DEM."""
+
 import logging
 
 import geopandas as gpd
