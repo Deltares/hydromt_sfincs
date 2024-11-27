@@ -176,7 +176,7 @@ def test_subgrid_rivers(mod):
         datasets_rgh=[
             {
                 "lulc": "vito_2015",
-                "reclass_table": join(TESTDATADIR, "local_data\\vito_mapping.csv"),
+                "reclass_table": join(TESTDATADIR, "local_data, vito_mapping.csv"),
             }
         ],
         datasets_riv=[
