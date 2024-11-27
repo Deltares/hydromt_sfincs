@@ -1102,34 +1102,30 @@ def subgrid_q_table(
         h = np.maximum(zbin - elevation, 0.0)  # water depth in each pixel
 
         # Side A
-        h_a = np.maximum(
-            zbin - dd_a, 0.0
-        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        h_a = np.maximum(zbin - dd_a, 0.0)
         q_a = h_a ** (5.0 / 3.0) / manning_a  # Determine 'flux' for each pixel
         q_a = np.mean(q_a)  # Grid-average flux through all the pixels
         h_a = np.mean(h_a)  # Grid-average depth through all the pixels
 
         # Side B
-        h_b = np.maximum(
-            zbin - dd_b, 0.0
-        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        h_b = np.maximum(zbin - dd_b, 0.0)
         q_b = h_b ** (5.0 / 3.0) / manning_b  # Determine 'flux' for each pixel
         q_b = np.mean(q_b)  # Grid-average flux through all the pixels
         h_b = np.mean(h_b)  # Grid-average depth through all the pixels
 
         # Compute q and h
-        q_all = np.mean(
-            h ** (5.0 / 3.0) / manning
-        )  # Determine grid average 'flux' for each pixel
+        # Determine grid average 'flux' for each pixel
+        q_all = np.mean(h ** (5.0 / 3.0) / manning)
         h_all = np.mean(h)  # grid averaged depth of A and B combined
         q_min = np.minimum(q_a, q_b)
         h_min = np.minimum(h_a, h_b)
 
         if option == 1:
             # Use old 1 option (weighted average of q_ab and q_all) option (min at bottom bin, mean at top bin)
-            w = (ibin) / (
-                nlevels - 1
-            )  # Weight (increase from 0 to 1 from bottom to top bin)
+            # Weight (increase from 0 to 1 from bottom to top bin)
+            w = (ibin) / (nlevels - 1)
             q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
             hmean = h_all
 
@@ -1165,9 +1161,8 @@ def subgrid_q_table(
 
     # Determine nfit at zfit
     zfit = zmax + zmax - zmin
-    hfit = (
-        havg_top + zmax - zmin
-    )  # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
+    # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
+    hfit = havg_top + zmax - zmin
 
     # Compute q and navg
     h = np.maximum(zfit - elevation, 0.0)  # water depth in each pixel
