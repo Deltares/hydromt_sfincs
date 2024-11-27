@@ -1080,8 +1080,8 @@ def subgrid_q_table(
     zmin_b = np.min(dd_b)  # Minimum elevation side B
     zmax_b = np.max(dd_b)  # Maximum elevation side B
 
-    zmin = min(zmin_a, zmin_b) + huthresh  # Minimum elevation of uv point
-    zmax = max(zmax_a, zmax_b)  # Maximum elevation of uv point
+    zmin = max(zmin_a, zmin_b) + huthresh  # Minimum elevation of uv point
+    zmax = max(zmax_a, zmax_b) + huthresh  # Maximum elevation of uv point
 
     # Make sure zmax is always a bit higher than zmin
     if zmax < zmin + 0.001:
@@ -1100,8 +1100,6 @@ def subgrid_q_table(
         zz[ibin] = zbin
 
         h = np.maximum(zbin - elevation, 0.0)  # water depth in each pixel
-
-        pwet[ibin] = (zbin - elevation > -1.0e-6).sum() / n
 
         # Side A
         h_a = np.maximum(
@@ -1135,14 +1133,27 @@ def subgrid_q_table(
             q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
             hmean = h_all
 
+            # Wet fraction
+            pwet[ibin] = (zbin > elevation + huthresh).sum() / n
+
         elif option == 2:
-            # Use newer 2 option (minimum of q_a an q_b, minimum of h_a and h_b increasing to h_all, using pwet for weighting) option
-            pwet_a = (zbin - dd_a > -1.0e-6).sum() / (n / 2)
-            pwet_b = (zbin - dd_b > -1.0e-6).sum() / (n / 2)
+            # We want to make sure that, in the first layer, hmean does not exceed huthresh.
+            # This is done by making sure that the wet fraction is 0.0 in the first level on the shallowest side (i.e. if ibin==0, pwet_a or pwet_b must be 0.0).
+            # As a result, the weight w will be 0.0 in the first level on the shallowest side.
+            # At the bottom level (i.e. ibin is 0), the grid-averaged depth h_min is typically huthresh / (n / 2), assuming there is one unique pixel that is the lowest.
+            if ibin == 0:
+                # Ensure that either pwet_a or pwet_b is 0.0
+                pwet_a = (zbin > dd_a + huthresh + 1.0e-4).sum() / (n / 2)
+                pwet_b = (zbin > dd_b + huthresh + 1.0e-4).sum() / (n / 2)
+            else:
+                # Ensure that both pwet_a and pwet_b are 1.0 at the top level, so that the weight w is 1.0 and pwet[ibin] is 1.0
+                pwet_a = (zbin > dd_a + huthresh - 1.0e-4).sum() / (n / 2)
+                pwet_b = (zbin > dd_b + huthresh - 1.0e-4).sum() / (n / 2)
             # Weight increases linearly from 0 to 1 from bottom to top bin use percentage wet in sides A and B
-            w = 2 * np.minimum(pwet_a, pwet_b) / (pwet_a + pwet_b)
+            w = 2 * np.minimum(pwet_a, pwet_b) / max(pwet_a + pwet_b, 1.0e-9)
             q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
             hmean = (1.0 - w) * h_min + w * h_all  # Weighted average of h_min and h_all
+            pwet[ibin] = 0.5 * (pwet_a + pwet_b)  # Combined pwet_a and pwet_b
 
         havg[ibin] = hmean  # conveyance depth
         nrep[ibin] = hmean ** (5.0 / 3.0) / q  # Representative n for qmean and hmean
