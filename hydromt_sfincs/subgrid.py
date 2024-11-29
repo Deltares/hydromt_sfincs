@@ -815,6 +815,40 @@ class SubgridTableRegular:
             setattr(self, name, ds_sbg[name].values)
 
 
+class SubgridTableQuadtree:
+    # This code is still slow as it does not use numba
+
+    def __init__(self, version=0):
+        # A quadtree subgrid table contains data for EACH cell, u and v point in the quadtree mesh,
+        # regardless of the mask value!
+        self.version = version
+        self.data = None
+
+    def read(self, file_name):
+        """Read XArray dataset from netcdf file"""
+
+        if not os.path.isfile(file_name):
+            logger.info("File " + file_name + " does not exist!")
+            return
+
+        # Read from netcdf file with xarray
+        ds = xr.open_dataset(file_name)
+        # Transpose to ensure bins is first dimension (convert from FORTRAN convention in SFINCS to Python)
+        ds = ds.transpose("levels", "npuv", "np")
+        ds.close()  # Should this be closed ?
+        self.data = ds
+
+    def write(self, file_name):
+        """Write XArray dataset to netcdf file"""
+        # ensure levels is last dimension to match the FORTRAN convention in SFINCS
+        ds = self.data.transpose("npuv", "np", "levels")
+
+        # fix names to match SFINCS convention
+        # ds = ds.rename_vars({"uv_navg": "uv_navg_w", "uv_ffit": "uv_fnfit"})
+
+        ds.to_netcdf(file_name)
+
+
 @njit
 def process_tile_regular(
     mask,
