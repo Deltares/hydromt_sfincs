@@ -26,3 +26,10 @@ observation_lines:
   data_type: GeoDataFrame
   driver: vector
   path: local_data/observation_lines.geojson
+
+vito_mapping:
+  data_type: DataFrame
+  driver: csv
+  driver_kwargs:
+    index_col: 0
+  path: local_data/vito_mapping.csv

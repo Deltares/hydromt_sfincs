@@ -5,8 +5,8 @@ channels:
 
 dependencies:
 - affine
-- geopandas>=0.8
-- hydromt>=0.9.1
+- geopandas>1.0
+- hydromt>=0.10, <0.11
 - numba
 - numpy
 - pandas

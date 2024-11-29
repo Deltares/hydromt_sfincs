@@ -1,0 +1,24 @@
+vito,description,landuse,N
+20,Shrubs,20,0.05
+30,Herbaceous vegetation,30,0.034
+40,Cultivated and managed vegetation/agriculture (cropland),40,0.037
+50,Urban / built up,50,0.1
+60,Bare / sparse vegetation,60,0.023
+70,Snow and Ice,70,0.01
+80,Permanent water bodies,80,0.02
+90,Herbaceous wetland,90,0.035
+100,Moss and lichen,100,0.025
+111,Closed forest evergreen needle leaf,111,0.11
+112,Closed forest evergreen broad leaf,112,0.11
+113,Closed forest deciduous needle leaf,113,0.1
+114,Closed forest deciduous broad leaf,114,0.1
+115,Closed forest mixed,115,0.1
+116,Closed forest unknown,116,0.1
+121,Open forest evergreen needle leaf,121,0.11
+122,Open forest evergreen broad leaf,122,0.11
+123,Open forest deciduous needle leaf,123,0.1
+124,Open forest deciduous broad leaf,124,0.1
+125,Open forest mixed,125,0.1
+126,Open forest unknown,126,0.1
+200,Open sea,200,0.02
+0,No data,0,-999
