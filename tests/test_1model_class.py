@@ -156,7 +156,7 @@ def test_subgrid_io(tmpdir):
 
 def test_subgrid_rivers(mod):
     gdf_riv = mod.data_catalog.get_geodataframe(
-        "rivers_lin2019_v1", geom=mod.region, buffer=1e3
+        "hydro_rivers_lin", geom=mod.region, buffer=1e3
     )
 
     # create dummy depths for the river based on the width
@@ -173,7 +173,12 @@ def test_subgrid_rivers(mod):
             {"elevtn": "merit_hydro", "zmin": 0.001},
             {"elevtn": "gebco"},
         ],
-        datasets_rgh=[{"lulc": "vito"}],
+        datasets_rgh=[
+            {
+                "lulc": "vito_2015",
+                "reclass_table": join(TESTDATADIR, "local_data", "vito_mapping.csv"),
+            }
+        ],
         datasets_riv=[
             {
                 "centerlines": gdf_riv,

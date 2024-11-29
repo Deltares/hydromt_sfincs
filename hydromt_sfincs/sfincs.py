@@ -206,6 +206,10 @@ class SfincsModel(GridModel):
         """
         # TODO gdf_refinement for quadtree
 
+        # clean old grid
+        self._grid = None
+
+        # setup regular grid
         self.config.update(
             x0=x0,
             y0=y0,
