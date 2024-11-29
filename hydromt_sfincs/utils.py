@@ -939,7 +939,7 @@ def downscale_floodmap(
         return hmax
 
     elif isinstance(dep, (str, Path)):
-        if floodmap_fn is not None:
+        if floodmap_fn is None:
             raise ValueError(
                 "floodmap_fn should be provided when dep is a Path or str."
             )
