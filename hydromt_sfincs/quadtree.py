@@ -161,7 +161,7 @@ class QuadtreeGrid:
             name = os.path.splitext(name)[0]
             export_image(img, name, export_path=path)
             return True
-        except Exception as e:
+        except Exception:
             return False
 
     def snap_to_grid(self, polyline, max_snap_distance=1.0):

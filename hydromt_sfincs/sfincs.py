@@ -1840,7 +1840,7 @@ class SfincsModel(GridModel):
             if not set(gdf_locs.index) == set(df_ts.columns):
                 gdf_locs = gdf_locs.set_index(df_ts.columns)
                 self.logger.info(
-                    f"No matching index column found in gdf_locs; assuming the order is correct"
+                    "No matching index column found in gdf_locs; assuming the order is correct"
                 )
         # merge with existing data
         if name in self.forcing and merge:
