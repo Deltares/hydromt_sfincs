@@ -1,4 +1,5 @@
 """RegularGrid class for SFINCS."""
+
 import logging
 import math
 import os
