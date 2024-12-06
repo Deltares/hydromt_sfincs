@@ -1235,7 +1235,7 @@ class SfincsModel(GridModel):
 
     # Function to create curve number for SFINCS including recovery via saturated hydraulic conductivity [mm/hr]
     def setup_cn_infiltration_with_ks(
-        self, lulc, hsg, ksat, reclass_table, effective, block_size=2000
+        self, lulc, hsg, ksat, reclass_table, effective, factor_ksat, block_size=2000
     ):
         """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
         including recovery term based on the soil saturation
@@ -1342,6 +1342,9 @@ class SfincsModel(GridModel):
 
         # Done
         self.logger.info(f"Done with determination of values (in blocks).")
+        
+        # Convert ks - (e.g. from micrometer per second to mm/hr which is SFINCS required)
+        da_ks = da_ks * factor_ksat
 
         # Specify the effective soil retention (seff)
         da_seff = da_smax
@@ -2803,7 +2806,7 @@ class SfincsModel(GridModel):
         # config last; might be udpated when writing maps, states or forcing
         self.write_config()
         # write data catalog with used data sources
-        self.write_data_catalog()  # new in hydromt v0.4.4
+        #self.write_data_catalog()  # new in hydromt v0.4.4
 
     def read_grid(self, data_vars: Union[List, str] = None) -> None:
         """Read SFINCS binary grid files and save to `grid` attribute.
