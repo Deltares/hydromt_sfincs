@@ -12,7 +12,6 @@ authors = [
 ]
 dependencies = [
     "affine",
-    "datashader",
     "geopandas>1.0",
     "hydromt>=0.10, <0.11",
     "numba",
@@ -25,7 +24,7 @@ dependencies = [
     "scipy",
     "shapely",
     "xarray",
-    "xugrid",
+    "xugrid>=0.12, <1.0",
 ]
 requires-python = ">=3.9" # fix tests to support older versions
 readme = "README.rst"
@@ -60,6 +59,9 @@ examples = [
     "jupyterlab",
     "matplotlib",
     "pillow",
+]
+quadtree = [
+    "datashader",
 ]
 
 full = ["hydromt_sfincs[test, doc, examples]"]

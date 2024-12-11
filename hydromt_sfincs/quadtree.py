@@ -1,32 +1,27 @@
 import logging
 import os
-import time
-import warnings
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 import numpy as np
-from matplotlib import path
 from pyproj import CRS, Transformer
-
-np.warnings = warnings
 
 import geopandas as gpd
 import pandas as pd
+import xarray as xr
+import xugrid as xu
 import shapely
 
+# optional dependency
 try:
-    import xugrid as xu
-except ImportError:
-    raise ImportError("xugrid is not installed. Please install it first.")
-import xarray as xr
-
-try:
-    import datashader as ds
+    from datashader import Canvas
     import datashader.transfer_functions as tf
     from datashader.utils import export_image
+
+    HAS_DATASHADER = True
 except ImportError:
-    raise ImportError("datashader is not installed. Please install it first.")
+    HAS_DATASHADER = False
+
 
 from hydromt_sfincs.subgrid import SubgridTableQuadtree
 
@@ -39,9 +34,9 @@ class QuadtreeGrid:
         self.nr_refinement_levels = 1
         self.version = 0
 
-        self.data = None
+        self.data = None  # placeholder for xugrid object
         self.subgrid = SubgridTableQuadtree()
-        self.df = None
+        self.df = None  # placeholder for pandas dataframe for datashader
 
     @property
     def crs(self):
@@ -133,6 +128,10 @@ class QuadtreeGrid:
         ds.to_netcdf(file_name)
 
     def map_overlay(self, file_name, xlim=None, ylim=None, color="black", width=800):
+        # check if datashader is available
+        if not HAS_DATASHADER:
+            logger.warning("Datashader is not available. Please install datashader.")
+            return False
         if self.data is None:
             # No grid (yet)
             return False
@@ -149,7 +148,7 @@ class QuadtreeGrid:
             ylim = [yl0, yl1]
             ratio = (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
             height = int(width * ratio)
-            cvs = ds.Canvas(
+            cvs = Canvas(
                 x_range=xlim, y_range=ylim, plot_height=height, plot_width=width
             )
             agg = cvs.line(self.df, x=["x1", "x2"], y=["y1", "y2"], axis=1)
@@ -161,19 +160,20 @@ class QuadtreeGrid:
             name = os.path.splitext(name)[0]
             export_image(img, name, export_path=path)
             return True
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to create map overlay. Error: %s" % e)
             return False
 
     def snap_to_grid(self, polyline, max_snap_distance=1.0):
         if len(polyline) == 0:
             return gpd.GeoDataFrame()
         geom_list = []
-        for iline, line in polyline.iterrows():
+        for _, line in polyline.iterrows():
             geom = line["geometry"]
             if geom.geom_type == "LineString":
                 geom_list.append(geom)
         gdf = gpd.GeoDataFrame({"geometry": geom_list})
-        snapped_uds, snapped_gdf = xu.snap_to_grid(
+        _, snapped_gdf = xu.snap_to_grid(
             gdf, self.data.grid, max_snap_distance=max_snap_distance
         )
         snapped_gdf = snapped_gdf.set_crs(self.crs)
