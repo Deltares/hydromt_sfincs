@@ -184,13 +184,21 @@ class SfincsModel(GridModel):
         return region
 
     @property
+    def bounds(self) -> List[float]:
+        """Returns the bounding box of the model grid."""
+        if self.grid_type == "regular":
+            return self.mask.raster.bounds
+        elif self.grid_type == "quadtree":
+            return self.mask.ugrid.total_bounds
+                
+    @property
     def bbox(self) -> tuple:
-        """Returns the bounding box of the active model cells."""
+        """Returns the bounding box in WGS 84 of the model grid."""
         if self.grid_type == "regular":
             return self.mask.raster.transform_bounds(4326)
         elif self.grid_type == "quadtree":
             return self.mask.ugrid.to_crs(4326).ugrid.total_bounds
-
+        
     @property
     def crs(self) -> CRS | None:
         """Returns the model crs"""
@@ -2814,6 +2822,9 @@ class SfincsModel(GridModel):
             if not isfile(fn):
                 raise IOError(f".nc path {fn} does not exist")
             self.quadtree.read(file_name=fn)
+            # remove grid from api and model
+            self._API.pop("grid", None)
+            self._grid = None
         self.read_subgrid()
         self.read_geoms()
         self.read_forcing()

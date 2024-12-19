@@ -21,6 +21,9 @@ _cases = {
         "ini": "sfincs_test.yml",
         "example": "sfincs_test",
     },
+    "test2": {
+        "example": "sfincs_test_quadtree",
+    },    
 }
 
 
