@@ -3426,6 +3426,8 @@ class SfincsModel(GridModel):
                     chunks={"time": chunksize},
                 )
                 
+                # set coords
+                dsu = dsu.set_coords(["mesh2d_node_x","mesh2d_node_y"])
                 # get crs variable, drop it and set it correctly
                 crs = dsu["crs"].values
                 dsu.drop_vars("crs")

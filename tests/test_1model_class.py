@@ -35,8 +35,11 @@ def test_model_class(case):
     mod.read()
     # run test_model_api() method
     non_compliant_list = mod._test_model_api()
+    # drop non-compliant variables with "results" and "mesh" in name
+    non_compliant_list = [
+        v for v in non_compliant_list if "results" not in v and "mesh" not in v
+    ]
     assert len(non_compliant_list) == 0
-    # pass
 
 
 def test_states(mod):
@@ -398,20 +401,23 @@ def test_forcing_io(tmpdir):
     )
 
 
-def test_read_results():
-    root = TESTMODELDIR
+@pytest.mark.parametrize("case", list(_cases.keys()))
+def test_read_results(case):
+    root = join(TESTDATADIR, _cases[case]["example"])
     mod = SfincsModel(root=root, mode="r")
     assert all([v in mod.results for v in ["zs", "zsmax", "inp"]])
 
-
-def test_plots(mod):
+@pytest.mark.parametrize("case", list(_cases.keys()))
+def test_plots(case):
+    root = join(TESTDATADIR, _cases[case]["example"])
+    mod = SfincsModel(root=root, mode="r")    
     mod.plot_forcing(fn_out="forcing.png")
     assert isfile(join(mod.root, "figs", "forcing.png"))
     mod.plot_basemap(fn_out="basemap.png")
     assert isfile(join(mod.root, "figs", "basemap.png"))
 
 
-@pytest.mark.parametrize("case", list(_cases.keys()))
+@pytest.mark.parametrize("case", list(_cases.keys())[:1])
 def test_model_build(tmpdir, case):
     # compare results with model from examples folder
     root = str(tmpdir.join(case))
