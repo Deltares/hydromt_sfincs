@@ -15,7 +15,8 @@ import geopandas as gpd
 import hydromt
 import numpy as np
 import pandas as pd
-import xarray as xr
+import xarray as xr                
+import xugrid as xu
 from xugrid.core.wrap import UgridDataArray
 from hydromt.models.model_grid import GridModel
 from hydromt.vector import GeoDataArray, GeoDataset
@@ -2775,13 +2776,20 @@ class SfincsModel(GridModel):
         if isinstance(variable, xr.DataArray):
             ds = variable.to_dataset()
             variable = variable.name
+        elif isinstance(variable, xu.UgridDataArray):
+            ds = variable.to_dataset()
+            variable = variable.name
         elif variable.startswith("subgrid.") and self.subgrid is not None:
             ds = self.subgrid.copy()
             variable = variable.replace("subgrid.", "")
         else:
-            ds = self.grid.copy()
+            if self.grid_type == "regular":
+                ds = self.grid.copy()
+            elif self.grid_type == "quadtree":
+                ds = self.quadtree.data.copy()
             if "msk" not in ds:
                 ds["msk"] = self.mask
+
 
         fig, ax = plots.plot_basemap(
             ds,
@@ -2797,6 +2805,7 @@ class SfincsModel(GridModel):
             geom_names=geom_names,
             geom_kwargs=geom_kwargs,
             legend_kwargs=legend_kwargs,
+            logger=self.logger,
             **kwargs,
         )
 
@@ -3400,16 +3409,34 @@ class SfincsModel(GridModel):
         if not isabs(fn_map):
             fn_map = join(self.root, fn_map)
         if isfile(fn_map):
-            ds_face, ds_edge = utils.read_sfincs_map_results(
-                fn_map,
-                ds_like=self.grid,  # TODO: fix for quadtree
-                drop=drop,
-                logger=self.logger,
-                **kwargs,
-            )
-            # save as dict of DataArray
-            self.set_results(ds_face, split_dataset=True)
-            self.set_results(ds_edge, split_dataset=True)
+            if self.grid_type == "regular":
+                ds_face, ds_edge = utils.read_sfincs_map_results(
+                    fn_map,
+                    ds_like=self.grid,  # TODO: fix for quadtree
+                    drop=drop,
+                    logger=self.logger,
+                    **kwargs,
+                )
+                # save as dict of DataArray
+                self.set_results(ds_face, split_dataset=True)
+                self.set_results(ds_edge, split_dataset=True)
+            elif self.grid_type == "quadtree":
+                dsu = xu.open_dataset(
+                    fn_map,
+                    chunks={"time": chunksize},
+                )
+                
+                # get crs variable, drop it and set it correctly
+                crs = dsu["crs"].values
+                dsu.drop_vars("crs")
+                dsu.grid.set_crs(CRS.from_user_input(crs))
+
+                # NOTE the set_results of the model api doesnt support ugrid
+                self._initialize_results()
+                for name in dsu.variables:
+                    if name in self._results:
+                        self.logger.warning(f"Replacing result: {name}")
+                    self._results[name] = dsu[name]
 
         if not isabs(fn_his):
             fn_his = join(self.root, fn_his)
