@@ -4,7 +4,6 @@ from typing import Dict, List, Tuple, Union
 import numpy as np
 import logging
 import pandas as pd
-from pyproj import CRS, Transformer
 import xarray as xr
 import xugrid as xu
 
@@ -189,38 +188,34 @@ def plot_basemap(
         proj_crs = ds.grid.crs
         bounds = ds.ugrid.total_bounds
         bbox = ds.ugrid.to_crs(4326).ugrid.total_bounds
-        ratio = (bounds[3]-bounds[1])/((bounds[2]-bounds[0])*1.4)
+        ratio = (bounds[3] - bounds[1]) / ((bounds[2] - bounds[0]) * 1.4)
     proj_str = proj_crs.name
     extent = np.array(bounds)[[0, 2, 1, 3]]
 
-    # Get the area of use of the Project CRS in geographic coordinates
-    area = proj_crs.area_of_use
-    west, south, east, north = area.bounds
-    # Transform the extent to the actual CRS
-    transformer = Transformer.from_crs("EPSG:4326", proj_crs, always_xy=True)
-    # Transform each corner of the bounding box
-    x_min, y_min = transformer.transform(west, south)
-    x_max, y_max = transformer.transform(east, north)
-
-    # now check whether the model extent is within the extent of the crs
-    if extent[0] < x_min  or extent[1] > x_max or extent[2] < y_min or extent[3] > y_max:
-        logger.info("Model domain exceeds the area of use of the CRS. "
-                    "Reprojecting to EPSG:4326 for plotting.")
-
-        # reproject ds to EPSG:4326
-        if isinstance(ds, xr.Dataset):
-            ds = ds.raster.reproject('epsg:4326')
-        # reproject all geoms to EPSG:4326
-        for name, gdf in geoms.items():
-            geoms[name] = gdf.to_crs("epsg:4326")
-        # update proj_crs, proj_str bounds and extent
-        proj_crs = CRS.from_epsg(4326)
-        proj_str = proj_crs.name
-        bounds = bbox
-        extent = np.array(bounds)[[0, 2, 1, 3]]
-
     if proj_crs.is_projected and proj_crs.to_epsg() is not None:
-        crs = ccrs.epsg(proj_crs.to_epsg())
+        if "UTM" in proj_str:
+            # Extract the UTM zone number
+            utm_zone = proj_crs.utm_zone
+            # Parse the zone number and hemisphere
+            zone_number = int(utm_zone[:-1])  # Extract numeric part
+            hemisphere = utm_zone[-1]  # Last character is 'N' or 'S'
+            # Determine if it's in the southern hemisphere
+            is_southern_hemisphere = hemisphere == "S"
+            # Create the Cartopy UTM projection
+            crs = ccrs.UTM(zone_number, southern_hemisphere=is_southern_hemisphere)
+        else:
+            crs = ccrs.epsg(proj_crs.to_epsg())
+
+        # now check whether the model extent is within the extent of the crs
+        bounds_crs = crs.boundary.bounds
+        if (
+            bounds[0] < bounds_crs[0]
+            or bounds[1] < bounds_crs[1]
+            or bounds[2] > bounds_crs[2]
+            or bounds[3] > bounds_crs[3]
+        ):
+            logger.warning("Model domain exceeds the area of the CRS.")
+            logger.warning("Consider reprojecting to EPSG:4326 for plotting.")
         unit = proj_crs.axis_info[0].unit_name
         unit = "m" if unit == "metre" else unit
         xlab, ylab = f"x [{unit}] - {proj_str}", f"y [{unit}]"
