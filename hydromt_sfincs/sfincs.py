@@ -15,7 +15,7 @@ import geopandas as gpd
 import hydromt
 import numpy as np
 import pandas as pd
-import xarray as xr                
+import xarray as xr
 import xugrid as xu
 from xugrid.core.wrap import UgridDataArray
 from hydromt.models.model_grid import GridModel
@@ -191,7 +191,7 @@ class SfincsModel(GridModel):
             return self.mask.raster.bounds
         elif self.grid_type == "quadtree":
             return self.mask.ugrid.total_bounds
-                
+
     @property
     def bbox(self) -> tuple:
         """Returns the bounding box in WGS 84 of the model grid."""
@@ -199,7 +199,7 @@ class SfincsModel(GridModel):
             return self.mask.raster.transform_bounds(4326)
         elif self.grid_type == "quadtree":
             return self.mask.ugrid.to_crs(4326).ugrid.total_bounds
-        
+
     @property
     def crs(self) -> CRS | None:
         """Returns the model crs"""
@@ -2790,7 +2790,6 @@ class SfincsModel(GridModel):
             if "msk" not in ds:
                 ds["msk"] = self.mask
 
-
         fig, ax = plots.plot_basemap(
             ds,
             sg,
@@ -3412,7 +3411,7 @@ class SfincsModel(GridModel):
             if self.grid_type is None:
                 self.logger.warning(
                     "Grid type not known, trying to read from config file. "
-                    )
+                )
                 self.read_config()
             if self.grid_type == "regular":
                 ds_face, ds_edge = utils.read_sfincs_map_results(
@@ -3430,9 +3429,9 @@ class SfincsModel(GridModel):
                     fn_map,
                     chunks={"time": chunksize},
                 )
-                
+
                 # set coords
-                dsu = dsu.set_coords(["mesh2d_node_x","mesh2d_node_y"])
+                dsu = dsu.set_coords(["mesh2d_node_x", "mesh2d_node_y"])
                 # get crs variable, drop it and set it correctly
                 crs = dsu["crs"].values
                 dsu.drop_vars("crs")

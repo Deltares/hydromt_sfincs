@@ -6,6 +6,7 @@ from hydromt_sfincs.quadtree import QuadtreeGrid
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
 
+
 def test_quadtree_io(tmpdir):
     # Initialize a QuadtreeGrid object
     qtr = QuadtreeGrid()
@@ -34,7 +35,3 @@ def test_quadtree_io(tmpdir):
     assert np.sum(qtr2.data["msk"].values) == 4298
     # assert the dep variable is the same
     assert np.sum(qtr.data["dep"].values) == np.sum(qtr2.data["dep"].values)
-
-
-
-    

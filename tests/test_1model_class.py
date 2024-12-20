@@ -23,7 +23,7 @@ _cases = {
     },
     "test2": {
         "example": "sfincs_test_quadtree",
-    },    
+    },
 }
 
 
@@ -408,20 +408,21 @@ def test_read_results(case):
     mod.read_results()
     assert all([v in mod.results for v in ["zs", "zsmax", "inp"]])
 
+
 @pytest.mark.parametrize("case", list(_cases.keys()))
 def test_plots(case, tmpdir):
     root = join(TESTDATADIR, _cases[case]["example"])
     mod = SfincsModel(root=root, mode="r")
-    mod.read()  
-    mod.plot_forcing(fn_out=join(tmpdir,"forcing.png"))
-    assert isfile(join(tmpdir,"forcing.png"))
+    mod.read()
+    mod.plot_forcing(fn_out=join(tmpdir, "forcing.png"))
+    assert isfile(join(tmpdir, "forcing.png"))
     fn_out = join(tmpdir, "basemap.png")
     if case == "test2":
         mod.plot_basemap(
-            fn_out=fn_out, 
-            bmap="sat", 
-            plot_bounds=False, # does not work yet for quadtree
-            )
+            fn_out=fn_out,
+            bmap="sat",
+            plot_bounds=False,  # does not work yet for quadtree
+        )
     else:
         mod.plot_basemap(fn_out=fn_out, bmap="sat")
     assert isfile(fn_out)

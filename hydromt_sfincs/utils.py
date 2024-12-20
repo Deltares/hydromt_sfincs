@@ -906,8 +906,8 @@ def downscale_floodmap(
     else:
         timedim = set(zsmax.dims) - set(zsmax.raster.dims)
     if timedim:
-        logger.info(f"Multiple values present in {timedim} dimension,
-                    downscaling floodmap for maximum water level over {timedim}.")
+        logger.info(f"Multiple values present in {timedim} dimension.")
+        logger.info(f"Downscaling floodmap for maximum water level over {timedim}.")
         zsmax = zsmax.max(timedim)
 
     # Hydromt expects a string so if a Path is provided, convert to str
@@ -1014,21 +1014,29 @@ def downscale_floodmap(
                     # Determine if rotation is zero
                     if src.transform[1] == 0 and src.transform[3] == 0:  # No rotation
                         # Compute the 1D coordinates for x and y using the affine transformation
-                        x_coords = src.transform[2] + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
-                        y_coords = src.transform[5] + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
+                        x_coords = (
+                            src.transform[2]
+                            + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
+                        )
+                        y_coords = (
+                            src.transform[5]
+                            + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
+                        )
 
                         # Create xarray DataArray with coordinates
                         block_dep = xr.DataArray(
                             block_data.squeeze(),
                             dims=("y", "x"),
-                            coords = {
+                            coords={
                                 "y": ("y", y_coords),
                                 "x": ("x", x_coords),
-                            },                            
+                            },
                         )
                     else:
                         # Convert row and column indices to pixel coordinates
-                        cols, rows = np.meshgrid(np.arange(bm0, bm1), np.arange(bn0, bn1))
+                        cols, rows = np.meshgrid(
+                            np.arange(bm0, bm1), np.arange(bn0, bn1)
+                        )
                         x_coords, y_coords = src.transform * (cols + 0.5, rows + 0.5)
 
                         # Create xarray DataArray with coordinates
@@ -1189,27 +1197,25 @@ def _downscale_floodmap_da(
     gdf_mask : gpd.GeoDataFrame, optional
         Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
         Note that the area outside the polygons is set to nodata.
-     """
+    """
 
     # interpolate zsmax to dep grid
     if isinstance(zsmax, xr.DataArray):
         zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
-         
+
     elif isinstance(zsmax, xu.UgridDataArray):
         # if non-rotated grid, use xugrid rasterize_like
-        if dep.raster.transform[1] == 0 and dep.raster.transform[3] == 0:  
+        if dep.raster.transform[1] == 0 and dep.raster.transform[3] == 0:
             zsmax = zsmax.ugrid.rasterize_like(dep)
         # if rotated grid, use xugrid regridder
         else:
             # need to convert dep to unstructured to enable xugrid regridder
-            uda_dep = xu.UgridDataArray.from_structured(
-                    dep, "xc", "yc"
-                )
+            uda_dep = xu.UgridDataArray.from_structured(dep, "xc", "yc")
             regridder = xu.CentroidLocatorRegridder(source=zsmax, target=uda_dep)
             result = regridder.regrid(zsmax)
             # map back to structured
             zsmax = dep.copy(data=result.values.reshape(dep.shape))
-            
+
     zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
 
     # get flood depth
