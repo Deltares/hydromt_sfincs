@@ -3409,6 +3409,11 @@ class SfincsModel(GridModel):
         if not isabs(fn_map):
             fn_map = join(self.root, fn_map)
         if isfile(fn_map):
+            if self.grid_type is None:
+                self.logger.warning(
+                    "Grid type not known, trying to read from config file. "
+                    )
+                self.read_config()
             if self.grid_type == "regular":
                 ds_face, ds_edge = utils.read_sfincs_map_results(
                     fn_map,
