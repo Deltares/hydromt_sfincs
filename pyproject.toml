@@ -18,7 +18,7 @@ dependencies = [
     "numpy<2.0", # temp pin until bottleneck release v1.4
     "pandas",
     "pillow",
-    "pyflwdir>=0.5.5", < 0.5.9, # update together with numpy
+    "pyflwdir>=0.5.5, <0.5.9",
     "pyproj",
     "rasterio",
     "scipy",
