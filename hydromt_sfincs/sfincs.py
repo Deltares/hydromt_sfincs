@@ -17,18 +17,18 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import xugrid as xu
-from xugrid.core.wrap import UgridDataArray
 from hydromt.models.model_grid import GridModel
 from hydromt.vector import GeoDataArray, GeoDataset
 from hydromt.workflows.forcing import da_to_timedelta
 from pyproj import CRS
 from shapely.geometry import LineString, box
+from xugrid.core.wrap import UgridDataArray
 
-from . import DATADIR, plots, utils, workflows
-from .regulargrid import RegularGrid
-from .quadtree import QuadtreeGrid
-from .subgrid import SubgridTableRegular
-from .sfincs_input import SfincsInput
+from hydromt_sfincs import DATADIR, plots, utils, workflows
+from hydromt_sfincs.quadtree import QuadtreeGrid
+from hydromt_sfincs.regulargrid import RegularGrid
+from hydromt_sfincs.sfincs_input import SfincsInput
+from hydromt_sfincs.subgrid import SubgridTableRegular
 
 __all__ = ["SfincsModel"]
 
@@ -3196,7 +3196,8 @@ class SfincsModel(GridModel):
             elif name in ["netbndbzsbzi", "netsrcdis"]:
                 ds = GeoDataset.from_netcdf(fn, crs=self.crs, chunks="auto")
             else:
-                ds = xr.open_dataset(fn, chunks="auto")
+                with xr.open_dataset(fn, chunks="auto") as file:
+                    ds = file.load()
             rename = {k: v for k, v in rename.items() if k in ds}
             if len(rename) > 0:
                 ds = ds.rename(rename).squeeze(drop=True)[list(rename.values())]

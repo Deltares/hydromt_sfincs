@@ -12,8 +12,7 @@ import xarray as xr
 from numba import njit
 from rasterio.windows import Window
 
-from . import utils
-from . import workflows
+from hydromt_sfincs import utils, workflows
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,8 @@ class SubgridTableRegular:
         self.version = 1
 
         # Read data from netcdf file with xarray
-        ds = xr.open_dataset(file_name)
+        with xr.open_dataset(file_name) as file:
+            ds = file.load()
 
         # transpose to have level as first dimension
         ds = ds.transpose("levels", "npuv", "np")
@@ -146,9 +146,6 @@ class SubgridTableRegular:
                 # Set the modified arrays back to the attributes
                 setattr(self, u_attr_name, u_array)
                 setattr(self, v_attr_name, v_array)
-
-        # close the dataset
-        ds.close()
 
     # new way of writing netcdf subgrid tables
     def write(self, file_name, mask):
@@ -833,7 +830,9 @@ class SubgridTableQuadtree:
             return
 
         # Read from netcdf file with xarray
-        ds = xr.open_dataset(file_name)
+        with xr.open_dataset(file_name) as file:
+            ds = file.load()
+
         # Transpose to ensure bins is first dimension (convert from FORTRAN convention in SFINCS to Python)
         ds = ds.transpose("levels", "npuv", "np")
         ds.close()  # Should this be closed ?

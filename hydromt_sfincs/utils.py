@@ -778,7 +778,9 @@ def read_sfincs_map_results(
         "corner_n": "corner_y",
         "corner_m": "corner_x",
     }
-    ds_map = xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs)
+    with xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs) as file:
+        ds_map = file.load()
+
     ds_map = ds_map.rename(
         {k: v for k, v in rm.items() if (k in ds_map or k in ds_map.dims)}
     )
@@ -836,17 +838,19 @@ def read_sfincs_his_results(
     ds_his: xr.Dataset
         Parsed SFINCS output his file.
     """
-    with xr.open_dataset(fn_his, chunks={"time": chunksize}, **kwargs) as ds_his:
-        crs = ds_his["crs"].item() if ds_his["crs"].item() > 0 else crs
-        dvars = list(ds_his.data_vars.keys())
-        # set coordinates & spatial dims
-        cvars = ["id", "name", "x", "y"]
-        ds_his = ds_his.set_coords([v for v in dvars if v.split("_")[-1] in cvars])
-        ds_his.vector.set_spatial_dims(
-            x_name="station_x", y_name="station_y", index_dim="stations"
-        )
-        # set crs
-        ds_his.vector.set_crs(crs)
+    with xr.open_dataset(fn_his, chunks={"time": chunksize}, **kwargs) as file:
+        ds_his = file.load()
+
+    crs = ds_his["crs"].item() if ds_his["crs"].item() > 0 else crs
+    dvars = list(ds_his.data_vars.keys())
+    # set coordinates & spatial dims
+    cvars = ["id", "name", "x", "y"]
+    ds_his = ds_his.set_coords([v for v in dvars if v.split("_")[-1] in cvars])
+    ds_his.vector.set_spatial_dims(
+        x_name="station_x", y_name="station_y", index_dim="stations"
+    )
+    # set crs
+    ds_his.vector.set_crs(crs)
 
     return ds_his
 
