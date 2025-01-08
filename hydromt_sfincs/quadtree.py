@@ -3,19 +3,18 @@ import os
 from pathlib import Path
 from typing import Union
 
-import numpy as np
-from pyproj import CRS, Transformer
-
 import geopandas as gpd
+import numpy as np
 import pandas as pd
+import shapely
 import xarray as xr
 import xugrid as xu
-import shapely
+from pyproj import CRS, Transformer
 
 # optional dependency
 try:
-    from datashader import Canvas
     import datashader.transfer_functions as tf
+    from datashader import Canvas
     from datashader.utils import export_image
 
     HAS_DATASHADER = True
