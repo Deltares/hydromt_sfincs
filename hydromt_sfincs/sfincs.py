@@ -3196,8 +3196,7 @@ class SfincsModel(GridModel):
             elif name in ["netbndbzsbzi", "netsrcdis"]:
                 ds = GeoDataset.from_netcdf(fn, crs=self.crs, chunks="auto")
             else:
-                with xr.open_dataset(fn, chunks="auto") as file:
-                    ds = file.load()
+                ds = xr.load_dataset(fn, chunks="auto")
             rename = {k: v for k, v in rename.items() if k in ds}
             if len(rename) > 0:
                 ds = ds.rename(rename).squeeze(drop=True)[list(rename.values())]
