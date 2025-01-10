@@ -15,15 +15,14 @@ import hydromt
 import numpy as np
 import pandas as pd
 import rasterio
-from rasterio.enums import Resampling
-from rasterio.rio.overview import get_maximum_overview_level
-from rasterio.windows import Window
 import xarray as xr
 import xugrid as xu
 from hydromt.io import write_xy
 from pyproj.crs.crs import CRS
+from rasterio.enums import Resampling
+from rasterio.rio.overview import get_maximum_overview_level
+from rasterio.windows import Window
 from shapely.geometry import LineString, Polygon
-
 
 __all__ = [
     "read_binary_map",
@@ -779,38 +778,40 @@ def read_sfincs_map_results(
         "corner_n": "corner_y",
         "corner_m": "corner_x",
     }
-    ds_map = xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs)
-    ds_map = ds_map.rename(
-        {k: v for k, v in rm.items() if (k in ds_map or k in ds_map.dims)}
-    )
-    ds_map = ds_map.set_coords(
-        [var for var in ds_map.data_vars.keys() if (var in rm.values())]
-    )
+    with xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs) as ds_map:
+        ds_map = ds_map.rename(
+            {k: v for k, v in rm.items() if (k in ds_map or k in ds_map.dims)}
+        )
+        ds_map = ds_map.set_coords(
+            [var for var in ds_map.data_vars.keys() if (var in rm.values())]
+        )
 
-    # support for older sfincs_map.nc files
-    # check if x,y dimensions are in the order y,x
-    ds_map = ds_map.transpose(..., "y", "x", "corner_y", "corner_x")
+        # support for older sfincs_map.nc files
+        # check if x,y dimensions are in the order y,x
+        ds_map = ds_map.transpose(..., "y", "x", "corner_y", "corner_x")
 
-    # split face and edge variables
-    scoords = ds_like.raster.coords
-    tcoords = {tdim: ds_map[tdim] for tdim in ds_map.dims if tdim.startswith("time")}
-    ds_face = xr.Dataset(coords={**scoords, **tcoords})
-    ds_edge = xr.Dataset()
-    for var in ds_map.data_vars:
-        if var in drop:
-            continue
-        if "x" in ds_map[var].dims and "y" in ds_map[var].dims:
-            # drop to overwrite with ds_like.raster.coords
-            ds_face[var] = ds_map[var].drop_vars(["xc", "yc"])
-        elif ds_map[var].ndim == 0:
-            ds_face[var] = ds_map[var]
-        else:
-            ds_edge[var] = ds_map[var]
+        # split face and edge variables
+        scoords = ds_like.raster.coords
+        tcoords = {
+            tdim: ds_map[tdim] for tdim in ds_map.dims if tdim.startswith("time")
+        }
+        ds_face = xr.Dataset(coords={**scoords, **tcoords})
+        ds_edge = xr.Dataset()
+        for var in ds_map.data_vars:
+            if var in drop:
+                continue
+            if "x" in ds_map[var].dims and "y" in ds_map[var].dims:
+                # drop to overwrite with ds_like.raster.coords
+                ds_face[var] = ds_map[var].drop_vars(["xc", "yc"])
+            elif ds_map[var].ndim == 0:
+                ds_face[var] = ds_map[var]
+            else:
+                ds_edge[var] = ds_map[var]
 
-    # add crs
-    if ds_like.raster.crs is not None:
-        ds_face.raster.set_crs(ds_like.raster.crs)
-        ds_edge.raster.set_crs(ds_like.raster.crs)
+        # add crs
+        if ds_like.raster.crs is not None:
+            ds_face.raster.set_crs(ds_like.raster.crs)
+            ds_edge.raster.set_crs(ds_like.raster.crs)
 
     return ds_face, ds_edge
 
@@ -837,18 +838,17 @@ def read_sfincs_his_results(
     ds_his: xr.Dataset
         Parsed SFINCS output his file.
     """
-
-    ds_his = xr.open_dataset(fn_his, chunks={"time": chunksize}, **kwargs)
-    crs = ds_his["crs"].item() if ds_his["crs"].item() > 0 else crs
-    dvars = list(ds_his.data_vars.keys())
-    # set coordinates & spatial dims
-    cvars = ["id", "name", "x", "y"]
-    ds_his = ds_his.set_coords([v for v in dvars if v.split("_")[-1] in cvars])
-    ds_his.vector.set_spatial_dims(
-        x_name="station_x", y_name="station_y", index_dim="stations"
-    )
-    # set crs
-    ds_his.vector.set_crs(crs)
+    with xr.open_dataset(fn_his, chunks={"time": chunksize}, **kwargs) as ds_his:
+        crs = ds_his["crs"].item() if ds_his["crs"].item() > 0 else crs
+        dvars = list(ds_his.data_vars.keys())
+        # set coordinates & spatial dims
+        cvars = ["id", "name", "x", "y"]
+        ds_his = ds_his.set_coords([v for v in dvars if v.split("_")[-1] in cvars])
+        ds_his.vector.set_spatial_dims(
+            x_name="station_x", y_name="station_y", index_dim="stations"
+        )
+        # set crs
+        ds_his.vector.set_crs(crs)
 
     return ds_his
 
