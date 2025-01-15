@@ -1350,7 +1350,7 @@ class SfincsModel(GridModel):
                 ib += 1
                 self.logger.debug(
                     f"\nblock {ib + 1}/{nrbn * nrbm} -- "
-                    f"col {bm0}:{bm1-1} | row {bn0}:{bn1-1}"
+                    f"col {bm0}:{bm1 - 1} | row {bn0}:{bn1 - 1}"
                 )
 
                 # calculate transform and shape of block at cell and subgrid level
@@ -3189,6 +3189,7 @@ class SfincsModel(GridModel):
         for name in dvars_2d:
             fname, rename = self._FORCING_NET[name]
             fn = self.get_config(f"{fname}file", abs_path=True)
+            ds = None
             if fn is None or not isfile(fn):
                 if fn is not None:
                     self.logger.warning(f"{name}file not found at {fn}")
@@ -3196,13 +3197,17 @@ class SfincsModel(GridModel):
             elif name in ["netbndbzsbzi", "netsrcdis"]:
                 ds = GeoDataset.from_netcdf(fn, crs=self.crs, chunks="auto")
             else:
-                ds = xr.load_dataset(fn, chunks="auto")
+                ds = xr.open_dataset(fn, chunks="auto")
+
             rename = {k: v for k, v in rename.items() if k in ds}
             if len(rename) > 0:
                 ds = ds.rename(rename).squeeze(drop=True)[list(rename.values())]
                 self.set_forcing(ds, split_dataset=True)
             else:
                 logger.warning(f"No forcing variables found in {fname}file")
+
+            if ds is not None:
+                ds.close()
 
     def write_forcing(self, data_vars: Union[List, str] = None, fmt: str = "%7.2f"):
         """Write forcing to ascii or netcdf (netampr) files.
@@ -3425,7 +3430,7 @@ class SfincsModel(GridModel):
                 self.set_results(ds_face, split_dataset=True)
                 self.set_results(ds_edge, split_dataset=True)
             elif self.grid_type == "quadtree":
-                dsu = xu.open_dataset(
+                dsu = utils.xu_open_dataset(
                     fn_map,
                     chunks={"time": chunksize},
                 )

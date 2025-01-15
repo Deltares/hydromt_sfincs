@@ -1329,3 +1329,12 @@ def binary_search(vals, val):
         if vals[indx] == val:
             return indx
     return None
+
+
+def xu_open_dataset(*args, **kwargs):
+    """This function is a replacement of xu.open_dataset.
+
+    It exists because xu.open_dataset does not close the file after opening, which can lead to Permission Errors.
+    """
+    with xr.open_dataset(*args, **kwargs) as ds:
+        return xu.UgridDataset(ds)
