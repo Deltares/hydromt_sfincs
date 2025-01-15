@@ -1149,9 +1149,9 @@ def build_overviews(
 
     # check if fn is a geotiff file
     extensions = [".tif", ".tiff"]
-    assert any(
-        fn.endswith(ext) for ext in extensions
-    ), f"File {fn} is not a GeoTIFF file."
+    assert any(fn.endswith(ext) for ext in extensions), (
+        f"File {fn} is not a GeoTIFF file."
+    )
 
     # open rasterio dataset
     with rasterio.open(fn, "r+") as src:
@@ -1329,3 +1329,11 @@ def binary_search(vals, val):
         if vals[indx] == val:
             return indx
     return None
+
+
+def xu_open_dataset(*args, **kwargs):
+    """This function is a replacement of xu.open_dataset.
+
+    It exists because xu.open_dataset does not close the file after opening, which can lead to Permission Errors."""
+    with xr.open_dataset(*args, **kwargs) as ds:
+        return xu.UgridDataset(ds)

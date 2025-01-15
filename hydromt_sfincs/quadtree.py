@@ -11,6 +11,8 @@ import xarray as xr
 import xugrid as xu
 from pyproj import CRS, Transformer
 
+from hydromt_sfincs.utils import xu_open_dataset
+
 # optional dependency
 try:
     import datashader.transfer_functions as tf
@@ -83,8 +85,7 @@ class QuadtreeGrid:
     def read(self, file_name: Union[str, Path] = "sfincs.nc"):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object."""
 
-        self.data = xu.open_dataset(file_name)
-        self.data.close()  # TODO check if close works/is needed
+        self.data = xu_open_dataset(file_name)
 
         # TODO make similar to fortran conventions?
         # Rename to python conventions
