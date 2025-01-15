@@ -3189,6 +3189,7 @@ class SfincsModel(GridModel):
         for name in dvars_2d:
             fname, rename = self._FORCING_NET[name]
             fn = self.get_config(f"{fname}file", abs_path=True)
+            ds = None
             if fn is None or not isfile(fn):
                 if fn is not None:
                     self.logger.warning(f"{name}file not found at {fn}")
@@ -3196,7 +3197,7 @@ class SfincsModel(GridModel):
             elif name in ["netbndbzsbzi", "netsrcdis"]:
                 ds = GeoDataset.from_netcdf(fn, crs=self.crs, chunks="auto")
             else:
-                ds = xr.load_dataset(fn, chunks="auto")
+                ds = xr.open_dataset(fn, chunks="auto")
 
             rename = {k: v for k, v in rename.items() if k in ds}
             if len(rename) > 0:
@@ -3204,6 +3205,9 @@ class SfincsModel(GridModel):
                 self.set_forcing(ds, split_dataset=True)
             else:
                 logger.warning(f"No forcing variables found in {fname}file")
+
+            if ds is not None:
+                ds.close()
 
     def write_forcing(self, data_vars: Union[List, str] = None, fmt: str = "%7.2f"):
         """Write forcing to ascii or netcdf (netampr) files.
