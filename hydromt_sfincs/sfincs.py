@@ -1807,6 +1807,17 @@ class SfincsModel(GridModel):
                 )
             tref = utils.parse_datetime(self.config["tref"])
             df_ts.index = tref + pd.to_timedelta(df_ts.index, unit="sec")
+        # Check if df_ts covers the model time and has at least two values
+        tstart, tstop = self.get_model_time()  # model time
+        if df_ts is not None:
+            if df_ts.index.min() > tstart or df_ts.index.max() < tstop:
+                self.logger.warning(
+                    "The provided timeseries does not cover the entire model time period."
+                )
+            if df_ts.shape[0] < 2:
+                raise ValueError(
+                    "The provided timeseries must have at least two data points (from tstart to tstop)."
+                )
         # parse location index
         if (
             gdf_locs is not None
