@@ -1957,6 +1957,13 @@ class SfincsModel(GridModel):
         elif gdf_locs is None:
             raise ValueError("No waterlevel boundary (bnd) points provided.")
 
+        # It is still possible that all points are outside the region+buffer, this error should provide clear feedback
+        if gdf_locs.is_empty.all():
+            raise ValueError(
+                "All waterlevel boundary points provided are outside the active model domain plus specified buffer. "
+                "Check the provided locations or increase the value of the buffer argument."
+            )
+
         # optionally read offset data and correct df_ts
         if offset is not None and gdf_locs is not None:
             if isinstance(offset, (float, int)):
