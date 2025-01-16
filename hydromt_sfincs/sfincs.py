@@ -2796,7 +2796,7 @@ class SfincsModel(GridModel):
         self.read_forcing()
         self.logger.info("Model read")
 
-    def write(self, write_data_catalog: bool = True):
+    def write(self):
         """Write the complete model schematization and configuration to file."""
         self.logger.info(f"Writing model data to {self.root}")
         # TODO - add check for subgrid & quadtree > give flags to self.write_grid() and self.write_config()
@@ -2808,8 +2808,10 @@ class SfincsModel(GridModel):
         # config last; might be udpated when writing maps, states or forcing
         self.write_config()
         # write data catalog with used data sources
-        if write_data_catalog:
+        try:
             self.write_data_catalog()  # new in hydromt v0.4.4
+        except Exception as e:
+            self.logger.error(f"Error writing data catalog: {str(e)}")
 
     def read_grid(self, data_vars: Union[List, str] = None) -> None:
         """Read SFINCS binary grid files and save to `grid` attribute.
