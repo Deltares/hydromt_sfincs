@@ -1715,7 +1715,7 @@
 <div class="viewcode-block" id="SfincsModel.setup_cn_infiltration_with_ks">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks.html#hydromt_sfincs.SfincsModel.setup_cn_infiltration_with_ks">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_cn_infiltration_with_ks</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">lulc</span><span class="p">,</span> <span class="n">hsg</span><span class="p">,</span> <span class="n">ksat</span><span class="p">,</span> <span class="n">reclass_table</span><span class="p">,</span> <span class="n">effective</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">2000</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lulc</span><span class="p">,</span> <span class="n">hsg</span><span class="p">,</span> <span class="n">ksat</span><span class="p">,</span> <span class="n">reclass_table</span><span class="p">,</span> <span class="n">effective</span><span class="p">,</span> <span class="n">factor_ksat</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">2000</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS</span>
 <span class="sd">        including recovery term based on the soil saturation</span>
@@ -1732,6 +1732,8 @@
 <span class="sd">            reclass table to relate landcover with soiltype</span>
 <span class="sd">        effective : float</span>
 <span class="sd">            estimate of percentage effective soil, e.g. 0.50 for 50%</span>
+<span class="sd">        factor_ksat : float</span>
+<span class="sd">            factor to convert units of Ksat, e.g. from micrometer per second to mm/hr</span>
 <span class="sd">        block_size : float</span>
 <span class="sd">            maximum block size - use larger values will get more data in memory but can be faster, default=2000</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1818,6 +1820,9 @@
 
         <span class="c1"># Done</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Done with determination of values (in blocks).&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Convert ks - (e.g. from micrometer per second to mm/hr which is required in SFINCS)</span>
+        <span class="n">da_ks</span> <span class="o">=</span> <span class="n">da_ks</span> <span class="o">*</span> <span class="n">factor_ksat</span>
 
         <span class="c1"># Specify the effective soil retention (seff)</span>
         <span class="n">da_seff</span> <span class="o">=</span> <span class="n">da_smax</span>
@@ -3362,7 +3367,10 @@
         <span class="c1"># config last; might be udpated when writing maps, states or forcing</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_config</span><span class="p">()</span>
         <span class="c1"># write data catalog with used data sources</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">write_data_catalog</span><span class="p">()</span>  <span class="c1"># new in hydromt v0.4.4</span></div>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_data_catalog</span><span class="p">()</span>  <span class="c1"># new in hydromt v0.4.4</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error writing data catalog: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SfincsModel.read_grid">
