@@ -16,8 +16,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -27,19 +27,19 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
     <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=17060807" />
   
   <!-- So that users can add custom icons -->
-  <script src="../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
@@ -391,9 +391,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -452,7 +457,11 @@
 <h1>SFINCS results: determine maximum water depth<a class="headerlink" href="#SFINCS-results:-determine-maximum-water-depth" title="Link to this heading">#</a></h1>
 <p>This notebook contains 2 examples, one for a standard regular SFINCS model, and one for a subgrid SFINCS model.</p>
 <p>IMPORTANT NOTE, the methods for producing a flood depth map for the regular vs subgrid versions of SFINCS are <strong>NOT</strong> the same, and <strong>NOT</strong> interchangeable!</p>
-<p>Contents: 1. Determine maximum water depth for a regular model 2. Determine maximum water depth for a subgrid model</p>
+<p>Contents:</p>
+<ol class="arabic simple">
+<li><p>Determine maximum water depth for a regular model</p></li>
+<li><p>Determine maximum water depth for a subgrid model</p></li>
+</ol>
 <section id="1.-Determine-maximum-water-depth-for-a-regular-model">
 <h2>1. Determine maximum water depth for a regular model<a class="headerlink" href="#1.-Determine-maximum-water-depth-for-a-regular-model" title="Link to this heading">#</a></h2>
 <p>The first example used in this notebook is based on a regular SFINCS model, i.e. no subgrid tables are used. In the absence of the subgrid tables, SFINCS computes the water depth by simply substracting the bed levels from the water levels. The (maximum) water depth <strong>h(max)</strong> is stored in the NetCDF output (<em>sfincs_map.nc</em>).</p>
@@ -461,9 +470,9 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">hydromt_sfincs</span> <span class="kn">import</span> <span class="n">SfincsModel</span><span class="p">,</span> <span class="n">utils</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="kn">import</span> <span class="n">join</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span><span class="p">,</span> <span class="n">utils</span>
 </pre></div>
 </div>
 </div>
@@ -689,7 +698,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
@@ -701,6 +710,23 @@ The process of interpolating the water levels onto the higher-resolution elevati
 <span class="n">da_zsmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;zsmax&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;timemax&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Grid type not known, trying to read from config file.
+Replacing result: inp
+Replacing result: msk
+Replacing result: zb
+Replacing result: zs
+Replacing result: h
+Replacing result: zsmax
+Replacing result: hmax
+Replacing result: total_runtime
+Replacing result: average_dt
+</pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
@@ -758,6 +784,16 @@ The process of interpolating the water levels onto the higher-resolution elevati
 </div>
 </div>
 <div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_compound/gis/bnd.geojson
+Index in bndfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_compound/gis/bnd.geojson
+Index in srcfile does not match /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_compound/gis/src.geojson
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
@@ -770,7 +806,7 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_sfincs_results_hmax_26_1.png" src="../_images/_examples_sfincs_results_hmax_26_1.png" />
+<img alt="../_images/_examples_sfincs_results_hmax_26_2.png" src="../_images/_examples_sfincs_results_hmax_26_2.png" />
 </div>
 </div>
 </section>
@@ -832,13 +868,13 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
   </nav></div>
 
   <div class="sidebar-secondary-item">
-
-  <div class="tocsection sourcelink">
-    <a href="../_sources/_examples/sfincs_results_hmax.ipynb.txt">
-      <i class="fa-solid fa-file-lines"></i> Show Source
-    </a>
-  </div>
-</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/_examples/sfincs_results_hmax.ipynb.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
 
 </div></div>
               
@@ -853,8 +889,8 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -887,7 +923,8 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
       
         <div class="footer-item">
 <p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
 </p></div>
       
     </div>

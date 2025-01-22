@@ -16,8 +16,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -27,19 +27,19 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
     <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=17060807" />
   
   <!-- So that users can add custom icons -->
-  <script src="../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
@@ -391,9 +391,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -459,13 +464,13 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
 
-<span class="kn">from</span> <span class="nn">hydromt_sfincs</span> <span class="kn">import</span> <span class="n">SfincsModel</span>
-<span class="kn">from</span> <span class="nn">hydromt_sfincs</span> <span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
 </pre></div>
 </div>
 </div>
@@ -617,8 +622,12 @@
 <img alt="../_images/_examples_build_from_script_14_0.png" src="../_images/_examples_build_from_script_14_0.png" />
 </div>
 </div>
-<p>NOTE: - The given output of HydroMT says “3 gaps outside valid elevation range &lt; 10 km2”. HydroMT does some smart filtering that if small groups of inactive cells are found, surrounded by active cells, these are still included as active, in this case 3 gaps. You can control the size of these gaps to filter by adding <code class="docutils literal notranslate"><span class="pre">fill_area</span> <span class="pre">=</span> <span class="pre">10</span></code> in <code class="docutils literal notranslate"><span class="pre">setup_mask_active()</span></code>. - A similar argument exists to neglect a group of active cells surrounded by inactive cells: <code class="docutils literal notranslate"><span class="pre">drop_area</span></code> - <code class="docutils literal notranslate"><span class="pre">reset_mask=True</span></code> means
-that every time you start with an ampy mask while defining your msk cells, if <code class="docutils literal notranslate"><span class="pre">reset_bounds=False</span></code> (default) you continue on the prevous time you ran that function</p>
+<p>NOTE:</p>
+<ul class="simple">
+<li><p>The given output of HydroMT says “3 gaps outside valid elevation range &lt; 10 km2”. HydroMT does some smart filtering that if small groups of inactive cells are found, surrounded by active cells, these are still included as active, in this case 3 gaps. You can control the size of these gaps to filter by adding <code class="docutils literal notranslate"><span class="pre">fill_area</span> <span class="pre">=</span> <span class="pre">10</span></code> in <code class="docutils literal notranslate"><span class="pre">setup_mask_active()</span></code>.</p></li>
+<li><p>A similar argument exists to neglect a group of active cells surrounded by inactive cells: <code class="docutils literal notranslate"><span class="pre">drop_area</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reset_mask=True</span></code> means that every time you start with an ampy mask while defining your msk cells, if <code class="docutils literal notranslate"><span class="pre">reset_bounds=False</span></code> (default) you continue on the prevous time you ran that function</p></li>
+</ul>
 </section>
 <section id="5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">
 <h2>5. Update mask with water level and outflow boundary cells - including use of polygons:<a class="headerlink" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:" title="Link to this heading">#</a></h2>
@@ -671,7 +680,12 @@ that every time you start with an ampy mask while defining your msk cells, if <c
 <img alt="../_images/_examples_build_from_script_19_1.png" src="../_images/_examples_build_from_script_19_1.png" />
 </div>
 </div>
-<p>NOTE: - As you can see now, also msk=2 values (red line) have been added along the coastal boundary - As you can see now, also msk=3 values (purple line) have been added along the lateral inland boundaries within the gdf_include shapefile - <code class="docutils literal notranslate"><span class="pre">reset_bounds=True</span></code> means that you start without initial boundary cells (of the specified type), if <code class="docutils literal notranslate"><span class="pre">reset_bounds=False</span></code> (default) you build on the existing boundary cells (if available)</p>
+<p>NOTE:</p>
+<ul class="simple">
+<li><p>As you can see now, also msk=2 values (red line) have been added along the coastal boundary</p></li>
+<li><p>As you can see now, also msk=3 values (purple line) have been added along the lateral inland boundaries within the gdf_include shapefile</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reset_bounds=True</span></code> means that you start without initial boundary cells (of the specified type), if <code class="docutils literal notranslate"><span class="pre">reset_bounds=False</span></code> (default) you build on the existing boundary cells (if available)</p></li>
+</ul>
 </section>
 <section id="6.-Add-river-inflow-points:">
 <h2>6. Add river inflow points:<a class="headerlink" href="#6.-Add-river-inflow-points:" title="Link to this heading">#</a></h2>
@@ -839,27 +853,27 @@ Cell <span class="ansi-green-fg">In[14], line 4</span>
 <span class="ansi-green-intense-fg ansi-bold">     17</span> <span style="color: rgb(95,135,135)">#       The whole point of the subgrid functionality of SFINCS is that by derived subgrid tables based on high res elevation data,</span>
 <span class="ansi-green-intense-fg ansi-bold">     18</span> <span style="color: rgb(95,135,135)">#       you either have more accurate results or run on a coarser grid resolution (= much faster) or both</span>
 
-File <span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:751</span>, in <span class="ansi-cyan-fg">SfincsModel.setup_subgrid</span><span class="ansi-blue-fg">(self, datasets_dep, datasets_rgh, datasets_riv, buffer_cells, nlevels, nbins, nr_subgrid_pixels, nrmax, max_gradient, z_minimum, huthresh, q_table_option, manning_land, manning_sea, rgh_lev_land, write_dep_tif, write_man_tif)</span>
-<span class="ansi-green-intense-fg ansi-bold">    747</span> datasets_dep <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_parse_datasets_dep(datasets_dep, res<span style="color: rgb(98,98,98)">=</span>res)
-<span class="ansi-green-intense-fg ansi-bold">    749</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">len</span>(datasets_rgh) <span style="color: rgb(98,98,98)">&gt;</span> <span style="color: rgb(98,98,98)">0</span>:
-<span class="ansi-green-intense-fg ansi-bold">    750</span>     <span style="color: rgb(95,135,135)"># NOTE conversion from landuse/landcover to manning happens here</span>
-<span class="ansi-green-fg">--&gt; 751</span>     datasets_rgh <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_parse_datasets_rgh</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">datasets_rgh</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">    753</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">len</span>(datasets_riv) <span style="color: rgb(98,98,98)">&gt;</span> <span style="color: rgb(98,98,98)">0</span>:
-<span class="ansi-green-intense-fg ansi-bold">    754</span>     datasets_riv <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_parse_datasets_riv(datasets_riv)
+File <span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:788</span>, in <span class="ansi-cyan-fg">SfincsModel.setup_subgrid</span><span class="ansi-blue-fg">(self, datasets_dep, datasets_rgh, datasets_riv, buffer_cells, nlevels, nbins, nr_subgrid_pixels, nrmax, max_gradient, z_minimum, huthresh, q_table_option, manning_land, manning_sea, rgh_lev_land, write_dep_tif, write_man_tif)</span>
+<span class="ansi-green-intense-fg ansi-bold">    784</span> datasets_dep <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_parse_datasets_dep(datasets_dep, res<span style="color: rgb(98,98,98)">=</span>res)
+<span class="ansi-green-intense-fg ansi-bold">    786</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">len</span>(datasets_rgh) <span style="color: rgb(98,98,98)">&gt;</span> <span style="color: rgb(98,98,98)">0</span>:
+<span class="ansi-green-intense-fg ansi-bold">    787</span>     <span style="color: rgb(95,135,135)"># NOTE conversion from landuse/landcover to manning happens here</span>
+<span class="ansi-green-fg">--&gt; 788</span>     datasets_rgh <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_parse_datasets_rgh</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">datasets_rgh</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    790</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">len</span>(datasets_riv) <span style="color: rgb(98,98,98)">&gt;</span> <span style="color: rgb(98,98,98)">0</span>:
+<span class="ansi-green-intense-fg ansi-bold">    791</span>     datasets_riv <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_parse_datasets_riv(datasets_riv)
 
-File <span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:3702</span>, in <span class="ansi-cyan-fg">SfincsModel._parse_datasets_rgh</span><span class="ansi-blue-fg">(self, datasets_rgh)</span>
-<span class="ansi-green-intense-fg ansi-bold">   3693</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(
-<span class="ansi-green-intense-fg ansi-bold">   3694</span>         <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Manning roughness </span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">reclass_table</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)"> csv file must be provided</span><span style="color: rgb(175,0,0)">&#34;</span>
-<span class="ansi-green-intense-fg ansi-bold">   3695</span>     )
-<span class="ansi-green-intense-fg ansi-bold">   3696</span> da_lulc <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>data_catalog<span style="color: rgb(98,98,98)">.</span>get_rasterdataset(
-<span class="ansi-green-intense-fg ansi-bold">   3697</span>     lulc,
-<span class="ansi-green-intense-fg ansi-bold">   3698</span>     bbox<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>mask<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>transform_bounds(<span style="color: rgb(98,98,98)">4326</span>),
-<span class="ansi-green-intense-fg ansi-bold">   3699</span>     buffer<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">10</span>,
-<span class="ansi-green-intense-fg ansi-bold">   3700</span>     variables<span style="color: rgb(98,98,98)">=</span>[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">lulc</span><span style="color: rgb(175,0,0)">&#34;</span>],
-<span class="ansi-green-intense-fg ansi-bold">   3701</span> )
-<span class="ansi-green-fg">-&gt; 3702</span> df_map <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">data_catalog</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">get_dataframe</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">reclass_table</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">index_col</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">0</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   3703</span> <span style="color: rgb(95,135,135)"># reclassify</span>
-<span class="ansi-green-intense-fg ansi-bold">   3704</span> da_man <span style="color: rgb(98,98,98)">=</span> da_lulc<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>reclassify(df_map[[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">N</span><span style="color: rgb(175,0,0)">&#34;</span>]])[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">N</span><span style="color: rgb(175,0,0)">&#34;</span>]
+File <span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:3801</span>, in <span class="ansi-cyan-fg">SfincsModel._parse_datasets_rgh</span><span class="ansi-blue-fg">(self, datasets_rgh)</span>
+<span class="ansi-green-intense-fg ansi-bold">   3792</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(
+<span class="ansi-green-intense-fg ansi-bold">   3793</span>         <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Manning roughness </span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">reclass_table</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)"> csv file must be provided</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">   3794</span>     )
+<span class="ansi-green-intense-fg ansi-bold">   3795</span> da_lulc <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>data_catalog<span style="color: rgb(98,98,98)">.</span>get_rasterdataset(
+<span class="ansi-green-intense-fg ansi-bold">   3796</span>     lulc,
+<span class="ansi-green-intense-fg ansi-bold">   3797</span>     bbox<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>bbox,
+<span class="ansi-green-intense-fg ansi-bold">   3798</span>     buffer<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">10</span>,
+<span class="ansi-green-intense-fg ansi-bold">   3799</span>     variables<span style="color: rgb(98,98,98)">=</span>[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">lulc</span><span style="color: rgb(175,0,0)">&#34;</span>],
+<span class="ansi-green-intense-fg ansi-bold">   3800</span> )
+<span class="ansi-green-fg">-&gt; 3801</span> df_map <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">data_catalog</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">get_dataframe</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">reclass_table</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">index_col</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">0</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   3802</span> <span style="color: rgb(95,135,135)"># reclassify</span>
+<span class="ansi-green-intense-fg ansi-bold">   3803</span> da_man <span style="color: rgb(98,98,98)">=</span> da_lulc<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>reclassify(df_map[[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">N</span><span style="color: rgb(175,0,0)">&#34;</span>]])[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">N</span><span style="color: rgb(175,0,0)">&#34;</span>]
 
 File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/data_catalog.py:1683</span>, in <span class="ansi-cyan-fg">DataCatalog.get_dataframe</span><span class="ansi-blue-fg">(self, data_like, variables, time_tuple, handle_nodata, provider, version, **kwargs)</span>
 <span class="ansi-green-intense-fg ansi-bold">   1680</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
@@ -915,7 +929,7 @@ File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/p
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 <span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">AttributeError</span>                            Traceback (most recent call last)
+<span class="ansi-red-fg">ValueError</span>                                Traceback (most recent call last)
 Cell <span class="ansi-green-fg">In[15], line 5</span>
 <span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(95,135,135)"># uncomment to see the subgrid table variales</span>
 <span class="ansi-green-intense-fg ansi-bold">      2</span> <span style="color: rgb(95,135,135)"># sf.subgrid</span>
@@ -925,36 +939,87 @@ Cell <span class="ansi-green-fg">In[15], line 5</span>
 <span class="ansi-green-intense-fg ansi-bold">      6</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">variable</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">subgrid.z_zmin</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">plot_bounds</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">False</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">bmap</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">sat</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">zoomlevel</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">12</span>
 <span class="ansi-green-intense-fg ansi-bold">      7</span> <span class="ansi-yellow-bg">)</span>
 
-File <span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:2756</span>, in <span class="ansi-cyan-fg">SfincsModel.plot_basemap</span><span class="ansi-blue-fg">(self, fn_out, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, legend_kwargs, **kwargs)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2753</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">msk</span><span style="color: rgb(175,0,0)">&#34;</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> ds:
-<span class="ansi-green-intense-fg ansi-bold">   2754</span>         ds[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">msk</span><span style="color: rgb(175,0,0)">&#34;</span>] <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>mask
-<span class="ansi-green-fg">-&gt; 2756</span> fig, ax <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">plots</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">plot_basemap</span><span class="ansi-yellow-bg">(</span>
-<span class="ansi-green-intense-fg ansi-bold">   2757</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">ds</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2758</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">sg</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2759</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">variable</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">variable</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2760</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">shaded</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">shaded</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2761</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">plot_bounds</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">plot_bounds</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2762</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">plot_region</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">plot_region</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2763</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">plot_geoms</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">plot_geoms</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2764</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">bmap</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">bmap</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2765</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">zoomlevel</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">zoomlevel</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2766</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">figsize</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">figsize</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2767</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">geom_names</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">geom_names</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2768</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">geom_kwargs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">geom_kwargs</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2769</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">legend_kwargs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">legend_kwargs</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2770</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-intense-fg ansi-bold">   2771</span> <span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2773</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> fn_out <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-intense-fg ansi-bold">   2774</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> os<span style="color: rgb(98,98,98)">.</span>path<span style="color: rgb(98,98,98)">.</span>isabs(fn_out):
+File <span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:2793</span>, in <span class="ansi-cyan-fg">SfincsModel.plot_basemap</span><span class="ansi-blue-fg">(self, fn_out, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, legend_kwargs, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">   2790</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">msk</span><span style="color: rgb(175,0,0)">&#34;</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> ds:
+<span class="ansi-green-intense-fg ansi-bold">   2791</span>         ds[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">msk</span><span style="color: rgb(175,0,0)">&#34;</span>] <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>mask
+<span class="ansi-green-fg">-&gt; 2793</span> fig, ax <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">plots</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">plot_basemap</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">   2794</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">ds</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2795</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">sg</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2796</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">variable</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">variable</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2797</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">shaded</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">shaded</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2798</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">plot_bounds</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">plot_bounds</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2799</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">plot_region</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">plot_region</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2800</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">plot_geoms</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">plot_geoms</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2801</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">bmap</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">bmap</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2802</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">zoomlevel</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">zoomlevel</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2803</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">figsize</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">figsize</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2804</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">geom_names</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">geom_names</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2805</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">geom_kwargs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">geom_kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2806</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">legend_kwargs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">legend_kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2807</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">logger</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2808</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   2809</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   2811</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> fn_out <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-intense-fg ansi-bold">   2812</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> os<span style="color: rgb(98,98,98)">.</span>path<span style="color: rgb(98,98,98)">.</span>isabs(fn_out):
 
-File <span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/plots.py:179</span>, in <span class="ansi-cyan-fg">plot_basemap</span><span class="ansi-blue-fg">(ds, geoms, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, legend_kwargs, bmap_kwargs, **kwargs)</span>
-<span class="ansi-green-intense-fg ansi-bold">    177</span> <span style="color: rgb(95,135,135)"># read crs and utm zone &gt; convert to cartopy</span>
-<span class="ansi-green-intense-fg ansi-bold">    178</span> proj_crs <span style="color: rgb(98,98,98)">=</span> ds<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>crs
-<span class="ansi-green-fg">--&gt; 179</span> proj_str <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">proj_crs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">name</span>
-<span class="ansi-green-intense-fg ansi-bold">    180</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> proj_crs<span style="color: rgb(98,98,98)">.</span>is_projected <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> proj_crs<span style="color: rgb(98,98,98)">.</span>to_epsg() <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-intense-fg ansi-bold">    181</span>     crs <span style="color: rgb(98,98,98)">=</span> ccrs<span style="color: rgb(98,98,98)">.</span>epsg(ds<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>crs<span style="color: rgb(98,98,98)">.</span>to_epsg())
+File <span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/plots.py:184</span>, in <span class="ansi-cyan-fg">plot_basemap</span><span class="ansi-blue-fg">(ds, geoms, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, legend_kwargs, bmap_kwargs, logger, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    182</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(ds, xr<span style="color: rgb(98,98,98)">.</span>Dataset):
+<span class="ansi-green-intense-fg ansi-bold">    183</span>     proj_crs <span style="color: rgb(98,98,98)">=</span> ds<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>crs
+<span class="ansi-green-fg">--&gt; 184</span>     bounds <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">ds</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">raster</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">box</span><span style="color: rgb(98,98,98)">.</span>buffer(<span style="color: rgb(0,135,0)">abs</span>(ds<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>res[<span style="color: rgb(98,98,98)">0</span>] <span style="color: rgb(98,98,98)">*</span> <span style="color: rgb(98,98,98)">1</span>))<span style="color: rgb(98,98,98)">.</span>total_bounds
+<span class="ansi-green-intense-fg ansi-bold">    185</span>     bbox <span style="color: rgb(98,98,98)">=</span> ds<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>transform_bounds(<span style="color: rgb(98,98,98)">4326</span>)
+<span class="ansi-green-intense-fg ansi-bold">    186</span>     ratio <span style="color: rgb(98,98,98)">=</span> ds<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>ycoords<span style="color: rgb(98,98,98)">.</span>size <span style="color: rgb(98,98,98)">/</span> (ds<span style="color: rgb(98,98,98)">.</span>raster<span style="color: rgb(98,98,98)">.</span>xcoords<span style="color: rgb(98,98,98)">.</span>size <span style="color: rgb(98,98,98)">*</span> <span style="color: rgb(98,98,98)">1.4</span>)
 
-<span class="ansi-red-fg">AttributeError</span>: &#39;NoneType&#39; object has no attribute &#39;name&#39;
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/raster.py:536</span>, in <span class="ansi-cyan-fg">XRasterBase.box</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    533</span> <span style="color: rgb(175,0,255)">@property</span>
+<span class="ansi-green-intense-fg ansi-bold">    534</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span><span style="color: rgb(188,188,188)"> </span><span style="color: rgb(0,0,255)">box</span>(<span style="color: rgb(0,135,0)">self</span>) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> gpd<span style="color: rgb(98,98,98)">.</span>GeoDataFrame:
+<span class="ansi-green-intense-fg ansi-bold">    535</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;Return :py:meth:`~geopandas.GeoDataFrame` of bounding box.&#34;&#34;&#34;</span>
+<span class="ansi-green-fg">--&gt; 536</span>     transform <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">transform</span>
+<span class="ansi-green-intense-fg ansi-bold">    537</span>     rs <span style="color: rgb(98,98,98)">=</span> np<span style="color: rgb(98,98,98)">.</span>array([<span style="color: rgb(98,98,98)">0</span>, <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>height, <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>height, <span style="color: rgb(98,98,98)">0</span>, <span style="color: rgb(98,98,98)">0</span>])
+<span class="ansi-green-intense-fg ansi-bold">    538</span>     cs <span style="color: rgb(98,98,98)">=</span> np<span style="color: rgb(98,98,98)">.</span>array([<span style="color: rgb(98,98,98)">0</span>, <span style="color: rgb(98,98,98)">0</span>, <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>width, <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>width, <span style="color: rgb(98,98,98)">0</span>])
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/raster.py:500</span>, in <span class="ansi-cyan-fg">XRasterBase.transform</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    497</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_transform <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-intense-fg ansi-bold">    498</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_transform
+<span class="ansi-green-intense-fg ansi-bold">    499</span> transform <span style="color: rgb(98,98,98)">=</span> (
+<span class="ansi-green-fg">--&gt; 500</span>     Affine<span style="color: rgb(98,98,98)">.</span>translation(<span style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">origin</span>)
+<span class="ansi-green-intense-fg ansi-bold">    501</span>     <span style="color: rgb(98,98,98)">*</span> Affine<span style="color: rgb(98,98,98)">.</span>rotation(<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>rotation)
+<span class="ansi-green-intense-fg ansi-bold">    502</span>     <span style="color: rgb(98,98,98)">*</span> Affine<span style="color: rgb(98,98,98)">.</span>scale(<span style="color: rgb(98,98,98)">*</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>res)
+<span class="ansi-green-intense-fg ansi-bold">    503</span> )
+<span class="ansi-green-intense-fg ansi-bold">    504</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_transform <span style="color: rgb(98,98,98)">=</span> transform
+<span class="ansi-green-intense-fg ansi-bold">    505</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> transform
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/raster.py:641</span>, in <span class="ansi-cyan-fg">XRasterBase.origin</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    639</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:  <span style="color: rgb(95,135,135)"># from coordinates</span>
+<span class="ansi-green-intense-fg ansi-bold">    640</span>     x0, y0 <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(98,98,98)">0</span>, <span style="color: rgb(98,98,98)">0</span>
+<span class="ansi-green-fg">--&gt; 641</span>     xs, ys <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">xcoords</span><span style="color: rgb(98,98,98)">.</span>data, <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>ycoords<span style="color: rgb(98,98,98)">.</span>data
+<span class="ansi-green-intense-fg ansi-bold">    642</span>     dx, dy <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>res
+<span class="ansi-green-intense-fg ansi-bold">    643</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> xs<span style="color: rgb(98,98,98)">.</span>ndim <span style="color: rgb(98,98,98)">==</span> <span style="color: rgb(98,98,98)">1</span>:  <span style="color: rgb(95,135,135)"># regular non-rotated</span>
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/raster.py:364</span>, in <span class="ansi-cyan-fg">XRasterBase.xcoords</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    361</span> <span style="color: rgb(175,0,255)">@property</span>
+<span class="ansi-green-intense-fg ansi-bold">    362</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span><span style="color: rgb(188,188,188)"> </span><span style="color: rgb(0,0,255)">xcoords</span>(<span style="color: rgb(0,135,0)">self</span>) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> xr<span style="color: rgb(98,98,98)">.</span>IndexVariable:
+<span class="ansi-green-intense-fg ansi-bold">    363</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">&#34;&#34;&#34;Return the x coordinates.&#34;&#34;&#34;</span>
+<span class="ansi-green-fg">--&gt; 364</span>     xcoords <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_obj[<span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">x_dim</span>]
+<span class="ansi-green-intense-fg ansi-bold">    365</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>x_dim <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_obj<span style="color: rgb(98,98,98)">.</span>coords:
+<span class="ansi-green-intense-fg ansi-bold">    366</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> key <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">list</span>(<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_obj<span style="color: rgb(98,98,98)">.</span>coords<span style="color: rgb(98,98,98)">.</span>keys()):
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/raster.py:351</span>, in <span class="ansi-cyan-fg">XRasterBase.x_dim</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    349</span> <span style="color: rgb(175,0,0)">&#34;&#34;&#34;Return the x dimension name.&#34;&#34;&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    350</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>get_attrs(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">x_dim</span><span style="color: rgb(175,0,0)">&#34;</span>) <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_obj<span style="color: rgb(98,98,98)">.</span>dims:
+<span class="ansi-green-fg">--&gt; 351</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">set_spatial_dims</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    352</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>attrs[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">x_dim</span><span style="color: rgb(175,0,0)">&#34;</span>]
+
+File <span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/raster.py:419</span>, in <span class="ansi-cyan-fg">XRasterBase.set_spatial_dims</span><span class="ansi-blue-fg">(self, x_dim, y_dim)</span>
+<span class="ansi-green-intense-fg ansi-bold">    417</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>set_attrs(x_dim<span style="color: rgb(98,98,98)">=</span>x_dim)
+<span class="ansi-green-intense-fg ansi-bold">    418</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">--&gt; 419</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(
+<span class="ansi-green-intense-fg ansi-bold">    420</span>         <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">x dimension not found. Use </span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">set_spatial_dims</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    421</span>         <span style="color: rgb(98,98,98)">+</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)"> functions with correct x_dim argument provided.</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    422</span>     )
+<span class="ansi-green-intense-fg ansi-bold">    424</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> y_dim <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-intense-fg ansi-bold">    425</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> dim <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> YDIMS:
+
+<span class="ansi-red-fg">ValueError</span>: x dimension not found. Use &#39;set_spatial_dims&#39; functions with correct x_dim argument provided.
 </pre></div></div>
 </div>
 </section>
@@ -1371,7 +1436,7 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;sfincs.crs&#39;, &#39;sfincs.inp&#39;, &#39;hydromt.log&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.dis&#39;, &#39;sfincs.bzs&#39;, &#39;sfincs.bnd&#39;, &#39;sfincs.weir&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.src&#39;, &#39;precip_2d.nc&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.scs&#39;, &#39;figs&#39;, &#39;gis&#39;, &#39;hydromt_data.yml&#39;]
+[&#39;sfincs.scs&#39;, &#39;sfincs.src&#39;, &#39;sfincs.bnd&#39;, &#39;gis&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.crs&#39;, &#39;sfincs.dis&#39;, &#39;precip_2d.nc&#39;, &#39;sfincs.obs&#39;, &#39;hydromt_data.yml&#39;, &#39;hydromt.log&#39;, &#39;sfincs.ind&#39;, &#39;figs&#39;, &#39;sfincs.bzs&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.weir&#39;]
 </pre></div></div>
 </div>
 <p>Your basemap and forcing figures are saved in the folder ‘figs’, GIS files (tiff &amp; geojson) of your model setup in ‘gis’ and merged elevation and manning roughness on subgrid resolution in ‘subgrid’.</p>
@@ -1447,13 +1512,13 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
   </nav></div>
 
   <div class="sidebar-secondary-item">
-
-  <div class="tocsection sourcelink">
-    <a href="../_sources/_examples/build_from_script.ipynb.txt">
-      <i class="fa-solid fa-file-lines"></i> Show Source
-    </a>
-  </div>
-</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/_examples/build_from_script.ipynb.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
 
 </div></div>
               
@@ -1468,8 +1533,8 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1502,7 +1567,8 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
       
         <div class="footer-item">
 <p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
 </p></div>
       
     </div>
