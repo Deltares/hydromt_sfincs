@@ -15,14 +15,14 @@ import hydromt
 import numpy as np
 import pandas as pd
 import rasterio
+import xarray as xr
+import xugrid as xu
+from hydromt.io import write_xy
+from pyproj.crs.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.rio.overview import get_maximum_overview_level
 from rasterio.windows import Window
-import xarray as xr
-from hydromt.io import write_xy
-from pyproj.crs.crs import CRS
 from shapely.geometry import LineString, Polygon
-
 
 __all__ = [
     "read_binary_map",
@@ -778,38 +778,40 @@ def read_sfincs_map_results(
         "corner_n": "corner_y",
         "corner_m": "corner_x",
     }
-    ds_map = xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs)
-    ds_map = ds_map.rename(
-        {k: v for k, v in rm.items() if (k in ds_map or k in ds_map.dims)}
-    )
-    ds_map = ds_map.set_coords(
-        [var for var in ds_map.data_vars.keys() if (var in rm.values())]
-    )
+    with xr.open_dataset(fn_map, chunks={"time": chunksize}, **kwargs) as ds_map:
+        ds_map = ds_map.rename(
+            {k: v for k, v in rm.items() if (k in ds_map or k in ds_map.dims)}
+        )
+        ds_map = ds_map.set_coords(
+            [var for var in ds_map.data_vars.keys() if (var in rm.values())]
+        )
 
-    # support for older sfincs_map.nc files
-    # check if x,y dimensions are in the order y,x
-    ds_map = ds_map.transpose(..., "y", "x", "corner_y", "corner_x")
+        # support for older sfincs_map.nc files
+        # check if x,y dimensions are in the order y,x
+        ds_map = ds_map.transpose(..., "y", "x", "corner_y", "corner_x")
 
-    # split face and edge variables
-    scoords = ds_like.raster.coords
-    tcoords = {tdim: ds_map[tdim] for tdim in ds_map.dims if tdim.startswith("time")}
-    ds_face = xr.Dataset(coords={**scoords, **tcoords})
-    ds_edge = xr.Dataset()
-    for var in ds_map.data_vars:
-        if var in drop:
-            continue
-        if "x" in ds_map[var].dims and "y" in ds_map[var].dims:
-            # drop to overwrite with ds_like.raster.coords
-            ds_face[var] = ds_map[var].drop_vars(["xc", "yc"])
-        elif ds_map[var].ndim == 0:
-            ds_face[var] = ds_map[var]
-        else:
-            ds_edge[var] = ds_map[var]
+        # split face and edge variables
+        scoords = ds_like.raster.coords
+        tcoords = {
+            tdim: ds_map[tdim] for tdim in ds_map.dims if tdim.startswith("time")
+        }
+        ds_face = xr.Dataset(coords={**scoords, **tcoords})
+        ds_edge = xr.Dataset()
+        for var in ds_map.data_vars:
+            if var in drop:
+                continue
+            if "x" in ds_map[var].dims and "y" in ds_map[var].dims:
+                # drop to overwrite with ds_like.raster.coords
+                ds_face[var] = ds_map[var].drop_vars(["xc", "yc"])
+            elif ds_map[var].ndim == 0:
+                ds_face[var] = ds_map[var]
+            else:
+                ds_edge[var] = ds_map[var]
 
-    # add crs
-    if ds_like.raster.crs is not None:
-        ds_face.raster.set_crs(ds_like.raster.crs)
-        ds_edge.raster.set_crs(ds_like.raster.crs)
+        # add crs
+        if ds_like.raster.crs is not None:
+            ds_face.raster.set_crs(ds_like.raster.crs)
+            ds_edge.raster.set_crs(ds_like.raster.crs)
 
     return ds_face, ds_edge
 
@@ -836,24 +838,23 @@ def read_sfincs_his_results(
     ds_his: xr.Dataset
         Parsed SFINCS output his file.
     """
-
-    ds_his = xr.open_dataset(fn_his, chunks={"time": chunksize}, **kwargs)
-    crs = ds_his["crs"].item() if ds_his["crs"].item() > 0 else crs
-    dvars = list(ds_his.data_vars.keys())
-    # set coordinates & spatial dims
-    cvars = ["id", "name", "x", "y"]
-    ds_his = ds_his.set_coords([v for v in dvars if v.split("_")[-1] in cvars])
-    ds_his.vector.set_spatial_dims(
-        x_name="station_x", y_name="station_y", index_dim="stations"
-    )
-    # set crs
-    ds_his.vector.set_crs(crs)
+    with xr.open_dataset(fn_his, chunks={"time": chunksize}, **kwargs) as ds_his:
+        crs = ds_his["crs"].item() if ds_his["crs"].item() > 0 else crs
+        dvars = list(ds_his.data_vars.keys())
+        # set coordinates & spatial dims
+        cvars = ["id", "name", "x", "y"]
+        ds_his = ds_his.set_coords([v for v in dvars if v.split("_")[-1] in cvars])
+        ds_his.vector.set_spatial_dims(
+            x_name="station_x", y_name="station_y", index_dim="stations"
+        )
+        # set crs
+        ds_his.vector.set_crs(crs)
 
     return ds_his
 
 
 def downscale_floodmap(
-    zsmax: xr.DataArray,
+    zsmax: Union[xr.DataArray, xu.UgridDataArray],
     dep: Union[Path, str, xr.DataArray],
     hmin: float = 0.05,
     gdf_mask: gpd.GeoDataFrame = None,
@@ -900,8 +901,13 @@ def downscale_floodmap(
     hydromt.raster.RasterDataArray.to_raster
     """
     # get maximum water level
-    timedim = set(zsmax.dims) - set(zsmax.raster.dims)
+    if isinstance(zsmax, xu.UgridDataArray):
+        timedim = set(zsmax.dims) - set(zsmax.ugrid.grid.dims)
+    else:
+        timedim = set(zsmax.dims) - set(zsmax.raster.dims)
     if timedim:
+        logger.info(f"Multiple values present in {timedim} dimension.")
+        logger.info(f"Downscaling floodmap for maximum water level over {timedim}.")
         zsmax = zsmax.max(timedim)
 
     # Hydromt expects a string so if a Path is provided, convert to str
@@ -1005,21 +1011,44 @@ def downscale_floodmap(
                     if np.all(np.isnan(block_data)):
                         continue
 
-                    # TODO directly use the rasterio warp method rather than the raster.reproject see PR #145
-                    # Convert row and column indices to pixel coordinates
-                    cols, rows = np.indices((bm1 - bm0, bn1 - bn0))
-                    x_coords, y_coords = src.transform * (cols + bm0, rows + bn0)
+                    # Determine if rotation is zero
+                    if src.transform[1] == 0 and src.transform[3] == 0:  # No rotation
+                        # Compute the 1D coordinates for x and y using the affine transformation
+                        x_coords = (
+                            src.transform[2]
+                            + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
+                        )
+                        y_coords = (
+                            src.transform[5]
+                            + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
+                        )
 
-                    # Create xarray DataArray with coordinates
-                    block_dep = xr.DataArray(
-                        block_data.squeeze().transpose(),
-                        dims=("y", "x"),
-                        coords={
-                            "yc": (("y", "x"), y_coords),
-                            "xc": (("y", "x"), x_coords),
-                        },
-                    )
-                    block_dep.raster.set_crs(src.crs)
+                        # Create xarray DataArray with coordinates
+                        block_dep = xr.DataArray(
+                            block_data.squeeze(),
+                            dims=("y", "x"),
+                            coords={
+                                "y": ("y", y_coords),
+                                "x": ("x", x_coords),
+                            },
+                        )
+                    else:
+                        # Convert row and column indices to pixel coordinates
+                        cols, rows = np.meshgrid(
+                            np.arange(bm0, bm1), np.arange(bn0, bn1)
+                        )
+                        x_coords, y_coords = src.transform * (cols + 0.5, rows + 0.5)
+
+                        # Create xarray DataArray with coordinates
+                        block_dep = xr.DataArray(
+                            block_data.squeeze(),
+                            dims=("y", "x"),
+                            coords={
+                                "yc": (("y", "x"), y_coords),
+                                "xc": (("y", "x"), x_coords),
+                            },
+                        )
+                    block_dep.raster.set_crs(src.crs.to_epsg())
 
                     block_hmax = _downscale_floodmap_da(
                         zsmax=zsmax,
@@ -1031,7 +1060,7 @@ def downscale_floodmap(
 
                     with rasterio.open(floodmap_fn, "r+") as fm_tif:
                         fm_tif.write(
-                            np.transpose(block_hmax.values),
+                            block_hmax.values,
                             window=window,
                             indexes=1,
                         )
@@ -1149,7 +1178,7 @@ def build_overviews(
 
 
 def _downscale_floodmap_da(
-    zsmax: xr.DataArray,
+    zsmax: Union[xr.DataArray, xu.UgridDataArray],
     dep: xr.DataArray,
     hmin: float = 0.05,
     gdf_mask: gpd.GeoDataFrame = None,
@@ -1171,7 +1200,22 @@ def _downscale_floodmap_da(
     """
 
     # interpolate zsmax to dep grid
-    zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
+    if isinstance(zsmax, xr.DataArray):
+        zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
+
+    elif isinstance(zsmax, xu.UgridDataArray):
+        # if non-rotated grid, use xugrid rasterize_like
+        if dep.raster.transform[1] == 0 and dep.raster.transform[3] == 0:
+            zsmax = zsmax.ugrid.rasterize_like(dep)
+        # if rotated grid, use xugrid regridder
+        else:
+            # need to convert dep to unstructured to enable xugrid regridder
+            uda_dep = xu.UgridDataArray.from_structured(dep, "xc", "yc")
+            regridder = xu.CentroidLocatorRegridder(source=zsmax, target=uda_dep)
+            result = regridder.regrid(zsmax)
+            # map back to structured
+            zsmax = dep.copy(data=result.values.reshape(dep.shape))
+
     zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
 
     # get flood depth
@@ -1285,3 +1329,12 @@ def binary_search(vals, val):
         if vals[indx] == val:
             return indx
     return None
+
+
+def xu_open_dataset(*args, **kwargs):
+    """This function is a replacement of xu.open_dataset.
+
+    It exists because xu.open_dataset does not close the file after opening, which can lead to Permission Errors.
+    """
+    with xr.open_dataset(*args, **kwargs) as ds:
+        return xu.UgridDataset(ds)
