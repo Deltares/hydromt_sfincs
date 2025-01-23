@@ -1,12 +1,15 @@
 """Plotting functions for SFINCS model data."""
-
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
+import logging
 import pandas as pd
 import xarray as xr
+import xugrid as xu
 
 from .utils import get_bounds_vector
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["plot_forcing", "plot_basemap"]
 
@@ -107,7 +110,7 @@ def plot_forcing(forcing: Dict, **kwargs):
 
 
 def plot_basemap(
-    ds: xr.Dataset,
+    ds: Union[xr.Dataset, xu.UgridDataset],
     geoms: Dict,
     variable: str = "dep",
     shaded: bool = False,
@@ -121,6 +124,7 @@ def plot_basemap(
     geom_kwargs: Dict = {},
     legend_kwargs: Dict = {},
     bmap_kwargs: Dict = {},
+    logger=logger,
     **kwargs,
 ):
     """Create basemap plot.
@@ -175,10 +179,43 @@ def plot_basemap(
         has_cx = False
 
     # read crs and utm zone > convert to cartopy
-    proj_crs = ds.raster.crs
+    if isinstance(ds, xr.Dataset):
+        proj_crs = ds.raster.crs
+        bounds = ds.raster.box.buffer(abs(ds.raster.res[0] * 1)).total_bounds
+        bbox = ds.raster.transform_bounds(4326)
+        ratio = ds.raster.ycoords.size / (ds.raster.xcoords.size * 1.4)
+    elif isinstance(ds, xu.UgridDataset):
+        proj_crs = ds.grid.crs
+        bounds = ds.ugrid.total_bounds
+        bbox = ds.ugrid.to_crs(4326).ugrid.total_bounds
+        ratio = (bounds[3] - bounds[1]) / ((bounds[2] - bounds[0]) * 1.4)
     proj_str = proj_crs.name
+    extent = np.array(bounds)[[0, 2, 1, 3]]
+
     if proj_crs.is_projected and proj_crs.to_epsg() is not None:
-        crs = ccrs.epsg(ds.raster.crs.to_epsg())
+        if "UTM" in proj_str:
+            # Extract the UTM zone number
+            utm_zone = proj_crs.utm_zone
+            # Parse the zone number and hemisphere
+            zone_number = int(utm_zone[:-1])  # Extract numeric part
+            hemisphere = utm_zone[-1]  # Last character is 'N' or 'S'
+            # Determine if it's in the southern hemisphere
+            is_southern_hemisphere = hemisphere == "S"
+            # Create the Cartopy UTM projection
+            crs = ccrs.UTM(zone_number, southern_hemisphere=is_southern_hemisphere)
+        else:
+            crs = ccrs.epsg(proj_crs.to_epsg())
+
+        # now check whether the model extent is within the extent of the crs
+        bounds_crs = crs.boundary.bounds
+        if (
+            bounds[0] < bounds_crs[0]
+            or bounds[1] < bounds_crs[1]
+            or bounds[2] > bounds_crs[2]
+            or bounds[3] > bounds_crs[3]
+        ):
+            logger.warning("Model domain exceeds the area of the CRS.")
+            logger.warning("Consider reprojecting to EPSG:4326 for plotting.")
         unit = proj_crs.axis_info[0].unit_name
         unit = "m" if unit == "metre" else unit
         xlab, ylab = f"x [{unit}] - {proj_str}", f"y [{unit}]"
@@ -187,12 +224,9 @@ def plot_basemap(
         xlab, ylab = f"lon [deg] - {proj_str}", "lat [deg]"
     else:
         raise ValueError("Unsupported CRS")
-    bounds = ds.raster.box.buffer(abs(ds.raster.res[0] * 1)).total_bounds
-    extent = np.array(bounds)[[0, 2, 1, 3]]
 
     # create fig with geo-axis and set background
     if figsize is None:
-        ratio = ds.raster.ycoords.size / (ds.raster.xcoords.size * 1.4)
         figsize = (6, 6 * ratio)
     fig = plt.figure(figsize=figsize)
     ax = plt.subplot(projection=crs)
@@ -200,7 +234,7 @@ def plot_basemap(
     if bmap is not None:
         if zoomlevel == "auto":  # auto zoomlevel
             c = 2 * np.pi * 6378137  # Earth circumference
-            lat = np.array(ds.raster.transform_bounds(4326))[[1, 3]].mean()
+            lat = np.array(bbox)[[1, 3]].mean()
             # max 4 x 4 tiles per image
             tile_size = max(bounds[2] - bounds[0], bounds[3] - bounds[1]) / 4
             if proj_crs.is_geographic:
@@ -247,30 +281,35 @@ def plot_basemap(
             kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3])
 
     if variable in ds:
-        da = ds[variable].raster.mask_nodata()
+        da = ds[variable]
         if "msk" in ds and np.any(ds["msk"] > 0):
             da = da.where(ds["msk"] > 0)
-        if da.raster.rotation != 0 and "xc" in da.coords and "yc" in da.coords:
-            da.plot(transform=crs, x="xc", y="yc", ax=ax, zorder=1, **kwargs0)
-        else:
-            da.plot.imshow(transform=crs, ax=ax, zorder=1, **kwargs0)
-        if shaded and variable == "dep" and da.raster.rotation == 0:
-            ls = colors.LightSource(azdeg=315, altdeg=45)
-            dx, dy = da.raster.res
-            _rgb = ls.shade(
-                da.fillna(0).values,
-                norm=kwargs0["norm"],
-                cmap=kwargs0["cmap"],
-                blend_mode="soft",
-                dx=dx,
-                dy=dy,
-                vert_exag=2,
-            )
-            rgb = xr.DataArray(
-                dims=("y", "x", "rgb"), data=_rgb, coords=da.raster.coords
-            )
-            rgb = xr.where(np.isnan(da), np.nan, rgb)
-            rgb.plot.imshow(transform=crs, ax=ax, zorder=1)
+        if isinstance(da, xr.DataArray):
+            # mask_nodata converts it to an xr.DataArray, so performed inside if-else statement
+            da = da.raster.mask_nodata()
+            if da.raster.rotation != 0 and "xc" in da.coords and "yc" in da.coords:
+                da.plot(transform=crs, x="xc", y="yc", ax=ax, zorder=1, **kwargs0)
+            else:
+                da.plot.imshow(transform=crs, ax=ax, zorder=1, **kwargs0)
+            if shaded and variable == "dep" and da.raster.rotation == 0:
+                ls = colors.LightSource(azdeg=315, altdeg=45)
+                dx, dy = da.raster.res
+                _rgb = ls.shade(
+                    da.fillna(0).values,
+                    norm=kwargs0["norm"],
+                    cmap=kwargs0["cmap"],
+                    blend_mode="soft",
+                    dx=dx,
+                    dy=dy,
+                    vert_exag=2,
+                )
+                rgb = xr.DataArray(
+                    dims=("y", "x", "rgb"), data=_rgb, coords=da.raster.coords
+                )
+                rgb = xr.where(np.isnan(da), np.nan, rgb)
+                rgb.plot.imshow(transform=crs, ax=ax, zorder=1)
+        elif isinstance(da, xu.UgridDataArray):
+            da.ugrid.plot(transform=crs, ax=ax, zorder=1, **kwargs0)
 
     # geometry plotting and annotate kwargs
     for k, d in geom_kwargs.items():
@@ -289,6 +328,11 @@ def plot_basemap(
         raise ValueError(
             "No 'msk' (sfincs.msk) found in ds required to plot the model bounds "
             "Set plot_bounds=False or add 'msk' to ds"
+        )
+    elif plot_bounds and isinstance(ds, xu.UgridDataset):
+        raise NotImplementedError(
+            "Plotting of the boundaries for quadtree grids is not yet implemented. "
+            "Set plot_bounds=False to proceed."
         )
     elif plot_bounds and (ds["msk"] >= 1).any():
         gdf_msk = get_bounds_vector(ds["msk"])
