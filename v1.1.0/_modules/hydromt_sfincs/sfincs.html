@@ -2309,6 +2309,17 @@
                 <span class="p">)</span>
             <span class="n">tref</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tref&quot;</span><span class="p">])</span>
             <span class="n">df_ts</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">tref</span> <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="n">df_ts</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;sec&quot;</span><span class="p">)</span>
+        <span class="c1"># Check if df_ts covers the model time and has at least two values</span>
+        <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">()</span>  <span class="c1"># model time</span>
+        <span class="k">if</span> <span class="n">df_ts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">df_ts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">tstart</span> <span class="ow">or</span> <span class="n">df_ts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">tstop</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;The provided timeseries does not cover the entire model time period.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">df_ts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;The provided timeseries must have at least two data points (from tstart to tstop).&quot;</span>
+                <span class="p">)</span>
         <span class="c1"># parse location index</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">gdf_locs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -2461,6 +2472,13 @@
             <span class="n">gdf_locs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcing</span><span class="p">[</span><span class="s2">&quot;bzs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">gdf_locs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No waterlevel boundary (bnd) points provided.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># It is still possible that all points are outside the region+buffer, this error should provide clear feedback</span>
+        <span class="k">if</span> <span class="n">gdf_locs</span><span class="o">.</span><span class="n">is_empty</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;All waterlevel boundary points provided are outside the active model domain plus specified buffer. &quot;</span>
+                <span class="s2">&quot;Check the provided locations or increase the value of the buffer argument.&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># optionally read offset data and correct df_ts</span>
         <span class="k">if</span> <span class="n">offset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gdf_locs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
