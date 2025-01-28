@@ -841,6 +841,8 @@ class SubgridTableQuadtree:
         # fix names to match SFINCS convention
         # ds = ds.rename_vars({"uv_navg": "uv_navg_w", "uv_ffit": "uv_fnfit"})
 
+        # before writing, check if the file already exists while data is still lazily loaded
+        utils.check_exists_and_lazy(ds, file_name)
         ds.to_netcdf(file_name)
 
 
