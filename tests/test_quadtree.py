@@ -62,7 +62,7 @@ def test_overwrite_quadtree_nc(tmpdir):
         pass
 
     # Now perform the check and lazy loading check
-    utils.check_exists_and_lazy(ds, nc_copy)
+    ds = utils.check_exists_and_lazy(ds, nc_copy)
 
     # Try to overwrite the file
     ds.to_netcdf(nc_copy)

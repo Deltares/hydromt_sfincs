@@ -1356,7 +1356,7 @@ def check_exists_and_lazy(ds, file_name):
         The path to the netcdf file.
     """
     if not os.path.exists(file_name):
-        return
+        return ds
 
     # Check for lazy loading
     lazy_vars = [not data_array._in_memory for data_array in ds.data_vars.values()]
@@ -1366,4 +1366,4 @@ def check_exists_and_lazy(ds, file_name):
 
     if any(lazy_vars):
         ds.load()  # Some variables are lazy-loaded, load them into memory
-    return
+    return ds
