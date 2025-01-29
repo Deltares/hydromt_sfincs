@@ -3337,6 +3337,8 @@ class SfincsModel(GridModel):
                         self.write_vector(variables=f"forcing.{list(rename.keys())[0]}")
                 # write 2D gridded timeseries
                 else:
+                    # before writing, check if the file already exists while data is still lazily loaded
+                    utils.check_exists_and_lazy(ds, fn)
                     ds.to_netcdf(fn, encoding=encoding)
 
     def read_states(self):

@@ -11,7 +11,7 @@ import xarray as xr
 import xugrid as xu
 from pyproj import CRS, Transformer
 
-from hydromt_sfincs.utils import xu_open_dataset
+from hydromt_sfincs.utils import xu_open_dataset, check_exists_and_lazy
 
 # optional dependency
 try:
@@ -125,6 +125,8 @@ class QuadtreeGrid:
         )
 
         ds.attrs = attrs
+        # before writing, check if the file already exists while data is still lazily loaded
+        check_exists_and_lazy(ds, file_name)
         ds.to_netcdf(file_name)
 
     def map_overlay(self, file_name, xlim=None, ylim=None, color="black", width=800):

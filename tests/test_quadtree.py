@@ -1,7 +1,10 @@
 from os.path import join, dirname, abspath
 import numpy as np
+import os
 from pyproj import CRS
+import shutil
 
+from hydromt_sfincs import utils
 from hydromt_sfincs.quadtree import QuadtreeGrid
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
@@ -35,3 +38,34 @@ def test_quadtree_io(tmpdir):
     assert np.sum(qtr2.data["msk"].values) == 4298
     # assert the dep variable is the same
     assert np.sum(qtr.data["dep"].values) == np.sum(qtr2.data["dep"].values)
+
+
+def test_overwrite_quadtree_nc(tmpdir):
+    ncfile = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
+    nc_copy = join(str(tmpdir), "sfincs.nc")
+
+    # Create file + copy
+    shutil.copy(ncfile, nc_copy)
+
+    # Open the copy with xu_open_dataset
+    # This opens the file lazily
+    ds = utils.xu_open_dataset(nc_copy)
+
+    # Convert to dataset
+    ds = ds.ugrid.to_dataset()
+
+    # Try to write
+    # NOTE this should fail because it still has lazy references to the file
+    try:
+        ds.to_netcdf(nc_copy)
+    except PermissionError:
+        pass
+
+    # Now perform the check and lazy loading check
+    utils.check_exists_and_lazy(ds, nc_copy)
+
+    # Try to overwrite the file
+    ds.to_netcdf(nc_copy)
+
+    # Remove the copied file
+    os.remove(nc_copy)
