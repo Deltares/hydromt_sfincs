@@ -1,8 +1,12 @@
-from os.path import join, dirname, abspath
-import numpy as np
 import os
-from pyproj import CRS
 import shutil
+from os.path import abspath, dirname, join
+
+import numpy as np
+import pytest
+import xarray as xr
+import xugrid as xu
+from pyproj import CRS
 
 from hydromt_sfincs import utils
 from hydromt_sfincs.quadtree import QuadtreeGrid
@@ -47,25 +51,71 @@ def test_overwrite_quadtree_nc(tmpdir):
     # Create file + copy
     shutil.copy(ncfile, nc_copy)
 
-    # Open the copy with xu_open_dataset
-    # This opens the file lazily
-    ds = utils.xu_open_dataset(nc_copy)
+    # Open the copy with xu_open_dataset, creating a lazy handler pointing to the original file and a UGridDataset
+    uds = utils.xu_open_dataset(nc_copy)
 
     # Convert to dataset
-    ds = ds.ugrid.to_dataset()
+    ds = uds.ugrid.to_dataset()
+    # Note that `ds` here is a different ds that doesnt have a reference to the file, so closing it is not possible
 
-    # Try to write
-    # NOTE this should fail because it still has lazy references to the file
-    try:
+    # # Try to write
+    # NOTE this should fail because lazy_file still has lazy references to the file
+    with pytest.raises(PermissionError):
         ds.to_netcdf(nc_copy)
-    except PermissionError:
-        pass
 
-    # Now perform the check and lazy loading check
-    utils.check_exists_and_lazy(ds, nc_copy)
+    # Would like to close the file but cannot because this ds is not the same as the one opened with xu_open_dataset
+    ds.close()
+
+    # Try to overwrite the file
+    # Note that this fails because not all data was read in!
+    ds.to_netcdf(nc_copy)
+
+    # Remove the copied file
+    os.remove(nc_copy)
+
+
+def test_overwrite_quadtree_nc_with_load_dataset(tmpdir):
+    ncfile = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
+    nc_copy = join(str(tmpdir), "sfincs.nc")
+
+    # Create file + copy
+    shutil.copy(ncfile, nc_copy)
+
+    # This opens, loads and closes the file
+    full_ds = xr.load_dataset(nc_copy)
+    uds = xu.UgridDataset(full_ds)
+
+    # Convert to dataset
+    ds = uds.ugrid.to_dataset()
 
     # Try to overwrite the file
     ds.to_netcdf(nc_copy)
 
     # Remove the copied file
     os.remove(nc_copy)
+
+
+def test_overwrite_quadtree_nc_with_open_dataset_contextmanager(tmpdir):
+    ncfile = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
+    nc_copy = join(str(tmpdir), "sfincs.nc")
+
+    # Create file + copy
+    shutil.copy(ncfile, nc_copy)
+
+    # This is essentially the same as xu_open_dataset, but with xr.open_dataset
+    with xr.open_dataset(nc_copy) as lazy_ds:
+        uds = xu.UgridDataset(lazy_ds)
+
+        # Convert to dataset
+        ds = uds.ugrid.to_dataset()
+
+        with pytest.raises(PermissionError):
+            # This fails because the file is open
+            ds.to_netcdf(nc_copy)
+
+    # File is now closed
+    os.remove(nc_copy)
+
+    with pytest.raises(KeyError):
+        # This fails because not all data was read in!
+        ds.to_netcdf(nc_copy)
