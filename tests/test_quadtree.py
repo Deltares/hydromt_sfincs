@@ -109,14 +109,13 @@ def test_overwrite_quadtree_nc_with_open_dataset_contextmanager(tmpdir):
         # Convert to dataset
         ds = uds.ugrid.to_dataset()
 
-        # Try to overwrite the file
         with pytest.raises(PermissionError):
+            # This fails because the file is open
             ds.to_netcdf(nc_copy)
+
+    # File is now closed
+    os.remove(nc_copy)
 
     with pytest.raises(KeyError):
         # This fails because not all data was read in!
         ds.to_netcdf(nc_copy)
-
-    with pytest.raises(PermissionError):
-        # This fails because the file is still open
-        os.remove(nc_copy)
