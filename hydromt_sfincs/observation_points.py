@@ -20,9 +20,9 @@ class SfincsObservationPoints(ModelComponent):
 
     @property
     def data(self) -> pd.GeoDataFrame:
-        """Model geometries.
+        """Observation point data.
 
-        Return dict of geopandas.GeoDataFrame
+        Return geopandas.GeoDataFrame
         """
         if self._data is None:
             self._initialize()
@@ -31,7 +31,8 @@ class SfincsObservationPoints(ModelComponent):
     def _initialize(self, skip_read=False) -> None:
         """Initialize geoms."""
         if self._data is None:
-            self._data = dict()
+            # self._data = dict()
+            self._data = gpd.GeoDataFrame() #FIXME - right?
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
@@ -67,7 +68,7 @@ class SfincsObservationPoints(ModelComponent):
             gdf: gpd.GeoDataFrame,
             merge: bool = True
     ):
-        """Add data to the geom component.
+        """Set observation points.
 
         Arguments
         ---------
@@ -108,7 +109,7 @@ class SfincsObservationPoints(ModelComponent):
 
         * **obs** geom: observation point locations
 
-        Parameters
+        Arguments
         ---------
         locations: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for observation point locations.
@@ -135,7 +136,7 @@ class SfincsObservationPoints(ModelComponent):
                   ):
         """Add single point to observation points.
         
-        Parameters
+        Arguments
         ---------
         x: float
             x-coordinate for point to be added
@@ -143,32 +144,32 @@ class SfincsObservationPoints(ModelComponent):
             y-coordinate for point to be added
         name: str        
             Name for point to be added
-        NOTE - x&y values need to be in the same CRS as SFINCS model.
+        **NOTE** - x&y values need to be in the same CRS as SFINCS model.
         """
         point = shapely.geometry.Point(x, y)
         d = {"name": name, "long_name": None, "geometry": point}
 
         self.data.append(d) #add point directly to gdf
         
-    def add_points(self, 
+    def add_points(self,  #TODO - or name 'add'?
                    gdf: gpd.GeoDataFrame,
                    ):
         """Add multiple points to observation points.
         
-        Parameters
+        Arguments
         ---------
         gdf: gpd.GeoDataFrame
             GeoDataFrame with locations and names of observations points to be added.
-        NOTE - coordinates of points in GeoDataFrame need to be in the same CRS as SFINCS model.
+        **NOTE** - coordinates of points in GeoDataFrame need to be in the same CRS as SFINCS model.
         """        
         self.set(gdf, merge=True)
 
-    def delete_point(self, 
+    def delete_point(self,  #TODO - or name 'delete'?
                      name_or_index: Union[str, int],
                      ):
         """Remove (multiple) point(s) from observation points.
         
-        Parameters
+        Arguments
         ---------
         name_or_index: str, int
             Specify either name (str) or index (int) of points to be dropped from GeoDataFrame of observations.
@@ -183,9 +184,9 @@ class SfincsObservationPoints(ModelComponent):
             raise ValueError("Point " + name + " not found!")    
         elif type(name_or_index) == int:
             index = name_or_index
-            if len(self.gdf.index) < index + 1:
+            if len(self.data.index) < index + 1:
                 raise ValueError("Index exceeds length!")    
-            self.gdf = self.gdf.drop(index).reset_index(drop=True)
+            self.data.drop(index).reset_index(drop=True)
             self.logger.info('Dropping point from observations')
             return
         else:
