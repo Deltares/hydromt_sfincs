@@ -1,4 +1,4 @@
-name: hydromt-sfincs-dev
+name: hydromt-sfincs-v1
 
 channels:
 - conda-forge
@@ -10,7 +10,7 @@ dependencies:
 - descartes
 - ffmpeg
 - geopandas>1.0
-- hydromt>=0.10, <0.11
+- hydromt>=1.0, <1.1
 - jupyterlab
 - matplotlib
 - nbsphinx
