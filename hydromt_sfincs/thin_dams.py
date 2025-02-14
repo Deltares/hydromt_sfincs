@@ -28,6 +28,16 @@ class SfincsThinDams(ModelComponent):
             self._initialize()
         return self._data
 
+#%% core HydroMT-SFINCS functions:
+    # _initialize
+    # read
+    # write
+    # set
+    # create
+    # add
+    # delete
+    # clear
+    
     def _initialize(self, skip_read=False) -> None:
         """Initialize thin dam lines."""
         if self._data is None:
@@ -63,10 +73,10 @@ class SfincsThinDams(ModelComponent):
         #     self.write_vector(variables=["geoms"])
 
     def set(
-            self,
-            gdf: gpd.GeoDataFrame,
-            merge: bool = True
-    ):
+        self,
+        gdf: gpd.GeoDataFrame,
+        merge: bool = True
+        ):
         """Set thin dam lines.
 
         Arguments
@@ -97,10 +107,10 @@ class SfincsThinDams(ModelComponent):
 
     def create(
         self,
-        locations: Union[str, Path, gpd.GeoDataFrame],
+        structures: Union[str, Path, gpd.GeoDataFrame],
         merge: bool = True,
         **kwargs,
-    ):
+        ):
         """Create model thin dam lines.
         (old name: setup_structures)
 
@@ -110,7 +120,7 @@ class SfincsThinDams(ModelComponent):
 
         Arguments
         ---------
-        locations: str, Path, gpd.GeoDataFrame, optional
+        structures: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for thin dam lines.
         merge: bool, optional
             If True, merge the new thin dam lines with the existing ones. By default True.
@@ -119,8 +129,18 @@ class SfincsThinDams(ModelComponent):
         # self.data_catalog.sources TODO: check if still needed
 
         gdf = self.data_catalog.get_geodataframe(
-            locations, geom=self.model.region, assert_gtype=None, **kwargs
-        ).to_crs(self.crs)
+            structures, geom=self.model.region, assert_gtype=None, **kwargs
+        ).to_crs(self.model.crs)
+
+        # expected columns in gdf
+        cols = {
+            "thd": ["name", "geometry"],
+        }
+
+        # keep relevant columns
+        gdf = gdf[
+            [c for c in cols["thd"] if c in gdf.columns]
+        ]  
 
         # make sure MultiLineString are converted to LineString
         gdf = gdf.explode(index_parts=True).reset_index(drop=True)        
@@ -131,9 +151,10 @@ class SfincsThinDams(ModelComponent):
         # self.model.config(f"{name}file", f"sfincs.{name}")
         # self.set_config(f"{name}file", f"sfincs.{name}")
 
-    def add(self,
-                   gdf: gpd.GeoDataFrame,
-                   ):
+    def add(
+        self,
+        gdf: gpd.GeoDataFrame,
+        ):
         """Add multiple lines to thin dams.
         
         Arguments
@@ -144,9 +165,10 @@ class SfincsThinDams(ModelComponent):
         """        
         self.set(gdf, merge=True)
 
-    def delete(self,
-                   index: int, #FIXME - should this be List(int)?
-                   ):
+    def delete(
+        self,
+        index: int, #FIXME - should this be List(int)?
+        ):
         """Remove (multiple) line(s) from thin dams.
         
         Arguments
@@ -164,6 +186,10 @@ class SfincsThinDams(ModelComponent):
         """Clean GeoDataFrame with thin dams."""
         self.data  = gpd.GeoDataFrame()
 
+#%% DDB GUI focused additional functions:
+    # snap_to_grid
+    # list_names
+    
     def snap_to_grid(self):
         snap_gdf = self.model.grid.snap_to_grid(self.gdf) #FIXME - snap_to_grid should be function in grid.py!
         return snap_gdf

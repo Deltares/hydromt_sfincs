@@ -28,6 +28,16 @@ class SfincsObservationPoints(ModelComponent):
             self._initialize()
         return self._data
 
+#%% core HydroMT-SFINCS functions:
+    # _initialize
+    # read
+    # write
+    # set
+    # create
+    # add
+    # delete
+    # clear
+    
     def _initialize(self, skip_read=False) -> None:
         """Initialize geoms."""
         if self._data is None:
@@ -120,7 +130,7 @@ class SfincsObservationPoints(ModelComponent):
 
         gdf = self.data_catalog.get_geodataframe(
             locations, geom=self.model.region, assert_gtype="Point", **kwargs
-        ).to_crs(self.crs)
+        ).to_crs(self.model.crs)
 
         self.set(gdf, merge)
 
@@ -161,11 +171,17 @@ class SfincsObservationPoints(ModelComponent):
         """Clean GeoDataFrame with observation points."""
         self.data  = gpd.GeoDataFrame()
         
-    def add_point(self, 
-                  x: float, 
-                  y: float,
-                  name: str,
-                  ):
+#%% DDB GUI focused additional functions:
+    # add_point
+    # delete_point
+    # list_names
+    
+    def add_point(
+        self, 
+        x: float, 
+        y: float,
+        name: str,
+        ):
         """Add single point to observation points.
         
         Arguments
@@ -183,9 +199,10 @@ class SfincsObservationPoints(ModelComponent):
 
         self.data.append(d) #add point directly to gdf
         
-    def delete_point(self,  
-                     name_or_index: Union[str, int],
-                     ):
+    def delete_point(
+        self,  
+        name_or_index: Union[str, int],
+        ):
         """Remove point from observation points.
         This function finds the wanted index, after which the generic delete function is called.
         

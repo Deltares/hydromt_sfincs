@@ -1472,38 +1472,13 @@ class SfincsModel(GridModel):
         merge: bool = True,
         **kwargs,
     ):
-        """Setup model observation point locations.
-
-        Adds model layers:
-
-        * **obs** geom: observation point locations
-
-        Parameters
+        """        
+        Replaced by class function called:
         ---------
-        locations: str, Path, gpd.GeoDataFrame, optional
-            Path, data source name, or geopandas object for observation point locations.
-        merge: bool, optional
-            If True, merge the new observation points with the existing ones. By default True.
+        SfincsObservationPoints.create()
         """
-        name = self._GEOMS["observation_points"]
-
-        # FIXME ensure the catalog is loaded before adding any new entries
-        self.data_catalog.sources
-
-        gdf_obs = self.data_catalog.get_geodataframe(
-            locations, geom=self.region, assert_gtype="Point", **kwargs
-        ).to_crs(self.crs)
-
-        if not gdf_obs.geometry.type.isin(["Point"]).all():
-            raise ValueError("Observation points must be of type Point.")
-
-        if merge and name in self.geoms:
-            gdf0 = self._geoms.pop(name)
-            gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
-            self.logger.info("Adding new observation points to existing ones.")
-
-        self.set_geoms(gdf_obs, name)
-        self.set_config(f"{name}file", f"sfincs.{name}")
+        SfincsModel.SfincsObservationPoints.create(
+            self, locations, merge,**kwargs)
 
     def setup_observation_lines(
         self,
@@ -1511,42 +1486,13 @@ class SfincsModel(GridModel):
         merge: bool = True,
         **kwargs,
     ):
-        """Setup model observation lines (cross-sections) to monitor discharges.
-
-        Adds model layers:
-
-        * **crs** geom: observation lines (cross-sections)
-
-        Parameters
-        ---------
-        locations: str, Path, gpd.GeoDataFrame, optional
-            Path, data source name, or geopandas object for observation lines (cross-sections).
-        merge: bool, optional
-            If True, merge the new observation lines with the existing ones. By default True.
         """
-        name = self._GEOMS["observation_lines"]
-
-        # FIXME ensure the catalog is loaded before adding any new entries
-        self.data_catalog.sources
-
-        # FIXME assert_gtype="LineString" does not work for MultiLineString and default seems to be Point (??)
-        gdf_obs = self.data_catalog.get_geodataframe(
-            locations, geom=self.region, assert_gtype=None, **kwargs
-        ).to_crs(self.crs)
-
-        # make sure MultiLineString are converted to LineString
-        gdf_obs = gdf_obs.explode(index_parts=True).reset_index(drop=True)
-
-        if not gdf_obs.geometry.type.isin(["LineString"]).all():
-            raise ValueError("Observation lines must be of type LineString.")
-
-        if merge and name in self.geoms:
-            gdf0 = self._geoms.pop(name)
-            gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
-            self.logger.info("Adding new observation lines to existing ones.")
-
-        self.set_geoms(gdf_obs, name)
-        self.set_config(f"{name}file", f"sfincs.{name}")
+        Replaced by class function called:
+        ---------
+        SfincsCrossSections.create()
+        """
+        SfincsModel.SfincsCrossSections.create(
+            self, locations, merge,**kwargs)
 
     def setup_structures(
         self,
@@ -1558,96 +1504,17 @@ class SfincsModel(GridModel):
         merge: bool = True,
         **kwargs,
     ):
-        """Setup thin dam or weir structures.
-
-        Adds model layer (depending on `stype`):
-
-        * **thd** geom: thin dam
-        * **weir** geom: weir / levee
-
-        Parameters
-        ----------
-        structures : str, Path
-            Path, data source name, or geopandas object to structure line geometry file.
-            The "name" (for thd and weir), "z" and "par1" (for weir only) variables are optional.
-            For weirs: `dz` must be provided if gdf has no "z" column or ZLineString;
-            "par1" defaults to 0.6 if gdf has no "par1" column.
-        stype : {'thd', 'weir'}
-            Structure type.
-        dep : str, Path, xr.DataArray, optional
-            Path, data source name, or xarray raster object ('elevtn') describing the depth in an
-            alternative resolution which is used for sampling the weir.
-        buffer : float, optional
-            If provided, describes the distance from the centerline to the foot of the structure.
-            This distance is supplied to the raster.sample as the window (wdw).
-        merge : bool, optional
-            If True, merge with existing'stype' structures, by default True.
-        dz: float, optional
-            If provided, for weir structures the z value is calculated from
-            the model elevation (dep) plus dz.
         """
-
-        # read, clip and reproject
-        gdf_structures = self.data_catalog.get_geodataframe(
-            structures, geom=self.region, **kwargs
-        ).to_crs(self.crs)
-
-        cols = {
-            "thd": ["name", "geometry"],
-            "weir": ["name", "z", "par1", "geometry"],
-        }
-        assert stype in cols, f"stype must be one of {list(cols.keys())}"
-        gdf = gdf_structures[
-            [c for c in cols[stype] if c in gdf_structures.columns]
-        ]  # keep relevant cols
-
-        structs = utils.gdf2linestring(gdf)  # check if it parsed correct
-        # sample zb values from dep file and set z = zb + dz
-        if stype == "weir" and (dep is not None or dz is not None):
-            if dep is None or dep == "dep":
-                assert "dep" in self.grid, "dep layer not found"
-                elv = self.grid["dep"]
-            else:
-                elv = self.data_catalog.get_rasterdataset(
-                    dep, geom=self.region, buffer=5, variables=["elevtn"]
-                )
-
-            # calculate window size from buffer
-            if buffer is not None:
-                res = abs(elv.raster.res[0])
-                if elv.raster.crs.is_geographic:
-                    res = res * 111111.0
-                window_size = int(np.ceil(buffer / res))
-            else:
-                window_size = 0
-            self.logger.debug(f"Sampling elevation with window size {window_size}")
-
-            structs_out = []
-            for s in structs:
-                pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
-                zb = elv.raster.sample(
-                    gpd.GeoDataFrame(geometry=pnts, crs=self.crs), wdw=window_size
-                )
-                if zb.ndim > 1:
-                    zb = zb.max(axis=1)
-
-                s["z"] = zb.values
-                if dz is not None:
-                    s["z"] += float(dz)
-                structs_out.append(s)
-            gdf = utils.linestring2gdf(structs_out, crs=self.crs)
-        # Else function if you define elevation of weir
-        elif stype == "weir" and np.any(["z" not in s for s in structs]):
-            raise ValueError("Weir structure requires z values.")
-        # combine with existing structures if present
-        if merge and stype in self.geoms:
-            gdf0 = self._geoms.pop(stype)
-            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
-            self.logger.info(f"Adding {stype} structures to existing structures.")
-
-        # set structures
-        self.set_geoms(gdf, stype)
-        self.set_config(f"{stype}file", f"sfincs.{stype}")
+        Replaced by class functions called:
+        ---------
+        SfincsThinDams.create()   
+        SfincsWeirs.create()            
+        """
+        SfincsModel.SfincsThinDams.create(
+            self, structures, merge,**kwargs)
+        
+        SfincsModel.SfincsWeirs.create(
+            self, structures, dep, buffer, dz, merge,**kwargs)                
 
     def setup_drainage_structures(
         self,

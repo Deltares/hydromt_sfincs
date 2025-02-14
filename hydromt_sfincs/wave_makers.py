@@ -28,6 +28,16 @@ class Sfincswavemakerss(ModelComponent):
             self._initialize()
         return self._data
 
+#%% core HydroMT-SFINCS functions:
+    # _initialize
+    # read
+    # write
+    # set
+    # create
+    # add
+    # delete
+    # clear
+    
     def _initialize(self, skip_read=False) -> None:
         """Initialize wavemakers lines."""
         if self._data is None:
@@ -120,7 +130,7 @@ class Sfincswavemakerss(ModelComponent):
 
         gdf = self.data_catalog.get_geodataframe(
             locations, geom=self.model.region, assert_gtype=None, **kwargs
-        ).to_crs(self.crs)
+        ).to_crs(self.model.crs)
 
         # make sure MultiLineString are converted to LineString
         gdf = gdf.explode(index_parts=True).reset_index(drop=True)        
@@ -163,6 +173,10 @@ class Sfincswavemakerss(ModelComponent):
     def clear(self):
         """Clean GeoDataFrame with wavemakerss."""
         self.data  = gpd.GeoDataFrame()
+    
+#%% DDB GUI focused additional functions:
+    # delete_polyline
+    # list_names
     
     def delete_polyline(self, 
                     index: int,

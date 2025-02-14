@@ -28,6 +28,16 @@ class SfincsCrossSections(ModelComponent):
             self._initialize()
         return self._data
 
+#%% core HydroMT-SFINCS functions:
+    # _initialize
+    # read
+    # write
+    # set
+    # create
+    # add
+    # delete
+    # clear
+    
     def _initialize(self, skip_read=False) -> None:
         """Initialize cross-section lines."""
         if self._data is None:
@@ -64,10 +74,10 @@ class SfincsCrossSections(ModelComponent):
         #     self.write_vector(variables=["geoms"])
 
     def set(
-            self,
-            gdf: gpd.GeoDataFrame,
-            merge: bool = True
-    ):
+        self,
+        gdf: gpd.GeoDataFrame,
+        merge: bool = True
+        ):
         """Set cross-section lines.
 
         Arguments
@@ -120,8 +130,8 @@ class SfincsCrossSections(ModelComponent):
         # self.data_catalog.sources TODO: check if still needed
 
         gdf = self.data_catalog.get_geodataframe(
-            locations, geom=self.model.region, assert_gtype=None, **kwargs
-        ).to_crs(self.crs)
+            locations, geom=self.model.region, assert_gtype="Point", **kwargs
+        ).to_crs(self.model.crs)
 
         # make sure MultiLineString are converted to LineString
         gdf = gdf.explode(index_parts=True).reset_index(drop=True)        
@@ -132,9 +142,10 @@ class SfincsCrossSections(ModelComponent):
         # self.model.config(f"{name}file", f"sfincs.{name}")
         # self.set_config(f"{name}file", f"sfincs.{name}")
 
-    def add(self,
-                   gdf: gpd.GeoDataFrame,
-                   ):
+    def add(
+        self,
+        gdf: gpd.GeoDataFrame,
+        ):
         """Add multiple lines to cross-sections.
         
         Arguments
@@ -145,9 +156,10 @@ class SfincsCrossSections(ModelComponent):
         """        
         self.set(gdf, merge=True)
 
-    def delete(self,
-                   index: int, #FIXME - should this be List(int)?
-                   ):
+    def delete(
+        self,
+        index: int, #FIXME - should this be List(int)?
+        ):
         """Remove (multiple) line(s) from cross-sections.
         
         Arguments
@@ -165,11 +177,17 @@ class SfincsCrossSections(ModelComponent):
         """Clean GeoDataFrame with cross sections."""
         self.data  = gpd.GeoDataFrame()
 
-    def add_line(self, 
-                  x: float, 
-                  y: float,
-                  name: str,
-                  ):
+#%% DDB GUI focused additional functions:
+    # add_line
+    # delete_line
+    # list_names
+
+    def add_line(
+        self, 
+        x: float, 
+        y: float,
+        name: str,
+        ):
         """Add single line to cross-sections.
         
         Arguments
@@ -187,9 +205,10 @@ class SfincsCrossSections(ModelComponent):
 
         self.data.append(d) #add line directly to gdf
     
-    def delete_line(self, 
-                     name_or_index: Union[str, int],
-                     ):
+    def delete_line(
+        self, 
+        name_or_index: Union[str, int],
+        ):
         """Remove line from cross-sections.
         This function finds the wanted index, after which the generic delete function is called.
         

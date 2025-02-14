@@ -1,6 +1,7 @@
 import geopandas as gpd
-import shapely
+import numpy as np
 import pandas as pd
+import xarray as xr
 from pathlib import Path
 from typing import Union
 
@@ -27,6 +28,16 @@ class SfincsWeirs(ModelComponent):
         if self._data is None:
             self._initialize()
         return self._data
+
+#%% core HydroMT-SFINCS functions:
+    # _initialize
+    # read
+    # write
+    # set
+    # create
+    # add
+    # delete
+    # clear
 
     def _initialize(self, skip_read=False) -> None:
         """Initialize weir lines."""
@@ -63,9 +74,9 @@ class SfincsWeirs(ModelComponent):
         #     self.write_vector(variables=["geoms"])
 
     def set(
-            self,
-            gdf: gpd.GeoDataFrame,
-            merge: bool = True
+        self,
+        gdf: gpd.GeoDataFrame,
+        merge: bool = True
     ):
         """Set weir lines.
 
@@ -100,12 +111,17 @@ class SfincsWeirs(ModelComponent):
 
     def create(
         self,
-        locations: Union[str, Path, gpd.GeoDataFrame],
+        structures: Union[str, Path, gpd.GeoDataFrame],
+        dep: Union[str, Path, xr.DataArray] = None,
+        buffer: float = None,
+        dz: float = None,        
         merge: bool = True,
         **kwargs,
     ):
         """Create model weir lines.
         (old name: setup_structures)
+
+        If elevation at weir locations is not provided, it can be calculated from the model elevation (dep) plus dz.
 
         Adds model layers:
 
@@ -113,8 +129,17 @@ class SfincsWeirs(ModelComponent):
 
         Arguments
         ---------
-        locations: str, Path, gpd.GeoDataFrame, optional
+        structures: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for weir lines.
+        dep : str, Path, xr.DataArray, optional
+            Path, data source name, or xarray raster object ('elevtn') describing the depth in an
+            alternative resolution which is used for sampling the weir.
+        buffer : float, optional
+            If provided, describes the distance from the centerline to the foot of the structure.
+            This distance is supplied to the raster.sample as the window (wdw).            
+        dz: float, optional
+            If provided, for weir structures the z value is calculated from
+            the model elevation (dep) plus dz.            
         merge: bool, optional
             If True, merge the new weir lines with the existing ones. By default True.
         """
@@ -122,8 +147,25 @@ class SfincsWeirs(ModelComponent):
         # self.data_catalog.sources TODO: check if still needed
 
         gdf = self.data_catalog.get_geodataframe(
-            locations, geom=self.model.region, assert_gtype=None, **kwargs
-        ).to_crs(self.crs)
+            structures, geom=self.model.region, assert_gtype=None, **kwargs
+        ).to_crs(self.model.crs)
+
+        # expected columns in gdf
+        cols = {
+            "weir": ["name", "z", "par1", "geometry"],
+        }
+
+        # keep relevant columns
+        gdf = gdf[
+            [c for c in cols["weir"] if c in gdf.columns]
+        ]  
+
+        # check if z values are provided or can be calculated
+        if not "z" in gdf.columns and (dep is None and dz is None):
+            raise ValueError("Weir structure requires z values, or 'dep' or 'dz' input to determine these on the fly.")
+        elif (dep is not None or dz is not None):
+            # determine elevation from dep and dz, if data parsed
+            gdf = self.determine_weir_elevation(gdf, dep, buffer, dz)
 
         # make sure MultiLineString are converted to LineString
         gdf = gdf.explode(index_parts=True).reset_index(drop=True)        
@@ -134,9 +176,10 @@ class SfincsWeirs(ModelComponent):
         # self.model.config(f"{name}file", f"sfincs.{name}")
         # self.set_config(f"{name}file", f"sfincs.{name}")
 
-    def add(self,
-                   gdf: gpd.GeoDataFrame,
-                   ):
+    def add(
+        self,
+        gdf: gpd.GeoDataFrame,
+        ):
         """Add multiple lines to weirs.
         
         Arguments
@@ -147,9 +190,10 @@ class SfincsWeirs(ModelComponent):
         """        
         self.set(gdf, merge=True)
 
-    def delete(self,
-                   index: int, #FIXME - should this be List(int)?
-                   ):
+    def delete(
+        self,
+        index: int, #FIXME - should this be List(int)?
+        ):
         """Remove (multiple) line(s) from weirs.
         
         Arguments
@@ -166,6 +210,66 @@ class SfincsWeirs(ModelComponent):
     def clear(self):
         """Clean GeoDataFrame with weirs."""
         self.data  = gpd.GeoDataFrame()
+
+#%% HydroMT-SFINCS focused additional functions:
+    # determine_weir_elevation
+    
+    def determine_weir_elevation(
+        self, 
+        gdf: gpd.GeoDataFrame,
+        dep: Union[str, Path, xr.DataArray] = None,
+        buffer: float = None,
+        dz: float = None,            
+        ):
+        """Determine z values for weir structures."""
+        # taken from old 'sfincs.py'>setup_structures function
+
+        structs = utils.gdf2linestring(gdf)  # check if it parsed correct
+
+        # get elevation data either from model itself, or separate input
+        if dep is None or dep == "dep":
+            assert "dep" in self.model.grid, "dep layer not found"
+            elv = self.model.grid["dep"]
+        else:
+            elv = self.data_catalog.get_rasterdataset(
+                dep, geom=self.region, buffer=5, variables=["elevtn"]
+            )
+
+        # calculate window size from buffer
+        if buffer is not None:
+            res = abs(elv.raster.res[0])
+            if elv.raster.crs.is_geographic:
+                res = res * 111111.0
+            window_size = int(np.ceil(buffer / res))
+        else:
+            window_size = 0
+        self.logger.debug(f"Sampling elevation with window size {window_size}")
+
+        # interpolate dep data to points of weirs
+        structs_out = []
+        for s in structs:
+            pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
+            zb = elv.raster.sample(
+                gpd.GeoDataFrame(geometry=pnts, crs=self.crs), wdw=window_size
+            )
+            if zb.ndim > 1:
+                zb = zb.max(axis=1)
+
+            s["z"] = zb.values
+
+            # in case of dz, add this to the elevation
+            if dz is not None:
+                s["z"] += float(dz)
+
+            structs_out.append(s)
+
+        gdf = utils.linestring2gdf(structs_out, crs=self.crs)
+    
+        return gdf
+
+#%% DDB GUI focused additional functions:
+    # snap_to_grid
+    # list_names
 
     def snap_to_grid(self):
         snap_gdf = self.model.grid.snap_to_grid(self.gdf) #FIXME - snap_to_grid should be function in grid.py!
