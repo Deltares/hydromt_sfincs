@@ -144,7 +144,7 @@ class SfincsObservationPoints(ModelComponent):
     def delete(self,
                    index: int,
                    ):
-        """Remove multiple points from observation points.
+        """Remove (multiple) point(s) from observation points.
         
         Arguments
         ---------
@@ -152,7 +152,7 @@ class SfincsObservationPoints(ModelComponent):
             Specify indices (int) of point(s) to be dropped from GeoDataFrame of observations.
         """        
         if index.any() > (len(self.data.index)-1): #TODO - check if this is correct
-            raise ValueError("One of the indices exceeds length!")    
+            raise ValueError("One of the indices exceeds length of index range!")    
         
         self.data.drop(index).reset_index(drop=True)
         self.logger.info('Dropping point(s) from observations')        
@@ -187,6 +187,7 @@ class SfincsObservationPoints(ModelComponent):
                      name_or_index: Union[str, int],
                      ):
         """Remove point from observation points.
+        This function finds the wanted index, after which the generic delete function is called.
         
         Arguments
         ---------
@@ -194,23 +195,18 @@ class SfincsObservationPoints(ModelComponent):
             Specify either name (str) or index (int) of point to be dropped from GeoDataFrame of observations.
         """                
         if type(name_or_index) == str:
-            name = name_or_index
-            for index, row in self.data.iterrows():
+            for id, row in self.data.iterrows():
                 if row["name"] == name_or_index:
-                    self.data.drop(index).reset_index(drop=True)
-                    self.logger.info('Dropping point from observations')
-                    return
-            raise ValueError("Point " + name + " not found!")    
+                    index = id
+            raise ValueError("Point " + name_or_index + " not found!")
         elif type(name_or_index) == int:
             index = name_or_index
-            if len(self.data.index) < index + 1:
-                raise ValueError("Index exceeds length!")    
-            self.data.drop(index).reset_index(drop=True)
-            self.logger.info('Dropping point from observations')
-            return
         else:
             raise ValueError('Wrong input type given for function delete_point')        
         
+        self.delete(index) #calls the generic delete function
+        return
+
     def list_names(self):
         """Give list of names of observation points."""
         names = list(self.data.name)
