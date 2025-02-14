@@ -41,7 +41,6 @@ class SfincsObservationPoints(ModelComponent):
     def _initialize(self, skip_read=False) -> None:
         """Initialize geoms."""
         if self._data is None:
-            # self._data = dict()
             self._data = gpd.GeoDataFrame() #FIXME - right?
             if self.root.is_reading_mode() and not skip_read:
                 self.read()

@@ -8,7 +8,7 @@ from hydromt.model.components import ModelComponent
 from hydromt_sfincs import SfincsModel
 from hydromt_sfincs import utils
 
-class Sfincswavemakerss(ModelComponent):
+class SfincsWaveMakers(ModelComponent):
     def __init__(
         self,        
         model: SfincsModel,
@@ -20,7 +20,7 @@ class Sfincswavemakerss(ModelComponent):
 
     @property
     def data(self) -> pd.GeoDataFrame:
-        """wavemakers lines data.
+        """Wavemakers lines data.
 
         Return geopandas.GeoDataFrame
         """
