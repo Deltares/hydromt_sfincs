@@ -132,29 +132,7 @@ class SfincsCrossSections(ModelComponent):
         # self.model.config(f"{name}file", f"sfincs.{name}")
         # self.set_config(f"{name}file", f"sfincs.{name}")
 
-    def add_line(self, 
-                  x: float, 
-                  y: float,
-                  name: str,
-                  ):
-        """Add single line to cross-sections.
-        
-        Arguments
-        ---------
-        x: float
-            x-coordinates for line to be added
-        y: float
-            y-coordinates for line to be added
-        name: str        
-            Name for line to be added
-        **NOTE** - x&y coordinates need to be in the same CRS as SFINCS model.
-        """
-        line = shapely.geometry.LineString(x, y)
-        d = {"name": name, "long_name": None, "geometry": line}
-
-        self.data.append(d) #add line directly to gdf
-        
-    def add_lines(self, #TODO - or name 'add'?
+    def add(self,
                    gdf: gpd.GeoDataFrame,
                    ):
         """Add multiple lines to cross-sections.
@@ -167,22 +145,64 @@ class SfincsCrossSections(ModelComponent):
         """        
         self.set(gdf, merge=True)
 
+    def delete(self,
+                   index: int,
+                   ):
+        """Remove multiple lines from cross-sections.
+        
+        Arguments
+        ---------
+        index: int
+            Specify indices (int) of point(s) to be dropped from GeoDataFrame of cross-sections.
+        """        
+        if index.any() > (len(self.data.index)-1): #TODO - check if this is correct
+            raise ValueError("One of the indices exceeds length!")    
+        
+        self.data.drop(index).reset_index(drop=True)
+        self.logger.info('Dropping line(s) from cross-sections')    
+
+    def clear(self):
+        """Clean GeoDataFrame with cross sections."""
+        self.data  = gpd.GeoDataFrame()
+
+    def add_line(self, 
+                  x: float, 
+                  y: float,
+                  name: str,
+                  ):
+        """Add single line to cross-sections.
+        
+        Arguments
+        ---------
+        x: float
+            multiple x-coordinates for line to be added, minimum of 2 data points per line
+        y: float
+            multiple y-coordinates for line to be added, minimum of 2 data points per line
+        name: str        
+            Name for line to be added
+        **NOTE** - x&y coordinates need to be in the same CRS as SFINCS model.
+        """
+        line = shapely.geometry.LineString(x, y)
+        d = {"name": name, "long_name": None, "geometry": line}
+
+        self.data.append(d) #add line directly to gdf
+    
     def delete_line(self, 
                      name_or_index: Union[str, int],
                      ):
-        """Remove (multiple) lines from cross-sections.
+        """Remove line from cross-sections.
         
         Arguments
         ---------
         name_or_index: str, int
-            Specify either name (str) or index (int) of cross-sections to be dropped from GeoDataFrame.
+            Specify either name (str) or index (int) of cross-section to be dropped from GeoDataFrame.
         """                
         if type(name_or_index) == str:
             name = name_or_index
             for index, row in self.data.iterrows():
                 if row["name"] == name_or_index:
                     self.data.drop(index).reset_index(drop=True)
-                    self.logger.info('Dropping point from cross-sections')
+                    self.logger.info('Dropping line from cross-sections')
                     return
             raise ValueError("Cross section " + name + " not found!")    
         elif type(name_or_index) == int:
@@ -190,14 +210,10 @@ class SfincsCrossSections(ModelComponent):
             if len(self.data.index) < index + 1:
                 raise ValueError("Index exceeds length!")    
             self.data.drop(index).reset_index(drop=True)
-            self.logger.info('Dropping line from cross sections')
+            self.logger.info('Dropping line from cross-sections')
             return
         else:
             raise ValueError('Wrong input type given for function delete_line')        
-        
-    def clear(self):
-        """Clean GeoDataFrame with cross sections."""
-        self.data  = gpd.GeoDataFrame()
 
     def list_names(self):
         """Give list of names of cross sections."""

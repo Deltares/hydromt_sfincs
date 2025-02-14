@@ -93,8 +93,7 @@ class SfincsObservationPoints(ModelComponent):
             gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
             self.logger.info("Adding new observation points to existing ones.")
         
-        # set gdf in self.data    
-        self._data = gdf
+        self._data = gdf  # set gdf in self.data    
 
     def create(
         self,
@@ -129,6 +128,39 @@ class SfincsObservationPoints(ModelComponent):
         # self.model.config(f"{name}file", f"sfincs.{name}")
         # self.set_config(f"{name}file", f"sfincs.{name}")
 
+    def add(self,
+                   gdf: gpd.GeoDataFrame,
+                   ):
+        """Add multiple points to observation points.
+        
+        Arguments
+        ---------
+        gdf: gpd.GeoDataFrame
+            GeoDataFrame with locations and names of observations points to be added.
+        **NOTE** - coordinates of points in GeoDataFrame need to be in the same CRS as SFINCS model.
+        """        
+        self.set(gdf, merge=True)
+
+    def delete(self,
+                   index: int,
+                   ):
+        """Remove multiple points from observation points.
+        
+        Arguments
+        ---------
+        index: int
+            Specify indices (int) of point(s) to be dropped from GeoDataFrame of observations.
+        """        
+        if index.any() > (len(self.data.index)-1): #TODO - check if this is correct
+            raise ValueError("One of the indices exceeds length!")    
+        
+        self.data.drop(index).reset_index(drop=True)
+        self.logger.info('Dropping point(s) from observations')        
+
+    def clear(self):
+        """Clean GeoDataFrame with observation points."""
+        self.data  = gpd.GeoDataFrame()
+        
     def add_point(self, 
                   x: float, 
                   y: float,
@@ -151,28 +183,15 @@ class SfincsObservationPoints(ModelComponent):
 
         self.data.append(d) #add point directly to gdf
         
-    def add_points(self,  #TODO - or name 'add'?
-                   gdf: gpd.GeoDataFrame,
-                   ):
-        """Add multiple points to observation points.
-        
-        Arguments
-        ---------
-        gdf: gpd.GeoDataFrame
-            GeoDataFrame with locations and names of observations points to be added.
-        **NOTE** - coordinates of points in GeoDataFrame need to be in the same CRS as SFINCS model.
-        """        
-        self.set(gdf, merge=True)
-
-    def delete_point(self,  #TODO - or name 'delete'?
+    def delete_point(self,  
                      name_or_index: Union[str, int],
                      ):
-        """Remove (multiple) point(s) from observation points.
+        """Remove point from observation points.
         
         Arguments
         ---------
         name_or_index: str, int
-            Specify either name (str) or index (int) of points to be dropped from GeoDataFrame of observations.
+            Specify either name (str) or index (int) of point to be dropped from GeoDataFrame of observations.
         """                
         if type(name_or_index) == str:
             name = name_or_index
@@ -192,10 +211,6 @@ class SfincsObservationPoints(ModelComponent):
         else:
             raise ValueError('Wrong input type given for function delete_point')        
         
-    def clear(self):
-        """Clean GeoDataFrame with observation points."""
-        self.data  = gpd.GeoDataFrame()
-
     def list_names(self):
         """Give list of names of observation points."""
         names = list(self.data.name)
