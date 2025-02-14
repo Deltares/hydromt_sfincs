@@ -58,8 +58,11 @@ from hydromt_sfincs.storage_volume import SfincsStorageVolume
 from hydromt_sfincs.discharge_points import SfincsDischargePoints
 # from hydromt_sfincs.boundary_conditions import SfincsBoundaryConditions #/
 from hydromt_sfincs.waterlevel_conditions import SfincsWaterlevelConditions
-from hydromt_sfincs.wave_conditions import SfincsWaveConditions
+from hydromt_sfincs.snapwave_conditions import SfincsSnapWaveConditions
 from hydromt_sfincs.meteo import SfincsMeteo
+
+# river types:
+from hydromt_sfincs.rivers import SfincsRivers
 
 # output / visualization types:
 from hydromt_sfincs.output import SfincsOutput
@@ -102,11 +105,14 @@ class SfincsModel(Model):
 
         # forcing types:
         self.add_component("discharge_points", SfincsDischargePoints(self))
-        self.add_component("waterlevel_conditions", SfincsBoundaryConditions(self))
-        self.add_component("wave_conditions", SfincsWaveConditions(self))
+        self.add_component("waterlevel_conditions", SfincsWaterlevelConditions(self))
+        self.add_component("snapwave_conditions", SfincsSnapWaveConditions(self))
         self.add_component("meteo", SfincsMeteo(self))
         # self.add_component("forcing", SfincsForcing(self))
         
+        # river types:
+        self.add_component("rivers", SfincsRivers(self))
+
         # output / visualization types:
         self.add_component("output", SfincsOutput(self))
         self.add_component("plots", SfincsPlots(self))

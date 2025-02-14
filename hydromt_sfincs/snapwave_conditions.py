@@ -23,7 +23,7 @@ class SfincsSnapWaveConditions(ModelComponent):
     def data(self) -> xr.Dataset:
         """SnapWaveboundary conditions data.
 
-        Return FIXME
+        Return xr.Dataset
         """
         if self._data is None:
             self._initialize()

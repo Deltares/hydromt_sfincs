@@ -23,7 +23,7 @@ class SfincsWaterlevelConditions(ModelComponent):
     def data(self) -> pd.GeoDataFrame:
         """Water level boundary conditions data.
 
-        Return FIXME
+        Return pd.GeoDataFrame
         """
         if self._data is None:
             self._initialize()
