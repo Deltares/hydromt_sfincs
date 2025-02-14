@@ -146,7 +146,7 @@ class SfincsCrossSections(ModelComponent):
         self.set(gdf, merge=True)
 
     def delete(self,
-                   index: int,
+                   index: int, #FIXME - should this be List(int)?
                    ):
         """Remove (multiple) line(s) from cross-sections.
         

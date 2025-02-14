@@ -56,7 +56,7 @@ class SfincsWeirs(ModelComponent):
             # self.config.XXX
             # self._filename = XXX
         struct = utils.gdf2linestring(self.data)
-        utils.write_geoms(self._filename, struct, stype="crs", fmt=fmt) #=utils.py function
+        utils.write_geoms(self._filename, struct, stype="weir", fmt=fmt) #=utils.py function
 
         # TODO - write also as geojson - TL: at what level do we want to do that?
         # if self._write_gis:

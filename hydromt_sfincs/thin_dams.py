@@ -56,7 +56,7 @@ class SfincsThinDams(ModelComponent):
             # self.config.XXX
             # self._filename = XXX
         struct = utils.gdf2linestring(self.data)
-        utils.write_geoms(self._filename, struct, stype="crs", fmt=fmt) #=utils.py function
+        utils.write_geoms(self._filename, struct, stype="thd", fmt=fmt) #=utils.py function
 
         # TODO - write also as geojson - TL: at what level do we want to do that?
         # if self._write_gis:
@@ -102,11 +102,11 @@ class SfincsThinDams(ModelComponent):
         **kwargs,
     ):
         """Create model thin dam lines.
-        (old name: setup_observation_lines)
+        (old name: setup_structures)
 
         Adds model layers:
 
-        * **crs** geom: thin dam lines
+        * **thd** geom: thin dam lines
 
         Arguments
         ---------
@@ -145,7 +145,7 @@ class SfincsThinDams(ModelComponent):
         self.set(gdf, merge=True)
 
     def delete(self,
-                   index: int,
+                   index: int, #FIXME - should this be List(int)?
                    ):
         """Remove (multiple) line(s) from thin dams.
         
