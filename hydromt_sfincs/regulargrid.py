@@ -15,26 +15,48 @@ from pyproj import CRS, Transformer
 from scipy import ndimage
 from shapely.geometry import LineString
 
+from hydromt.model.components import GridComponent
+from hydromt_sfincs import SfincsModel
 from .subgrid import SubgridTableRegular
 from .workflows.tiling import int2png, tile_window
 
 logger = logging.getLogger(__name__)
 
-
-class RegularGrid:
-    def __init__(self, x0, y0, dx, dy, nmax, mmax, epsg=None, rotation=0):
-        self.x0 = x0
-        self.y0 = y0
-        self.dx = dx
-        self.dy = dy
-        self.nmax = nmax  # height
-        self.mmax = mmax  # width
-        self.rotation = rotation
-        self.crs = None
-        if epsg is not None:
-            self.crs = CRS.from_user_input(epsg)
+class RegularGrid(GridComponent):
+    def __init__(
+        self,        
+        model: SfincsModel,
+    ):
+        self._filename: str = "sfincs_grid.nc"
+        self._data: xr.DataArray = None #FIXME - correct?
+        self.x0 = float,
+        self.y0 = float,
+        self.dx = float,
+        self.dy = float,
+        self.nmax = float,  # height
+        self.mmax = float,  # width
+        self.rotation = float,
+        self.crs = None,
+        self.epsg = None,
+        if self.epsg is not None:
+            self.crs = CRS.from_user_input(self.epsg)
         self.subgrid = SubgridTableRegular()
-        # self.data = xr.Dataset()
+        super().__init__(model=model, 
+        )   
+# class RegularGrid:
+#     def __init__(self, x0, y0, dx, dy, nmax, mmax, epsg=None, rotation=0):
+#         self.x0 = x0
+#         self.y0 = y0
+#         self.dx = dx
+#         self.dy = dy
+#         self.nmax = nmax  # height
+#         self.mmax = mmax  # width
+#         self.rotation = rotation
+#         self.crs = None
+#         if epsg is not None:
+#             self.crs = CRS.from_user_input(epsg)
+#         self.subgrid = SubgridTableRegular()
+#         # self.data = xr.Dataset()
 
     @property
     def transform(self):
@@ -100,6 +122,23 @@ class RegularGrid:
         )
         da_mask.raster.set_crs(self.crs)
         return da_mask
+
+#%% core HydroMT-SFINCS functions:
+    # _initialize
+    # read
+    #   - read_ind
+    #   - read_map
+    # write
+    #   - write_ind
+    #   - write_map    
+    # create
+        # - create (model.grid.create)
+        # - create_from_region (model.grid.create_from_region)
+    #
+    # other:
+    # - ind
+
+    # FIXME - question > include here the mask & dep functions or not!?!
 
     def ind(self, mask: np.ndarray) -> np.ndarray:
         """Return indices of active cells in mask."""
@@ -434,6 +473,15 @@ class RegularGrid:
         grid_lines = vertical_lines + horizontal_lines
 
         return gpd.GeoDataFrame(geometry=grid_lines, crs=self.crs)
+
+#%% DDB GUI focused additional functions:
+    # create_index_tiles > FIXME - TL: still needed?
+    # map_overlay
+    # snap_to_grid
+    # _get_datashader_dataframe
+    
+    # TODO - missing as in cht_sfincs:
+    # Many...
 
     def create_index_tiles(
         self,

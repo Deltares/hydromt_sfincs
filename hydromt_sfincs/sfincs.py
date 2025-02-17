@@ -39,8 +39,8 @@ from hydromt_sfincs.regulargrid import RegularGrid
 from hydromt_sfincs.subgrid import SubgridTableRegular
 
 # map types:
-from hydromt_sfincs.mask import SfincsMask
-from hydromt_sfincs.bathymetry import SfincsBathymetry
+# from hydromt_sfincs.mask import SfincsMask
+# from hydromt_sfincs.bathymetry import SfincsBathymetry
 from hydromt_sfincs.infiltration import SfincsInfiltration
 from hydromt_sfincs.manning_roughness import SfincsManningRoughness
 from hydromt_sfincs.initial_conditions import SfincsInitialConditions
@@ -83,9 +83,9 @@ class SfincsModel(Model):
         self.add_component("config", SfincsInput(self))
 
         # grid types:
-        self.add_component("grid", SfincsGrid(self))
-        self.add_component("mesh", SfincsMesh(self))
-        self.add_component("subgrid", SubgridTable(self))
+        self.add_component("grid", RegularGrid(self))
+        # self.add_component("mesh", SfincsMesh(self))
+        self.add_component("subgrid", SubgridTableRegular(self))
         # self.add_component("subgrid", SubgridTableRegular(self))
 
         # map types:

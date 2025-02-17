@@ -11,7 +11,10 @@ import xarray as xr
 import xugrid as xu
 from pyproj import CRS, Transformer
 
+from hydromt.model.components import MeshComponent
+from hydromt_sfincs import SfincsModel
 from hydromt_sfincs.utils import xu_open_dataset
+from hydromt_sfincs.subgrid import SubgridTableQuadtree
 
 # optional dependency
 try:
@@ -23,21 +26,33 @@ try:
 except ImportError:
     HAS_DATASHADER = False
 
-
-from hydromt_sfincs.subgrid import SubgridTableQuadtree
-
 logger = logging.getLogger(__name__)
 
-
-class QuadtreeGrid:
-    def __init__(self, logger=logger):
+class QuadtreeGrid(MeshComponent):
+    def __init__(
+        self,        
+        model: SfincsModel,
+    ):
+        self._filename: str = "sfincs_grid.nc"
+        self._data: xu.UgridDataArray = None #FIXME - correct?
         self.nr_cells = 0
         self.nr_refinement_levels = 1
         self.version = 0
 
-        self.data = None  # placeholder for xugrid object
         self.subgrid = SubgridTableQuadtree()
         self.df = None  # placeholder for pandas dataframe for datashader
+
+        super().__init__(model=model, 
+        )    
+# class QuadtreeGrid:
+#     def __init__(self, logger=logger):
+#         self.nr_cells = 0
+#         self.nr_refinement_levels = 1
+#         self.version = 0
+
+#         self.data = None  # placeholder for xugrid object
+#         self.subgrid = SubgridTableQuadtree()
+#         self.df = None  # placeholder for pandas dataframe for datashader
 
     @property
     def crs(self):
@@ -82,10 +97,23 @@ class QuadtreeGrid:
         )
         return xu.UgridDataArray(da0, self.data.grid)
 
-    def read(self, file_name: Union[str, Path] = "sfincs.nc"):
+#%% core HydroMT-SFINCS functions:
+    # _initialize
+    # read
+    # write
+    # create
+
+    def _initialize(self, skip_read=False) -> None:
+        """Initialize geoms."""
+        if self._data is None:
+            self._data = xu.UgridDataArray() #FIXME - right?
+            if self.root.is_reading_mode() and not skip_read:
+                self.read()
+
+    def read(self, file_name: Union[str, Path] = "sfincs.nc"): #FIXME - or directly self._filename?
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object."""
 
-        self.data = xu_open_dataset(file_name)
+        self.data = xu_open_dataset(self._filename)
 
         # TODO make similar to fortran conventions?
         # Rename to python conventions
@@ -108,7 +136,7 @@ class QuadtreeGrid:
         for key, value in self.data.attrs.items():
             setattr(self, key, value)
 
-    def write(self, file_name: Union[str, Path] = "sfincs.nc", version: int = 0):
+    def write(self, file_name: Union[str, Path] = "sfincs.nc", version: int = 0):  #FIXME - or directly self._filename?
         """Writes a quadtree SFINCS netcdf file."""
 
         # TODO do we want to cut inactive cells here? Or already when creating the mask?
@@ -127,6 +155,13 @@ class QuadtreeGrid:
         ds.attrs = attrs
         ds.to_netcdf(file_name)
 
+#%% DDB GUI focused additional functions:
+    # map_overlay
+    # snap_to_grid
+    # _get_datashader_dataframe
+    
+    # TODO - missing as in cht_sfincs:
+    # Many...
     def map_overlay(self, file_name, xlim=None, ylim=None, color="black", width=800):
         # check if datashader is available
         if not HAS_DATASHADER:
