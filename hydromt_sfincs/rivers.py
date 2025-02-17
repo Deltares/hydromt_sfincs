@@ -33,6 +33,7 @@ class SfincsRivers(ModelComponent):
     # setup_river_inflow
     # setup_river_outflow
     # FIXME - also functions like burn in river???
+    # FIXME - also new functions to read/process/burn in river cross-section data???
 
 #%% core HydroMT-SFINCS functions:
     # _initialize

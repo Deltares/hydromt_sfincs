@@ -41,7 +41,7 @@ class SfincsWaterlevelConditions(ModelComponent):
         # read_waterlevel_points - bndfile
         # read_waterlevel_timeseries - bzsfile
         # read_waterlevel_astro - bcafile
-        # read_waterlevel_netcdf - netbndbzsbzifile
+        # read_waterlevel_netcdf - netbndbzsbzifile --> ds = GeoDataset.from_netcdf(fn, crs=self.crs, chunks="auto")
     # write
         # write_boundary_points - bndfile + write_boundary_conditions_timeseries - bzsfile
         # and/or: write_boundary_conditions - netbndbzsbzifile    

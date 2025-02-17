@@ -76,7 +76,7 @@ class SfincsObservationPoints(ModelComponent):
             self,
             gdf: gpd.GeoDataFrame,
             merge: bool = True
-    ):
+        ):
         """Set observation points.
 
         Arguments
