@@ -59,7 +59,8 @@ from hydromt_sfincs.discharge_points import SfincsDischargePoints
 # from hydromt_sfincs.boundary_conditions import SfincsBoundaryConditions #/
 from hydromt_sfincs.waterlevel_conditions import SfincsWaterlevelConditions
 from hydromt_sfincs.snapwave_conditions import SfincsSnapWaveConditions
-from hydromt_sfincs.meteo import SfincsMeteo
+# from hydromt_sfincs.meteo import SfincsMeteo
+from hydromt_sfincs.meteo import SfincsPrecipitation, SfincsPressure, SfincsWind
 
 # river types:
 from hydromt_sfincs.rivers import SfincsRivers
@@ -107,7 +108,10 @@ class SfincsModel(Model):
         self.add_component("discharge_points", SfincsDischargePoints(self))
         self.add_component("waterlevel_conditions", SfincsWaterlevelConditions(self))
         self.add_component("snapwave_conditions", SfincsSnapWaveConditions(self))
-        self.add_component("meteo", SfincsMeteo(self))
+        # self.add_component("meteo", SfincsMeteo(self))
+        self.add_component("precipitation", SfincsPrecipitation(self))
+        self.add_component("pressure", SfincsPressure(self))
+        self.add_component("wind", SfincsWind(self))
         # self.add_component("forcing", SfincsForcing(self))
         
         # river types:
@@ -2296,6 +2300,10 @@ class SfincsModel(Model):
             ).fillna(0)
 
             # only resample in time if freq < 1H, else keep input values
+            
+            # FIXME - TL: make this user optional!!! 
+            # TODO - and at least with clear warning
+            
             if da_to_timedelta(precip_out) < pd.to_timedelta("1H"):
                 precip_out = hydromt.workflows.resample_time(
                     precip_out,
@@ -2397,6 +2405,10 @@ class SfincsModel(Model):
         ).fillna(fill_value)
 
         # only resample in time if freq < 1H, else keep input values
+
+        # FIXME - TL: make this user optional!!! 
+        # TODO - and at least with clear warning
+                
         if da_to_timedelta(press_out) < pd.to_timedelta("1H"):
             press_out = hydromt.workflows.resample_time(
                 press_out,
@@ -2452,6 +2464,9 @@ class SfincsModel(Model):
         ).fillna(0)
 
         # only resample in time if freq < 1H, else keep input values
+        # FIXME - TL: make this user optional!!! 
+        # TODO - and at least with clear warning        
+
         if da_to_timedelta(wind) < pd.to_timedelta("1H"):
             wind_out = xr.Dataset()
             # resample in time
