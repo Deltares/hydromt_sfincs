@@ -51,7 +51,7 @@ def river_centerline_from_hydrography(
     riv_mask = da_uparea >= river_upa
     if not riv_mask.any():
         return gpd.GeoDataFrame()
-    flwdir = hydromt.flw.flwdir_from_da(da_flwdir, mask=riv_mask)
+    flwdir = hydromt.gis.flw.flwdir_from_da(da_flwdir, mask=riv_mask)
     feats = flwdir.streams(uparea=da_uparea.values)
     gdf_riv = gpd.GeoDataFrame.from_features(feats, crs=da_flwdir.raster.crs)
     # clip to mask and remove empty geometries

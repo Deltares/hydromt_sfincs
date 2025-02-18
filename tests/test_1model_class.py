@@ -9,8 +9,9 @@ import pytest
 from shapely.geometry import Polygon, Point
 import xarray as xr
 from geopandas.testing import assert_geodataframe_equal
-from hydromt.cli.cli_utils import parse_config
-from hydromt.log import setuplog
+from hydromt.cli._utils import parse_config
+
+# from hydromt.log import setuplog
 
 from hydromt_sfincs.sfincs import SfincsModel
 
@@ -437,8 +438,8 @@ def test_model_build(tmpdir, case):
     # Build model
     ini_fn = join(TESTDATADIR, _cases[case]["ini"])
     opt = parse_config(ini_fn)
-    logger = setuplog(path=join(root, "hydromt.log"), log_level=10)
-    mod1 = SfincsModel(root=root, mode="w", logger=logger, **opt.pop("global", {}))
+    # logger = setuplog(path=join(root, "hydromt.log"), log_level=10)
+    mod1 = SfincsModel(root=root, mode="w", **opt.pop("global", {}))
     mod1.build(opt=opt)
     # Check if model is api compliant
     non_compliant_list = mod1.test_model_api()

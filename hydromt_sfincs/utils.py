@@ -17,7 +17,7 @@ import pandas as pd
 import rasterio
 import xarray as xr
 import xugrid as xu
-from hydromt.io import write_xy
+from hydromt._io import _write_xy as write_xy
 from pyproj.crs.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.rio.overview import get_maximum_overview_level
