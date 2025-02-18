@@ -5,7 +5,7 @@ platforms = ["linux-64", "win-64"]
 
 [tasks]
 # dev environment
-dev = { depends_on = [
+dev = { depends-on = [
   "dev-env-file",
   "dev-create-mamba-env",
   "dev-install-hydromt",

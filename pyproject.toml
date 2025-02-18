@@ -18,12 +18,13 @@ dependencies = [
     "numpy",
     "pandas",
     "pillow",
-    "pyflwdir>=0.5.9",
+    "pyflwdir>=0.5.5",
     "pyproj",
     "rasterio",
     "scipy",
     "shapely",
     "xarray",
+    "xugrid>=0.12, <1.0",
 ]
 requires-python = ">=3.9" # fix tests to support older versions
 readme = "README.rst"
@@ -58,6 +59,9 @@ examples = [
     "jupyterlab",
     "matplotlib",
     "pillow",
+]
+quadtree = [
+    "datashader",
 ]
 
 full = ["hydromt_sfincs[test, doc, examples]"]
