@@ -51,6 +51,7 @@ doc = [
 	"pydata-sphinx-theme",
 	"sphinx",
     "sphinx_design",
+    "pandoc",
 ]
 examples = [
     "cartopy",
