@@ -136,22 +136,22 @@ class RegularGrid(GridComponent):
     # _initialize
     #
     # GRID:
-    #   read
-    #   write
+    #   read_grid
+    #   write_grid
     #   create
-    #       - create (model.grid.create)
-    #       - create_from_region (model.grid.create_from_region)
+    #       - create_grid (model.grid.create?)
+    #       - create_grid_from_region (model.grid.create_from_region)
     #
     # DEP:
-    #   read
-    #   write
-    #   create
+    #   read_dep
+    #   write_dep
+    #   create_dep
     #
     # MASK:
-    #   read
-    #   write
-    #   create
-    #   create_bounds
+    #   read_msk
+    #   write_msk
+    #   create_msk
+    #   create_msk_bounds
     #
     # supporting HydroMT-SFINCS functions:
     # - read_ind

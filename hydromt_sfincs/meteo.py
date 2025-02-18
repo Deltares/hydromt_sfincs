@@ -78,6 +78,12 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
                 self.read()
 
     def read(self):
+        if self.filetype == 'gridded':
+            self.read_gridded()
+        elif self.filetype == 'uniform': 
+            self.read_uniform()          
+
+    def read_gridded(self):
         """Read in gridded precipitation data."""
         ds = xr.open_dataset(self._filename, chunks="auto")
 
@@ -110,7 +116,14 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
         # Add to self._data            
         self.set(da)
 
-    def write(self, filename=None): #TODO - TL: filename=None - still needed?
+    def write(self): #FIXME
+
+        if self.filetype == 'gridded':
+            self.write_gridded()
+        elif self.filetype == 'uniform': 
+            self.write_uniform()            
+
+    def write_gridded(self, filename=None): #TODO - TL: filename=None - still needed?
         """Write netamprfile."""
 
         #FIXME - correct for tref_str?
@@ -274,7 +287,7 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
         # Add to self.data
         self.set(df_ts.to_xarray())
 
-    def setup_precip_forcing_from_grid(
+    def create_uniform_from_gridded(
         self, 
         precip, 
         aggregate=False, 

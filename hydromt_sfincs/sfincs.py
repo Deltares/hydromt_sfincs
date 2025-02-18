@@ -44,6 +44,7 @@ from hydromt_sfincs.subgrid import SubgridTableRegular
 from hydromt_sfincs.infiltration import SfincsInfiltration
 from hydromt_sfincs.manning_roughness import SfincsManningRoughness
 from hydromt_sfincs.initial_conditions import SfincsInitialConditions
+from hydromt_sfincs.storage_volume import SfincsStorageVolume
 
 # geoms types:
 from hydromt_sfincs.observation_points import SfincsObservationPoints
@@ -52,7 +53,6 @@ from hydromt_sfincs.weirs import SfincsWeirs
 from hydromt_sfincs.thin_dams import SfincsThinDams
 from hydromt_sfincs.wave_makers import SfincsWaveMakers
 from hydromt_sfincs.drainage_structures import SfincsDrainageStructures
-from hydromt_sfincs.storage_volume import SfincsStorageVolume
 
 # forcing types:
 from hydromt_sfincs.discharge_points import SfincsDischargePoints
@@ -94,6 +94,7 @@ class SfincsModel(Model):
         self.add_component("infiltration", SfincsInfiltration(self))
         self.add_component("manning_roughness", SfincsManningRoughness(self))
         self.add_component("initial_conditions", SfincsInitialConditions(self))
+        self.add_component("storage_volume", SfincsStorageVolume(self))
 
         # geoms types:
         self.add_component("observation_points", SfincsObservationPoints(self))
@@ -102,7 +103,6 @@ class SfincsModel(Model):
         self.add_component("thin_dams", SfincsThinDams(self))
         self.add_component("wave_makers", SfincsWaveMakers(self))
         self.add_component("drainage_structures", SfincsDrainageStructures(self))
-        self.add_component("storage_volume", SfincsStorageVolume(self))
 
         # forcing types:
         self.add_component("discharge_points", SfincsDischargePoints(self))

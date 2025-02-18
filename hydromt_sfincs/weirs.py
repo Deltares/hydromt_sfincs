@@ -214,7 +214,7 @@ class SfincsWeirs(ModelComponent):
 #%% HydroMT-SFINCS focused additional functions:
     # determine_weir_elevation
     
-    def determine_weir_elevation(
+    def determine_weir_elevation( #FIXME - should this be in utils.py or not?
         self, 
         gdf: gpd.GeoDataFrame,
         dep: Union[str, Path, xr.DataArray] = None,
