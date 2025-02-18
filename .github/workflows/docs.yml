@@ -31,32 +31,37 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Miniforge
-        uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/setup-python@v5
+        id: pip
         with:
-            python-version: '3.11'
-            miniforge-variant: Miniforge3
-            miniforge-version: latest
-            use-mamba: true
+          # caching, see https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
+          cache: 'pip'
+          python-version: '3.11'
+          cache-dependency-path: pyproject.toml
 
-      - name: Setup env
+      # true if cache-hit occurred on the primary key
+      - name: Cache hit
+        run: echo '${{ steps.pip.outputs.cache-hit }}'
+
+      # build environment with pip
+      - name: Install hydromt-sfincs
         run: |
-          python make_env.py full -p 3.11 -n hydromt-sfincs -o environment-doc.yml
-          mamba env create -f environment-doc.yml
-          mamba run -n hydromt-sfincs pip install -e .
+          pip install --upgrade pip
+          pip install .[doc,examples]
+          pip list
 
       # if we're not publishing we don't have to write them, so we might as well
       # save ourself a bunch of IO time
       - name: Build dummy docs
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          mamba run -n hydromt-sfincs sphinx-build ./docs ./docs/_build -b dummy -W
+          sphinx-build ./docs ./docs/_build -b dummy -W
 
       - name: Build html docs
         if: ${{ github.event_name != 'pull_request' }}
         run: |
-          mamba run -n hydromt-sfincs sphinx-build -M html ./docs ./docs/_build -W
-          echo "DOC_VERSION=$(mamba run -n hydromt-sfincs python -c 'from hydromt_sfincs import __version__ as v; print("dev" if "dev" in v else "v"+v)')" >> $GITHUB_ENV
+          sphinx-build -M html ./docs ./docs/_build -W
+          echo "DOC_VERSION=$(python -c 'from hydromt_sfincs import __version__ as v; print("dev" if "dev" in v else "v"+v)')" >> $GITHUB_ENV
 
       - name: Upload to GitHub Pages
         if: ${{ github.event_name != 'pull_request'}}

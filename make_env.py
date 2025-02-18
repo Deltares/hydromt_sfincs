@@ -43,7 +43,7 @@ def _parse_profile(profile_str: str, opt_deps: dict, project_name: str) -> List[
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("profile", default="dev,test", nargs="?")
+parser.add_argument("profile", default="test,examples,doc", nargs="?")
 parser.add_argument("--output", "-o", default="environment.yml")
 parser.add_argument("--channels", "-c", default=None)
 parser.add_argument("--name", "-n", default=None)
@@ -86,7 +86,7 @@ if args.profile not in ["", "min"]:
 conda_deps = []
 pip_deps = []
 for dep in deps_to_install:
-    if dep in deps_not_in_conda:
+    if any([dep.startswith(pypi_dep) for pypi_dep in deps_not_in_conda]):
         pip_deps.append(dep)
     else:
         conda_deps.append(dep)
