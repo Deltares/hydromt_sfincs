@@ -2,7 +2,9 @@
 
 import logging
 import math
+import glob
 import os
+from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -15,48 +17,32 @@ from pyproj import CRS, Transformer
 from scipy import ndimage
 from shapely.geometry import LineString
 
+import hydromt
+from hydromt.model import Model
 from hydromt.model.components import GridComponent
-from hydromt_sfincs import SfincsModel, workflows
-from .subgrid import SubgridTableRegular
-from .workflows.tiling import int2png, tile_window
+
+from hydromt_sfincs import workflows
+from hydromt_sfincs.subgrid import SubgridTableRegular
+from hydromt_sfincs.workflows.tiling import int2png, tile_window
 
 logger = logging.getLogger(__name__)
 
+_MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
+
+
 class RegularGrid(GridComponent):
     def __init__(
-        self,        
-        model: SfincsModel,
+        self,
+        model: Model,
     ):
-        self._filename: str = "sfincs_grid.nc"
-        self._data: xr.DataArray = None #FIXME - correct?
-        self.x0 = float,
-        self.y0 = float,
-        self.dx = float,
-        self.dy = float,
-        self.nmax = float,  # height
-        self.mmax = float,  # width
-        self.rotation = float,
-        self.crs = None,
-        self.epsg = None,
-        if self.epsg is not None:
-            self.crs = CRS.from_user_input(self.epsg)
-        self.subgrid = SubgridTableRegular()
-        super().__init__(model=model, 
-        )   
-# class RegularGrid:
-#     def __init__(self, x0, y0, dx, dy, nmax, mmax, epsg=None, rotation=0):
-#         self.x0 = x0
-#         self.y0 = y0
-#         self.dx = dx
-#         self.dy = dy
-#         self.nmax = nmax  # height
-#         self.mmax = mmax  # width
-#         self.rotation = rotation
-#         self.crs = None
-#         if epsg is not None:
-#             self.crs = CRS.from_user_input(epsg)
-#         self.subgrid = SubgridTableRegular()
-#         # self.data = xr.Dataset()
+        super().__init__(
+            model=model,
+            filename="sfincs.nc",
+            region_filename="region.geojson",
+        )
+
+        # set spatial attributes
+        self.update_grid_from_config()
 
     @property
     def transform(self):
@@ -97,17 +83,13 @@ class RegularGrid(GridComponent):
         return coords
 
     @property
-    def edges(self, x_dim="xg", y_dim="yg"):
+    def edges(self):
         """Return the coordinates of the cell-edges the regular grid."""
         x_edges, y_edges = (
             self.transform
             * self.transform.translation(0, 0)
             * np.meshgrid(np.arange(self.mmax + 1), np.arange(self.nmax + 1))
         )
-        # edges = {
-        #     "yg": ((y_dim, x_dim), y_edges),
-        #     "xg": ((y_dim, x_dim), x_edges),
-        # }
         return x_edges, y_edges
 
     @property
@@ -123,7 +105,91 @@ class RegularGrid(GridComponent):
         da_mask.raster.set_crs(self.crs)
         return da_mask
 
-#%%   Original HydroMT-SFINCS setup_ functions:
+    def read(self, data_vars: Union[List, str] = None) -> None:
+        """Read SFINCS binary grid files and save to `data` attribute.
+        Filenames are taken from the `model.config` attribute (i.e. input file).
+
+        Parameters
+        ----------
+        data_vars : Union[List, str], optional
+            List of data variables to read, by default None (all)
+        """
+        # check if in read mode and initialize grid
+        self.root._assert_read_mode()
+        self._initialize_grid(skip_read=True)
+
+        da_lst = []
+        if data_vars is None:
+            data_vars = _MAPS
+        elif isinstance(data_vars, str):
+            data_vars = list(data_vars)
+
+        # read index file
+        ind_fn = self.model.config.get(
+            "indexfile", fallback="sfincs.ind", abs_path=True
+        )
+        if not isfile(ind_fn):
+            raise IOError(f".ind path {ind_fn} does not exist")
+
+        dtypes = {"msk": "u1"}
+        mvs = {"msk": 0}
+        ind = self.read_ind(ind_fn=ind_fn)
+
+        for name in data_vars:
+            if f"{name}file" in self.config:
+                fn = self.model.config.get(
+                    f"{name}file", fallback=f"sfincs.{name}", abs_path=True
+                )
+                if not isfile(fn):
+                    self.logger.warning(f"{name}file not found at {fn}")
+                    continue
+                dtype = dtypes.get(name, "f4")
+                mv = mvs.get(name, -9999.0)
+                da = self.read_map(fn, ind, dtype, mv, name=name)
+                da_lst.append(da)
+        ds = xr.merge(da_lst)
+        epsg = self.model.config.get("epsg", None)
+        if epsg is not None:
+            ds.raster.set_crs(epsg)
+        self.set(ds)
+
+        # # TODO - fix this properly; but to create overlays in GUIs,
+        # # we always convert regular grids to a UgridDataArray
+        # self.quadtree = QuadtreeGrid(logger=self.logger)
+        # if self.config.get("rotation", 0) != 0:  # This is a rotated regular grid
+        #     self.quadtree.data = UgridDataArray.from_structured(
+        #         self.mask, "xc", "yc"
+        #     )
+        # else:
+        #     self.quadtree.data = UgridDataArray.from_structured(self.mask)
+        # self.quadtree.data.grid.set_crs(self.crs)
+
+        # keep some metadata maps from gis directory
+
+        # fns = glob.glob(join(self.root, "gis", "*.tif"))
+        # fns = [
+        #     fn
+        #     for fn in fns
+        #     if basename(fn).split(".")[0] not in self.grid.data_vars
+        # ]
+        # if fns:
+        #     ds = hydromt.open_mfraster(fns).load()
+        #     self.set_grid(ds)
+        #     ds.close()
+
+    def create(self, x0, y0, dx, dy, nmax, mmax, epsg=None, rotation=0):
+        self.x0 = x0
+        self.y0 = y0
+        self.dx = dx
+        self.dy = dy
+        self.nmax = nmax  # height
+        self.mmax = mmax  # width
+        self.rotation = rotation
+        # self.crs = None
+        if epsg is not None:
+            self.crs = CRS.from_user_input(epsg)
+
+    # %%   Original HydroMT-SFINCS setup_ functions:
     # setup_grid
     # setup_grid_from_region
     #
@@ -132,7 +198,7 @@ class RegularGrid(GridComponent):
     # setup_mask_active
     # setup_mask_bounds
 
-#%% core HydroMT-SFINCS functions:
+    # %% core HydroMT-SFINCS functions:
     # _initialize
     #
     # GRID:
@@ -155,54 +221,52 @@ class RegularGrid(GridComponent):
     #
     # supporting HydroMT-SFINCS functions:
     # - read_ind
-    # - read_map    
+    # - read_map
     # - write_ind
-    # - write_map        
+    # - write_map
     # - ind
-    # - to_vector_lines    
+    # - to_vector_lines
 
-#%% GRID:
+    # %% GRID:
     def read_grid(
         self,
-        ):
+    ):
         # uses read_ind()
 
         return
 
     def write_grid(
         self,
-        ):
+    ):
         # uses write_ind()
 
         return
-    
+
     def create_grid(
         self,
-        ):
-
+    ):
         return
-    
+
     def create_grid_from_region(
         self,
-        ):
+    ):
+        return
 
-
-        return    
-#%% DEP:
+    # %% DEP:
     def read_dep(
         self,
-        ):        
+    ):
         # uses read_map()
 
         return
-    
+
     def write_dep(
         self,
-        ):            
+    ):
         # uses write_map()
 
         return
-    
+
     def create_dep(
         self,
         datasets_dep: List[dict],
@@ -247,9 +311,7 @@ class RegularGrid(GridComponent):
         nmissing = int(np.sum(np.isnan(da_dep.values)))
         if nmissing > 0:
             self.logger.warning(f"Interpolate elevation at {nmissing} cells")
-            da_dep = da_dep.raster.interpolate_na(
-                method="rio_idw", extrapolate=True
-            )
+            da_dep = da_dep.raster.interpolate_na(method="rio_idw", extrapolate=True)
 
         self.set_grid(da_dep, name="dep")
         # FIXME this shouldn't be necessary, since da_dep should already have a crs
@@ -259,24 +321,24 @@ class RegularGrid(GridComponent):
         if "depfile" not in self.config:
             self.config.update({"depfile": "sfincs.dep"})
 
-#%% MASK:
+    ## MASK
 
     def read_msk(
         self,
-        ):        
+    ):
         # uses read_map()
 
         return
-    
+
     def write_msk(
         self,
-        ):         
+    ):
         # uses write_map()
 
         return
 
     def create_mask_active(
-    # def create_mask(
+        # def create_mask(
         self,
         da_mask: xr.DataArray = None,
         da_dep: xr.DataArray = None,
@@ -524,8 +586,7 @@ class RegularGrid(GridComponent):
 
         return da_mask
 
-
-#%% supporting HydroMT-SFINCS functions:
+    # %% supporting HydroMT-SFINCS functions:
     # other:
     # - ind
     # - read_ind
@@ -550,7 +611,7 @@ class RegularGrid(GridComponent):
         assert _ind[0] == ind.size
 
         return ind
-    
+
     def read_map(
         self,
         map_fn: Union[str, Path],
@@ -598,7 +659,6 @@ class RegularGrid(GridComponent):
         data_out = np.asarray(data.transpose()[mask.transpose() > 0], dtype=dtype)
         data_out.tofile(map_fn)
 
-
     def to_vector_lines(self):
         """Return a geopandas GeoDataFrame with a geometry for each grid line."""
 
@@ -621,12 +681,12 @@ class RegularGrid(GridComponent):
 
         return gpd.GeoDataFrame(geometry=grid_lines, crs=self.crs)
 
-#%% DDB GUI focused additional functions:
+    # %% DDB GUI focused additional functions:
     # create_index_tiles > FIXME - TL: still needed?
     # map_overlay
     # snap_to_grid
     # _get_datashader_dataframe
-    
+
     # TODO - missing as in cht_sfincs:
     # Many...
 
@@ -739,3 +799,20 @@ class RegularGrid(GridComponent):
                         # for png, change nodata -999 nodata into 0
                         ind[ind == -999] = 0
                         int2png(ind, file_name)
+
+    def update_grid_from_config(self):
+        """Update grid properties based on `config` (sfincs.inp) attributes"""
+        self.grid_type = (
+            "quadtree" if self.model.config.get("qtrfile") is not None else "regular"
+        )
+
+        self.x0 = self.config.get("x0")
+        self.y0 = self.config.get("y0")
+        self.dx = self.config.get("dx")
+        self.dy = self.config.get("dy")
+        self.nmax = self.config.get("nmax")
+        self.mmax = self.config.get("mmax")
+        self.rotation = self.config.get("rotation", 0)
+        self.epsg = self.config.get("epsg", None)
+        if self.epsg is not None:
+            self.crs = CRS.from_user_input(self.epsg)

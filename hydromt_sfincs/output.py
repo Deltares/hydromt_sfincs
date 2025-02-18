@@ -6,18 +6,20 @@ from pathlib import Path
 from typing import Union
 
 from hydromt.model.components import SpatialDatasetsComponent
-from hydromt_sfincs import SfincsModel
+from hydromt.model import Model
 from hydromt_sfincs import utils
+
 
 class SfincsOutput(SpatialDatasetsComponent):
     def __init__(
-        self,        
-        model: SfincsModel,
+        self,
+        model: Model,
     ):
         self._filename: str = "sfincs_map.nc"
-        self._data: xr.Dataset = None #FIXME - how if xugrid needed?
-        super().__init__(model=model, 
-        )    
+        self._data: xr.Dataset = None  # FIXME - how if xugrid needed?
+        super().__init__(
+            model=model,
+        )
 
     @property
     def data(self) -> xr.Dataset:
@@ -28,17 +30,18 @@ class SfincsOutput(SpatialDatasetsComponent):
         if self._data is None:
             self._initialize()
         return self._data
-    
+
     # Original HydroMT-SFINCS setup_ functions:
     # read_results
 
-#%% core HydroMT-SFINCS functions:
-    # _initialize
-    # read
-    # set
-    # clear
 
-#%% DDB GUI focused additional functions:
-    # read_his_file
-    # read_zsmax
-    # read_cumulative_precipitation
+# %% core HydroMT-SFINCS functions:
+# _initialize
+# read
+# set
+# clear
+
+# %% DDB GUI focused additional functions:
+# read_his_file
+# read_zsmax
+# read_cumulative_precipitation

@@ -9,56 +9,58 @@ from typing import Union, List
 
 import hydromt
 from hydromt.model.components import SpatialDatasetsComponent
-from hydromt_sfincs import SfincsModel
+from hydromt.model import Model
 from hydromt_sfincs import utils
-from hydromt.workflows.forcing import da_to_timedelta
-   
-#%% Original HydroMT-SFINCS setup_ functions:
-    # setup_precip_forcing
-    # setup_precip_forcing_from_grid
-    # setup_pressure_forcing_from_grid
-    # setup_wind_forcing
-    # setup_wind_forcing_from_grid
+from hydromt.model.processes.meteo import da_to_timedelta
 
-    # supported spiderweb TC files through sfincs.inp: cyclone.spw
-    # TODO - now also as netcdf: cyclone.nc - FIXME take care with pressure_drop vs atmospheric_pressure
+# %% Original HydroMT-SFINCS setup_ functions:
+# setup_precip_forcing
+# setup_precip_forcing_from_grid
+# setup_pressure_forcing_from_grid
+# setup_wind_forcing
+# setup_wind_forcing_from_grid
 
-#%% core HydroMT-SFINCS functions:
-    # _initialize
+# supported spiderweb TC files through sfincs.inp: cyclone.spw
+# TODO - now also as netcdf: cyclone.nc - FIXME take care with pressure_drop vs atmospheric_pressure
 
-    # 1 class per type - precipitation, pressure, wind
-    # 2 flavours for 2D, and uniform (either from time-series or aggregated from 2D)
+# %% core HydroMT-SFINCS functions:
+# _initialize
 
-    # read:
-        # read
-        # read_uniform
-    # write
-        # write
-        # write_uniform
-    # set
-    # create:
-        # model.precipitation.create
-        # model.precipitation.create_uniform
-        # model.precipitation.create_uniform_from_gridded
+# 1 class per type - precipitation, pressure, wind
+# 2 flavours for 2D, and uniform (either from time-series or aggregated from 2D)
 
-        # model.pressure.create
+# read:
+# read
+# read_uniform
+# write
+# write
+# write_uniform
+# set
+# create:
+# model.precipitation.create
+# model.precipitation.create_uniform
+# model.precipitation.create_uniform_from_gridded
 
-        # model.wind.create
-        # model.wind.create_uniform
-        # model.wind.create_uniform_from_gridded
+# model.pressure.create
 
-    # clear
+# model.wind.create
+# model.wind.create_uniform
+# model.wind.create_uniform_from_gridded
 
-#%% Precipitation
+# clear
+
+
+# %% Precipitation
 class SfincsPrecipitation(SpatialDatasetsComponent):
     def __init__(
-        self,        
-        model: SfincsModel,
+        self,
+        model: Model,
     ):
         self._filename: str = "sfincs_netampr.nc"
         self._data: xr.DataArray = None
-        super().__init__(model=model, 
-        )    
+        super().__init__(
+            model=model,
+        )
 
     @property
     def data(self) -> xr.DataArray:
@@ -69,7 +71,7 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
         if self._data is None:
             self._initialize()
         return self._data
-    
+
     def _initialize(self, skip_read=False) -> None:
         """Initialize DataArray."""
         if self._data is None:
@@ -78,10 +80,10 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
                 self.read()
 
     def read(self):
-        if self.filetype == 'gridded':
+        if self.filetype == "gridded":
             self.read_gridded()
-        elif self.filetype == 'uniform': 
-            self.read_uniform()          
+        elif self.filetype == "uniform":
+            self.read_uniform()
 
     def read_gridded(self):
         """Read in gridded precipitation data."""
@@ -95,14 +97,14 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
         else:
             logger.warning(f"No forcing variables found in {self._filename}")
 
-        # Add to self._data            
+        # Add to self._data
         self.set(ds)
 
     def read_uniform(self):
         """Read in spatially uniform precipitation data."""
         # TL: parts are copied from sfincs.py - read_forcing()
-        tref = utils.parse_datetime(self.config["tref"]) #FIXME  - or differently?
-        
+        tref = utils.parse_datetime(self.config["tref"])  # FIXME  - or differently?
+
         if self._filename is None or not isfile(self._filename):
             if self._filename is not None:
                 self.logger.warning(f"{self._filename} not found")
@@ -111,37 +113,41 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
         df.index.name = "time"
 
         # spatially uniform forcing
-        da = xr.DataArray(df[df.columns[0]], dims=("time"), name='precip')
+        da = xr.DataArray(df[df.columns[0]], dims=("time"), name="precip")
 
-        # Add to self._data            
+        # Add to self._data
         self.set(da)
 
-    def write(self): #FIXME
-
-        if self.filetype == 'gridded':
+    def write(self):  # FIXME
+        if self.filetype == "gridded":
             self.write_gridded()
-        elif self.filetype == 'uniform': 
-            self.write_uniform()            
+        elif self.filetype == "uniform":
+            self.write_uniform()
 
-    def write_gridded(self, filename=None): #TODO - TL: filename=None - still needed?
+    def write_gridded(self, filename=None):  # TODO - TL: filename=None - still needed?
         """Write netamprfile."""
 
-        #FIXME - correct for tref_str?
+        # FIXME - correct for tref_str?
         encoding = dict(
-            time={"units": f"minutes since {self.model.config.tref_str}", "dtype": "float64"} 
+            time={
+                "units": f"minutes since {self.model.config.tref_str}",
+                "dtype": "float64",
+            }
         )
-        
+
         # combine variables and rename to output names
         rename = {v: k for k, v in rename.items() if v in self.forcing}
-        ds = xr.merge([self.forcing[v] for v in rename.keys()]).rename(rename)        
+        ds = xr.merge([self.forcing[v] for v in rename.keys()]).rename(rename)
 
         # write 2D gridded timeseries
         ds.to_netcdf(filename, encoding=encoding)
 
-    def write_uniform(self, filename=None, fmt: str = "%7.2f"): #TODO - TL: filename=None - still needed?
+    def write_uniform(
+        self, filename=None, fmt: str = "%7.2f"
+    ):  # TODO - TL: filename=None - still needed?
         """Write precipfile."""
 
-        tref = utils.parse_datetime(self.config["tref"]) #FIXME  - or differently?
+        tref = utils.parse_datetime(self.config["tref"])  # FIXME  - or differently?
 
         # parse data to dataframe
         da = self.data.transpose("time", ...)
@@ -155,30 +161,30 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
         utils.write_timeseries(filename, df, tref, fmt=fmt)
 
     def set(
-            self,
-            da: xr.DataArray,
-        ):
+        self,
+        da: xr.DataArray,
+    ):
         """Set 2D precipitation data.
 
         Arguments
         ---------
         da: xr.DataArray
             Set DataArray with precipitation data to self.data
-        """       
+        """
 
         # FIXME - add check if wanted variables exist (?)
         # XXX
 
-        self._data = da  # set da in self.data    
+        self._data = da  # set da in self.data
 
     # def set_uniform(): #FIXME - not needed?
 
     def create(
-        self, 
-        precip, 
-        dst_res=None, 
+        self,
+        precip,
+        dst_res=None,
         **kwargs,
-        ):
+    ):
         """Setup precipitation forcing from a gridded spatially varying data source.
 
         Distributed precipitation is added to the model as netcdf file.
@@ -220,10 +226,10 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
             dst_crs=self.crs, dst_res=dst_res, **kwargs
         ).fillna(0)
 
-        # only resample in time if freq < 1H, else keep input values        
-        # FIXME - TL: make this user optional!!! 
+        # only resample in time if freq < 1H, else keep input values
+        # FIXME - TL: make this user optional!!!
         # TODO - and at least with clear warning
-        
+
         if da_to_timedelta(precip_out) < pd.to_timedelta("1H"):
             precip_out = hydromt.workflows.resample_time(
                 precip_out,
@@ -233,16 +239,12 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
                 downsampling="sum",
                 logger=self.logger,
             )
-        precip_out = precip_out.rename("precip_2d") #FIXME - needed?
+        precip_out = precip_out.rename("precip_2d")  # FIXME - needed?
 
         # Add to self.data
         self.set(precip_out)
 
-    def create_uniform(
-        self, 
-        timeseries=None, 
-        magnitude=None
-        ):
+    def create_uniform(self, timeseries=None, magnitude=None):
         """Setup spatially uniform precipitation forcing (precip).
 
         Adds model layers:
@@ -288,11 +290,11 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
         self.set(df_ts.to_xarray())
 
     def create_uniform_from_gridded(
-        self, 
-        precip, 
-        aggregate=False, 
+        self,
+        precip,
+        aggregate=False,
         # **kwargs
-        ):
+    ):
         """Setup spatially uniform precipitation forcing from a gridded spatially varying data source.
 
         Spatially uniform precipitation forcing is added to
@@ -330,24 +332,26 @@ class SfincsPrecipitation(SpatialDatasetsComponent):
         zone = self.region.dissolve()  # make sure we have a single (multi)polygon
         precip_out = precip.raster.zonal_stats(zone, stats=stat)[f"precip_{stat}"]
         df_ts = precip_out.where(precip_out >= 0, 0).fillna(0).squeeze().to_pandas()
-        
+
         # call create_uniform
         self.create_uniform(df_ts.to_frame())
 
     def clear(self):
         """Clean DataArray with precipitation data."""
-        self.data  = xr.DataArray()        
+        self.data = xr.DataArray()
 
-#%% Pressure
+
+# %% Pressure
 class SfincsPressure(SpatialDatasetsComponent):
     def __init__(
-        self,        
-        model: SfincsModel,
+        self,
+        model: Model,
     ):
         self._filename: str = "sfincs_netamp.nc"
         self._data: xr.DataArray = None
-        super().__init__(model=model, 
-        )    
+        super().__init__(
+            model=model,
+        )
 
     @property
     def data(self) -> xr.DataArray:
@@ -358,7 +362,7 @@ class SfincsPressure(SpatialDatasetsComponent):
         if self._data is None:
             self._initialize()
         return self._data
-    
+
     def _initialize(self, skip_read=False) -> None:
         """Initialize DataArray."""
         if self._data is None:
@@ -368,27 +372,29 @@ class SfincsPressure(SpatialDatasetsComponent):
 
     # TODO - add:
     # read:
-        # read
+    # read
     # write
-        # write
+    # write
     # set
     # create:
-        # model.wind.create
-    
+    # model.wind.create
+
     def clear(self):
         """Clean DataArray with atmospheric pressure data."""
-        self.data  = xr.DataArray()      
+        self.data = xr.DataArray()
 
-#%% Wind
+
+# %% Wind
 class SfincsWind(SpatialDatasetsComponent):
     def __init__(
-        self,        
-        model: SfincsModel,
+        self,
+        model: Model,
     ):
         self._filename: str = "sfincs_netamuv.nc"
         self._data: xr.DataArray = None
-        super().__init__(model=model, 
-        )    
+        super().__init__(
+            model=model,
+        )
 
     @property
     def data(self) -> xr.DataArray:
@@ -409,20 +415,21 @@ class SfincsWind(SpatialDatasetsComponent):
 
     # TODO - add:
     # read:
-        # read
-        # read_uniform
+    # read
+    # read_uniform
     # write
-        # write
-        # write_uniform
+    # write
+    # write_uniform
     # set
     # create:
-        # model.wind.create
-        # model.wind.create_uniform
-        # model.wind.create_uniform_from_gridded
-    
+    # model.wind.create
+    # model.wind.create_uniform
+    # model.wind.create_uniform_from_gridded
+
     def clear(self):
         """Clean DataArray with wind data."""
-        self.data  = xr.DataArray()      
+        self.data = xr.DataArray()
 
-#%% DDB GUI focused additional functions:
-    # - yet unsupported in DDB-
+
+# %% DDB GUI focused additional functions:
+# - yet unsupported in DDB-

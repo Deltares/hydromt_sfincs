@@ -9,21 +9,9 @@ import xugrid as xu
 
 from .utils import get_bounds_vector
 
-from hydromt.model.components import SpatialDatasetsComponent
-from hydromt_sfincs import SfincsModel
-from hydromt_sfincs import utils
 
-class SfincsPlots(SpatialDatasetsComponent):
-    def __init__(
-        self,        
-        model: SfincsModel,
-    ):
-        self._filename: None #FIXME - depends on type of infiltration
-        self._data: None #FIXME - depends on type of infiltration
-        super().__init__(model=model, 
-        )   
+logger = logging.getLogger(__name__)
 
-# logger = logging.getLogger(__name__) #FIXME - needed?
 __all__ = ["plot_forcing", "plot_basemap"]
 
 geom_style = {
@@ -41,15 +29,16 @@ geom_style = {
     "region": dict(ls="--", linewidth=1, color="r"),
 }
 
-#%% Original HydroMT-SFINCS setup_ functions:
-    # plot_basemap 
-    # plot_forcing
-    # To add: geom_style?
+# %% Original HydroMT-SFINCS setup_ functions:
+# plot_basemap
+# plot_forcing
+# To add: geom_style?
 
-#%% core HydroMT-SFINCS functions:
-    # _initialize
-    # plot_forcing
-    # plot_basemap
+# %% core HydroMT-SFINCS functions:
+# _initialize
+# plot_forcing
+# plot_basemap
+
 
 def plot_forcing(forcing: Dict, **kwargs):
     """Plot model timeseries forcing.
@@ -408,5 +397,6 @@ def plot_basemap(
 
     return fig, ax
 
-#%% DDB GUI focused additional functions:
-    # FIXME - GUI overlay functions?
+
+# %% DDB GUI focused additional functions:
+# FIXME - GUI overlay functions?

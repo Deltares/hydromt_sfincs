@@ -6,21 +6,23 @@ from pathlib import Path
 from typing import Union
 
 from hydromt.model.components import ModelComponent
-from hydromt_sfincs import SfincsModel
+from hydromt.model import Model
 from hydromt_sfincs import utils
+
 
 class SfincsDrainageStructures(ModelComponent):
     def __init__(
-        self,        
-        model: SfincsModel,
+        self,
+        model: Model,
     ):
         self._filename: str = "sfincs.drain"
         self._data: gpd.GeoDataFrame = None
-        super().__init__(model=model, 
-        )    
+        super().__init__(
+            model=model,
+        )
 
     @property
-    def data(self) -> pd.GeoDataFrame:
+    def data(self) -> gpd.GeoDataFrame:
         """Drainage structures data.
 
         Return geopandas.GeoDataFrame
@@ -28,19 +30,20 @@ class SfincsDrainageStructures(ModelComponent):
         if self._data is None:
             self._initialize()
         return self._data
-    
-#%% Original HydroMT-SFINCS setup_ functions:
-    #   setup_drainage_structures
 
-#%% core HydroMT-SFINCS functions:
-    # _initialize
-    # read
-    # write
-    # set
-    # create
-    # add
-    # delete
-    # clear
 
-#%% DDB GUI focused additional functions:
-    # - yet unsupported in DDB-
+# %% Original HydroMT-SFINCS setup_ functions:
+#   setup_drainage_structures
+
+# %% core HydroMT-SFINCS functions:
+# _initialize
+# read
+# write
+# set
+# create
+# add
+# delete
+# clear
+
+# %% DDB GUI focused additional functions:
+# - yet unsupported in DDB-
