@@ -86,7 +86,8 @@ channels = ["conda-forge"]
 deps_not_in_conda = [
   "sphinx_design",
   "black[jupyter]",
-  "hydromt"  # temporary until hydromt v0.10.1 is released
+  "hydromt",  # temporary until hydromt v0.10.1 is released
+  "pyflwdir", # temporary until pyflwdir v0.5.10 is released on conda-forge
 ]
 
 [tool.pytest.ini_options]
