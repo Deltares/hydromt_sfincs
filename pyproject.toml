@@ -13,7 +13,7 @@ authors = [
 dependencies = [
     "affine",
     "geopandas>1.0",
-    "hydromt>=0.10, <0.11",
+    "hydromt@git+https://github.com/Deltares/hydromt.git@v0.10.1",
     "numba",
     "numpy",
     "pandas",
