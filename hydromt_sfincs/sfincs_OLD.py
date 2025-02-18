@@ -2,7 +2,6 @@
 SfincsModel class
 """
 
-#%% Import packages
 from __future__ import annotations
 
 import glob
@@ -26,213 +25,122 @@ from shapely.geometry import LineString, box
 from xugrid.core.wrap import UgridDataArray
 
 from hydromt_sfincs import DATADIR, plots, utils, workflows
-
-#%% Import model components
-from hydromt.model import Model
-
-# input types:
-from hydromt_sfincs.sfincs_input import SfincsInput
-
-# grid types:
 from hydromt_sfincs.quadtree import QuadtreeGrid
 from hydromt_sfincs.regulargrid import RegularGrid
+from hydromt_sfincs.sfincs_input import SfincsInput
 from hydromt_sfincs.subgrid import SubgridTableRegular
-
-# map types:
-# from hydromt_sfincs.mask import SfincsMask
-# from hydromt_sfincs.bathymetry import SfincsBathymetry
-from hydromt_sfincs.infiltration import SfincsInfiltration
-from hydromt_sfincs.manning_roughness import SfincsManningRoughness
-from hydromt_sfincs.initial_conditions import SfincsInitialConditions
-from hydromt_sfincs.storage_volume import SfincsStorageVolume
-
-# geoms types:
-from hydromt_sfincs.observation_points import SfincsObservationPoints
-from hydromt_sfincs.cross_sections import SfincsCrossSections
-from hydromt_sfincs.weirs import SfincsWeirs
-from hydromt_sfincs.thin_dams import SfincsThinDams
-from hydromt_sfincs.wave_makers import SfincsWaveMakers
-from hydromt_sfincs.drainage_structures import SfincsDrainageStructures
-
-# forcing types:
-from hydromt_sfincs.discharge_points import SfincsDischargePoints
-# from hydromt_sfincs.boundary_conditions import SfincsBoundaryConditions #/
-from hydromt_sfincs.waterlevel_conditions import SfincsWaterlevelConditions
-from hydromt_sfincs.snapwave_conditions import SfincsSnapWaveConditions
-# from hydromt_sfincs.meteo import SfincsMeteo
-from hydromt_sfincs.meteo import SfincsPrecipitation, SfincsPressure, SfincsWind
-
-# river types:
-from hydromt_sfincs.rivers import SfincsRivers
-
-# output / visualization types:
-from hydromt_sfincs.output import SfincsOutput
-from hydromt_sfincs.plots import SfincsPlots
 
 __all__ = ["SfincsModel"]
 
 logger = logging.getLogger(__name__)
 
-#%% SfincsModel class - in V1 style:
-class SfincsModel(Model):
-    def __init__(self):
-        super().__init__(...)
-        # Initialize model components:
 
-        # input types:
-        self.add_component("config", SfincsInput(self))
+class SfincsModel(GridModel):
+    # GLOBAL Static class variables that can be used by all methods within
+    # SfincsModel class. Typically list of variables (e.g. _MAPS) or
+    # dict with varname - filename pairs (e.g. thin_dams : thd)
+    _NAME = "sfincs"
+    _GEOMS = {
+        "observation_points": "obs",
+        "observation_lines": "crs",
+        "weirs": "weir",
+        "thin_dams": "thd",
+        "drainage_structures": "drn",
+    }  # parsed to dict of geopandas.GeoDataFrame
+    _FORCING_1D = {
+        # timeseries (can be multiple), locations tuple
+        "waterlevel": (["bzs"], "bnd"),
+        "waves": (["bzi"], "bnd"),
+        "discharge": (["dis"], "src"),
+        "precip": (["precip"], None),
+        "wind": (["wnd"], None),
+        "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),
+        "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
+    }
+    _FORCING_NET = {
+        # 2D forcing sfincs name, rename tuple
+        "waterlevel": ("netbndbzsbzi", {"zs": "bzs", "zi": "bzi"}),
+        "discharge": ("netsrcdis", {"discharge": "dis"}),
+        "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
+        "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
+        "wind_2d": (
+            "netamuamv",
+            {"eastward_wind": "wind10_u", "northward_wind": "wind10_v"},
+        ),
+    }
+    _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
+    _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
+    _STATES = ["rst", "ini"]
+    _FOLDERS = []
+    _CLI_ARGS = {"region": "setup_grid_from_region", "res": "setup_grid_from_region"}
+    _CONF = "sfincs.inp"
+    _DATADIR = DATADIR
+    _ATTRS = {
+        "dep": {"standard_name": "elevation", "unit": "m+ref"},
+        "msk": {"standard_name": "mask", "unit": "-"},
+        "scs": {
+            "standard_name": "potential maximum soil moisture retention",
+            "unit": "in",
+        },
+        "qinf": {"standard_name": "infiltration rate", "unit": "mm.hr-1"},
+        "manning": {"standard_name": "manning roughness", "unit": "s.m-1/3"},
+        "vol": {"standard_name": "storage volume", "unit": "m3"},
+        "bzs": {"standard_name": "waterlevel", "unit": "m+ref"},
+        "bzi": {"standard_name": "wave height", "unit": "m"},
+        "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
+        "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
+        "precip_2d": {"standard_name": "precipitation", "unit": "mm.hr-1"},
+        "press_2d": {"standard_name": "barometric pressure", "unit": "Pa"},
+        "wind10_u": {"standard_name": "eastward wind", "unit": "m/s"},
+        "wind10_v": {"standard_name": "northward wind", "unit": "m/s"},
+        "wnd": {"standard_name": "wind", "unit": "m/s"},
+    }
 
-        # grid types:
-        self.add_component("grid", RegularGrid(self))
-        # self.add_component("mesh", SfincsMesh(self))
-        self.add_component("subgrid", SubgridTableRegular(self))
-        # self.add_component("subgrid", SubgridTableRegular(self))
+    def __init__(
+        self,
+        root: str = None,
+        mode: str = "w",
+        config_fn: str = "sfincs.inp",
+        write_gis: bool = True,
+        data_libs: Union[List[str], str] = None,
+        logger=logger,
+    ):
+        """
+        The SFINCS model class (SfincsModel) contains methods to read, write, setup and edit
+        `SFINCS <https://sfincs.readthedocs.io/en/latest/>`_ models.
 
-        # map types:
-        self.add_component("mask", SfincsMask(self))
-        self.add_component("bathymetry", SfincsBathymetry(self))
-        self.add_component("infiltration", SfincsInfiltration(self))
-        self.add_component("manning_roughness", SfincsManningRoughness(self))
-        self.add_component("initial_conditions", SfincsInitialConditions(self))
-        self.add_component("storage_volume", SfincsStorageVolume(self))
+        Parameters
+        ----------
+        root: str, Path, optional
+            Path to model folder
+        mode: {'w', 'r+', 'r'}
+            Open model in write, append or reading mode, by default 'w'
+        config_fn: str, Path, optional
+            Filename of model config file, by default "sfincs.inp"
+        write_gis: bool
+            Write model files additionally to geotiff and geojson, by default True
+        data_libs: List, str
+            List of data catalog yaml files, by default None
 
-        # geoms types:
-        self.add_component("observation_points", SfincsObservationPoints(self))
-        self.add_component("cross_sections", SfincsCrossSections(self))
-        self.add_component("weirs", SfincsWeirs(self))
-        self.add_component("thin_dams", SfincsThinDams(self))
-        self.add_component("wave_makers", SfincsWaveMakers(self))
-        self.add_component("drainage_structures", SfincsDrainageStructures(self))
+        """
+        # model folders
+        self._write_gis = write_gis
+        if write_gis and "gis" not in self._FOLDERS:
+            self._FOLDERS.append("gis")
 
-        # forcing types:
-        self.add_component("discharge_points", SfincsDischargePoints(self))
-        self.add_component("waterlevel_conditions", SfincsWaterlevelConditions(self))
-        self.add_component("snapwave_conditions", SfincsSnapWaveConditions(self))
-        # self.add_component("meteo", SfincsMeteo(self))
-        self.add_component("precipitation", SfincsPrecipitation(self))
-        self.add_component("pressure", SfincsPressure(self))
-        self.add_component("wind", SfincsWind(self))
-        # self.add_component("forcing", SfincsForcing(self))
-        
-        # river types:
-        self.add_component("rivers", SfincsRivers(self))
-
-        # output / visualization types:
-        self.add_component("output", SfincsOutput(self))
-        self.add_component("plots", SfincsPlots(self))
+        super().__init__(
+            root=root,
+            mode=mode,
+            config_fn=config_fn,
+            data_libs=data_libs,
+            logger=logger,
+        )
 
         # placeholder grid classes
         self.grid_type = None
         self.reggrid = None
         self.quadtree = None
-        self.subgrid = xr.Dataset()        
-
-# class SfincsModel(GridModel):
-#     # GLOBAL Static class variables that can be used by all methods within
-#     # SfincsModel class. Typically list of variables (e.g. _MAPS) or
-#     # dict with varname - filename pairs (e.g. thin_dams : thd)
-#     _NAME = "sfincs"
-#     _GEOMS = {
-#         "observation_points": "obs",
-#         "observation_lines": "crs",
-#         "weirs": "weir",
-#         "thin_dams": "thd",
-#         "drainage_structures": "drn",
-#     }  # parsed to dict of geopandas.GeoDataFrame
-#     _FORCING_1D = {
-#         # timeseries (can be multiple), locations tuple
-#         "waterlevel": (["bzs"], "bnd"),
-#         "waves": (["bzi"], "bnd"),
-#         "discharge": (["dis"], "src"),
-#         "precip": (["precip"], None),
-#         "wind": (["wnd"], None),
-#         "wavespectra": (["bhs", "btp", "bwd", "bds"], "bwv"),
-#         "wavemaker": (["whi", "wti", "wst"], "wvp"),  # TODO check names and test
-#     }
-#     _FORCING_NET = {
-#         # 2D forcing sfincs name, rename tuple
-#         "waterlevel": ("netbndbzsbzi", {"zs": "bzs", "zi": "bzi"}),
-#         "discharge": ("netsrcdis", {"discharge": "dis"}),
-#         "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
-#         "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
-#         "wind_2d": (
-#             "netamuamv",
-#             {"eastward_wind": "wind10_u", "northward_wind": "wind10_v"},
-#         ),
-#     }
-#     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
-#     _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
-#     _STATES = ["rst", "ini"]
-#     _FOLDERS = []
-#     _CLI_ARGS = {"region": "setup_grid_from_region", "res": "setup_grid_from_region"}
-#     _CONF = "sfincs.inp"
-#     _DATADIR = DATADIR
-#     _ATTRS = {
-#         "dep": {"standard_name": "elevation", "unit": "m+ref"},
-#         "msk": {"standard_name": "mask", "unit": "-"},
-#         "scs": {
-#             "standard_name": "potential maximum soil moisture retention",
-#             "unit": "in",
-#         },
-#         "qinf": {"standard_name": "infiltration rate", "unit": "mm.hr-1"},
-#         "manning": {"standard_name": "manning roughness", "unit": "s.m-1/3"},
-#         "vol": {"standard_name": "storage volume", "unit": "m3"},
-#         "bzs": {"standard_name": "waterlevel", "unit": "m+ref"},
-#         "bzi": {"standard_name": "wave height", "unit": "m"},
-#         "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
-#         "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
-#         "precip_2d": {"standard_name": "precipitation", "unit": "mm.hr-1"},
-#         "press_2d": {"standard_name": "barometric pressure", "unit": "Pa"},
-#         "wind10_u": {"standard_name": "eastward wind", "unit": "m/s"},
-#         "wind10_v": {"standard_name": "northward wind", "unit": "m/s"},
-#         "wnd": {"standard_name": "wind", "unit": "m/s"},
-#     }
-
-    # def __init__(
-    #     self,
-    #     root: str = None,
-    #     mode: str = "w",
-    #     config_fn: str = "sfincs.inp",
-    #     write_gis: bool = True,
-    #     data_libs: Union[List[str], str] = None,
-    #     logger=logger,
-    # ):
-    #     """
-    #     The SFINCS model class (SfincsModel) contains methods to read, write, setup and edit
-    #     `SFINCS <https://sfincs.readthedocs.io/en/latest/>`_ models.
-
-    #     Parameters
-    #     ----------
-    #     root: str, Path, optional
-    #         Path to model folder
-    #     mode: {'w', 'r+', 'r'}
-    #         Open model in write, append or reading mode, by default 'w'
-    #     config_fn: str, Path, optional
-    #         Filename of model config file, by default "sfincs.inp"
-    #     write_gis: bool
-    #         Write model files additionally to geotiff and geojson, by default True
-    #     data_libs: List, str
-    #         List of data catalog yaml files, by default None
-
-    #     """
-    #     # model folders
-    #     self._write_gis = write_gis
-    #     if write_gis and "gis" not in self._FOLDERS:
-    #         self._FOLDERS.append("gis")
-
-    #     super().__init__(
-    #         root=root,
-    #         mode=mode,
-    #         config_fn=config_fn,
-    #         data_libs=data_libs,
-    #         logger=logger,
-    #     )
-
-    #     # placeholder grid classes
-    #     self.grid_type = None
-    #     self.reggrid = None
-    #     self.quadtree = None
-    #     self.subgrid = xr.Dataset()
+        self.subgrid = xr.Dataset()
 
     def __del__(self):
         """Close the model and remove the logger file handler."""
@@ -299,16 +207,6 @@ class SfincsModel(Model):
             return self.reggrid.crs
         elif self.grid_type == "quadtree":
             return self.quadtree.data.grid.crs
-
-#%% core HydroMT-SFINCS functions:
-    # _initialize
-    # read
-    # write
-    # set
-    # create
-    # add
-    # delete
-    # clear
 
     def set_crs(self, crs: Any) -> None:
         """Sets the model crs"""
@@ -1574,13 +1472,38 @@ class SfincsModel(Model):
         merge: bool = True,
         **kwargs,
     ):
-        """        
-        Replaced by class function called:
+        """Setup model observation point locations.
+
+        Adds model layers:
+
+        * **obs** geom: observation point locations
+
+        Parameters
         ---------
-        SfincsObservationPoints.create()
+        locations: str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for observation point locations.
+        merge: bool, optional
+            If True, merge the new observation points with the existing ones. By default True.
         """
-        SfincsModel.SfincsObservationPoints.create(
-            self, locations, merge,**kwargs)
+        name = self._GEOMS["observation_points"]
+
+        # FIXME ensure the catalog is loaded before adding any new entries
+        self.data_catalog.sources
+
+        gdf_obs = self.data_catalog.get_geodataframe(
+            locations, geom=self.region, assert_gtype="Point", **kwargs
+        ).to_crs(self.crs)
+
+        if not gdf_obs.geometry.type.isin(["Point"]).all():
+            raise ValueError("Observation points must be of type Point.")
+
+        if merge and name in self.geoms:
+            gdf0 = self._geoms.pop(name)
+            gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
+            self.logger.info("Adding new observation points to existing ones.")
+
+        self.set_geoms(gdf_obs, name)
+        self.set_config(f"{name}file", f"sfincs.{name}")
 
     def setup_observation_lines(
         self,
@@ -1588,13 +1511,42 @@ class SfincsModel(Model):
         merge: bool = True,
         **kwargs,
     ):
-        """
-        Replaced by class function called:
+        """Setup model observation lines (cross-sections) to monitor discharges.
+
+        Adds model layers:
+
+        * **crs** geom: observation lines (cross-sections)
+
+        Parameters
         ---------
-        SfincsCrossSections.create()
+        locations: str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for observation lines (cross-sections).
+        merge: bool, optional
+            If True, merge the new observation lines with the existing ones. By default True.
         """
-        SfincsModel.SfincsCrossSections.create(
-            self, locations, merge,**kwargs)
+        name = self._GEOMS["observation_lines"]
+
+        # FIXME ensure the catalog is loaded before adding any new entries
+        self.data_catalog.sources
+
+        # FIXME assert_gtype="LineString" does not work for MultiLineString and default seems to be Point (??)
+        gdf_obs = self.data_catalog.get_geodataframe(
+            locations, geom=self.region, assert_gtype=None, **kwargs
+        ).to_crs(self.crs)
+
+        # make sure MultiLineString are converted to LineString
+        gdf_obs = gdf_obs.explode(index_parts=True).reset_index(drop=True)
+
+        if not gdf_obs.geometry.type.isin(["LineString"]).all():
+            raise ValueError("Observation lines must be of type LineString.")
+
+        if merge and name in self.geoms:
+            gdf0 = self._geoms.pop(name)
+            gdf_obs = gpd.GeoDataFrame(pd.concat([gdf_obs, gdf0], ignore_index=True))
+            self.logger.info("Adding new observation lines to existing ones.")
+
+        self.set_geoms(gdf_obs, name)
+        self.set_config(f"{name}file", f"sfincs.{name}")
 
     def setup_structures(
         self,
@@ -1606,17 +1558,96 @@ class SfincsModel(Model):
         merge: bool = True,
         **kwargs,
     ):
+        """Setup thin dam or weir structures.
+
+        Adds model layer (depending on `stype`):
+
+        * **thd** geom: thin dam
+        * **weir** geom: weir / levee
+
+        Parameters
+        ----------
+        structures : str, Path
+            Path, data source name, or geopandas object to structure line geometry file.
+            The "name" (for thd and weir), "z" and "par1" (for weir only) variables are optional.
+            For weirs: `dz` must be provided if gdf has no "z" column or ZLineString;
+            "par1" defaults to 0.6 if gdf has no "par1" column.
+        stype : {'thd', 'weir'}
+            Structure type.
+        dep : str, Path, xr.DataArray, optional
+            Path, data source name, or xarray raster object ('elevtn') describing the depth in an
+            alternative resolution which is used for sampling the weir.
+        buffer : float, optional
+            If provided, describes the distance from the centerline to the foot of the structure.
+            This distance is supplied to the raster.sample as the window (wdw).
+        merge : bool, optional
+            If True, merge with existing'stype' structures, by default True.
+        dz: float, optional
+            If provided, for weir structures the z value is calculated from
+            the model elevation (dep) plus dz.
         """
-        Replaced by class functions called:
-        ---------
-        SfincsThinDams.create()   
-        SfincsWeirs.create()            
-        """
-        SfincsModel.SfincsThinDams.create(
-            self, structures, merge,**kwargs)
-        
-        SfincsModel.SfincsWeirs.create(
-            self, structures, dep, buffer, dz, merge,**kwargs)                
+
+        # read, clip and reproject
+        gdf_structures = self.data_catalog.get_geodataframe(
+            structures, geom=self.region, **kwargs
+        ).to_crs(self.crs)
+
+        cols = {
+            "thd": ["name", "geometry"],
+            "weir": ["name", "z", "par1", "geometry"],
+        }
+        assert stype in cols, f"stype must be one of {list(cols.keys())}"
+        gdf = gdf_structures[
+            [c for c in cols[stype] if c in gdf_structures.columns]
+        ]  # keep relevant cols
+
+        structs = utils.gdf2linestring(gdf)  # check if it parsed correct
+        # sample zb values from dep file and set z = zb + dz
+        if stype == "weir" and (dep is not None or dz is not None):
+            if dep is None or dep == "dep":
+                assert "dep" in self.grid, "dep layer not found"
+                elv = self.grid["dep"]
+            else:
+                elv = self.data_catalog.get_rasterdataset(
+                    dep, geom=self.region, buffer=5, variables=["elevtn"]
+                )
+
+            # calculate window size from buffer
+            if buffer is not None:
+                res = abs(elv.raster.res[0])
+                if elv.raster.crs.is_geographic:
+                    res = res * 111111.0
+                window_size = int(np.ceil(buffer / res))
+            else:
+                window_size = 0
+            self.logger.debug(f"Sampling elevation with window size {window_size}")
+
+            structs_out = []
+            for s in structs:
+                pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
+                zb = elv.raster.sample(
+                    gpd.GeoDataFrame(geometry=pnts, crs=self.crs), wdw=window_size
+                )
+                if zb.ndim > 1:
+                    zb = zb.max(axis=1)
+
+                s["z"] = zb.values
+                if dz is not None:
+                    s["z"] += float(dz)
+                structs_out.append(s)
+            gdf = utils.linestring2gdf(structs_out, crs=self.crs)
+        # Else function if you define elevation of weir
+        elif stype == "weir" and np.any(["z" not in s for s in structs]):
+            raise ValueError("Weir structure requires z values.")
+        # combine with existing structures if present
+        if merge and stype in self.geoms:
+            gdf0 = self._geoms.pop(stype)
+            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
+            self.logger.info(f"Adding {stype} structures to existing structures.")
+
+        # set structures
+        self.set_geoms(gdf, stype)
+        self.set_config(f"{stype}file", f"sfincs.{stype}")
 
     def setup_drainage_structures(
         self,
@@ -2300,10 +2331,6 @@ class SfincsModel(Model):
             ).fillna(0)
 
             # only resample in time if freq < 1H, else keep input values
-            
-            # FIXME - TL: make this user optional!!! 
-            # TODO - and at least with clear warning
-            
             if da_to_timedelta(precip_out) < pd.to_timedelta("1H"):
                 precip_out = hydromt.workflows.resample_time(
                     precip_out,
@@ -2405,10 +2432,6 @@ class SfincsModel(Model):
         ).fillna(fill_value)
 
         # only resample in time if freq < 1H, else keep input values
-
-        # FIXME - TL: make this user optional!!! 
-        # TODO - and at least with clear warning
-                
         if da_to_timedelta(press_out) < pd.to_timedelta("1H"):
             press_out = hydromt.workflows.resample_time(
                 press_out,
@@ -2464,9 +2487,6 @@ class SfincsModel(Model):
         ).fillna(0)
 
         # only resample in time if freq < 1H, else keep input values
-        # FIXME - TL: make this user optional!!! 
-        # TODO - and at least with clear warning        
-
         if da_to_timedelta(wind) < pd.to_timedelta("1H"):
             wind_out = xr.Dataset()
             # resample in time

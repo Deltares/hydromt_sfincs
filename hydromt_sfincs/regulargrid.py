@@ -15,26 +15,48 @@ from pyproj import CRS, Transformer
 from scipy import ndimage
 from shapely.geometry import LineString
 
+from hydromt.model.components import GridComponent
+from hydromt_sfincs import SfincsModel, workflows
 from .subgrid import SubgridTableRegular
 from .workflows.tiling import int2png, tile_window
 
 logger = logging.getLogger(__name__)
 
-
-class RegularGrid:
-    def __init__(self, x0, y0, dx, dy, nmax, mmax, epsg=None, rotation=0):
-        self.x0 = x0
-        self.y0 = y0
-        self.dx = dx
-        self.dy = dy
-        self.nmax = nmax  # height
-        self.mmax = mmax  # width
-        self.rotation = rotation
-        self.crs = None
-        if epsg is not None:
-            self.crs = CRS.from_user_input(epsg)
+class RegularGrid(GridComponent):
+    def __init__(
+        self,        
+        model: SfincsModel,
+    ):
+        self._filename: str = "sfincs_grid.nc"
+        self._data: xr.DataArray = None #FIXME - correct?
+        self.x0 = float,
+        self.y0 = float,
+        self.dx = float,
+        self.dy = float,
+        self.nmax = float,  # height
+        self.mmax = float,  # width
+        self.rotation = float,
+        self.crs = None,
+        self.epsg = None,
+        if self.epsg is not None:
+            self.crs = CRS.from_user_input(self.epsg)
         self.subgrid = SubgridTableRegular()
-        # self.data = xr.Dataset()
+        super().__init__(model=model, 
+        )   
+# class RegularGrid:
+#     def __init__(self, x0, y0, dx, dy, nmax, mmax, epsg=None, rotation=0):
+#         self.x0 = x0
+#         self.y0 = y0
+#         self.dx = dx
+#         self.dy = dy
+#         self.nmax = nmax  # height
+#         self.mmax = mmax  # width
+#         self.rotation = rotation
+#         self.crs = None
+#         if epsg is not None:
+#             self.crs = CRS.from_user_input(epsg)
+#         self.subgrid = SubgridTableRegular()
+#         # self.data = xr.Dataset()
 
     @property
     def transform(self):
@@ -101,36 +123,160 @@ class RegularGrid:
         da_mask.raster.set_crs(self.crs)
         return da_mask
 
-    def ind(self, mask: np.ndarray) -> np.ndarray:
-        """Return indices of active cells in mask."""
-        assert mask.shape == (self.nmax, self.mmax)
-        ind = np.where(mask.ravel(order="F"))[0]
-        return ind
+#%%   Original HydroMT-SFINCS setup_ functions:
+    # setup_grid
+    # setup_grid_from_region
+    #
+    # setup_dep
+    #
+    # setup_mask_active
+    # setup_mask_bounds
 
-    def write_ind(
+#%% core HydroMT-SFINCS functions:
+    # _initialize
+    #
+    # GRID:
+    #   read_grid
+    #   write_grid
+    #   create
+    #       - create_grid (model.grid.create?)
+    #       - create_grid_from_region (model.grid.create_from_region)
+    #
+    # DEP:
+    #   read_dep
+    #   write_dep
+    #   create_dep
+    #
+    # MASK:
+    #   read_msk
+    #   write_msk
+    #   create_msk
+    #   create_msk_bounds
+    #
+    # supporting HydroMT-SFINCS functions:
+    # - read_ind
+    # - read_map    
+    # - write_ind
+    # - write_map        
+    # - ind
+    # - to_vector_lines    
+
+#%% GRID:
+    def read_grid(
         self,
-        mask: np.ndarray,
-        ind_fn: Union[str, Path] = "sfincs.ind",
-    ) -> None:
-        """Write indices of active cells in mask to binary file."""
-        assert mask.shape == (self.nmax, self.mmax)
-        # Add 1 because indices in SFINCS start with 1, not 0
-        ind = self.ind(mask)
-        indices_ = np.array(np.hstack([np.array(len(ind)), ind + 1]), dtype="u4")
-        indices_.tofile(ind_fn)
+        ):
+        # uses read_ind()
 
-    def read_ind(
+        return
+
+    def write_grid(
         self,
-        ind_fn: Union[str, Path] = "sfincs.ind",
-    ) -> np.ndarray:
-        """Read indices of active cells in mask from binary file."""
-        _ind = np.fromfile(ind_fn, dtype="u4")
-        ind = _ind[1:] - 1  # convert to zero based index
-        assert _ind[0] == ind.size
+        ):
+        # uses write_ind()
 
-        return ind
+        return
+    
+    def create_grid(
+        self,
+        ):
+
+        return
+    
+    def create_grid_from_region(
+        self,
+        ):
+
+
+        return    
+#%% DEP:
+    def read_dep(
+        self,
+        ):        
+        # uses read_map()
+
+        return
+    
+    def write_dep(
+        self,
+        ):            
+        # uses write_map()
+
+        return
+    
+    def create_dep(
+        self,
+        datasets_dep: List[dict],
+        buffer_cells: int = 0,  # not in list
+        interp_method: str = "linear",  # used for buffer cells only
+    ):
+        """Interpolate topobathy (dep) data to the model grid.
+
+        Adds model grid layers:
+
+        * **dep**: combined elevation/bathymetry [m+ref]
+
+        Parameters
+        ----------
+        datasets_dep : List[dict]
+            List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
+            [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
+            For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
+        buffer_cells : int, optional
+            Number of cells between datasets to ensure smooth transition of bed levels, by default 0
+        interp_method : str, optional
+            Interpolation method used to fill the buffer cells , by default "linear"
+        """
+
+        # retrieve model resolution to determine zoom level for xyz-datasets
+        if not self.mask.raster.crs.is_geographic:
+            res = np.abs(self.mask.raster.res[0])
+        else:
+            res = np.abs(self.mask.raster.res[0]) * 111111.0
+
+        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+
+        da_dep = workflows.merge_multi_dataarrays(
+            da_list=datasets_dep,
+            da_like=self.mask,
+            buffer_cells=buffer_cells,
+            interp_method=interp_method,
+            logger=self.logger,
+        )
+
+        # check if no nan data is present in the bed levels
+        nmissing = int(np.sum(np.isnan(da_dep.values)))
+        if nmissing > 0:
+            self.logger.warning(f"Interpolate elevation at {nmissing} cells")
+            da_dep = da_dep.raster.interpolate_na(
+                method="rio_idw", extrapolate=True
+            )
+
+        self.set_grid(da_dep, name="dep")
+        # FIXME this shouldn't be necessary, since da_dep should already have a crs
+        if self.crs is not None and self.grid.raster.crs is None:
+            self.grid.set_crs(self.crs)
+
+        if "depfile" not in self.config:
+            self.config.update({"depfile": "sfincs.dep"})
+
+#%% MASK:
+
+    def read_msk(
+        self,
+        ):        
+        # uses read_map()
+
+        return
+    
+    def write_msk(
+        self,
+        ):         
+        # uses write_map()
+
+        return
 
     def create_mask_active(
+    # def create_mask(
         self,
         da_mask: xr.DataArray = None,
         da_dep: xr.DataArray = None,
@@ -378,18 +524,33 @@ class RegularGrid:
 
         return da_mask
 
-    def write_map(
+
+#%% supporting HydroMT-SFINCS functions:
+    # other:
+    # - ind
+    # - read_ind
+    # - read_map
+    # - write_ind
+    # - write_map
+    # - to_vector_lines
+
+    def ind(self, mask: np.ndarray) -> np.ndarray:
+        """Return indices of active cells in mask."""
+        assert mask.shape == (self.nmax, self.mmax)
+        ind = np.where(mask.ravel(order="F"))[0]
+        return ind
+
+    def read_ind(
         self,
-        map_fn: Union[str, Path],
-        data: np.ndarray,
-        mask: np.ndarray,
-        dtype: Union[str, np.dtype] = "f4",
-    ) -> None:
-        """Write one of the grid variables of the SFINCS model map to a binary file."""
+        ind_fn: Union[str, Path] = "sfincs.ind",
+    ) -> np.ndarray:
+        """Read indices of active cells in mask from binary file."""
+        _ind = np.fromfile(ind_fn, dtype="u4")
+        ind = _ind[1:] - 1  # convert to zero based index
+        assert _ind[0] == ind.size
 
-        data_out = np.asarray(data.transpose()[mask.transpose() > 0], dtype=dtype)
-        data_out.tofile(map_fn)
-
+        return ind
+    
     def read_map(
         self,
         map_fn: Union[str, Path],
@@ -413,6 +574,31 @@ class RegularGrid:
         )
         return da
 
+    def write_ind(
+        self,
+        mask: np.ndarray,
+        ind_fn: Union[str, Path] = "sfincs.ind",
+    ) -> None:
+        """Write indices of active cells in mask to binary file."""
+        assert mask.shape == (self.nmax, self.mmax)
+        # Add 1 because indices in SFINCS start with 1, not 0
+        ind = self.ind(mask)
+        indices_ = np.array(np.hstack([np.array(len(ind)), ind + 1]), dtype="u4")
+        indices_.tofile(ind_fn)
+
+    def write_map(
+        self,
+        map_fn: Union[str, Path],
+        data: np.ndarray,
+        mask: np.ndarray,
+        dtype: Union[str, np.dtype] = "f4",
+    ) -> None:
+        """Write one of the grid variables of the SFINCS model map to a binary file."""
+
+        data_out = np.asarray(data.transpose()[mask.transpose() > 0], dtype=dtype)
+        data_out.tofile(map_fn)
+
+
     def to_vector_lines(self):
         """Return a geopandas GeoDataFrame with a geometry for each grid line."""
 
@@ -434,6 +620,15 @@ class RegularGrid:
         grid_lines = vertical_lines + horizontal_lines
 
         return gpd.GeoDataFrame(geometry=grid_lines, crs=self.crs)
+
+#%% DDB GUI focused additional functions:
+    # create_index_tiles > FIXME - TL: still needed?
+    # map_overlay
+    # snap_to_grid
+    # _get_datashader_dataframe
+    
+    # TODO - missing as in cht_sfincs:
+    # Many...
 
     def create_index_tiles(
         self,
