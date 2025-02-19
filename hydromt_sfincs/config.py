@@ -17,13 +17,17 @@ class SfincsInputVariables(BaseSettings):
     #
     # Settings
     #
-    mmax: int = Field(10, ge=1, description="Number of grid cells in x-direction")
-    nmax: int = Field(10, ge=1, description="Number of grid cells in y-direction")
-    dx: float = Field(10.0, gt=0, description="Grid size in x-direction")
-    dy: float = Field(10.0, gt=0, description="Grid size in y-direction")
-    x0: float = Field(0.0, description="Origin of the grid in the x-direction")
-    y0: float = Field(0.0, description="Origin of the grid in the y-direction")
-    rotation: float = Field(
+    mmax: int | None = Field(
+        10, ge=1, description="Number of grid cells in x-direction"
+    )
+    nmax: int | None = Field(
+        10, ge=1, description="Number of grid cells in y-direction"
+    )
+    dx: float | None = Field(10.0, gt=0, description="Grid size in x-direction")
+    dy: float | None = Field(10.0, gt=0, description="Grid size in y-direction")
+    x0: float | None = Field(0.0, description="Origin of the grid in the x-direction")
+    y0: float | None = Field(0.0, description="Origin of the grid in the y-direction")
+    rotation: float | None = Field(
         0.0,
         gt=-360,
         lt=360,
@@ -43,22 +47,22 @@ class SfincsInputVariables(BaseSettings):
     )
     tspinup: float = Field(
         0.0,
-        ge=0,
+        ge=0.0,
         description="Duration of spinup period for boundary conditions after tstart (seconds)",
     )
     t0out: datetime | None = Field(None, description="Output start time (datetime)")
     t1out: datetime | None = Field(None, description="Output stop time (datetime)")
     dtout: float = Field(
-        3600.0, ge=0, description="Spatial map output interval (seconds)"
+        3600.0, ge=0.0, description="Spatial map output interval (seconds)"
     )
     dtmaxout: float = Field(
-        86400, ge=0, description="Maximum map output interval (seconds)"
-    )  # FIXME - TL: why was 'int'?
+        86400.0, ge=0.0, description="Maximum map output interval (seconds)"
+    )  # FIXME - TL: why was 'int' before?
     dtrstout: float = Field(
-        0.0, ge=0, description="Restart file output interval (seconds)"
+        None, ge=0.0, description="Restart file output interval (seconds)"
     )
     trstout: float = Field(
-        -999.0, description="Restart file output after specific time (seconds)"
+        None, description="Restart file output after specific time (seconds)"
     )
     dthisout: float = Field(600.0, description="Timeseries output interval (seconds)")
     dtwave: float | None = Field(
@@ -80,12 +84,12 @@ class SfincsInputVariables(BaseSettings):
         description="Numerical smoothing factor in momentum equation (-)",
     )
     hmin_cfl: float = Field(
-        0.1,
+        None,
         gt=0.0,
         description="Minimum water depth for cfl condition in max timestep determination (meters)",
     )
     hmin_uv: float = Field(
-        0.1,
+        None,
         gt=0.0,
         description="Minimum water depth for uv velocity determination in momentum equation (meters)",
     )
@@ -124,7 +128,7 @@ class SfincsInputVariables(BaseSettings):
         description="Infiltration rate, spatially uniform and constant in time (mm/hr)",
     )
     dtmax: float = Field(
-        60.0, gt=0.0, description="Maximum allowed internal timestep (seconds)"
+        None, gt=0.0, description="Maximum allowed internal timestep (seconds)"
     )
     huthresh: float = Field(
         0.01, gt=0.0, lt=1.0, description="Threshold water depth (meters)"
@@ -146,7 +150,10 @@ class SfincsInputVariables(BaseSettings):
     )
     nc_deflate_level: int | None = Field(None, description="Netcdf deflate level (-))")
     bndtype: int | None = Field(
-        None, ge=1, ls=1, description="Boundary type, only bndtype=1 is supported (-)"
+        None,
+        ge=1,
+        ls=1,
+        description="Boundary type, only bndtype=1 is supported currently (-)",
     )
     advection: int = Field(
         1, ge=0, le=1, description="Enable advection (1: yes, 0: no)"
@@ -219,14 +226,15 @@ class SfincsInputVariables(BaseSettings):
     )
     # radstr > unclear if used
     crsgeo: int | None = Field(
-        None, description="Geographical coordinate system flag (1: yes, 0: no)"
+        None,
+        description="Geographical coordinate system flag (1: yes, 0: no)",
     )
     coriolis: int | None = Field(
         None,
         description="Ability to turn off Coriolis term, only if crsgeo = True (1: on, 0: off)",
     )
     amprblock: int = Field(
-        1,
+        None,
         ge=0,
         le=1,
         description="Use data in ampr file as block rather than linear interpolation (1: yes, 0: no)",
@@ -261,7 +269,6 @@ class SfincsInputVariables(BaseSettings):
         le=1,
         description="Option to also apply spinup to the meteo forcing (1: on, 0: off)",
     )
-    # TODO:
     waveage: float | None = Field(
         None,
         description="Determine Cd with wave age based on LGX method (-)",
@@ -516,7 +523,7 @@ class SfincsInputVariables(BaseSettings):
         description="Option to write cumulative precipitation output to netcdf map output (1: yes, 0: no)",
     )
     storetwet: int = Field(
-        None,
+        0,
         ge=0,
         le=1,
         description="Option to write 'twet' time wet output to netcdf map output (1: yes, 0: no)",
