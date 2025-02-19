@@ -177,13 +177,15 @@ class SfincsInput(ModelComponent):
             if len(line) != 2:
                 continue
             name, val = line
-            if name in ["tref"]:
+            if name in ["tref", "tstart", "tstop"]:
                 try:
                     val = datetime.strptime(val, "%Y%m%d %H%M%S")
                 except ValueError:
-                    raise ValueError(f'"{name} = {val}" not understood.')
+                    ValueError(f'"{name} = {val}" not understood.')
             elif name in ["cdwnd", "cdval"]:
                 val = [float(x) for x in val.split()]
+            elif name == "utmzone":
+                val = str(val)
             else:
                 try:
                     val = literal_eval(val)
@@ -204,13 +206,19 @@ class SfincsInput(ModelComponent):
             for key, value in self.data.dict(exclude_unset=True).items():
                 if value is None:
                     continue
-                if isinstance(value, list):
-                    valstr = " ".join(map(str, value))
-                    fid.write(f"{key.ljust(20)} = {valstr}\n")
-                elif isinstance(value, datetime):
-                    fid.write(f"{key.ljust(20)} = {value.strftime('%Y%m%d %H%M%S')}\n")
+                if isinstance(value, float):  # remove insignificant traling zeros
+                    string = f"{key.ljust(20)} = {value}\n"
+                elif isinstance(value, int):
+                    string = f"{key.ljust(20)} = {value}\n"
+                elif isinstance(value, list):
+                    valstr = " ".join([str(v) for v in value])
+                    string = f"{key.ljust(20)} = {valstr}\n"
+                elif hasattr(value, "strftime"):
+                    dstr = value.strftime("%Y%m%d %H%M%S")
+                    string = f"{key.ljust(20)} = {dstr}\n"
                 else:
-                    fid.write(f"{key.ljust(20)} = {value}\n")
+                    string = f"{key.ljust(20)} = {value}\n"
+                fid.write(string)
 
     def get(self, key: str, fallback: Any = None) -> Any:
         """Get a value with validation check."""
