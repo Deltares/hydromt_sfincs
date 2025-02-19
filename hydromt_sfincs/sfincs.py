@@ -79,8 +79,43 @@ logger = logging.getLogger(__name__)
 class SfincsModel(Model):
     """SFINCS model class."""
 
-    def __init__(self):
-        super().__init__(...)
+    _FOLDERS = []
+
+    def __init__(
+        self,
+        root: str = None,
+        mode: str = "w",
+        write_gis: bool = True,
+        data_libs: Union[List[str], str] = None,
+    ):
+        """
+        The SFINCS model class (SfincsModel) contains methods to read, write, setup and edit
+        `SFINCS <https://sfincs.readthedocs.io/en/latest/>`_ models.
+
+        Parameters
+        ----------
+        root: str, Path, optional
+            Path to model folder
+        mode: {'w', 'r+', 'r'}
+            Open model in write, append or reading mode, by default 'w'
+
+        write_gis: bool
+            Write model files additionally to geotiff and geojson, by default True
+        data_libs: List, str
+            List of data catalog yaml files, by default None
+
+        """
+
+        # model folders
+        self._write_gis = write_gis
+        if write_gis and "gis" not in self._FOLDERS:
+            self._FOLDERS.append("gis")
+
+        super().__init__(
+            root=root,
+            mode=mode,
+            data_libs=data_libs,
+        )
         # Initialize model components:
 
         self.grid_type = None
@@ -123,15 +158,15 @@ class SfincsModel(Model):
         # self.add_component("output", SfincsOutput(self))
         # self.add_component("plots", SfincsPlots(self))
 
-    def __del__(self):
-        """Close the model and remove the logger file handler."""
-        for handler in self.logger.handlers:
-            if (
-                isinstance(handler, logging.FileHandler)
-                and "hydromt.log" in handler.baseFilename
-            ):
-                handler.close()
-                self.logger.removeHandler(handler)
+    # def __del__(self):
+    #     """Close the model and remove the logger file handler."""
+    #     for handler in self.logger.handlers:
+    #         if (
+    #             isinstance(handler, logging.FileHandler)
+    #             and "hydromt.log" in handler.baseFilename
+    #         ):
+    #             handler.close()
+    #             self.logger.removeHandler(handler)
 
     @property
     def grid(self) -> RegularGrid | QuadtreeGrid:
@@ -206,17 +241,17 @@ class SfincsModel(Model):
             self.quadtree.data.grid.set_crs(CRS.from_user_input(crs))
 
     ## I/O
-    def read(self, config_fn: str = None) -> None:
+    def read(self, filename: str = None) -> None:
         """Read model components from config file and initialize model grid.
 
         Parameters
         ----------
-        config_fn : str, optional
+        filename : str, optional
             Path to config file, by default None
         """
-        if config_fn is None:
-            config_fn = join(self.root, "sfincs.inp")
-        self.config.read(config_fn=config_fn)
+        if filename is None:
+            filename = join(self.root.path, "sfincs.inp")
+        self.config.read(filename=filename)
 
     def write(self):
         self.config.write()

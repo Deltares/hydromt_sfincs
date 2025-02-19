@@ -17,9 +17,9 @@ from pyproj import CRS, Transformer
 from scipy import ndimage
 from shapely.geometry import LineString
 
-import hydromt
 from hydromt.model import Model
 from hydromt.model.components import GridComponent
+from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs import workflows
 from hydromt_sfincs.subgrid import SubgridTableRegular
@@ -177,17 +177,125 @@ class RegularGrid(GridComponent):
         #     self.set_grid(ds)
         #     ds.close()
 
-    def create(self, x0, y0, dx, dy, nmax, mmax, epsg=None, rotation=0):
-        self.x0 = x0
-        self.y0 = y0
-        self.dx = dx
-        self.dy = dy
-        self.nmax = nmax  # height
-        self.mmax = mmax  # width
-        self.rotation = rotation
-        # self.crs = None
-        if epsg is not None:
-            self.crs = CRS.from_user_input(epsg)
+    def create(
+        self,
+        x0: float,
+        y0: float,
+        dx: float,
+        dy: float,
+        nmax: int,
+        mmax: int,
+        rotation: float,
+        epsg: int,
+    ):
+        """Setup a regular or quadtree grid.
+
+        Parameters
+        ----------
+        x0, y0 : float
+            x,y coordinates of the origin of the grid
+        dx, dy : float
+            grid cell size in x and y direction
+        mmax, nmax : int
+            number of grid cells in x and y direction
+        rotation : float, optional
+            rotation of grid [degree angle], by default None
+        epsg : int, optional
+            epsg-code of the coordinate reference system
+        """
+
+        # update the grid attributes in the model config
+        self.model.config.update(
+            {
+                "x0": x0,
+                "y0": y0,
+                "dx": dx,
+                "dy": dy,
+                "nmax": nmax,
+                "mmax": mmax,
+                "rotation": rotation,
+                "epsg": epsg,
+            }
+        )
+        self.update_grid_from_config()
+
+        # set an empty mask to data
+        self.set(self.empty_mask)
+
+    def create_from_region(
+        self,
+        region: dict,
+        res: float = 100,
+        crs: Union[str, int] = "utm",
+        rotated: bool = False,
+        hydrography_fn: str = None,
+        basin_index_fn: str = None,
+        align: bool = False,
+        dec_origin: int = 0,
+        dec_rotation: int = 3,
+    ):
+        """Setup a regular or quadtree grid from a region.
+
+        Parameters
+        ----------
+        region : dict
+            Dictionary describing region of interest, e.g.:
+
+            * {'bbox': [xmin, ymin, xmax, ymax]}
+            * {'geom': 'path/to/polygon_geometry'}
+
+            Note: For the 'bbox' option the coordinates need to be provided in WG84/EPSG:4326.
+
+            For a complete overview of all region options,
+            see :py:func:`hydromt.workflows.basin_mask.parse_region`
+        res : float, optional
+            grid resolution, by default 100 m
+        crs : Union[str, int], optional
+            coordinate reference system of the grid
+            if "utm" (default) the best UTM zone is selected
+            else a pyproj crs string or epsg code (int) can be provided
+        grid_type : str, optional
+            grid type, "regular" (default) or "quadtree"
+        rotated : bool, optional
+            if True, a minimum rotated rectangular grid is fitted around the region, by default False
+        hydrography_fn : str
+            Name of data source for hydrography data.
+        basin_index_fn : str
+            Name of data source with basin (bounding box) geometries associated with
+            the 'basins' layer of `hydrography_fn`. Only required if the `region` is
+            based on a (sub)(inter)basins without a 'bounds' argument.
+        align : bool, optional
+            If True (default), align target transform to resolution.
+            Note that this has only been implemented for non-rotated grids.
+        dec_origin : int, optional
+            number of decimals to round the origin coordinates, by default 0
+        dec_rotation : int, optional
+            number of decimals to round the rotation angle, by default 3
+
+        See Also
+        --------
+        hydromt.model.processes.create_grid_from_region
+        """
+
+        da = create_grid_from_region(
+            region=region,
+            data_catalog=self.model.data_catalog,
+            res=res,
+            crs=crs,
+            region_crs=4326,
+            rotated=rotated,
+            hydrography_path=hydrography_fn,
+            basin_index_path=basin_index_fn,
+            add_mask=True,
+            align=align,
+            dec_origin=dec_origin,
+            dec_rotation=dec_rotation,
+        )
+
+        # add the grid to the model
+        self.set(da)
+        # update the grid attributes in the model config
+        self.update_config_from_grid()
 
     # %%   Original HydroMT-SFINCS setup_ functions:
     # setup_grid
@@ -659,6 +767,52 @@ class RegularGrid(GridComponent):
         data_out = np.asarray(data.transpose()[mask.transpose() > 0], dtype=dtype)
         data_out.tofile(map_fn)
 
+    def update_grid_from_config(self):
+        """Update grid properties based on `config` (sfincs.inp) attributes"""
+
+        # assert model.config exists
+        if not hasattr(self.model, "config"):
+            raise AttributeError("Model has no config attribute")
+
+        self.model.grid_type = (
+            "quadtree" if self.model.config.get("qtrfile") is not None else "regular"
+        )
+
+        self.x0 = self.model.config.get("x0")
+        self.y0 = self.model.config.get("y0")
+        self.dx = self.model.config.get("dx")
+        self.dy = self.model.config.get("dy")
+        self.nmax = self.model.config.get("nmax")
+        self.mmax = self.model.config.get("mmax")
+        self.rotation = self.model.config.get("rotation", 0)
+        self.epsg = self.model.config.get("epsg", None)
+        if self.epsg is not None:
+            self.crs = CRS.from_user_input(self.epsg)
+
+    def update_config_from_grid(self):
+        """Update `config` (sfincs.inp) attributes based on grid properties"""
+
+        # derive grid properties from grid
+        self.nmax, self.mmax = self.data.shape
+        self.dx, self.dy = self.data.raster.res
+        self.x0, self.y0 = self.data.raster.origin
+        self.rotation = self.data.raster.rotation
+        self.epsg = self.mask.raster.crs.to_epsg()
+
+        # update the grid properties in the config
+        self.model.config.update(
+            {
+                "x0": self.x0,
+                "y0": self.y0,
+                "dx": self.dx,
+                "dy": self.dy,
+                "nmax": self.nmax,
+                "mmax": self.mmax,
+                "rotation": self.rotation,
+                "epsg": self.epsg,
+            }
+        )
+
     def to_vector_lines(self):
         """Return a geopandas GeoDataFrame with a geometry for each grid line."""
 
@@ -799,20 +953,3 @@ class RegularGrid(GridComponent):
                         # for png, change nodata -999 nodata into 0
                         ind[ind == -999] = 0
                         int2png(ind, file_name)
-
-    def update_grid_from_config(self):
-        """Update grid properties based on `config` (sfincs.inp) attributes"""
-        self.grid_type = (
-            "quadtree" if self.model.config.get("qtrfile") is not None else "regular"
-        )
-
-        self.x0 = self.config.get("x0")
-        self.y0 = self.config.get("y0")
-        self.dx = self.config.get("dx")
-        self.dy = self.config.get("dy")
-        self.nmax = self.config.get("nmax")
-        self.mmax = self.config.get("mmax")
-        self.rotation = self.config.get("rotation", 0)
-        self.epsg = self.config.get("epsg", None)
-        if self.epsg is not None:
-            self.crs = CRS.from_user_input(self.epsg)

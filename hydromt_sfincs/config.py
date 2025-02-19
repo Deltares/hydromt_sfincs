@@ -7,8 +7,6 @@ from pydantic_settings import BaseSettings
 from hydromt.model import Model
 from hydromt.model.components import ModelComponent
 
-# from hydromt_sfincs import SfincsModel
-
 
 class SfincsInputVariables(BaseSettings):
     # Attributes with descriptions and defaults
