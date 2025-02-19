@@ -72,6 +72,9 @@ from hydromt_sfincs.output import SfincsOutput
 
 __all__ = ["SfincsModel"]
 
+__hydromt_eps__ = ["SfincsModel"]  # core entrypoints
+
+
 logger = logging.getLogger(__name__)
 
 
