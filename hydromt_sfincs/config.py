@@ -10,8 +10,10 @@ from hydromt.model.components import ModelComponent
 
 class SfincsInputVariables(BaseSettings):
     # Attributes with descriptions and defaults
-    # - follow order of SFINCS kernel's sfincs_input.f90
-    # - and description of https://sfincs.readthedocs.io/en/latest/parameters.html
+    #
+    # - follows order of SFINCS kernel's sfincs_input.f90
+    # (https://github.com/Deltares/SFINCS/blob/main/source/src/sfincs_input.f90)
+    # - and description and value range of https://sfincs.readthedocs.io/en/latest/parameters.html
     #
     # Settings:
     mmax: int = Field(10, ge=1, description="Number of grid cells in x-direction")
@@ -236,6 +238,8 @@ class SfincsInputVariables(BaseSettings):
     )
     usespwprecip: int | None = Field(
         None,
+        ge=0,
+        le=1,
         description="Ability to use rainfall from spiderweb  (1: on, 0: off)",
     )
     # global: int = Field(
@@ -250,71 +254,206 @@ class SfincsInputVariables(BaseSettings):
     viscosity: int = Field(
         1, ge=0, le=1, description="Enable viscosity term (1: yes, 0: no)"
     )
-
-    # TODO:
-    # spinup_meteo
-    # waveage
-    # snapwave
-    # dtoutfixed
-    # wmtfilter
-    # wmfred
-    # wmsignal
-    # wmrandom
-    # advection_scheme
-    # btrelax
-    # wiggle_suppression > used?
-    # wiggle_factor
-    # wiggle_threshold
-    # storevelocity ETC
-
-    depfile: str | None = Field(None, description="Path to the depth file")
-    mskfile: str | None = Field(None, description="Path to the mask file")
-    indexfile: str | None = Field(None, description="Path to the index file")
-    cstfile: str | None = Field(None, description="Path to the coastline file")
-    bndfile: str | None = Field(None, description="Path to the boundary file")
-    bzsfile: str | None = Field(None, description="Path to the bathymetry file")
-    bzifile: str | None = Field(None, description="Path to the initial bathymetry file")
-    bwvfile: str | None = Field(None, description="Path to the wave file")
-    bhsfile: str | None = Field(
-        None, description="Path to the significant wave height file"
+    spinup_meteo: int | None = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to also apply spinup to the meteo forcing (1: on, 0: off)",
     )
-    btpfile: str | None = Field(None, description="Path to the bottom topography file")
-    bwdfile: str | None = Field(None, description="Path to the wind file")
-    bdsfile: str | None = Field(None, description="Path to the discharge file")
-    bcafile: str | None = Field(None, description="Path to the calibration file")
-    corfile: str | None = Field(None, description="Path to the correction file")
-    srcfile: str | None = Field(None, description="Path to the source file")
-    disfile: str | None = Field(None, description="Path to the distribution file")
-    inifile: str | None = Field(None, description="Path to the initial conditions file")
-    sbgfile: str | None = Field(None, description="Path to the subgrid file")
-    qtrfile: str | None = Field(None, description="Path to the quarter file")
-    spwfile: str | None = Field(None, description="Path to the spectral wave file")
+    # TODO:
+    waveage: float | None = Field(
+        None,
+        description="Determine Cd with wave age based on LGX method (-)",
+    )
+    snapwave: int | None = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to turn on the determination of spectral wave conditions through the internal SnapWave solver (1: on, 0: off)",
+    )
+    # dtoutfixed > currently not used
+    wmtfilter: float | None = Field(
+        None,
+        ge=0.0,
+        le=3600.0,
+        description="Filtering duration for wave maker to determine mean water level component (-)",
+    )
+    wmfred: float | None = Field(
+        None,
+        description="Filtering variable in wave maker to determine mean water level component (-)",
+    )
+    wmsignal: str | None = Field(
+        None, description="Wavemaker options ('spectrum' or 'mon(ochromatic)')"
+    )
+    advection_scheme: str | None = Field(
+        None, description="Wavemaker options ('upw1' or 'original')"
+    )
+    btrelax: float | None = Field(
+        None,
+        ge=0.0,
+        le=10800.0,
+        description="Internal parameter of SFINCS for relaxation in uvmean (s)",
+    )
+    wiggle_suppression: int | None = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to turn on the wiggle surpression (1: on, 0: off)",
+    )
+    wiggle_factor: float | None = Field(
+        None,
+        ge=0.0,
+        description="Wiggle suppresion factor (-)",
+    )
+    wiggle_threshold: float | None = Field(
+        None,
+        ge=0.0,
+        description="Wiggle suppresion minimum depth threshold (-)",
+    )
+    #
+    # Domain
+    #
+    qtrfile: str | None = Field(None, description="Name of the quadtree file")
+    depfile: str | None = Field(None, description="Name of the depth file")
+    inifile: str | None = Field(
+        None, description="Name of the initial water level condition file"
+    )
+    rstfile: str | None = Field(None, description="Name of the restart file")
+    ncinifile: str | None = Field(
+        None, description="Name of the Netcdf initial water level condition file"
+    )
+    mskfile: str | None = Field(None, description="Name of the mask file")
+    indexfile: str | None = Field(None, description="Name of the index file")
+    # cstfile: > not used
+    sbgfile: str | None = Field(None, description="Name of the subgrid file")
+    thdfile: str | None = Field(None, description="Name of the thin dam structure file")
+    weirfile: str | None = Field(None, description="Name of the weir structure file")
+    manningfile: str | None = Field(None, description="Name of the Manning's n file")
+    drnfile: str | None = Field(None, description="Name of the drainage structure file")
+    volfile: str | None = Field(None, description="Name of the storage volume file")
+    #
+    # Forcing
+    #
+    bndfile: str | None = Field(
+        None, description="Name of the water level boundary points file"
+    )
+    bzsfile: str | None = Field(
+        None, description="Name of the water level time-series file"
+    )
+    bzifile: str | None = Field(
+        None, description="Name of the individual wave water level time-series file"
+    )
+    # bwvfile: FIXME > can be removed?
+    # bhsfile: FIXME > can be removed?
+    # btpfile:  FIXME > can be removed?
+    # bwdfile:  FIXME > can be removed?
+    # bdsfile:  FIXME > can be removed?
+    wfpfile: str | None = Field(
+        None, description="Name of the wavemaker location input points file"
+    )
+    whifile: str | None = Field(
+        None, description="Name of the wavemaker IG wave height input file"
+    )
+    wtifile: str | None = Field(
+        None, description="Name of the wavemaker IG wave period input file"
+    )
+    wstfile: str | None = Field(
+        None, description="Name of the wavemaker setup input file"
+    )
+    srcfile: str | None = Field(
+        None, description="Name of the discharge input points file"
+    )
+    disfile: str | None = Field(
+        None, description="Name of the discharge input time-series file"
+    )
+    spwfile: str | None = Field(
+        None, description="Name of the spiderweb tropical cyclone file"
+    )
+    wndfile: str | None = Field(
+        None, description="Name of the spatially uniform wind file"
+    )
+    prcfile: str | None = Field(
+        None, description="Name of the spatially uniform precipitation file"
+    )
+    precipfile: str | None = Field(
+        None,
+        description="LEGACY OPTION- Name of the spatially uniform precipitation file > now use: prcfile",
+    )
     amufile: str | None = Field(
-        None, description="Path to the u-component of the wind file"
+        None, description="Name of the u-component of the wind file"
     )
     amvfile: str | None = Field(
-        None, description="Path to the v-component of the wind file"
+        None, description="Name of the v-component of the wind file"
     )
-    # ampfile: > does not exist
-    amprfile: str | None = Field(None, description="Path to the precipitation file")
-    wndfile: str | None = Field(None, description="Path to the wind file")
-    precipfile: str | None = Field(None, description="Path to the precipitation file")
-    obsfile: str | None = Field(None, description="Path to the observation file")
-    crsfile: str | None = Field(
-        None, description="Path to the coordinate reference system file"
+    ampfile: str | None = Field(
+        None, description="Name of the atmospheric pressure file"
     )
-    thdfile: str | None = Field(None, description="Path to the threshold file")
-    manningfile: str | None = Field(None, description="Path to the Manning's n file")
+    amprfile: str | None = Field(None, description="Name of the precipitation file")
+    z0lfile: str | None = Field(
+        None, description="Name of the wind reduction over land input file"
+    )
+    wvmfile: str | None = Field(
+        None, description="Name of the wave maker input points file"
+    )
+    qinffile: str | None = Field(
+        None,
+        description="Name of the spatially-uniform, constant in time infiltration file",
+    )
+    # Curve Number files
     scsfile: str | None = Field(
-        None, description="Path to the soil conservation service file"
+        None,
+        description="Name of the Curve Number infiltration method A - maximum soil moisture storage capacity file",
     )
-    rstfile: str | None = Field(None, description="Path to the restart file")
+    smaxfile: str | None = Field(
+        None,
+        description="Name of the Curve Number infiltration method B - maximum soil moisture storage capacity file",
+    )
+    sefffile: str | None = Field(
+        None,
+        description="Name of the Curve Number infiltration method B - initial soil moisture storage capacity file",
+    )
+    # Green and Ampt files
+    psifile: str | None = Field(
+        None,
+        description="Name of the Green and Ampt infiltration  method - suction head file",
+    )
+    sigmafile: str | None = Field(
+        None,
+        description="Name of the Green and Ampt infiltration method - maximum moisture deficit file",
+    )
+    ksfile: str | None = Field(
+        None,
+        description="Name of the Green and Ampt infiltration method - saturated hydraulic conductivity file",
+    )
+    # Horton file
+    f0file: str | None = Field(
+        None,
+        description="Name of the Horton infiltration method - Maximum (Initial) Infiltration Capacity file",
+    )
+    fcfile: str | None = Field(
+        None,
+        description="Name of the Horton infiltration method - Minimum (Asymptotic) Infiltration Rate file",
+    )
+    kdfile: str | None = Field(
+        None,
+        description="Name of the Horton infiltration method - empirical constant (hr-1) of decay file",
+    )
+    horton_kr_kd: float | None = Field(
+        None, description="Horton infiltration recovery vs decay ration (-)"
+    )
+    # Netcdf input
+
+    bcafile: str | None = Field(None, description="Name of the calibration file")
+    corfile: str | None = Field(None, description="Name of the correction file")
+
+    obsfile: str | None = Field(None, description="Name of the observation file")
+    crsfile: str | None = Field(
+        None, description="Name of the coordinate reference system file"
+    )
+
     wfpfile: str | None = Field(
-        None, description="Path to the wind forcing parameter file"
+        None, description="Name of the wind forcing parameter file"
     )
-    whifile: str | None = Field(None, description="Path to the wave height input file")
-    wtifile: str | None = Field(None, description="Path to the wave period input file")
-    wstfile: str | None = Field(None, description="Path to the wave spectrum file")
 
     cdnrb: int | None = Field(
         None, description="Number of wind speed ranges for drag coefficient"
