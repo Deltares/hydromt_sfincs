@@ -120,7 +120,7 @@ class SfincsConfigVariables(BaseSettings):
     )
     qinf: float | None = Field(
         None,
-        gt=0.0,
+        ge=0.0,
         lt=20.0,
         description="Infiltration rate, spatially uniform and constant in time (mm/hr)",
     )
