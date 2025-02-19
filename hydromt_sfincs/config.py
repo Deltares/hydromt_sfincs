@@ -58,10 +58,10 @@ class SfincsInputVariables(BaseSettings):
     dtmaxout: float = Field(
         86400.0, ge=0.0, description="Maximum map output interval (seconds)"
     )  # FIXME - TL: why was 'int' before?
-    dtrstout: float = Field(
+    dtrstout: float | None = Field(
         None, ge=0.0, description="Restart file output interval (seconds)"
     )
-    trstout: float = Field(
+    trstout: float | None = Field(
         None, description="Restart file output after specific time (seconds)"
     )
     dthisout: float = Field(600.0, description="Timeseries output interval (seconds)")
@@ -83,12 +83,12 @@ class SfincsInputVariables(BaseSettings):
         le=1.0,
         description="Numerical smoothing factor in momentum equation (-)",
     )
-    hmin_cfl: float = Field(
+    hmin_cfl: float | None = Field(
         None,
         gt=0.0,
         description="Minimum water depth for cfl condition in max timestep determination (meters)",
     )
-    hmin_uv: float = Field(
+    hmin_uv: float | None = Field(
         None,
         gt=0.0,
         description="Minimum water depth for uv velocity determination in momentum equation (meters)",
@@ -127,7 +127,7 @@ class SfincsInputVariables(BaseSettings):
         lt=20.0,
         description="Infiltration rate, spatially uniform and constant in time (mm/hr)",
     )
-    dtmax: float = Field(
+    dtmax: float | None = Field(
         None, gt=0.0, description="Maximum allowed internal timestep (seconds)"
     )
     huthresh: float = Field(
@@ -233,7 +233,7 @@ class SfincsInputVariables(BaseSettings):
         None,
         description="Ability to turn off Coriolis term, only if crsgeo = True (1: on, 0: off)",
     )
-    amprblock: int = Field(
+    amprblock: int | None = Field(
         None,
         ge=0,
         le=1,
@@ -528,7 +528,7 @@ class SfincsInputVariables(BaseSettings):
         le=1,
         description="Option to write 'twet' time wet output to netcdf map output (1: yes, 0: no)",
     )
-    storehsubgrid: int = Field(
+    storehsubgrid: int | None = Field(
         None,
         ge=0,
         le=1,
@@ -539,7 +539,7 @@ class SfincsInputVariables(BaseSettings):
         ge=0.0,
         description="Time wet 'twet' minimum depth threshold (m)",
     )
-    store_tsunami_arrival_time: int = Field(
+    store_tsunami_arrival_time: int | None = Field(
         None,
         ge=0,
         le=1,
@@ -550,13 +550,13 @@ class SfincsInputVariables(BaseSettings):
         ge=0.0,
         description="Tsunami arrival time minimum depth threshold (m)",
     )
-    storeqdrain: int = Field(
+    storeqdrain: int | None = Field(
         None,
         ge=0,
         le=1,
         description="Option to write discharge through drainage structure output to netcdf map output (1: yes, 0: no)",
     )
-    storezvolume: int = Field(
+    storezvolume: int | None = Field(
         None,
         ge=0,
         le=1,
@@ -581,19 +581,19 @@ class SfincsInputVariables(BaseSettings):
         le=1,
         description="Option to write maximum wind speed output to netcdf map output (1: yes, 0: no)",
     )
-    storefw: int = Field(
+    storefw: int | None = Field(
         None,
         ge=0,
         le=1,
         description="Option to write wave forces to netcdf map output (1: yes, 0: no)",
     )
-    storewavdir: int = Field(
+    storewavdir: int | None = Field(
         None,
         ge=0,
         le=1,
         description="Option to write wave direction to netcdf map output (1: yes, 0: no)",
     )
-    regular_output_on_mesh: int = Field(
+    regular_output_on_mesh: int | None = Field(
         None,
         ge=0,
         le=1,
@@ -602,7 +602,7 @@ class SfincsInputVariables(BaseSettings):
     #
     # Coupled SnapWave solver related
     #
-    snapwave_wind: int = Field(
+    snapwave_wind: int | None = Field(
         None,
         ge=0,
         le=1,
