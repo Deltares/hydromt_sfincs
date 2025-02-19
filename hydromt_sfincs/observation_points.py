@@ -52,6 +52,8 @@ class SfincsObservationPoints(ModelComponent):
 
     def read(self):
         """Read in all observation points."""
+        self._filename = self.model.config.get("obsfile")
+
         # Read input file:
         gdf = utils.read_xyn(self._filename, crs=self.model.crs)  # =utils.py function
 

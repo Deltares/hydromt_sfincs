@@ -139,7 +139,7 @@ class SfincsModel(Model):
         # self.add_component("storage_volume", SfincsStorageVolume(self))
 
         # geoms types:
-        # self.add_component("observation_points", SfincsObservationPoints(self))
+        self.add_component("observation_points", SfincsObservationPoints(self))
         # self.add_component("cross_sections", SfincsCrossSections(self))
         # self.add_component("weirs", SfincsWeirs(self))
         # self.add_component("thin_dams", SfincsThinDams(self))
