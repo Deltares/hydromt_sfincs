@@ -1,11 +1,15 @@
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import TYPE_CHECKING, List, Optional, Dict, Any
 from ast import literal_eval
+from os.path import abspath, isabs, join
+from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
-from hydromt.model import Model
 from hydromt.model.components import ModelComponent
+
+if TYPE_CHECKING:
+    from hydromt_sfincs import SfincsModel
 
 
 class SfincsInputVariables(BaseSettings):
@@ -154,7 +158,7 @@ class SfincsInputVariables(BaseSettings):
 class SfincsInput(ModelComponent):
     """Class to read and write SFINCS input files."""
 
-    def __init__(self, model: Model):
+    def __init__(self, model: "SfincsModel"):
         self._filename = "sfincs.inp"
         self._data: SfincsInputVariables = None
         super().__init__(model=model)
@@ -220,9 +224,19 @@ class SfincsInput(ModelComponent):
                     string = f"{key.ljust(20)} = {value}\n"
                 fid.write(string)
 
-    def get(self, key: str, fallback: Any = None) -> Any:
+    def get(self, key: str, fallback: Any = None, abs_path: bool = True) -> Any:
         """Get a value with validation check."""
-        return self.data.model_dump().get(key, fallback)
+
+        value = self.data.model_dump().get(key, fallback)
+
+        if value is None and fallback is not None:
+            value = fallback
+        if abs_path and isinstance(value, (str, Path)):
+            value = Path(value)
+            if not isabs(value):
+                value = Path(abspath(join(self.root.path, value)))
+
+        return value
 
     def set(self, key: str, value: Any) -> None:
         """Set a value with validation using Pydantic's model_copy."""

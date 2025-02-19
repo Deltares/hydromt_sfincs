@@ -2,17 +2,20 @@ import geopandas as gpd
 import shapely
 import pandas as pd
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 from hydromt.model.components import ModelComponent
 from hydromt.model import Model
 from hydromt_sfincs import utils
 
+if TYPE_CHECKING:
+    from hydromt_sfincs.sfincs import SfincsModel
+
 
 class SfincsObservationPoints(ModelComponent):
     def __init__(
         self,
-        model: Model,
+        model: "SfincsModel",
     ):
         self._filename: str = "sfincs.obs"
         self._data: gpd.GeoDataFrame = None

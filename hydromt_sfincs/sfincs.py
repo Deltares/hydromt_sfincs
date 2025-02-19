@@ -118,11 +118,11 @@ class SfincsModel(Model):
         )
         # Initialize model components:
 
-        self.grid_type = None
+        self.grid_type = "regular"
 
         self.add_component("config", SfincsInput(self))
         # grid types:
-        self.add_component("reggrid", RegularGrid(self))
+        self.add_component("grid", RegularGrid(self))
         self.add_component("quadtree", QuadtreeGrid(self))
         # self.add_component("subgrid", SubgridTableRegular(self))
         # self.add_component("subgrid", SubgridTableRegular(self))
@@ -169,12 +169,19 @@ class SfincsModel(Model):
     #             self.logger.removeHandler(handler)
 
     @property
-    def grid(self) -> RegularGrid | QuadtreeGrid:
+    def config(self) -> SfincsInput:
+        """Returns the config object."""
+        return self.components["config"]
+
+    @property
+    def grid(self) -> RegularGrid:
         """Returns the grid object."""
-        if self.grid_type == "regular":
-            return self.reggrid
-        elif self.grid_type == "quadtree":
-            return self.quadtree
+        return self.components["grid"]
+
+    @property
+    def quadtree(self) -> QuadtreeGrid:
+        """Returns the quadtree object."""
+        return self.components["quadtree"]
 
     @property
     def mask(self) -> xr.DataArray | None:
@@ -182,8 +189,8 @@ class SfincsModel(Model):
         if self.grid_type == "regular":
             if "msk" in self.grid.data:
                 return self.grid.data["msk"]
-            elif self.reggrid is not None:
-                return self.reggrid.empty_mask
+            elif self.grid is not None:
+                return self.grid.empty_mask
         elif self.grid_type == "quadtree":
             if "msk" in self.quadtree.data:
                 return self.quadtree.data["msk"]
@@ -202,8 +209,8 @@ class SfincsModel(Model):
                 da = xr.where(self.mask > 0, 1, 0).astype(np.int16)
                 da.raster.set_nodata(0)
                 region = da.raster.vectorize().dissolve()
-            elif self.reggrid is not None:
-                region = self.reggrid.empty_mask.raster.box
+            elif self.grid is not None:
+                region = self.grid.empty_mask.raster.box
         elif self.grid_type == "quadtree":
             region = self.quadtree.exterior
         return region
@@ -228,17 +235,9 @@ class SfincsModel(Model):
     def crs(self) -> CRS | None:
         """Returns the model crs"""
         if self.grid_type == "regular":
-            return self.reggrid.crs
+            return self.grid.crs
         elif self.grid_type == "quadtree":
             return self.quadtree.data.grid.crs
-
-    def set_crs(self, crs: Any) -> None:
-        """Sets the model crs"""
-        if self.grid_type == "regular":
-            self.reggrid.crs = CRS.from_user_input(crs)
-            self.grid.raster.set_crs(self.reggrid.crs)
-        elif self.grid_type == "quadtree":
-            self.quadtree.data.grid.set_crs(CRS.from_user_input(crs))
 
     ## I/O
     def read(self, filename: str = None) -> None:
@@ -249,9 +248,22 @@ class SfincsModel(Model):
         filename : str, optional
             Path to config file, by default None
         """
+        # always read config first
         if filename is None:
             filename = join(self.root.path, "sfincs.inp")
         self.config.read(filename=filename)
+
+        # Determine grid type based on configuration
+        self.grid_type = "quadtree" if self.config.get("qtrfile") else "regular"
+
+        # Remove the grid component if it doesn't match the current grid type
+        if self.grid_type == "regular":
+            self.components.pop("quadtree", None)
+        elif self.grid_type == "quadtree":
+            self.components.pop("grid", None)
+
+        # loop over all components (except config) and read
+        self.grid.read()
 
     def write(self):
         self.config.write()

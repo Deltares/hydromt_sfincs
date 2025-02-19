@@ -6,7 +6,7 @@ import glob
 import os
 from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import geopandas as gpd
 import numpy as np
@@ -17,13 +17,15 @@ from pyproj import CRS, Transformer
 from scipy import ndimage
 from shapely.geometry import LineString
 
-from hydromt.model import Model
 from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs import workflows
 from hydromt_sfincs.subgrid import SubgridTableRegular
 from hydromt_sfincs.workflows.tiling import int2png, tile_window
+
+if TYPE_CHECKING:
+    from hydromt_sfincs import SfincsModel
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +35,7 @@ _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
 class RegularGrid(GridComponent):
     def __init__(
         self,
-        model: Model,
+        model: "SfincsModel",
     ):
         super().__init__(
             model=model,
@@ -105,6 +107,16 @@ class RegularGrid(GridComponent):
         da_mask.raster.set_crs(self.crs)
         return da_mask
 
+    @property
+    def crs(self) -> CRS:
+        """Return the coordinate reference system of the regular grid."""
+        if self.epsg is not None:
+            return CRS.from_epsg(self.epsg)
+        elif self.data.raster.crs is not None:
+            return self.data.raster.crs
+        else:
+            raise ValueError("No CRS defined for the regular grid.")
+
     def read(self, data_vars: Union[List, str] = None) -> None:
         """Read SFINCS binary grid files and save to `data` attribute.
         Filenames are taken from the `model.config` attribute (i.e. input file).
@@ -118,6 +130,10 @@ class RegularGrid(GridComponent):
         self.root._assert_read_mode()
         self._initialize_grid(skip_read=True)
 
+        # first update grid from config
+        self.update_grid_from_config()
+
+        # now read in the actual files
         da_lst = []
         if data_vars is None:
             data_vars = _MAPS
@@ -136,12 +152,12 @@ class RegularGrid(GridComponent):
         ind = self.read_ind(ind_fn=ind_fn)
 
         for name in data_vars:
-            if f"{name}file" in self.config:
+            if f"{name}file" in self.model.config:
                 fn = self.model.config.get(
                     f"{name}file", fallback=f"sfincs.{name}", abs_path=True
                 )
                 if not isfile(fn):
-                    self.logger.warning(f"{name}file not found at {fn}")
+                    logger.warning(f"{name}file not found at {fn}")
                     continue
                 dtype = dtypes.get(name, "f4")
                 mv = mvs.get(name, -9999.0)
@@ -155,7 +171,7 @@ class RegularGrid(GridComponent):
 
         # # TODO - fix this properly; but to create overlays in GUIs,
         # # we always convert regular grids to a UgridDataArray
-        # self.quadtree = QuadtreeGrid(logger=self.logger)
+        # self.quadtree = QuadtreeGrid(logger=logger)
         # if self.config.get("rotation", 0) != 0:  # This is a rotated regular grid
         #     self.quadtree.data = UgridDataArray.from_structured(
         #         self.mask, "xc", "yc"
@@ -176,6 +192,56 @@ class RegularGrid(GridComponent):
         #     ds = hydromt.open_mfraster(fns).load()
         #     self.set_grid(ds)
         #     ds.close()
+
+    def write(self, data_vars: Union[List, str] = None):
+        """Write SFINCS grid to binary files including map index file.
+        Filenames are taken from the `config` attribute (i.e. input file).
+
+        If `write_gis` property is True, all grid variables are written to geotiff
+        files in a "gis" subfolder.
+
+        Parameters
+        ----------
+        data_vars : Union[List, str], optional
+            List of data variables to write, by default None (all)
+        """
+        self.root._assert_write_mode
+
+        dtypes = {"msk": "u1"}  # default to f4
+        if len(self.data.data_vars) > 0 and "msk" in self.data:
+            # make sure orientation is S->N
+            ds_out = self.data
+            if ds_out.raster.res[1] < 0:
+                ds_out = ds_out.raster.flipud()
+            mask = ds_out["msk"].values
+
+            logger.debug("Write binary map indices based on mask.")
+            if self.model.config.get("indexfile") is None:
+                self.model.config.set("indexfile", "sfincs.ind")
+            self.write_ind(
+                ind_fn=self.model.config.get("indexfile", abs_path=True), mask=mask
+            )
+
+            if data_vars is None:  # write all maps
+                data_vars = [v for v in self._MAPS if v in ds_out]
+            elif isinstance(data_vars, str):
+                data_vars = list(data_vars)
+            logger.debug(f"Write binary map files: {data_vars}.")
+            for name in data_vars:
+                if self.model.config.get(f"{name}file") is None:
+                    self.config.set(f"{name}file", f"sfincs.{name}")
+                # do not write depfile if subgrid is used
+                # if (name == "dep" or name == "manning") and self.subgrid:
+                #     continue
+                self.write_map(
+                    map_fn=self.model.config.get(f"{name}file", abs_path=True),
+                    data=ds_out[name].values,
+                    mask=mask,
+                    dtype=dtypes.get(name, "f4"),
+                )
+
+        # if self._write_gis:
+        #     self.write_raster("grid")
 
     def create(
         self,
@@ -286,7 +352,7 @@ class RegularGrid(GridComponent):
             rotated=rotated,
             hydrography_path=hydrography_fn,
             basin_index_path=basin_index_fn,
-            add_mask=True,
+            add_mask=False,
             align=align,
             dec_origin=dec_origin,
             dec_rotation=dec_rotation,
@@ -412,13 +478,13 @@ class RegularGrid(GridComponent):
             da_like=self.mask,
             buffer_cells=buffer_cells,
             interp_method=interp_method,
-            logger=self.logger,
+            logger=logger,
         )
 
         # check if no nan data is present in the bed levels
         nmissing = int(np.sum(np.isnan(da_dep.values)))
         if nmissing > 0:
-            self.logger.warning(f"Interpolate elevation at {nmissing} cells")
+            logger.warning(f"Interpolate elevation at {nmissing} cells")
             da_dep = da_dep.raster.interpolate_na(method="rio_idw", extrapolate=True)
 
         self.set_grid(da_dep, name="dep")
@@ -774,10 +840,6 @@ class RegularGrid(GridComponent):
         if not hasattr(self.model, "config"):
             raise AttributeError("Model has no config attribute")
 
-        self.model.grid_type = (
-            "quadtree" if self.model.config.get("qtrfile") is not None else "regular"
-        )
-
         self.x0 = self.model.config.get("x0")
         self.y0 = self.model.config.get("y0")
         self.dx = self.model.config.get("dx")
@@ -786,18 +848,16 @@ class RegularGrid(GridComponent):
         self.mmax = self.model.config.get("mmax")
         self.rotation = self.model.config.get("rotation", 0)
         self.epsg = self.model.config.get("epsg", None)
-        if self.epsg is not None:
-            self.crs = CRS.from_user_input(self.epsg)
 
     def update_config_from_grid(self):
         """Update `config` (sfincs.inp) attributes based on grid properties"""
 
         # derive grid properties from grid
-        self.nmax, self.mmax = self.data.shape
+        self.nmax, self.mmax = self.data.raster.shape
         self.dx, self.dy = self.data.raster.res
         self.x0, self.y0 = self.data.raster.origin
         self.rotation = self.data.raster.rotation
-        self.epsg = self.mask.raster.crs.to_epsg()
+        self.epsg = self.crs.to_epsg()
 
         # update the grid properties in the config
         self.model.config.update(
