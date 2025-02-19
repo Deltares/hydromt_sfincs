@@ -10,22 +10,22 @@ from hydromt.model.components import ModelComponent
 
 class SfincsInputVariables(BaseSettings):
     # Attributes with descriptions and defaults
-    mmax: int = Field(
-        10, description="Maximum number of grid points in the x-direction"
-    )
-    nmax: int = Field(
-        10, description="Maximum number of grid points in the y-direction"
-    )
-    dx: float = Field(10.0, gt=0, description="Grid spacing in the x-direction")
-    dy: float = Field(10.0, gt=0, description="Grid spacing in the y-direction")
+    # - follow order of SFINCS kernel's sfincs_input.f90
+    # - and description of https://sfincs.readthedocs.io/en/latest/parameters.html
+    #
+    # Settings:
+    mmax: int = Field(10, ge=1, description="Number of grid cells in x-direction")
+    nmax: int = Field(10, ge=1, description="Number of grid cells in y-direction")
+    dx: float = Field(10.0, gt=0, description="Grid size in x-direction")
+    dy: float = Field(10.0, gt=0, description="Grid size in y-direction")
     x0: float = Field(0.0, description="Origin of the grid in the x-direction")
     y0: float = Field(0.0, description="Origin of the grid in the y-direction")
-    rotation: float = Field(0.0, description="Rotation angle of the grid (degrees)")
-    epsg: Optional[int] = Field(
-        None, description="EPSG code for spatial reference system"
+    rotation: float = Field(
+        0.0,
+        gt=-360,
+        lt=360,
+        description="Rotation of the grid in degrees from the x-axis (east) in anti-clockwise direction",
     )
-    latitude: float = Field(0.0, description="Latitude of the grid center")
-    utmzone: Optional[str] = Field(None, description="UTM zone for spatial reference")
     tref: datetime = Field(
         datetime(2010, 2, 1, 0, 0, 0),
         description="Reference time for simulation (datetime)",
@@ -38,41 +38,217 @@ class SfincsInputVariables(BaseSettings):
         datetime(2010, 2, 2, 0, 0, 0),
         description="Stop time for the simulation (datetime)",
     )
-    tspinup: float = Field(0.0, ge=0, description="Spin-up time (seconds)")
+    tspinup: float = Field(
+        0.0,
+        ge=0,
+        description="Duration of spinup period for boundary conditions after tstart (seconds)",
+    )
     t0out: Optional[datetime] = Field(None, description="Output start time (datetime)")
-    dtout: float = Field(3600.0, description="Output interval (seconds)")
-    dtmapout: Optional[float] = Field(None, description="Map output interval (seconds)")
+    t1out: Optional[datetime] = Field(None, description="Output stop time (datetime)")
+    dtout: float = Field(
+        3600.0, ge=0, description="Spatial map output interval (seconds)"
+    )
+    dtmaxout: float = Field(
+        86400, ge=0, description="Maximum map output interval (seconds)"
+    )  # FIXME - TL: why was 'int'?
+    dtrstout: float = Field(
+        0.0, ge=0, description="Restart file output interval (seconds)"
+    )
+    trstout: float = Field(
+        -999.0, description="Restart file output after specific time (seconds)"
+    )
     dthisout: float = Field(600.0, description="Timeseries output interval (seconds)")
-    dtrstout: float = Field(0.0, description="Restart file output interval (seconds)")
-    dtmaxout: int = Field(86400, description="Maximum map output interval (seconds)")
-    trstout: float = Field(-999.0, description="Restart file time (seconds)")
-    dtwnd: float = Field(1800.0, description="Wind forcing interval (seconds)")
-    alpha: float = Field(0.5, description="Numerical diffusion parameter")
-    theta: float = Field(1.0, description="Numerical weighting parameter")
-    huthresh: float = Field(0.01, description="Threshold water depth (meters)")
+    dtwave: float = Field(None, description="Interval of running SnapWave (seconds)")
+    dtwnd: float = Field(
+        None, description="Interval of updating wind forcing (seconds)"
+    )
+    alpha: float = Field(
+        0.5,
+        ge=0.001,
+        le=1.0,
+        description="Numerical time step reduction for CFL-condition (-)",
+    )
+    theta: float = Field(
+        1.0,
+        ge=0.8,
+        le=1.0,
+        description="Numerical smoothing factor in momentum equation (-)",
+    )
+    hmin_cfl: float = Field(
+        0.1,
+        gt=0.0,
+        description="Minimum water depth for cfl condition in max timestep determination (meters)",
+    )
+    hmin_uv: float = Field(
+        0.1,
+        gt=0.0,
+        description="Minimum water depth for uv velocity determination in momentum equation (meters)",
+    )
     manning: float = Field(
-        0.04, description="Manning's n coefficient for overall roughness"
+        None,
+        gt=0.0,
+        lt=0.5,
+        description="Manning's n coefficient for spatially uniform roughness, if no other manning options specified (s/m^(1/3))",
     )
-    manning_land: float = Field(0.04, description="Manning's n for land areas")
-    manning_sea: float = Field(0.02, description="Manning's n for sea areas")
-    rgh_lev_land: float = Field(0.0, description="Roughness level for land")
-    zsini: float = Field(0.0, description="Initial surface elevation (meters)")
-    qinf: float = Field(0.0, description="Inflow discharge (m^3/s)")
-    rhoa: float = Field(1.25, description="Air density (kg/m^3)")
-    rhow: float = Field(1024.0, description="Water density (kg/m^3)")
-    dtmax: float = Field(60.0, description="Maximum allowed timestep (seconds)")
-    advection: int = Field(1, description="Enable advection (1: yes, 0: no)")
-    baro: int = Field(1, description="Enable baroclinicity (1: yes, 0: no)")
-    pavbnd: int = Field(
-        0, description="Atmospheric pressure boundary condition (1: yes, 0: no)"
+    manning_land: float = Field(
+        None,
+        gt=0.0,
+        lt=0.5,
+        description="Manning's n coefficient for land areas, if no other manning options specified (s/m^(1/3))",
     )
-    gapres: float = Field(101200.0, description="Atmospheric pressure (Pa)")
-    stopdepth: float = Field(100.0, description="Stopping water depth (meters)")
+    manning_sea: float = Field(
+        None,
+        gt=0.0,
+        lt=0.5,
+        description="Manning's n coefficient for sea areas, if no other manning options specified (s/m^(1/3))",
+    )
+    rgh_lev_land: float = Field(
+        None,
+        gt=-9999,
+        lt=9999,
+        description="Elevation level to distinguish land and sea roughness (meters above reference level)",
+    )
+    zsini: float = Field(
+        0.0,
+        description="Initial water level in entire domain - where above bed level (meters)",
+    )
+    qinf: float = Field(
+        None,
+        gt=0.0,
+        lt=20.0,
+        description="Infiltration rate, spatially uniform and constant in time (mm/hr)",
+    )
+    dtmax: float = Field(
+        60.0, gt=0.0, description="Maximum allowed internal timestep (seconds)"
+    )
+    huthresh: float = Field(
+        0.01, gt=0.0, lt=1.0, description="Threshold water depth (meters)"
+    )
+    rhoa: float = Field(None, gt=1.0, lt=1.5, description="Air density (kg/m^3)")
+    rhow: float = Field(
+        None, gt=1000.0, lt=1100.0, description="Water density (kg/m^3)"
+    )
+    inputformat: str = Field("bin", description="Input file format (bin or asc)")
+    outputformat: str = Field(
+        "net", description="Output file format (net or asc or bin)"
+    )
+    outputtype_map: str = Field(
+        None, description="Output file format for spatial map file (net or asc or bin)"
+    )
+    outputtype_his: str = Field(
+        None,
+        description="Output file format for observation his file (net or asc or bin)",
+    )
+    nc_deflate_level: int = Field(None, description="Netcdf deflate level (-))")
+    bndtype: int = Field(
+        None, ge=1, ls=1, description="Boundary type, only bndtype=1 is supported (-)"
+    )
+    advection: int = Field(
+        1, ge=0, le=1, description="Enable advection (1: yes, 0: no)"
+    )
+    nfreqsig: int = Field(
+        None,
+        ge=0,
+        le=500,
+        description="Wave maker number of frequency bins IG spectrum (-)",
+    )
+    freqminig: float = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Minimum frequency wave maker IG spectrum (Hz)",
+    )
+    freqmaxig: float = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Minimum frequency wave maker IG spectrum (Hz)",
+    )
+    latitude: float = Field(None, description="Latitude of the grid center (degrees)")
+    pavbnd: float = Field(None, description="Atmospheric pressure at boundary (Pa)")
+    gapres: float = Field(
+        None,
+        description="Background atmospheric pressure used by spiderweb pressure conversion (Pa)",
+    )
+    baro: int = Field(
+        None, description="Enable atmospheric pressure term (1: yes, 0: no)"
+    )
+    utmzone: Optional[str] = Field(
+        None, description="UTM zone for spatial reference (-)"
+    )
+    epsg: Optional[int] = Field(
+        None, description="EPSG code for spatial reference system"
+    )
+    stopdepth: float = Field(
+        100.0,
+        gt=0.0,
+        lt=15000,
+        description="Water depth based on which the minimal time step is determined below which the simulation is classified as unstable and stopped (meters)",
+    )
+    advlim: float = Field(
+        None,
+        ge=0.0,
+        le=9999.9,
+        description="Maximum value of the advection term in the momentum equation (-)",
+    )
+    slopelim: float = Field(
+        None, ge=0.0, le=9999.9, description=">currently not used< (-)"
+    )
+    qinf_zmin: float = Field(
+        None,
+        ge=-100,
+        le=100,
+        description="Minimum elevation level above for what cells the spatially uniform, constant in time infiltration rate 'qinf' is added (meters above reference)",
+    )
+    btfilter: float = Field(
+        None,
+        ge=0.0,
+        le=3600.0,
+        description="Water level boundary timeseries filtering period (seconds)",
+    )
+    sfacinf: float = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Curve Number infiltration initial abstraction or the amount of water before runoff, such as infiltration, or rainfall interception by vegetation.",
+    )
+    # radstr > unclear if used
     crsgeo: int = Field(
-        0, description="Geographical coordinate system flag (1: yes, 0: no)"
+        None, description="Geographical coordinate system flag (1: yes, 0: no)"
     )
-    btfilter: float = Field(60.0, description="Bottom filter interval (seconds)")
-    viscosity: int = Field(1, description="Numerical viscosity parameter")
+    coriolis: int = Field(
+        None,
+        description="Ability to turn off Coriolis term, only if crsgeo = True (1: on, 0: off)",
+    )
+    amprblock: int = Field(
+        1,
+        description="Use data in ampr file as block rather than linear interpolation (1: yes, 0: no)",
+    )
+
+    # Still to add:
+    spwmergefrac: float = Field(
+        None,
+        gt=0.0,
+        lt=1.0,
+        description="Spiderweb merge factor with background wind and pressure (-)",
+    )
+    # usespwprecip
+    # global
+    # nuvisc
+    viscosity: int = Field(1, description="Enable viscosity term (1: yes, 0: no)")
+    # spinup_meteo
+    # waveage
+    # snapwave
+    # dtoutfixed
+    # wmtfilter
+    # wmfred
+    # wmsignal
+    # wmrandom
+    # advection_scheme
+    # btrelax
+    # wiggle_suppression > used?
+    # wiggle_factor
+    # wiggle_threshold
 
     depfile: Optional[str] = Field(None, description="Path to the depth file")
     mskfile: Optional[str] = Field(None, description="Path to the mask file")
@@ -135,18 +311,15 @@ class SfincsInputVariables(BaseSettings):
     )
     wstfile: Optional[str] = Field(None, description="Path to the wave spectrum file")
 
-    inputformat: str = Field("bin", description="Input file format (bin or text)")
-    outputformat: str = Field("net", description="Output file format (net or text)")
-
     cdnrb: int = Field(
-        3, description="Number of wind speed ranges for drag coefficient"
+        None, description="Number of wind speed ranges for drag coefficient"
     )
     cdwnd: List[float] = Field(
-        [0.0, 28.0, 50.0],
+        None,
         description="Wind speed ranges for drag coefficient (m/s)",
     )
     cdval: List[float] = Field(
-        [0.001, 0.0025, 0.0015],
+        None,
         description="Drag coefficient values corresponding to cdwnd",
     )
 
