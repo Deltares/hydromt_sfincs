@@ -81,3 +81,9 @@ def hydrography(data_catalog):
     da_mask.raster.set_nodata(0)
     gdf_mask = da_mask.raster.vectorize()
     return ds_hydro["flwdir"], ds_hydro["uparea"], gdf_mask
+
+
+@pytest.fixture
+def model(tmp_path):
+    mod = SfincsModel(root=tmp_path, data_libs=["deltares_data"])
+    return mod
