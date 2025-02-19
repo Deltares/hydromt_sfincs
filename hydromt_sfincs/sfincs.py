@@ -31,7 +31,7 @@ from hydromt_sfincs import DATADIR, plots, utils, workflows
 from hydromt.model import Model
 
 # input types:
-from hydromt_sfincs.config import SfincsInput
+from hydromt_sfincs.config import SfincsConfig
 
 # grid types:
 from hydromt_sfincs.quadtree import QuadtreeGrid
@@ -123,7 +123,7 @@ class SfincsModel(Model):
 
         self.grid_type = "regular"
 
-        self.add_component("config", SfincsInput(self))
+        self.add_component("config", SfincsConfig(self))
         # grid types:
         self.add_component("grid", RegularGrid(self))
         self.add_component("quadtree", QuadtreeGrid(self))
@@ -172,7 +172,7 @@ class SfincsModel(Model):
     #             self.logger.removeHandler(handler)
 
     @property
-    def config(self) -> SfincsInput:
+    def config(self) -> SfincsConfig:
         """Returns the config object."""
         return self.components["config"]
 
