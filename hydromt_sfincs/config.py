@@ -15,7 +15,8 @@ class SfincsInputVariables(BaseSettings):
     # (https://github.com/Deltares/SFINCS/blob/main/source/src/sfincs_input.f90)
     # - and description and value range of https://sfincs.readthedocs.io/en/latest/parameters.html
     #
-    # Settings:
+    # Settings
+    #
     mmax: int = Field(10, ge=1, description="Number of grid cells in x-direction")
     nmax: int = Field(10, ge=1, description="Number of grid cells in y-direction")
     dx: float = Field(10.0, gt=0, description="Grid size in x-direction")
@@ -310,6 +311,18 @@ class SfincsInputVariables(BaseSettings):
         ge=0.0,
         description="Wiggle suppresion minimum depth threshold (-)",
     )
+    friction2d: int | None = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to turn on the 2D friction component in the momentum equation (1: on, 0: off)",
+    )
+    advection_mask: int | None = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to turn on the advection_mask(1: on, 0: off)",
+    )
     #
     # Domain
     #
@@ -399,7 +412,9 @@ class SfincsInputVariables(BaseSettings):
         None,
         description="Name of the spatially-uniform, constant in time infiltration file",
     )
+    #
     # Curve Number files
+    #
     scsfile: str | None = Field(
         None,
         description="Name of the Curve Number infiltration method A - maximum soil moisture storage capacity file",
@@ -412,7 +427,9 @@ class SfincsInputVariables(BaseSettings):
         None,
         description="Name of the Curve Number infiltration method B - initial soil moisture storage capacity file",
     )
+    #
     # Green and Ampt files
+    #
     psifile: str | None = Field(
         None,
         description="Name of the Green and Ampt infiltration  method - suction head file",
@@ -425,7 +442,9 @@ class SfincsInputVariables(BaseSettings):
         None,
         description="Name of the Green and Ampt infiltration method - saturated hydraulic conductivity file",
     )
+    #
     # Horton file
+    #
     f0file: str | None = Field(
         None,
         description="Name of the Horton infiltration method - Maximum (Initial) Infiltration Capacity file",
@@ -441,20 +460,150 @@ class SfincsInputVariables(BaseSettings):
     horton_kr_kd: float | None = Field(
         None, description="Horton infiltration recovery vs decay ration (-)"
     )
+    #
     # Netcdf input
-
-    bcafile: str | None = Field(None, description="Name of the calibration file")
-    corfile: str | None = Field(None, description="Name of the correction file")
-
-    obsfile: str | None = Field(None, description="Name of the observation file")
+    #
+    netbndbzsbzifile: str | None = Field(
+        None, description="Name of the Netcdf type water level input file"
+    )
+    netsrcdisfile: str | None = Field(
+        None, description="Name of the Netcdf type discharge input file"
+    )
+    netamuamvfile: str | None = Field(
+        None, description="Name of the Netcdf type wind amu-amv input file"
+    )
+    netamprfile: str | None = Field(
+        None, description="Name of the Netcdf type precipitation input file"
+    )
+    netampfile: str | None = Field(
+        None, description="Name of the Netcdf type atmoshperic pressure input file"
+    )
+    netspwfile: str | None = Field(
+        None,
+        description="Name of the Netcdf type spiderweb tropical cyclone input file",
+    )
+    #
+    # Output
+    #
+    obsfile: str | None = Field(
+        None, description="Name of the observation points input file"
+    )
     crsfile: str | None = Field(
-        None, description="Name of the coordinate reference system file"
+        None, description="Name of the cross-section lines input file"
     )
-
-    wfpfile: str | None = Field(
-        None, description="Name of the wind forcing parameter file"
+    storevelmax: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Option to write maximum velocity output to netcdf map output (1: yes, 0: no)",
     )
-
+    storefluxmax: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Option to write maximum flux output to netcdf map output (1: yes, 0: no)",
+    )
+    storevel: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Option to write instantaneous velocity output to netcdf map output (1: yes, 0: no)",
+    )
+    storecumprcp: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Option to write cumulative precipitation output to netcdf map output (1: yes, 0: no)",
+    )
+    storetwet: int = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to write 'twet' time wet output to netcdf map output (1: yes, 0: no)",
+    )
+    storehsubgrid: int = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to write -approximated- depth output for Subgrid models to netcdf map output (1: yes, 0: no)",
+    )
+    twet_threshold: float | None = Field(
+        None,
+        ge=0.0,
+        description="Time wet 'twet' minimum depth threshold (m)",
+    )
+    store_tsunami_arrival_time: int = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to write tsunami arrival time output to netcdf map output (1: yes, 0: no)",
+    )
+    tsunami_arrival_threshold: float | None = Field(
+        None,
+        ge=0.0,
+        description="Tsunami arrival time minimum depth threshold (m)",
+    )
+    storeqdrain: int = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to write discharge through drainage structure output to netcdf map output (1: yes, 0: no)",
+    )
+    storezvolume: int = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to write storage volume output to netcdf map output (1: yes, 0: no)",
+    )
+    # writeruntime > not used currently
+    debug: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Option to turn on debug mode and write every timestep to netcdf map output (1: yes, 0: no)",
+    )
+    storemeteo: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Option to write meteo output to netcdf map output (1: yes, 0: no)",
+    )
+    storemaxwind: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Option to write maximum wind speed output to netcdf map output (1: yes, 0: no)",
+    )
+    storefw: int = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to write wave forces to netcdf map output (1: yes, 0: no)",
+    )
+    storewavdir: int = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to write wave direction to netcdf map output (1: yes, 0: no)",
+    )
+    regular_output_on_mesh: int = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option to write regular grid model on quadtree mesh type output in netcdf map output (1: yes, 0: no)",
+    )
+    #
+    # Coupled SnapWave solver related
+    #
+    snapwave_wind: int = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Option in integrated SnapWave solver to turn on wind growth process (1: yes, 0: no)",
+    )
+    #
+    # Wind drag
+    #
     cdnrb: int | None = Field(
         None, description="Number of wind speed ranges for drag coefficient"
     )
@@ -466,6 +615,11 @@ class SfincsInputVariables(BaseSettings):
         None,
         description="Drag coefficient values corresponding to cdwnd",
     )
+    #
+    # Other used files - NOTE: not part of nor recognized by SFINCS kernel itself!!!
+    #
+    bcafile: str | None = Field(None, description="Name of the calibration file")
+    corfile: str | None = Field(None, description="Name of the correction file")
 
 
 class SfincsInput(ModelComponent):
