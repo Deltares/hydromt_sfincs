@@ -702,7 +702,7 @@ class SfincsInput(ModelComponent):
                     string = f"{key.ljust(20)} = {value}\n"
                 fid.write(string)
 
-    def get(self, key: str, fallback: Any = None, abs_path: bool = True) -> Any:
+    def get(self, key: str, fallback: Any = None, abs_path: bool = False) -> Any:
         """Get a value with validation check."""
 
         value = self.data.model_dump().get(key, fallback)
