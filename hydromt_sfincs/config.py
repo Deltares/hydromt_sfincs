@@ -225,17 +225,28 @@ class SfincsInputVariables(BaseSettings):
         description="Use data in ampr file as block rather than linear interpolation (1: yes, 0: no)",
     )
 
-    # Still to add:
     spwmergefrac: float = Field(
         None,
         gt=0.0,
         lt=1.0,
         description="Spiderweb merge factor with background wind and pressure (-)",
     )
-    # usespwprecip
-    # global
-    # nuvisc
+    usespwprecip: int = Field(
+        None,
+        description="Ability to use rainfall from spiderweb  (1: on, 0: off)",
+    )
+    # global: int = Field(
+    #     None,
+    #     description="Ability to make a global spherical SFINCS model that wraps 'over the edge' (1: on, 0: off)",
+    # ) #FIXME > clash with 'global' keyword, leave out for now
+    nuvisc: float = Field(
+        None,
+        ge=0.0,
+        description="Viscosity coefficient 'per meter of grid cell length', used if 'viscosity=1' and multiplied internally with the grid cell size (per quadtree level in quadtree mesh mode) (-)",
+    )
     viscosity: int = Field(1, description="Enable viscosity term (1: yes, 0: no)")
+
+    # TODO:
     # spinup_meteo
     # waveage
     # snapwave
