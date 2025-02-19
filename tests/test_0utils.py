@@ -12,13 +12,13 @@ import geopandas as gpd
 import copy
 
 from hydromt_sfincs import utils
-from hydromt_sfincs.sfincs_input import SfincsInput
+from hydromt_sfincs.config_variables import SfincsConfig
 
 from .conftest import TESTMODELDIR
 
 
 def test_bin_map(tmpdir):
-    conf = SfincsInput.from_file(join(TESTMODELDIR, "sfincs.inp"))
+    conf = SfincsConfig.from_file(join(TESTMODELDIR, "sfincs.inp"))
     shape = conf["nmax"], conf["mmax"]
     ind = utils.read_binary_map_index(join(TESTMODELDIR, "sfincs.ind"))
     msk = utils.read_binary_map(

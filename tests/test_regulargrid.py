@@ -12,7 +12,7 @@ def test_ind(reggrid, mask):
     assert ind.size == np.sum(mask > 0)
 
 
-def test_RegularGrid_create(model):
+def test_grid_create(model):
     # create a simple regular grid similar to sfincs_test
     grid_params = {
         "mmax": 84,
@@ -31,7 +31,7 @@ def test_RegularGrid_create(model):
     assert model.crs == CRS.from_epsg(32633)
 
 
-def test_RegularGrid_create_from_region(model):
+def test_grid_create_from_region(model):
     region = model.data_catalog.get_geodataframe(
         os.path.join(TESTDATADIR, "region.geojson"),
     )

@@ -57,11 +57,26 @@ def weirs():
 
 
 @pytest.fixture
-def mod(tmpdir):
+def model(tmp_path):
+    mod = SfincsModel(root=tmp_path, mode="w+")
+    return mod
+
+
+@pytest.fixture
+def model_config(tmp_path):
+    root = TESTMODELDIR
+    mod = SfincsModel(root=root, mode="r")
+    mod.config.read()
+    mod.root.set(str(tmp_path), mode="r+")
+    return mod
+
+
+@pytest.fixture
+def model_read(tmp_path):
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
     mod.read()
-    mod.set_root(str(tmpdir), mode="r+")
+    mod.root.set(str(tmp_path), mode="r+")
     return mod
 
 
@@ -81,9 +96,3 @@ def hydrography(data_catalog):
     da_mask.raster.set_nodata(0)
     gdf_mask = da_mask.raster.vectorize()
     return ds_hydro["flwdir"], ds_hydro["uparea"], gdf_mask
-
-
-@pytest.fixture
-def model(tmp_path):
-    mod = SfincsModel(root=tmp_path, data_libs=["deltares_data"])
-    return mod

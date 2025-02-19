@@ -27,7 +27,7 @@ from xugrid.core.wrap import UgridDataArray
 from hydromt_sfincs import DATADIR, plots, utils, workflows
 from hydromt_sfincs.quadtree import QuadtreeGrid
 from hydromt_sfincs.regulargrid import RegularGrid
-from hydromt_sfincs.sfincs_input import SfincsInput
+from hydromt_sfincs.config_variables import SfincsInput
 from hydromt_sfincs.subgrid import SubgridTableRegular
 
 __all__ = ["SfincsModel"]

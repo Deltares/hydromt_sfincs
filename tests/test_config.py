@@ -1,22 +1,23 @@
 import pytest
 from datetime import datetime
 from hydromt.model import Model
-from hydromt_sfincs.config import SfincsInput, SfincsInputVariables
+from hydromt_sfincs.config import SfincsConfig
+from hydromt_sfincs.config_variables import SfincsConfigVariables
 
 
-def test_SfincsInput_initialization():
+def test_config_initialization():
     model = Model()
-    config = SfincsInput(model)
+    config = SfincsConfig(model)
 
-    assert isinstance(config, SfincsInput)
-    assert isinstance(config.data, SfincsInputVariables)
+    assert isinstance(config, SfincsConfig)
+    assert isinstance(config.data, SfincsConfigVariables)
     assert config.data.mmax == 10  # Default value check
     assert config.data.nmax == 10
 
 
-def test_SfincsInput_get_set():
+def test_config_get_set():
     model = Model()
-    config = SfincsInput(model)
+    config = SfincsConfig(model)
 
     # set a new value and get it
     config.set("mmax", 20)
@@ -40,9 +41,9 @@ def test_SfincsInput_get_set():
         config.set("invalid_key", 100)
 
 
-def test_SfincsInput_io(tmpdir):
+def test_config_io(tmpdir):
     # Initialize the configuration
-    config0 = SfincsInput(Model)  # initialize with default values
+    config0 = SfincsConfig(Model)  # initialize with default values
     fn_out = str(tmpdir.join("sfincs.inp"))
 
     inpdict = {
@@ -64,14 +65,14 @@ def test_SfincsInput_io(tmpdir):
     # now test the read/write
     config0.write(fn_out)
 
-    config1 = SfincsInput(Model)
+    config1 = SfincsConfig(Model)
     config1.read(fn_out)
     assert config0.data == config1.data
 
 
-def test_SfincsInput_default_datetime():
+def test_config_datetime():
     model = Model()
-    config = SfincsInput(model)
+    config = SfincsConfig(model)
 
     assert isinstance(config.get("tref"), datetime)
     assert config.get("tref").year == 2010
