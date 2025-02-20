@@ -43,8 +43,8 @@ class RegularGrid(GridComponent):
             region_filename="region.geojson",
         )
 
-        # set spatial attributes
-        self.update_grid_from_config()
+        # # set spatial attributes
+        # self.update_grid_from_config()
 
     @property
     def transform(self):
@@ -137,8 +137,12 @@ class RegularGrid(GridComponent):
         da_lst = []
         if data_vars is None:
             data_vars = _MAPS
+            provide_warnings = (
+                False  # all possible variables are read, no warnings needed
+            )
         elif isinstance(data_vars, str):
             data_vars = list(data_vars)
+            provide_warnings = True  # specific variables are asked, so provide warnings
 
         # read index file
         ind_fn = self.model.config.get(
@@ -152,17 +156,17 @@ class RegularGrid(GridComponent):
         ind = self.read_ind(ind_fn=ind_fn)
 
         for name in data_vars:
-            if f"{name}file" in self.model.config:
-                fn = self.model.config.get(
-                    f"{name}file", fallback=f"sfincs.{name}", abs_path=True
-                )
-                if not isfile(fn):
+            fn = self.model.config.get(
+                f"{name}file", fallback=f"sfincs.{name}", abs_path=True
+            )
+            if not isfile(fn):
+                if provide_warnings:
                     logger.warning(f"{name}file not found at {fn}")
-                    continue
-                dtype = dtypes.get(name, "f4")
-                mv = mvs.get(name, -9999.0)
-                da = self.read_map(fn, ind, dtype, mv, name=name)
-                da_lst.append(da)
+                continue
+            dtype = dtypes.get(name, "f4")
+            mv = mvs.get(name, -9999.0)
+            da = self.read_map(fn, ind, dtype, mv, name=name)
+            da_lst.append(da)
         ds = xr.merge(da_lst)
         epsg = self.model.config.get("epsg", None)
         if epsg is not None:
@@ -193,7 +197,9 @@ class RegularGrid(GridComponent):
         #     self.set_grid(ds)
         #     ds.close()
 
-    def write(self, data_vars: Union[List, str] = None):
+    def write(
+        self, data_vars: Union[List, str] = None, write_gis: bool = False
+    ) -> None:
         """Write SFINCS grid to binary files including map index file.
         Filenames are taken from the `config` attribute (i.e. input file).
 
@@ -204,6 +210,8 @@ class RegularGrid(GridComponent):
         ----------
         data_vars : Union[List, str], optional
             List of data variables to write, by default None (all)
+        write_gis : bool, optional
+            Write grid variables to geotiff files, by default False
         """
         self.root._assert_write_mode
 
@@ -223,7 +231,7 @@ class RegularGrid(GridComponent):
             )
 
             if data_vars is None:  # write all maps
-                data_vars = [v for v in self._MAPS if v in ds_out]
+                data_vars = [v for v in _MAPS if v in ds_out]
             elif isinstance(data_vars, str):
                 data_vars = list(data_vars)
             logger.debug(f"Write binary map files: {data_vars}.")

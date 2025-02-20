@@ -256,20 +256,17 @@ class SfincsModel(Model):
             filename = join(self.root.path, "sfincs.inp")
         self.config.read(filename=filename)
 
-        # Determine grid type based on configuration
-        self.grid_type = "quadtree" if self.config.get("qtrfile") else "regular"
-
-        # Remove the grid component if it doesn't match the current grid type
-        if self.grid_type == "regular":
-            self.components.pop("quadtree", None)
-        elif self.grid_type == "quadtree":
-            self.components.pop("grid", None)
-
         # loop over all components (except config) and read
-        self.grid.read()
+        # TODO add check if files are present in each component otherwise skip-read
+        for name, comp in self.components.items():
+            if name != "config":
+                comp.read()
 
     def write(self):
-        self.config.write()
+        # loop over all components and write
+        # TODO make sure that all components are in the config (in their individual write functions?)
+        for name, comp in self.components.items():
+            comp.write()
 
     ## Plotting
     def plot_forcing(self, fn_out=None, forcings="all", **kwargs):

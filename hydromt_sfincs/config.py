@@ -27,9 +27,17 @@ class SfincsConfig(ModelComponent):
             self._data = SfincsConfigVariables()
         return self._data
 
-    def read(self, filename: str) -> None:
-        """Read a text file and populate SfincsConfig."""
-        with open(filename, "r") as fid:
+    def read(self, filename: str = "sfincs.inp") -> None:
+        """Read a text file and populate SfincsConfig.
+        This function also determines the grid type and updates the grid properties.
+        """
+
+        # Set the filename and check if it is an absolute path
+        self._filename = filename
+        if not isabs(filename):
+            self._filename = join(self.root.path, filename)
+
+        with open(self._filename, "r") as fid:
             lines = fid.readlines()
 
         inp_dict = {}
@@ -61,9 +69,16 @@ class SfincsConfig(ModelComponent):
         # Convert dictionary to SfincsConfig instance
         self._data = SfincsConfigVariables(**inp_dict)
 
-    def write(self, filename: str) -> None:
+        # Update the grid properties from the configuration
+        self.update_grid_from_config()
+
+    def write(self, filename: str = "sfincs.inp") -> None:
         """Write the instance's attributes to a file."""
-        with open(filename, "w") as fid:
+        self.root._assert_write_mode
+        if not isabs(filename) and self.root.path:
+            self._filename = join(self.root.path, filename)
+
+        with open(self._filename, "w") as fid:
             for key, value in self.data.dict(exclude_unset=True).items():
                 if value is None:
                     continue
@@ -122,3 +137,18 @@ class SfincsConfig(ModelComponent):
         # set each key-value pair in the dictionary
         for key, value in dict.items():
             self.set(key, value)
+
+    def update_grid_from_config(self) -> None:
+        """Update the grid properties from the configuration."""
+
+        # Determine grid type based on configuration
+        self.model.grid_type = "quadtree" if self.get("qtrfile") else "regular"
+
+        if self.model.grid_type == "regular":
+            # update the regular grid properties from the configuration
+            self.model.grid.update_grid_from_config()
+            # drop quadtree component
+            self.model.components.pop("quadtree", None)
+        elif self.model.grid_type == "quadtree":
+            # drop regular component
+            self.model.components.pop("grid", None)

@@ -1,6 +1,9 @@
 import numpy as np
 from pyproj import CRS
+import pytest
 import os
+
+from hydromt_sfincs.sfincs import SfincsModel
 
 from .conftest import TESTDATADIR, TESTMODELDIR
 
@@ -10,6 +13,49 @@ def test_ind(reggrid, mask):
     assert ind[0] == 254
     assert ind[-1] == 2939
     assert ind.size == np.sum(mask > 0)
+
+
+def test_grid_io(model_config, tmp_path):
+    # create a model instance with configuration read
+    model = model_config
+
+    # check if grid-variables are set properly
+    # this happens with update_grid_from_config()
+    assert model.grid.mmax == 84
+    assert model.grid.nmax == 36
+    assert model.grid.dx == 150
+    assert model.grid.dy == 150
+    assert model.grid.x0 == 318650.0
+    assert model.grid.y0 == 5040000.0
+    assert model.grid.rotation == 27.0
+    # model crs comes from sfincs.inp in this case
+    assert model.crs == CRS.from_epsg(32633)
+
+    # even though properties are set, the grid is not created yet
+    assert model.grid._data is None
+
+    # now read the grid
+    model.grid.read()
+
+    # check the shape model.grid.data
+    assert model.grid.data.raster.shape == (36, 84)
+
+    # check the variables in the grid
+    assert "msk" in model.grid.data.variables
+    assert len(model.grid.data.data_vars) == 1
+
+    # now write the model grid
+    model.root.set(tmp_path, mode="w+")
+    model.config.write()
+    model.grid.write()
+
+    # and read it again
+    model1 = SfincsModel(root=tmp_path, mode="r")
+    model1.config.read()
+    model1.grid.read()
+
+    # assert the grid is the same
+    assert model.grid.data.equals(model1.grid.data)
 
 
 def test_grid_create(model):

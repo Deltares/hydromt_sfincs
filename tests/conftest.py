@@ -66,7 +66,7 @@ def model(tmp_path):
 def model_config(tmp_path):
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
-    mod.config.read(filename=join(root, "sfincs.inp"))
+    mod.config.read()
     return mod
 
 
