@@ -108,7 +108,9 @@ class SfincsObservationPoints(ModelComponent):
             raise ValueError("Observation points must be of type Point.")
 
         # Clip points outside of model region:
-        within = gdf.within(self.model.region)  # same as 'inpolygon' function
+        within = gdf.within(
+            self.model.region.unary_union
+        )  # same as 'inpolygon' function
         if within.any() == True:
             if within.all() == False:
                 # keep points that fall within region
