@@ -55,7 +55,7 @@ def test_observation_points_create(model_config):
     obs1 = model_config.observation_points.data
     assert obs1.shape == obs0.shape  # (3,2) > both 3 points
 
-    # check if coordinates are similar (do to rounding in ascii sfincs.obs not exactly the same)
+    # check if coordinates are similar (due to rounding in ascii sfincs.obs not exactly the same)
     assert np.isclose(obs1.geometry.x.values, obs0.geometry.x.values, rtol=0.001).all()
     assert np.isclose(obs1.geometry.y.values, obs0.geometry.y.values, rtol=0.001).all()
 

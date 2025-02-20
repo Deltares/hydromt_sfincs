@@ -103,6 +103,7 @@ class SfincsObservationPoints(ModelComponent):
             Set GeoDataFrame with observation points to self.data
         name: str
             Geometry name.
+        **NOTE** - coordinates of points in GeoDataFrame need to be in the same CRS as SFINCS model.
         """
         if not gdf.geometry.type.isin(["Point"]).all():
             raise ValueError("Observation points must be of type Point.")
@@ -164,20 +165,6 @@ class SfincsObservationPoints(ModelComponent):
         # TODO - add to config: self.model.config
         # self.model.config(f"{name}file", f"sfincs.{name}")
         # self.set_config(f"{name}file", f"sfincs.{name}")
-
-    def add(
-        self,
-        gdf: gpd.GeoDataFrame,
-    ):
-        """Add multiple points to observation points.
-
-        Arguments
-        ---------
-        gdf: gpd.GeoDataFrame
-            GeoDataFrame with locations and names of observations points to be added.
-        **NOTE** - coordinates of points in GeoDataFrame need to be in the same CRS as SFINCS model.
-        """
-        self.set(gdf, merge=True)
 
     def delete(
         self,
