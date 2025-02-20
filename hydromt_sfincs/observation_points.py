@@ -3,7 +3,7 @@ import geopandas as gpd
 import shapely
 import pandas as pd
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, List
 from os.path import join
 
 from hydromt.model.components import ModelComponent
@@ -129,7 +129,8 @@ class SfincsObservationPoints(ModelComponent):
 
         if merge and self.data is not None:
             gdf0 = self.data
-            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
+            # add the new data behind the original
+            gdf = gpd.GeoDataFrame(pd.concat([gdf0, gdf], ignore_index=True))
             logger.info("Adding new observation points to existing ones.")
 
         self._data = gdf  # set gdf in self.data
@@ -154,9 +155,6 @@ class SfincsObservationPoints(ModelComponent):
         merge: bool, optional
             If True, merge the new observation points with the existing ones. By default True.
         """
-        # FIXME ensure the catalog is loaded before adding any new entries
-        # self.data_catalog.sources TODO: check if still needed
-
         gdf = self.data_catalog.get_geodataframe(
             locations, geom=self.model.region, assert_gtype="Point", **kwargs
         ).to_crs(self.model.crs)
@@ -183,7 +181,7 @@ class SfincsObservationPoints(ModelComponent):
 
     def delete(
         self,
-        index: int,  # FIXME - should this be List(int)?
+        index: int,  # FIXME - now we expect list [int] - does that make sense?/should we specify here?
     ):
         """Remove (multiple) point(s) from observation points.
 
@@ -192,10 +190,10 @@ class SfincsObservationPoints(ModelComponent):
         index: int
             Specify indices (int) of point(s) to be dropped from GeoDataFrame of observations.
         """
-        if index.any() > (len(self.data.index) - 1):  # TODO - check if this is correct
+        if any(x > (len(self.data.index) - 1) for x in index):
             raise ValueError("One of the indices exceeds length of index range!")
 
-        self.data.drop(index).reset_index(drop=True)
+        self._data = self.data.drop(index).reset_index(drop=True)
         logger.info("Dropping point(s) from observations")
 
     def clear(self):
@@ -228,7 +226,11 @@ class SfincsObservationPoints(ModelComponent):
         point = shapely.geometry.Point(x, y)
         d = {"name": name, "long_name": None, "geometry": point}
 
-        self.data.append(d)  # add point directly to gdf
+        # Create a new GeoDataFrame for the Point
+        gdf = gpd.GeoDataFrame([d], crs=self.model.region.crs)
+
+        self.set(gdf, merge=True)
+        # self._data = self.data.append(d)  # add point directly to gdf > has been deprecated...
 
     def delete_point(
         self,
@@ -243,16 +245,18 @@ class SfincsObservationPoints(ModelComponent):
             Specify either name (str) or index (int) of point to be dropped from GeoDataFrame of observations.
         """
         if type(name_or_index) == str:
+            index = None
             for id, row in self.data.iterrows():
                 if row["name"] == name_or_index:
-                    index = id
-            raise ValueError("Point " + name_or_index + " not found!")
+                    index = int(id)
+            if index == None:
+                raise ValueError("Point " + name_or_index + " not found!")
         elif type(name_or_index) == int:
-            index = name_or_index
+            index = int(name_or_index)
         else:
             raise ValueError("Wrong input type given for function delete_point")
 
-        self.delete(index)  # calls the generic delete function
+        self.delete(index=[index])  # calls the generic delete function as list
         return
 
     def list_names(self):
