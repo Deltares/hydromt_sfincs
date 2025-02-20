@@ -7,20 +7,27 @@ from .conftest import TESTDATADIR, TESTMODELDIR
 
 
 def test_observation_points_io(model_config, tmp_path):
-    # goal: test that reads the input from existing model
+    # goal:
+    # - test read existing sfincs.obs file
+    # - test writing to new location
+    # - read in again, and compare the 2
 
     # read existing sfincs.obs file
-    obs0 = model_config.observation_points.read()
+    model_config.observation_points.read()
+
+    # get the data of read in file
+    obs0 = model_config.observation_points.data
 
     # write to testfolder
     obsfile = join(tmp_path, "sfincs.obs")
     model_config.observation_points.write(filename=obsfile)
 
     # read in again
-    obs1 = model_config.observation_points.read(obsfile)
+    model_config.observation_points.read(obsfile)
+    obs1 = model_config.observation_points.data
 
-    # compare whether they are the same
-    assert obs0 == obs1
+    # compare whether the 2 gdf's are the same
+    assert obs0.equals(obs1)
 
 
 # def test_observation_points_create(model):

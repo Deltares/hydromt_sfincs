@@ -1,8 +1,10 @@
+import logging
 import geopandas as gpd
 import shapely
 import pandas as pd
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
+from os.path import join
 
 from hydromt.model.components import ModelComponent
 from hydromt.model import Model
@@ -10,6 +12,8 @@ from hydromt_sfincs import utils
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
+
+logger = logging.getLogger(__name__)
 
 
 class SfincsObservationPoints(ModelComponent):
@@ -50,18 +54,28 @@ class SfincsObservationPoints(ModelComponent):
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
-    def read(self):
+    def read(
+        self, filename=None
+    ):  # FIXME - what is best way to treat filename - self._filename ?
         """Read in all observation points."""
-        self._filename = self.model.config.get("obsfile")
+        if filename is None:
+            self._filename = self.model.config.get("obsfile")
+            filename = join(self.model.root.path, self._filename)
 
         # Read input file:
-        gdf = utils.read_xyn(self._filename, crs=self.model.crs)  # =utils.py function
+        gdf = utils.read_xyn(filename, crs=self.model.region.crs)  # =utils.py function
 
         # Add to self._data
         self.set(gdf, merge=False)
 
-    def write(self, filename=None):  # TODO - TL: filename=None - still needed?
+    def write(
+        self, filename=None
+    ):  # FIXME - what is best way to treat filename - self._filename ?
         """Write obsfile."""
+        if filename is None:
+            self._filename = self.model.config.get("obsfile")
+            filename = join(self.model.root.path, self._filename)
+
         # change precision of coordinates according to crs
         if self.model.crs.is_geographic:
             fmt = "%.6f"
@@ -73,7 +87,8 @@ class SfincsObservationPoints(ModelComponent):
         # self.config.XXX
         # self._filename = XXX
 
-        utils.write_xyn(self._filename, self.data, fmt=fmt)  # =utils.py function
+        # utils.write_xyn(self._filename, self.data, fmt=fmt)  # =utils.py function
+        utils.write_xyn(filename, self.data, fmt=fmt)  # =utils.py function
 
         # TODO - write also as geojson - TL: at what level do we want to do that?
         # if self._write_gis:
@@ -94,13 +109,19 @@ class SfincsObservationPoints(ModelComponent):
 
         # Clip points outside of model region:
         within = gdf.within(self.model.region)  # same as 'inpolygon' function
-        if within.all() == False:
+        if within.any() == True:
+            if within.all() == False:
+                # keep points that fall within region
+                gdf = gdf[within]
+
+                # write away the names of points that are removed
+                gdf_name = gdf.name[~within]
+                logger.info(
+                    "Some of the observation points fall out of model domain. Removing points: "
+                    + str(gdf_name.values)
+                )
+        else:
             raise ValueError("None of observation points fall within model domain.")
-        elif within.any() == False:
-            gdf = gdf[~within]
-            self.logger.info(
-                "Some of observation points fall out of model domain. Removing points."
-            )
 
         if merge and self.data is not None:
             gdf0 = self.data

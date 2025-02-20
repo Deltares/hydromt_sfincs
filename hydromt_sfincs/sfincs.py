@@ -205,10 +205,8 @@ class SfincsModel(Model):
         """Returns the geometry of the active model cells."""
         # NOTE overwrites property in GridModel
         region = gpd.GeoDataFrame()
-        if "region" in self.geoms:
-            region = self.geoms["region"]
-        elif self.grid_type == "regular":
-            if "msk" in self.grid and np.any(self.grid["msk"] > 0):
+        if self.grid_type == "regular":
+            if "msk" in self.grid.data and np.any(self.grid.data["msk"] > 0):
                 da = xr.where(self.mask > 0, 1, 0).astype(np.int16)
                 da.raster.set_nodata(0)
                 region = da.raster.vectorize().dissolve()
