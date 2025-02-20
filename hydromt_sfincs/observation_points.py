@@ -108,9 +108,11 @@ class SfincsObservationPoints(ModelComponent):
             raise ValueError("Observation points must be of type Point.")
 
         # Clip points outside of model region:
-        within = gdf.within(
-            self.model.region.unary_union
-        )  # same as 'inpolygon' function
+        within = gdf.within(self.model.region.unary_union)
+        # within = gdf.within(self.model.region.union_all)
+        # > FIXME - tried to overcome deprecation warning of unary_union, but suggested alternative does not work
+        # NOTE - .within does same as 'inpolygon' function
+
         if within.any() == True:
             if within.all() == False:
                 # keep points that fall within region
@@ -128,7 +130,7 @@ class SfincsObservationPoints(ModelComponent):
         if merge and self.data is not None:
             gdf0 = self.data
             gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
-            self.logger.info("Adding new observation points to existing ones.")
+            logger.info("Adding new observation points to existing ones.")
 
         self._data = gdf  # set gdf in self.data
 
@@ -194,11 +196,11 @@ class SfincsObservationPoints(ModelComponent):
             raise ValueError("One of the indices exceeds length of index range!")
 
         self.data.drop(index).reset_index(drop=True)
-        self.logger.info("Dropping point(s) from observations")
+        logger.info("Dropping point(s) from observations")
 
     def clear(self):
         """Clean GeoDataFrame with observation points."""
-        self.data = gpd.GeoDataFrame()
+        self._data = gpd.GeoDataFrame()
 
     # %% DDB GUI focused additional functions:
     # add_point

@@ -1,4 +1,5 @@
 import numpy as np
+import geopandas as gpd
 from pyproj import CRS
 import os
 from os.path import join
@@ -30,7 +31,7 @@ def test_observation_points_io(model_config, tmp_path):
     assert obs0.equals(obs1)
 
 
-def test_observation_points_create(model_config, tmp_path):
+def test_observation_points_create(model_config):
     # goal: test if obsfile can be made from an existing geojson
     # goal: compare to similar values from existing ascii sfincs.obs file
     # goal: check behaviour merge = False and True
@@ -60,9 +61,18 @@ def test_observation_points_create(model_config, tmp_path):
     assert obs2.size == 12  # (6,2) > now 6 points
 
 
-# model_config.observation_points.clear() #> does not work?
+def test_observation_points_clear(model_config):
+    # load including data
+    obs0 = model_config.observation_points.data
 
-# def test_observation_points_set(model):
+    # call clear
+    model_config.observation_points.clear()
+
+    # check if actually cleared
+    assert model_config.observation_points.data.empty
+
+
+# def test_observation_points_add_delete(model):
 # goal: check if point can be added (one in and one outside of region)
 # goal: check if points outside of region are actually clipped
 
