@@ -72,20 +72,24 @@ class SfincsObservationPoints(ModelComponent):
         self, filename=None
     ):  # FIXME - what is best way to treat filename - self._filename ?
         """Write obsfile."""
+
+        # add to config
+        self.model.config.update({"obsfile": "sfincs.obs"})
+        # FIXME - should be self._filename? > but was still None ...
+
         if filename is None:
             self._filename = self.model.config.get("obsfile")
             filename = join(self.model.root.path, self._filename)
+            self.model.config.update({"obsfile": filename})
+
+        # add to config
+        self.model.config.update({"obsfile": filename})
 
         # change precision of coordinates according to crs
         if self.model.crs.is_geographic:
             fmt = "%.6f"
         else:
             fmt = "%.1f"
-
-        # #TODO add to config -
-        # # If filename is not None:
-        # self.config.XXX
-        # self._filename = XXX
 
         # utils.write_xyn(self._filename, self.data, fmt=fmt)  # =utils.py function
         utils.write_xyn(filename, self.data, fmt=fmt)  # =utils.py function
