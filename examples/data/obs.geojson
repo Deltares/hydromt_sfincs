@@ -1,0 +1,16 @@
+{
+"type": "FeatureCollection",
+"name": "obs",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::25832" } },
+"features": [
+{ "type": "Feature", "properties": { "id": null, "name": null }, "geometry": { "type": "Point", "coordinates": [ 538550.250826026313007, 6115987.950079037807882 ] } },
+{ "type": "Feature", "properties": { "id": null, "name": null }, "geometry": { "type": "Point", "coordinates": [ 538942.161213149433024, 6115884.961923640221357 ] } },
+{ "type": "Feature", "properties": { "id": null, "name": "'KoldingHavn'" }, "geometry": { "type": "Point", "coordinates": [ 530481.207999999984168, 6149418.619 ] } },
+{ "type": "Feature", "properties": { "id": null, "name": "'Kolding_aa_vestre_ringvej'" }, "geometry": { "type": "Point", "coordinates": [ 529407.604000000050291, 6149318.596 ] } },
+{ "type": "Feature", "properties": { "id": null, "name": "'Kolding_aa_Kongebrogade'" }, "geometry": { "type": "Point", "coordinates": [ 530155.123999999952503, 6149045.433000000193715 ] } },
+{ "type": "Feature", "properties": { "id": null, "name": "'AssensHavn'" }, "geometry": { "type": "Point", "coordinates": [ 556379.429, 6125242.08600000012666 ] } },
+{ "type": "Feature", "properties": { "id": null, "name": "'FaaborgHavn'" }, "geometry": { "type": "Point", "coordinates": [ 579220.446, 6105860.06900000013411 ] } },
+{ "type": "Feature", "properties": { "id": null, "name": "'HaderslevHavn'" }, "geometry": { "type": "Point", "coordinates": [ 532385.01300000003539, 6122917.007000000216067 ] } },
+{ "type": "Feature", "properties": { "id": null, "name": "'AbenraHavn'" }, "geometry": { "type": "Point", "coordinates": [ 527318.34499999997206, 6099850.037999999709427 ] } }
+]
+}
