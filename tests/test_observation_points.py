@@ -25,7 +25,7 @@ def test_observation_points_io(model_config, tmp_path):
     model_config.observation_points.write(filename=obsfile)
 
     # check if file is made
-    assert not isfile(obsfile)
+    assert isfile(obsfile)
 
     # read in again
     model_config.observation_points.read(obsfile)
@@ -75,7 +75,7 @@ def test_observation_points_add_delete(model_config):
     obs0 = model_config.observation_points.data
 
     # add again
-    model_config.observation_points.add(gdf=obs0)
+    model_config.observation_points.set(gdf=obs0)
 
     # check if points are added
     obs1 = model_config.observation_points.data
