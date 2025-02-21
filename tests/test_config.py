@@ -1,23 +1,12 @@
-import pytest
 from datetime import datetime
-from hydromt.model import Model
-from hydromt_sfincs.config import SfincsConfig
-from hydromt_sfincs.config_variables import SfincsConfigVariables
+import os
+import pytest
+
+from hydromt_sfincs import SfincsModel
 
 
-def test_config_initialization():
-    model = Model()
-    config = SfincsConfig(model)
-
-    assert isinstance(config, SfincsConfig)
-    assert isinstance(config.data, SfincsConfigVariables)
-    assert config.data.mmax == 10  # Default value check
-    assert config.data.nmax == 10
-
-
-def test_config_get_set():
-    model = Model()
-    config = SfincsConfig(model)
+def test_config_get_set(model_init):
+    config = model_init.config
 
     # set a new value and get it
     config.set("mmax", 20)
@@ -41,11 +30,11 @@ def test_config_get_set():
         config.set("invalid_key", 100)
 
 
-def test_config_io(tmpdir):
-    # Initialize the configuration
-    config0 = SfincsConfig(Model)  # initialize with default values
-    fn_out = str(tmpdir.join("sfincs.inp"))
+def test_config_io(tmp_path):
+    # Start with model initialized with default values
+    model0 = SfincsModel(root=tmp_path, mode="w+")
 
+    # update the configuration with new values
     inpdict = {
         "mmax": 84,
         "nmax": 36,
@@ -56,23 +45,26 @@ def test_config_io(tmpdir):
         "rotation": 27.0,
         "epsg": 32633,
     }
-    config0.update(inpdict)
+    model0.config.update(inpdict)
 
     # check if the values are set correctly
     for key, value in inpdict.items():
-        assert config0.get(key) == value
+        assert model0.config.get(key) == value
 
     # now test the read/write
-    config0.write(fn_out)
+    model0.config.write()
 
-    config1 = SfincsConfig(Model)
-    config1.read(fn_out)
-    assert config0.data == config1.data
+    # check if the file is written
+    assert os.path.isfile(os.path.join(tmp_path, "sfincs.inp"))
+
+    # now read the configuration again
+    model1 = SfincsModel(root=tmp_path, mode="r")
+    model1.config.read()
+    assert model0.config.data == model1.config.data
 
 
-def test_config_datetime():
-    model = Model()
-    config = SfincsConfig(model)
+def test_config_datetime(model_init):
+    config = model_init.config
 
     assert isinstance(config.get("tref"), datetime)
     assert config.get("tref").year == 2010

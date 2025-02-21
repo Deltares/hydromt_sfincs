@@ -7,6 +7,7 @@ import pytest
 import numpy as np
 
 from hydromt import DataCatalog
+from hydromt.model import Model
 from hydromt_sfincs.sfincs import SfincsModel
 from hydromt_sfincs.regulargrid import RegularGrid
 
@@ -15,19 +16,56 @@ TESTMODELDIR = join(TESTDATADIR, "sfincs_test")
 
 
 @pytest.fixture
-def reggrid():
-    # create a simple regular grid
-    grid = RegularGrid(
-        x0=318650,
-        y0=5040000,
-        dx=150,
-        dy=150,
-        nmax=84,  # height
-        mmax=36,  # width
-    )
-    return grid
+def data_catalog():
+    return DataCatalog("artifact_data")
 
 
+# initialize a model instance in write mode in a temporary directory
+@pytest.fixture
+def model_init(tmp_path):
+    mod = SfincsModel(root=tmp_path, mode="w+")
+    return mod
+
+
+# initialize a model instance with configuration read
+@pytest.fixture
+def model_config():
+    root = TESTMODELDIR
+    mod = SfincsModel(root=root, mode="r")
+    mod.config.read()
+    return mod
+
+
+# read full model instance and set to write mode in a temporary directory
+@pytest.fixture
+def model(tmp_path):
+    root = TESTMODELDIR
+    mod = SfincsModel(root=root, mode="r")
+    mod.read()
+    mod.root.set(str(tmp_path), mode="r+")
+    return mod
+
+
+# create a simple regular grid similar to sfincs_test
+@pytest.fixture
+def reggrid(model_config):
+    grid_params = {
+        "mmax": 36,
+        "nmax": 84,
+        "dx": 150,
+        "dy": 150,
+        "x0": 318650.0,
+        "y0": 5040000.0,
+        "rotation": 27.0,
+        "epsg": 32633,
+    }
+
+    # create the grid (note this actually calls model.reggrid.create)
+    model_config.grid.create(**grid_params)
+    return model_config.grid
+
+
+# create a random mask
 @pytest.fixture
 def mask(reggrid):
     # create a simple mask
@@ -54,34 +92,6 @@ def weirs():
         },
     ]
     return feats
-
-
-@pytest.fixture
-def model(tmp_path):
-    mod = SfincsModel(root=tmp_path, mode="w+")
-    return mod
-
-
-@pytest.fixture
-def model_config(tmp_path):
-    root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r")
-    mod.config.read()
-    return mod
-
-
-@pytest.fixture
-def model_read(tmp_path):
-    root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r")
-    mod.read()
-    mod.root.set(str(tmp_path), mode="r+")
-    return mod
-
-
-@pytest.fixture
-def data_catalog():
-    return DataCatalog("artifact_data")
 
 
 @pytest.fixture

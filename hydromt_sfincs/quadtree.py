@@ -1,7 +1,8 @@
 import logging
 import os
+from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import geopandas as gpd
 import numpy as np
@@ -11,7 +12,6 @@ import xarray as xr
 import xugrid as xu
 from pyproj import CRS, Transformer
 
-from hydromt.model import Model
 from hydromt.model.components import MeshComponent
 from hydromt_sfincs.utils import xu_open_dataset
 from hydromt_sfincs.subgrid import SubgridTableQuadtree
@@ -26,13 +26,16 @@ try:
 except ImportError:
     HAS_DATASHADER = False
 
+if TYPE_CHECKING:
+    from hydromt_sfincs import SfincsModel
+
 logger = logging.getLogger(__name__)
 
 
 class QuadtreeGrid(MeshComponent):
     def __init__(
         self,
-        model: Model,
+        model: "SfincsModel",
     ):
         self._filename: str = "sfincs_grid.nc"
         self._data: xu.UgridDataArray = None  # FIXME - correct?
@@ -101,50 +104,55 @@ class QuadtreeGrid(MeshComponent):
         return xu.UgridDataArray(da0, self.data.grid)
 
     # %% core HydroMT-SFINCS functions:
-    # _initialize
+    # _data (coming from MeshComponent)
+    # _initialize (coming from MeshComponent)
     # read
     # write
+    # set (coming from MeshComponent)
     # create
 
-    def _initialize(self, skip_read=False) -> None:
-        """Initialize geoms."""
-        if self._data is None:
-            self._data = xu.UgridDataArray()  # FIXME - right?
-            if self.root.is_reading_mode() and not skip_read:
-                self.read()
-
     def read(
-        self, file_name: Union[str, Path] = "sfincs.nc"
+        self, filename: Union[str, Path] = "sfincs.nc"
     ):  # FIXME - or directly self._filename?
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object."""
 
-        self.data = xu_open_dataset(self._filename)
+        # check if in read mode and initialize grid
+        self.root._assert_read_mode()
+
+        # Set the filename and check if it is an absolute path
+        self._filename = filename
+        if not isabs(filename):
+            self._filename = join(self.root.path, filename)
+
+        dsu = xu_open_dataset(self._filename)
+        # set CRS (not sure if that should be stored in the netcdf in this way)
+        dsu.grid.set_crs(CRS.from_wkt(dsu["crs"].crs_wkt))
 
         # TODO make similar to fortran conventions?
         # Rename to python conventions
-        self.data = self.data.rename({"z": "dep"}) if "z" in self.data else self.data
-        self.data = (
-            self.data.rename({"mask": "msk"}) if "mask" in self.data else self.data
+        dsu = dsu.rename({"z": "dep"}) if "z" in dsu else dsu
+        dsu = dsu.rename({"mask": "msk"}) if "mask" in dsu else dsu
+        dsu = (
+            dsu.rename({"snapwave_mask": "snapwave_msk"})
+            if "snapwave_mask" in dsu
+            else dsu
         )
-        self.data = (
-            self.data.rename({"snapwave_mask": "snapwave_msk"})
-            if "snapwave_mask" in self.data
-            else self.data
-        )
+        # set the data
+        self.set(dsu)
 
         self.nr_cells = self.data.sizes["mesh2d_nFaces"]
-
-        # set CRS (not sure if that should be stored in the netcdf in this way)
-        # self.data.crs = CRS.from_wkt(self.data["crs"].crs_wkt)
-        self.data.grid.set_crs(CRS.from_wkt(self.data["crs"].crs_wkt))
 
         for key, value in self.data.attrs.items():
             setattr(self, key, value)
 
     def write(
-        self, file_name: Union[str, Path] = "sfincs.nc", version: int = 0
+        self, filename: Union[str, Path] = "sfincs.nc", version: int = 0
     ):  # FIXME - or directly self._filename?
         """Writes a quadtree SFINCS netcdf file."""
+
+        self._filename = filename
+        if not isabs(filename):
+            self._filename = join(self.root.path, filename)
 
         # TODO do we want to cut inactive cells here? Or already when creating the mask?
 
@@ -160,7 +168,7 @@ class QuadtreeGrid(MeshComponent):
         )
 
         ds.attrs = attrs
-        ds.to_netcdf(file_name)
+        ds.to_netcdf(filename)
 
     # %% DDB GUI focused additional functions:
     # map_overlay

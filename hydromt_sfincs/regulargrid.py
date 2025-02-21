@@ -409,46 +409,6 @@ class RegularGrid(GridComponent):
     # - ind
     # - to_vector_lines
 
-    # %% GRID:
-    def read_grid(
-        self,
-    ):
-        # uses read_ind()
-
-        return
-
-    def write_grid(
-        self,
-    ):
-        # uses write_ind()
-
-        return
-
-    def create_grid(
-        self,
-    ):
-        return
-
-    def create_grid_from_region(
-        self,
-    ):
-        return
-
-    # %% DEP:
-    def read_dep(
-        self,
-    ):
-        # uses read_map()
-
-        return
-
-    def write_dep(
-        self,
-    ):
-        # uses write_map()
-
-        return
-
     def create_dep(
         self,
         datasets_dep: List[dict],
@@ -504,20 +464,6 @@ class RegularGrid(GridComponent):
             self.config.update({"depfile": "sfincs.dep"})
 
     ## MASK
-
-    def read_msk(
-        self,
-    ):
-        # uses read_map()
-
-        return
-
-    def write_msk(
-        self,
-    ):
-        # uses write_map()
-
-        return
 
     def create_mask_active(
         # def create_mask(
@@ -865,7 +811,7 @@ class RegularGrid(GridComponent):
         self.dx, self.dy = self.data.raster.res
         self.x0, self.y0 = self.data.raster.origin
         self.rotation = self.data.raster.rotation
-        self.epsg = self.crs.to_epsg()
+        self.epsg = self.data.raster.crs.to_epsg()
 
         # update the grid properties in the config
         self.model.config.update(

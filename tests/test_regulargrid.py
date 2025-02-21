@@ -58,7 +58,8 @@ def test_grid_io(model_config, tmp_path):
     assert model.grid.data.equals(model1.grid.data)
 
 
-def test_grid_create(model):
+def test_grid_create(model_init):
+    model = model_init
     # create a simple regular grid similar to sfincs_test
     grid_params = {
         "mmax": 84,
@@ -77,7 +78,8 @@ def test_grid_create(model):
     assert model.crs == CRS.from_epsg(32633)
 
 
-def test_grid_create_from_region(model):
+def test_grid_create_from_region(model_init):
+    model = model_init
     region = model.data_catalog.get_geodataframe(
         os.path.join(TESTDATADIR, "region.geojson"),
     )
