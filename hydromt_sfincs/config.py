@@ -156,7 +156,6 @@ class SfincsConfig(ModelComponent):
     def get_set_config_file_variable(
         self, key: str, value: str, default_filename: str
     ) -> Path:
-        # ) -> None:
         """Return filepath of a variable 'key', and add key-value to config if not present.
 
         Actions depending on situation:
@@ -193,7 +192,6 @@ class SfincsConfig(ModelComponent):
                 self.model.config.set(key, value)
                 # return file_path including root:
                 file_path = Path(abspath(join(self.model.config.root.path, value)))
-                # file_path = join(self.model.config.root.path, value)
 
             else:  # dealing with a path as input
                 # check if path == root, determines how we add to the config:
@@ -202,18 +200,12 @@ class SfincsConfig(ModelComponent):
                     self.model.config.set(key, value_name)
                 else:
                     # file_directory different than root
-                    #
-                    # if exists(file_directory):
-                    #     # file_directory is exists, but is different than root
-                    # else:
-                    # raise ValueError("Directory " + file_directory + " does not exist!")
 
                     # add the full path to config:
                     self.model.config.set(key, value)
 
                 # value is the full_path already:
                 file_path = Path(value)
-                # file_path = value
 
         # 2) variable 'key' already in config:
         elif value is None and self.model.config.get(key) is not None:
@@ -237,6 +229,5 @@ class SfincsConfig(ModelComponent):
             file_path = Path(
                 abspath(join(self.model.config.root.path, default_filename))
             )
-            # file_path = join(self.model.config.root.path, value)
 
         return file_path
