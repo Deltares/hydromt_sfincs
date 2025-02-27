@@ -13,6 +13,10 @@ def test_observation_points_io(model_config, tmp_path):
     # - test read existing sfincs.obs file
     # - test writing to new location
     # - read in again, and compare the 2
+    # - clear obsfile in config
+    # - write again and check whether is added to config
+    # - also write without specifying name
+    # - and with filename without path
 
     # read existing sfincs.obs file
     model_config.observation_points.read()
@@ -33,6 +37,38 @@ def test_observation_points_io(model_config, tmp_path):
 
     # compare whether the 2 gdf's are the same
     assert obs0.equals(obs1)
+
+    # clear in config
+    model_config.config.set("obsfile", None)
+
+    # write again and check whether 'obsfile' is added to config
+    model_config.observation_points.write(filename=obsfile)
+
+    obs2 = model_config.config.get("obsfile")
+    assert obsfile == obs2
+
+    # change root to tmpfolder
+    model_config.root.path = tmp_path
+
+    # clear in config
+    model_config.config.set("obsfile", None)
+
+    # write without filename specified
+    model_config.observation_points.write()
+
+    # check if added with default name
+    obs3 = model_config.config.get("obsfile")
+    assert "sfincs.obs" == obs3
+
+    # clear in config
+    model_config.config.set("obsfile", None)
+
+    # write with filename not as path
+    model_config.observation_points.write(filename="sfincs_test.obs")
+
+    # check if added with default name
+    obs4 = model_config.config.get("obsfile")
+    assert "sfincs_test.obs" == obs4
 
 
 def test_observation_points_create(model_config):

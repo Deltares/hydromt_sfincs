@@ -10,6 +10,8 @@ from hydromt.model.components import ModelComponent
 from hydromt.model import Model
 from hydromt_sfincs import utils
 
+# from hydromt.config import get_set_config_file_variable
+
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
 
@@ -43,24 +45,23 @@ class SfincsObservationPoints(ModelComponent):
     # write
     # set
     # create
-    # add
     # delete
     # clear
 
     def _initialize(self, skip_read=False) -> None:
         """Initialize geoms."""
         if self._data is None:
-            self._data = gpd.GeoDataFrame()  # FIXME - right?
+            self._data = gpd.GeoDataFrame()
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
-    def read(
-        self, filename=None
-    ):  # FIXME - what is best way to treat filename - self._filename ?
+    def read(self, filename=None):
         """Read in all observation points."""
         if filename is None:
             self._filename = self.model.config.get("obsfile")
             filename = join(self.model.root.path, self._filename)
+
+        # FIXME check is file exist
 
         # Read input file:
         gdf = utils.read_xyn(filename, crs=self.model.region.crs)  # =utils.py function
@@ -68,31 +69,29 @@ class SfincsObservationPoints(ModelComponent):
         # Add to self._data
         self.set(gdf, merge=False)
 
-    def write(
-        self, filename=None
-    ):  # FIXME - what is best way to treat filename - self._filename ?
+    def write(self, filename=None):
         """Write obsfile."""
 
-        # add to config
-        self.model.config.update({"obsfile": "sfincs.obs"})
-        # FIXME - should be self._filename? > but was still None ...
+        # check if data present:
+        if self.data.empty:
+            return
 
-        if filename is None:
-            self._filename = self.model.config.get("obsfile")
-            filename = join(self.model.root.path, self._filename)
-            self.model.config.update({"obsfile": filename})
+        # call function to get back full filepath of config variable "obsfile"
+        # function also updates the name in case a filename is provided to this function
+        # and if not the case, and obsfile doesn't exist yet, it is initialised with the default of "sfincs.obs"
 
-        # add to config
-        self.model.config.update({"obsfile": filename})
+        file_path = self.model.config.get_set_config_file_variable(
+            key="obsfile", value=filename, default_filename="sfincs.obs"
+        )
 
         # change precision of coordinates according to crs
+        # FIXME - incorporate in utils.xyn or not?
         if self.model.crs.is_geographic:
             fmt = "%.6f"
         else:
             fmt = "%.1f"
 
-        # utils.write_xyn(self._filename, self.data, fmt=fmt)  # =utils.py function
-        utils.write_xyn(filename, self.data, fmt=fmt)  # =utils.py function
+        utils.write_xyn(file_path, self.data, fmt=fmt)  # =utils.py function
 
         # TODO - write also as geojson - TL: at what level do we want to do that?
         # if self._write_gis:
