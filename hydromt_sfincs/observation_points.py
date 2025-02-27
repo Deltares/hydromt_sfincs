@@ -4,7 +4,7 @@ import shapely
 import pandas as pd
 from pathlib import Path
 from typing import TYPE_CHECKING, Union, List
-from os.path import join
+from os.path import join, exists
 
 from hydromt.model.components import ModelComponent
 from hydromt.model import Model
@@ -61,7 +61,11 @@ class SfincsObservationPoints(ModelComponent):
             self._filename = self.model.config.get("obsfile")
             filename = join(self.model.root.path, self._filename)
 
-        # FIXME check is file exist
+        # check if file exists:
+        # if not exists(filename):
+        if not Path(filename).exists():  # pathlib option
+            raise ValueError("Path " + filename + " does not exist!")
+            # return
 
         # Read input file:
         gdf = utils.read_xyn(filename, crs=self.model.region.crs)  # =utils.py function
@@ -74,7 +78,8 @@ class SfincsObservationPoints(ModelComponent):
 
         # check if data present:
         if self.data.empty:
-            return
+            raise ValueError("No data in observation_points.data!")
+            # return
 
         # call function to get back full filepath of config variable "obsfile"
         # function also updates the name in case a filename is provided to this function

@@ -17,6 +17,8 @@ def test_observation_points_io(model_config, tmp_path):
     # - write again and check whether is added to config
     # - also write without specifying name
     # - and with filename without path
+    # - test reading random nonexisting file
+    # - test writing without data should raise warning
 
     # read existing sfincs.obs file
     model_config.observation_points.read()
@@ -69,6 +71,19 @@ def test_observation_points_io(model_config, tmp_path):
     # check if added with default name
     obs4 = model_config.config.get("obsfile")
     assert "sfincs_test.obs" == obs4
+
+    # reading random nonexisting file > should raise warning
+    with pytest.raises(ValueError):
+        model_config.observation_points.read(
+            filename="random/nonexistent/path/sfincs.obs"
+        )
+
+    # call clear
+    model_config.observation_points.clear()
+
+    # writing without data should raise warning
+    with pytest.raises(ValueError):
+        model_config.observation_points.write()
 
 
 def test_observation_points_create(model_config):
