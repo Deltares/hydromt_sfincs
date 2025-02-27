@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional, Dict, Any
 from ast import literal_eval
-from os.path import abspath, isabs, join
+from os.path import abspath, isabs, join, split, exists
 from pathlib import Path
 
 from hydromt.model.components import ModelComponent
@@ -152,3 +152,77 @@ class SfincsConfig(ModelComponent):
         elif self.model.grid_type == "quadtree":
             # drop regular component
             self.model.components.pop("grid", None)
+
+    def get_set_config_file_variable(
+        self, key: str, value: str, default_filename: str
+    ) -> None:
+        """Return filepath of a variable 'key', and add key-value to config if not present.
+
+        Actions depending on situation:
+         1) input file variable 'key' is given as input
+            a) value is only the name of variable
+                - add to config directly as value
+                - return file_path including root
+            b) value is a path
+                - get file_directory and value_name through split
+                - update the config
+                    - with only value_name if file_directory==root
+                    - otherwise with full path 'value'
+
+         2) variable 'key' already in config:
+             a) get full file_path using get with abs_path=True
+                - In case not a path, then it adds the root
+
+         3) use default name and root:
+             a) set default name
+             b) update the config
+             c) give back full file_path
+
+         Returns: file_path
+          ."""
+
+        # 1) input file variable 'key' is given as input
+        if value is not None:
+            # Split the file path
+            file_directory, value_name = split(value)
+
+            if file_directory == "":  # dealing with only a file name as input
+                # add to config directly as value:
+                self.model.config.set(key, value)
+                # return file_path including root:
+                file_path = join(self.model.config.root.path, value)
+
+            else:  # dealing with a path as input
+                # check if path == root, determines how we add to the config:
+                if file_directory == self.model.config.root.path:
+                    # folders are the same, only write value_name:
+                    self.model.config.set(key, value_name)
+
+                elif exists(file_directory):
+                    # file_directory is exists, but is different than root
+                    # add the full path to config:
+                    self.model.config.set(key, value)
+
+                # value is the full_path already:
+                file_path = value
+
+        # 2) variable 'key' already in config:
+        elif value is None and self.model.config.get(key) is not None:
+            # If variable 'key' is not None, it has been set already in config
+            # NOTE Assumes that by default all input file variables in
+            # SfincsInputVariables are initiated as None
+
+            # get existing file name as full path (already adds root, in case not a file);
+            file_path = self.model.config.get(key, abs_path=True)
+
+        # 3) use default name and root:
+        elif value is None and self.model.config.get(key) is None:
+            # If variable 'key' is None, it has not been added previously to config
+            # Now add the default_filename to config
+
+            self.model.config.set(key, default_filename)
+
+            # And return the full file_path including root
+            file_path = join(self.model.config.root.path, value)
+
+        return file_path
