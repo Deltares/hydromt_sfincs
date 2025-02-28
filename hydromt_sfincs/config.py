@@ -178,8 +178,21 @@ class SfincsConfig(ModelComponent):
              b) update the config
              c) give back full file_path
 
-         Returns: file_path
-          ."""
+        Parameters:
+        -----------
+        key (str):
+            Input filename like 'obsfile'
+        value (str, Optional):
+            Optional input filename corresponding 'obsfile',
+            if not supplied, the default_filename will be used.
+        default_filename (str):
+            Default filename for corresponding 'key' like 'sfincs.obs'
+
+        Returns:
+        -----------
+        file_path (Path):
+            Full filename path of the file, as pathlib.Path
+        """
         # Use pathlib.Path for modern, readable, and Pythonic code.
 
         # 1) input file variable 'key' is given as input

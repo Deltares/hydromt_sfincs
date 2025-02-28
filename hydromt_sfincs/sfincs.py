@@ -82,13 +82,13 @@ logger = logging.getLogger(__name__)
 class SfincsModel(Model):
     """SFINCS model class."""
 
-    _FOLDERS = []
+    # _FOLDERS = []
 
     def __init__(
         self,
         root: str = None,
         mode: str = "w",
-        write_gis: bool = True,
+        write_gis: bool = False,
         data_libs: Union[List[str], str] = None,
     ):
         """
@@ -111,8 +111,8 @@ class SfincsModel(Model):
 
         # model folders
         self._write_gis = write_gis
-        if write_gis and "gis" not in self._FOLDERS:
-            self._FOLDERS.append("gis")
+        # if write_gis and "gis" not in self._FOLDERS:
+        # self._FOLDERS.append("gis")
 
         super().__init__(
             root=root,

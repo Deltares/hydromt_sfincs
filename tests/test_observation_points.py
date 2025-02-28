@@ -26,6 +26,9 @@ def test_observation_points_io(model_config, tmp_path):
     # get the data of read in file
     obs0 = model_config.observation_points.data
 
+    # change root to tmpfolder
+    model_config.root.set(tmp_path, mode="r+")
+
     # write to testfolder
     obsfile = join(tmp_path, "sfincs.obs")
     model_config.observation_points.write(filename=obsfile)
@@ -47,10 +50,8 @@ def test_observation_points_io(model_config, tmp_path):
     model_config.observation_points.write(filename=obsfile)
 
     obs2 = model_config.config.get("obsfile")
-    assert obsfile == obs2
-
-    # change root to tmpfolder
-    model_config.root.path = tmp_path
+    # assert obsfile == obs2
+    assert "sfincs.obs" == obs2
 
     # clear in config
     model_config.config.set("obsfile", None)
@@ -73,7 +74,7 @@ def test_observation_points_io(model_config, tmp_path):
     assert "sfincs_test.obs" == obs4
 
     # reading random nonexisting file > should raise warning
-    with pytest.raises(ValueError):
+    with pytest.raises(IOError):
         model_config.observation_points.read(
             filename="random/nonexistent/path/sfincs.obs"
         )

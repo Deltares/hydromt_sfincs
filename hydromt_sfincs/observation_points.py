@@ -4,13 +4,13 @@ import shapely
 import pandas as pd
 from pathlib import Path
 from typing import TYPE_CHECKING, Union, List
-from os.path import join, exists
+import os
+from os.path import abspath, join, exists
 
 from hydromt.model.components import ModelComponent
 from hydromt.model import Model
 from hydromt_sfincs import utils
 
-# from hydromt.config import get_set_config_file_variable
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -55,17 +55,29 @@ class SfincsObservationPoints(ModelComponent):
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
-    def read(self, filename=None):
+    def read(self, filename: str | Path = None):
         """Read in all observation points."""
+
+        # check that read mode is on
+        self.root._assert_read_mode()
+
         if filename is None:
-            self._filename = self.model.config.get("obsfile")
-            filename = join(self.model.root.path, self._filename)
+            # check if obsfile exists in config (by default is None)
+            filename = self.model.config.get("obsfile", abs_path=True)
+            # always gives back full path
+
+            # check if obsfile exists in config (by default is None)
+            if filename is None:
+                return
+
+        elif filename is not None and not abspath:
+            # combine with model root if not a path
+            filename = Path(abspath(join(self.root.path, filename)))
 
         # check if file exists:
         # if not exists(filename):
         if not Path(filename).exists():  # pathlib option
-            raise ValueError("Path " + filename + " does not exist!")
-            # return
+            raise IOError("Path " + filename + " does not exist!")
 
         # Read input file:
         gdf = utils.read_xyn(filename, crs=self.model.region.crs)  # =utils.py function
@@ -76,11 +88,15 @@ class SfincsObservationPoints(ModelComponent):
     def write(self, filename=None):
         """Write obsfile."""
 
+        # check that write mode is on
+        self.root._assert_write_mode()
+
         # check if data present:
         if self.data.empty:
             raise ValueError("No data in observation_points.data!")
             # return
 
+        # TODO - can be removed, just for info now
         # call function to get back full filepath of config variable "obsfile"
         # function also updates the name in case a filename is provided to this function
         # and if not the case, and obsfile doesn't exist yet, it is initialised with the default of "sfincs.obs"
@@ -90,7 +106,6 @@ class SfincsObservationPoints(ModelComponent):
         )
 
         # change precision of coordinates according to crs
-        # FIXME - incorporate in utils.xyn or not?
         if self.model.crs.is_geographic:
             fmt = "%.6f"
         else:
@@ -98,9 +113,14 @@ class SfincsObservationPoints(ModelComponent):
 
         utils.write_xyn(file_path, self.data, fmt=fmt)  # =utils.py function
 
-        # TODO - write also as geojson - TL: at what level do we want to do that?
-        # if self._write_gis:
-        #     self.write_vector(variables=["geoms"])
+        # write also as geojson:
+        if self.model._write_gis:
+            root = join(self.model.root.path, "gis")
+
+            if not os.path.isdir(root):
+                os.makedirs(root)
+
+            self.data.to_file(join(root, f"obs.geojson"), driver="GeoJSON")
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
         """Set observation points.
