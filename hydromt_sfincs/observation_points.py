@@ -190,10 +190,6 @@ class SfincsObservationPoints(ModelComponent):
 
         self.set(gdf, merge)
 
-        # TODO - add to config: self.model.config
-        # self.model.config(f"{name}file", f"sfincs.{name}")
-        # self.set_config(f"{name}file", f"sfincs.{name}")
-
     def delete(
         self,
         index: int,  # FIXME - now we expect list [int] - does that make sense?/should we specify here?
