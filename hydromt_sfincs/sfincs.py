@@ -35,6 +35,7 @@ from hydromt_sfincs.config import SfincsConfig
 
 # grid types:
 from hydromt_sfincs.quadtree import QuadtreeGrid
+from hydromt_sfincs.quadtree_mask import QuadtreeMask
 from hydromt_sfincs.regulargrid import RegularGrid
 from hydromt_sfincs.subgrid import SubgridTableRegular
 
@@ -128,6 +129,7 @@ class SfincsModel(Model):
         # grid types:
         self.add_component("grid", RegularGrid(self))
         self.add_component("quadtree", QuadtreeGrid(self))
+        self.add_component("quadtree_mask", QuadtreeMask(self))
         # self.add_component("subgrid", SubgridTableRegular(self))
         # self.add_component("subgrid", SubgridTableRegular(self))
 
