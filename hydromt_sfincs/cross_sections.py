@@ -62,7 +62,9 @@ class SfincsCrossSections(ModelComponent):
         self.root._assert_read_mode()
 
         # Get absolute file name and set it in config if crsfile is not None
-        abs_file_path = self.model.config.get_file_path("crsfile", value=filename)
+        abs_file_path = self.model.config.get_set_file_variable(
+            "crsfile", value=filename
+        )
 
         # Check if abs_file_path is None
         if abs_file_path is None:
@@ -90,8 +92,10 @@ class SfincsCrossSections(ModelComponent):
             return
 
         # Set file name and get absolute path
-        abs_file_path = self.model.config.set_file_path(
-            "crsfile", "sfincs.crs", value=filename
+        abs_file_path = self.model.config.get_set_file_variable(
+            "crsfile",
+            value=filename,
+            default="sfincs.crs",
         )
 
         # Change precision of coordinates according to crs
