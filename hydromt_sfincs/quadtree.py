@@ -130,13 +130,14 @@ class QuadtreeGrid(MeshComponent):
 
         # TODO make similar to fortran conventions?
         # Rename to python conventions
-        dsu = dsu.rename({"z": "dep"}) if "z" in dsu else dsu
-        dsu = dsu.rename({"mask": "msk"}) if "mask" in dsu else dsu
-        dsu = (
-            dsu.rename({"snapwave_mask": "snapwave_msk"})
-            if "snapwave_mask" in dsu
-            else dsu
-        )
+        # Why are we renaming these?
+        # dsu = dsu.rename({"z": "dep"}) if "z" in dsu else dsu
+        # dsu = dsu.rename({"mask": "msk"}) if "mask" in dsu else dsu
+        # dsu = (
+        #     dsu.rename({"snapwave_mask": "snapwave_msk"})
+        #     if "snapwave_mask" in dsu
+        #     else dsu
+        # )
         # set the data
         self.set(dsu)
 

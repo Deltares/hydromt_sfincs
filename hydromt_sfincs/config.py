@@ -42,6 +42,14 @@ class SfincsConfig(ModelComponent):
 
         inp_dict = {}
         for line in lines:
+            # Check if first character is #
+            if line.strip().startswith("#"):
+                # Full line comment
+                continue
+            # Find last character before #
+            comment_idx = line.find("#")
+            if comment_idx >= 0:
+                line = line[:comment_idx]
             line = [x.strip() for x in line.split("=")]
             if len(line) != 2:
                 continue
@@ -84,18 +92,25 @@ class SfincsConfig(ModelComponent):
                 if value is None:
                     continue
                 if isinstance(value, float):  # remove insignificant traling zeros
-                    string = f"{key.ljust(20)} = {value}\n"
+                    string = f"{key.ljust(20)} = {value}"
                 elif isinstance(value, int):
-                    string = f"{key.ljust(20)} = {value}\n"
+                    string = f"{key.ljust(20)} = {value}"
                 elif isinstance(value, list):
                     valstr = " ".join([str(v) for v in value])
-                    string = f"{key.ljust(20)} = {valstr}\n"
+                    string = f"{key.ljust(20)} = {valstr}"
                 elif hasattr(value, "strftime"):
                     dstr = value.strftime("%Y%m%d %H%M%S")
-                    string = f"{key.ljust(20)} = {dstr}\n"
+                    string = f"{key.ljust(20)} = {dstr}"
                 else:
-                    string = f"{key.ljust(20)} = {value}\n"
-                fid.write(string)
+                    string = f"{key.ljust(20)} = {value}"
+
+                if key in self.data.model_fields:
+                    description = self.data.model_fields[key].description
+                    if description:
+                        # Add description to string
+                        string = string.ljust(50) + f" # {description}"
+
+                fid.write(string + "\n")
 
     def get(self, key: str, fallback: Any = None, abs_path: bool = False) -> Any:
         """Get a value with validation check."""
@@ -119,7 +134,9 @@ class SfincsConfig(ModelComponent):
         # Validate the new data
         # FIXME implement this in a better way
         try:
-            value = SfincsConfigVariables(**{key: value}).__dict__[key]
+            # If key was an extra field, do NOT set it here
+            if key in self.data.model_fields:
+                value = SfincsConfigVariables(**{key: value}).__dict__[key]
         except Exception as e:
             raise TypeError(f"Invalid input type for '{key}'")
 

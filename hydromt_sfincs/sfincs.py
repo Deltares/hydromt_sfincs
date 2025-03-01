@@ -128,7 +128,7 @@ class SfincsModel(Model):
         self.add_component("config", SfincsConfig(self))
         # grid types:
         self.add_component("grid", RegularGrid(self))
-        self.add_component("quadtree", QuadtreeGrid(self))
+        self.add_component("quadtree_grid", QuadtreeGrid(self))
         self.add_component("quadtree_mask", QuadtreeMask(self))
         # self.add_component("subgrid", SubgridTableRegular(self))
         # self.add_component("subgrid", SubgridTableRegular(self))
@@ -187,7 +187,7 @@ class SfincsModel(Model):
     @property
     def quadtree(self) -> QuadtreeGrid:
         """Returns the quadtree object."""
-        return self.components["quadtree"]
+        return self.components["quadtree_grid"]
 
     @property
     def mask(self) -> xr.DataArray | None:
@@ -198,9 +198,9 @@ class SfincsModel(Model):
             elif self.grid is not None:
                 return self.grid.empty_mask
         elif self.grid_type == "quadtree":
-            if "msk" in self.quadtree.data:
-                return self.quadtree.data["msk"]
-            elif self.quadtree is not None:
+            if "mask" in self.quadtree_grid.data:
+                return self.quadtree_grid.data["mask"]
+            elif self.quadtree_grid is not None:
                 return self.quadtree.empty_mask
 
     @property
@@ -216,7 +216,7 @@ class SfincsModel(Model):
             elif self.grid is not None:
                 region = self.grid.empty_mask.raster.box
         elif self.grid_type == "quadtree":
-            region = self.quadtree.exterior
+            region = self.quadtree_grid.exterior
         return region
 
     @property
@@ -225,6 +225,7 @@ class SfincsModel(Model):
         if self.grid_type == "regular":
             return self.mask.raster.bounds
         elif self.grid_type == "quadtree":
+            # By are we getting the total bounds of the mask and not the grid?
             return self.mask.ugrid.total_bounds
 
     @property
@@ -241,7 +242,7 @@ class SfincsModel(Model):
         if self.grid_type == "regular":
             return self.grid.crs
         elif self.grid_type == "quadtree":
-            return self.quadtree.data.grid.crs
+            return self.quadtree_grid.data.grid.crs
 
     ## I/O
     def read(self, filename: str = None) -> None:

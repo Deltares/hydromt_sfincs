@@ -29,7 +29,7 @@ class QuadtreeMask:
         self,
         model: "SfincsModel",
     ):
-        # The data for the mask is stored in the model.quadtree.data["mask"] array
+        # The data for the mask is stored in the model.quadtree_grid.data["mask"] array
         self.model = model
         # For plotting map overlay (This is the only data that is stored in the object! All other data is stored in the model.grid.data["mask"])
         self.datashader_dataframe = pd.DataFrame()
@@ -64,23 +64,23 @@ class QuadtreeMask:
         if not quiet:
             print("Building mask ...")
 
-        mask = np.zeros(self.model.grid.nr_cells, dtype=np.int8)
-        x, y = self.model.grid.face_coordinates()
-        z = self.model.grid.data["z"].values[:]
+        mask = np.zeros(self.model.quadtree_grid.nr_cells, dtype=np.int8)
+        x, y = self.model.quadtree_grid.face_coordinates()
+        z = self.model.quadtree_grid.data["z"].values[:]
 
         # Indices are 1-based in SFINCS so subtract 1 for python 0-based indexing
-        mu = self.model.grid.data["mu"].values[:]
-        mu1 = self.model.grid.data["mu1"].values[:] - 1
-        mu2 = self.model.grid.data["mu2"].values[:] - 1
-        nu = self.model.grid.data["nu"].values[:]
-        nu1 = self.model.grid.data["nu1"].values[:] - 1
-        nu2 = self.model.grid.data["nu2"].values[:] - 1
-        md = self.model.grid.data["md"].values[:]
-        md1 = self.model.grid.data["md1"].values[:] - 1
-        md2 = self.model.grid.data["md2"].values[:] - 1
-        nd = self.model.grid.data["nd"].values[:]
-        nd1 = self.model.grid.data["nd1"].values[:] - 1
-        nd2 = self.model.grid.data["nd2"].values[:] - 1
+        mu = self.model.quadtree_grid.data["mu"].values[:]
+        mu1 = self.model.quadtree_grid.data["mu1"].values[:] - 1
+        mu2 = self.model.quadtree_grid.data["mu2"].values[:] - 1
+        nu = self.model.quadtree_grid.data["nu"].values[:]
+        nu1 = self.model.quadtree_grid.data["nu1"].values[:] - 1
+        nu2 = self.model.quadtree_grid.data["nu2"].values[:] - 1
+        md = self.model.quadtree_grid.data["md"].values[:]
+        md1 = self.model.quadtree_grid.data["md1"].values[:] - 1
+        md2 = self.model.quadtree_grid.data["md2"].values[:] - 1
+        nd = self.model.quadtree_grid.data["nd"].values[:]
+        nd1 = self.model.quadtree_grid.data["nd1"].values[:] - 1
+        nd2 = self.model.quadtree_grid.data["nd2"].values[:] - 1
 
         if zmin >= zmax:
             # Do not include any points initially
@@ -395,8 +395,8 @@ class QuadtreeMask:
                         mask[ic] = 3
 
         # Now add the data arrays
-        ugrid2d = self.model.grid.data.grid
-        self.model.grid.data["mask"] = xu.UgridDataArray(
+        ugrid2d = self.model.quadtree_grid.data.grid
+        self.model.quadtree_grid.data["mask"] = xu.UgridDataArray(
             xr.DataArray(data=mask, dims=[ugrid2d.face_dimension]), ugrid2d
         )
 
@@ -406,12 +406,12 @@ class QuadtreeMask:
 
     def to_gdf(self, option="all"):
         """Returns a geodataframe with points for each cell in the mask"""
-        nr_cells = self.model.grid.nr_cells
+        nr_cells = self.model.quadtree_grid.nr_cells
         if nr_cells == 0:
             # Return empty geodataframe
             return gpd.GeoDataFrame()
-        xz, yz = self.model.grid.face_coordinates()
-        mask = self.model.grid.data["mask"]
+        xz, yz = self.model.quadtree_grid.face_coordinates()
+        mask = self.model.quadtree_grid.data["mask"]
         gdf_list = []
         okay = np.zeros(mask.shape, dtype=int)
         if option == "all":
@@ -441,7 +441,7 @@ class QuadtreeMask:
 
     def has_open_boundaries(self):
         """Returns True if mask contains open boundaries (mask = 2)"""
-        mask = self.model.grid.data["mask"]
+        mask = self.model.quadtree_grid.data["mask"]
         if mask is None:
             return False
         if np.any(mask == 2):
@@ -453,14 +453,14 @@ class QuadtreeMask:
         """Sets the datashader dataframe for plotting"""
         # Create a dataframe with points elements
         # Coordinates of cell centers
-        x = self.model.grid.data.grid.face_coordinates[:, 0]
-        y = self.model.grid.data.grid.face_coordinates[:, 1]
+        x = self.model.quadtree_grid.data.grid.face_coordinates[:, 0]
+        y = self.model.quadtree_grid.data.grid.face_coordinates[:, 1]
         # Check if grid crosses the dateline
         cross_dateline = False
         if self.model.crs.is_geographic:
             if np.max(x) > 180.0:
                 cross_dateline = True
-        mask = self.model.grid.data["mask"].values[:]
+        mask = self.model.quadtree_grid.data["mask"].values[:]
         # Get rid of cells with mask = 0
         iok = np.where(mask > 0)
         x = x[iok]
@@ -496,7 +496,7 @@ class QuadtreeMask:
     ):
         """Creates a map overlay image of the mask"""
 
-        if self.model.grid.data is None:
+        if self.model.quadtree_grid.data is None:
             # No mask points (yet)
             return False
         try:
