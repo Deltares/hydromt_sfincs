@@ -113,6 +113,7 @@ class SfincsModel(Model):
         self._write_gis = write_gis
         # if write_gis and "gis" not in self._FOLDERS:
         # self._FOLDERS.append("gis")
+        self.name = "SfincsModel"
 
         super().__init__(
             root=root,
@@ -140,7 +141,7 @@ class SfincsModel(Model):
 
         # geoms types:
         self.add_component("observation_points", SfincsObservationPoints(self))
-        # self.add_component("cross_sections", SfincsCrossSections(self))
+        self.add_component("cross_sections", SfincsCrossSections(self))
         # self.add_component("weirs", SfincsWeirs(self))
         # self.add_component("thin_dams", SfincsThinDams(self))
         # self.add_component("wave_makers", SfincsWaveMakers(self))
@@ -251,11 +252,12 @@ class SfincsModel(Model):
         """
         # always read config first
         if filename is None:
-            filename = join(self.root.path, "sfincs.inp")
+            filename = self.root.path / "sfincs.inp"
         self.config.read(filename=filename)
 
         # loop over all components (except config) and read
         # TODO add check if files are present in each component otherwise skip-read
+        # Note: this is now done in the read method of each component
         for name, comp in self.components.items():
             if name != "config":
                 comp.read()
