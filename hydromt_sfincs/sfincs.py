@@ -142,8 +142,8 @@ class SfincsModel(Model):
         # geoms types:
         self.add_component("observation_points", SfincsObservationPoints(self))
         self.add_component("cross_sections", SfincsCrossSections(self))
+        self.add_component("thin_dams", SfincsThinDams(self))
         # self.add_component("weirs", SfincsWeirs(self))
-        # self.add_component("thin_dams", SfincsThinDams(self))
         # self.add_component("wave_makers", SfincsWaveMakers(self))
         # self.add_component("drainage_structures", SfincsDrainageStructures(self))
         # self.add_component("rivers", SfincsRivers(self))
