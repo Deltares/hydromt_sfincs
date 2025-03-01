@@ -246,23 +246,28 @@ class SfincsConfig(ModelComponent):
 
         return file_path
 
-    def get_file_path(self, key: str, value: str | Path = None) -> Path:
+    def get_set_file_variable(
+        self, key: str, value: str | Path = None, default: str = None
+    ) -> Path:
         """Return filepath of a variable 'key', and add key-value to config if not present.
 
         Parameters:
         -----------
         key (str):
-            Input filename like 'obsfile'
+            Input keyword, e.g. "obsfile"
         value (str, Optional):
-            Optional input filename corresponding 'obsfile',
-            if not supplied, the default_filename will be used.
+            Optional input filename, e.g. "sfincs.obs"
+        default (str, Optional):
+            Default filename for corresponding 'key', e.g. 'sfincs.obs'
+
+        When getting the input path to READ the file, default should NOT be provided.
+        When setting the output path to WRITE the file, default SHOULD be provided.
 
         Returns:
         -----------
         file_path (Path):
             Full filename path of the file, as pathlib.Path
         """
-        # Use pathlib.Path for modern, readable, and Pythonic code.
 
         # If value is a string, turn it into a Path
         if isinstance(value, str):
@@ -303,10 +308,14 @@ class SfincsConfig(ModelComponent):
         else:  # 2) Input file name not provided so get it from the config
             # Get existing file name from config
             value = self.get(key)
-
             if value is None:
-                # File name not defined in config, so return None
-                return None
+                if default is None:
+                    # File name not defined in config, so return None
+                    return None
+                else:
+                    # Default file name is provided
+                    self.model.config.set(key, default)
+                    full_file_path = root_path / default
             else:
                 value = Path(value)
                 file_directory = value.parent
@@ -329,96 +338,96 @@ class SfincsConfig(ModelComponent):
                             # Relative
                             full_file_path = (root_path / value).resolve()
 
-        # Now check if the file actually exists
-        if not full_file_path.exists():
-            full_file_path = None
+        # # Now check if the file actually exists
+        # if not full_file_path.exists():
+        #     full_file_path = None
 
         return full_file_path
 
-    def set_file_path(
-        self, key: str, default_file_name: str, value: str | Path = None
-    ) -> Path:
-        """Return filepath of a variable 'key', and add key-value to config if not present.
+    # def set_file_path(
+    #     self, key: str, default_file_name: str, value: str | Path = None
+    # ) -> Path:
+    #     """Return filepath of a variable 'key', and add key-value to config if not present.
 
-        Parameters:
-        -----------
-        key (str):
-            Input filename like 'obsfile'
-        value (str, Optional):
-            Optional input filename corresponding 'obsfile',
-            if not supplied, the default_filename will be used.
-        default_filename (str):
-            Default filename for corresponding 'key' like 'sfincs.obs'
+    #     Parameters:
+    #     -----------
+    #     key (str):
+    #         Input filename like 'obsfile'
+    #     value (str, Optional):
+    #         Optional input filename corresponding 'obsfile',
+    #         if not supplied, the default_filename will be used.
+    #     default_filename (str):
+    #         Default filename for corresponding 'key' like 'sfincs.obs'
 
-        Returns:
-        -----------
-        file_path (Path):
-            Full filename path of the file, as pathlib.Path
-        """
-        # Use pathlib.Path for modern, readable, and Pythonic code.
+    #     Returns:
+    #     -----------
+    #     file_path (Path):
+    #         Full filename path of the file, as pathlib.Path
+    #     """
+    #     # Use pathlib.Path for modern, readable, and Pythonic code.
 
-        # If value is a string, turn it into a Path
-        if isinstance(value, str):
-            value = Path(value)
+    #     # If value is a string, turn it into a Path
+    #     if isinstance(value, str):
+    #         value = Path(value)
 
-        root_path = self.model.root.path.resolve()
+    #     root_path = self.model.root.path.resolve()
 
-        if value is not None:  # 1) input file variable 'key' is given as input
-            # File name is given as input
-            file_directory = value.parent
-            file_name = value.name
-            if file_directory == ".":
-                # Dealing with only a file name as input
-                # Add to config directly
-                self.model.config.set(key, file_name)
-                # Return file path including root
-                full_file_path = root_path / file_name
-            else:
-                # Dealing with a path as input
-                # Check if path is same as root
-                if Path(file_directory).resolve() == root_path:
-                    # Folders are the same, only write file_name
-                    self.model.config.set(key, file_name)
-                    full_file_path = root_path / file_name
-                else:
-                    # File directory different than root
-                    # Check if file_directory is an absolute or relative path
-                    if Path(file_directory).is_absolute():
-                        # Add the full path to config
-                        self.model.config.set(key, str(value))
-                        full_file_path = value
-                    else:
-                        # Relative path
-                        self.model.config.set(key, str(value))
-                        full_file_path = (root_path / value).resolve()
+    #     if value is not None:  # 1) input file variable 'key' is given as input
+    #         # File name is given as input
+    #         file_directory = value.parent
+    #         file_name = value.name
+    #         if file_directory == ".":
+    #             # Dealing with only a file name as input
+    #             # Add to config directly
+    #             self.model.config.set(key, file_name)
+    #             # Return file path including root
+    #             full_file_path = root_path / file_name
+    #         else:
+    #             # Dealing with a path as input
+    #             # Check if path is same as root
+    #             if Path(file_directory).resolve() == root_path:
+    #                 # Folders are the same, only write file_name
+    #                 self.model.config.set(key, file_name)
+    #                 full_file_path = root_path / file_name
+    #             else:
+    #                 # File directory different than root
+    #                 # Check if file_directory is an absolute or relative path
+    #                 if Path(file_directory).is_absolute():
+    #                     # Add the full path to config
+    #                     self.model.config.set(key, str(value))
+    #                     full_file_path = value
+    #                 else:
+    #                     # Relative path
+    #                     self.model.config.set(key, str(value))
+    #                     full_file_path = (root_path / value).resolve()
 
-        else:  # 2) Input file name not provided so get it from the config
-            # Get existing file name from config
-            value = Path(self.get(key))
+    #     else:  # 2) Input file name not provided so get it from the config
+    #         # Get existing file name from config
+    #         value = Path(self.get(key))
 
-            if value is None:
-                # File name not defined in config, so use default
-                self.model.config.set(key, default_file_name)
-                full_file_path = root_path / default_file_name
-            else:
-                file_directory = value.parent
-                file_name = value.name
-                if file_directory == ".":
-                    # Dealing with only a file name as input
-                    full_file_path = root_path / file_name
-                else:
-                    # Dealing with a path as input
-                    if Path(file_directory).resolve() == root_path:
-                        # Folders are the same, only write file_name
-                        full_file_path = root_path / file_name
-                    else:
-                        # File directory different than root
-                        # Check if file_directory is an absolute or relative path
-                        if Path(file_directory).is_absolute():
-                            # Absolute
-                            full_file_path = value
-                        else:
-                            # Relative
-                            full_file_path = (root_path / value).resolve()
+    #         if value is None:
+    #             # File name not defined in config, so use default
+    #             self.model.config.set(key, default_file_name)
+    #             full_file_path = root_path / default_file_name
+    #         else:
+    #             file_directory = value.parent
+    #             file_name = value.name
+    #             if file_directory == ".":
+    #                 # Dealing with only a file name as input
+    #                 full_file_path = root_path / file_name
+    #             else:
+    #                 # Dealing with a path as input
+    #                 if Path(file_directory).resolve() == root_path:
+    #                     # Folders are the same, only write file_name
+    #                     full_file_path = root_path / file_name
+    #                 else:
+    #                     # File directory different than root
+    #                     # Check if file_directory is an absolute or relative path
+    #                     if Path(file_directory).is_absolute():
+    #                         # Absolute
+    #                         full_file_path = value
+    #                     else:
+    #                         # Relative
+    #                         full_file_path = (root_path / value).resolve()
 
-        return full_file_path
+    #     return full_file_path
