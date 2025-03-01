@@ -209,3 +209,9 @@ class SfincsCrossSections(ModelComponent):
         """Give list of names of cross sections."""
         names = list(self.data.name)
         return names
+
+    def snap_to_grid(self):
+        """Returns GeoDataFrame with cross-sections snapped to model grid."""
+        # TODO - this probably only works for quadtree grids for now
+        snap_gdf = self.model.grid.snap_to_grid(self.data)
+        return snap_gdf
