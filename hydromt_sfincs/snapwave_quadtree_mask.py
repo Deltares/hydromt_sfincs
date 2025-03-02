@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class QuadtreeMask(ModelComponent):
+class SnapWaveQuadtreeMask(ModelComponent):
     def __init__(
         self,
         model: "SfincsModel",
@@ -61,15 +61,16 @@ class QuadtreeMask(ModelComponent):
         include_polygon=None,
         exclude_polygon=None,
         open_boundary_polygon=None,
-        outflow_boundary_polygon=None,
+        neumann_boundary_polygon=None,
         include_zmin=-99999.0,
         include_zmax=99999.0,
         exclude_zmin=-99999.0,
         exclude_zmax=99999.0,
         open_boundary_zmin=-99999.0,
         open_boundary_zmax=99999.0,
-        outflow_boundary_zmin=-99999.0,
-        outflow_boundary_zmax=99999.0,
+        neumann_boundary_zmin=-99999.0,
+        neumann_boundary_zmax=99999.0,
+        update_datashader_dataframe=False,
         quiet=True,
     ):
         if not quiet:
@@ -268,8 +269,8 @@ class QuadtreeMask(ModelComponent):
                         mask[ic] = 2
 
         # Outflow boundary polygons
-        if outflow_boundary_polygon is not None:
-            for ip, polygon in outflow_boundary_polygon.iterrows():
+        if neumann_boundary_polygon is not None:
+            for ip, polygon in neumann_boundary_polygon.iterrows():
                 inpol = inpolygon(x, y, polygon["geometry"])
                 # Only consider points that are:
                 # 1) Inside the polygon
@@ -279,8 +280,8 @@ class QuadtreeMask(ModelComponent):
                 iok = np.where(
                     (inpol)
                     & (mask > 0)
-                    & (z >= outflow_boundary_zmin)
-                    & (z <= outflow_boundary_zmax)
+                    & (z >= neumann_boundary_zmin)
+                    & (z <= neumann_boundary_zmax)
                 )
                 for ic in iok[0]:
                     okay = False
@@ -409,7 +410,7 @@ class QuadtreeMask(ModelComponent):
 
         # Now add the data arrays
         ugrid2d = self.model.quadtree_grid.data.grid
-        self.model.quadtree_grid.data["mask"] = xu.UgridDataArray(
+        self.model.quadtree_grid.data["snapwave_mask"] = xu.UgridDataArray(
             xr.DataArray(data=mask, dims=[ugrid2d.face_dimension]), ugrid2d
         )
 
@@ -422,7 +423,7 @@ class QuadtreeMask(ModelComponent):
             # Return empty geodataframe
             return gpd.GeoDataFrame()
         xz, yz = self.model.quadtree_grid.face_coordinates()
-        mask = self.model.quadtree_grid.data["mask"]
+        mask = self.model.quadtree_grid.data["snapwave_mask"]
         gdf_list = []
         okay = np.zeros(mask.shape, dtype=int)
         if option == "all":
@@ -452,7 +453,7 @@ class QuadtreeMask(ModelComponent):
 
     def has_open_boundaries(self):
         """Returns True if mask contains open boundaries (mask = 2)"""
-        mask = self.model.quadtree_grid.data["mask"]
+        mask = self.model.quadtree_grid.data["snapwave_mask"]
         if mask is None:
             return False
         if np.any(mask == 2):
@@ -471,7 +472,7 @@ class QuadtreeMask(ModelComponent):
         if self.model.crs.is_geographic:
             if np.max(x) > 180.0:
                 cross_dateline = True
-        mask = self.model.quadtree_grid.data["mask"].values[:]
+        mask = self.model.quadtree_grid.data["snapwave_mask"].values[:]
         # Get rid of cells with mask = 0
         iok = np.where(mask > 0)
         x = x[iok]
@@ -501,7 +502,7 @@ class QuadtreeMask(ModelComponent):
         ylim=None,
         active_color="yellow",
         boundary_color="red",
-        outflow_color="green",
+        neumann_color="green",
         px=2,
         width=800,
     ):
@@ -519,8 +520,8 @@ class QuadtreeMask(ModelComponent):
             The color of the active cells
         boundary_color : str, optional
             The color of the boundary cells
-        outflow_color : str, optional
-            The color of the outflow cells
+        neumann_color : str, optional
+            The color of the neumann cells
         px : int, optional
             The marker size in pixels
         width : int, optional
@@ -578,7 +579,7 @@ class QuadtreeMask(ModelComponent):
             )
             img_o = tf.shade(
                 tf.spread(cvs.points(dfout, "x", "y", ds.any()), px=px),
-                cmap=outflow_color,
+                cmap=neumann_color,
             )
             img = tf.stack(img_a, img_b, img_o)
 

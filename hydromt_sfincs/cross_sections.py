@@ -211,7 +211,9 @@ class SfincsCrossSections(ModelComponent):
 
     def list_names(self):
         """Give list of names of cross sections."""
-        names = list(self.data.name)
+        if self.data.empty:
+            return []
+        names = list(self.data["name"])
         return names
 
     def snap_to_grid(self):

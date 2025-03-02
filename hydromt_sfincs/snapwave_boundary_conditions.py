@@ -14,7 +14,7 @@ from hydromt.model import Model
 from hydromt_sfincs import utils
 
 
-class SfincsSnapWaveBoundaryConditions(ModelComponent):
+class SnapWaveBoundaryConditions(ModelComponent):
     def __init__(
         self,
         model: Model,

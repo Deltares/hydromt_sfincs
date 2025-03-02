@@ -272,5 +272,7 @@ class SfincsObservationPoints(ModelComponent):
 
     def list_names(self):
         """Give list of names of observation points."""
-        names = list(self.data.name)
+        if self.data.empty:
+            return []
+        names = list(self.data["name"])
         return names

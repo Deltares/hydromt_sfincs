@@ -40,6 +40,7 @@ from hydromt_sfincs.quadtree import QuadtreeGrid
 # Map types
 # from hydromt_sfincs.mask import SfincsMask
 from hydromt_sfincs.quadtree_mask import QuadtreeMask
+from hydromt_sfincs.snapwave_quadtree_mask import SnapWaveQuadtreeMask
 
 # from hydromt_sfincs.bathymetry import SfincsBathymetry
 from hydromt_sfincs.subgrid import SubgridTableRegular
@@ -60,7 +61,7 @@ from hydromt_sfincs.rivers import SfincsRivers
 # Forcing types
 from hydromt_sfincs.boundary_conditions import SfincsBoundaryConditions
 from hydromt_sfincs.discharge_points import SfincsDischargePoints
-from hydromt_sfincs.snapwave_boundary_conditions import SfincsSnapWaveBoundaryConditions
+from hydromt_sfincs.snapwave_boundary_conditions import SnapWaveBoundaryConditions
 
 # from hydromt_sfincs.meteo import SfincsMeteo
 from hydromt_sfincs.meteo import SfincsPrecipitation, SfincsPressure, SfincsWind
@@ -132,6 +133,7 @@ class SfincsModel(Model):
 
         # Map types
         self.add_component("quadtree_mask", QuadtreeMask(self))
+        self.add_component("snapwave_quadtree_mask", SnapWaveQuadtreeMask(self))
         # self.add_component("mask", SfincsMask(self))
         # self.add_component("bathymetry", SfincsBathymetry(self))
         # self.add_component("infiltration", SfincsInfiltration(self))
@@ -154,7 +156,7 @@ class SfincsModel(Model):
         self.add_component("boundary_conditions", SfincsBoundaryConditions(self))
         self.add_component("discharge_points", SfincsDischargePoints(self))
         self.add_component(
-            "snapwave_boundary_conditions", SfincsSnapWaveBoundaryConditions(self)
+            "snapwave_boundary_conditions", SnapWaveBoundaryConditions(self)
         )
         # self.add_component("meteo", SfincsMeteo(self))
         # self.add_component("precipitation", SfincsPrecipitation(self))
