@@ -225,6 +225,28 @@ class QuadtreeGrid(ModelComponent):
         return snapped_gdf
 
     def map_overlay(self, file_name, xlim=None, ylim=None, color="black", width=800):
+        """Create a map overlay of the grid
+
+        Parameters
+        ----------
+        file_name : str | Path
+            File name of the map overlay
+        xlim : list, optional
+            x-axis limits (longitude)
+        ylim : list, optional
+            y-axis limits (latitude)
+        color : str, optional
+            Color of the grid lines
+        width : int, optional
+            Width of the map overlay in pixels
+
+        Returns
+        -------
+        bool
+            True if the map overlay was created successfully, False otherwise
+        """
+        # TODO: xlim and ylim should not be optional and be called lonlim and latlim or just give bbox
+
         # check if datashader is available
         if not HAS_DATASHADER:
             logger.warning("Datashader is not available. Please install datashader.")

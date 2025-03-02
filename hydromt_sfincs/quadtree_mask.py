@@ -1,30 +1,38 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 21 17:24:49 2022
-
-@author: ormondt
-"""
+import logging
 import os
 import numpy as np
 from matplotlib import path
 from pyproj import Transformer
 import shapely
-
+from typing import TYPE_CHECKING, List, Optional, Union
 import xugrid as xu
 import xarray as xr
 import warnings
 
 np.warnings = warnings
-
 import geopandas as gpd
 import pandas as pd
 
-import datashader as ds
-import datashader.transfer_functions as tf
-from datashader.utils import export_image
+from hydromt.model.components import ModelComponent
+
+# optional dependency
+try:
+    import datashader as ds
+    import datashader.transfer_functions as tf
+    from datashader.utils import export_image
+
+    HAS_DATASHADER = True
+
+except ImportError:
+    HAS_DATASHADER = False
+
+if TYPE_CHECKING:
+    from hydromt_sfincs import SfincsModel
+
+logger = logging.getLogger(__name__)
 
 
-class QuadtreeMask:
+class QuadtreeMask(ModelComponent):
     def __init__(
         self,
         model: "SfincsModel",
@@ -498,13 +506,48 @@ class QuadtreeMask:
         px=2,
         width=800,
     ):
-        """Creates a map overlay image of the mask"""
+        """Creates a map overlay image of the mask
+
+        Parameters
+        ----------
+        file_name : str
+            The file name of the image
+        xlim : list, optional
+            The x limits of the image
+        ylim : list, optional
+            The y limits of the image
+        active_color : str, optional
+            The color of the active cells
+        boundary_color : str, optional
+            The color of the boundary cells
+        outflow_color : str, optional
+            The color of the outflow cells
+        px : int, optional
+            The marker size in pixels
+        width : int, optional
+            The width of the image in pixels
+
+        Returns
+        -------
+        bool
+            True if the image was created successfully, False otherwise
+        """
+
+        # check if datashader is available
+        if not HAS_DATASHADER:
+            logger.warning("Datashader is not available. Please install datashader.")
+            return False
 
         if self.model.quadtree_grid.data is None:
-            # No mask points (yet)
+            # No grid or mask points
             return False
+
         try:
-            # Mask is empty, return False
+            # Check if datashader dataframe is empty (maybe it was not made yet, or it was cleared)
+            if self.datashader_dataframe.empty:
+                self.get_datashader_dataframe()
+
+            # If it is still empty (because there are no active cells), return False
             if self.datashader_dataframe.empty:
                 return False
 
@@ -521,13 +564,6 @@ class QuadtreeMask:
             cvs = ds.Canvas(
                 x_range=xlim, y_range=ylim, plot_height=height, plot_width=width
             )
-
-            # With this approach we can still see colors of mask 2 and 3 even if they are not there
-            # color_key = {1: active_color, 2: boundary_color, 3: outflow_color}
-            # agg = cvs.points(self.datashader_dataframe, 'x', 'y', ds.min("mask"))
-            # # img = tf.shade(tf.spread(agg, px=px), cmap=active_color)
-            # img = tf.shade(tf.spread(agg, px=px), color_key=color_key, rescale_discrete_levels=True)
-            # img = tf.stack(img, tf.shade(agg, cmap=["black"]))
 
             # Instead, we can create separate images for each mask and stack them
             dfact = self.datashader_dataframe[self.datashader_dataframe["mask"] == 1]
