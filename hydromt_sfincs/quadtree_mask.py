@@ -65,7 +65,7 @@ class QuadtreeMask:
             print("Building mask ...")
 
         mask = np.zeros(self.model.quadtree_grid.nr_cells, dtype=np.int8)
-        x, y = self.model.quadtree_grid.face_coordinates()
+        x, y = self.model.quadtree_grid.face_coordinates
         z = self.model.quadtree_grid.data["z"].values[:]
 
         # Indices are 1-based in SFINCS so subtract 1 for python 0-based indexing

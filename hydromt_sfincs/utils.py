@@ -292,7 +292,7 @@ def write_timeseries(
     fn: Union[str, Path],
     df: Union[pd.DataFrame, pd.Series],
     tref: Union[str, datetime],
-    fmt: str = "%7.2f",
+    fmt: str = "%7.3f",
 ) -> None:
     """Write pandas.DataFrame to fixed width ascii timeseries files
     such as sfincs.bzs, sfincs.dis and sfincs.precip. The output time index is given in

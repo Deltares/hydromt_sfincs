@@ -1,34 +1,42 @@
+import logging
 import geopandas as gpd
-import shapely
+
+# import shapely
 import pandas as pd
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING, Union, List
+
+# import os
+from os.path import abspath, join, exists
 
 from hydromt.model.components import ModelComponent
 from hydromt.model import Model
 from hydromt_sfincs import utils
 
+if TYPE_CHECKING:
+    from hydromt_sfincs.sfincs import SfincsModel
+logger = logging.getLogger(__name__)
+
 
 class SfincsWaveMakers(ModelComponent):
     def __init__(
         self,
-        model: Model,
+        model: "SfincsModel",
     ):
-        self._filename: str = "sfincs.wvm"
-        self._data: gpd.GeoDataFrame = None
+        self.data = gpd.GeoDataFrame()
         super().__init__(
             model=model,
         )
 
-    @property
-    def data(self) -> gpd.GeoDataFrame:
-        """Wavemakers lines data.
+    # @property
+    # def data(self) -> gpd.GeoDataFrame:
+    #     """Cross-section lines data.
 
-        Return geopandas.GeoDataFrame
-        """
-        if self._data is None:
-            self._initialize()
-        return self._data
+    #     Return geopandas.GeoDataFrame
+    #     """
+    #     if self._data is None:
+    #         self._initialize()
+    #     return self._data
 
     # %% core HydroMT-SFINCS functions:
     # _initialize
@@ -36,168 +44,162 @@ class SfincsWaveMakers(ModelComponent):
     # write
     # set
     # create
-    # add
     # delete
     # clear
 
-    def _initialize(self, skip_read=False) -> None:
-        """Initialize wavemakers lines."""
-        if self._data is None:
-            self._data = gpd.GeoDataFrame()  # FIXME - right?
-            if self.root.is_reading_mode() and not skip_read:
-                self.read()
+    # def _initialize(self, skip_read=False) -> None:
+    #     """Initialize cross-section lines."""
+    #     if self._data is None:
+    #         # self._data = dict()
+    #         self._data = gpd.GeoDataFrame()  # FIXME - right?
+    #         if self.root.is_reading_mode() and not skip_read:
+    #             self.read()
 
-    def read(self):
-        """Read in all wavemakers lines."""
-        # Read input file:
-        struct = utils.read_geoms(self._filename)  # =utils.py function
-        gdf = utils.linestring2gdf(struct, crs=self.model.crs)  # =utils.py function
+    def read(self, filename: str | Path = None):
+        """Read SFINCS wave makers (*.wvm) file"""
 
-        self.set(gdf, merge=False)  # Add to self._data
+        # Check that read mode is on
+        self.root._assert_read_mode()
 
-    def write(self, filename=None):  # TODO - TL: filename=None - still needed?
-        """Write wvmfile."""
-        # change precision of coordinates according to crs
+        # Get absolute file name and set it in config if crsfile is not None
+        abs_file_path = self.model.config.get_set_file_variable(
+            "wvmfile", value=filename
+        )
+
+        # Check if abs_file_path is None
+        if abs_file_path is None:
+            # File name not defined, so no wave makers in this model
+            return
+
+        # Check if wvm file exists
+        if not abs_file_path.exists():
+            raise FileNotFoundError(f"wave makers file not found: {abs_file_path}")
+
+        # Read wvm file
+        struct = utils.read_geoms(abs_file_path)
+        gdf = utils.linestring2gdf(struct, crs=self.model.crs)
+
+        # Add to self.data
+        self.set(gdf, merge=False)
+
+    def write(self, filename: str | Path = None):
+        """Write SFINCS wave makers (*.wvm) file,
+        and set wvmfile in config (if it was not already set)"""
+
+        # Check that data is not empty
+        if self.data.empty:
+            logger.info("No wave makers available to write.")
+            return
+
+        # Set file name and get absolute path
+        abs_file_path = self.model.config.get_set_file_variable(
+            "wvmfile",
+            value=filename,
+            default="sfincs.wvm",
+        )
+
+        # Change precision of coordinates according to crs
         if self.model.crs.is_geographic:
-            fmt = "%.6f"
+            fmt = "%11.6f"
         else:
-            fmt = "%.1f"
+            fmt = "%11.1f"
 
-        # #TODO add to config -
-        # # If filename is not None:
-        # self.config.XXX
-        # self._filename = XXX
+        # Get linestring geometries from gdf
         struct = utils.gdf2linestring(self.data)
-        utils.write_geoms(
-            self._filename, struct, stype="wvm", fmt=fmt
-        )  # =utils.py function
+        # Write to wvm file
+        utils.write_geoms(abs_file_path, struct, stype="wvm", fmt=fmt)
 
         # TODO - write also as geojson - TL: at what level do we want to do that?
         # if self._write_gis:
         #     self.write_vector(variables=["geoms"])
 
-    def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
-        """Set wavemakers lines.
+    def set(self, gdf: Union[gpd.GeoDataFrame, str, Path], merge: bool = True):
+        """Set SFINCS wave makers.
 
         Arguments
         ---------
-        gdf: geopandas.GeoDataFrame
-            Set GeoDataFrame with wavemakers lines to self.data
-        name: str
-            Geometry name.
+        str, Path, gpd.GeoDataFrame :
+            data source name, Path, or geopandas object with LineString geometries.
+        merge: bool
+            Merge with existing wave makers. If False, overwrite existing wave makers.
         """
+
+        # Check if gdf is a string or Path. If so, read the file.
+        if isinstance(gdf, (str, Path)):
+            gdf = self.data_catalog.get_geodataframe(
+                gdf, geom=self.model.region, assert_gtype="LineString"
+            ).to_crs(self.model.crs)
+
         if not gdf.geometry.type.isin(["LineString"]).all():
-            raise ValueError("wavemakers must be of type LineString.")
+            raise ValueError("wave makers must be of type LineString.")
 
-        # Clip points outside of model region:
-        within = gdf.within(self.model.region)  # same as 'inpolygon' function
-        if within.all() == False:
-            raise ValueError("None of wavemakers fall within model domain.")
-        elif within.any() == False:
-            gdf = gdf[~within]
-            self.logger.info(
-                "Some of wavemakers fall out of model domain. Removing lines."
+        # Check if any of the cross sections fall completely outside the model domain
+        # If so, give a warning and remove these lines
+        outside = gdf.disjoint(self.model.region)
+        if outside.any():
+            logger.warning(
+                "Some wave makers fall outside model domain. Removing these lines."
             )
+            gdf = gdf[~outside]
 
-        if merge and self.data is not None:
-            gdf0 = self.data
-            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
-            self.logger.info("Adding new wavemakers to existing ones.")
+        # Check if there are any cross sections left
+        if gdf.empty:
+            logger.warning("All wave makers fall outside model domain!")
+            return
 
-        # set gdf in self.data
-        self._data = gdf
-
-    def create(
-        self,
-        locations: Union[str, Path, gpd.GeoDataFrame],
-        merge: bool = True,
-        **kwargs,
-    ):
-        """Create model wavemakers lines.
-        (old name: -)
-
-        Adds model layers:
-
-        * **wvm** geom: wavemakers lines
-
-        Arguments
-        ---------
-        locations: str, Path, gpd.GeoDataFrame, optional
-            Path, data source name, or geopandas object for wavemakers lines.
-        merge: bool, optional
-            If True, merge the new wavemakers lines with the existing ones. By default True.
-        """
-        # FIXME ensure the catalog is loaded before adding any new entries
-        # self.data_catalog.sources TODO: check if still needed
-
-        gdf = self.data_catalog.get_geodataframe(
-            locations, geom=self.model.region, assert_gtype=None, **kwargs
-        ).to_crs(self.model.crs)
-
-        # make sure MultiLineString are converted to LineString
-        gdf = gdf.explode(index_parts=True).reset_index(drop=True)
-
-        self.set(gdf, merge)
-
-        # TODO - add to config: self.model.config
-        # self.model.config(f"{name}file", f"sfincs.{name}")
-        # self.set_config(f"{name}file", f"sfincs.{name}")
-
-    def add(
-        self,
-        gdf: gpd.GeoDataFrame,
-    ):
-        """Add multiple lines to wavemakers.
-
-        Arguments
-        ---------
-        gdf: gpd.GeoDataFrame
-            GeoDataFrame with locations and names of wavemakers lines to be added.
-        **NOTE** - coordinates of wavemakers in GeoDataFrame need to be in the same CRS as SFINCS model.
-        """
-        self.set(gdf, merge=True)
+        if merge:
+            self.data = pd.concat([self.gdf, gdf], ignore_index=True)
+            logger.info("Adding new wave makers to existing ones")
+        else:
+            self.data = gdf
+            logger.info("Setting new wave makers")
 
     def delete(
         self,
-        index: int,  # FIXME - should this be List(int)?
+        index: Union[list, int],
     ):
-        """Remove (multiple) line(s) from wavemakers.
+        """Remove one or more wave makers.
 
         Arguments
         ---------
-        index: int
-            Specify indices (int) of wavemakers(s) to be dropped from GeoDataFrame of wavemakers.
+        index: list, int
+            Specify wave makers to be dropped from GeoDataFrame.
+            If int, drop a single wave maker based on index.
+            If list, drop multiple wave makers based on index.
         """
-        if index.any() > (len(self.data.index) - 1):  # TODO - check if this is correct
+        # Turn int or str into list
+        if type(index) == int:
+            index = [index]
+
+        # Check that any integer in list is not larger than the number of lines
+        if max(index) > (len(self.data) - 1) or min(index) < 0:
             raise ValueError("One of the indices exceeds length of index range!")
 
-        self.data.drop(index).reset_index(drop=True)
-        self.logger.info("Dropping line(s) from wavemakers")
+        # Drop lines from GeoDataFrame
+        self.data = self.data.drop(index).reset_index(drop=True)
+        logger.info("Dropping line(s) from wave makers")
+
+        # Check if any cross sections are left
+        if self.data.empty:
+            logger.warning("All wave makers have been removed!")
+            # Set crsfile to None
+            self.model.config.set("wvmfile", None)
 
     def clear(self):
-        """Clean GeoDataFrame with wavemakerss."""
+        """Clean GeoDataFrame with wave makers."""
         self.data = gpd.GeoDataFrame()
-
-    # %% DDB GUI focused additional functions:
-    # delete_polyline
-    # list_names
-
-    def delete_polyline(
-        self,
-        index: int,
-    ):
-        """Remove single polyline from wavemakers.
-        This function sets the wanted index, after which the generic delete function is called.
-
-        Arguments
-        ---------
-        name_or_index: str, int
-            Specify either name (str) or index (int) of cross-section to be dropped from GeoDataFrame.
-        """
-        self.delete(index)  # calls the generic delete function
-        return
+        # Set crsfile to None
+        self.model.config.set("wvmfile", None)
 
     def list_names(self):
-        """Give list of names of cross sections."""
-        names = list(self.data.name)
+        """Give list of names of wave makers."""
+        # The wave makers do not really have names,
+        # but we can use the index and turn into strings
+        names = [str(i + 1) for i in self.data.index]
         return names
+
+    def snap_to_grid(self):
+        """Returns GeoDataFrame with wave makers snapped to model grid."""
+        # TODO - this probably only works for quadtree grids for now
+        snap_gdf = self.model.grid.snap_to_grid(self.data)
+        return snap_gdf

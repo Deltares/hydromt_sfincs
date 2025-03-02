@@ -14,12 +14,12 @@ from hydromt.model import Model
 from hydromt_sfincs import utils
 
 
-class SfincsDischargePoints(ModelComponent):
+class SfincsBoundaryConditions(ModelComponent):
     def __init__(
         self,
         model: Model,
     ):
-        # self._filename: str = "sfincs.dis"  # FIXME - List(str = "sfincs.dis" and str = "sfincs.src" or str = "sfincs_netbndbzsbzi.nc")
+        # self._filename: str = "sfincs.bnd"  # FIXME - List(str = "sfincs.bnd" and str = "sfincs.bzs" or str = "sfincs_netbndbzsbzi.nc")
         self.data = gpd.GeoDataFrame()
         super().__init__(
             model=model,
@@ -27,7 +27,7 @@ class SfincsDischargePoints(ModelComponent):
 
     # @property
     # def data(self) -> gpd.GeoDataFrame:
-    #     """Water level discharge conditions data.
+    #     """Water level boundary conditions data.
 
     #     Return pd.GeoDataFrame
     #     """
@@ -36,46 +36,49 @@ class SfincsDischargePoints(ModelComponent):
     #     return self._data
 
     # def _initialize(self) -> None:
-    #     """Initialize discharge conditions data."""
+    #     """Initialize boundary conditions data."""
     #     if self._data is None:
     #         self._data = gpd.GeoDataFrame()
 
     def read(self, format: str = None):
-        """Read SFINCS discharge points (*.dis, *.src files) or netcdf file.
+        """Read SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
 
-        The format of the discharge conditions files can be specified,
+        The format of the boundary conditions files can be specified,
         otherwise it is determined from the model configuration.
 
         Parameters
         ----------
         format : str, optional
-            Format of the discharge files, "asc" or "netcdf".
+            Format of the boundary conditions files, "asc" or "netcdf".
         """
 
         if format is None:
-            if self.model.config.get("netsrcdisfile"):
+            if self.model.config.get("netbndbzsbzifile"):
                 format = "netcdf"
             else:
                 format = "asc"
 
         if format == "asc":
-            self.read_discharge_points()
+            self.read_boundary_points()
             # Check if there are any points
             if not self.data.empty:
-                self.read_discharge_timeseries()
+                self.read_boundary_conditions_timeseries()
+                # Read astro if bcafile is defined
+                if self.model.config.get("bcafile"):
+                    self.read_boundary_conditions_astro()
         elif format == "netcdf":
             # Read netcdf file
-            self.read_discharges_netcdf()
+            self.read_boundary_conditions_netcdf()
 
-    def read_discharge_points(self, filename: str | Path = None):
-        """Read SFINCS discharge points (*.src) file"""
+    def read_boundary_points(self, filename: str | Path = None):
+        """Read SFINCS boundary condition points (*.bnd) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
 
         # Get absolute file name and set it in config if crsfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "srcfile", value=filename
+            "bndfile", value=filename
         )
 
         # Check if abs_file_path is None
@@ -83,9 +86,11 @@ class SfincsDischargePoints(ModelComponent):
             # File name not defined
             return
 
-        # Check if src file exists
+        # Check if bnd file exists
         if not abs_file_path.exists():
-            raise FileNotFoundError(f"Discharge points file not found: {abs_file_path}")
+            raise FileNotFoundError(
+                f"Boundary condition points file not found: {abs_file_path}"
+            )
 
         # HydroMT does not have open_vector at the moment ...
         # Read bnd file
@@ -111,20 +116,21 @@ class SfincsDischargePoints(ModelComponent):
             d = {
                 "name": name,
                 "timeseries": pd.DataFrame(),
+                "astro": pd.DataFrame(),
                 "geometry": point,
             }
             gdf_list.append(d)
         self.data = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
 
-    def read_discharge_timeseries(self, filename: str | Path = None):
-        """Read SFINCS discharge condition timeseries (*.bzs) file"""
+    def read_boundary_conditions_timeseries(self, filename: str | Path = None):
+        """Read SFINCS boundary condition timeseries (*.bzs) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
 
         # Get absolute file name and set it in config if crsfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "disfile", value=filename
+            "bzsfile", value=filename
         )
 
         # Check if abs_file_path is None
@@ -132,10 +138,10 @@ class SfincsDischargePoints(ModelComponent):
             # File name not defined
             return
 
-        # Check if dis file exists
+        # Check if bzs file exists
         if not abs_file_path.exists():
             raise FileNotFoundError(
-                f"Discharge timeseries file not found: {abs_file_path}"
+                f"Boundary condition timeseries file not found: {abs_file_path}"
             )
 
         # Read bzs file (this creates one DataFrame with all timeseries)
@@ -146,14 +152,43 @@ class SfincsDischargePoints(ModelComponent):
             # Get the timeseries for this point
             ts = pd.DataFrame(df.iloc[:, idx])
             # Set the column name to wl
-            ts.columns = ["q"]
+            ts.columns = ["wl"]
             # # Set the index to time
             # ts.index.name = "time"
             # Add to the point
             self.data.at[idx, "timeseries"] = ts
 
-    def read_discharge_conditions_netcdf(self, filename: str | Path = None):
-        """Read SFINCS discharge conditions netcdf file"""
+    def read_boundary_conditions_astro(self, filename: str | Path = None):
+        """Read SFINCS boundary condition astro (*.bca) file"""
+
+        # Check that read mode is on
+        self.root._assert_read_mode()
+
+        # Get absolute file name and set it in config if bcafile is not None
+        abs_file_path = self.model.config.get_set_file_variable(
+            "bcafile", value=filename
+        )
+
+        # Check if abs_file_path is None
+        if abs_file_path is None:
+            # File name not defined
+            return
+
+        # Check if bca file exists
+        if not abs_file_path.exists():
+            raise FileNotFoundError(
+                f"Boundary condition astro file not found: {abs_file_path}"
+            )
+
+        # Read bca file, which is actually some sort of toml file
+        d = IniStruct(filename=abs_file_path)
+        # Loop through boundary points
+        for ip, point in self.data.iterrows():
+            # Set data in row of gdf
+            self.data.at[ip, "astro"] = d.section[ip].data
+
+    def read_boundary_conditions_netcdf(self, filename: str | Path = None):
+        """Read SFINCS boundary conditions netcdf file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -171,13 +206,13 @@ class SfincsDischargePoints(ModelComponent):
         # Check if netbndbzsbzifile exists
         if not abs_file_path.exists():
             raise FileNotFoundError(
-                f"discharge condition netcdf file not found: {abs_file_path}"
+                f"Boundary condition netcdf file not found: {abs_file_path}"
             )
 
         # Read netcdf file
         ds = xr.open_dataset(abs_file_path)
 
-        # Loop through discharge points
+        # Loop through boundary points
         # FIXME - we first need to get the points!
         for ip, point in self.data.iterrows():
             # Get the timeseries for this point
@@ -191,68 +226,69 @@ class SfincsDischargePoints(ModelComponent):
             self.data.at[ip, "astro"] = astro
 
     def write(self, format: str = None):
-        """Write SFINCS discharges (*.src, *.dis files) or netcdf file.
+        """Write SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
 
-        The format of the discharge files can be specified,
+        The format of the boundary conditions files can be specified,
         otherwise it is determined from the model configuration.
 
         Parameters
         ----------
         format : str, optional
-            Format of the discharge files, "asc" (default), or "netcdf".
+            Format of the boundary conditions files, "asc" (default), or "netcdf".
         """
 
         if self.data.empty:
-            # There are no discharge points
+            # There are no boundary points
             return
 
         if format is None:
-            if self.model.config.get("netsrcdisfile"):
+            if self.model.config.get("netbndbzsbzifile"):
                 format = "netcdf"
             else:
                 format = "asc"
 
         if format == "asc":
-            self.write_discharge_points()
-            self.write_discharge_timeseries()
+            self.write_boundary_points()
+            self.write_boundary_conditions_timeseries()
+            if self.model.config.get("bcafile"):
+                self.write_boundary_conditions_astro()
         else:
-            self.write_discharges_netcdf()
+            self.write_boundary_conditions_netcdf()
 
-    def write_discharge_points(self, filename: str | Path = None):
-        """Write SFINCS discharge points (*.src) file"""
+    def write_boundary_points(self, filename: str | Path = None):
+        """Write SFINCS boundary condition points (*.bnd) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
 
         # Get absolute file name and set it in config if bndfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "srcfile", value=filename, default="sfincs.src"
+            "bndfile", value=filename, default="sfincs.bnd"
         )
 
-        # Write src file
+        # Write bnd file
         # Change precision of coordinates according to crs
         if self.model.crs.is_geographic:
             fmt = "%11.6f"
         else:
             fmt = "%11.1f"
+        utils.write_xy(abs_file_path, self.data, fmt=fmt)
 
-        utils.write_xyn(abs_file_path, self.data, fmt=fmt)
-
-    def write_discharge_timeseries(self, filename: str | Path = None):
-        """Write SFINCS discharge timeseries (*.dis) file"""
+    def write_boundary_conditions_timeseries(self, filename: str | Path = None):
+        """Write SFINCS boundary condition timeseries (*.bzs) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
 
         # Get absolute file name and set it in config if bzsfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "disfile", value=filename, default="sfincs.dis"
+            "bzsfile", value=filename, default="sfincs.bzs"
         )
 
         # Get all timeseries and stick in one DataFrame
         df = pd.DataFrame()
         for ip, point in self.data.iterrows():
-            df = pd.concat([df, point["timeseries"]["q"]], axis=1)
+            df = pd.concat([df, point["timeseries"]["wl"]], axis=1)
 
         # Write to file
         # This does NOT work at the moment!
@@ -270,13 +306,34 @@ class SfincsDischargePoints(ModelComponent):
 
         # to_fwf(df, abs_file_path)
 
+    def write_boundary_conditions_astro(self, filename: str | Path = None):
+        """Write SFINCS boundary condition astro (*.bca) file"""
+
+        # Check that write mode is on
+        self.root._assert_write_mode()
+
+        # Get absolute file name and set it in config if bcafile is not None
+        abs_file_path = self.model.config.get_set_file_variable(
+            "bcafile", value=filename, default="sfincs.bca"
+        )
+
+        # Write bca file
+        # Create IniStruct
+        d = IniStruct()
+        # Loop through boundary points
+        for ip, point in self.data.iterrows():
+            # Add data to IniStruct
+            d.section[ip].data = point["astro"]
+        # Write to file
+        d.write(abs_file_path)
+
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
-        """Set discharge data.
+        """Set boundary conditions data.
 
         Parameters
         ----------
         gdf : gpd.GeoDataFrame
-            GeoDataFrame with discharge points.
+            GeoDataFrame with boundary points.
         merge : bool, optional
             Merge data with existing data, by default True.
         """
@@ -289,20 +346,17 @@ class SfincsDischargePoints(ModelComponent):
     def add_point(
         self,
         gdf: gpd.GeoDataFrame = None,
-        name: str = None,
         x: float = None,
         y: float = None,
-        q: float = 0.0,
+        wl: float = 0.0,
     ):
-        """Add a single point to the discharge data. Either gdf,
+        """Add a single point to the boundary conditions data. Either gdf,
         or x, y must be provided.
 
         Parameters
         ----------
         gdf : gpd.GeoDataFrame
             GeoDataFrame with a single point
-        name : str
-            Name of the point
         x : float
             x-coordinate of the point
         y : float
@@ -318,16 +372,18 @@ class SfincsDischargePoints(ModelComponent):
             gdf = gdf.to_crs(self.model.crs)
             if "timeseries" not in gdf:
                 gdf["timeseries"] = pd.DataFrame()
+            if "astro" not in gdf:
+                gdf["astro"] = pd.DataFrame()
         else:
             # Create a GeoDataFrame with a single point
-            if x is None or y is None or name is None:
+            if x is None or y is None:
                 raise ValueError("Either gdf or x, y, and name must be provided.")
             point = shapely.geometry.Point(x, y)
             gdf = gpd.GeoDataFrame(
                 [
                     {
-                        "name": name,
                         "timeseries": pd.DataFrame(),
+                        "astro": pd.DataFrame(),
                         "geometry": point,
                     }
                 ],
@@ -340,29 +396,29 @@ class SfincsDischargePoints(ModelComponent):
             if not self.data.empty:
                 # Set water level at same times as first existing point by copying
                 gdf.at[0, "timeseries"] = self.data.iloc[0]["timeseries"].copy()
-                gdf.at[0, "timeseries"]["q"] = q
+                gdf.at[0, "timeseries"]["wl"] = wl
             else:
                 # First point, so need to generate df with constant water level
                 time = [self.model.config.get("tstart"), self.model.config.get("tstop")]
-                q = [q] * 2
+                wl = [wl] * 2
                 # Create DataFrame with columns time and wl
                 df = pd.DataFrame()
                 df["time"] = time
-                df["q"] = q
+                df["wl"] = wl
                 df = df.set_index("time")
                 gdf.at[0, "timeseries"] = df
         else:
             # Check if the timeseries is the same length as the first point
             if len(gdf["timeseries"][0]) != len(self.data.iloc[0]["timeseries"]):
                 raise ValueError(
-                    "Timeseries in gdf must be the same length as the first point in the discharge conditions data."
+                    "Timeseries in gdf must be the same length as the first point in the boundary conditions data."
                 )
 
         # Add to self.data
         self.data = pd.concat([self.data, gdf], ignore_index=True)
 
     def delete(self, index: Union[int, List[int]]):
-        """Delete a single point from the discharge data.
+        """Delete a single point from the boundary conditions data.
 
         Parameters
         ----------
@@ -381,12 +437,13 @@ class SfincsDischargePoints(ModelComponent):
         self.data = self.data.drop(index).reset_index(drop=True)
 
         if self.data.empty:
-            self.model.config.set("srcfile", None)
-            self.model.config.set("disfile", None)
-            self.model.config.set("netsrcdisfile", None)
+            self.model.config.set("bndfile", None)
+            self.model.config.set("bzsfile", None)
+            self.model.config.set("bcafile", None)
+            self.model.config.set("netbndbzsbzifile", None)
 
     def clear(self):
-        """Clean GeoDataFrame with discharge points."""
+        """Clean GeoDataFrame with boundary points."""
         self.data = gpd.GeoDataFrame()
 
     def set_timeseries(
@@ -402,13 +459,13 @@ class SfincsDischargePoints(ModelComponent):
         tpeak: float = 86400.0,
         duration: float = 43200.0,
     ):
-        """Applies time series discharges for each point
+        """Applies time series boundary conditions for each point
         Create numpy datetime64 array for time series with python datetime.datetime objects
 
         Parameters
         ----------
         shape : str
-            Shape of the time series. Options are "constant", "sine", or "gaussian".
+            Shape of the time series. Options are "constant", "sine", "gaussian", "astronomical".
         timestep : float
             Time step [s]
         offset : float
@@ -430,6 +487,11 @@ class SfincsDischargePoints(ModelComponent):
         if self.data.empty:
             return
 
+        if shape == "astronomical":
+            # Use existing method
+            self.generate_bzs_from_bca(dt=timestep, offset=offset, write=False)
+            return
+
         t0 = np.datetime64(self.model.config.get("tstart"))
         t1 = np.datetime64(self.model.config.get("tstop"))
         if shape == "constant":
@@ -446,14 +508,14 @@ class SfincsDischargePoints(ModelComponent):
         )
         nt = len(tsec)
         if shape == "constant":
-            q = [offset] * nt
+            wl = [offset] * nt
         elif shape == "sine":
-            q = offset + amplitude * np.sin(
+            wl = offset + amplitude * np.sin(
                 2 * np.pi * tsec / period + phase * np.pi / 180
             )
         elif shape == "gaussian":
-            q = offset + peak * np.exp(-(((tsec - tpeak) / (0.25 * duration)) ** 2))
-        else:
+            wl = offset + peak * np.exp(-(((tsec - tpeak) / (0.25 * duration)) ** 2))
+        elif shape == "astronomical":
             # Not implemented
             return
 
@@ -469,9 +531,159 @@ class SfincsDischargePoints(ModelComponent):
         for i in index:
             df = pd.DataFrame()
             df["time"] = times
-            df["q"] = q
+            df["wl"] = wl
             df = df.set_index("time")
             self.data.at[i, "timeseries"] = df
+
+    def generate_bzs_from_bca(
+        self, dt: float = 600.0, offset: float = 0.0, write_file: bool = True
+    ):
+        """Generate bzs file from bca file"""
+
+        if self.data.empty:
+            return
+
+        if not self.model.input.variables.bzsfile:
+            self.model.input.variables.bzsfile = "sfincs.bzs"
+
+        times = pd.date_range(
+            start=self.model.input.variables.tstart,
+            end=self.model.input.variables.tstop,
+            freq=pd.tseries.offsets.DateOffset(seconds=dt),
+        )
+
+        # Make boundary conditions based on bca file
+        for icol, point in self.gdf.iterrows():
+            v = predict(point.astro, times) + offset
+            ts = pd.Series(v, index=times)
+            # Convert this pandas series to a DataFrame
+            df = pd.DataFrame()
+            df["time"] = ts.index
+            df["wl"] = ts.values
+            df = df.set_index("time")
+            self.gdf.at[icol, "timeseries"] = df
+
+        if write_file:
+            self.write_boundary_conditions_timeseries()
+
+    def get_boundary_points_from_mask(self, min_dist=None, bnd_dist=5000.0):
+        # Should move this to mask?
+
+        if min_dist is None:
+            # Set minimum distance between to grid boundary points on polyline to 2 * dx
+            min_dist = self.model.quadtree_grid.data.attrs["dx"] * 2
+
+        mask = self.model.quadtree_grid.data["mask"]
+        ibnd = np.where(mask == 2)
+        xz, yz = self.model.quadtree_grid.face_coordinates()
+        xp = xz[ibnd]
+        yp = yz[ibnd]
+
+        # Make boolean array for points that are include in a polyline
+        used = np.full(xp.shape, False, dtype=bool)
+
+        # Make list of polylines. Each polyline is a list of indices of boundary points.
+        polylines = []
+
+        while True:
+            if np.all(used):
+                # All boundary grid points have been used. We can stop now.
+                break
+
+            # Find first the unused points
+            i1 = np.where(~used)[0][0]
+
+            # Set this point to used
+            used[i1] = True
+
+            # Start new polyline with index i1
+            polyline = [i1]
+
+            while True:
+                # Compute distances to all points that have not been used
+                xpunused = xp[~used]
+                ypunused = yp[~used]
+                # Get all indices of unused points
+                unused_indices = np.where(~used)[0]
+
+                dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
+                if np.all(np.isnan(dst)):
+                    break
+                inear = np.nanargmin(dst)
+                inearall = unused_indices[inear]
+                if dst[inear] < min_dist:
+                    # Found next point along polyline
+                    polyline.append(inearall)
+                    used[inearall] = True
+                    i1 = inearall
+                else:
+                    # Last point found
+                    break
+
+            # Now work the other way
+            # Start with first point of polyline
+            i1 = polyline[0]
+            while True:
+                if np.all(used):
+                    # All boundary grid points have been used. We can stop now.
+                    break
+                # Now we go in the other direction
+                xpunused = xp[~used]
+                ypunused = yp[~used]
+                unused_indices = np.where(~used)[0]
+                dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
+                inear = np.nanargmin(dst)
+                inearall = unused_indices[inear]
+                if dst[inear] < min_dist:
+                    # Found next point along polyline
+                    polyline.insert(0, inearall)
+                    used[inearall] = True
+                    # Set index of next point
+                    i1 = inearall
+                else:
+                    # Last nearby point found
+                    break
+
+            if len(polyline) > 1:
+                polylines.append(polyline)
+
+        gdf_list = []
+        ip = 0
+        # Transform to web mercator to get distance in metres
+        if self.model.crs.is_geographic:
+            transformer = Transformer.from_crs(self.model.crs, 3857, always_xy=True)
+        # Loop through polylines
+        for polyline in polylines:
+            x = xp[polyline]
+            y = yp[polyline]
+            points = [(x, y) for x, y in zip(x.ravel(), y.ravel())]
+            line = shapely.geometry.LineString(points)
+            if self.model.crs.is_geographic:
+                # Line in web mercator (to get length in metres)
+                xm, ym = transformer.transform(x, y)
+                pointsm = [(xm, ym) for xm, ym in zip(xm.ravel(), ym.ravel())]
+                linem = shapely.geometry.LineString(pointsm)
+                num_points = int(linem.length / bnd_dist) + 2
+            else:
+                num_points = int(line.length / bnd_dist) + 2
+            # Interpolate to new points
+            new_points = [
+                line.interpolate(i / float(num_points - 1), normalized=True)
+                for i in range(num_points)
+            ]
+            # Loop through points in polyline
+            for point in new_points:
+                name = str(ip + 1).zfill(4)
+                d = {
+                    "name": name,
+                    "timeseries": pd.DataFrame(),
+                    "astro": pd.DataFrame(),
+                    "geometry": point,
+                }
+                gdf_list.append(d)
+                ip += 1
+
+        self.data = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
 
 
 # def to_fwf(df, fname, floatfmt=".3f"):

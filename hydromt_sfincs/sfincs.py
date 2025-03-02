@@ -30,24 +30,25 @@ from hydromt_sfincs import DATADIR, plots, utils, workflows
 # %% Import model components
 from hydromt.model import Model
 
-# input types:
+# Input types
 from hydromt_sfincs.config import SfincsConfig
 
-# grid types:
-from hydromt_sfincs.quadtree import QuadtreeGrid
-from hydromt_sfincs.quadtree_mask import QuadtreeMask
+# Grid types
 from hydromt_sfincs.regulargrid import RegularGrid
-from hydromt_sfincs.subgrid import SubgridTableRegular
+from hydromt_sfincs.quadtree import QuadtreeGrid
 
-# map types:
+# Map types
 # from hydromt_sfincs.mask import SfincsMask
+from hydromt_sfincs.quadtree_mask import QuadtreeMask
+
 # from hydromt_sfincs.bathymetry import SfincsBathymetry
+from hydromt_sfincs.subgrid import SubgridTableRegular
 from hydromt_sfincs.infiltration import SfincsInfiltration
 from hydromt_sfincs.manning_roughness import SfincsManningRoughness
 from hydromt_sfincs.initial_conditions import SfincsInitialConditions
 from hydromt_sfincs.storage_volume import SfincsStorageVolume
 
-# geoms types:
+# Geoms types
 from hydromt_sfincs.observation_points import SfincsObservationPoints
 from hydromt_sfincs.cross_sections import SfincsCrossSections
 from hydromt_sfincs.weirs import SfincsWeirs
@@ -56,12 +57,10 @@ from hydromt_sfincs.wave_makers import SfincsWaveMakers
 from hydromt_sfincs.drainage_structures import SfincsDrainageStructures
 from hydromt_sfincs.rivers import SfincsRivers
 
-# forcing types:
+# Forcing types
+from hydromt_sfincs.boundary_conditions import SfincsBoundaryConditions
 from hydromt_sfincs.discharge_points import SfincsDischargePoints
-
-# from hydromt_sfincs.boundary_conditions import SfincsBoundaryConditions #/
-from hydromt_sfincs.waterlevel_conditions import SfincsWaterlevelConditions
-from hydromt_sfincs.snapwave_conditions import SfincsSnapWaveConditions
+from hydromt_sfincs.snapwave_boundary_conditions import SfincsSnapWaveBoundaryConditions
 
 # from hydromt_sfincs.meteo import SfincsMeteo
 from hydromt_sfincs.meteo import SfincsPrecipitation, SfincsPressure, SfincsWind
@@ -126,34 +125,37 @@ class SfincsModel(Model):
         self.grid_type = "regular"
 
         self.add_component("config", SfincsConfig(self))
-        # grid types:
+
+        # Grid types
         self.add_component("grid", RegularGrid(self))
         self.add_component("quadtree_grid", QuadtreeGrid(self))
-        self.add_component("quadtree_mask", QuadtreeMask(self))
-        # self.add_component("subgrid", SubgridTableRegular(self))
-        # self.add_component("subgrid", SubgridTableRegular(self))
 
-        # map types:
+        # Map types
+        self.add_component("quadtree_mask", QuadtreeMask(self))
         # self.add_component("mask", SfincsMask(self))
         # self.add_component("bathymetry", SfincsBathymetry(self))
         # self.add_component("infiltration", SfincsInfiltration(self))
         # self.add_component("manning_roughness", SfincsManningRoughness(self))
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
         # self.add_component("storage_volume", SfincsStorageVolume(self))
+        # self.add_component("subgrid", SubgridTableRegular(self))
+        # self.add_component("quadtree_subgrid", SubgridTableQuadtree(self))
 
-        # geoms types:
+        # Geoms types
         self.add_component("observation_points", SfincsObservationPoints(self))
         self.add_component("cross_sections", SfincsCrossSections(self))
         self.add_component("thin_dams", SfincsThinDams(self))
         # self.add_component("weirs", SfincsWeirs(self))
-        # self.add_component("wave_makers", SfincsWaveMakers(self))
+        self.add_component("wave_makers", SfincsWaveMakers(self))
         # self.add_component("drainage_structures", SfincsDrainageStructures(self))
         # self.add_component("rivers", SfincsRivers(self))
 
-        # forcing types:
-        # self.add_component("discharge_points", SfincsDischargePoints(self))
-        # self.add_component("waterlevel_conditions", SfincsWaterlevelConditions(self))
-        # self.add_component("snapwave_conditions", SfincsSnapWaveConditions(self))
+        # Forcing types
+        self.add_component("boundary_conditions", SfincsBoundaryConditions(self))
+        self.add_component("discharge_points", SfincsDischargePoints(self))
+        self.add_component(
+            "snapwave_boundary_conditions", SfincsSnapWaveBoundaryConditions(self)
+        )
         # self.add_component("meteo", SfincsMeteo(self))
         # self.add_component("precipitation", SfincsPrecipitation(self))
         # self.add_component("pressure", SfincsPressure(self))

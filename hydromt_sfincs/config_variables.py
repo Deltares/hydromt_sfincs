@@ -618,6 +618,26 @@ class SfincsConfigVariables(BaseSettings):
         le=1,
         description="Option in integrated SnapWave solver to turn on wind growth process (1: yes, 0: no)",
     )
+    snapwave_bndfile: str | None = Field(
+        None,
+        description="Name of the SnapWave boundary points file",
+    )
+    snapwave_bhsfile: str | None = Field(
+        None,
+        description="Name of the SnapWave wave height time-series file",
+    )
+    snapwave_btpfile: str | None = Field(
+        None,
+        description="Name of the SnapWave wave period time-series file",
+    )
+    snapwave_bwdfile: str | None = Field(
+        None,
+        description="Name of the SnapWave wave direction time-series file",
+    )
+    snapwave_bdsfile: str | None = Field(
+        None,
+        description="Name of the SnapWave wave spreading time-series file",
+    )
     #
     # Wind drag
     #
@@ -637,3 +657,6 @@ class SfincsConfigVariables(BaseSettings):
     #
     bcafile: str | None = Field(None, description="Name of the calibration file")
     corfile: str | None = Field(None, description="Name of the correction file")
+
+
+sfincs_config_variables = SfincsConfigVariables()

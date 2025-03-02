@@ -124,7 +124,8 @@ class QuadtreeGrid(MeshComponent):
         if not isabs(filename):
             self._filename = join(self.root.path, filename)
 
-        dsu = xu_open_dataset(self._filename)
+        # dsu = xu_open_dataset(self._filename)
+        dsu = xu.load_dataset(self._filename)
         # set CRS (not sure if that should be stored in the netcdf in this way)
         dsu.grid.set_crs(CRS.from_wkt(dsu["crs"].crs_wkt))
 
