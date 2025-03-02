@@ -273,6 +273,14 @@ class SfincsModel(Model):
         for name, comp in self.components.items():
             comp.write()
 
+    def clear_spatial_components(self):
+        """Clear all spatial components."""
+        return
+        # Do something like this
+        for name, comp in self.components.items():
+            if hasattr(comp, "clear"):
+                comp.clear()
+
     ## Plotting
     def plot_forcing(self, fn_out=None, forcings="all", **kwargs):
         """Plot model timeseries forcing.

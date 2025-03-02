@@ -64,7 +64,9 @@ class QuadtreeMask:
         if not quiet:
             print("Building mask ...")
 
-        mask = np.zeros(self.model.quadtree_grid.nr_cells, dtype=np.int8)
+        nr_cells = self.model.quadtree_grid.data.sizes["mesh2d_nFaces"]
+
+        mask = np.zeros(nr_cells, dtype=np.int8)
         x, y = self.model.quadtree_grid.face_coordinates
         z = self.model.quadtree_grid.data["z"].values[:]
 
@@ -406,7 +408,9 @@ class QuadtreeMask:
 
     def to_gdf(self, option="all"):
         """Returns a geodataframe with points for each cell in the mask"""
-        nr_cells = self.model.quadtree_grid.nr_cells
+
+        nr_cells = self.model.quadtree_grid.data.sizes["mesh2d_nFaces"]
+
         if nr_cells == 0:
             # Return empty geodataframe
             return gpd.GeoDataFrame()
