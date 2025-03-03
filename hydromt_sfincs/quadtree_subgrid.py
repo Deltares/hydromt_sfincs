@@ -1,0 +1,137 @@
+import logging
+import xarray as xr
+from pathlib import Path
+
+from hydromt.model.components import ModelComponent
+from hydromt_sfincs.subgrid_quadtree_builder import build_subgrid_table_quadtree
+
+logger = logging.getLogger(__name__)
+
+
+class SfincsQuadtreeSubgridTable(ModelComponent):
+    def __init__(
+        self,
+        model: "SfincsModel",
+    ):
+        self.data = xr.Dataset()
+        super().__init__(
+            model=model,
+        )
+
+    def read(self, filename: str | Path = None):
+        """Read SFINCS subgrid table (*.sbg) file for Quadree grid
+
+        Args:
+            filename (str | Path, optional): File name to read. Defaults to None.
+        """
+
+        # First check whether this model uses a quadtree grid
+        if not self.model.grid_type == "quadtree":
+            return
+
+        # Check that read mode is on
+        self.root._assert_read_mode()
+
+        # Get absolute file name and set it in config if crsfile is not None
+        abs_file_path = self.model.config.get_set_file_variable(
+            "sbgfile", value=filename
+        )
+
+        # Check if abs_file_path is None
+        if abs_file_path is None:
+            # File name not defined, so no subgrid in this model
+            return
+
+        # Check if thd file exists
+        if not abs_file_path.exists():
+            raise FileNotFoundError(f"Subgrid file not found: {abs_file_path}")
+
+        # Read from netcdf file with xarray
+        self.data = xr.load_dataset(filename)
+
+    def write(self, filename: str | Path = None):
+        """Write SFINCS subgrid table (*.sbg) file for Quadree grid
+
+        Args:
+            filename (str | Path, optional): File name to write. Defaults to None.
+        """
+
+        # Check that data is not empty
+        if len(self.data.data_vars) == 0:
+            logger.info("No subgrid table available to write.")
+            return
+
+        # Set file name and get absolute path
+        abs_file_path = self.model.config.get_set_file_variable(
+            "sbgfile",
+            value=filename,
+            default="sfincs.sbg",
+        )
+
+        # Write XArray dataset to netcdf file
+        self.data.to_netcdf(abs_file_path)
+
+    def build(
+        self,
+        bathymetry_sets,
+        roughness_sets,
+        manning_land=0.04,
+        manning_water=0.020,
+        manning_level=1.0,
+        nr_levels=10,
+        nr_subgrid_pixels=20,
+        max_gradient=999.0,
+        depth_factor=1.0,
+        huthresh=0.01,
+        zmin=-999999.0,
+        zmax=999999.0,
+        weight_option="min",
+        bathymetry_database=None,
+        quiet=False,
+        progress_bar=None,
+    ):
+        """Build SFINCS subgrid table for quadtree grid
+
+        WARNING: this only works when called from Delft Dashboard
+        The hydromt_sfincs.subgrid_quadtree_builder needs to be updated
+        to work with data catalogs
+
+        Args:
+            bathymetry_sets (list): List of bathymetry data sets
+            roughness_sets (list): List of roughness data sets
+            manning_land (float, optional): Manning's n value for land. Defaults to 0.04.
+            manning_water (float, optional): Manning's n value for water. Defaults to 0.020.
+            manning_level (float, optional): Manning's n value for level. Defaults to 1.0.
+            nr_levels (int, optional): Number of levels in the quadtree. Defaults to 10.
+            nr_subgrid_pixels (int, optional): Number of pixels in the subgrid. Defaults to 20.
+            max_gradient (float, optional): Maximum gradient. Defaults to 999.0.
+            depth_factor (float, optional): Depth factor. Defaults to 1.0.
+            huthresh (float, optional): Huthresh. Defaults to 0.01.
+            zmin (float, optional): Minimum elevation. Defaults to -999999.0.
+            zmax (float, optional): Maximum elevation. Defaults to 999999.0.
+            weight_option (str, optional): Weight option. Defaults to "min".
+            bathymetry_database (str, optional): Bathymetry database. Defaults to None.
+            quiet (bool, optional): Quiet mode. Defaults to False.
+            progress_bar (tqdm, optional): Progress bar. Defaults to None.
+        """
+
+        self.data = build_subgrid_table_quadtree(
+            self.model.quadtree_grid.data,
+            bathymetry_sets,
+            roughness_sets,
+            manning_land=manning_land,
+            manning_water=manning_water,
+            manning_level=manning_level,
+            nr_levels=nr_levels,
+            nr_subgrid_pixels=nr_subgrid_pixels,
+            max_gradient=max_gradient,
+            depth_factor=depth_factor,
+            huthresh=huthresh,
+            zmin=zmin,
+            zmax=zmax,
+            weight_option=weight_option,
+            bathymetry_database=bathymetry_database,
+            quiet=False,
+            progress_bar=progress_bar,
+            logger=logger,
+        )

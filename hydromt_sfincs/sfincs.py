@@ -41,6 +41,7 @@ from hydromt_sfincs.quadtree import QuadtreeGrid
 # from hydromt_sfincs.mask import SfincsMask
 from hydromt_sfincs.quadtree_mask import QuadtreeMask
 from hydromt_sfincs.snapwave_quadtree_mask import SnapWaveQuadtreeMask
+from hydromt_sfincs.quadtree_subgrid import SfincsQuadtreeSubgridTable
 
 # from hydromt_sfincs.bathymetry import SfincsBathymetry
 from hydromt_sfincs.subgrid import SubgridTableRegular
@@ -141,7 +142,7 @@ class SfincsModel(Model):
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
         # self.add_component("storage_volume", SfincsStorageVolume(self))
         # self.add_component("subgrid", SubgridTableRegular(self))
-        # self.add_component("quadtree_subgrid", SubgridTableQuadtree(self))
+        self.add_component("quadtree_subgrid", SfincsQuadtreeSubgridTable(self))
 
         # Geoms types
         self.add_component("observation_points", SfincsObservationPoints(self))
