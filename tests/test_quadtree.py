@@ -4,6 +4,7 @@ import os
 from pyproj import CRS
 import pytest
 import shutil
+import xugrid as xu
 
 from hydromt_sfincs import utils
 from hydromt_sfincs.quadtree import QuadtreeGrid
@@ -55,6 +56,34 @@ def test_overwrite_quadtree_nc(tmpdir):
 
     # Convert to dataset
     ds = ds.ugrid.to_dataset()
+
+    # Try to write
+    # NOTE this should fail because it still has lazy references to the file
+    with pytest.raises(PermissionError):
+        ds.to_netcdf(nc_copy)
+
+    # Now perform the check and lazy loading check
+    utils.check_exists_and_lazy(ds, nc_copy)
+
+    # Try to overwrite the file
+    ds.to_netcdf(nc_copy)
+
+    # Remove the copied file
+    os.remove(nc_copy)
+
+
+def test_overwrite_quadtree_nc_xu(tmpdir):
+    ncfile = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
+    nc_copy = join(str(tmpdir), "sfincs.nc")
+
+    # Create file + copy
+    shutil.copy(ncfile, nc_copy)
+
+    # Open the copy with xu_open_dataset
+    # This opens the file lazily
+    with xu.open_dataset(nc_copy) as ds:
+        # Convert to dataset
+        ds = ds.ugrid.to_dataset()
 
     # Try to write
     # NOTE this should fail because it still has lazy references to the file
