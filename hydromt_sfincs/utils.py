@@ -1366,4 +1366,5 @@ def check_exists_and_lazy(ds, file_name):
 
     if any(lazy_vars):
         ds.load()  # Some variables are lazy-loaded, load them into memory
+        ds.close()
     return
