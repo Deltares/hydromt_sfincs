@@ -2,6 +2,7 @@ from os.path import join, dirname, abspath
 import numpy as np
 import os
 from pyproj import CRS
+import pytest
 import shutil
 
 from hydromt_sfincs import utils
@@ -50,16 +51,15 @@ def test_overwrite_quadtree_nc(tmpdir):
     # Open the copy with xu_open_dataset
     # This opens the file lazily
     ds = utils.xu_open_dataset(nc_copy)
+    ds.close()
 
     # Convert to dataset
     ds = ds.ugrid.to_dataset()
 
     # Try to write
     # NOTE this should fail because it still has lazy references to the file
-    try:
+    with pytest.raises(PermissionError):
         ds.to_netcdf(nc_copy)
-    except PermissionError:
-        pass
 
     # Now perform the check and lazy loading check
     utils.check_exists_and_lazy(ds, nc_copy)
