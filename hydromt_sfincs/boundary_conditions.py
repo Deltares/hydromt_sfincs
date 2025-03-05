@@ -7,11 +7,12 @@ from typing import Union, List
 import shapely
 from pyproj import Transformer
 
-# from tabulate import tabulate
-
 from hydromt.model.components import ModelComponent
 from hydromt.model import Model
 from hydromt_sfincs import utils
+
+# Are we now importing from CHT packages ?!
+# from cht_tide import predict
 
 
 class SfincsBoundaryConditions(ModelComponent):
@@ -19,26 +20,24 @@ class SfincsBoundaryConditions(ModelComponent):
         self,
         model: Model,
     ):
-        # self._filename: str = "sfincs.bnd"  # FIXME - List(str = "sfincs.bnd" and str = "sfincs.bzs" or str = "sfincs_netbndbzsbzi.nc")
-        self.data = gpd.GeoDataFrame()
+        self._data = gpd.GeoDataFrame()
         super().__init__(
             model=model,
         )
 
-    # @property
-    # def data(self) -> gpd.GeoDataFrame:
-    #     """Water level boundary conditions data.
+    @property
+    def data(self) -> gpd.GeoDataFrame:
+        """Water level boundary conditions data.
 
-    #     Return pd.GeoDataFrame
-    #     """
-    #     if self._data is None:
-    #         self._initialize()
-    #     return self._data
-
-    # def _initialize(self) -> None:
-    #     """Initialize boundary conditions data."""
-    #     if self._data is None:
-    #         self._data = gpd.GeoDataFrame()
+        Return pd.GeoDataFrame
+        """
+        if self._data.is_empty:
+            # Does this not lead to an inifinite loop,
+            # if self._data is empty and we use self.data?
+            # At least it seems to, if we use self.data in the other methods
+            # I still don't really understand why need this.
+            self.read()
+        return self._data
 
     def read(self, format: str = None):
         """Read SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
@@ -61,7 +60,7 @@ class SfincsBoundaryConditions(ModelComponent):
         if format == "asc":
             self.read_boundary_points()
             # Check if there are any points
-            if not self.data.empty:
+            if not self._data.empty:
                 self.read_boundary_conditions_timeseries()
                 # Read astro if bcafile is defined
                 if self.model.config.get("bcafile"):
@@ -69,6 +68,124 @@ class SfincsBoundaryConditions(ModelComponent):
         elif format == "netcdf":
             # Read netcdf file
             self.read_boundary_conditions_netcdf()
+
+    def write(self, format: str = None):
+        """Write SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
+
+        The format of the boundary conditions files can be specified,
+        otherwise it is determined from the model configuration.
+
+        Parameters
+        ----------
+        format : str, optional
+            Format of the boundary conditions files, "asc" (default), or "netcdf".
+        """
+
+        if self._data.empty:
+            # There are no boundary points
+            return
+
+        if format is None:
+            if self.model.config.get("netbndbzsbzifile"):
+                format = "netcdf"
+            else:
+                format = "asc"
+
+        if format == "asc":
+            self.write_boundary_points()
+            self.write_boundary_conditions_timeseries()
+            if self.model.config.get("bcafile"):
+                self.write_boundary_conditions_astro()
+        else:
+            self.write_boundary_conditions_netcdf()
+
+    def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
+        """Set boundary conditions data.
+
+        Parameters
+        ----------
+        gdf : gpd.GeoDataFrame
+            GeoDataFrame with boundary points.
+        merge : bool, optional
+            Merge data with existing data, by default True.
+        """
+
+        if merge:
+            self._data = pd.concat([self._data, gdf], ignore_index=True)
+        else:
+            self._data = gdf
+
+    def add(
+        self,
+        gdf: Union[gpd.GeoDataFrame, Path, str],
+        merge: bool = True,
+        wl: float = 0.0,
+    ):
+        """Add boundary conditions data.
+
+        Parameters
+        ----------
+        gdf : gpd.GeoDataFrame, str, or Path
+            GeoDataFrame with boundary points, str or Path to geojson file.
+        merge : bool, optional
+            Merge data with existing data, by default True.
+        wl : float, optional
+            Water level of the point, by default 0.0.
+        """
+        # So basically the same as set?
+        # Or should we first make sure that the CRS is the same?
+        # Or do we do that in the set method?
+        # Also, do we expect that gdf has "timeseries" and "astro" columns?
+        # If not, we should add them here. Maybe let add_point
+        # call the add method? Or the other way around?
+        # After setting crs, we could loopthrough the rows and call add_point?
+        # So many quandaries!
+        # I suggest we get rid of add_point, and allow x, y, wl to be passed to add
+        # But then gdf would be optional,
+        # and we would need to check if x, y, wl are provided.
+        # So maybe just do it like this ...
+
+        # Check if gdf is a string or path
+        if isinstance(gdf, (str, Path)):
+            if isinstance(gdf, str):
+                gdf = Path(gdf)
+            if not gdf.exists():
+                raise FileNotFoundError(f"File not found: {gdf}")
+            gdf = gpd.read_file(gdf)
+        gdf = gdf.to_crs(self.model.crs)
+
+        # Now loop through points and add them
+        for ip, point in gdf.iterrows():
+            self.add_point(point.geometry.x, point.geometry.y, wl=wl, merge=merge)
+
+    def delete(self, index: Union[int, List[int]]):
+        """Delete a single point from the boundary conditions data.
+
+        Parameters
+        ----------
+        index : int or list of int
+            Index or list of indices of points to be deleted.
+        """
+
+        if self._data.empty:
+            return
+
+        if not isinstance(index, list):
+            index = [index]
+        # Check if indices are within range
+        if any(x > (len(self._data.index) - 1) for x in index):
+            raise ValueError("One of the indices exceeds length of index range!")
+        self._data = self._data.drop(index).reset_index(drop=True)
+
+        if self._data.empty:
+            self.model.config.set("bndfile", None)
+            self.model.config.set("bzsfile", None)
+            self.model.config.set("bcafile", None)
+            self.model.config.set("netbndbzsbzifile", None)
+
+    def clear(self):
+        """Clean GeoDataFrame with boundary points."""
+        self._data = gpd.GeoDataFrame()
 
     def read_boundary_points(self, filename: str | Path = None):
         """Read SFINCS boundary condition points (*.bnd) file"""
@@ -120,7 +237,10 @@ class SfincsBoundaryConditions(ModelComponent):
                 "geometry": point,
             }
             gdf_list.append(d)
-        self.data = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
+
+        gdf = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
+
+        self.set(gdf, merge=False)
 
     def read_boundary_conditions_timeseries(self, filename: str | Path = None):
         """Read SFINCS boundary condition timeseries (*.bzs) file"""
@@ -148,7 +268,7 @@ class SfincsBoundaryConditions(ModelComponent):
         df = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
 
         # Now we need to split the timeseries into the different points
-        for idx, row in self.data.iterrows():
+        for idx, row in self._data.iterrows():
             # Get the timeseries for this point
             ts = pd.DataFrame(df.iloc[:, idx])
             # Set the column name to wl
@@ -156,7 +276,7 @@ class SfincsBoundaryConditions(ModelComponent):
             # # Set the index to time
             # ts.index.name = "time"
             # Add to the point
-            self.data.at[idx, "timeseries"] = ts
+            self._data.at[idx, "timeseries"] = ts
 
     def read_boundary_conditions_astro(self, filename: str | Path = None):
         """Read SFINCS boundary condition astro (*.bca) file"""
@@ -183,9 +303,9 @@ class SfincsBoundaryConditions(ModelComponent):
         # Read bca file, which is actually some sort of toml file
         d = IniStruct(filename=abs_file_path)
         # Loop through boundary points
-        for ip, point in self.data.iterrows():
+        for ip, point in self._data.iterrows():
             # Set data in row of gdf
-            self.data.at[ip, "astro"] = d.section[ip].data
+            self._data.at[ip, "astro"] = d.section[ip]._data
 
     def read_boundary_conditions_netcdf(self, filename: str | Path = None):
         """Read SFINCS boundary conditions netcdf file"""
@@ -214,46 +334,16 @@ class SfincsBoundaryConditions(ModelComponent):
 
         # Loop through boundary points
         # FIXME - we first need to get the points!
-        for ip, point in self.data.iterrows():
+        for ip, point in self._data.iterrows():
             # Get the timeseries for this point
             ts = ds["timeseries"].sel(point=ip).to_dataframe()
             # Add to the point
-            self.data.at[ip, "timeseries"] = ts
+            self._data.at[ip, "timeseries"] = ts
 
             # Get the astro for this point
             astro = ds["astro"].sel(point=ip).to_dataframe()
             # Add to the point
-            self.data.at[ip, "astro"] = astro
-
-    def write(self, format: str = None):
-        """Write SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
-
-        The format of the boundary conditions files can be specified,
-        otherwise it is determined from the model configuration.
-
-        Parameters
-        ----------
-        format : str, optional
-            Format of the boundary conditions files, "asc" (default), or "netcdf".
-        """
-
-        if self.data.empty:
-            # There are no boundary points
-            return
-
-        if format is None:
-            if self.model.config.get("netbndbzsbzifile"):
-                format = "netcdf"
-            else:
-                format = "asc"
-
-        if format == "asc":
-            self.write_boundary_points()
-            self.write_boundary_conditions_timeseries()
-            if self.model.config.get("bcafile"):
-                self.write_boundary_conditions_astro()
-        else:
-            self.write_boundary_conditions_netcdf()
+            self._data.at[ip, "astro"] = astro
 
     def write_boundary_points(self, filename: str | Path = None):
         """Write SFINCS boundary condition points (*.bnd) file"""
@@ -272,7 +362,7 @@ class SfincsBoundaryConditions(ModelComponent):
             fmt = "%11.6f"
         else:
             fmt = "%11.1f"
-        utils.write_xy(abs_file_path, self.data, fmt=fmt)
+        utils.write_xy(abs_file_path, self._data, fmt=fmt)
 
     def write_boundary_conditions_timeseries(self, filename: str | Path = None):
         """Write SFINCS boundary condition timeseries (*.bzs) file"""
@@ -287,7 +377,7 @@ class SfincsBoundaryConditions(ModelComponent):
 
         # Get all timeseries and stick in one DataFrame
         df = pd.DataFrame()
-        for ip, point in self.data.iterrows():
+        for ip, point in self._data.iterrows():
             df = pd.concat([df, point["timeseries"]["wl"]], axis=1)
 
         # Write to file
@@ -319,83 +409,54 @@ class SfincsBoundaryConditions(ModelComponent):
 
         # Write bca file
         # Create IniStruct
+        # Get rid of this IniStruct business !
+        # Isn't bca a toml file? No, it is not. I just tested it.
+        # There is probably something better in hydrolib-core
         d = IniStruct()
         # Loop through boundary points
-        for ip, point in self.data.iterrows():
+        for ip, point in self._data.iterrows():
             # Add data to IniStruct
-            d.section[ip].data = point["astro"]
+            d.section[ip]._data = point["astro"]
         # Write to file
         d.write(abs_file_path)
 
-    def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
-        """Set boundary conditions data.
-
-        Parameters
-        ----------
-        gdf : gpd.GeoDataFrame
-            GeoDataFrame with boundary points.
-        merge : bool, optional
-            Merge data with existing data, by default True.
-        """
-
-        if merge:
-            self.data = pd.concat([self.data, gdf], ignore_index=True)
-        else:
-            self.data = gdf
-
     def add_point(
         self,
-        gdf: gpd.GeoDataFrame = None,
-        x: float = None,
-        y: float = None,
+        x: float,
+        y: float,
         wl: float = 0.0,
+        merge: bool = True,
     ):
-        """Add a single point to the boundary conditions data. Either gdf,
-        or x, y must be provided.
+        """Add a single point to the boundary conditions data.
 
         Parameters
         ----------
-        gdf : gpd.GeoDataFrame
-            GeoDataFrame with a single point
         x : float
             x-coordinate of the point
         y : float
             y-coordinate of the point
-        wl : float
-            Water level of the point
+        wl : float, optional
+            Water level of the point, by default 0.0
         """
-        if gdf is not None:
-            if len(gdf) != 1:
-                raise ValueError(
-                    "Only GeoDataFrame with a single point in a can be added."
-                )
-            gdf = gdf.to_crs(self.model.crs)
-            if "timeseries" not in gdf:
-                gdf["timeseries"] = pd.DataFrame()
-            if "astro" not in gdf:
-                gdf["astro"] = pd.DataFrame()
-        else:
-            # Create a GeoDataFrame with a single point
-            if x is None or y is None:
-                raise ValueError("Either gdf or x, y, and name must be provided.")
-            point = shapely.geometry.Point(x, y)
-            gdf = gpd.GeoDataFrame(
-                [
-                    {
-                        "timeseries": pd.DataFrame(),
-                        "astro": pd.DataFrame(),
-                        "geometry": point,
-                    }
-                ],
-                crs=self.model.crs,
-            )
+
+        point = shapely.geometry.Point(x, y)
+        gdf = gpd.GeoDataFrame(
+            [
+                {
+                    "timeseries": pd.DataFrame(),
+                    "astro": pd.DataFrame(),
+                    "geometry": point,
+                }
+            ],
+            crs=self.model.crs,
+        )
 
         # Check if there is data in the timeseries
         if gdf["timeseries"][0].empty:
             # Now add the water level
-            if not self.data.empty:
+            if not self._data.empty:
                 # Set water level at same times as first existing point by copying
-                gdf.at[0, "timeseries"] = self.data.iloc[0]["timeseries"].copy()
+                gdf.at[0, "timeseries"] = self._data.iloc[0]["timeseries"].copy()
                 gdf.at[0, "timeseries"]["wl"] = wl
             else:
                 # First point, so need to generate df with constant water level
@@ -409,42 +470,13 @@ class SfincsBoundaryConditions(ModelComponent):
                 gdf.at[0, "timeseries"] = df
         else:
             # Check if the timeseries is the same length as the first point
-            if len(gdf["timeseries"][0]) != len(self.data.iloc[0]["timeseries"]):
+            if len(gdf["timeseries"][0]) != len(self._data.iloc[0]["timeseries"]):
                 raise ValueError(
                     "Timeseries in gdf must be the same length as the first point in the boundary conditions data."
                 )
 
-        # Add to self.data
-        self.data = pd.concat([self.data, gdf], ignore_index=True)
-
-    def delete(self, index: Union[int, List[int]]):
-        """Delete a single point from the boundary conditions data.
-
-        Parameters
-        ----------
-        index : int or list of int
-            Index or list of indices of points to be deleted.
-        """
-
-        if self.data.empty:
-            return
-
-        if not isinstance(index, list):
-            index = [index]
-        # Check if indices are within range
-        if any(x > (len(self.data.index) - 1) for x in index):
-            raise ValueError("One of the indices exceeds length of index range!")
-        self.data = self.data.drop(index).reset_index(drop=True)
-
-        if self.data.empty:
-            self.model.config.set("bndfile", None)
-            self.model.config.set("bzsfile", None)
-            self.model.config.set("bcafile", None)
-            self.model.config.set("netbndbzsbzifile", None)
-
-    def clear(self):
-        """Clean GeoDataFrame with boundary points."""
-        self.data = gpd.GeoDataFrame()
+        # Add to self._data
+        self.set(gdf, merge=merge)
 
     def set_timeseries(
         self,
@@ -484,7 +516,7 @@ class SfincsBoundaryConditions(ModelComponent):
             Duration of the Gaussian wave [s]
         """
 
-        if self.data.empty:
+        if self._data.empty:
             return
 
         if shape == "astronomical":
@@ -524,7 +556,7 @@ class SfincsBoundaryConditions(ModelComponent):
         )
 
         if index is None:
-            index = list(self.data.index)
+            index = list(self._data.index)
         elif not isinstance(index, list):
             index = [index]
 
@@ -533,14 +565,14 @@ class SfincsBoundaryConditions(ModelComponent):
             df["time"] = times
             df["wl"] = wl
             df = df.set_index("time")
-            self.data.at[i, "timeseries"] = df
+            self._data.at[i, "timeseries"] = df
 
     def generate_bzs_from_bca(
         self, dt: float = 600.0, offset: float = 0.0, write_file: bool = True
     ):
         """Generate bzs file from bca file"""
 
-        if self.data.empty:
+        if self._data.empty:
             return
 
         if not self.model.input.variables.bzsfile:
@@ -571,9 +603,9 @@ class SfincsBoundaryConditions(ModelComponent):
 
         if min_dist is None:
             # Set minimum distance between to grid boundary points on polyline to 2 * dx
-            min_dist = self.model.quadtree_grid.data.attrs["dx"] * 2
+            min_dist = self.model.quadtree_grid._data.attrs["dx"] * 2
 
-        mask = self.model.quadtree_grid.data["mask"]
+        mask = self.model.quadtree_grid._data["mask"]
         ibnd = np.where(mask == 2)
         xz, yz = self.model.quadtree_grid.face_coordinates()
         xp = xz[ibnd]
@@ -683,13 +715,45 @@ class SfincsBoundaryConditions(ModelComponent):
                 gdf_list.append(d)
                 ip += 1
 
-        self.data = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
+        gdf = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
 
+        self.set(gdf, merge=False)
 
-# def to_fwf(df, fname, floatfmt=".3f"):
-#     indx = df.index.tolist()
-#     vals = df.values.tolist()
-#     for it, t in enumerate(vals):
-#         t.insert(0, indx[it])
-#     content = tabulate(vals, [], tablefmt="plain", floatfmt=floatfmt)
-#     open(fname, "w").write(content)
+    def to_xarray(self):
+        """Convert boundary conditions data to xarray dataset.
+
+        Returns
+        -------
+        xarray.Dataset
+            xarray dataset with boundary conditions data.
+        """
+
+        # This has not yet been tested !
+
+        ds = xr.Dataset()
+
+        if self._data.empty:
+            return ds
+
+        # Dimensions are time and point
+        ds["time"] = self._data.iloc[0]["timeseries"].index
+        ds["point"] = self._data.index
+
+        # Create numpy arrays for boundary locations
+        x = np.empty(len(self._data))
+        y = np.empty(len(self._data))
+        for ip, point in self._data.iterrows():
+            x[ip] = point["geometry"].x
+            y[ip] = point["geometry"].y
+
+        # Create numpy array for water level
+        wl = np.empty((len(ds["time"]), len(ds["point"])))
+        for ip, point in self._data.iterrows():
+            wl[:, ip] = point["timeseries"]["wl"].values
+
+        # Add to dataset
+        ds["x"] = x
+        ds["y"] = y
+        ds["wl"] = (("time", "point"), wl)
+
+        return ds
