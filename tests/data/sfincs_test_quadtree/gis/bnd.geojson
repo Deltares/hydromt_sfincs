@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "bnd",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32633" } },
+"features": [
+{ "type": "Feature", "properties": { "stations": 1 }, "geometry": { "type": "Point", "coordinates": [ 319526.0, 5041108.0 ] } },
+{ "type": "Feature", "properties": { "stations": 2 }, "geometry": { "type": "Point", "coordinates": [ 329195.0, 5046243.0 ] } }
+]
+}

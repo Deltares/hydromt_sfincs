@@ -43,7 +43,7 @@ def test_river_source_points(hydrography, data_catalog):
     np.allclose(gdf_src.geometry[0].coords[:], [(322650.3, 5044385.7)])
 
     # test reverse oriented line
-    gdf_riv = data_catalog.get_geodataframe("rivers_lin2019_v1")
+    gdf_riv = data_catalog.get_geodataframe("hydro_rivers_lin")
     kwargs = dict(gdf_riv=gdf_riv, gdf_mask=gdf_mask, reverse_river_geom=True)
     gdf_src = river_source_points(src_type="inflow", **kwargs)
     assert gdf_src.index.size == 1  # this data only one river

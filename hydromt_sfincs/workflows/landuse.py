@@ -1,4 +1,5 @@
 """Landuse related workflows for SFINCS."""
+
 import logging
 
 import numpy as np

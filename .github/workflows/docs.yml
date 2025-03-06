@@ -31,17 +31,18 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Mambaforge
+      - name: Setup Miniforge
         uses: conda-incubator/setup-miniconda@v2
         with:
             python-version: '3.11'
-            miniforge-variant: Mambaforge
+            miniforge-variant: Miniforge3
             miniforge-version: latest
             use-mamba: true
 
+      ## mamba required to install pandoc with nbsphinx (does not work via pip)
       - name: Setup env
         run: |
-          python make_env.py full -p 3.11 -n hydromt-sfincs -o environment-doc.yml
+          python make_env.py doc,examples -p 3.11 -n hydromt-sfincs -o environment-doc.yml
           mamba env create -f environment-doc.yml
           mamba run -n hydromt-sfincs pip install -e .
 

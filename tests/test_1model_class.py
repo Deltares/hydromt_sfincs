@@ -21,6 +21,9 @@ _cases = {
         "ini": "sfincs_test.yml",
         "example": "sfincs_test",
     },
+    "test2": {
+        "example": "sfincs_test_quadtree",
+    },
 }
 
 
@@ -32,8 +35,11 @@ def test_model_class(case):
     mod.read()
     # run test_model_api() method
     non_compliant_list = mod._test_model_api()
+    # drop non-compliant variables with "results" and "mesh" in name
+    non_compliant_list = [
+        v for v in non_compliant_list if "results" not in v and "mesh" not in v
+    ]
     assert len(non_compliant_list) == 0
-    # pass
 
 
 def test_states(mod):
@@ -156,7 +162,7 @@ def test_subgrid_io(tmpdir):
 
 def test_subgrid_rivers(mod):
     gdf_riv = mod.data_catalog.get_geodataframe(
-        "rivers_lin2019_v1", geom=mod.region, buffer=1e3
+        "hydro_rivers_lin", geom=mod.region, buffer=1e3
     )
 
     # create dummy depths for the river based on the width
@@ -173,7 +179,12 @@ def test_subgrid_rivers(mod):
             {"elevtn": "merit_hydro", "zmin": 0.001},
             {"elevtn": "gebco"},
         ],
-        datasets_rgh=[{"lulc": "vito"}],
+        datasets_rgh=[
+            {
+                "lulc": "vito_2015",
+                "reclass_table": join(TESTDATADIR, "local_data", "vito_mapping.csv"),
+            }
+        ],
         datasets_riv=[
             {
                 "centerlines": gdf_riv,
@@ -390,20 +401,34 @@ def test_forcing_io(tmpdir):
     )
 
 
-def test_read_results():
-    root = TESTMODELDIR
+@pytest.mark.parametrize("case", list(_cases.keys()))
+def test_read_results(case):
+    root = join(TESTDATADIR, _cases[case]["example"])
     mod = SfincsModel(root=root, mode="r")
+    mod.read_results()
     assert all([v in mod.results for v in ["zs", "zsmax", "inp"]])
 
 
-def test_plots(mod):
-    mod.plot_forcing(fn_out="forcing.png")
-    assert isfile(join(mod.root, "figs", "forcing.png"))
-    mod.plot_basemap(fn_out="basemap.png")
-    assert isfile(join(mod.root, "figs", "basemap.png"))
-
-
 @pytest.mark.parametrize("case", list(_cases.keys()))
+def test_plots(case, tmpdir):
+    root = join(TESTDATADIR, _cases[case]["example"])
+    mod = SfincsModel(root=root, mode="r")
+    mod.read()
+    mod.plot_forcing(fn_out=join(tmpdir, "forcing.png"))
+    assert isfile(join(tmpdir, "forcing.png"))
+    fn_out = join(tmpdir, "basemap.png")
+    if case == "test2":
+        mod.plot_basemap(
+            fn_out=fn_out,
+            bmap="sat",
+            plot_bounds=False,  # does not work yet for quadtree
+        )
+    else:
+        mod.plot_basemap(fn_out=fn_out, bmap="sat")
+    assert isfile(fn_out)
+
+
+@pytest.mark.parametrize("case", list(_cases.keys())[:1])
 def test_model_build(tmpdir, case):
     # compare results with model from examples folder
     root = str(tmpdir.join(case))

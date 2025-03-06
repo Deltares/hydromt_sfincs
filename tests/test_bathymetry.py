@@ -13,7 +13,7 @@ def test_bathymetry():
     da_man0 = xr.zeros_like(da_elv0)
     da_elv = da_elv0.raster.reproject(dst_crs="utm", dst_res=30).load()
     da_man = xr.zeros_like(da_elv)
-    gdf_riv = data_cat.get_geodataframe("rivers_lin2019_v1", bbox=bbox)
+    gdf_riv = data_cat.get_geodataframe("hydro_rivers_lin", bbox=bbox)
     da_mask = (data_cat.get_rasterdataset("grwl_mask", bbox=bbox) > 0).astype(np.uint8)
     da_mask.raster.set_nodata(0)
     gdf_mask = da_mask.raster.vectorize()

@@ -36,7 +36,8 @@ setup_subgrid:
       zmin: 0.001
     - elevtn: gebco
   datasets_rgh:
-    - lulc: vito
+    - lulc: vito_2015
+      reclass_table: vito_mapping
   write_dep_tif: True
   nr_subgrid_pixels: 5
   nbins: 8

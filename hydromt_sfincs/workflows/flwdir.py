@@ -67,13 +67,16 @@ def river_centerline_from_hydrography(
     gdf_riv = gdf_riv[gdf_riv["seglen"] > 0]
     if gdf_riv.empty or river_len == 0:
         return gdf_riv
-    # accumulate to get river length from outlet
-    flwdir = pyflwdir.from_dataframe(gdf_riv.set_index("idx"), ds_col="idx_ds")
-    gdf_riv["rivdst"] = flwdir.accuflux(gdf_riv["seglen"].values, direction="down")
-    # get maximum river length from outlet (at headwater segments) for each river segment
-    gdf_riv["rivlen"] = flwdir.fillnodata(
-        np.where(flwdir.n_upstream == 0, gdf_riv["rivdst"], 0), 0
-    )
+    if gdf_riv.index.size > 1:
+        # accumulate to get river length from outlet
+        flwdir = pyflwdir.from_dataframe(gdf_riv.set_index("idx"), ds_col="idx_ds")
+        gdf_riv["rivdst"] = flwdir.accuflux(gdf_riv["seglen"].values, direction="down")
+        # get maximum river length from outlet (at headwater segments) for each river segment
+        gdf_riv["rivlen"] = flwdir.fillnodata(
+            np.where(flwdir.n_upstream == 0, gdf_riv["rivdst"], 0), 0
+        )
+    else:
+        gdf_riv["rivlen"] = gdf_riv["seglen"]
     # filter river network based on total length
     gdf_riv = gdf_riv[gdf_riv["rivlen"] >= river_len]
     return gdf_riv
