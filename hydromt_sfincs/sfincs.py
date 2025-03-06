@@ -665,6 +665,7 @@ class SfincsModel(GridModel):
         z_minimum: float = -99999.0,
         huthresh: float = 0.01,
         q_table_option: int = 2,
+        weight_option: str = "min",
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
@@ -761,6 +762,8 @@ class SfincsModel(GridModel):
             Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.
             1: "old" weighting method, compliant with SFINCS < v2.1.1, taking the avarage of the adjacent cells
             2: "improved" weighting method, recommended for SFINCS >= v2.1.1, that takes into account the wet fractions of the adjacent cells
+        weight_option : str, optional
+            Weighting factor of the adjacent cells for the flux q at u/v points, by default "min". Other, option is "mean".
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
             Note that these values are only used when no Manning's n datasets are provided,
@@ -823,6 +826,7 @@ class SfincsModel(GridModel):
                 z_minimum=z_minimum,
                 huthresh=huthresh,
                 q_table_option=q_table_option,
+                weight_option=weight_option,
                 manning_land=manning_land,
                 manning_sea=manning_sea,
                 rgh_lev_land=rgh_lev_land,

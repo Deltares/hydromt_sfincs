@@ -395,6 +395,7 @@ class SubgridTableRegular:
         z_minimum: float = -99999.0,
         huthresh: float = 0.01,
         q_table_option: int = 2,
+        weight_option: str = "min",
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
@@ -453,6 +454,8 @@ class SubgridTableRegular:
             Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.
             1: "old" weighting method, compliant with SFINCS < v2.1.1, taking the avarage of the adjecent cells
             2: "improved" weighting method, recommended for SFINCS >= v2.1.1, that takes into account the wet fractions of the adjacent cells
+        weight_option : str, optional
+            Weighting factor of the adjacent cells for the flux q at u/v points, by default "min"
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea,
             by default 0.04 and 0.02 s.m-1/3
@@ -742,6 +745,7 @@ class SubgridTableRegular:
                     max_gradient,
                     huthresh,
                     q_table_option,
+                    weight_option,
                     da_mask.raster.crs.is_geographic,
                 )
 
@@ -857,6 +861,7 @@ def process_tile_regular(
     max_gradient,
     huthresh,
     q_table_option,
+    weight_option,
     is_geographic=False,
 ):
     """calculate subgrid properties for a single tile"""
@@ -924,7 +929,12 @@ def process_tile_regular(
             manning = manning_grid[nn : nn + refi, mm : mm + refi]
             manning = np.transpose(manning)
             zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(
-                zgu.flatten(), manning.flatten(), nlevels, huthresh, q_table_option
+                zgu.flatten(),
+                manning.flatten(),
+                nlevels,
+                huthresh,
+                q_table_option,
+                weight_option=weight_option,
             )
             u_zmin[n, m] = zmin
             u_zmax[n, m] = zmax
@@ -940,7 +950,12 @@ def process_tile_regular(
             zgu = zg[nn : nn + refi, mm : mm + refi]
             manning = manning_grid[nn : nn + refi, mm : mm + refi]
             zmin, zmax, havg, nrep, pwet, ffit, navg, zz = subgrid_q_table(
-                zgu.flatten(), manning.flatten(), nlevels, huthresh, q_table_option
+                zgu.flatten(),
+                manning.flatten(),
+                nlevels,
+                huthresh,
+                q_table_option,
+                weight_option=weight_option,
             )
             v_zmin[n, m] = zmin
             v_zmax[n, m] = zmax
@@ -1064,7 +1079,10 @@ def subgrid_q_table(
     manning: np.ndarray,
     nlevels: int,
     huthresh: float,
-    option: int,
+    option: int = 2,
+    z_zmin_a: float = -99999.0,
+    z_zmin_b: float = -99999.0,
+    weight_option: str = "min",
 ):
     """
     map vector of elevation values into a hypsometric hydraulic radius - depth relationship for one u/v point
@@ -1075,6 +1093,9 @@ def subgrid_q_table(
     nlevels : int, number of vertical levels [-]
     huthresh : float, threshold depth [m]
     option : int, option to use "old" or "new" method for computing conveyance depth at u/v points
+    z_zmin_a : float, elevation of lowest pixel in neighboring cell A [m]
+    z_zmin_b : float, elevation of lowest pixel in neighboring cell B [m]
+    weight_option : str, weight of q between sides A and B ("min" or "mean")
 
     Returns
     -------
@@ -1093,33 +1114,38 @@ def subgrid_q_table(
     pwet = np.zeros(nlevels)
     zz = np.zeros(nlevels)
 
-    n = int(elevation.size)  # Nr of pixels in grid cell
-    # n   = int(np.size(elevation)) # Nr of pixels in grid cell
+    n = int(np.size(elevation))  # Nr of pixels in grid cell
+    n05 = int(n / 2)  # Nr of pixels in half grid cell
 
-    n05 = int(n / 2)  # Index of middle pixel
+    # Sort elevation and manning values by side A and B
+    dd_a = elevation[0:n05]
+    dd_b = elevation[n05:]
+    manning_a = manning[0:n05]
+    manning_b = manning[n05:]
 
-    dd_a = elevation[0:n05]  # Pixel elevations side A
-    dd_b = elevation[n05:]  # Pixel elevations side B
-    manning_a = manning[0:n05]  # Pixel manning side A
-    manning_b = manning[n05:]  # Pixel manning side B
+    # Ensure that pixels are at least as high as the minimum elevation in the neighbouring cells
+    # This should always be the case, but there may be errors in the interpolation to the subgrid pixels
+    dd_a = np.maximum(dd_a, z_zmin_a)
+    dd_b = np.maximum(dd_b, z_zmin_b)
 
-    zmin_a = np.min(dd_a)  # Minimum elevation side A
-    zmax_a = np.max(dd_a)  # Maximum elevation side A
+    # Determine min and max elevation
+    zmin_a = np.min(dd_a)
+    zmax_a = np.max(dd_a)
+    zmin_b = np.min(dd_b)
+    zmax_b = np.max(dd_b)
 
-    zmin_b = np.min(dd_b)  # Minimum elevation side B
-    zmax_b = np.max(dd_b)  # Maximum elevation side B
+    # Add huthresh to zmin
+    zmin = max(zmin_a, zmin_b) + huthresh
+    zmax = max(zmax_a, zmax_b)
 
-    zmin = max(zmin_a, zmin_b) + huthresh  # Minimum elevation of uv point
-    zmax = max(zmax_a, zmax_b) + huthresh  # Maximum elevation of uv point
+    # Make sure zmax is at least 0.01 m higher than zmin
+    zmax = max(zmax, zmin + 0.01)
 
-    # Make sure zmax is always a bit higher than zmin
-    if zmax < zmin + 0.001:
-        zmax = max(zmax, zmin + 0.001)
-
-    # Determine level size (metres)
+    # Determine bin size
     dlevel = (zmax - zmin) / (nlevels - 1)
 
-    # Option can be either 1 ("old, compliant with SFINCS < v2.1.") or 2 ("new", recommended SFINCS >= v2.1.)
+    # Option can be either 1 ("old") or 2 ("new")
+    # Should never use option 1 !
     option = option
 
     # Loop through levels
@@ -1157,27 +1183,44 @@ def subgrid_q_table(
             w = (ibin) / (nlevels - 1)
             q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
             hmean = h_all
-
             # Wet fraction
             pwet[ibin] = (zbin > elevation + huthresh).sum() / n
 
         elif option == 2:
-            # We want to make sure that, in the first layer, hmean does not exceed huthresh.
+            # Use newer 2 option (minimum of q_a an q_b, minimum of h_a and h_b increasing to h_all, using pwet for weighting) option
             # This is done by making sure that the wet fraction is 0.0 in the first level on the shallowest side (i.e. if ibin==0, pwet_a or pwet_b must be 0.0).
             # As a result, the weight w will be 0.0 in the first level on the shallowest side.
-            # At the bottom level (i.e. ibin is 0), the grid-averaged depth h_min is typically huthresh / (n / 2), assuming there is one unique pixel that is the lowest.
+
+            pwet_a = (zbin > dd_a).sum() / (n / 2)
+            pwet_b = (zbin > dd_b).sum() / (n / 2)
+
             if ibin == 0:
-                # Ensure that either pwet_a or pwet_b is 0.0
-                pwet_a = (zbin > dd_a + huthresh + 1.0e-4).sum() / (n / 2)
-                pwet_b = (zbin > dd_b + huthresh + 1.0e-4).sum() / (n / 2)
+                # Ensure that at bottom level, either pwet_a or pwet_b is 0.0
+                if pwet_a < pwet_b:
+                    pwet_a = 0.0
+                else:
+                    pwet_b = 0.0
+            elif ibin == nlevels - 1:
+                # Ensure that at top level, both pwet_a and pwet_b are 1.0
+                pwet_a = 1.0
+                pwet_b = 1.0
+
+            if weight_option == "mean":
+                # Weight increases linearly from 0 to 1 from bottom to top bin use percentage wet in sides A and B
+                w = 2 * np.minimum(pwet_a, pwet_b) / max(pwet_a + pwet_b, 1.0e-9)
+                q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
+                # Weighted average of h_min and h_all
+                hmean = (1.0 - w) * h_min + w * h_all
+
             else:
-                # Ensure that both pwet_a and pwet_b are 1.0 at the top level, so that the weight w is 1.0 and pwet[ibin] is 1.0
-                pwet_a = (zbin > dd_a + huthresh - 1.0e-4).sum() / (n / 2)
-                pwet_b = (zbin > dd_b + huthresh - 1.0e-4).sum() / (n / 2)
-            # Weight increases linearly from 0 to 1 from bottom to top bin use percentage wet in sides A and B
-            w = 2 * np.minimum(pwet_a, pwet_b) / max(pwet_a + pwet_b, 1.0e-9)
-            q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
-            hmean = (1.0 - w) * h_min + w * h_all  # Weighted average of h_min and h_all
+                # Take minimum of q_a and q_b
+                if q_a < q_b:
+                    q = q_a
+                    hmean = h_a
+                else:
+                    q = q_b
+                    hmean = h_b
+
             pwet[ibin] = 0.5 * (pwet_a + pwet_b)  # Combined pwet_a and pwet_b
 
         havg[ibin] = hmean  # conveyance depth
@@ -1191,12 +1234,27 @@ def subgrid_q_table(
     # Determine nfit at zfit
     zfit = zmax + zmax - zmin
     # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
-    hfit = havg_top + zmax - zmin
 
+    hfit = havg_top + zmax - zmin
     # Compute q and navg
-    h = np.maximum(zfit - elevation, 0.0)  # water depth in each pixel
-    q = np.mean(h ** (5.0 / 3.0) / manning)  # combined unit discharge for cell
-    navg = np.mean(manning)
+    if weight_option == "mean":
+        # Use entire uv point
+        h = np.maximum(zfit - elevation, 0.0)  # water depth in each pixel
+        q = np.mean(h ** (5.0 / 3.0) / manning)  # combined unit discharge for cell
+        navg = np.mean(manning)
+
+    else:
+        # Use minimum of q_a and q_b
+        if q_a < q_b:
+            h = np.maximum(zfit - dd_a, 0.0)  # water depth in each pixel
+            q = np.mean(
+                h ** (5.0 / 3.0) / manning_a
+            )  # combined unit discharge for cell
+            navg = np.mean(manning_a)
+        else:
+            h = np.maximum(zfit - dd_b, 0.0)
+            q = np.mean(h ** (5.0 / 3.0) / manning_b)
+            navg = np.mean(manning_b)
 
     nfit = hfit ** (5.0 / 3.0) / q
 
