@@ -46,8 +46,6 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_examples/sfincs_results_hmax';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -576,11 +574,11 @@
 <div class="highlight"><pre>
 <span class="ansi-red-fg">---------------------------------------------------------------------------</span>
 <span class="ansi-red-fg">AttributeError</span>                            Traceback (most recent call last)
-Cell <span class="ansi-green-fg">In[6], line 2</span>
-<span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(95,135,135)"># read global surface water occurance (GSWO) data to mask permanent water</span>
-<span class="ansi-green-fg">----&gt; 2</span> <span class="ansi-yellow-bg">mod</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">data_catalog</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">from_artifacts</span>()
-<span class="ansi-green-intense-fg ansi-bold">      3</span> <span style="color: rgb(0,135,0)">print</span>(mod<span style="color: rgb(98,98,98)">.</span>data_catalog[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">gswo</span><span style="color: rgb(175,0,0)">&#34;</span>])
-<span class="ansi-green-intense-fg ansi-bold">      4</span> gswo <span style="color: rgb(98,98,98)">=</span> mod<span style="color: rgb(98,98,98)">.</span>data_catalog<span style="color: rgb(98,98,98)">.</span>get_rasterdataset(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">gswo</span><span style="color: rgb(175,0,0)">&#34;</span>, geom<span style="color: rgb(98,98,98)">=</span>mod<span style="color: rgb(98,98,98)">.</span>region, buffer<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">10</span>)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[6]</span><span class="ansi-green-fg">, line 2</span>
+<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># read global surface water occurance (GSWO) data to mask permanent water</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> <span class="ansi-yellow-bg">mod</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">data_catalog</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">from_artifacts</span>()
+<span class="ansi-green-fg">      3</span> <span style="color: rgb(0,135,0)">print</span>(mod.data_catalog[<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">gswo</span><span class="ansi-yellow-fg">&#34;</span>])
+<span class="ansi-green-fg">      4</span> gswo = mod.data_catalog.get_rasterdataset(<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">gswo</span><span class="ansi-yellow-fg">&#34;</span>, geom=mod.region, buffer=<span class="ansi-green-fg">10</span>)
 
 <span class="ansi-red-fg">AttributeError</span>: &#39;DataCatalog&#39; object has no attribute &#39;from_artifacts&#39;
 </pre></div></div>
@@ -609,12 +607,12 @@ Cell <span class="ansi-green-fg">In[6], line 2</span>
 <div class="highlight"><pre>
 <span class="ansi-red-fg">---------------------------------------------------------------------------</span>
 <span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-Cell <span class="ansi-green-fg">In[7], line 7</span>
-<span class="ansi-green-intense-fg ansi-bold">      4</span> da_hmax <span style="color: rgb(98,98,98)">=</span> mod<span style="color: rgb(98,98,98)">.</span>results[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">hmax</span><span style="color: rgb(175,0,0)">&#34;</span>]
-<span class="ansi-green-intense-fg ansi-bold">      6</span> <span style="color: rgb(95,135,135)"># get overland flood depth with GSWO and set minimum flood depth</span>
-<span class="ansi-green-fg">----&gt; 7</span> da_hmax <span style="color: rgb(98,98,98)">=</span> da_hmax<span style="color: rgb(98,98,98)">.</span>where(<span class="ansi-yellow-bg">gswo_mask</span>)<span style="color: rgb(98,98,98)">.</span>where(da_hmax <span style="color: rgb(98,98,98)">&gt;</span> hmin)
-<span class="ansi-green-intense-fg ansi-bold">      9</span> <span style="color: rgb(95,135,135)"># update attributes for colorbar label later</span>
-<span class="ansi-green-intense-fg ansi-bold">     10</span> da_hmax<span style="color: rgb(98,98,98)">.</span>attrs<span style="color: rgb(98,98,98)">.</span>update(long_name<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">flood depth</span><span style="color: rgb(175,0,0)">&#34;</span>, unit<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">m</span><span style="color: rgb(175,0,0)">&#34;</span>)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[7]</span><span class="ansi-green-fg">, line 7</span>
+<span class="ansi-green-fg">      4</span> da_hmax = mod.results[<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">hmax</span><span class="ansi-yellow-fg">&#34;</span>]
+<span class="ansi-green-fg">      6</span> <span style="color: rgb(95,135,135)"># get overland flood depth with GSWO and set minimum flood depth</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">7</span> da_hmax = da_hmax.where(<span class="ansi-yellow-bg">gswo_mask</span>).where(da_hmax &gt; hmin)
+<span class="ansi-green-fg">      9</span> <span style="color: rgb(95,135,135)"># update attributes for colorbar label later</span>
+<span class="ansi-green-fg">     10</span> da_hmax.attrs.update(long_name=<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">flood depth</span><span class="ansi-yellow-fg">&#34;</span>, unit=<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">m</span><span class="ansi-yellow-fg">&#34;</span>)
 
 <span class="ansi-red-fg">NameError</span>: name &#39;gswo_mask&#39; is not defined
 </pre></div></div>
@@ -910,7 +908,7 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
     <br/>
   </p>
 </div>
