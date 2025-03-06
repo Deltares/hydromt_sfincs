@@ -85,7 +85,7 @@ class QuadtreeGrid:
     def read(self, file_name: Union[str, Path] = "sfincs.nc"):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object."""
 
-        with xu.open_dataset(file_name) as ds:
+        with xu.load_dataset(file_name) as ds:
             ds = ds.rename({"z": "dep"}) if "z" in ds else ds
             ds = ds.rename({"mask": "msk"}) if "mask" in ds else ds
             ds = (

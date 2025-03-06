@@ -3458,24 +3458,20 @@ class SfincsModel(GridModel):
                 self.set_results(ds_face, split_dataset=True)
                 self.set_results(ds_edge, split_dataset=True)
             elif self.grid_type == "quadtree":
-                dsu = utils.xu_open_dataset(
-                    fn_map,
-                    chunks={"time": chunksize},
-                )
+                with xu.load_dataset(fn_map, chunks={"time": chunksize}) as dsu:
+                    # set coords
+                    dsu = dsu.set_coords(["mesh2d_node_x", "mesh2d_node_y"])
+                    # get crs variable, drop it and set it correctly
+                    crs = dsu["crs"].values
+                    dsu.drop_vars("crs")
+                    dsu.grid.set_crs(CRS.from_user_input(crs))
 
-                # set coords
-                dsu = dsu.set_coords(["mesh2d_node_x", "mesh2d_node_y"])
-                # get crs variable, drop it and set it correctly
-                crs = dsu["crs"].values
-                dsu.drop_vars("crs")
-                dsu.grid.set_crs(CRS.from_user_input(crs))
-
-                # NOTE the set_results of the model api doesnt support ugrid
-                self._initialize_results()
-                for name in dsu.variables:
-                    if name in self._results:
-                        self.logger.warning(f"Replacing result: {name}")
-                    self._results[name] = dsu[name]
+                    # NOTE the set_results of the model api doesnt support ugrid
+                    self._initialize_results()
+                    for name in dsu.variables:
+                        if name in self._results:
+                            self.logger.warning(f"Replacing result: {name}")
+                        self._results[name] = dsu[name]
 
         if not isabs(fn_his):
             fn_his = join(self.root, fn_his)
