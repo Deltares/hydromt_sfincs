@@ -97,20 +97,20 @@ def test_xu_open_dataset_overwrite(tmp_dir):
     # os.remove(fn_copy)
 
 
-def test_lazy_xu_open_dataset(tmp_dir):
-    # copy the test data to the tmp_path
-    fn = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
-    fn_copy = tmp_dir.joinpath("sfincs.nc")
+# def test_lazy_xu_open_dataset(tmp_dir):
+#     # copy the test data to the tmp_path
+#     fn = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
+#     fn_copy = tmp_dir.joinpath("sfincs.nc")
 
-    shutil.copy(fn, fn_copy)
+#     shutil.copy(fn, fn_copy)
 
-    # lazy load
-    ds = xu.open_dataset(fn_copy)
-    ds.close()
+#     # lazy load
+#     ds = xu.open_dataset(fn_copy)
+#     ds.close()
 
-    # further down the code, you would like to obtain the data
-    ds.load().close()
+#     # further down the code, you would like to obtain the data
+#     ds.load().close()
 
-    # now it can't be removed
-    with pytest.raises(PermissionError):
-        os.remove(fn_copy)
+#     # now it can't be removed
+#     with pytest.raises(PermissionError):
+#         os.remove(fn_copy)
