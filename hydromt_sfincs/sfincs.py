@@ -2876,11 +2876,12 @@ class SfincsModel(GridModel):
         self.write_states()
         # config last; might be udpated when writing maps, states or forcing
         self.write_config()
-        # write data catalog with used data sources
-        try:
-            self.write_data_catalog()  # new in hydromt v0.4.4
-        except Exception as e:
-            self.logger.error(f"Error writing data catalog: {str(e)}")
+        # FIXME - erroneous data catalog writing should be avoided to prevent errors later on
+        # # write data catalog with used data sources
+        # try:
+        #     self.write_data_catalog()  # new in hydromt v0.4.4
+        # except Exception as e:
+        #     self.logger.error(f"Error writing data catalog: {str(e)}")
 
     def read_grid(self, data_vars: Union[List, str] = None) -> None:
         """Read SFINCS binary grid files and save to `grid` attribute.

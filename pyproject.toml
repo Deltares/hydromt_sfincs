@@ -13,12 +13,12 @@ authors = [
 dependencies = [
     "affine",
     "geopandas>1.0",
-    "hydromt>=0.10, <0.11",
+    "hydromt>=0.10.1,<1.0",
     "numba",
-    "numpy<2.0", # temp pin until bottleneck release v1.4
+    "numpy",
     "pandas",
     "pillow",
-    "pyflwdir>=0.5.5, <0.5.9",
+    "pyflwdir>=0.5.10",
     "pyproj",
     "rasterio",
     "scipy",
@@ -86,6 +86,8 @@ channels = ["conda-forge"]
 deps_not_in_conda = [
   "sphinx_design",
   "black[jupyter]",
+  "hydromt",  # temporary until hydromt v0.10.1 is released
+  "pyflwdir", # temporary until pyflwdir v0.5.10 is released on conda-forge
 ]
 
 [tool.pytest.ini_options]
