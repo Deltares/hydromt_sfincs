@@ -228,7 +228,7 @@ class RegularGrid:
             _msk1 = np.logical_xor(
                 da_mask, ndimage.binary_fill_holes(da_mask, structure=s)
             )
-            regions = ndimage.measurements.label(_msk1, structure=s)[0]
+            regions = ndimage.label(_msk1, structure=s)[0]
             # TODO check if region_area works for rotated grids!
             lbls, areas = region_area(regions, self.transform, latlon)
             n = int(sum(areas / 1e6 < fill_area))
@@ -237,7 +237,7 @@ class RegularGrid:
                 da_mask, np.isin(regions, lbls[areas / 1e6 < fill_area])
             )
         if drop_area > 0:
-            regions = ndimage.measurements.label(da_mask.values, structure=s)[0]
+            regions = ndimage.label(da_mask.values, structure=s)[0]
             lbls, areas = region_area(regions, self.transform, latlon)
             _msk = np.isin(regions, lbls[areas / 1e6 >= drop_area])
             n = int(sum(areas / 1e6 < drop_area))
