@@ -12,7 +12,8 @@ from hydromt.model import Model
 from hydromt_sfincs import utils
 
 # Are we now importing from CHT packages ?!
-# from cht_tide import predict
+from cht_tide import predict
+from hydromt_sfincs.deltares_ini import IniStruct
 
 
 class SfincsBoundaryConditions(ModelComponent):
@@ -412,6 +413,7 @@ class SfincsBoundaryConditions(ModelComponent):
         # Get rid of this IniStruct business !
         # Isn't bca a toml file? No, it is not. I just tested it.
         # There is probably something better in hydrolib-core
+        # For now, I added IniStruct to this module (see all the way at the bottom)
         d = IniStruct()
         # Loop through boundary points
         for ip, point in self._data.iterrows():
@@ -570,13 +572,31 @@ class SfincsBoundaryConditions(ModelComponent):
     def generate_bzs_from_bca(
         self, dt: float = 600.0, offset: float = 0.0, write_file: bool = True
     ):
-        """Generate bzs file from bca file"""
+        """Function called in CoSMoS to generate bzs file from bca file.
+        Should probably update CoSMoS and only use generate_timeseries_from_astro"""
+
+        self.generate_timeseries_from_astro(dt=dt, offset=offset)
+
+        if write_file:
+            self.write_boundary_conditions_timeseries()
+
+    def generate_timeseries_from_astro(
+        self,
+        dt: float = 600.0,
+        offset: float = 0.0,
+    ):
+        """Generates boundary time series file from astronomical components
+
+        Parameters
+        ----------
+        dt : float, optional, default 600.0
+            Time step [s]
+        offset : float, optional, default 0.0
+            Offset of the time series [m]
+        """
 
         if self._data.empty:
             return
-
-        if not self.model.input.variables.bzsfile:
-            self.model.input.variables.bzsfile = "sfincs.bzs"
 
         times = pd.date_range(
             start=self.model.input.variables.tstart,
@@ -585,7 +605,7 @@ class SfincsBoundaryConditions(ModelComponent):
         )
 
         # Make boundary conditions based on bca file
-        for icol, point in self.gdf.iterrows():
+        for icol, point in self.data.iterrows():
             v = predict(point.astro, times) + offset
             ts = pd.Series(v, index=times)
             # Convert this pandas series to a DataFrame
@@ -595,17 +615,17 @@ class SfincsBoundaryConditions(ModelComponent):
             df = df.set_index("time")
             self.gdf.at[icol, "timeseries"] = df
 
-        if write_file:
-            self.write_boundary_conditions_timeseries()
-
     def get_boundary_points_from_mask(self, min_dist=None, bnd_dist=5000.0):
-        # Should move this to mask?
+        """Get boundary points from mask in quadtree grid.
+        Should make utils function as sfincs_snapwave_boundary conditions uses nearly same code
+        Also, regular grid has similar code. Maybe that is more efficient or better.
+        """
 
         if min_dist is None:
             # Set minimum distance between to grid boundary points on polyline to 2 * dx
             min_dist = self.model.quadtree_grid._data.attrs["dx"] * 2
 
-        mask = self.model.quadtree_grid._data["mask"]
+        mask = self.model.quadtree_grid.data["mask"]
         ibnd = np.where(mask == 2)
         xz, yz = self.model.quadtree_grid.face_coordinates()
         xp = xz[ibnd]
