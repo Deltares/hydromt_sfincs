@@ -102,7 +102,7 @@ def merge_multi_dataarrays(
             da1.raster.set_nodata(np.nan)
         else:
             # TODO: this applies to the whole dataset, not only the clipped part
-            da1 = da1.load().raster.reproject_like(da_like)
+            da1 = da1.load().raster.reproject_like(da_like, method=method)
     elif reproj_kwargs:
         # TODO
         da1 = da1.raster.reproject(method=method, **reproj_kwargs).load()
