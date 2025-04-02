@@ -307,13 +307,19 @@ def burn_river_rect(
             raise ValueError(f"Missing {rivbed_name} attribute in gdf_zb")
         # fill missing manning values based on centerlines
         # TODO manning always defined on centerline?
+
+        # Clip gdf_zb on subgrid table
+        gdf_zb = gdf_zb.clip(da_elv.raster.box.to_crs(gdf_zb.crs))
+
         if manning_name not in gdf_zb.columns and manning_name in gdf_riv.columns:
             gdf_zb[manning_name] = np.nan
-        if np.any(np.isnan(gdf_zb[manning_name])):
-            gdf_zb["idx0"], _ = nearest(gdf_zb, gdf_riv)
-            man_nearest = gdf_riv.loc[gdf_zb["idx0"], manning_name]
-            man_nearest.index = gdf_zb.index
-            gdf_zb[manning_name] = gdf_zb[manning_name].fillna(man_nearest)
+        if manning_name in gdf_zb.columns:
+            if np.any(np.isnan(gdf_zb[manning_name])):
+                gdf_zb["idx0"], _ = nearest(gdf_zb, gdf_riv)
+                man_nearest = gdf_riv.loc[gdf_zb["idx0"], manning_name]
+                man_nearest.index = gdf_zb.index
+                gdf_zb[manning_name] = gdf_zb[manning_name].fillna(man_nearest)
+
     elif rivbed_name not in gdf_zb.columns:
         raise ValueError(f"Missing {rivbed_name} or {rivdph_name} attributes")
 
