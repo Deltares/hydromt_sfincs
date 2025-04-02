@@ -439,7 +439,8 @@ class SubgridTableRegular:
         nlevels : int, optional
             Number of levels in which hypsometry is subdivided, by default 10
         nr_subgrid_pixels : int, optional
-            Number of subgrid pixels per computational cell, by default 20
+            Number of subgrid pixels per computational cell, by default 20.
+            Note that this value must be a multiple of 2.
         nrmax : int, optional
             Maximum number of cells per subgrid-block, by default 2000
             These blocks are used to prevent memory issues
