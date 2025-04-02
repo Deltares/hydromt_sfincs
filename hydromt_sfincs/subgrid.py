@@ -483,6 +483,13 @@ class SubgridTableRegular:
         if write_dep_tif or write_man_tif:
             assert highres_dir is not None, "highres_dir must be specified"
 
+        # check if nr_subgrid_pixels is a multiple of 2
+        # this is needed for symmetry around the uv points
+        if nr_subgrid_pixels % 2 != 0:
+            raise ValueError(
+                "nr_subgrid_pixels must be a multiple of 2 for subgrid table"
+            )
+
         refi = nr_subgrid_pixels
         self.nlevels = nlevels
         grid_dim = da_mask.raster.shape
