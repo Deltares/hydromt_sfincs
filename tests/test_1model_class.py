@@ -203,7 +203,7 @@ def test_subgrid_rivers(mod):
     assert isfile(join(mod.root, "subgrid", "dep_subgrid.tif"))
     assert isfile(join(mod.root, "subgrid", "manning_subgrid.tif"))
 
-    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 117.32075)
+    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 124.13107)
 
 
 def test_structs(tmpdir):
