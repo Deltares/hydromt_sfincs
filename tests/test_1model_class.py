@@ -122,7 +122,6 @@ def test_subgrid_io(tmpdir):
     # u and v paramters should be separated internally
     assert "u_pwet" in mod0.subgrid
     assert "uv_pwet" not in mod0.subgrid
-    sbg_net = mod0.subgrid.copy()
 
     # write the subgrid (new format)
     tmp_root = str(tmpdir.join("subgrid_io_test"))
@@ -147,11 +146,11 @@ def test_subgrid_io(tmpdir):
     mod1.set_config("sbgfile", sbgfile)
     mod1.read_subgrid()
 
-    # check version and new parameter
+    # NOTE values are not the same as in the new format due to some changes in #225 and #247
+    # only check version and new parameter
     assert mod1.reggrid.subgrid.version == 0
     assert "u_pwet" not in mod1.subgrid
     assert "uv_pwet" not in mod1.subgrid
-    sbg_bin = mod1.subgrid.copy()
 
 
 def test_subgrid_rivers(mod):
