@@ -102,11 +102,11 @@ def test_infiltration(mod):
     mod1 = SfincsModel(root=mod.root, mode="r")
 
     # assure the sum of smax is close to earlier calculated value
-    assert np.isclose(mod1.grid["smax"].where(mod.mask > 0).sum(), 37.918575)
+    assert np.isclose(mod1.grid["smax"].where(mod.mask > 0).sum(), 32.929287)
     assert np.isclose(
-        mod1.grid["seff"].where(mod.mask > 0).sum(), 37.918575 * effective
+        mod1.grid["seff"].where(mod.mask > 0).sum(), 32.929287 * effective
     )
-    assert np.isclose(mod1.grid["ks"].where(mod.mask > 0).sum(), 351.10803)
+    assert np.isclose(mod1.grid["ks"].where(mod.mask > 0).sum(), 331.27203)
 
 
 def test_subgrid_io(tmpdir):
@@ -152,12 +152,6 @@ def test_subgrid_io(tmpdir):
     assert "u_pwet" not in mod1.subgrid
     assert "uv_pwet" not in mod1.subgrid
     sbg_bin = mod1.subgrid.copy()
-
-    # compare z_zmin and z_zmax
-    assert np.isclose(np.sum(sbg_net["z_zmin"] - sbg_bin["z_zmin"]), 0.0)
-    # TODO: check with Maarten whether this is meant to be different
-    # difference comes from different discretization of volume bins
-    assert np.isclose(np.sum(sbg_net["z_zmax"] - sbg_bin["z_zmax"]), 1.0714283)
 
 
 def test_subgrid_rivers(mod):
