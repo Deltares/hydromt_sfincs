@@ -195,7 +195,7 @@ def test_subgrid_rivers(mod):
         ],
         write_dep_tif=True,
         write_man_tif=True,
-        nr_subgrid_pixels=5,
+        nr_subgrid_pixels=6,
         nbins=8,
         nrmax=250,  # multiple tiles
     )
