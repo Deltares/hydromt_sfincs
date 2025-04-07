@@ -156,7 +156,7 @@ def interp_along_line_to_grid(
     gdf_zb = gdf_zb[["geometry"] + column_names].copy()
     gdf_zb["idx0"], gdf_zb["dist"] = nearest(gdf_zb, gdf_lines)
     nearest_lines = gdf_lines.loc[gdf_zb["idx0"], "geometry"].values
-    gdf_zb["x"] = nearest_lines.project(gdf_zb["geometry"].values)
+    gdf_zb["x"] = nearest_lines.project(gdf_zb["geometry"].to_crs(gdf_lines.crs).values)
     gdf_zb.set_index("idx0", inplace=True)
     # keep only lines with associated points
     gdf_lines = gdf_lines.loc[np.unique(gdf_zb.index.values)]
@@ -173,8 +173,12 @@ def interp_along_line_to_grid(
         for name in column_names:
             x0 = np.atleast_1d(gdf_zb.loc[idx0, "x"])
             z0 = np.atleast_1d(gdf_zb.loc[idx0, name]).astype(np.float32)
+            distances = np.atleast_1d(gdf_zb.loc[idx0, "dist"])
             valid = np.isfinite(z0)
-            x0, z0 = x0[valid], z0[valid]
+            x0, z0, distances = x0[valid], z0[valid], distances[valid]
+            if x0.size > 1 and np.unique(x0).size == 1:
+                valid2 = distances.argmin()
+                x0, z0 = x0[valid2], z0[valid2]
             if x0.size == 0:
                 cc0[name] = np.nan
                 logger.warning(f"River segment {idx0} has no valid values for {name}.")
@@ -307,9 +311,6 @@ def burn_river_rect(
             raise ValueError(f"Missing {rivbed_name} attribute in gdf_zb")
         # fill missing manning values based on centerlines
         # TODO manning always defined on centerline?
-
-        # Clip gdf_zb on subgrid table
-        gdf_zb = gdf_zb.clip(da_elv.raster.box.to_crs(gdf_zb.crs))
 
         if manning_name not in gdf_zb.columns and manning_name in gdf_riv.columns:
             gdf_zb[manning_name] = np.nan
