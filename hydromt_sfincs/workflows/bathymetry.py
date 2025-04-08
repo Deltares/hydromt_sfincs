@@ -177,7 +177,7 @@ def interp_along_line_to_grid(
             valid = np.isfinite(z0)
             x0, z0, distances = x0[valid], z0[valid], distances[valid]
             if x0.size > 1 and np.unique(x0).size == 1:
-                valid2 = distances.argmin()
+                valid2 = distances == np.min(distances)
                 x0, z0 = x0[valid2], z0[valid2]
             if x0.size == 0:
                 cc0[name] = np.nan
