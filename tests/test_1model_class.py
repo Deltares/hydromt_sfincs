@@ -148,7 +148,7 @@ def test_subgrid_io(tmpdir):
     # Check if values are almost equal
     for var_name in sbg0.variables:
         assert np.sum(sbg0[var_name] - sbg1[var_name]) == 0.0
-    
+
     # copy old sbgfile to new location
     sbgfile = join(datadir, "sfincs_test", "sfincs.sbg")
 

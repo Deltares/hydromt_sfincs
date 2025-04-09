@@ -117,8 +117,8 @@ class SubgridTableRegular:
                 v_array = getattr(self, v_attr_name)
 
                 # Update only the active indices
-                u_array[active_u_cells] = uv_var[index_mu1[index_mu1>-1]]
-                v_array[active_v_cells] = uv_var[index_nu1[index_nu1>-1]]
+                u_array[active_u_cells] = uv_var[index_mu1[index_mu1 > -1]]
+                v_array[active_v_cells] = uv_var[index_nu1[index_nu1 > -1]]
 
                 # Set the modified arrays back to the attributes
                 setattr(self, u_attr_name, u_array)
@@ -139,10 +139,10 @@ class SubgridTableRegular:
 
                     # Update only the active indices
                     u_array[ilevel, active_u_cells[0], active_u_cells[1]] = uv_var[
-                        index_mu1[index_mu1>-1]
+                        index_mu1[index_mu1 > -1]
                     ]
                     v_array[ilevel, active_v_cells[0], active_v_cells[1]] = uv_var[
-                        index_nu1[index_nu1>-1]
+                        index_nu1[index_nu1 > -1]
                     ]
 
                     # Set the modified arrays back to the attributes
@@ -192,11 +192,11 @@ class SubgridTableRegular:
         var_list = ["zmin", "zmax", "ffit", "navg"]
         for var in var_list:
             uv_var = np.zeros(nr_uv_points)
-            uv_var[index_mu1[index_mu1>-1]] = ds["u_" + var].values.flatten()[
-                index_mu1>-1
+            uv_var[index_mu1[index_mu1 > -1]] = ds["u_" + var].values.flatten()[
+                index_mu1 > -1
             ]
-            uv_var[index_nu1[index_nu1>-1]] = ds["v_" + var].values.flatten()[
-                index_nu1>-1
+            uv_var[index_nu1[index_nu1 > -1]] = ds["v_" + var].values.flatten()[
+                index_nu1 > -1
             ]
             ds_new[f"uv_{var}"] = xr.DataArray(uv_var, dims=("npuv"))
 
@@ -204,12 +204,12 @@ class SubgridTableRegular:
         for var in var_list_levels:
             uv_var = np.zeros((nlevels, nr_uv_points))
             for ilevel in range(nlevels):
-                uv_var[ilevel, index_mu1[index_mu1>-1]] = ds["u_" + var][
+                uv_var[ilevel, index_mu1[index_mu1 > -1]] = ds["u_" + var][
                     ilevel
-                ].values.flatten()[index_mu1>-1]
-                uv_var[ilevel, index_nu1[index_nu1>-1]] = ds["v_" + var][
+                ].values.flatten()[index_mu1 > -1]
+                uv_var[ilevel, index_nu1[index_nu1 > -1]] = ds["v_" + var][
                     ilevel
-                ].values.flatten()[index_nu1>-1]
+                ].values.flatten()[index_nu1 > -1]
             ds_new[f"uv_{var}"] = xr.DataArray(uv_var, dims=("levels", "npuv"))
 
         # ensure levels is last dimension
