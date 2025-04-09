@@ -314,7 +314,6 @@ def burn_river_rect(
 
         if manning_name not in gdf_zb.columns and manning_name in gdf_riv.columns:
             gdf_zb[manning_name] = np.nan
-        if manning_name in gdf_zb.columns:
             if np.any(np.isnan(gdf_zb[manning_name])):
                 gdf_zb["idx0"], _ = nearest(gdf_zb, gdf_riv)
                 man_nearest = gdf_riv.loc[gdf_zb["idx0"], manning_name]
