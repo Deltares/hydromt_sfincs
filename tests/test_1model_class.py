@@ -123,6 +123,9 @@ def test_subgrid_io(tmpdir):
     assert "u_pwet" in mod0.subgrid
     assert "uv_pwet" not in mod0.subgrid
 
+    # also read-in the "real" netcdf file wihtout any hydromt interpretation
+    sbg0 = xr.open_dataset(join(mod0.root, "sfincs_subgrid.nc"))
+
     # write the subgrid (new format)
     tmp_root = str(tmpdir.join("subgrid_io_test"))
     mod0.set_root(tmp_root, mode="w")
@@ -137,8 +140,15 @@ def test_subgrid_io(tmpdir):
 
     # Check if values are almost equal
     for var_name in mod0.subgrid.variables:
-        assert np.isclose(np.sum(mod0.subgrid[var_name] - mod1.subgrid[var_name]), 0.0)
+        assert np.sum(mod0.subgrid[var_name] - mod1.subgrid[var_name]) == 0.0
 
+    # now read again the raw-netcdf file without any hydromt interpretation
+    sbg1 = xr.open_dataset(join(mod1.root, "sfincs_subgrid.nc"))
+
+    # Check if values are almost equal
+    for var_name in sbg0.variables:
+        assert np.sum(sbg0[var_name] - sbg1[var_name]) == 0.0
+    
     # copy old sbgfile to new location
     sbgfile = join(datadir, "sfincs_test", "sfincs.sbg")
 
