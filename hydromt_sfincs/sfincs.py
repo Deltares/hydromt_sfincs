@@ -2271,9 +2271,19 @@ class SfincsModel(GridModel):
         self.set_geoms(ds_snapped.vector.to_gdf(), "src_snapped")
 
     def setup_precip_forcing_from_grid(
-        self, precip, dst_res=None, aggregate=False, **kwargs
+        self, precip, dst_res=None, cumulative_input=True, aggregate=False, **kwargs
     ):
         """Setup precipitation forcing from a gridded spatially varying data source.
+
+        SFINCS by default requires the mean precipition rate in mm/hr over the interval to come,
+        i.e. the precipitation rate at t0 is the cumulative precipitation between t1 and t0 divided
+        by the time interval. This precipation rate is kept constant over the time interval.
+
+        To obtain the hourly precipitation rate, you can specify your precip as either;
+        *  **cumulative precipitation (mm)** over any time interval (e.g. 15/60/180 minutes).
+            This will be converted to precipitation rate (mm/hr) when cumulative_input = True (default).
+        *  **precipitation rate (mm/hr)** at any time interval, will be used as is
+            if 'cumulative_input = False'
 
         If aggregate is True, spatially uniform precipitation forcing is added to
         the model based on the mean precipitation over the model domain.
@@ -2282,20 +2292,31 @@ class SfincsModel(GridModel):
 
         Adds one of these model layer:
 
-        * **netamprfile** forcing: distributed precipitation [mm/hr]
-        * **precipfile** forcing: uniform precipitation [mm/hr]
+        * **netamprfile** forcing: distributed precipitation rate [mm/hr]
+        * **precipfile** forcing: uniform precipitation rate [mm/hr]
+
+        **NOTE1** By default SFINCS updates the precipitation rates from the input dataset
+        every 1800 seconds ('dtwind=1800', default). When providing precipitation rate at smaller intervals,
+        the value of 'dtwnd' in your sfincs.inp file is lowered automatically.
+
+        **NOTE2** When you do NOT want to keep precipitation rates constant over the time interval, but
+        want to let rates vary linearly over the time interval, specify ampr_block = 0 in the sfincs.inp.
 
         Parameters
         ----------
         precip, str, Path
             Path to precipitation rasterdataset netcdf file.
 
-            * Required variables: ['precip' (mm)]
+            * Required variables: ['precip' (mm) or 'precip' (mm/hr)]
             * Required coordinates: ['time', 'y', 'x']
 
         dst_res: float
             output resolution (m), by default None and computed from source data.
             Only used in combination with aggregate=False
+        cumulative_input: bool, optional
+            option to indicate whether the input precipitation is cumulative in mm
+            (True, default) or a precipitation rate in mm/hr (False). When cumulative,
+            the data is converted to mm/hr by dividing by the time interval of the input dataset.
         aggregate: bool, {'mean', 'median'}, optional
             Method to aggregate distributed input precipitation data. If True, mean
             aggregation is used, if False (default) the data is not aggregated and
@@ -2310,6 +2331,22 @@ class SfincsModel(GridModel):
             variables=["precip"],
         )
 
+        # get the time interval of the input data in seconds
+        time_interval = da_to_timedelta(precip).total_seconds()
+
+        # check if time interval is set in the model config
+        if "dtwnd" in self.config:
+            dtwnd = self.config["dtwnd"]
+            if dtwnd > time_interval:
+                self.set_config("dtwnd", time_interval)
+                self.logger.warning(
+                    f"dtwnd ({dtwnd}) was larger than the time interval of the input data ({time_interval}) and therefore lowered."
+                )
+
+        # check if precip is cumulative or not to convert to mm/hr
+        if cumulative_input:
+            da_precip = da_precip / (time_interval / 3600)
+
         # aggregate or reproject in space
         if aggregate:
             stat = aggregate if isinstance(aggregate, str) else "mean"
@@ -2320,7 +2357,6 @@ class SfincsModel(GridModel):
             self.setup_precip_forcing(df_ts.to_frame())
         else:
             # reproject to model utm crs
-            # NOTE: currently SFINCS errors (stack overflow) on large files,
             # downscaling to model grid is not recommended
             kwargs0 = dict(align=dst_res is not None, method="nearest_index")
             kwargs0.update(kwargs)
@@ -2330,16 +2366,6 @@ class SfincsModel(GridModel):
                 dst_crs=self.crs, dst_res=dst_res, **kwargs
             ).fillna(0)
 
-            # only resample in time if freq < 1H, else keep input values
-            if da_to_timedelta(precip_out) < pd.to_timedelta("1H"):
-                precip_out = hydromt.workflows.resample_time(
-                    precip_out,
-                    freq=pd.to_timedelta("1H"),
-                    conserve_mass=True,
-                    upsampling="bfill",
-                    downsampling="sum",
-                    logger=self.logger,
-                )
             precip_out = precip_out.rename("precip_2d")
 
             # add to forcing
@@ -2420,8 +2446,19 @@ class SfincsModel(GridModel):
             variables=["press_msl"],
         )
 
+        # get the time interval of the input data in seconds
+        time_interval = da_to_timedelta(press).total_seconds()
+
+        # check if time interval is set in the model config
+        if "dtwnd" in self.config:
+            dtwnd = self.config["dtwnd"]
+            if dtwnd > time_interval:
+                self.set_config("dtwnd", time_interval)
+                self.logger.warning(
+                    f"dtwnd ({dtwnd}) was larger than the time interval of the input data ({time_interval}) and therefore lowered."
+                )
+
         # reproject to model utm crs
-        # NOTE: currently SFINCS errors (stack overflow) on large files,
         # downscaling to model grid is not recommended
         kwargs0 = dict(align=dst_res is not None, method="nearest_index")
         kwargs0.update(kwargs)
@@ -2431,24 +2468,13 @@ class SfincsModel(GridModel):
             dst_crs=self.crs, dst_res=dst_res, **kwargs
         ).fillna(fill_value)
 
-        # only resample in time if freq < 1H, else keep input values
-        if da_to_timedelta(press_out) < pd.to_timedelta("1H"):
-            press_out = hydromt.workflows.resample_time(
-                press_out,
-                freq=pd.to_timedelta("1H"),
-                conserve_mass=False,
-                upsampling="interpolate",
-                downsampling="interpolate",
-                logger=self.logger,
-            )
-
         press_out = press_out.rename("press_2d")
 
         # add to forcing
         self.set_forcing(press_out, name="press_2d")
 
     def setup_wind_forcing_from_grid(self, wind, dst_res=None, **kwargs):
-        """Setup pressure forcing from a gridded spatially varying data source.
+        """Setup wind forcing from a gridded spatially varying data source.
 
         Adds one model layer:
 
@@ -2474,33 +2500,28 @@ class SfincsModel(GridModel):
             variables=["wind10_u", "wind10_v"],
         )
 
+        # get the time interval of the input data in seconds
+        time_interval = da_to_timedelta(wind).total_seconds()
+
+        # check if time interval is set in the model config
+        if "dtwnd" in self.config:
+            dtwnd = self.config["dtwnd"]
+            if dtwnd > time_interval:
+                self.set_config("dtwnd", time_interval)
+                self.logger.warning(
+                    f"dtwnd ({dtwnd}) was larger than the time interval of the input data ({time_interval}) and therefore lowered."
+                )
+
         # reproject to model utm crs
-        # NOTE: currently SFINCS errors (stack overflow) on large files,
         # downscaling to model grid is not recommended
         kwargs0 = dict(align=dst_res is not None, method="nearest_index")
         kwargs0.update(kwargs)
         meth = kwargs0["method"]
         self.logger.debug(f"Resample wind using {meth}.")
 
-        wind = wind.raster.reproject(
+        wind_out = wind.raster.reproject(
             dst_crs=self.crs, dst_res=dst_res, **kwargs
         ).fillna(0)
-
-        # only resample in time if freq < 1H, else keep input values
-        if da_to_timedelta(wind) < pd.to_timedelta("1H"):
-            wind_out = xr.Dataset()
-            # resample in time
-            for var in wind.data_vars:
-                wind_out[var] = hydromt.workflows.resample_time(
-                    wind[var],
-                    freq=pd.to_timedelta("1H"),
-                    conserve_mass=False,
-                    upsampling="interpolate",
-                    downsampling="interpolate",
-                    logger=self.logger,
-                )
-        else:
-            wind_out = wind
 
         # add to forcing
         self.set_forcing(wind_out, name="wind_2d")
