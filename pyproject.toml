@@ -13,7 +13,7 @@ authors = [
 dependencies = [
     "affine",
     "geopandas>1.0",
-    "hydromt>=0.10.1,<1.0",
+    "hydromt>=0.10.1,<2.0",
     "numba",
     "numpy",
     "pandas",
