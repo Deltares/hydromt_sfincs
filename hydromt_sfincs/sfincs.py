@@ -2283,10 +2283,10 @@ class SfincsModel(GridModel):
         Input precipitation can be specified as:
 
         * **Cumulative precipitation (mm)** over any time interval (e.g., 15/60/180 minutes).
-        This will be converted to a rate (mm/hr) if ``cumulative_input=True`` (default).
+          This will be converted to a rate (mm/hr) if ``cumulative_input=True`` (default).
 
         * **Precipitation rate (mm/hr)** at any time interval. Used as-is if
-        ``cumulative_input=False``.
+          ``cumulative_input=False``.
 
         If ``aggregate=True``, a spatially uniform precipitation forcing is applied based on
         the domain-wide mean. If ``aggregate=False``, distributed precipitation is applied
@@ -2300,13 +2300,13 @@ class SfincsModel(GridModel):
 
         .. note::
 
-        SFINCS updates the meteo forcing every 1800 seconds (``dtwnd=1800`` by default).
-        If your dataset has smaller intervals, ``dtwnd`` in ``sfincs.inp`` is adjusted automatically.
+            SFINCS updates the meteo forcing every 1800 seconds (``dtwnd=1800`` by default).
+            If your dataset has smaller intervals, ``dtwnd`` in ``sfincs.inp`` is adjusted automatically.
 
         .. note::
 
-        To allow precipitation rates to vary linearly over the time interval
-        (instead of being constant), set ``ampr_block = 0`` in ``sfincs.inp``.
+            To allow precipitation rates to vary linearly over the time interval
+            (instead of being constant), set ``ampr_block = 0`` in ``sfincs.inp``.
 
         Parameters
         ----------
