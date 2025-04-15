@@ -2275,46 +2275,51 @@ class SfincsModel(GridModel):
     ):
         """Setup precipitation forcing from a gridded spatially varying data source.
 
-        SFINCS by default requires the mean precipition rate in mm/hr over the interval to come,
-        i.e. the precipitation rate at t0 is the cumulative precipitation between t1 and t0 divided
-        by the time interval. This precipation rate is kept constant over the time interval.
+        SFINCS requires the mean precipitation rate in mm/hr over the upcoming interval.
+        That is, the precipitation rate at time t0 is derived by taking the cumulative
+        precipitation between t0 and t1 and divided by the time interval. This rate is
+        assumed to be constant over that interval.
 
-        To obtain the hourly precipitation rate, you can specify your precip as either;
-        *  **cumulative precipitation (mm)** over any time interval (e.g. 15/60/180 minutes).
-            This will be converted to precipitation rate (mm/hr) when cumulative_input = True (default).
-        *  **precipitation rate (mm/hr)** at any time interval, will be used as is
-            if 'cumulative_input = False'
+        Input precipitation can be specified as:
 
-        If aggregate is True, spatially uniform precipitation forcing is added to
-        the model based on the mean precipitation over the model domain.
-        If aggregate is False, distributed precipitation is added to the model as netcdf file.
-        The data is reprojected to the model CRS (and destination resolution `dst_res` if provided).
+        * **Cumulative precipitation (mm)** over any time interval (e.g., 15/60/180 minutes).
+        This will be converted to a rate (mm/hr) if ``cumulative_input=True`` (default).
 
-        Adds one of these model layer:
+        * **Precipitation rate (mm/hr)** at any time interval. Used as-is if
+        ``cumulative_input=False``.
 
-        * **netamprfile** forcing: distributed precipitation rate [mm/hr]
-        * **precipfile** forcing: uniform precipitation rate [mm/hr]
+        If ``aggregate=True``, a spatially uniform precipitation forcing is applied based on
+        the domain-wide mean. If ``aggregate=False``, distributed precipitation is applied
+        using a NetCDF file. In that case, data is reprojected to the model CRS (and to
+        ``dst_res`` if provided).
 
-        **NOTE1** By default SFINCS updates the precipitation rates from the input dataset
-        every 1800 seconds ('dtwind=1800', default). When providing precipitation rate at smaller intervals,
-        the value of 'dtwnd' in your sfincs.inp file is lowered automatically.
+        One of the following model layers will be added:
 
-        **NOTE2** When you do NOT want to keep precipitation rates constant over the time interval, but
-        want to let rates vary linearly over the time interval, specify ampr_block = 0 in the sfincs.inp.
+        * **netamprfile**: for distributed precipitation rate [mm/hr].
+        * **precipfile**: for uniform precipitation rate [mm/hr].
+
+        .. note::
+
+        SFINCS updates the meteo forcing every 1800 seconds (``dtwnd=1800`` by default).
+        If your dataset has smaller intervals, ``dtwnd`` in ``sfincs.inp`` is adjusted automatically.
+
+        .. note::
+
+        To allow precipitation rates to vary linearly over the time interval
+        (instead of being constant), set ``ampr_block = 0`` in ``sfincs.inp``.
 
         Parameters
         ----------
-        precip, str, Path
+        precip: str or Path
             Path to precipitation rasterdataset netcdf file.
 
             * Required variables: ['precip' (mm) or 'precip' (mm/hr)]
             * Required coordinates: ['time', 'y', 'x']
-
-        dst_res: float
-            output resolution (m), by default None and computed from source data.
+        dst_res: float, optional
+            Output resolution (m), by default None and computed from source data.
             Only used in combination with aggregate=False
         cumulative_input: bool, optional
-            option to indicate whether the input precipitation is cumulative in mm
+            Option to indicate whether the input precipitation is cumulative in mm
             (True, default) or a precipitation rate in mm/hr (False). When cumulative,
             the data is converted to mm/hr by dividing by the time interval of the input dataset.
         aggregate: bool, {'mean', 'median'}, optional
