@@ -2345,7 +2345,10 @@ class SfincsModel(GridModel):
 
         # check if precip is cumulative or not to convert to mm/hr
         if cumulative_input:
-            da_precip = da_precip / (time_interval / 3600)
+            # convert to mm/hr by dividing by the time interval in seconds
+            precip = precip / (time_interval / 3600)
+            # typically precip is cumulative over the previous time interval, so we need to shift the data
+            precip = precip.shift(time=-1, fill_value=0)
 
         # aggregate or reproject in space
         if aggregate:
