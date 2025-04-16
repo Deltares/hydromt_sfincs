@@ -1624,8 +1624,20 @@ class SfincsModel(GridModel):
 
             structs_out = []
             for s in structs:
-                pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
-                zb = elv.raster.sample(
+                
+                pnts = gpd.points_from_xy(x=s["x"], y=s["y"], crs=self.crs)
+
+                # 2. Buffer the point to avoid large files
+                if window_size > 0:
+                    buffer_geom = pnts.buffer(window_size*2)  # buffer_size in same units as CRS (e.g. meters)
+                else:
+                    buffer_geom = pnts.buffer(res*2)
+
+                # 3. Clip elevation raster to buffer
+                elv_clip = self.data_catalog.get_rasterdataset(
+                    dep, geom=buffer_geom, variables=["elevtn"]
+                )
+                zb = elv_clip.raster.sample(
                     gpd.GeoDataFrame(geometry=pnts, crs=self.crs), wdw=window_size
                 )
                 if zb.ndim > 1:
