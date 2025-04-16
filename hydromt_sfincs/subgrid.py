@@ -1104,18 +1104,18 @@ def subgrid_q_table(
     manning : np.ndarray (nr of pixels in one cell) containing subgrid manning roughness values for one grid cell [s m^(-1/3)]
     nlevels : int, number of vertical levels [-]
     huthresh : float, threshold depth [m]
-    option : int, option to use "old" or "new" method for computing conveyance depth at u/v points
+    option : int, option to use "old" or "new" method for computing conveyance depth at u/v points, recommended to always use 2
     z_zmin_a : float, elevation of lowest pixel in neighboring cell A [m]
     z_zmin_b : float, elevation of lowest pixel in neighboring cell B [m]
-    weight_option : str, weight of q between sides A and B ("min" or "mean")
+    weight_option : str, weight of q between sides A and B ("min" or "mean"), recommended to always use min
 
     Returns
     -------
     zmin : float, minimum elevation [m]
     zmax : float, maximum elevation [m]
     havg : np.ndarray (nlevels) grid-average depth for vertical levels [m]
-    nrep : np.ndarray (nlevels) representative roughness for vertical levels [m1/3/s] ?
-    pwet : np.ndarray (nlevels) wet fraction for vertical levels [-] ?
+    nrep : np.ndarray (nlevels) representative roughness for vertical levels [m1/3/s]
+    pwet : np.ndarray (nlevels) wet fraction for vertical levels [-]
     navg : float, grid-average Manning's n [m 1/3 / s]
     ffit : float, fitting coefficient [-]
     zz   : np.ndarray (nlevels) elevation of vertical levels [m]
