@@ -7,11 +7,10 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
 v1.2.0 (17-4-2025)
-==========
-**This release contains new functionality on reading/writing quadtree models and some minor bugfixes.
-Most important fixes are related to the subgrid-tables and interpolation of datasets to the computational grid.
-It is strongly recommended to use this version in combination with `SFINCS versions ≥ 2.2.0
-<https://github.com/Deltares/SFINCS/releases/tag/ >`_.**
+==================
+**This release contains new functionality on reading/writing quadtree models and some minor bugfixes and updates.
+It is strongly recommended to use this version in combination with SFINCS versions ≥ 2.2.0
+`<https://github.com/Deltares/SFINCS/releases/tag/ >`_.**
 
 
 Added
@@ -24,7 +23,7 @@ Changed
 -------
 - nr_subgrid_pixels in `SfincsModel.setup_subgrid` can only be a multiple of 2 (#225)
 - provide decent warning when all waterlevel boundary points are outside of region+buffer (#237)
-- default value for 'tspinup' changed to 0.0 in sfincs.inp to align with SFINCS kernel (#243)
+- default value for "tspinup" changed to 0.0 in sfincs.inp to align with SFINCS kernel (#243)
 - no automatic upscaling anymore of meteo datasets with intervals < 1 hour for wind, pressure and precipitation (#255)
 - changed the way `SfincsModel.setup_precip_forcing_from_grid` deals with cumulative precipitation inputs (#255)
 
@@ -32,8 +31,8 @@ Fixed
 -----
 - fixed a bug in `river_centerline_from_hydrography` in case there is only one river with a single segment (#215)
 - clean the grid variables when recreating the grid (#220)
-- fixed erronuous mapping of uv points to joined uv-array when writing the subgrid files (#225)
 - minor bugfix in downscale floodmap routine when providing a file_name (#224)
+- fixed erronuous mapping of uv points to joined uv-array when writing the subgrid files (#225)
 - fixed missing projection method while merging datasets (#247)
 - fixed burning in rivers when very few riverbed points are provided (#250)
 
