@@ -9,7 +9,7 @@ import logging
 import os
 from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Unionz, Literal
 
 import geopandas as gpd
 import hydromt
@@ -2271,7 +2271,13 @@ class SfincsModel(GridModel):
         self.set_geoms(ds_snapped.vector.to_gdf(), "src_snapped")
 
     def setup_precip_forcing_from_grid(
-        self, precip, dst_res=None, cumulative_input=True, aggregate=False, **kwargs
+        self,
+        precip,
+        dst_res: float = None,
+        cumulative_input: bool = True,
+        time_label: Literal["left", "right"] = "right",
+        aggregate: bool = False,
+        **kwargs,
     ):
         """Setup precipitation forcing from a gridded spatially varying data source.
 
@@ -2282,7 +2288,7 @@ class SfincsModel(GridModel):
 
         Input precipitation can be specified as:
 
-        * **Cumulative precipitation (mm)** over any time interval (e.g., 15/60/180 minutes).
+        * **Cumulative precipitation (mm)** over any constant time interval (e.g., 15/60/180 minutes).
           This will be converted to a rate (mm/hr) if ``cumulative_input=True`` (default).
 
         * **Precipitation rate (mm/hr)** at any time interval. Used as-is if
@@ -2322,6 +2328,10 @@ class SfincsModel(GridModel):
             Option to indicate whether the input precipitation is cumulative in mm
             (True, default) or a precipitation rate in mm/hr (False). When cumulative,
             the data is converted to mm/hr by dividing by the time interval of the input dataset.
+        time_label: literal, optional
+            Label to prescribe whether the accumulation period of the precipitation
+            is starting (left) or ending (right) at the validity date and time.
+            This is only relevant if cumulative_input=True.
         aggregate: bool, {'mean', 'median'}, optional
             Method to aggregate distributed input precipitation data. If True, mean
             aggregation is used, if False (default) the data is not aggregated and
@@ -2352,8 +2362,10 @@ class SfincsModel(GridModel):
         if cumulative_input:
             # convert to mm/hr by dividing by the time interval in seconds
             precip = precip / (time_interval / 3600)
-            # typically precip is cumulative over the previous time interval, so we need to shift the data
-            precip = precip.shift(time=-1, fill_value=0)
+            if time_label == "right":
+                # typically cumulative precipation is accumulated over time interval ending at the validity time,
+                # to match SFINCS conventions, we shift the time index to the left
+                precip = precip.shift(time=-1, fill_value=0)
 
         # aggregate or reproject in space
         if aggregate:
