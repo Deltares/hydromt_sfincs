@@ -2350,13 +2350,11 @@ class SfincsModel(GridModel):
         time_interval = da_to_timedelta(precip).total_seconds()
 
         # check if time interval is set in the model config
-        if "dtwnd" in self.config:
-            dtwnd = self.config["dtwnd"]
-            if dtwnd > time_interval:
-                self.set_config("dtwnd", time_interval)
-                self.logger.warning(
-                    f"dtwnd ({dtwnd}) was larger than the time interval of the input data ({time_interval}) and therefore lowered."
-                )
+        if self.config.get("dtwnd",1800) > time_interval:
+            self.set_config("dtwnd", time_interval)
+            self.logger.warning(
+                f"dtwnd ({dtwnd}) was larger than the time interval of the input data ({time_interval}) and therefore lowered."
+            )
 
         # check if precip is cumulative or not to convert to mm/hr
         if cumulative_input:
