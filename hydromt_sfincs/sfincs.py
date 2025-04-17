@@ -2349,11 +2349,12 @@ class SfincsModel(GridModel):
         # get the time interval of the input data in seconds
         time_interval = da_to_timedelta(precip).total_seconds()
 
-        # check if time interval is set in the model config
-        if self.config.get("dtwnd",1800) > time_interval:
+        # check if time interval is set in the model config, else use default from SFINCS
+        dtwnd = self.config.get("dtwnd", 1800)
+        if dtwnd > time_interval:
             self.set_config("dtwnd", time_interval)
             self.logger.warning(
-                f"dtwnd ({dtwnd}) was larger than the time interval of the input data ({time_interval}) and therefore lowered."
+                f"dtwnd ({dtwnd}) was larger than the time interval of the precip data ({time_interval}) and therefore lowered."
             )
 
         # check if precip is cumulative or not to convert to mm/hr
@@ -2467,14 +2468,13 @@ class SfincsModel(GridModel):
         # get the time interval of the input data in seconds
         time_interval = da_to_timedelta(press).total_seconds()
 
-        # check if time interval is set in the model config
-        if "dtwnd" in self.config:
-            dtwnd = self.config["dtwnd"]
-            if dtwnd > time_interval:
-                self.set_config("dtwnd", time_interval)
-                self.logger.warning(
-                    f"dtwnd ({dtwnd}) was larger than the time interval of the input data ({time_interval}) and therefore lowered."
-                )
+        # check if time interval is set in the model config, else use default from SFINCS
+        dtwnd = self.config.get("dtwnd", 1800)
+        if dtwnd > time_interval:
+            self.set_config("dtwnd", time_interval)
+            self.logger.warning(
+                f"dtwnd ({dtwnd}) was larger than the time interval of the pressure data ({time_interval}) and therefore lowered."
+            )
 
         # reproject to model utm crs
         # downscaling to model grid is not recommended
@@ -2521,14 +2521,13 @@ class SfincsModel(GridModel):
         # get the time interval of the input data in seconds
         time_interval = da_to_timedelta(wind).total_seconds()
 
-        # check if time interval is set in the model config
-        if "dtwnd" in self.config:
-            dtwnd = self.config["dtwnd"]
-            if dtwnd > time_interval:
-                self.set_config("dtwnd", time_interval)
-                self.logger.warning(
-                    f"dtwnd ({dtwnd}) was larger than the time interval of the input data ({time_interval}) and therefore lowered."
-                )
+        # check if time interval is set in the model config, else use default from SFINCS
+        dtwnd = self.config.get("dtwnd", 1800)
+        if dtwnd > time_interval:
+            self.set_config("dtwnd", time_interval)
+            self.logger.warning(
+                f"dtwnd ({dtwnd}) was larger than the time interval of the wind data ({time_interval}) and therefore lowered."
+            )
 
         # reproject to model utm crs
         # downscaling to model grid is not recommended
