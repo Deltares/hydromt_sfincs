@@ -665,6 +665,7 @@ class SfincsModel(GridModel):
         z_minimum: float = -99999.0,
         huthresh: float = 0.01,
         q_table_option: int = 2,
+        weight_option: str = "min",
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
@@ -761,6 +762,8 @@ class SfincsModel(GridModel):
             Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.
             1: "old" weighting method, compliant with SFINCS < v2.1.1, taking the avarage of the adjacent cells
             2: "improved" weighting method, recommended for SFINCS >= v2.1.1, that takes into account the wet fractions of the adjacent cells
+        weight_option : str, optional
+            Weighting factor of the adjacent cells for the flux q at u/v points, by default "min". Other, option is "mean".
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
             Note that these values are only used when no Manning's n datasets are provided,
@@ -823,6 +826,7 @@ class SfincsModel(GridModel):
                 z_minimum=z_minimum,
                 huthresh=huthresh,
                 q_table_option=q_table_option,
+                weight_option=weight_option,
                 manning_land=manning_land,
                 manning_sea=manning_sea,
                 rgh_lev_land=rgh_lev_land,
@@ -3376,6 +3380,8 @@ class SfincsModel(GridModel):
                         self.write_vector(variables=f"forcing.{list(rename.keys())[0]}")
                 # write 2D gridded timeseries
                 else:
+                    # before writing, check if the file already exists while data is still lazily loaded
+                    utils.check_exists_and_lazy(ds, fn)
                     ds.to_netcdf(fn, encoding=encoding)
 
     def read_states(self):
@@ -3495,24 +3501,20 @@ class SfincsModel(GridModel):
                 self.set_results(ds_face, split_dataset=True)
                 self.set_results(ds_edge, split_dataset=True)
             elif self.grid_type == "quadtree":
-                dsu = utils.xu_open_dataset(
-                    fn_map,
-                    chunks={"time": chunksize},
-                )
+                with xu.load_dataset(fn_map, chunks={"time": chunksize}) as dsu:
+                    # set coords
+                    dsu = dsu.set_coords(["mesh2d_node_x", "mesh2d_node_y"])
+                    # get crs variable, drop it and set it correctly
+                    crs = dsu["crs"].values
+                    dsu.drop_vars("crs")
+                    dsu.grid.set_crs(CRS.from_user_input(crs))
 
-                # set coords
-                dsu = dsu.set_coords(["mesh2d_node_x", "mesh2d_node_y"])
-                # get crs variable, drop it and set it correctly
-                crs = dsu["crs"].values
-                dsu.drop_vars("crs")
-                dsu.grid.set_crs(CRS.from_user_input(crs))
-
-                # NOTE the set_results of the model api doesnt support ugrid
-                self._initialize_results()
-                for name in dsu.variables:
-                    if name in self._results:
-                        self.logger.warning(f"Replacing result: {name}")
-                    self._results[name] = dsu[name]
+                    # NOTE the set_results of the model api doesnt support ugrid
+                    self._initialize_results()
+                    for name in dsu.variables:
+                        if name in self._results:
+                            self.logger.warning(f"Replacing result: {name}")
+                        self._results[name] = dsu[name]
 
         if not isabs(fn_his):
             fn_his = join(self.root, fn_his)

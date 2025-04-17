@@ -11,7 +11,7 @@ import xarray as xr
 import xugrid as xu
 from pyproj import CRS, Transformer
 
-from hydromt_sfincs.utils import xu_open_dataset
+from hydromt_sfincs.utils import xu_open_dataset, check_exists_and_lazy
 
 # optional dependency
 try:
@@ -85,33 +85,31 @@ class QuadtreeGrid:
     def read(self, file_name: Union[str, Path] = "sfincs.nc"):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object."""
 
-        self.data = xu_open_dataset(file_name)
+        with xu.load_dataset(file_name) as ds:
+            ds = ds.rename({"z": "dep"}) if "z" in ds else ds
+            ds = ds.rename({"mask": "msk"}) if "mask" in ds else ds
+            ds = (
+                ds.rename({"snapwave_mask": "snapwave_msk"})
+                if "snapwave_mask" in ds
+                else ds
+            )
 
-        # TODO make similar to fortran conventions?
-        # Rename to python conventions
-        self.data = self.data.rename({"z": "dep"}) if "z" in self.data else self.data
-        self.data = (
-            self.data.rename({"mask": "msk"}) if "mask" in self.data else self.data
-        )
-        self.data = (
-            self.data.rename({"snapwave_mask": "snapwave_msk"})
-            if "snapwave_mask" in self.data
-            else self.data
-        )
+            ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
 
-        self.nr_cells = self.data.sizes["mesh2d_nFaces"]
+            # store attributes
+            self.nr_cells = ds.sizes["mesh2d_nFaces"]
+            for key, value in ds.attrs.items():
+                setattr(self, key, value)
 
-        # set CRS (not sure if that should be stored in the netcdf in this way)
-        # self.data.crs = CRS.from_wkt(self.data["crs"].crs_wkt)
-        self.data.grid.set_crs(CRS.from_wkt(self.data["crs"].crs_wkt))
-
-        for key, value in self.data.attrs.items():
-            setattr(self, key, value)
+            self.data = ds
 
     def write(self, file_name: Union[str, Path] = "sfincs.nc", version: int = 0):
         """Writes a quadtree SFINCS netcdf file."""
 
         # TODO do we want to cut inactive cells here? Or already when creating the mask?
+
+        # before writing, check if the file already exists while data is still lazily loaded
+        check_exists_and_lazy(self.data, file_name)
 
         attrs = self.data.attrs
         ds = self.data.ugrid.to_dataset()

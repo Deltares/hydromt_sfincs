@@ -39,7 +39,7 @@ setup_subgrid:
     - lulc: vito_2015
       reclass_table: vito_mapping
   write_dep_tif: True
-  nr_subgrid_pixels: 5
+  nr_subgrid_pixels: 6
   nbins: 8
 
 setup_observation_points:
