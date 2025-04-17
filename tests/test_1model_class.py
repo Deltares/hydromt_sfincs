@@ -493,8 +493,4 @@ def test_model_build(tmpdir, case):
         for name in mod0.forcing:
             assert np.allclose(
                 mod0.forcing[name], mod1.forcing[name]
-            ), f"forcing {name}"
-    # check forcing
-    if mod0.forcing:
-        for name in mod0.forcing:
-            assert np.allclose(mod0.forcing[name], mod1.forcing[name])
+            ), f" invalid forcing: {name}"
