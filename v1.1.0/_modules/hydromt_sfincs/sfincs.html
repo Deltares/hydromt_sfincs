@@ -1095,6 +1095,7 @@
         <span class="n">z_minimum</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">99999.0</span><span class="p">,</span>
         <span class="n">huthresh</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
         <span class="n">q_table_option</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">weight_option</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;min&quot;</span><span class="p">,</span>
         <span class="n">manning_land</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.04</span><span class="p">,</span>
         <span class="n">manning_sea</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
         <span class="n">rgh_lev_land</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
@@ -1191,6 +1192,8 @@
 <span class="sd">            Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.</span>
 <span class="sd">            1: &quot;old&quot; weighting method, compliant with SFINCS &lt; v2.1.1, taking the avarage of the adjacent cells</span>
 <span class="sd">            2: &quot;improved&quot; weighting method, recommended for SFINCS &gt;= v2.1.1, that takes into account the wet fractions of the adjacent cells</span>
+<span class="sd">        weight_option : str, optional</span>
+<span class="sd">            Weighting factor of the adjacent cells for the flux q at u/v points, by default &quot;min&quot;. Other, option is &quot;mean&quot;.</span>
 <span class="sd">        manning_land, manning_sea : float, optional</span>
 <span class="sd">            Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3</span>
 <span class="sd">            Note that these values are only used when no Manning&#39;s n datasets are provided,</span>
@@ -1253,6 +1256,7 @@
                 <span class="n">z_minimum</span><span class="o">=</span><span class="n">z_minimum</span><span class="p">,</span>
                 <span class="n">huthresh</span><span class="o">=</span><span class="n">huthresh</span><span class="p">,</span>
                 <span class="n">q_table_option</span><span class="o">=</span><span class="n">q_table_option</span><span class="p">,</span>
+                <span class="n">weight_option</span><span class="o">=</span><span class="n">weight_option</span><span class="p">,</span>
                 <span class="n">manning_land</span><span class="o">=</span><span class="n">manning_land</span><span class="p">,</span>
                 <span class="n">manning_sea</span><span class="o">=</span><span class="n">manning_sea</span><span class="p">,</span>
                 <span class="n">rgh_lev_land</span><span class="o">=</span><span class="n">rgh_lev_land</span><span class="p">,</span>
@@ -3870,6 +3874,8 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;forcing.</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">rename</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="c1"># write 2D gridded timeseries</span>
                 <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># before writing, check if the file already exists while data is still lazily loaded</span>
+                    <span class="n">utils</span><span class="o">.</span><span class="n">check_exists_and_lazy</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">fn</span><span class="p">)</span>
                     <span class="n">ds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span></div>
 
 
@@ -3998,24 +4004,20 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">ds_face</span><span class="p">,</span> <span class="n">split_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">ds_edge</span><span class="p">,</span> <span class="n">split_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
-                <span class="n">dsu</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">xu_open_dataset</span><span class="p">(</span>
-                    <span class="n">fn_map</span><span class="p">,</span>
-                    <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">chunksize</span><span class="p">},</span>
-                <span class="p">)</span>
+                <span class="k">with</span> <span class="n">xu</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">fn_map</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">chunksize</span><span class="p">})</span> <span class="k">as</span> <span class="n">dsu</span><span class="p">:</span>
+                    <span class="c1"># set coords</span>
+                    <span class="n">dsu</span> <span class="o">=</span> <span class="n">dsu</span><span class="o">.</span><span class="n">set_coords</span><span class="p">([</span><span class="s2">&quot;mesh2d_node_x&quot;</span><span class="p">,</span> <span class="s2">&quot;mesh2d_node_y&quot;</span><span class="p">])</span>
+                    <span class="c1"># get crs variable, drop it and set it correctly</span>
+                    <span class="n">crs</span> <span class="o">=</span> <span class="n">dsu</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                    <span class="n">dsu</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="s2">&quot;crs&quot;</span><span class="p">)</span>
+                    <span class="n">dsu</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">))</span>
 
-                <span class="c1"># set coords</span>
-                <span class="n">dsu</span> <span class="o">=</span> <span class="n">dsu</span><span class="o">.</span><span class="n">set_coords</span><span class="p">([</span><span class="s2">&quot;mesh2d_node_x&quot;</span><span class="p">,</span> <span class="s2">&quot;mesh2d_node_y&quot;</span><span class="p">])</span>
-                <span class="c1"># get crs variable, drop it and set it correctly</span>
-                <span class="n">crs</span> <span class="o">=</span> <span class="n">dsu</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-                <span class="n">dsu</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="s2">&quot;crs&quot;</span><span class="p">)</span>
-                <span class="n">dsu</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">))</span>
-
-                <span class="c1"># NOTE the set_results of the model api doesnt support ugrid</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_results</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">dsu</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Replacing result: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">dsu</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                    <span class="c1"># NOTE the set_results of the model api doesnt support ugrid</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_results</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">dsu</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Replacing result: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">dsu</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">isabs</span><span class="p">(</span><span class="n">fn_his</span><span class="p">):</span>
             <span class="n">fn_his</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">fn_his</span><span class="p">)</span>

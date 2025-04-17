@@ -414,6 +414,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
@@ -461,6 +462,8 @@
     <span class="s2">&quot;rotated_grid&quot;</span><span class="p">,</span>
     <span class="s2">&quot;build_overviews&quot;</span><span class="p">,</span>
     <span class="s2">&quot;find_uv_indices&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;xu_open_dataset&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;check_exists_and_lazy&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -1824,6 +1827,33 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">ds</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataset</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">check_exists_and_lazy</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">file_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If a netcdf file is read lazily, the file can not be overwritten.</span>
+<span class="sd">    This function checks whether the file already exists, if so, it checks</span>
+<span class="sd">    if the data is lazily loaded. If so, data should be loaded before writing.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ds : xarray.Dataset, xu.UgridDataset</span>
+<span class="sd">        The dataset to be written to a netcdf file.</span>
+<span class="sd">    file_name : str</span>
+<span class="sd">        The path to the netcdf file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_name</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Check for lazy loading</span>
+    <span class="n">lazy_vars</span> <span class="o">=</span> <span class="p">[</span><span class="ow">not</span> <span class="n">data_array</span><span class="o">.</span><span class="n">_in_memory</span> <span class="k">for</span> <span class="n">data_array</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+    <span class="c1"># if all(lazy_vars):</span>
+    <span class="c1">#     return  # All variables are lazy-loaded, skip writing?</span>
+
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">lazy_vars</span><span class="p">):</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>  <span class="c1"># Some variables are lazy-loaded, load them into memory</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span>
 </pre></div>
 
                 </article>
