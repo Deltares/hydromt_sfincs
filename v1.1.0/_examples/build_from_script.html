@@ -960,12 +960,12 @@
 <span class="ansi-green-fg">   2838</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> fn_out <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
 <span class="ansi-green-fg">   2839</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> os.path.isabs(fn_out):
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/plots.py:184</span>, in <span class="ansi-cyan-fg">plot_basemap</span><span class="ansi-blue-fg">(ds, geoms, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, legend_kwargs, bmap_kwargs, logger, **kwargs)</span>
-<span class="ansi-green-fg">    182</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(ds, xr.Dataset):
-<span class="ansi-green-fg">    183</span>     proj_crs = ds.raster.crs
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">184</span>     bounds = <span class="ansi-yellow-bg">ds</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">raster</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">box</span>.buffer(<span style="color: rgb(0,135,0)">abs</span>(ds.raster.res[<span class="ansi-green-fg">0</span>] * <span class="ansi-green-fg">1</span>)).total_bounds
-<span class="ansi-green-fg">    185</span>     bbox = ds.raster.transform_bounds(<span class="ansi-green-fg">4326</span>)
-<span class="ansi-green-fg">    186</span>     ratio = ds.raster.ycoords.size / (ds.raster.xcoords.size * <span class="ansi-green-fg">1.4</span>)
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/plots.py:185</span>, in <span class="ansi-cyan-fg">plot_basemap</span><span class="ansi-blue-fg">(ds, geoms, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, legend_kwargs, bmap_kwargs, logger, **kwargs)</span>
+<span class="ansi-green-fg">    183</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(ds, xr.Dataset):
+<span class="ansi-green-fg">    184</span>     proj_crs = ds.raster.crs
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">185</span>     bounds = <span class="ansi-yellow-bg">ds</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">raster</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">box</span>.buffer(<span style="color: rgb(0,135,0)">abs</span>(ds.raster.res[<span class="ansi-green-fg">0</span>] * <span class="ansi-green-fg">1</span>)).total_bounds
+<span class="ansi-green-fg">    186</span>     bbox = ds.raster.transform_bounds(<span class="ansi-green-fg">4326</span>)
+<span class="ansi-green-fg">    187</span>     ratio = ds.raster.ycoords.size / (ds.raster.xcoords.size * <span class="ansi-green-fg">1.4</span>)
 
 <span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/raster.py:535</span>, in <span class="ansi-cyan-fg">XRasterBase.box</span><span class="ansi-blue-fg">(self)</span>
 <span class="ansi-green-fg">    532</span> <span style="color: rgb(175,0,255)">@property</span>
