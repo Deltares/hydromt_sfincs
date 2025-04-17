@@ -9,7 +9,7 @@ import logging
 import os
 from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Unionz, Literal
+from typing import Any, Dict, List, Tuple, Union, Literal
 
 import geopandas as gpd
 import hydromt
