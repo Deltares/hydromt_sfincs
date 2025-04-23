@@ -9,7 +9,7 @@ import logging
 import os
 from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, Literal
 
 import geopandas as gpd
 import hydromt
@@ -665,6 +665,7 @@ class SfincsModel(GridModel):
         z_minimum: float = -99999.0,
         huthresh: float = 0.01,
         q_table_option: int = 2,
+        weight_option: str = "min",
         manning_land: float = 0.04,
         manning_sea: float = 0.02,
         rgh_lev_land: float = 0.0,
@@ -761,6 +762,8 @@ class SfincsModel(GridModel):
             Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.
             1: "old" weighting method, compliant with SFINCS < v2.1.1, taking the avarage of the adjacent cells
             2: "improved" weighting method, recommended for SFINCS >= v2.1.1, that takes into account the wet fractions of the adjacent cells
+        weight_option : str, optional
+            Weighting factor of the adjacent cells for the flux q at u/v points, by default "min". Other, option is "mean".
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
             Note that these values are only used when no Manning's n datasets are provided,
@@ -823,6 +826,7 @@ class SfincsModel(GridModel):
                 z_minimum=z_minimum,
                 huthresh=huthresh,
                 q_table_option=q_table_option,
+                weight_option=weight_option,
                 manning_land=manning_land,
                 manning_sea=manning_sea,
                 rgh_lev_land=rgh_lev_land,
@@ -2271,31 +2275,66 @@ class SfincsModel(GridModel):
         self.set_geoms(ds_snapped.vector.to_gdf(), "src_snapped")
 
     def setup_precip_forcing_from_grid(
-        self, precip, dst_res=None, aggregate=False, **kwargs
+        self,
+        precip,
+        dst_res: float = None,
+        cumulative_input: bool = True,
+        time_label: Literal["left", "right"] = "right",
+        aggregate: bool = False,
+        **kwargs,
     ):
         """Setup precipitation forcing from a gridded spatially varying data source.
 
-        If aggregate is True, spatially uniform precipitation forcing is added to
-        the model based on the mean precipitation over the model domain.
-        If aggregate is False, distributed precipitation is added to the model as netcdf file.
-        The data is reprojected to the model CRS (and destination resolution `dst_res` if provided).
+        SFINCS requires the mean precipitation rate in mm/hr over the upcoming interval.
+        It will use the rate at the start of this interval and keep it constant throughout.
+        This method can use rainfall rates in [mm/hr] directly, or transform accumulated precip [mm] over any constant time interval to precipitation rates.
 
-        Adds one of these model layer:
+        Input precipitation can be specified as:
 
-        * **netamprfile** forcing: distributed precipitation [mm/hr]
-        * **precipfile** forcing: uniform precipitation [mm/hr]
+        * **Cumulative precipitation (mm)** over any constant time interval (e.g., 15/60/180 minutes).
+          This will be converted to a rate (mm/hr) if ``cumulative_input=True`` (default).
+
+        * **Precipitation rate (mm/hr)** at any time interval. Used as-is if
+          ``cumulative_input=False``.
+
+        If ``aggregate=True``, a spatially uniform precipitation forcing is applied based on
+        the domain-wide mean. If ``aggregate=False``, distributed precipitation is applied
+        using a NetCDF file. In that case, data is reprojected to the model CRS (and to
+        ``dst_res`` if provided).
+
+        One of the following model layers will be added:
+
+        * **netamprfile**: for distributed precipitation rate [mm/hr].
+        * **precipfile**: for uniform precipitation rate [mm/hr].
+
+        .. note::
+
+            SFINCS updates the meteo forcing every 1800 seconds (``dtwnd=1800`` by default).
+            If your dataset has smaller intervals, ``dtwnd`` in ``sfincs.inp`` is adjusted automatically.
+
+        .. note::
+
+            To allow precipitation rates to vary linearly over the time interval
+            (instead of being constant), set ``ampr_block = 0`` in ``sfincs.inp``.
 
         Parameters
         ----------
-        precip, str, Path
+        precip: str or Path
             Path to precipitation rasterdataset netcdf file.
 
-            * Required variables: ['precip' (mm)]
+            * Required variables: ['precip' (mm) or 'precip' (mm/hr)]
             * Required coordinates: ['time', 'y', 'x']
-
-        dst_res: float
-            output resolution (m), by default None and computed from source data.
+        dst_res: float, optional
+            Output resolution (m), by default None and computed from source data.
             Only used in combination with aggregate=False
+        cumulative_input: bool, optional
+            Option to indicate whether the input precipitation is cumulative in mm
+            (True, default) or a precipitation rate in mm/hr (False). When cumulative,
+            the data is converted to mm/hr by dividing by the time interval of the input dataset.
+        time_label: literal, optional
+            Label to prescribe whether the accumulation period of the precipitation
+            is starting (left) or ending (right) at the validity date and time.
+            This is only relevant if cumulative_input=True.
         aggregate: bool, {'mean', 'median'}, optional
             Method to aggregate distributed input precipitation data. If True, mean
             aggregation is used, if False (default) the data is not aggregated and
@@ -2310,6 +2349,26 @@ class SfincsModel(GridModel):
             variables=["precip"],
         )
 
+        # get the time interval of the input data in seconds
+        time_interval = da_to_timedelta(precip).total_seconds()
+
+        # check if time interval is set in the model config, else use default from SFINCS
+        dtwnd = self.config.get("dtwnd", 1800)
+        if dtwnd > time_interval:
+            self.set_config("dtwnd", time_interval)
+            self.logger.warning(
+                f"dtwnd ({dtwnd}) was larger than the time interval of the precip data ({time_interval}) and therefore lowered."
+            )
+
+        # check if precip is cumulative or not to convert to mm/hr
+        if cumulative_input:
+            # convert to mm/hr by dividing by the time interval in seconds
+            precip = precip / (time_interval / 3600)
+            if time_label == "right":
+                # typically cumulative precipation is accumulated over time interval ending at the validity time,
+                # to match SFINCS conventions, we shift the time index to the left
+                precip = precip.shift(time=-1, fill_value=0)
+
         # aggregate or reproject in space
         if aggregate:
             stat = aggregate if isinstance(aggregate, str) else "mean"
@@ -2320,7 +2379,6 @@ class SfincsModel(GridModel):
             self.setup_precip_forcing(df_ts.to_frame())
         else:
             # reproject to model utm crs
-            # NOTE: currently SFINCS errors (stack overflow) on large files,
             # downscaling to model grid is not recommended
             kwargs0 = dict(align=dst_res is not None, method="nearest_index")
             kwargs0.update(kwargs)
@@ -2330,16 +2388,6 @@ class SfincsModel(GridModel):
                 dst_crs=self.crs, dst_res=dst_res, **kwargs
             ).fillna(0)
 
-            # only resample in time if freq < 1H, else keep input values
-            if da_to_timedelta(precip_out) < pd.to_timedelta("1H"):
-                precip_out = hydromt.workflows.resample_time(
-                    precip_out,
-                    freq=pd.to_timedelta("1H"),
-                    conserve_mass=True,
-                    upsampling="bfill",
-                    downsampling="sum",
-                    logger=self.logger,
-                )
             precip_out = precip_out.rename("precip_2d")
 
             # add to forcing
@@ -2420,8 +2468,18 @@ class SfincsModel(GridModel):
             variables=["press_msl"],
         )
 
+        # get the time interval of the input data in seconds
+        time_interval = da_to_timedelta(press).total_seconds()
+
+        # check if time interval is set in the model config, else use default from SFINCS
+        dtwnd = self.config.get("dtwnd", 1800)
+        if dtwnd > time_interval:
+            self.set_config("dtwnd", time_interval)
+            self.logger.warning(
+                f"dtwnd ({dtwnd}) was larger than the time interval of the pressure data ({time_interval}) and therefore lowered."
+            )
+
         # reproject to model utm crs
-        # NOTE: currently SFINCS errors (stack overflow) on large files,
         # downscaling to model grid is not recommended
         kwargs0 = dict(align=dst_res is not None, method="nearest_index")
         kwargs0.update(kwargs)
@@ -2431,24 +2489,13 @@ class SfincsModel(GridModel):
             dst_crs=self.crs, dst_res=dst_res, **kwargs
         ).fillna(fill_value)
 
-        # only resample in time if freq < 1H, else keep input values
-        if da_to_timedelta(press_out) < pd.to_timedelta("1H"):
-            press_out = hydromt.workflows.resample_time(
-                press_out,
-                freq=pd.to_timedelta("1H"),
-                conserve_mass=False,
-                upsampling="interpolate",
-                downsampling="interpolate",
-                logger=self.logger,
-            )
-
         press_out = press_out.rename("press_2d")
 
         # add to forcing
         self.set_forcing(press_out, name="press_2d")
 
     def setup_wind_forcing_from_grid(self, wind, dst_res=None, **kwargs):
-        """Setup pressure forcing from a gridded spatially varying data source.
+        """Setup wind forcing from a gridded spatially varying data source.
 
         Adds one model layer:
 
@@ -2474,33 +2521,27 @@ class SfincsModel(GridModel):
             variables=["wind10_u", "wind10_v"],
         )
 
+        # get the time interval of the input data in seconds
+        time_interval = da_to_timedelta(wind).total_seconds()
+
+        # check if time interval is set in the model config, else use default from SFINCS
+        dtwnd = self.config.get("dtwnd", 1800)
+        if dtwnd > time_interval:
+            self.set_config("dtwnd", time_interval)
+            self.logger.warning(
+                f"dtwnd ({dtwnd}) was larger than the time interval of the wind data ({time_interval}) and therefore lowered."
+            )
+
         # reproject to model utm crs
-        # NOTE: currently SFINCS errors (stack overflow) on large files,
         # downscaling to model grid is not recommended
         kwargs0 = dict(align=dst_res is not None, method="nearest_index")
         kwargs0.update(kwargs)
         meth = kwargs0["method"]
         self.logger.debug(f"Resample wind using {meth}.")
 
-        wind = wind.raster.reproject(
+        wind_out = wind.raster.reproject(
             dst_crs=self.crs, dst_res=dst_res, **kwargs
         ).fillna(0)
-
-        # only resample in time if freq < 1H, else keep input values
-        if da_to_timedelta(wind) < pd.to_timedelta("1H"):
-            wind_out = xr.Dataset()
-            # resample in time
-            for var in wind.data_vars:
-                wind_out[var] = hydromt.workflows.resample_time(
-                    wind[var],
-                    freq=pd.to_timedelta("1H"),
-                    conserve_mass=False,
-                    upsampling="interpolate",
-                    downsampling="interpolate",
-                    logger=self.logger,
-                )
-        else:
-            wind_out = wind
 
         # add to forcing
         self.set_forcing(wind_out, name="wind_2d")
@@ -3338,6 +3379,8 @@ class SfincsModel(GridModel):
                         self.write_vector(variables=f"forcing.{list(rename.keys())[0]}")
                 # write 2D gridded timeseries
                 else:
+                    # before writing, check if the file already exists while data is still lazily loaded
+                    utils.check_exists_and_lazy(ds, fn)
                     ds.to_netcdf(fn, encoding=encoding)
 
     def read_states(self):
@@ -3457,24 +3500,20 @@ class SfincsModel(GridModel):
                 self.set_results(ds_face, split_dataset=True)
                 self.set_results(ds_edge, split_dataset=True)
             elif self.grid_type == "quadtree":
-                dsu = utils.xu_open_dataset(
-                    fn_map,
-                    chunks={"time": chunksize},
-                )
+                with xu.load_dataset(fn_map, chunks={"time": chunksize}) as dsu:
+                    # set coords
+                    dsu = dsu.set_coords(["mesh2d_node_x", "mesh2d_node_y"])
+                    # get crs variable, drop it and set it correctly
+                    crs = dsu["crs"].values
+                    dsu.drop_vars("crs")
+                    dsu.grid.set_crs(CRS.from_user_input(crs))
 
-                # set coords
-                dsu = dsu.set_coords(["mesh2d_node_x", "mesh2d_node_y"])
-                # get crs variable, drop it and set it correctly
-                crs = dsu["crs"].values
-                dsu.drop_vars("crs")
-                dsu.grid.set_crs(CRS.from_user_input(crs))
-
-                # NOTE the set_results of the model api doesnt support ugrid
-                self._initialize_results()
-                for name in dsu.variables:
-                    if name in self._results:
-                        self.logger.warning(f"Replacing result: {name}")
-                    self._results[name] = dsu[name]
+                    # NOTE the set_results of the model api doesnt support ugrid
+                    self._initialize_results()
+                    for name in dsu.variables:
+                        if name in self._results:
+                            self.logger.warning(f"Replacing result: {name}")
+                        self._results[name] = dsu[name]
 
         if not isabs(fn_his):
             fn_his = join(self.root, fn_his)

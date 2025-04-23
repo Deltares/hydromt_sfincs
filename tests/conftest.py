@@ -2,6 +2,8 @@
 
 from os.path import abspath, dirname, join
 import numpy as np
+import tempfile
+from pathlib import Path
 
 import pytest
 import numpy as np
@@ -12,6 +14,16 @@ from hydromt_sfincs.regulargrid import RegularGrid
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
 TESTMODELDIR = join(TESTDATADIR, "sfincs_test")
+
+
+@pytest.fixture()
+def tmp_dir():
+    """Create and return a temporary directory.
+
+    Upon exiting the context, the directory and everything contained in it are removed.
+    """
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        yield Path(tmp_dir)
 
 
 @pytest.fixture
