@@ -24,7 +24,7 @@ Changed
 - nr_subgrid_pixels in `SfincsModel.setup_subgrid` can only be a multiple of 2 (#225)
 - provide decent warning when all waterlevel boundary points are outside of region+buffer (#237)
 - default value for "tspinup" changed to 0.0 in sfincs.inp to align with SFINCS kernel (#243)
-- no automatic upscaling anymore of meteo datasets with intervals < 1 hour for wind, pressure and precipitation (#255)
+- no automatic upscaling anymore of meteo datasets with intervals smaller than 1 hour for wind, pressure and precipitation (#255)
 - changed the way `SfincsModel.setup_precip_forcing_from_grid` deals with cumulative precipitation inputs (#255)
 
 Fixed
@@ -33,6 +33,7 @@ Fixed
 - clean the grid variables when recreating the grid (#220)
 - minor bugfix in downscale floodmap routine when providing a file_name (#224)
 - fixed erronuous mapping of uv points to joined uv-array when writing the subgrid files (#225)
+- unpinned numpy versions <2.0 in package requirements (#244)
 - fixed missing projection method while merging datasets (#247)
 - fixed burning in rivers when very few riverbed points are provided (#250)
 
