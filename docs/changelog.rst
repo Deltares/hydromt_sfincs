@@ -10,7 +10,7 @@ v1.2.0 (23-4-2025)
 ==================
 **This release contains new functionality on reading/writing quadtree models and some minor bugfixes and updates.
 It is strongly recommended to use this version in combination with
-`SFINCS versions ≥ 2.2.0 <https://github.com/Deltares/SFINCS/releases/tag/v2.2.0_col_dEze_release>`_.**
+`SFINCS versions ≥ 2.2.0 <https://github.com/Deltares/SFINCS/releases/tag/v2.2.0_col_dEze_release>`.**
 
 
 Added
