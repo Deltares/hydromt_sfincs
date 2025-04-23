@@ -417,7 +417,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="kn">import</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">isabs</span><span class="p">,</span> <span class="n">isfile</span><span class="p">,</span> <span class="n">join</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hydromt</span>
@@ -2756,31 +2756,66 @@
 <div class="viewcode-block" id="SfincsModel.setup_precip_forcing_from_grid">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_precip_forcing_from_grid">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_precip_forcing_from_grid</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">precip</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">precip</span><span class="p">,</span>
+        <span class="n">dst_res</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cumulative_input</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">time_label</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span>
+        <span class="n">aggregate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup precipitation forcing from a gridded spatially varying data source.</span>
 
-<span class="sd">        If aggregate is True, spatially uniform precipitation forcing is added to</span>
-<span class="sd">        the model based on the mean precipitation over the model domain.</span>
-<span class="sd">        If aggregate is False, distributed precipitation is added to the model as netcdf file.</span>
-<span class="sd">        The data is reprojected to the model CRS (and destination resolution `dst_res` if provided).</span>
+<span class="sd">        SFINCS requires the mean precipitation rate in mm/hr over the upcoming interval.</span>
+<span class="sd">        It will use the rate at the start of this interval and keep it constant throughout.</span>
+<span class="sd">        This method can use rainfall rates in [mm/hr] directly, or transform accumulated precip [mm] over any constant time interval to precipitation rates.</span>
 
-<span class="sd">        Adds one of these model layer:</span>
+<span class="sd">        Input precipitation can be specified as:</span>
 
-<span class="sd">        * **netamprfile** forcing: distributed precipitation [mm/hr]</span>
-<span class="sd">        * **precipfile** forcing: uniform precipitation [mm/hr]</span>
+<span class="sd">        * **Cumulative precipitation (mm)** over any constant time interval (e.g., 15/60/180 minutes).</span>
+<span class="sd">          This will be converted to a rate (mm/hr) if ``cumulative_input=True`` (default).</span>
+
+<span class="sd">        * **Precipitation rate (mm/hr)** at any time interval. Used as-is if</span>
+<span class="sd">          ``cumulative_input=False``.</span>
+
+<span class="sd">        If ``aggregate=True``, a spatially uniform precipitation forcing is applied based on</span>
+<span class="sd">        the domain-wide mean. If ``aggregate=False``, distributed precipitation is applied</span>
+<span class="sd">        using a NetCDF file. In that case, data is reprojected to the model CRS (and to</span>
+<span class="sd">        ``dst_res`` if provided).</span>
+
+<span class="sd">        One of the following model layers will be added:</span>
+
+<span class="sd">        * **netamprfile**: for distributed precipitation rate [mm/hr].</span>
+<span class="sd">        * **precipfile**: for uniform precipitation rate [mm/hr].</span>
+
+<span class="sd">        .. note::</span>
+
+<span class="sd">            SFINCS updates the meteo forcing every 1800 seconds (``dtwnd=1800`` by default).</span>
+<span class="sd">            If your dataset has smaller intervals, ``dtwnd`` in ``sfincs.inp`` is adjusted automatically.</span>
+
+<span class="sd">        .. note::</span>
+
+<span class="sd">            To allow precipitation rates to vary linearly over the time interval</span>
+<span class="sd">            (instead of being constant), set ``ampr_block = 0`` in ``sfincs.inp``.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        precip, str, Path</span>
+<span class="sd">        precip: str or Path</span>
 <span class="sd">            Path to precipitation rasterdataset netcdf file.</span>
 
-<span class="sd">            * Required variables: [&#39;precip&#39; (mm)]</span>
+<span class="sd">            * Required variables: [&#39;precip&#39; (mm) or &#39;precip&#39; (mm/hr)]</span>
 <span class="sd">            * Required coordinates: [&#39;time&#39;, &#39;y&#39;, &#39;x&#39;]</span>
-
-<span class="sd">        dst_res: float</span>
-<span class="sd">            output resolution (m), by default None and computed from source data.</span>
+<span class="sd">        dst_res: float, optional</span>
+<span class="sd">            Output resolution (m), by default None and computed from source data.</span>
 <span class="sd">            Only used in combination with aggregate=False</span>
+<span class="sd">        cumulative_input: bool, optional</span>
+<span class="sd">            Option to indicate whether the input precipitation is cumulative in mm</span>
+<span class="sd">            (True, default) or a precipitation rate in mm/hr (False). When cumulative,</span>
+<span class="sd">            the data is converted to mm/hr by dividing by the time interval of the input dataset.</span>
+<span class="sd">        time_label: literal, optional</span>
+<span class="sd">            Label to prescribe whether the accumulation period of the precipitation</span>
+<span class="sd">            is starting (left) or ending (right) at the validity date and time.</span>
+<span class="sd">            This is only relevant if cumulative_input=True.</span>
 <span class="sd">        aggregate: bool, {&#39;mean&#39;, &#39;median&#39;}, optional</span>
 <span class="sd">            Method to aggregate distributed input precipitation data. If True, mean</span>
 <span class="sd">            aggregation is used, if False (default) the data is not aggregated and</span>
@@ -2795,6 +2830,26 @@
             <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;precip&quot;</span><span class="p">],</span>
         <span class="p">)</span>
 
+        <span class="c1"># get the time interval of the input data in seconds</span>
+        <span class="n">time_interval</span> <span class="o">=</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">precip</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+
+        <span class="c1"># check if time interval is set in the model config, else use default from SFINCS</span>
+        <span class="n">dtwnd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="mi">1800</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dtwnd</span> <span class="o">&gt;</span> <span class="n">time_interval</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="n">time_interval</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;dtwnd (</span><span class="si">{</span><span class="n">dtwnd</span><span class="si">}</span><span class="s2">) was larger than the time interval of the precip data (</span><span class="si">{</span><span class="n">time_interval</span><span class="si">}</span><span class="s2">) and therefore lowered.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># check if precip is cumulative or not to convert to mm/hr</span>
+        <span class="k">if</span> <span class="n">cumulative_input</span><span class="p">:</span>
+            <span class="c1"># convert to mm/hr by dividing by the time interval in seconds</span>
+            <span class="n">precip</span> <span class="o">=</span> <span class="n">precip</span> <span class="o">/</span> <span class="p">(</span><span class="n">time_interval</span> <span class="o">/</span> <span class="mi">3600</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">time_label</span> <span class="o">==</span> <span class="s2">&quot;right&quot;</span><span class="p">:</span>
+                <span class="c1"># typically cumulative precipation is accumulated over time interval ending at the validity time,</span>
+                <span class="c1"># to match SFINCS conventions, we shift the time index to the left</span>
+                <span class="n">precip</span> <span class="o">=</span> <span class="n">precip</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="n">time</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
         <span class="c1"># aggregate or reproject in space</span>
         <span class="k">if</span> <span class="n">aggregate</span><span class="p">:</span>
             <span class="n">stat</span> <span class="o">=</span> <span class="n">aggregate</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">aggregate</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;mean&quot;</span>
@@ -2805,7 +2860,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">setup_precip_forcing</span><span class="p">(</span><span class="n">df_ts</span><span class="o">.</span><span class="n">to_frame</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># reproject to model utm crs</span>
-            <span class="c1"># NOTE: currently SFINCS errors (stack overflow) on large files,</span>
             <span class="c1"># downscaling to model grid is not recommended</span>
             <span class="n">kwargs0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="n">dst_res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest_index&quot;</span><span class="p">)</span>
             <span class="n">kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
@@ -2815,16 +2869,6 @@
                 <span class="n">dst_crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="n">dst_res</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
             <span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-            <span class="c1"># only resample in time if freq &lt; 1H, else keep input values</span>
-            <span class="k">if</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">precip_out</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">):</span>
-                <span class="n">precip_out</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">workflows</span><span class="o">.</span><span class="n">resample_time</span><span class="p">(</span>
-                    <span class="n">precip_out</span><span class="p">,</span>
-                    <span class="n">freq</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">),</span>
-                    <span class="n">conserve_mass</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">upsampling</span><span class="o">=</span><span class="s2">&quot;bfill&quot;</span><span class="p">,</span>
-                    <span class="n">downsampling</span><span class="o">=</span><span class="s2">&quot;sum&quot;</span><span class="p">,</span>
-                    <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
-                <span class="p">)</span>
             <span class="n">precip_out</span> <span class="o">=</span> <span class="n">precip_out</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;precip_2d&quot;</span><span class="p">)</span>
 
             <span class="c1"># add to forcing</span>
@@ -2911,8 +2955,18 @@
             <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;press_msl&quot;</span><span class="p">],</span>
         <span class="p">)</span>
 
+        <span class="c1"># get the time interval of the input data in seconds</span>
+        <span class="n">time_interval</span> <span class="o">=</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">press</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+
+        <span class="c1"># check if time interval is set in the model config, else use default from SFINCS</span>
+        <span class="n">dtwnd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="mi">1800</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dtwnd</span> <span class="o">&gt;</span> <span class="n">time_interval</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="n">time_interval</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;dtwnd (</span><span class="si">{</span><span class="n">dtwnd</span><span class="si">}</span><span class="s2">) was larger than the time interval of the pressure data (</span><span class="si">{</span><span class="n">time_interval</span><span class="si">}</span><span class="s2">) and therefore lowered.&quot;</span>
+            <span class="p">)</span>
+
         <span class="c1"># reproject to model utm crs</span>
-        <span class="c1"># NOTE: currently SFINCS errors (stack overflow) on large files,</span>
         <span class="c1"># downscaling to model grid is not recommended</span>
         <span class="n">kwargs0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="n">dst_res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest_index&quot;</span><span class="p">)</span>
         <span class="n">kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
@@ -2921,17 +2975,6 @@
         <span class="n">press_out</span> <span class="o">=</span> <span class="n">press</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
             <span class="n">dst_crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="n">dst_res</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">fill_value</span><span class="p">)</span>
-
-        <span class="c1"># only resample in time if freq &lt; 1H, else keep input values</span>
-        <span class="k">if</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">press_out</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">):</span>
-            <span class="n">press_out</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">workflows</span><span class="o">.</span><span class="n">resample_time</span><span class="p">(</span>
-                <span class="n">press_out</span><span class="p">,</span>
-                <span class="n">freq</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">),</span>
-                <span class="n">conserve_mass</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                <span class="n">upsampling</span><span class="o">=</span><span class="s2">&quot;interpolate&quot;</span><span class="p">,</span>
-                <span class="n">downsampling</span><span class="o">=</span><span class="s2">&quot;interpolate&quot;</span><span class="p">,</span>
-                <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
-            <span class="p">)</span>
 
         <span class="n">press_out</span> <span class="o">=</span> <span class="n">press_out</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;press_2d&quot;</span><span class="p">)</span>
 
@@ -2942,7 +2985,7 @@
 <div class="viewcode-block" id="SfincsModel.setup_wind_forcing_from_grid">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid.html#hydromt_sfincs.SfincsModel.setup_wind_forcing_from_grid">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_wind_forcing_from_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wind</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup pressure forcing from a gridded spatially varying data source.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup wind forcing from a gridded spatially varying data source.</span>
 
 <span class="sd">        Adds one model layer:</span>
 
@@ -2968,33 +3011,27 @@
             <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;wind10_u&quot;</span><span class="p">,</span> <span class="s2">&quot;wind10_v&quot;</span><span class="p">],</span>
         <span class="p">)</span>
 
+        <span class="c1"># get the time interval of the input data in seconds</span>
+        <span class="n">time_interval</span> <span class="o">=</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">wind</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+
+        <span class="c1"># check if time interval is set in the model config, else use default from SFINCS</span>
+        <span class="n">dtwnd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="mi">1800</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dtwnd</span> <span class="o">&gt;</span> <span class="n">time_interval</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="n">time_interval</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;dtwnd (</span><span class="si">{</span><span class="n">dtwnd</span><span class="si">}</span><span class="s2">) was larger than the time interval of the wind data (</span><span class="si">{</span><span class="n">time_interval</span><span class="si">}</span><span class="s2">) and therefore lowered.&quot;</span>
+            <span class="p">)</span>
+
         <span class="c1"># reproject to model utm crs</span>
-        <span class="c1"># NOTE: currently SFINCS errors (stack overflow) on large files,</span>
         <span class="c1"># downscaling to model grid is not recommended</span>
         <span class="n">kwargs0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="n">dst_res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest_index&quot;</span><span class="p">)</span>
         <span class="n">kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">meth</span> <span class="o">=</span> <span class="n">kwargs0</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Resample wind using </span><span class="si">{</span><span class="n">meth</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
-        <span class="n">wind</span> <span class="o">=</span> <span class="n">wind</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
+        <span class="n">wind_out</span> <span class="o">=</span> <span class="n">wind</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
             <span class="n">dst_crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="n">dst_res</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-
-        <span class="c1"># only resample in time if freq &lt; 1H, else keep input values</span>
-        <span class="k">if</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">wind</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">):</span>
-            <span class="n">wind_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
-            <span class="c1"># resample in time</span>
-            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">wind</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
-                <span class="n">wind_out</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">workflows</span><span class="o">.</span><span class="n">resample_time</span><span class="p">(</span>
-                    <span class="n">wind</span><span class="p">[</span><span class="n">var</span><span class="p">],</span>
-                    <span class="n">freq</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s2">&quot;1H&quot;</span><span class="p">),</span>
-                    <span class="n">conserve_mass</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                    <span class="n">upsampling</span><span class="o">=</span><span class="s2">&quot;interpolate&quot;</span><span class="p">,</span>
-                    <span class="n">downsampling</span><span class="o">=</span><span class="s2">&quot;interpolate&quot;</span><span class="p">,</span>
-                    <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
-                <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">wind_out</span> <span class="o">=</span> <span class="n">wind</span>
 
         <span class="c1"># add to forcing</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">wind_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;wind_2d&quot;</span><span class="p">)</span></div>
