@@ -442,18 +442,39 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 <p>The format is based on <a class="reference external" href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to
 <a class="reference external" href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 </section>
-<section id="unreleased">
-<h1>unreleased<a class="headerlink" href="#unreleased" title="Link to this heading">#</a></h1>
+<section id="v1-2-0-23-4-2025">
+<h1>v1.2.0 (23-4-2025)<a class="headerlink" href="#v1-2-0-23-4-2025" title="Link to this heading">#</a></h1>
+<p><strong>This release contains new functionality on reading/writing quadtree models and some minor bugfixes and updates.
+It is strongly recommended to use this version in combination with
+`SFINCS versions ≥ 2.2.0 &lt;https://github.com/Deltares/SFINCS/releases/tag/v2.2.0_col_dEze_release&gt;`.</strong></p>
 <section id="added">
 <h2>Added<a class="headerlink" href="#added" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>added reading/writing of quadtree models, but NOT building them from scratch (#226)</p></li>
+<li><p>added a “factor_ksat” to <cite>SfincsModel.setup_cn_infiltration_with_ks</cite> to change the units of the saturated hydraulic conductivity (#227)</p></li>
+<li><p>added the option to provide cumulative precipitation [mm] instead of precipitation rates [mm/hr] to <cite>SfincsModel.setup_precip_forcing_from_grid</cite> (#255)</p></li>
+</ul>
 </section>
 <section id="changed">
 <h2>Changed<a class="headerlink" href="#changed" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>nr_subgrid_pixels in <cite>SfincsModel.setup_subgrid</cite> can only be a multiple of 2 (#225)</p></li>
+<li><p>provide decent warning when all waterlevel boundary points are outside of region+buffer (#237)</p></li>
+<li><p>default value for “tspinup” changed to 0.0 in sfincs.inp to align with SFINCS kernel (#243)</p></li>
+<li><p>no automatic upscaling anymore of meteo datasets with intervals smaller than 1 hour for wind, pressure and precipitation (#255)</p></li>
+<li><p>changed the way <cite>SfincsModel.setup_precip_forcing_from_grid</cite> deals with cumulative precipitation inputs (#255)</p></li>
+</ul>
 </section>
 <section id="fixed">
 <h2>Fixed<a class="headerlink" href="#fixed" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>fixed a bug in <cite>river_centerline_from_hydrography</cite> in case there is only one river with a single segment</p></li>
+<li><p>fixed a bug in <cite>river_centerline_from_hydrography</cite> in case there is only one river with a single segment (#215)</p></li>
+<li><p>clean the grid variables when recreating the grid (#220)</p></li>
+<li><p>minor bugfix in downscale floodmap routine when providing a file_name (#224)</p></li>
+<li><p>fixed erronuous mapping of uv points to joined uv-array when writing the subgrid files (#225)</p></li>
+<li><p>unpinned numpy versions &lt;2.0 in package requirements (#244)</p></li>
+<li><p>fixed missing projection method while merging datasets (#247)</p></li>
+<li><p>fixed burning in rivers when very few riverbed points are provided (#250)</p></li>
 </ul>
 </section>
 </section>
@@ -850,7 +871,7 @@ The model domain is also determined on-the-fly, thus it is not required to run s
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">What’s new</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#unreleased">unreleased</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-2-0-23-4-2025">v1.2.0 (23-4-2025)</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#added">Added</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#changed">Changed</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fixed">Fixed</a></li>
