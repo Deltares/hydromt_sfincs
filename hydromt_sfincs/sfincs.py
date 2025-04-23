@@ -2286,9 +2286,8 @@ class SfincsModel(GridModel):
         """Setup precipitation forcing from a gridded spatially varying data source.
 
         SFINCS requires the mean precipitation rate in mm/hr over the upcoming interval.
-        That is, the precipitation rate at time t0 is derived by taking the cumulative
-        precipitation between t0 and t1 and divided by the time interval. This rate is
-        assumed to be constant over that interval.
+        It will use the rate at the start of this interval and keep it constant throughout. 
+        This method can use rainfall rates in [mm/hr] directly, or transform accumulated precip [mm] over any constant time interval to precipitation rates.
 
         Input precipitation can be specified as:
 
