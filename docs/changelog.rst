@@ -17,7 +17,7 @@ Added
 -----
 - added reading/writing of quadtree models, but NOT building them from scratch (#226)
 - added a "factor_ksat" to `SfincsModel.setup_cn_infiltration_with_ks` to change the units of the saturated hydraulic conductivity (#227)
-- added the option to provide cumulative precipitation [mm] instead of precipitation rates [mm/hr] to `SfincsModel.setup_precip_forcing_from_grid`(#255)
+- added the option to provide cumulative precipitation [mm] instead of precipitation rates [mm/hr] to `SfincsModel.setup_precip_forcing_from_grid` (#255)
 
 Changed
 -------
