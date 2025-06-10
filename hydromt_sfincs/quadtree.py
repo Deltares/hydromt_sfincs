@@ -83,7 +83,7 @@ class QuadtreeGrid:
         return xu.UgridDataArray(da0, self.data.grid)
 
     def read(
-        self, file_name: Union[str, Path] = "sfincs.nc", variables: List[dict] = None
+        self, file_name: Union[str, Path] = "sfincs.nc", variables: List[dict] = []
     ):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object.
 
@@ -125,7 +125,7 @@ class QuadtreeGrid:
                     continue
 
     def write(
-        self, file_name: Union[str, Path] = "sfincs.nc", variables: List[dict] = None
+        self, file_name: Union[str, Path] = "sfincs.nc", variables: List[dict] = []
     ):
         """Writes a quadtree SFINCS netcdf file.
 
