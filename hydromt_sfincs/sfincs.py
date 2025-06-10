@@ -2390,6 +2390,10 @@ class SfincsModel(GridModel):
 
             precip_out = precip_out.rename("precip_2d")
 
+            # rename dimensions to match SFINCS conventions (always x and y)
+            y_dim, x_dim = precip_out.raster.dims
+            precip_out = precip_out.rename({y_dim: "y", x_dim: "x"})
+
             # add to forcing
             self.set_forcing(precip_out, name="precip_2d")
 
@@ -2491,6 +2495,10 @@ class SfincsModel(GridModel):
 
         press_out = press_out.rename("press_2d")
 
+        # rename dimensions to match SFINCS conventions (always x and y)
+        y_dim, x_dim = press_out.raster.dims
+        press_out = press_out.rename({y_dim: "y", x_dim: "x"})
+
         # add to forcing
         self.set_forcing(press_out, name="press_2d")
 
@@ -2542,6 +2550,10 @@ class SfincsModel(GridModel):
         wind_out = wind.raster.reproject(
             dst_crs=self.crs, dst_res=dst_res, **kwargs
         ).fillna(0)
+
+        # rename dimensions to match SFINCS conventions (always x and y)
+        y_dim, x_dim = wind_out.raster.dims
+        wind_out = wind_out.rename({y_dim: "y", x_dim: "x"})
 
         # add to forcing
         self.set_forcing(wind_out, name="wind_2d")
