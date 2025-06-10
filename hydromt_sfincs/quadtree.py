@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 
 import geopandas as gpd
 import numpy as np
@@ -82,8 +82,20 @@ class QuadtreeGrid:
         )
         return xu.UgridDataArray(da0, self.data.grid)
 
-    def read(self, file_name: Union[str, Path] = "sfincs.nc"):
-        """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object."""
+    def read(
+        self, file_name: Union[str, Path] = "sfincs.nc", variables: List[dict] = None
+    ):
+        """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object.
+
+        Parameters
+        ----------
+        file_name : str or Path, optional
+            Path to the netcdf file to read, by default "sfincs.nc".
+        variables : List[dict], optional
+            List of dictionaries with variable names and file names to read additional variables,
+            by default None. Each dictionary should have keys "variable" and "file_name", e.g.:
+            variables = [{"variable":"vol", "file_name":"storage_volume.nc"}]
+        """
 
         with xu.load_dataset(file_name) as ds:
             ds = ds.rename({"z": "dep"}) if "z" in ds else ds
@@ -103,8 +115,29 @@ class QuadtreeGrid:
 
             self.data = ds
 
-    def write(self, file_name: Union[str, Path] = "sfincs.nc", version: int = 0):
-        """Writes a quadtree SFINCS netcdf file."""
+        if len(variables) > 0:
+            for var in variables:
+                try:
+                    with xu.load_dataset(var["file_name"]) as ds:
+                        self.data[var["variable"]] = ds[var["variable"]]
+                except Exception as e:
+                    logger.error(f"Error reading variable {var['variable']}: {e}")
+                    continue
+
+    def write(
+        self, file_name: Union[str, Path] = "sfincs.nc", variables: List[dict] = None
+    ):
+        """Writes a quadtree SFINCS netcdf file.
+
+        Parameters
+        ----------
+        file_name : str or Path, optional
+            Path to the netcdf file to write, by default "sfincs.nc".
+        variables : List[dict], optional
+            List of dictionaries with variable names and file names to write additional variables,
+            by default None. Each dictionary should have keys "variable" and "file_name", e.g.:
+            variables = [{"variable":"vol", "file_name":"storage_volume.nc"}]
+        """
 
         # TODO do we want to cut inactive cells here? Or already when creating the mask?
 
@@ -113,6 +146,21 @@ class QuadtreeGrid:
 
         attrs = self.data.attrs
         ds = self.data.ugrid.to_dataset()
+
+        # certain variables are stored as individual netcdfs because they might change between scnearios;
+        # in Python we keep everything in the same object so they are splitted here
+        if len(variables) > 0:
+            for var in variables:
+                try:
+                    # get the single variable and convert to dataset
+                    # NOTE this allows to read as a standalone file with spatial metadata
+                    ds_var = self.data[var["variable"]].ugrid.to_dataset()
+                    ds_var.to_netcdf(var["file_name"])
+                    # drop the variable from ds
+                    ds = ds.drop_vars(var["variable"])
+                except Exception as e:
+                    logger.error(f"Error writing variable {var['variable']}: {e}")
+                    continue
 
         # TODO make similar to fortran conventions
         # RENAME TO FORTRAN CONVENTION

@@ -70,6 +70,7 @@ class SfincsModel(GridModel):
     }
     _FORCING_SPW = {"spiderweb": "spw"}  # TODO add read and write functions
     _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
+    _QT_MAPS = ["vol"]
     _STATES = ["rst", "ini"]
     _FOLDERS = []
     _CLI_ARGS = {"region": "setup_grid_from_region", "res": "setup_grid_from_region"}
@@ -1790,6 +1791,27 @@ class SfincsModel(GridModel):
             self.set_grid(da_vol, name=mname)
             # update config
             self.set_config(f"{mname}file", f"sfincs.{mname[:3]}")
+        elif self.grid_type == "quadtree":
+            if merge and "vol" in self.quadtree.data:
+                da_vol = self.quadtree.data["vol"]
+            else:
+                da_vol = xu.full_like(self.mask, 0, dtype=np.float64)
+
+            # add storage volumes form gdf to da_vol
+            da_vol = workflows.add_storage_volume_qt(
+                da_vol,
+                gdf,
+                volume=volume,
+                height=height,
+                logger=self.logger,
+            )
+
+            mname = "vol"
+            da_vol.attrs.update(**self._ATTRS.get(mname, {}))
+            self.quadtree.data[mname] = da_vol
+            # update config
+            fname = self._ATTRS.get(mname)["standard_name"].replace(" ", "_")
+            self.set_config(f"{mname}file", f"{fname}.nc")
 
     ### FORCING
     def set_forcing_1d(
@@ -2893,7 +2915,14 @@ class SfincsModel(GridModel):
             fn = self.get_config("qtrfile", fallback="sfincs.nc", abs_path=True)
             if not isfile(fn):
                 raise IOError(f".nc path {fn} does not exist")
-            self.quadtree.read(file_name=fn)
+            variables = []
+            for var in self._QT_MAPS:
+                fn_var = self.get_config(
+                    f"{var}file", fallback=f"{var}.nc", abs_path=True
+                )
+                if isfile(fn_var):
+                    variables.append({"variable": var, "file_name": fn_var})
+            self.quadtree.read(file_name=fn, variables=variables)
             # remove grid from api and model
             self._API.pop("grid", None)
             self._grid = None
@@ -2910,7 +2939,12 @@ class SfincsModel(GridModel):
             self.write_grid()
         elif self.grid_type == "quadtree":
             fn = self.get_config("qtrfile", abs_path=True)
-            self.quadtree.write(file_name=fn)
+            variables = []
+            for var in self._QT_MAPS:
+                fn_var = self.get_config(f"{var}file", abs_path=True)
+                if fn_var is not None:
+                    variables.append({"variable": var, "file_name": fn_var})
+            self.quadtree.write(file_name=fn, variables=variables)
         self.write_subgrid()
         self.write_geoms()
         self.write_forcing()
