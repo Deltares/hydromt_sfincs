@@ -100,6 +100,8 @@ def test_infiltration(mod):
 
     # read and check if identical
     mod1 = SfincsModel(root=mod.root, mode="r")
+    mod1.read_config()
+    mod1.read_grid(data_vars=["smax", "seff", "ks"])
 
     # assure the sum of smax is close to earlier calculated value
     assert np.isclose(mod1.grid["smax"].where(mod.mask > 0).sum(), 32.929287)
@@ -324,7 +326,8 @@ def test_storage_volume(tmp_dir, case):
 
     # read the model again
     mod1 = SfincsModel(root=tmp_root, mode="r")
-    mod1.read()
+    mod1.read_config()
+    mod1.read_grid(data_vars=["vol"])
 
     # now compare the storage volumes
     if case == "test1":
