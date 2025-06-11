@@ -154,7 +154,9 @@ class QuadtreeGrid:
                 try:
                     # get the single variable and convert to dataset
                     # NOTE this allows to read as a standalone file with spatial metadata
-                    ds_var = self.data[var["variable"]].ugrid.to_dataset()
+                    ds_var = self.data[
+                        [var["variable"], "mesh2d_node_x", "mesh2d_node_y"]
+                    ].ugrid.to_dataset()
                     ds_var.to_netcdf(var["file_name"])
                     # drop the variable from ds
                     ds = ds.drop_vars(var["variable"])
