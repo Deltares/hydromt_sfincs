@@ -55,3 +55,4 @@ cdwnd                = 0.0 28.0 50.0
 cdval                = 0.001 0.0025 0.0015
 drnfile              = sfincs.drn
 netamprfile          = precip_2d.nc
+wndfile              = sfincs.wnd

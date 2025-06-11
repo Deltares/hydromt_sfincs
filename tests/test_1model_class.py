@@ -373,14 +373,14 @@ def test_observations(tmpdir):
     assert len(mod.geoms["crs"].index) == nr_observation_lines * 2
 
 
-def test_forcing_io(tmpdir):
+def test_forcing_io(tmp_dir):
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
     # read
     mod.read_forcing()
 
     # write forcing
-    tmp_root = str(tmpdir.join("forcing_test"))
+    tmp_root = join(tmp_dir, "forcing_test")
     mod.set_root(tmp_root, mode="w")
     mod.write_forcing()
     mod.write_config()
@@ -388,17 +388,20 @@ def test_forcing_io(tmpdir):
     # read and check if identical
     mod1 = SfincsModel(root=tmp_root, mode="r")
     mod1.read_forcing()
-    assert np.allclose(mod1.forcing["bzs"], mod.forcing["bzs"])
+
+    # for all forcing variables, check if they are identical
+    for key in mod.forcing.keys():
+        assert np.allclose(mod1.forcing[key].values, mod.forcing[key].values)
 
     # now change the timeseries-format and write again
-    tmp_root = str(tmpdir.join("forcing_test2"))
+    tmp_root = join(tmp_dir, "forcing_test2")
     mod1.set_root(tmp_root, mode="w+")
     mod1.write_forcing(fmt="%7.1f")
     mod1.write_config()
 
-    # read and check if identical
+    # read and check if identical (only for bzs here)
     mod2 = SfincsModel(root=tmp_root, mode="r")
-    mod2.read_forcing()
+    mod2.read_forcing(data_vars=["waterlevel"])
     assert np.isclose(
         np.sum(mod2.forcing["bzs"].values - mod1.forcing["bzs"].values), 0.73
     )

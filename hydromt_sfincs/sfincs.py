@@ -3214,6 +3214,15 @@ class SfincsModel(GridModel):
                 if xy_name is not None:
                     df.columns.name = "index"
                     da = xr.DataArray(df, dims=("time", "index"), name=ts_name)
+                elif (
+                    ts_name == "wnd"
+                ):  # spatially uniform but with magnitude and direction
+                    da = xr.DataArray(
+                        df,
+                        dims=("time", "index"),
+                        coords={"time": df.index, "index": ["mag", "dir"]},
+                        name=ts_name,
+                    )
                 else:  # spatially uniform forcing
                     da = xr.DataArray(df[df.columns[0]], dims=("time"), name=ts_name)
                 da_lst.append(da)

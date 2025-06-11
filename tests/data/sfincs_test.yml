@@ -72,3 +72,6 @@ setup_waterlevel_forcing:
 setup_precip_forcing_from_grid:
   precip: era5_hourly
   aggregate: False
+
+setup_wind_forcing:
+  timeseries: wind
