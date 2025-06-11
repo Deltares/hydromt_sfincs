@@ -51,7 +51,7 @@ jobs:
       - name: Install hydromt-sfincs
         run: |
           pip install --upgrade pip
-          pip install .[test,examples]
+          pip install .[test,examples,quadtree]
           pip install git+https://github.com/Deltares/hydromt.git@v0.10.1
           pip list
 

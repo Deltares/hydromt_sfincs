@@ -62,6 +62,7 @@ examples = [
 ]
 quadtree = [
     "datashader",
+    "mapbox_earcut"
 ]
 
 full = ["hydromt_sfincs[test, doc, examples]"]
