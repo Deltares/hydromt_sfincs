@@ -10,11 +10,13 @@ TESTDATADIR = join(dirname(abspath(__file__)), "data")
 def test_setup_meteo_latlon(tmp_dir):
     region = join(TESTDATADIR, "region.geojson")
 
+    # create a model instance with geographical coordinates
     mod = SfincsModel(root=tmp_dir, mode="w+")
     mod.setup_grid_from_region(
         region={"geom": region}, crs=4326, res=0.01, rotated=False, dec_origin=3
     )
     mod.setup_mask_active(mask=region)
+
     # get the forcing data from the data catalog
     ds = mod.data_catalog.get_rasterdataset("era5_hourly_zarr")
 

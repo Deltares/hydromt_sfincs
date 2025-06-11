@@ -2466,7 +2466,7 @@ class SfincsModel(GridModel):
         # get data for model domain and config time range
         press = self.data_catalog.get_rasterdataset(
             press,
-            geom=self.region,
+            bbox=self.bbox,
             buffer=2,
             time_tuple=self.get_model_time(),
             variables=["press_msl"],
@@ -2523,7 +2523,7 @@ class SfincsModel(GridModel):
         # get data for model domain and config time range
         wind = self.data_catalog.get_rasterdataset(
             wind,
-            geom=self.bbox,
+            bbox=self.bbox,
             buffer=2,
             time_tuple=self.get_model_time(),
             variables=["wind10_u", "wind10_v"],
