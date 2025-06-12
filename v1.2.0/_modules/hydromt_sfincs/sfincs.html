@@ -2871,6 +2871,10 @@
 
             <span class="n">precip_out</span> <span class="o">=</span> <span class="n">precip_out</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;precip_2d&quot;</span><span class="p">)</span>
 
+            <span class="c1"># rename dimensions to match SFINCS conventions (always x and y)</span>
+            <span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span> <span class="o">=</span> <span class="n">precip_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span>
+            <span class="n">precip_out</span> <span class="o">=</span> <span class="n">precip_out</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="n">y_dim</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">x_dim</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">})</span>
+
             <span class="c1"># add to forcing</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">precip_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;precip_2d&quot;</span><span class="p">)</span></div>
 
@@ -2949,7 +2953,7 @@
         <span class="c1"># get data for model domain and config time range</span>
         <span class="n">press</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
             <span class="n">press</span><span class="p">,</span>
-            <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
             <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="n">time_tuple</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>
             <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;press_msl&quot;</span><span class="p">],</span>
@@ -2978,6 +2982,10 @@
 
         <span class="n">press_out</span> <span class="o">=</span> <span class="n">press_out</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;press_2d&quot;</span><span class="p">)</span>
 
+        <span class="c1"># rename dimensions to match SFINCS conventions (always x and y)</span>
+        <span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span> <span class="o">=</span> <span class="n">press_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span>
+        <span class="n">press_out</span> <span class="o">=</span> <span class="n">press_out</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="n">y_dim</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">x_dim</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">})</span>
+
         <span class="c1"># add to forcing</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">press_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;press_2d&quot;</span><span class="p">)</span></div>
 
@@ -3005,7 +3013,7 @@
         <span class="c1"># get data for model domain and config time range</span>
         <span class="n">wind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
             <span class="n">wind</span><span class="p">,</span>
-            <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
             <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="n">time_tuple</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>
             <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;wind10_u&quot;</span><span class="p">,</span> <span class="s2">&quot;wind10_v&quot;</span><span class="p">],</span>
@@ -3032,6 +3040,10 @@
         <span class="n">wind_out</span> <span class="o">=</span> <span class="n">wind</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
             <span class="n">dst_crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="n">dst_res</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># rename dimensions to match SFINCS conventions (always x and y)</span>
+        <span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span> <span class="o">=</span> <span class="n">wind_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span>
+        <span class="n">wind_out</span> <span class="o">=</span> <span class="n">wind_out</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="n">y_dim</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">x_dim</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">})</span>
 
         <span class="c1"># add to forcing</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_forcing</span><span class="p">(</span><span class="n">wind_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;wind_2d&quot;</span><span class="p">)</span></div>
