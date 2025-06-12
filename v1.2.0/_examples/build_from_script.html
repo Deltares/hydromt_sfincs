@@ -859,19 +859,19 @@
 <span class="ansi-green-fg">    793</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">len</span>(datasets_riv) &gt; <span class="ansi-green-fg">0</span>:
 <span class="ansi-green-fg">    794</span>     datasets_riv = <span style="color: rgb(0,135,0)">self</span>._parse_datasets_riv(datasets_riv)
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:3867</span>, in <span class="ansi-cyan-fg">SfincsModel._parse_datasets_rgh</span><span class="ansi-blue-fg">(self, datasets_rgh)</span>
-<span class="ansi-green-fg">   3858</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(
-<span class="ansi-green-fg">   3859</span>         <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">Manning roughness </span><span class="ansi-yellow-fg">&#39;</span><span class="ansi-yellow-fg">reclass_table</span><span class="ansi-yellow-fg">&#39;</span><span class="ansi-yellow-fg"> csv file must be provided</span><span class="ansi-yellow-fg">&#34;</span>
-<span class="ansi-green-fg">   3860</span>     )
-<span class="ansi-green-fg">   3861</span> da_lulc = <span style="color: rgb(0,135,0)">self</span>.data_catalog.get_rasterdataset(
-<span class="ansi-green-fg">   3862</span>     lulc,
-<span class="ansi-green-fg">   3863</span>     bbox=<span style="color: rgb(0,135,0)">self</span>.bbox,
-<span class="ansi-green-fg">   3864</span>     buffer=<span class="ansi-green-fg">10</span>,
-<span class="ansi-green-fg">   3865</span>     variables=[<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">lulc</span><span class="ansi-yellow-fg">&#34;</span>],
-<span class="ansi-green-fg">   3866</span> )
-<span class="ansi-green-fg">-&gt; </span><span class="ansi-green-fg">3867</span> df_map = <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">data_catalog</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">get_dataframe</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">reclass_table</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">index_col</span><span class="ansi-yellow-bg">=</span><span class="ansi-green-fg ansi-yellow-bg">0</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">   3868</span> <span style="color: rgb(95,135,135)"># reclassify</span>
-<span class="ansi-green-fg">   3869</span> da_man = da_lulc.raster.reclassify(df_map[[<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">N</span><span class="ansi-yellow-fg">&#34;</span>]])[<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">N</span><span class="ansi-yellow-fg">&#34;</span>]
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:3876</span>, in <span class="ansi-cyan-fg">SfincsModel._parse_datasets_rgh</span><span class="ansi-blue-fg">(self, datasets_rgh)</span>
+<span class="ansi-green-fg">   3867</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(
+<span class="ansi-green-fg">   3868</span>         <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">Manning roughness </span><span class="ansi-yellow-fg">&#39;</span><span class="ansi-yellow-fg">reclass_table</span><span class="ansi-yellow-fg">&#39;</span><span class="ansi-yellow-fg"> csv file must be provided</span><span class="ansi-yellow-fg">&#34;</span>
+<span class="ansi-green-fg">   3869</span>     )
+<span class="ansi-green-fg">   3870</span> da_lulc = <span style="color: rgb(0,135,0)">self</span>.data_catalog.get_rasterdataset(
+<span class="ansi-green-fg">   3871</span>     lulc,
+<span class="ansi-green-fg">   3872</span>     bbox=<span style="color: rgb(0,135,0)">self</span>.bbox,
+<span class="ansi-green-fg">   3873</span>     buffer=<span class="ansi-green-fg">10</span>,
+<span class="ansi-green-fg">   3874</span>     variables=[<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">lulc</span><span class="ansi-yellow-fg">&#34;</span>],
+<span class="ansi-green-fg">   3875</span> )
+<span class="ansi-green-fg">-&gt; </span><span class="ansi-green-fg">3876</span> df_map = <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">data_catalog</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">get_dataframe</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">reclass_table</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">index_col</span><span class="ansi-yellow-bg">=</span><span class="ansi-green-fg ansi-yellow-bg">0</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">   3877</span> <span style="color: rgb(95,135,135)"># reclassify</span>
+<span class="ansi-green-fg">   3878</span> da_man = da_lulc.raster.reclassify(df_map[[<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">N</span><span class="ansi-yellow-fg">&#34;</span>]])[<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">N</span><span class="ansi-yellow-fg">&#34;</span>]
 
 <span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/data_catalog.py:1683</span>, in <span class="ansi-cyan-fg">DataCatalog.get_dataframe</span><span class="ansi-blue-fg">(self, data_like, variables, time_tuple, handle_nodata, provider, version, **kwargs)</span>
 <span class="ansi-green-fg">   1680</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
@@ -1434,7 +1434,7 @@ dict_keys([&#39;region&#39;, &#39;rivers_inflow&#39;, &#39;weir&#39;, &#39;obs&#
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;sfincs.bnd&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.weir&#39;, &#39;precip_2d.nc&#39;, &#39;sfincs.crs&#39;, &#39;sfincs.scs&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.dep&#39;, &#39;hydromt.log&#39;, &#39;sfincs.src&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.dis&#39;, &#39;figs&#39;, &#39;gis&#39;, &#39;sfincs.bzs&#39;]
+[&#39;sfincs.obs&#39;, &#39;sfincs.scs&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.bzs&#39;, &#39;sfincs.bnd&#39;, &#39;sfincs.dis&#39;, &#39;gis&#39;, &#39;sfincs.msk&#39;, &#39;precip_2d.nc&#39;, &#39;hydromt.log&#39;, &#39;sfincs.src&#39;, &#39;sfincs.crs&#39;, &#39;figs&#39;, &#39;sfincs.dep&#39;, &#39;sfincs.weir&#39;]
 </pre></div></div>
 </div>
 <p>Your basemap and forcing figures are saved in the folder ‘figs’, GIS files (tiff &amp; geojson) of your model setup in ‘gis’ and merged elevation and manning roughness on subgrid resolution in ‘subgrid’.</p>
