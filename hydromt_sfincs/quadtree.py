@@ -177,6 +177,106 @@ class QuadtreeGrid:
         snapped_gdf = snapped_gdf.set_crs(self.crs)
         return snapped_gdf
 
+    def get_indices_at_points(self, x, y):
+        # x and y are 2D arrays of coordinates (x, y) in the same projection as the model
+        # if x is a float, convert to 2D array
+        if np.ndim(x) == 0:
+            x = np.array([[x]])
+        if np.ndim(y) == 0:
+            y = np.array([[y]])
+
+        x0 = self.data.attrs["x0"]
+        y0 = self.data.attrs["y0"]
+        dx = self.data.attrs["dx"]
+        dy = self.data.attrs["dy"]
+        nmax = self.data.attrs["nmax"]
+        mmax = self.data.attrs["mmax"]
+        rotation = self.data.attrs["rotation"]
+        nr_refinement_levels = self.data.attrs["nr_levels"]
+
+        nr_cells = len(self.data["level"])
+
+        cosrot = np.cos(-rotation * np.pi / 180)
+        sinrot = np.sin(-rotation * np.pi / 180)
+
+        # Now rotate around origin of SFINCS model
+        x00 = x - x0
+        y00 = y - y0
+        xg = x00 * cosrot - y00 * sinrot
+        yg = x00 * sinrot + y00 * cosrot
+
+        # Find index of first cell in each level
+        if not hasattr(self.data, "ifirst"):
+            ifirst = np.zeros(nr_refinement_levels, dtype=int)
+            for ilev in range(0, nr_refinement_levels):
+                # Find index of first cell with this level
+                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)[0][0]
+            self.ifirst = ifirst
+
+        ifirst = self.ifirst    
+
+        i0_lev = []
+        i1_lev = []
+        nmax_lev = []
+        mmax_lev = []
+        nm_lev = []
+
+        for level in range(nr_refinement_levels):
+
+            i0 = ifirst[level]
+            if level < nr_refinement_levels - 1:
+                i1 = ifirst[level + 1]
+            else:
+                i1 = nr_cells
+            i0_lev.append(i0)
+            i1_lev.append(i1)
+            nmax_lev.append(np.amax(self.data["n"].to_numpy()[i0:i1]) + 1)
+            mmax_lev.append(np.amax(self.data["m"].to_numpy()[i0:i1]) + 1)
+            nn = self.data["n"].to_numpy()[i0:i1] - 1
+            mm = self.data["m"].to_numpy()[i0:i1] - 1
+            nm_lev.append(mm * nmax_lev[level] + nn)
+
+        # Initialize index array
+        indx = np.full(np.shape(x), -999, dtype=np.uint32)
+
+        for ilev in range(nr_refinement_levels):
+            nmax = nmax_lev[ilev]
+            mmax = mmax_lev[ilev]
+            i0 = i0_lev[ilev]
+            i1 = i1_lev[ilev]
+            dxr = dx / 2**ilev
+            dyr = dy / 2**ilev
+            iind = np.floor(xg / dxr).astype(int)
+            jind = np.floor(yg / dyr).astype(int)
+            # Now check whether this cell exists on this level
+            ind = iind * nmax + jind
+            ind[iind < 0] = -999
+            ind[jind < 0] = -999
+            ind[iind >= mmax] = -999
+            ind[jind >= nmax] = -999
+
+            ingrid = np.isin(
+                ind, nm_lev[ilev], assume_unique=False
+            )  # return boolean for each pixel that falls inside a grid cell
+            incell = np.where(
+                ingrid
+            )  # tuple of arrays of pixel indices that fall in a cell
+
+            if incell[0].size > 0:
+                # Now find the cell indices
+                try:
+                    cell_indices = (
+                        binary_search(nm_lev[ilev], ind[incell[0], incell[1]])
+                        + i0_lev[ilev]
+                    )
+                    indx[incell[0], incell[1]] = cell_indices
+                except Exception as e:
+                    print("Error in binary search: ", str(e))
+                    pass
+
+        return indx
+
+
     # Internal functions
     def _get_datashader_dataframe(self):
         # Create a dataframe with line elements
@@ -188,3 +288,18 @@ class QuadtreeGrid:
         x1, y1 = transformer.transform(x1, y1)
         x2, y2 = transformer.transform(x2, y2)
         self.df = pd.DataFrame(dict(x1=x1, y1=y1, x2=x2, y2=y2))
+
+
+def binary_search(val_array, vals):
+    indx = np.searchsorted(val_array, vals)  # ind is size of vals
+    not_ok = np.where(indx == len(val_array))[
+        0
+    ]  # size of vals, points that are out of bounds
+    indx[
+        np.where(indx == len(val_array))[0]
+    ] = 0  # Set to zero to avoid out of bounds error
+    is_ok = np.where(val_array[indx] == vals)[0]  # size of vals
+    indices = np.zeros(len(vals), dtype=int) - 1
+    indices[is_ok] = indx[is_ok]
+    indices[not_ok] = -1
+    return indices

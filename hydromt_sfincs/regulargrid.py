@@ -544,3 +544,40 @@ class RegularGrid:
                         # for png, change nodata -999 nodata into 0
                         ind[ind == -999] = 0
                         int2png(ind, file_name)
+
+    def get_indices_at_points(self, x, y):
+        # x and y are 2D arrays of coordinates (x, y) in the same projection as the model
+        # if x is a float, convert to 2D array
+        if np.ndim(x) == 0:
+            x = np.array([[x]])
+        if np.ndim(y) == 0:
+            y = np.array([[y]])
+
+        # get the coordinates of the SFINCS model
+        x0 = self.x0
+        y0 = self.y0
+        dx = self.dx
+        dy = self.dy
+        nmax = self.nmax
+        mmax = self.mmax
+        rotation = self.rotation
+
+        cosrot = np.cos(-rotation * np.pi / 180)
+        sinrot = np.sin(-rotation * np.pi / 180)
+
+        # Now rotate around origin of SFINCS model
+        x00 = x - x0
+        y00 = y - y0
+        xg = x00 * cosrot - y00 * sinrot
+        yg = x00 * sinrot + y00 * cosrot
+
+        # determine the SFINCS cell indices
+        iind = np.floor(xg / dx).astype(int)
+        jind = np.floor(yg / dy).astype(int)
+        ind = iind * nmax + jind
+        ind[iind < 0] = -999
+        ind[jind < 0] = -999
+        ind[iind >= mmax] = -999
+        ind[jind >= nmax] = -999
+
+        return ind   
