@@ -978,15 +978,15 @@ def downscale_floodmap(
             raise ValueError(
                 "floodmap_fn should be provided when dep is a Path or str."
             )
-        
+
         if zoom_level is not None:
-            source= RasterDatasetAdapter(dep)
+            source = RasterDatasetAdapter(dep)
             source._get_zoom_levels_and_crs()
             overview_level = source._parse_zoom_level(zoom_level=zoom_level)
         else:
             # use highest resolution by default
             overview_level = 0
-        
+
         with rasterio.open(dep, overview_level=overview_level) as src:
             # check if index is provided and open it if it is
             if indices is not None:
@@ -1119,7 +1119,7 @@ def downscale_floodmap(
                         zsmax=zsmax,
                         dep=block_dep,
                         indices=block_indices if indices is not None else None,
-                        hmin=hmin, 
+                        hmin=hmin,
                         gdf_mask=gdf_mask,
                         reproj_method=reproj_method,
                     )
@@ -1298,7 +1298,7 @@ def _downscale_floodmap_da(
             )
 
         # Get the no_data value from the indices array
-        nan_val_indices = indices.raster.nodata #indices.attrs["_FillValue"]
+        nan_val_indices = indices.raster.nodata  # indices.attrs["_FillValue"]
         # Set the no_data mask
         no_data_mask = indices == nan_val_indices
 
@@ -1310,8 +1310,8 @@ def _downscale_floodmap_da(
 
         # Compute water depth
         zs_numpy = zsmax.values[:].flatten()
-        h = zs_numpy[indices] - dep.values[:]        
-        
+        h = zs_numpy[indices] - dep.values[:]
+
         # Set water depth to NaN where indices are no data
         h[no_data_mask] = np.nan
 
@@ -1466,8 +1466,9 @@ def check_exists_and_lazy(ds, file_name):
         ds.close()
     return
 
-def make_index_cog(model, filename, filename_topobathy, nrmax=2000, nodata = 2147483647):
-# def make_index_cog(self, filename, dx=10.0):
+
+def make_index_cog(model, filename, filename_topobathy, nrmax=2000, nodata=2147483647):
+    # def make_index_cog(self, filename, dx=10.0):
     """Make a COG file with indices of the quadtree grid cells."""
 
     # Read coordinates from topobathy file
@@ -1494,7 +1495,7 @@ def make_index_cog(model, filename, filename_topobathy, nrmax=2000, nodata = 214
         if n1 % nrcb == 1:
             nrbn -= 1
             merge_last_row = True
-    
+
         profile = dict(
             driver="GTiff",
             height=height,
@@ -1511,7 +1512,7 @@ def make_index_cog(model, filename, filename_topobathy, nrmax=2000, nodata = 214
             predictor=2,
             profile="COG",
             BIGTIFF="YES",  # Add the BIGTIFF option here
-    )
+        )
 
     with rasterio.open(filename, "w", **profile):
         pass
@@ -1524,7 +1525,6 @@ def make_index_cog(model, filename, filename_topobathy, nrmax=2000, nodata = 214
             bm1 += 1
 
         for jj in range(nrbn):
-
             bn0 = jj * nrcb  # Index of first n in block
             bn1 = min(bn0 + nrcb, n1)  # last n in block
             if merge_last_row and jj == (nrbn - 1):
@@ -1532,17 +1532,11 @@ def make_index_cog(model, filename, filename_topobathy, nrmax=2000, nodata = 214
 
             # Define a window to read a block of data
             window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
-            
-            x_coords = (
-                transform[2]
-                + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
-            )
-            y_coords = (
-                transform[5]
-                + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
-            )
 
-            ii = np.empty((bn1-bn0, bm1-bm0), dtype=np.uint32)
+            x_coords = transform[2] + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
+            y_coords = transform[5] + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
+
+            ii = np.empty((bn1 - bn0, bm1 - bm0), dtype=np.uint32)
             xx, yy = np.meshgrid(x_coords, y_coords)
 
             if model.grid_type == "quadtree":
@@ -1554,7 +1548,7 @@ def make_index_cog(model, filename, filename_topobathy, nrmax=2000, nodata = 214
 
             indices[np.where(indices == -999)] = nodata
             # Fill the array with indices
-            ii[:, :] = indices        
+            ii[:, :] = indices
 
             with rasterio.open(filename, "r+") as fm_tif:
                 fm_tif.write(

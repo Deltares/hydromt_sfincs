@@ -210,10 +210,12 @@ class QuadtreeGrid:
             ifirst = np.zeros(nr_refinement_levels, dtype=int)
             for ilev in range(0, nr_refinement_levels):
                 # Find index of first cell with this level
-                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)[0][0]
+                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)[
+                    0
+                ][0]
             self.ifirst = ifirst
 
-        ifirst = self.ifirst    
+        ifirst = self.ifirst
 
         i0_lev = []
         i1_lev = []
@@ -222,7 +224,6 @@ class QuadtreeGrid:
         nm_lev = []
 
         for level in range(nr_refinement_levels):
-
             i0 = ifirst[level]
             if level < nr_refinement_levels - 1:
                 i1 = ifirst[level + 1]
@@ -275,7 +276,6 @@ class QuadtreeGrid:
                     pass
 
         return indx
-
 
     # Internal functions
     def _get_datashader_dataframe(self):

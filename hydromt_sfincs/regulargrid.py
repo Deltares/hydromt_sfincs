@@ -580,4 +580,4 @@ class RegularGrid:
         ind[iind >= mmax] = -999
         ind[jind >= nmax] = -999
 
-        return ind   
+        return ind
