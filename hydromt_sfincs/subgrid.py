@@ -1128,7 +1128,7 @@ def subgrid_q_table(
     pwet = np.zeros(nlevels)
     zz = np.zeros(nlevels)
 
-    n = int(np.size(elevation))  # Nr of pixels in grid cell
+    n = int(elevation.size)  # Nr of pixels in grid cell
     n05 = int(n / 2)  # Nr of pixels in half grid cell
 
     # Sort elevation and manning values by side A and B
