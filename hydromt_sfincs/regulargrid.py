@@ -20,7 +20,7 @@ from shapely.geometry import LineString
 from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
-from hydromt_sfincs import workflows
+from hydromt_sfincs import workflows, utils
 from hydromt_sfincs.subgrid import SubgridTableRegular
 from hydromt_sfincs.workflows.tiling import int2png, tile_window
 
@@ -104,7 +104,7 @@ class RegularGrid(GridComponent):
             dims=("y", "x"),
             attrs={"_FillValue": 0},
         )
-        da_mask.raster.set_crs(self.crs)
+        da_mask.raster.set_crs(self.model.crs)
         return da_mask
 
     @property
@@ -236,13 +236,17 @@ class RegularGrid(GridComponent):
                 data_vars = list(data_vars)
             logger.debug(f"Write binary map files: {data_vars}.")
             for name in data_vars:
-                if self.model.config.get(f"{name}file") is None:
-                    self.config.set(f"{name}file", f"sfincs.{name}")
+                # Set file name and get absolute path
+                abs_file_path = self.model.config.get_set_file_variable(
+                    f"{name}file",
+                    f"sfincs.{name}",
+                )
+
                 # do not write depfile if subgrid is used
                 # if (name == "dep" or name == "manning") and self.subgrid:
                 #     continue
                 self.write_map(
-                    map_fn=self.model.config.get(f"{name}file", abs_path=True),
+                    map_fn=abs_file_path,
                     data=ds_out[name].values,
                     mask=mask,
                     dtype=dtypes.get(name, "f4"),
@@ -293,8 +297,12 @@ class RegularGrid(GridComponent):
         )
         self.update_grid_from_config()
 
-        # set an empty mask to data
-        self.set(self.empty_mask)
+        # initialize the grid
+        ds = xr.Dataset(
+            coords=self.coordinates,
+        )
+        ds.raster.set_crs(self.model.crs)
+        self.set(ds)
 
     def create_from_region(
         self,
@@ -351,7 +359,7 @@ class RegularGrid(GridComponent):
         hydromt.model.processes.create_grid_from_region
         """
 
-        da = create_grid_from_region(
+        ds = create_grid_from_region(
             region=region,
             data_catalog=self.model.data_catalog,
             res=res,
@@ -367,7 +375,7 @@ class RegularGrid(GridComponent):
         )
 
         # add the grid to the model
-        self.set(da)
+        self.set(ds)
         # update the grid attributes in the model config
         self.update_config_from_grid()
 
@@ -434,16 +442,16 @@ class RegularGrid(GridComponent):
         """
 
         # retrieve model resolution to determine zoom level for xyz-datasets
-        if not self.mask.raster.crs.is_geographic:
-            res = np.abs(self.mask.raster.res[0])
+        if not self.model.mask.raster.crs.is_geographic:
+            res = np.abs(self.model.mask.raster.res[0])
         else:
-            res = np.abs(self.mask.raster.res[0]) * 111111.0
+            res = np.abs(self.model.mask.raster.res[0]) * 111111.0
 
-        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+        datasets_dep = self.model._parse_datasets_dep(datasets_dep, res=res)
 
         da_dep = workflows.merge_multi_dataarrays(
             da_list=datasets_dep,
-            da_like=self.mask,
+            da_like=self.model.mask,
             buffer_cells=buffer_cells,
             interp_method=interp_method,
             logger=logger,
@@ -455,50 +463,42 @@ class RegularGrid(GridComponent):
             logger.warning(f"Interpolate elevation at {nmissing} cells")
             da_dep = da_dep.raster.interpolate_na(method="rio_idw", extrapolate=True)
 
-        self.set_grid(da_dep, name="dep")
-        # FIXME this shouldn't be necessary, since da_dep should already have a crs
-        if self.crs is not None and self.grid.raster.crs is None:
-            self.grid.set_crs(self.crs)
+        # set the dep layer in the model data
+        self.set(da_dep, name="dep")
 
-        if "depfile" not in self.config:
-            self.config.update({"depfile": "sfincs.dep"})
+        # TODO add to config, or is that only done when writing?
 
     ## MASK
 
     def create_mask_active(
-        # def create_mask(
         self,
-        da_mask: xr.DataArray = None,
-        da_dep: xr.DataArray = None,
-        gdf_mask: gpd.GeoDataFrame = None,
-        gdf_include: gpd.GeoDataFrame = None,
-        gdf_exclude: gpd.GeoDataFrame = None,
+        mask: Union[str, Path, gpd.GeoDataFrame] = None,
+        include_mask: Union[str, Path, gpd.GeoDataFrame] = None,
+        exclude_mask: Union[str, Path, gpd.GeoDataFrame] = None,
+        mask_buffer: int = 0,
         zmin: float = None,
         zmax: float = None,
-        fill_area: float = 10,
-        drop_area: float = 0,
+        fill_area: float = 10.0,
+        drop_area: float = 0.0,
         connectivity: int = 8,
         all_touched: bool = True,
         reset_mask: bool = True,
-        logger: logging.Logger = logger,
-    ) -> xr.DataArray:
+    ):
         """Create an integer mask with inactive (msk=0) and active (msk=1) cells, optionally bounded
         by several criteria.
 
         Parameters
         ----------
-        da_mask: xarray.DataArray, optional
-            Mask with 0) Inactive and 1) active cells to initialize with.
-            If not provided, mask is initialized empty.
-        da_dep: xarray.DataArray, optional
-            Elevation data to use for active mask.
-        gdf_mask: geopandas.GeoDataFrame, optional
-            Geometry with area to initiliaze active mask with; proceding arguments can be used to include/exclude cells
-            If not given, existing mask (if present) is used, else mask is initialized empty.
-        gdf_include, gdf_exclude: geopandas.GeoDataFrame, optional
-            Geometries with areas to include/exclude from the active model cells.
+        mask: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name of polygons to initiliaze active mask with; proceding arguments can be used to include/exclude cells
+            If not given, existing mask (if present) used, else mask is initialized empty.
+        include_mask, exclude_mask: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name of polygons to include/exclude from the active model domain.
             Note that include (second last) and exclude (last) areas are processed after other critera,
             i.e. `zmin`, `zmax` and `drop_area`, and thus overrule these criteria for active model cells.
+        mask_buffer: float, optional
+            If larger than zero, extend the `include_mask` geometry with a buffer [m],
+            by default 0.
         zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for active model cells.
         fill_area : float, optional
@@ -516,12 +516,51 @@ class RegularGrid(GridComponent):
         reset_mask: bool, optional
             If True (default), reset existing mask layer. If False updating existing mask.
 
-        Returns
-        -------
-        da_mask: xr.DataArray
-            Integer SFINCS model mask with inactive (msk=0), active (msk=1) cells
         """
 
+        # read geometries
+        gdf_mask, gdf_include, gdf_exclude = None, None, None
+        bbox = self.model.region.to_crs(4326).total_bounds
+        if mask is not None:
+            if not isinstance(mask, gpd.GeoDataFrame) and str(mask).endswith(".pol"):
+                # NOTE polygons should be in same CRS as model
+                gdf_mask = utils.polygon2gdf(
+                    feats=utils.read_geoms(fn=mask), crs=self.region.crs
+                )
+            else:
+                gdf_mask = self.data_catalog.get_geodataframe(mask, bbox=bbox)
+            if mask_buffer > 0:  # NOTE assumes model in projected CRS!
+                gdf_mask["geometry"] = gdf_mask.to_crs(self.crs).buffer(mask_buffer)
+        if include_mask is not None:
+            if not isinstance(include_mask, gpd.GeoDataFrame) and str(
+                include_mask
+            ).endswith(".pol"):
+                # NOTE polygons should be in same CRS as model
+                gdf_include = utils.polygon2gdf(
+                    feats=utils.read_geoms(fn=include_mask), crs=self.region.crs
+                )
+            else:
+                gdf_include = self.data_catalog.get_geodataframe(
+                    include_mask, bbox=bbox
+                )
+        if exclude_mask is not None:
+            if not isinstance(exclude_mask, gpd.GeoDataFrame) and str(
+                exclude_mask
+            ).endswith(".pol"):
+                gdf_exclude = utils.polygon2gdf(
+                    feats=utils.read_geoms(fn=exclude_mask), crs=self.region.crs
+                )
+            else:
+                gdf_exclude = self.data_catalog.get_geodataframe(
+                    exclude_mask, bbox=bbox
+                )
+
+        # get mask and dep data
+        da_mask = self.data["msk"] if "msk" in self.data else None
+        da_dep = self.data["dep"] if "dep" in self.data else None
+
+        # if mask already defined and reset_mask is False,
+        # use the current active mask as starting point
         da_mask0 = None
         if not reset_mask and da_mask is not None:
             # use current active mask
@@ -538,9 +577,9 @@ class RegularGrid(GridComponent):
         latlon = self.crs.is_geographic
 
         if da_dep is None and (zmin is not None or zmax is not None):
-            raise ValueError("da_dep required in combination with zmin / zmax")
+            raise ValueError("dep required in combination with zmin / zmax")
         elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
-            raise ValueError("da_dep does not match regular grid")
+            raise ValueError("dep does not match regular grid")
 
         s = None if connectivity == 4 else np.ones((3, 3), int)
         if zmin is not None or zmax is not None:
@@ -602,59 +641,103 @@ class RegularGrid(GridComponent):
         da_mask.raster.set_nodata(0)
         da_mask.raster.set_crs(self.crs)
 
-        return da_mask
+        # set the mask in the model data
+        self.set(da_mask, name="msk")
 
     def create_mask_bounds(
         self,
-        da_mask: xr.DataArray,
         btype: str = "waterlevel",
-        gdf_include: Optional[gpd.GeoDataFrame] = None,
-        gdf_exclude: Optional[gpd.GeoDataFrame] = None,
-        da_dep: xr.DataArray = None,
-        zmin: Optional[float] = None,
-        zmax: Optional[float] = None,
+        include_mask: Union[str, Path, gpd.GeoDataFrame] = None,
+        exclude_mask: Union[str, Path, gpd.GeoDataFrame] = None,
+        include_mask_buffer: int = 0,
+        zmin: float = None,
+        zmax: float = None,
         connectivity: int = 8,
-        all_touched=False,
-        reset_bounds=False,
-        logger: logging.Logger = logger,
-    ) -> xr.DataArray:
-        """Returns an integer SFINCS model mask with inactive (msk=0), active (msk=1), and waterlevel boundary (msk=2)
-            and outflow boundary (msk=3) cells.  Boundary cells are defined by cells at the edge of active model domain.
+        all_touched: bool = False,
+        reset_bounds: bool = False,
+    ):
+        """Set boundary cells in the model mask.
+
+        The SFINCS model mask defines inactive (msk=0), active (msk=1), and waterlevel boundary (msk=2)
+        and outflow boundary (msk=3) cells. Active cells set using the `setup_mask` method,
+        while this method sets both types of boundary cells, see `btype` argument.
+
+        Boundary cells at the edge of the active model domain,
+        optionally bounded by areas inside the include geomtries, outside the exclude geomtries,
+        larger or equal than a minimum elevation threshhold and smaller or equal than a
+        maximum elevation threshhold.
+        All conditions are combined using a logical AND operation.
+
+        Updates model layers:
+
+        * **msk** map: model mask [-]
 
         Parameters
         ----------
-        da_mask: xarray.DataArray
-            SFINCS model mask with inactive (msk=0) active (msk>0) cells.
         btype: {'waterlevel', 'outflow'}
             Boundary type
-        gdf_include, gdf_exclude: geopandas.GeoDataFrame
-            Geometries with areas to include/exclude from the model boundary.
+        include_mask, exclude_mask: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name for geometries with areas to include/exclude from
+            the model boundary.
         zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for boundary cells.
-            Note that when include and exclude areas are used, the elevation range is only applied
-            on cells within the include area and outside the exclude area.
-        connectivity: {4, 8}
-            The connectivity used to detect the model edge, if 4 only horizontal and vertical
-            connections are used, if 8 (default) also diagonal connections.
+            Note that when include and exclude areas are used, the elevation range is
+            only applied on cells within the include area and outside the exclude area.
+        reset_bounds: bool, optional
+            If True, reset existing boundary cells of the selected boundary
+            type (`btype`) before setting new boundary cells, by default False.
         all_touched: bool, optional
             if True (default) include (or exclude) a cell in the mask if it touches any of the
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
-        reset_bounds: bool, optional
-            If True, reset existing boundary cells of the selected boundary
-            type (`btype`) before setting new boundary cells, by default False.
-
-        Returns
-        -------
-        da_mask: xr.DataArray
-            Integer SFINCS model mask with inactive (msk=0), active (msk=1), and waterlevel boundary (msk=2)
-            and outflow boundary (msk=3) cells
-
+        connectivity, {4, 8}:
+            The connectivity used to detect the model edge, if 4 only horizontal and vertical
+            connections are used, if 8 (default) also diagonal connections.
         """
-        if not da_mask.raster.identical_grid(self.empty_mask):
-            raise ValueError("da_mask does not match regular grid")
-        latlon = self.crs.is_geographic
 
+        # get include / exclude geometries
+        gdf_include, gdf_exclude = None, None
+        bbox = self.model.mask.raster.transform_bounds(4326)
+        if include_mask is not None:
+            if not isinstance(include_mask, gpd.GeoDataFrame) and str(
+                include_mask
+            ).endswith(".pol"):
+                # NOTE polygons should be in same CRS as model
+                gdf_include = utils.polygon2gdf(
+                    feats=utils.read_geoms(fn=include_mask), crs=self.region.crs
+                )
+            else:
+                gdf_include = self.data_catalog.get_geodataframe(
+                    include_mask, bbox=bbox
+                )
+            if include_mask_buffer > 0:
+                if self.crs.is_geographic:
+                    include_mask_buffer = include_mask_buffer / 111111.0
+                gdf_include["geometry"] = gdf_include.to_crs(self.crs).buffer(
+                    include_mask_buffer
+                )
+        if exclude_mask is not None:
+            if not isinstance(exclude_mask, gpd.GeoDataFrame) and str(
+                exclude_mask
+            ).endswith(".pol"):
+                gdf_exclude = utils.polygon2gdf(
+                    feats=utils.read_geoms(fn=exclude_mask), crs=self.region.crs
+                )
+            else:
+                gdf_exclude = self.data_catalog.get_geodataframe(
+                    exclude_mask, bbox=bbox
+                )
+
+        # get mask and dep data
+        if "msk" in self.data:
+            da_mask = self.data["msk"]
+        else:
+            raise ValueError(
+                "No mask data found in model, please create a mask first using `create_mask_active`."
+            )
+        da_dep = self.data["dep"] if "dep" in self.data else None
+
+        # check if mask and dep data are compatible
         if da_dep is None and (zmin is not None or zmax is not None):
             raise ValueError("da_dep required in combination with zmin / zmax")
         elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
@@ -712,7 +795,8 @@ class RegularGrid(GridComponent):
         if ncells > 0:
             da_mask = da_mask.where(~bounds, np.uint8(bvalue))
 
-        return da_mask
+        # update the mask in the model data
+        self.set(da_mask, name="msk")
 
     # %% supporting HydroMT-SFINCS functions:
     # other:
@@ -847,7 +931,7 @@ class RegularGrid(GridComponent):
         # combine lines into a single list
         grid_lines = vertical_lines + horizontal_lines
 
-        return gpd.GeoDataFrame(geometry=grid_lines, crs=self.crs)
+        return gpd.GeoDataFrame(geometry=grid_lines, crs=self.model.crs)
 
     # %% DDB GUI focused additional functions:
     # create_index_tiles > FIXME - TL: still needed?

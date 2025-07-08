@@ -28,17 +28,26 @@ class SfincsConfig(ModelComponent):
             self._data = SfincsConfigVariables()
         return self._data
 
-    def read(self, filename: str = "sfincs.inp") -> None:
-        """Read a text file and populate SfincsConfig.
-        This function also determines the grid type and updates the grid properties.
-        """
+    @property
+    def filename(self) -> str:
+        """Return the filename of the SFINCS input file."""
+        if not Path(self._filename).is_absolute():
+            # If not absolute, join with the model root path
+            root_path = self.model.root.path.resolve()
+            self._filename = root_path / self._filename
+        return self._filename
 
-        # Set the filename and check if it is an absolute path
-        self._filename = filename
-        if not isabs(filename):
-            self._filename = join(self.root.path, filename)
+    def read(self) -> None:
+        """Read a text file and populate SfincsConfig. This function also determines the grid type and updates the grid properties."""
 
-        with open(self._filename, "r") as fid:
+        self.root._assert_read_mode
+        if not exists(self.filename):
+            raise FileNotFoundError(
+                f"SFINCS input file '{self.filename}' does not exist."
+            )
+
+        # Read the file line by line
+        with open(self.filename, "r") as fid:
             lines = fid.readlines()
 
         inp_dict = {}
@@ -75,6 +84,7 @@ class SfincsConfig(ModelComponent):
 
             inp_dict[name] = val
 
+        # FIXME: when reading an existing config, you don't want to start with all possible variables?
         # Convert dictionary to SfincsConfig instance
         self._data = self.data.copy(update=inp_dict)
 

@@ -143,6 +143,7 @@ class SfincsModel(Model):
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
         # self.add_component("storage_volume", SfincsStorageVolume(self))
         # self.add_component("subgrid", SubgridTableRegular(self))
+        self.add_component("subgrid", SubgridTableRegular(self))
         self.add_component("quadtree_subgrid", SfincsQuadtreeSubgridTable(self))
 
         # Geoms types
@@ -251,18 +252,11 @@ class SfincsModel(Model):
             return self.quadtree_grid.data.grid.crs
 
     ## I/O
-    def read(self, filename: str = None) -> None:
-        """Read model components from config file and initialize model grid.
+    def read(self) -> None:
+        """Read model components from config file and initialize model grid."""
 
-        Parameters
-        ----------
-        filename : str, optional
-            Path to config file, by default None
-        """
         # always read config first
-        if filename is None:
-            filename = self.root.path / "sfincs.inp"
-        self.config.read(filename=filename)
+        self.config.read()
 
         # loop over all components (except config) and read
         # TODO add check if files are present in each component otherwise skip-read
@@ -275,7 +269,15 @@ class SfincsModel(Model):
         # loop over all components and write
         # TODO make sure that all components are in the config (in their individual write functions?)
         for name, comp in self.components.items():
+            if name == "config":
+                continue
+            elif "quadtree" in name and self.grid_type == "regular":
+                continue
+            elif "grid" in name and self.grid_type == "quadtree":
+                continue
             comp.write()
+        # write config last
+        self.config.write()
 
     def clear_spatial_components(self):
         """Clear all spatial components."""
@@ -410,14 +412,16 @@ class SfincsModel(Model):
         import matplotlib.pyplot as plt
 
         # combine geoms and forcing locations
-        sg = self.geoms.copy()
-        for fname, gname in self._FORCING_1D.values():
-            if fname[0] in self.forcing and gname is not None:
-                try:
-                    sg.update({gname: self.forcing[fname[0]].vector.to_gdf()})
-                except ValueError:
-                    self.logger.debug(f'unable to plot forcing location: "{fname}"')
-        if plot_region and "region" not in self.geoms:
+        # FIXME: no generic geoms component, but geoms are stored for each individual component
+        sg = {}
+        # sg = self.geoms.copy()
+        # for fname, gname in self._FORCING_1D.values():
+        #     if fname[0] in self.forcing and gname is not None:
+        #         try:
+        #             sg.update({gname: self.forcing[fname[0]].vector.to_gdf()})
+        #         except ValueError:
+        #             self.logger.debug(f'unable to plot forcing location: "{fname}"')
+        if plot_region:  # and "region" not in self.geoms:
             sg.update({"region": self.region})
 
         # make sure grid are set
@@ -432,7 +436,7 @@ class SfincsModel(Model):
             variable = variable.replace("subgrid.", "")
         else:
             if self.grid_type == "regular":
-                ds = self.grid.copy()
+                ds = self.grid.data.copy()
             elif self.grid_type == "quadtree":
                 ds = self.quadtree.data.copy()
             if "msk" not in ds:
@@ -452,7 +456,7 @@ class SfincsModel(Model):
             geom_names=geom_names,
             geom_kwargs=geom_kwargs,
             legend_kwargs=legend_kwargs,
-            logger=self.logger,
+            logger=logger,
             **kwargs,
         )
 
@@ -592,7 +596,9 @@ class SfincsModel(Model):
                     buffer=10,
                     variables=["lulc"],
                 )
-                df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
+                df_map = self.data_catalog.get_dataframe(reclass_table)
+                # set the index_column to 0
+                df_map.set_index(df_map.columns[0], inplace=True)
                 # reclassify
                 da_man = da_lulc.raster.reclassify(df_map[["N"]])["N"]
                 dd.update({"da": da_man})

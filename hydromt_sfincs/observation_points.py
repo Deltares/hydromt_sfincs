@@ -93,8 +93,8 @@ class SfincsObservationPoints(ModelComponent):
 
         # check if data present:
         if self.data.empty:
-            raise ValueError("No data in observation_points.data!")
-            # return
+            # raise ValueError("No data in observation_points.data!")
+            return
 
         # TODO - can be removed, just for info now
         # call function to get back full filepath of config variable "obsfile"
