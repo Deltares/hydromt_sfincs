@@ -85,6 +85,7 @@ class SfincsModel(Model):
     """SFINCS model class."""
 
     # _FOLDERS = []
+    name: str = "sfincs"
 
     def __init__(
         self,
@@ -115,7 +116,7 @@ class SfincsModel(Model):
         self._write_gis = write_gis
         # if write_gis and "gis" not in self._FOLDERS:
         # self._FOLDERS.append("gis")
-        self.name = "SfincsModel"
+        # self.name = "SfincsModel"
 
         super().__init__(
             root=root,

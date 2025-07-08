@@ -7,8 +7,7 @@ from pathlib import Path
 
 from hydromt.model.components import ModelComponent
 
-# from hydromt_sfincs.config_variables import SfincsConfigVariables
-from hydromt_sfincs.config_variables import sfincs_config_variables
+from hydromt_sfincs.config_variables import SfincsConfigVariables
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -19,14 +18,14 @@ class SfincsConfig(ModelComponent):
 
     def __init__(self, model: "SfincsModel"):
         self._filename = "sfincs.inp"
-        self._data: sfincs_config_variables = None
+        self._data: SfincsConfigVariables = None
         super().__init__(model=model)
 
     @property
     def data(self):
         """Return the SfincsConfig object."""
         if self._data is None:
-            self._data = sfincs_config_variables
+            self._data = SfincsConfigVariables()
         return self._data
 
     def read(self, filename: str = "sfincs.inp") -> None:
@@ -77,7 +76,7 @@ class SfincsConfig(ModelComponent):
             inp_dict[name] = val
 
         # Convert dictionary to SfincsConfig instance
-        self._data = self._data.copy(update=inp_dict)
+        self._data = self.data.copy(update=inp_dict)
 
         # Update the grid properties from the configuration
         # This will either drop the quadtree component or the regular component?
@@ -93,6 +92,8 @@ class SfincsConfig(ModelComponent):
             for key, value in self.data.dict(exclude_unset=False).items():
                 if value is None:
                     continue
+                else:
+                    value = convert_to_number(value)
                 if isinstance(value, float):  # remove insignificant traling zeros
                     string = f"{key.ljust(20)} = {value}"
                 elif isinstance(value, int):
@@ -139,10 +140,7 @@ class SfincsConfig(ModelComponent):
             # FIXME implement this in a better way
             # It works, but it is quite slow when all the variables are set in a loop
             # Therefore the skip_validation option is added
-            try:
-                self.data.model_validate({key: value})
-            except Exception as e:
-                raise TypeError(f"Invalid input type for '{key}'")
+            self.data.model_validate({key: value})
 
         self.data.__setattr__(key, value)
 
@@ -363,3 +361,14 @@ class SfincsConfig(ModelComponent):
                             full_file_path = (root_path / value).resolve()
 
         return full_file_path
+
+
+def convert_to_number(value):
+    """Convert a value to a number if possible, otherwise return the original value."""
+    try:
+        if isinstance(value, str):
+            value = value.strip()
+        num = float(value)
+        return int(num) if num.is_integer() else num
+    except (ValueError, TypeError):
+        return value

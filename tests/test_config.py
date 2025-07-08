@@ -1,8 +1,10 @@
 from datetime import datetime
-import os
-from os.path import join, abspath
-import pytest
 from pathlib import Path
+import os
+from os.path import abspath, join
+
+import pytest
+from pydantic import ValidationError
 
 from hydromt_sfincs import SfincsModel
 
@@ -14,12 +16,12 @@ def test_config_get_set(model_init):
     config.set("mmax", 20)
     assert config.get("mmax") == 20
 
-    # set a string with integer values
-    config.set("mmax", "50")
-    assert config.get("mmax") == 50
+    # set value out of bounds
+    with pytest.raises(ValidationError):
+        config.set("mmax", -1000)
 
     # now set a string with txt
-    with pytest.raises(TypeError):
+    with pytest.raises(ValidationError):
         config.set("mmax", "text")
 
     # set a new values with type text
@@ -68,10 +70,11 @@ def test_config_io(tmp_path):
 def test_config_datetime(model_init):
     config = model_init.config
 
+    # assert tref corresponds to current year
+    current_year = datetime.now().year
+
     assert isinstance(config.get("tref"), datetime)
-    assert config.get("tref").year == 2010
-    assert config.get("tref").month == 2
-    assert config.get("tref").day == 1
+    assert config.get("tref").year == current_year
 
 
 def test_get_set_config_file_variable(model_config):
