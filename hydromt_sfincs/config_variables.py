@@ -13,7 +13,11 @@ class SfincsConfigVariables(BaseSettings):
     # - and description and value range of https://sfincs.readthedocs.io/en/latest/parameters.html
     #
     # Settings
-    #
+
+    # Make sure that extra variables are allowed in the model
+    class Config:
+        extra = "allow"  # Allow extra fields
+
     mmax: int | None = Field(
         10, ge=1, description="Number of grid cells in x-direction"
     )
