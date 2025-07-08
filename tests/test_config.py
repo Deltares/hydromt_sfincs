@@ -256,7 +256,8 @@ def test_get_set_file_variable(model_config):
 
     # and check whether it has been updated in the config
     obs6 = config.get(varname)
-    assert random_location == obs6
+    # assert random_location == obs6
+    assert Path(random_location) == Path(obs6)
 
     # and whether path is correct
     assert file_path == Path(random_location)
