@@ -156,7 +156,7 @@ class SfincsCrossSections(ModelComponent):
             return
 
         if merge:
-            self.data = pd.concat([self.gdf, gdf], ignore_index=True)
+            self.data = pd.concat([self.data, gdf], ignore_index=True)
             logger.info("Adding new cross-sections to existing ones")
         else:
             self.data = gdf
@@ -211,7 +211,9 @@ class SfincsCrossSections(ModelComponent):
 
     def list_names(self):
         """Give list of names of cross sections."""
-        names = list(self.data.name)
+        if self.data.empty:
+            return []
+        names = list(self.data["name"])
         return names
 
     def snap_to_grid(self):

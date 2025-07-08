@@ -12,9 +12,11 @@ import xarray as xr
 import xugrid as xu
 from pyproj import CRS, Transformer
 
-from hydromt.model.components import MeshComponent
+from hydromt.model.components import MeshComponent, ModelComponent
 from hydromt_sfincs.utils import xu_open_dataset
 from hydromt_sfincs.subgrid import SubgridTableQuadtree
+
+from hydromt_sfincs.quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
 # optional dependency
 try:
@@ -32,33 +34,22 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class QuadtreeGrid(MeshComponent):
+class QuadtreeGrid(ModelComponent):
     def __init__(
         self,
         model: "SfincsModel",
     ):
         self._filename: str = "sfincs_grid.nc"
-        self._data: xu.UgridDataArray = None  # FIXME - correct?
-        self.nr_cells = 0
-        self.nr_refinement_levels = 1
+        self.data: xu.UgridDataset = None
+        self._data: xu.UgridDataset = None
         self.version = 0
-
-        self.subgrid = SubgridTableQuadtree()
-        self.df = None  # placeholder for pandas dataframe for datashader
+        # Subgrid should be separate model component
+        # self.subgrid = SubgridTableQuadtree()
+        self.datashader_dataframe = pd.DataFrame()
 
         super().__init__(
             model=model,
         )
-
-    # class QuadtreeGrid:
-    #     def __init__(self, logger=logger):
-    #         self.nr_cells = 0
-    #         self.nr_refinement_levels = 1
-    #         self.version = 0
-
-    #         self.data = None  # placeholder for xugrid object
-    #         self.subgrid = SubgridTableQuadtree()
-    #         self.df = None  # placeholder for pandas dataframe for datashader
 
     @property
     def crs(self):
@@ -111,108 +102,112 @@ class QuadtreeGrid(MeshComponent):
     # set (coming from MeshComponent)
     # create
 
-    def read(
-        self, filename: Union[str, Path] = "sfincs.nc"
-    ):  # FIXME - or directly self._filename?
+    def read(self, filename: str | Path = None):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object."""
 
         # check if in read mode and initialize grid
         self.root._assert_read_mode()
 
-        # Set the filename and check if it is an absolute path
-        self._filename = filename
-        if not isabs(filename):
-            self._filename = join(self.root.path, filename)
+        # Get absolute file name and set it in config if qtrfile is not None
+        abs_file_path = self.model.config.get_set_file_variable(
+            "qtrfile", value=filename
+        )
 
-        dsu = xu_open_dataset(self._filename)
+        # Check if abs_file_path is None
+        if abs_file_path is None:
+            # File name not defined
+            return
+
+        # Check if qtr file exists
+        if not abs_file_path.exists():
+            raise FileNotFoundError(f"Quadtree grid file not found: {abs_file_path}")
+
+        self.data = xu.load_dataset(abs_file_path)
         # set CRS (not sure if that should be stored in the netcdf in this way)
-        dsu.grid.set_crs(CRS.from_wkt(dsu["crs"].crs_wkt))
+        self.data.grid.set_crs(CRS.from_wkt(self.data["crs"].crs_wkt))
 
-        # TODO make similar to fortran conventions?
-        # Rename to python conventions
-        dsu = dsu.rename({"z": "dep"}) if "z" in dsu else dsu
-        dsu = dsu.rename({"mask": "msk"}) if "mask" in dsu else dsu
-        dsu = (
-            dsu.rename({"snapwave_mask": "snapwave_msk"})
-            if "snapwave_mask" in dsu
-            else dsu
+    def write(self, filename: str | Path = None, version: int = 0):
+        """Writes a QuadTree SFINCS netcdf file."""
+
+        # Get absolute file name and set it in config if bndfile is not None
+        abs_file_path = self.model.config.get_set_file_variable(
+            "qtrfile", value=filename, default="sfincs.qtr"
         )
-        # set the data
-        self.set(dsu)
 
-        self.nr_cells = self.data.sizes["mesh2d_nFaces"]
-
-        for key, value in self.data.attrs.items():
-            setattr(self, key, value)
-
-    def write(
-        self, filename: Union[str, Path] = "sfincs.nc", version: int = 0
-    ):  # FIXME - or directly self._filename?
-        """Writes a quadtree SFINCS netcdf file."""
-
-        self._filename = filename
-        if not isabs(filename):
-            self._filename = join(self.root.path, filename)
-
-        # TODO do we want to cut inactive cells here? Or already when creating the mask?
-
-        attrs = self.data.attrs
+        # And write the file
         ds = self.data.ugrid.to_dataset()
+        ds.attrs = self.data.attrs
+        ds.to_netcdf(abs_file_path)
+        ds.close()
 
-        # TODO make similar to fortran conventions
-        # RENAME TO FORTRAN CONVENTION
-        ds = ds.rename({"dep": "z"}) if "dep" in ds else ds
-        ds = ds.rename({"msk": "mask"}) if "msk" in ds else ds
-        ds = (
-            ds.rename({"snapwave_msk": "snapwave_mask"}) if "snapwave_msk" in ds else ds
+    def set(
+        self,
+        x0: float,
+        y0: float,
+        nmax: int,
+        mmax: int,
+        dx: float,
+        dy: float,
+        rotation: float,
+        refinement_polygons: Optional[gpd.GeoDataFrame] = None,
+        bathymetry_sets: Optional[List] = None,
+        bathymetry_database: Optional = None,
+    ):
+        """Build the Quadtree grid.
+
+        Parameters
+        ----------
+        x0 : float
+            x-coordinate of the lower left corner of the grid.
+        y0 : float
+            y-coordinate of the lower left corner of the grid.
+        nmax : int
+            Maximum number of cells in x-direction.
+        mmax : int
+            Maximum number of cells in y-direction.
+        dx : float
+            Cell size in x-direction.
+        dy : float
+            Cell size in y-direction.
+        rotation : float
+            Rotation angle of the grid in degrees.
+        refinement_polygons : gpd.GeoDataFrame, optional
+            GeoDataFrame with polygons that define areas where the grid should be refined.
+        bathymetry_sets : list, optional
+            List of bathymetry sets.
+        bathymetry_database : str, optional
+            Path to the bathymetry database.
+        """
+
+        # Clear datashader dataframes
+        self.clear_datashader_dataframe()
+        self.model.quadtree_mask.clear_datashader_dataframe()
+
+        # Get the CRS from the model config
+        epsg = self.model.config.get("epsg", None)
+        crs = CRS.from_epsg(epsg) if epsg is not None else CRS.from_epsg(4326)
+
+        # Build the quadtree grid
+        self.data = build_quadtree_xugrid(
+            x0,
+            y0,
+            nmax,
+            mmax,
+            dx,
+            dy,
+            rotation,
+            crs,
+            refinement_polygons=refinement_polygons,
+            bathymetry_sets=bathymetry_sets,
+            bathymetry_database=bathymetry_database,
         )
 
-        ds.attrs = attrs
-        ds.to_netcdf(filename)
-
-    # %% DDB GUI focused additional functions:
-    # map_overlay
-    # snap_to_grid
-    # _get_datashader_dataframe
-
-    # TODO - missing as in cht_sfincs:
-    # Many...
-    def map_overlay(self, file_name, xlim=None, ylim=None, color="black", width=800):
-        # check if datashader is available
-        if not HAS_DATASHADER:
-            logger.warning("Datashader is not available. Please install datashader.")
-            return False
-        if self.data is None:
-            # No grid (yet)
-            return False
-        try:
-            if not hasattr(self, "df"):
-                self.df = None
-            if self.df is None:
-                self._get_datashader_dataframe()
-
-            transformer = Transformer.from_crs(4326, 3857, always_xy=True)
-            xl0, yl0 = transformer.transform(xlim[0], ylim[0])
-            xl1, yl1 = transformer.transform(xlim[1], ylim[1])
-            xlim = [xl0, xl1]
-            ylim = [yl0, yl1]
-            ratio = (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
-            height = int(width * ratio)
-            cvs = Canvas(
-                x_range=xlim, y_range=ylim, plot_height=height, plot_width=width
-            )
-            agg = cvs.line(self.df, x=["x1", "x2"], y=["y1", "y2"], axis=1)
-            img = tf.shade(agg)
-            path = os.path.dirname(file_name)
-            if not path:
-                path = os.getcwd()
-            name = os.path.basename(file_name)
-            name = os.path.splitext(name)[0]
-            export_image(img, name, export_path=path)
-            return True
-        except Exception as e:
-            logger.warning("Failed to create map overlay. Error: %s" % e)
-            return False
+    def cut_inactive_cells(self):
+        # Clear datashader dataframes (new ones will be created when needed by map_overlay methods)
+        self.clear_datashader_dataframe()
+        self.model.quadtree_mask.clear_datashader_dataframe()
+        # Cut inactive cells
+        self.data = cut_inactive_cells(self.data)
 
     def snap_to_grid(self, polyline, max_snap_distance=1.0):
         if len(polyline) == 0:
@@ -229,14 +224,89 @@ class QuadtreeGrid(MeshComponent):
         snapped_gdf = snapped_gdf.set_crs(self.crs)
         return snapped_gdf
 
-    # Internal functions
-    def _get_datashader_dataframe(self):
+    def map_overlay(self, file_name, xlim=None, ylim=None, color="black", width=800):
+        """Create a map overlay of the grid
+
+        Parameters
+        ----------
+        file_name : str | Path
+            File name of the map overlay
+        xlim : list, optional
+            x-axis limits (longitude)
+        ylim : list, optional
+            y-axis limits (latitude)
+        color : str, optional
+            Color of the grid lines
+        width : int, optional
+            Width of the map overlay in pixels
+
+        Returns
+        -------
+        bool
+            True if the map overlay was created successfully, False otherwise
+        """
+        # TODO: xlim and ylim should not be optional and be called lonlim and latlim or just give bbox
+
+        # check if datashader is available
+        if not HAS_DATASHADER:
+            logger.warning("Datashader is not available. Please install datashader.")
+            return False
+
+        if self.data is None:
+            # No grid (yet)
+            return False
+
+        try:
+            # Check if datashader dataframe is empty (maybe it was not made yet, or it was cleared)
+            if self.datashader_dataframe.empty:
+                self.get_datashader_dataframe()
+
+            transformer = Transformer.from_crs(4326, 3857, always_xy=True)
+            xl0, yl0 = transformer.transform(xlim[0], ylim[0])
+            xl1, yl1 = transformer.transform(xlim[1], ylim[1])
+            if xl0 > xl1:
+                xl1 += 40075016.68557849
+            xlim = [xl0, xl1]
+            ylim = [yl0, yl1]
+            ratio = (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
+            height = int(width * ratio)
+            cvs = Canvas(
+                x_range=xlim, y_range=ylim, plot_height=height, plot_width=width
+            )
+            agg = cvs.line(
+                self.datashader_dataframe, x=["x1", "x2"], y=["y1", "y2"], axis=1
+            )
+            img = tf.shade(agg)
+            path = os.path.dirname(file_name)
+            if not path:
+                path = os.getcwd()
+            name = os.path.basename(file_name)
+            name = os.path.splitext(name)[0]
+            export_image(img, name, export_path=path)
+            return True
+        except Exception as e:
+            return False
+
+    def get_datashader_dataframe(self):
+        """Creates a dataframe with line elements for datashader"""
         # Create a dataframe with line elements
         x1 = self.data.grid.edge_node_coordinates[:, 0, 0]
         x2 = self.data.grid.edge_node_coordinates[:, 1, 0]
         y1 = self.data.grid.edge_node_coordinates[:, 0, 1]
         y2 = self.data.grid.edge_node_coordinates[:, 1, 1]
-        transformer = Transformer.from_crs(self.crs, 3857, always_xy=True)
+        # Check if grid crosses the dateline
+        cross_dateline = False
+        if self.model.crs.is_geographic:
+            if np.max(x1) > 180.0 or np.max(x2) > 180.0:
+                cross_dateline = True
+        transformer = Transformer.from_crs(self.model.crs, 3857, always_xy=True)
         x1, y1 = transformer.transform(x1, y1)
         x2, y2 = transformer.transform(x2, y2)
-        self.df = pd.DataFrame(dict(x1=x1, y1=y1, x2=x2, y2=y2))
+        if cross_dateline:
+            x1[x1 < 0] += 40075016.68557849
+            x2[x2 < 0] += 40075016.68557849
+        self.datashader_dataframe = pd.DataFrame(dict(x1=x1, y1=y1, x2=x2, y2=y2))
+
+    def clear_datashader_dataframe(self):
+        """Clears the datashader dataframe"""
+        self.datashader_dataframe = pd.DataFrame()

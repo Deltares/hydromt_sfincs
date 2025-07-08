@@ -30,23 +30,27 @@ from hydromt_sfincs import DATADIR, plots, utils, workflows
 # %% Import model components
 from hydromt.model import Model
 
-# input types:
+# Input types
 from hydromt_sfincs.config import SfincsConfig
 
-# grid types:
-from hydromt_sfincs.quadtree import QuadtreeGrid
+# Grid types
 from hydromt_sfincs.regulargrid import RegularGrid
-from hydromt_sfincs.subgrid import SubgridTableRegular
+from hydromt_sfincs.quadtree import QuadtreeGrid
 
-# map types:
+# Map types
 # from hydromt_sfincs.mask import SfincsMask
+from hydromt_sfincs.quadtree_mask import QuadtreeMask
+from hydromt_sfincs.snapwave_quadtree_mask import SnapWaveQuadtreeMask
+from hydromt_sfincs.quadtree_subgrid import SfincsQuadtreeSubgridTable
+
 # from hydromt_sfincs.bathymetry import SfincsBathymetry
+from hydromt_sfincs.subgrid import SubgridTableRegular
 from hydromt_sfincs.infiltration import SfincsInfiltration
 from hydromt_sfincs.manning_roughness import SfincsManningRoughness
 from hydromt_sfincs.initial_conditions import SfincsInitialConditions
 from hydromt_sfincs.storage_volume import SfincsStorageVolume
 
-# geoms types:
+# Geoms types
 from hydromt_sfincs.observation_points import SfincsObservationPoints
 from hydromt_sfincs.cross_sections import SfincsCrossSections
 from hydromt_sfincs.weirs import SfincsWeirs
@@ -55,12 +59,10 @@ from hydromt_sfincs.wave_makers import SfincsWaveMakers
 from hydromt_sfincs.drainage_structures import SfincsDrainageStructures
 from hydromt_sfincs.rivers import SfincsRivers
 
-# forcing types:
+# Forcing types
+from hydromt_sfincs.boundary_conditions import SfincsBoundaryConditions
 from hydromt_sfincs.discharge_points import SfincsDischargePoints
-
-# from hydromt_sfincs.boundary_conditions import SfincsBoundaryConditions #/
-from hydromt_sfincs.waterlevel_conditions import SfincsWaterlevelConditions
-from hydromt_sfincs.snapwave_conditions import SfincsSnapWaveConditions
+from hydromt_sfincs.snapwave_boundary_conditions import SnapWaveBoundaryConditions
 
 # from hydromt_sfincs.meteo import SfincsMeteo
 from hydromt_sfincs.meteo import SfincsPrecipitation, SfincsPressure, SfincsWind
@@ -125,33 +127,38 @@ class SfincsModel(Model):
         self.grid_type = "regular"
 
         self.add_component("config", SfincsConfig(self))
-        # grid types:
-        self.add_component("grid", RegularGrid(self))
-        self.add_component("quadtree", QuadtreeGrid(self))
-        # self.add_component("subgrid", SubgridTableRegular(self))
-        # self.add_component("subgrid", SubgridTableRegular(self))
 
-        # map types:
+        # Grid types
+        self.add_component("grid", RegularGrid(self))
+        self.add_component("quadtree_grid", QuadtreeGrid(self))
+
+        # Map types
+        self.add_component("quadtree_mask", QuadtreeMask(self))
+        self.add_component("snapwave_quadtree_mask", SnapWaveQuadtreeMask(self))
         # self.add_component("mask", SfincsMask(self))
         # self.add_component("bathymetry", SfincsBathymetry(self))
         # self.add_component("infiltration", SfincsInfiltration(self))
         # self.add_component("manning_roughness", SfincsManningRoughness(self))
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
         # self.add_component("storage_volume", SfincsStorageVolume(self))
+        # self.add_component("subgrid", SubgridTableRegular(self))
+        self.add_component("quadtree_subgrid", SfincsQuadtreeSubgridTable(self))
 
-        # geoms types:
+        # Geoms types
         self.add_component("observation_points", SfincsObservationPoints(self))
         self.add_component("cross_sections", SfincsCrossSections(self))
         self.add_component("thin_dams", SfincsThinDams(self))
         # self.add_component("weirs", SfincsWeirs(self))
-        # self.add_component("wave_makers", SfincsWaveMakers(self))
+        self.add_component("wave_makers", SfincsWaveMakers(self))
         # self.add_component("drainage_structures", SfincsDrainageStructures(self))
         # self.add_component("rivers", SfincsRivers(self))
 
-        # forcing types:
-        # self.add_component("discharge_points", SfincsDischargePoints(self))
-        # self.add_component("waterlevel_conditions", SfincsWaterlevelConditions(self))
-        # self.add_component("snapwave_conditions", SfincsSnapWaveConditions(self))
+        # Forcing types
+        self.add_component("boundary_conditions", SfincsBoundaryConditions(self))
+        self.add_component("discharge_points", SfincsDischargePoints(self))
+        self.add_component(
+            "snapwave_boundary_conditions", SnapWaveBoundaryConditions(self)
+        )
         # self.add_component("meteo", SfincsMeteo(self))
         # self.add_component("precipitation", SfincsPrecipitation(self))
         # self.add_component("pressure", SfincsPressure(self))
@@ -185,7 +192,7 @@ class SfincsModel(Model):
     @property
     def quadtree(self) -> QuadtreeGrid:
         """Returns the quadtree object."""
-        return self.components["quadtree"]
+        return self.components["quadtree_grid"]
 
     @property
     def mask(self) -> xr.DataArray | None:
@@ -196,9 +203,9 @@ class SfincsModel(Model):
             elif self.grid is not None:
                 return self.grid.empty_mask
         elif self.grid_type == "quadtree":
-            if "msk" in self.quadtree.data:
-                return self.quadtree.data["msk"]
-            elif self.quadtree is not None:
+            if "mask" in self.quadtree_grid.data:
+                return self.quadtree_grid.data["mask"]
+            elif self.quadtree_grid is not None:
                 return self.quadtree.empty_mask
 
     @property
@@ -214,7 +221,7 @@ class SfincsModel(Model):
             elif self.grid is not None:
                 region = self.grid.empty_mask.raster.box
         elif self.grid_type == "quadtree":
-            region = self.quadtree.exterior
+            region = self.quadtree_grid.exterior
         return region
 
     @property
@@ -223,6 +230,7 @@ class SfincsModel(Model):
         if self.grid_type == "regular":
             return self.mask.raster.bounds
         elif self.grid_type == "quadtree":
+            # By are we getting the total bounds of the mask and not the grid?
             return self.mask.ugrid.total_bounds
 
     @property
@@ -239,7 +247,7 @@ class SfincsModel(Model):
         if self.grid_type == "regular":
             return self.grid.crs
         elif self.grid_type == "quadtree":
-            return self.quadtree.data.grid.crs
+            return self.quadtree_grid.data.grid.crs
 
     ## I/O
     def read(self, filename: str = None) -> None:
@@ -267,6 +275,14 @@ class SfincsModel(Model):
         # TODO make sure that all components are in the config (in their individual write functions?)
         for name, comp in self.components.items():
             comp.write()
+
+    def clear_spatial_components(self):
+        """Clear all spatial components."""
+        return
+        # Do something like this
+        for name, comp in self.components.items():
+            if hasattr(comp, "clear"):
+                comp.clear()
 
     ## Plotting
     def plot_forcing(self, fn_out=None, forcings="all", **kwargs):

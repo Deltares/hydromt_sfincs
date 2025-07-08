@@ -105,11 +105,11 @@ class SfincsObservationPoints(ModelComponent):
             key="obsfile", value=filename, default_filename="sfincs.obs"
         )
 
-        # change precision of coordinates according to crs
+        # Change precision of coordinates according to crs
         if self.model.crs.is_geographic:
-            fmt = "%.6f"
+            fmt = "%11.6f"
         else:
-            fmt = "%.1f"
+            fmt = "%11.1f"
 
         utils.write_xyn(file_path, self.data, fmt=fmt)  # =utils.py function
 
@@ -272,5 +272,7 @@ class SfincsObservationPoints(ModelComponent):
 
     def list_names(self):
         """Give list of names of observation points."""
-        names = list(self.data.name)
+        if self.data.empty:
+            return []
+        names = list(self.data["name"])
         return names

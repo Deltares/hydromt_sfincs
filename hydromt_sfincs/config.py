@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 from typing import TYPE_CHECKING, List, Optional, Dict, Any
 from ast import literal_eval
 from os.path import abspath, isabs, join, split, exists
@@ -6,7 +7,8 @@ from pathlib import Path
 
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs.config_variables import SfincsConfigVariables
+# from hydromt_sfincs.config_variables import SfincsConfigVariables
+from hydromt_sfincs.config_variables import sfincs_config_variables
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -17,14 +19,14 @@ class SfincsConfig(ModelComponent):
 
     def __init__(self, model: "SfincsModel"):
         self._filename = "sfincs.inp"
-        self._data: SfincsConfigVariables = None
+        self._data: sfincs_config_variables = None
         super().__init__(model=model)
 
     @property
-    def data(self) -> SfincsConfigVariables:
+    def data(self):
         """Return the SfincsConfig object."""
         if self._data is None:
-            self._data = SfincsConfigVariables()
+            self._data = sfincs_config_variables
         return self._data
 
     def read(self, filename: str = "sfincs.inp") -> None:
@@ -42,6 +44,14 @@ class SfincsConfig(ModelComponent):
 
         inp_dict = {}
         for line in lines:
+            # Check if first character is #
+            if line.strip().startswith("#"):
+                # Full line comment
+                continue
+            # Find last character before #
+            comment_idx = line.find("#")
+            if comment_idx >= 0:
+                line = line[:comment_idx]
             line = [x.strip() for x in line.split("=")]
             if len(line) != 2:
                 continue
@@ -67,7 +77,7 @@ class SfincsConfig(ModelComponent):
             inp_dict[name] = val
 
         # Convert dictionary to SfincsConfig instance
-        self._data = SfincsConfigVariables(**inp_dict)
+        self._data = self._data.copy(update=inp_dict)
 
         # Update the grid properties from the configuration
         # This will either drop the quadtree component or the regular component?
@@ -84,18 +94,25 @@ class SfincsConfig(ModelComponent):
                 if value is None:
                     continue
                 if isinstance(value, float):  # remove insignificant traling zeros
-                    string = f"{key.ljust(20)} = {value}\n"
+                    string = f"{key.ljust(20)} = {value}"
                 elif isinstance(value, int):
-                    string = f"{key.ljust(20)} = {value}\n"
+                    string = f"{key.ljust(20)} = {value}"
                 elif isinstance(value, list):
                     valstr = " ".join([str(v) for v in value])
-                    string = f"{key.ljust(20)} = {valstr}\n"
+                    string = f"{key.ljust(20)} = {valstr}"
                 elif hasattr(value, "strftime"):
                     dstr = value.strftime("%Y%m%d %H%M%S")
-                    string = f"{key.ljust(20)} = {dstr}\n"
+                    string = f"{key.ljust(20)} = {dstr}"
                 else:
-                    string = f"{key.ljust(20)} = {value}\n"
-                fid.write(string)
+                    string = f"{key.ljust(20)} = {value}"
+
+                if key in self.data.model_fields:
+                    description = self.data.model_fields[key].description
+                    if description:
+                        # Add description to string
+                        string = string.ljust(50) + f" # {description}"
+
+                fid.write(string + "\n")
 
     def get(self, key: str, fallback: Any = None, abs_path: bool = False) -> Any:
         """Get a value with validation check."""
@@ -111,19 +128,23 @@ class SfincsConfig(ModelComponent):
 
         return value
 
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: Any, skip_validation=False) -> None:
         """Set a value with validation using Pydantic's model_copy."""
+
         if not hasattr(self.data, key):
             raise KeyError(f"'{key}' is not a valid attribute of SfincsConfig.")
 
-        # Validate the new data
-        # FIXME implement this in a better way
-        try:
-            value = SfincsConfigVariables(**{key: value}).__dict__[key]
-        except Exception as e:
-            raise TypeError(f"Invalid input type for '{key}'")
+        if not skip_validation:
+            # Validate the new data
+            # FIXME implement this in a better way
+            # It works, but it is quite slow when all the variables are set in a loop
+            # Therefore the skip_validation option is added
+            try:
+                self.data.model_validate({key: value})
+            except Exception as e:
+                raise TypeError(f"Invalid input type for '{key}'")
 
-        self._data = self._data.model_copy(update={key: value})
+        self.data.__setattr__(key, value)
 
     def update(self, dict: Dict[str, Any]) -> None:
         """
@@ -150,6 +171,7 @@ class SfincsConfig(ModelComponent):
             self.model.grid.update_grid_from_config()
             # drop quadtree component
             self.model.components.pop("quadtree", None)
+            # TODO also drop mask and subgrid components?
         elif self.model.grid_type == "quadtree":
             # drop regular component
             self.model.components.pop("grid", None)
