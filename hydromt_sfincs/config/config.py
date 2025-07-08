@@ -7,7 +7,7 @@ from pathlib import Path
 
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs.config_variables import SfincsConfigVariables
+from .config_variables import SfincsConfigVariables
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
