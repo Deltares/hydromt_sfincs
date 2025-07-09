@@ -1,35 +1,49 @@
+import logging
+from pathlib import Path
+from typing import TYPE_CHECKING, List, Optional, Union
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from scipy import ndimage
 import xarray as xr
-from pathlib import Path
-from typing import Union, List
 
 from hydromt.model.components import ModelComponent
-from hydromt.model import Model
-from hydromt_sfincs import utils
+from hydromt_sfincs import utils, workflows
+
+if TYPE_CHECKING:
+    from hydromt_sfincs import SfincsModel
+
+logger = logging.getLogger(__name__)
 
 
 class SfincsRivers(ModelComponent):
+    """This is not used by the SFINCS model, but usefull for model creation"""
+
     def __init__(
         self,
-        model: Model,
+        model: "SfincsModel",
     ):
-        # self._filename: str = "sfincs.src"
-        self._data: gpd.GeoDataFrame = None  # FIXME - ?
+        self._data: gpd.GeoDataFrame = None
         super().__init__(
             model=model,
         )
 
-    # @property FIXME - has no own data? or would that be mask/centerlines etc?
-    # def data(self) -> gpd.GeoDataFrame:
-    #     """Discharge points data.
+    @property
+    def data(self) -> gpd.GeoDataFrame:
+        """Discharge points data.
 
-    #     Return gpd.GeoDataFrame
-    #     """
-    #     if self._data is None:
-    #         self._initialize()
-    #     return self._data
+        Return gpd.GeoDataFrame
+        """
+        if self._data is None:
+            self._initialize()
+        return self._data
+
+    def _initialize(self):
+        """Initialize the SfincsRivers component."""
+        # get the data from the model
+        if self._data is None:
+            self._data = gpd.GeoDataFrame()
 
     # Original HydroMT-SFINCS setup_ functions:
     # setup_river_inflow
@@ -37,154 +51,173 @@ class SfincsRivers(ModelComponent):
     # FIXME - also functions like burn in river???
     # FIXME - also new functions to read/process/burn in river cross-section data???
 
-    # def setup_river_inflow(
-    #     self,
-    #     rivers: Union[str, Path, gpd.GeoDataFrame] = None,
-    #     hydrography: Union[str, Path, xr.Dataset] = None,
-    #     buffer: float = 200,
-    #     river_upa: float = 10.0,
-    #     river_len: float = 1e3,
-    #     river_width: float = 500,
-    #     merge: bool = False,
-    #     first_index: int = 1,
-    #     keep_rivers_geom: bool = False,
-    #     reverse_river_geom: bool = False,
-    #     src_type: str = "inflow",
-    # ):
-    #     """Setup discharge (src) points where a river enters the model domain.
+    def read(self):
+        pass
 
-    #     If `rivers` is not provided, river centerlines are extracted from the
-    #     `hydrography` dataset based on the `river_upa` threshold.
+    def write(self):
+        pass
 
-    #     Waterlevel or outflow boundary cells intersecting with the river
-    #     are removed from the model mask.
+    def create_river_inflow(
+        self,
+        rivers: Union[str, Path, gpd.GeoDataFrame] = None,
+        hydrography: Union[str, Path, xr.Dataset] = None,
+        buffer: float = 200,
+        river_upa: float = 10.0,
+        river_len: float = 1e3,
+        river_width: float = 500,
+        merge: bool = False,
+        first_index: int = 1,
+        keep_rivers_geom: bool = False,
+        reverse_river_geom: bool = False,
+        src_type: str = "inflow",
+    ):
+        """Setup discharge (src) points where a river enters the model domain.
 
-    #     Discharge is set to zero at these points, but can be updated
-    #     using the `setup_discharge_forcing` or `setup_discharge_forcing_from_grid` methods.
+        If `rivers` is not provided, river centerlines are extracted from the
+        `hydrography` dataset based on the `river_upa` threshold.
 
-    #     Note: this method assumes the rivers are directed from up- to downstream. Use
-    #     `reverse_river_geom=True` if the rivers are directed from downstream to upstream.
+        Waterlevel or outflow boundary cells intersecting with the river
+        are removed from the model mask.
 
-    #     Adds model layers:
+        Discharge is set to zero at these points, but can be updated
+        using the `setup_discharge_forcing` or `setup_discharge_forcing_from_grid` methods.
 
-    #     * **dis** forcing: discharge forcing
-    #     * **mask** map: SFINCS mask layer (only if `river_width` > 0)
-    #     * **rivers_inflow** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)
+        Note: this method assumes the rivers are directed from up- to downstream. Use
+        `reverse_river_geom=True` if the rivers are directed from downstream to upstream.
 
-    #     Parameters
-    #     ----------
-    #     rivers : str, Path, gpd.GeoDataFrame, optional
-    #         Path, data source name, or geopandas object for river centerline data.
-    #         If present, the 'uparea' and 'rivlen' attributes are used.
-    #     hydrography: str, Path, xr.Dataset optional
-    #         Path, data source name, or a xarray raster object for hydrography data.
+        Adds model layers:
 
-    #         * Required layers: ['uparea', 'flwdir'].
-    #     buffer: float, optional
-    #         Buffer around the model region boundary to define in/outflow points [m],
-    #         by default 200 m. We suggest to use a buffer of at least twice the hydrography
-    #         resolution. Inflow points are moved to a downstreawm confluence if within the buffer.
-    #     river_upa : float, optional
-    #         Minimum upstream area threshold for rivers [km2], by default 10.0
-    #     river_len: float, optional
-    #         Mimimum river length within the model domain threshhold [m], by default 1 km.
-    #     river_width: float, optional
-    #         Estimated constant width [m] of the inflowing river. Boundary cells within
-    #         half the width are forced to be closed (mask = 1) to avoid instabilities with
-    #         nearby open or waterlevel boundary cells, by default 500 m.
-    #     merge: bool, optional
-    #         If True, merge rivers source points with existing points, by default False.
-    #     first_index: int, optional
-    #         First index for the river source points, by default 1.
-    #     keep_rivers_geom: bool, optional
-    #         If True, keep a geometry of the rivers "rivers_inflow" in geoms. By default False.
-    #     reverse_river_geom: bool, optional
-    #         If True, assume that segments in 'rivers' are drawn from downstream to upstream.
-    #         Only used if 'rivers' is not None, By default False
-    #     src_type: {'inflow', 'headwater'}, optional
-    #         Source type, by default 'inflow'
-    #         If 'inflow', return points where the river flows into the model domain.
-    #         If 'headwater', return all headwater (including inflow) points within the model domain.
+        * **dis** forcing: discharge forcing
+        * **mask** map: SFINCS mask layer (only if `river_width` > 0)
+        * **rivers_inflow** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)
 
-    #     See Also
-    #     --------
-    #     setup_discharge_forcing
-    #     setup_discharge_forcing_from_grid
-    #     """
-    #     # get hydrography data
-    #     da_uparea = None
-    #     if hydrography is not None:
-    #         ds = self.data_catalog.get_rasterdataset(
-    #             hydrography,
-    #             bbox=self.bbox,
-    #             variables=["uparea", "flwdir"],
-    #             buffer=5,
-    #         )
-    #         da_uparea = ds["uparea"]  # reused in river_source_points
+        Parameters
+        ----------
+        rivers : str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for river centerline data.
+            If present, the 'uparea' and 'rivlen' attributes are used.
+        hydrography: str, Path, xr.Dataset optional
+            Path, data source name, or a xarray raster object for hydrography data.
 
-    #     # get river centerlines
-    #     if (
-    #         isinstance(rivers, str)
-    #         and rivers == "rivers_outflow"
-    #         and rivers in self.geoms
-    #     ):
-    #         # reuse rivers from setup_river_in/outflow
-    #         gdf_riv = self.geoms[rivers]
-    #     elif rivers is not None:
-    #         gdf_riv = self.data_catalog.get_geodataframe(
-    #             rivers, geom=self.region
-    #         ).to_crs(self.crs)
-    #     elif hydrography is not None:
-    #         gdf_riv = workflows.river_centerline_from_hydrography(
-    #             da_flwdir=ds["flwdir"],
-    #             da_uparea=da_uparea,
-    #             river_upa=river_upa,
-    #             river_len=river_len,
-    #             gdf_mask=self.region,
-    #         )
-    #     elif hydrography is None:
-    #         raise ValueError("Either hydrography or rivers must be provided.")
+            * Required layers: ['uparea', 'flwdir'].
+        buffer: float, optional
+            Buffer around the model region boundary to define in/outflow points [m],
+            by default 200 m. We suggest to use a buffer of at least twice the hydrography
+            resolution. Inflow points are moved to a downstreawm confluence if within the buffer.
+        river_upa : float, optional
+            Minimum upstream area threshold for rivers [km2], by default 10.0
+        river_len: float, optional
+            Mimimum river length within the model domain threshhold [m], by default 1 km.
+        river_width: float, optional
+            Estimated constant width [m] of the inflowing river. Boundary cells within
+            half the width are forced to be closed (mask = 1) to avoid instabilities with
+            nearby open or waterlevel boundary cells, by default 500 m.
+        merge: bool, optional
+            If True, merge rivers source points with existing points, by default False.
+        first_index: int, optional
+            First index for the river source points, by default 1.
+        keep_rivers_geom: bool, optional
+            If True, keep a geometry of the rivers "rivers_inflow" in geoms. By default False.
+        reverse_river_geom: bool, optional
+            If True, assume that segments in 'rivers' are drawn from downstream to upstream.
+            Only used if 'rivers' is not None, By default False
+        src_type: {'inflow', 'headwater'}, optional
+            Source type, by default 'inflow'
+            If 'inflow', return points where the river flows into the model domain.
+            If 'headwater', return all headwater (including inflow) points within the model domain.
 
-    #     # get river inflow / headwater source points
-    #     gdf_src = workflows.river_source_points(
-    #         gdf_riv=gdf_riv,
-    #         gdf_mask=self.region,
-    #         src_type=src_type,
-    #         buffer=buffer,
-    #         river_upa=river_upa,
-    #         river_len=river_len,
-    #         da_uparea=da_uparea,
-    #         reverse_river_geom=reverse_river_geom,
-    #         logger=self.logger,
-    #     )
-    #     if gdf_src.empty:
-    #         return
+        See Also
+        --------
+        setup_discharge_forcing
+        setup_discharge_forcing_from_grid
+        """
 
-    #     # set forcing src pnts
-    #     gdf_src.index = gdf_src.index + first_index
-    #     self.set_forcing_1d(gdf_locs=gdf_src.copy(), name="dis", merge=merge)
+        # FIXME what to do with these variables
+        all_touched = False
 
-    #     # set river
-    #     if keep_rivers_geom:
-    #         self.set_geoms(gdf_riv, name="rivers_inflow")
+        # get hydrography data
+        da_uparea = None
+        if hydrography is not None:
+            ds = self.data_catalog.get_rasterdataset(
+                hydrography,
+                bbox=self.model.bbox,
+                variables=["uparea", "flwdir"],
+                buffer=5,
+            )
+            da_uparea = ds["uparea"]  # reused in river_source_points
 
-    #     # update mask if river_width > 0
-    #     if "rivwth" in gdf_src.columns:
-    #         river_width = gdf_src["rivwth"].fillna(river_width)
-    #     if np.any(river_width > 0) and np.any(self.mask > 1):
-    #         # apply buffer
-    #         gdf_src["geometry"] = gdf_src.buffer(river_width / 2)
-    #         # find intersect of buffer and model grid
-    #         tmp_msk = self.reggrid.create_mask_bounds(
-    #             xr.where(self.mask > 0, 1, 0).astype(np.uint8), gdf_include=gdf_src
-    #         )
-    #         reset_msk = np.logical_and(tmp_msk > 1, self.mask > 1)
-    #         # update model mask
-    #         n = int(np.sum(reset_msk))
-    #         if n > 0:
-    #             da_mask = self.mask.where(~reset_msk, np.uint8(1))
-    #             self.set_grid(da_mask, "msk")
-    #             self.logger.info(f"Boundary cells (n={n}) updated around src points.")
+        # FIXME reuse from inflow/outflow and get from self.data
+        # get river centerlines
+        # if (
+        #     isinstance(rivers, str)
+        #     and rivers == "rivers_outflow"
+        #     and rivers in self.geoms
+        # ):
+        #     # reuse rivers from setup_river_in/outflow
+        #     gdf_riv = self.geoms[rivers]
+        # el
+        if rivers is not None:
+            gdf_riv = self.data_catalog.get_geodataframe(
+                rivers, geom=self.model.region
+            ).to_crs(self.model.crs)
+        elif hydrography is not None:
+            gdf_riv = workflows.river_centerline_from_hydrography(
+                da_flwdir=ds["flwdir"],
+                da_uparea=da_uparea,
+                river_upa=river_upa,
+                river_len=river_len,
+                gdf_mask=self.model.region,
+            )
+        elif hydrography is None:
+            raise ValueError("Either hydrography or rivers must be provided.")
+
+        # get river inflow / headwater source points
+        gdf_src = workflows.river_source_points(
+            gdf_riv=gdf_riv,
+            gdf_mask=self.model.region,
+            src_type=src_type,
+            buffer=buffer,
+            river_upa=river_upa,
+            river_len=river_len,
+            da_uparea=da_uparea,
+            reverse_river_geom=reverse_river_geom,
+            logger=logger,
+        )
+        if gdf_src.empty:
+            return
+
+        # set forcing src pnts
+        gdf_src.index = gdf_src.index + first_index
+        # loop through source points and set discharge
+        # FIXME update this to proper set function
+        for i, row in gdf_src.iterrows():
+            single_row_gdf = gdf_src.iloc[[i]]
+            # set discharge to zero
+            self.model.discharge_points.add_point(
+                gdf=single_row_gdf.copy(deep=True),
+            )
+        # self.model.discharge_points.set(gdf_src.copy(deep=True), merge=merge)
+
+        # set river
+        if keep_rivers_geom:
+            self._data = gdf_riv
+
+        # update mask if river_width > 0
+        if "rivwth" in gdf_src.columns:
+            river_width = gdf_src["rivwth"].fillna(river_width)
+        if np.any(river_width > 0) and np.any(self.model.mask > 1):
+            # apply buffer
+            gdf_src["geometry"] = gdf_src.buffer(river_width / 2)
+            # find intersect of buffer and model grid
+            da_mask = self.model.mask
+            da_include = da_mask.raster.geometry_mask(gdf_src, all_touched=all_touched)
+            reset_msk = np.logical_and(da_include, da_mask > 1)
+            # update model mask
+            n = int(reset_msk.sum().item())
+            if n > 0:
+                da_mask = da_mask.where(~reset_msk, np.uint8(1))
+                self.model.grid.set(da_mask, "msk")
+                logger.info(f"Boundary cells (n={n}) updated around src points.")
 
     # def setup_river_outflow(
     #     self,

@@ -153,7 +153,7 @@ class SfincsModel(Model):
         # self.add_component("weirs", SfincsWeirs(self))
         self.add_component("wave_makers", SfincsWaveMakers(self))
         # self.add_component("drainage_structures", SfincsDrainageStructures(self))
-        # self.add_component("rivers", SfincsRivers(self))
+        self.add_component("rivers", SfincsRivers(self))
 
         # Forcing types
         self.add_component("boundary_conditions", SfincsBoundaryConditions(self))
@@ -324,12 +324,10 @@ class SfincsModel(Model):
                 forcings = [forcings]
             for name in forcings:
                 if name not in self.forcing:
-                    self.logger.warning(f'No forcing named "{name}" found in model.')
+                    logger.warning(f'No forcing named "{name}" found in model.')
                     continue
                 if isinstance(self.forcing[name], xr.Dataset):
-                    self.logger.warning(
-                        f'Skipping forcing "{name}" as it is a dataset.'
-                    )
+                    logger.warning(f'Skipping forcing "{name}" as it is a dataset.')
                     continue
                 # plot only dataarrays
                 forcing[name] = self.forcing[name].copy()
@@ -512,7 +510,7 @@ class SfincsModel(Model):
                 # TODO remove ValueError after fix in hydromt core
                 except (IndexError, ValueError):
                     data_name = dataset.get("elevtn")
-                    self.logger.warning(f"No data in domain for {data_name}, skipped.")
+                    logger.warning(f"No data in domain for {data_name}, skipped.")
                     continue
                 dd.update({"da": da_elv})
             else:
@@ -543,7 +541,7 @@ class SfincsModel(Model):
                 if key in copy_keys and key not in dd:
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
-                    self.logger.warning(f"Unknown key {key} in datasets_dep. Ignoring.")
+                    logger.warning(f"Unknown key {key} in datasets_dep. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out
@@ -618,7 +616,7 @@ class SfincsModel(Model):
                 if key in copy_keys and key not in dd:
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
-                    self.logger.warning(f"Unknown key {key} in datasets_rgh. Ignoring.")
+                    logger.warning(f"Unknown key {key} in datasets_rgh. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out
@@ -705,7 +703,7 @@ class SfincsModel(Model):
                 if key in copy_keys and key not in dd:
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
-                    self.logger.warning(f"Unknown key {key} in datasets_riv. Ignoring.")
+                    logger.warning(f"Unknown key {key} in datasets_riv. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out

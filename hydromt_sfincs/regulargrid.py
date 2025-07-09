@@ -30,6 +30,17 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
+_ATTRS = {
+    "dep": {"standard_name": "elevation", "unit": "m+ref"},
+    "msk": {"standard_name": "mask", "unit": "-"},
+    "scs": {
+        "standard_name": "potential maximum soil moisture retention",
+        "unit": "in",
+    },
+    "qinf": {"standard_name": "infiltration rate", "unit": "mm.hr-1"},
+    "manning": {"standard_name": "manning roughness", "unit": "s.m-1/3"},
+    "vol": {"standard_name": "storage volume", "unit": "m3"},
+}
 
 
 class RegularGrid(GridComponent):
@@ -116,6 +127,15 @@ class RegularGrid(GridComponent):
             return self.data.raster.crs
         else:
             raise ValueError("No CRS defined for the regular grid.")
+
+    @property
+    def mask(self) -> xr.DataArray:
+        """Return the mask of the regular grid."""
+        if "msk" in self.data:
+            da_mask = self.data["msk"]
+        else:
+            da_mask = self.empty_mask
+        return da_mask
 
     def read(self, data_vars: Union[List, str] = None) -> None:
         """Read SFINCS binary grid files and save to `data` attribute.
@@ -297,11 +317,13 @@ class RegularGrid(GridComponent):
         )
         self.update_grid_from_config()
 
-        # initialize the grid
+        # initialize a grid without variables
         ds = xr.Dataset(
             coords=self.coordinates,
         )
         ds.raster.set_crs(self.model.crs)
+
+        # set the grid in the model data
         self.set(ds)
 
     def create_from_region(
@@ -376,46 +398,9 @@ class RegularGrid(GridComponent):
 
         # add the grid to the model
         self.set(ds)
+
         # update the grid attributes in the model config
         self.update_config_from_grid()
-
-    # %%   Original HydroMT-SFINCS setup_ functions:
-    # setup_grid
-    # setup_grid_from_region
-    #
-    # setup_dep
-    #
-    # setup_mask_active
-    # setup_mask_bounds
-
-    # %% core HydroMT-SFINCS functions:
-    # _initialize
-    #
-    # GRID:
-    #   read_grid
-    #   write_grid
-    #   create
-    #       - create_grid (model.grid.create?)
-    #       - create_grid_from_region (model.grid.create_from_region)
-    #
-    # DEP:
-    #   read_dep
-    #   write_dep
-    #   create_dep
-    #
-    # MASK:
-    #   read_msk
-    #   write_msk
-    #   create_msk
-    #   create_msk_bounds
-    #
-    # supporting HydroMT-SFINCS functions:
-    # - read_ind
-    # - read_map
-    # - write_ind
-    # - write_map
-    # - ind
-    # - to_vector_lines
 
     def create_dep(
         self,
@@ -464,9 +449,12 @@ class RegularGrid(GridComponent):
             da_dep = da_dep.raster.interpolate_na(method="rio_idw", extrapolate=True)
 
         # set the dep layer in the model data
-        self.set(da_dep, name="dep")
+        mname = "dep"
+        da_dep.attrs.update(**_ATTRS.get(mname, {}))
+        self.set(da_dep, name=mname)
 
         # TODO add to config, or is that only done when writing?
+        self.model.config.set("depfile", "sfincs.dep")
 
     ## MASK
 
@@ -642,7 +630,12 @@ class RegularGrid(GridComponent):
         da_mask.raster.set_crs(self.crs)
 
         # set the mask in the model data
-        self.set(da_mask, name="msk")
+        mname = "msk"
+        da_mask.attrs.update(**_ATTRS.get(mname, {}))
+        self.set(da_mask, name=mname)
+
+        # add msk and ind to config
+        self.model.config.update({"indexfile": "sfincs.ind", "mskfile": "sfincs.msk"})
 
     def create_mask_bounds(
         self,
@@ -796,7 +789,340 @@ class RegularGrid(GridComponent):
             da_mask = da_mask.where(~bounds, np.uint8(bvalue))
 
         # update the mask in the model data
-        self.set(da_mask, name="msk")
+        mname = "msk"
+        da_mask.attrs.update(**_ATTRS.get(mname, {}))
+        self.set(da_mask, name=mname)
+
+    # Roughness
+    def create_manning_roughness(
+        self,
+        datasets_rgh: List[dict] = [],
+        manning_land=0.04,
+        manning_sea=0.02,
+        rgh_lev_land=0,
+    ):
+        """Setup model manning roughness map (manningfile) from gridded manning data or a combinataion of gridded
+        land-use/land-cover map and manning roughness mapping table.
+
+        Adds model layers:
+
+        * **man** map: manning roughness coefficient [s.m-1/3]
+
+        Parameters
+        ---------
+        datasets_rgh : List[dict], optional
+            List of dictionaries with Manning's n datasets. Each dictionary should at least contain one of the following:
+            * (1) manning: filename (or Path) of gridded data with manning values
+            * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a mapping table.
+            In additon, optional merge arguments can be provided e.g.: merge_method, gdf_valid_fn
+        manning_land, manning_sea : float, optional
+            Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
+            Note that these values are only used when no Manning's n datasets are provided, or to fill the nodata values
+        rgh_lev_land : float, optional
+            Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
+        """
+
+        if len(datasets_rgh) > 0:
+            datasets_rgh = self.model._parse_datasets_rgh(datasets_rgh)
+        else:
+            datasets_rgh = []
+
+        # fromdep keeps track of whether any manning values should be based on the depth or not
+        fromdep = len(datasets_rgh) == 0
+        if len(datasets_rgh) > 0:
+            da_man = workflows.merge_multi_dataarrays(
+                da_list=datasets_rgh,
+                da_like=self.model.mask,
+                interp_method="linear",
+                logger=logger,
+            )
+            fromdep = np.isnan(da_man).where(self.mask > 0, False).any()
+        if "dep" in self.data and fromdep:
+            da_man0 = xr.where(
+                self.data["dep"] >= rgh_lev_land, manning_land, manning_sea
+            )
+        elif fromdep:
+            da_man0 = xr.full_like(self.model.mask, manning_land, dtype=np.float32)
+
+        if len(datasets_rgh) > 0 and fromdep:
+            logger.warning("nan values in manning roughness array")
+            da_man = da_man.where(~np.isnan(da_man), da_man0)
+        elif fromdep:
+            da_man = da_man0
+        da_man.raster.set_nodata(-9999.0)
+
+        # set grid
+        mname = "manning"
+        da_man.attrs.update(**_ATTRS.get(mname, {}))
+        self.set(da_man, name=mname)
+        # set file name in config
+        self.model.config.set(f"{mname}file", f"sfincs.{mname[:3]}")
+
+    # Function to create constant spatially varying infiltration
+    def create_constant_infiltration(
+        self,
+        qinf=None,
+        lulc=None,
+        reclass_table=None,
+        reproj_method="average",
+    ):
+        """Setup spatially varying constant infiltration rate (qinffile).
+
+        Adds model layers:
+
+        * **qinf** map: constant infiltration rate [mm/hr]
+
+        Parameters
+        ----------
+        qinf : str, Path, or RasterDataset
+            Spatially varying infiltration rates [mm/hr]
+        lulc: str, Path, or RasterDataset
+            Landuse/landcover data set
+        reclass_table: str, Path, or pd.DataFrame
+            Reclassification table to convert landuse/landcover to infiltration rates [mm/hr]
+        reproj_method : str, optional
+            Resampling method for reprojecting the infiltration data to the model grid.
+            By default 'average'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
+        """
+
+        # get infiltration data
+        if qinf is not None:
+            da_inf = self.data_catalog.get_rasterdataset(
+                qinf,
+                bbox=self.model.bbox,
+                buffer=10,
+            )
+        elif lulc is not None:
+            # landuse/landcover should always be combined with mapping
+            if reclass_table is None:
+                raise IOError(
+                    f"Infiltration mapping file should be provided for {lulc}"
+                )
+            da_lulc = self.data_catalog.get_rasterdataset(
+                lulc,
+                bbox=self.model.bbox,
+                buffer=10,
+                variables=["lulc"],
+            )
+            df_map = self.data_catalog.get_dataframe(
+                reclass_table,
+                variables=["qinf"],
+            )
+            # TODO set index col to 0
+            # reclassify
+            da_inf = da_lulc.raster.reclassify(df_map)["qinf"]
+        else:
+            raise ValueError(
+                "Either qinf or lulc must be provided when setting up constant infiltration."
+            )
+
+        # reproject infiltration data to model grid
+        da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
+        da_inf = da_inf.raster.reproject_like(self.model.mask, method=reproj_method)
+
+        # check on nan values
+        if np.logical_and(np.isnan(da_inf), self.model.mask >= 1).any():
+            self.logger.warning("NaN values found in infiltration data; filled with 0")
+            da_inf = da_inf.fillna(0)
+        da_inf.raster.set_nodata(-9999.0)
+
+        # set grid
+        mname = "qinf"
+        da_inf.attrs.update(**_ATTRS.get(mname, {}))
+        self.set(da_inf, name=mname)
+
+        # update config: remove default inf and set qinf map
+        self.model.config.set(f"{mname}file", f"sfincs.{mname}")
+        # FIXME remove default or other infiltration methods?
+
+    # Function to create curve number for SFINCS
+    def create_cn_infiltration(
+        self, cn, antecedent_moisture="avg", reproj_method="med"
+    ):
+        """Setup model potential maximum soil moisture retention map (scsfile)
+        from gridded curve number map.
+
+        Adds model layers:
+
+        * **scs** map: potential maximum soil moisture retention [inch]
+
+        Parameters
+        ---------
+        cn: str, Path, or RasterDataset
+            Name of gridded curve number map.
+
+            * Required layers without antecedent runoff conditions: ['cn']
+            * Required layers with antecedent runoff conditions: ['cn_dry', 'cn_avg', 'cn_wet']
+        antecedent_moisture: {'dry', 'avg', 'wet'}, optional
+            Antecedent runoff conditions.
+            None if data has no antecedent runoff conditions.
+            By default `avg`
+        reproj_method : str, optional
+            Resampling method for reprojecting the curve number data to the model grid.
+            By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
+        """
+        # get data
+        da_org = self.data_catalog.get_rasterdataset(
+            cn, bbox=self.model.bbox, buffer=10
+        )
+        # read variable
+        v = "cn"
+        if antecedent_moisture:
+            v = f"cn_{antecedent_moisture}"
+        if isinstance(da_org, xr.Dataset) and v in da_org.data_vars:
+            da_org = da_org[v]
+        elif not isinstance(da_org, xr.DataArray):
+            raise ValueError(f"Could not find variable {v} in {cn}")
+
+        # reproject using median
+        da_cn = da_org.raster.reproject_like(self.mask, method=reproj_method)
+
+        # convert to potential maximum soil moisture retention S (1000/CN - 10) [inch]
+        da_scs = workflows.cn_to_s(da_cn, self.mask > 0).round(3)
+
+        # set grid
+        mname = "scs"
+        da_scs.attrs.update(**_ATTRS.get(mname, {}))
+        self.set(da_scs, name=mname)
+        # update config:
+        # FIXME remove default infiltration values and set scs map??
+        self.model.config.set(f"{mname}file", f"sfincs.{mname}")
+
+    # Function to create curve number for SFINCS including recovery via saturated hydraulic conductivity [mm/hr]
+    def create_cn_infiltration_with_ks(
+        self, lulc, hsg, ksat, reclass_table, effective, factor_ksat=1, block_size=2000
+    ):
+        """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
+        including recovery term based on the soil saturation
+
+        Parameters
+        ---------
+        lulc : str, Path, or RasterDataset
+            Landuse/landcover data set
+        hsg : str, Path, or RasterDataset
+            HSG (Hydrological Similarity Group) in integers
+        ksat : str, Path, or RasterDataset
+            Ksat (saturated hydraulic conductivity) [mm/hr]
+        reclass_table : str, Path, or RasterDataset
+            reclass table to relate landcover with soiltype
+        effective : float
+            estimate of percentage effective soil, e.g. 0.50 for 50%
+        factor_ksat : float
+            factor to convert units of Ksat, e.g. from micrometer per second to mm/hr
+        block_size : float
+            maximum block size - use larger values will get more data in memory but can be faster, default=2000
+        """
+
+        # Read the datafiles
+        da_landuse = self.data_catalog.get_rasterdataset(
+            lulc, bbox=self.model.bbox, buffer=10
+        )
+        da_HSG = self.data_catalog.get_rasterdataset(
+            hsg, bbox=self.model.bbox, buffer=10
+        )
+        da_Ksat = self.data_catalog.get_rasterdataset(
+            ksat, bbox=self.model.bbox, buffer=10
+        )
+        df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
+
+        # Define outputs
+        da_smax = xr.full_like(self.mask, -9999, dtype=np.float32)
+        da_ks = xr.full_like(self.mask, -9999, dtype=np.float32)
+
+        # Compute resolution land use (we are assuming that is the finest)
+        resolution_landuse = np.mean(
+            [abs(da_landuse.raster.res[0]), abs(da_landuse.raster.res[1])]
+        )
+        if da_landuse.raster.crs.is_geographic:
+            resolution_landuse = (
+                resolution_landuse * 111111.0
+            )  # assume 1 degree is 111km
+
+        # Define the blocks
+        nrmax = block_size
+        nmax = np.shape(self.mask)[0]
+        mmax = np.shape(self.mask)[1]
+        refi = (
+            self.model.config.get("dx") / resolution_landuse
+        )  # finest resolution of landuse
+        nrcb = int(np.floor(nrmax / refi))  # nr of regular cells in a block
+        nrbn = int(np.ceil(nmax / nrcb))  # nr of blocks in n direction
+        nrbm = int(np.ceil(mmax / nrcb))  # nr of blocks in m direction
+        x_dim, y_dim = self.mask.raster.x_dim, self.mask.raster.y_dim
+
+        # avoid blocks with width or height of 1
+        merge_last_col = False
+        merge_last_row = False
+        if mmax % nrcb == 1:
+            nrbm -= 1
+            merge_last_col = True
+        if nmax % nrcb == 1:
+            nrbn -= 1
+            merge_last_row = True
+
+        ## Loop through blocks
+        ib = -1
+        for ii in range(nrbm):
+            bm0 = ii * nrcb  # Index of first m in block
+            bm1 = min(bm0 + nrcb, mmax)  # last m in block
+            if merge_last_col and ii == (nrbm - 1):
+                bm1 += 1
+
+            for jj in range(nrbn):
+                bn0 = jj * nrcb  # Index of first n in block
+                bn1 = min(bn0 + nrcb, nmax)  # last n in block
+                if merge_last_row and jj == (nrbn - 1):
+                    bn1 += 1
+
+                # Count
+                ib += 1
+                logger.debug(
+                    f"\nblock {ib + 1}/{nrbn * nrbm} -- "
+                    f"col {bm0}:{bm1 - 1} | row {bn0}:{bn1 - 1}"
+                )
+
+                # calculate transform and shape of block at cell and subgrid level
+                da_mask_block = self.mask.isel(
+                    {x_dim: slice(bm0, bm1), y_dim: slice(bn0, bn1)}
+                ).load()
+
+                # Call workflow
+                (
+                    da_smax_block,
+                    da_ks_block,
+                ) = workflows.curvenumber.scs_recovery_determination(
+                    da_landuse, da_HSG, da_Ksat, df_map, da_mask_block
+                )
+
+                # New place in the overall matrix
+                sn, sm = slice(bn0, bn1), slice(bm0, bm1)
+                da_smax[sn, sm] = da_smax_block
+                da_ks[sn, sm] = da_ks_block
+
+        # Done
+        logger.info("Done with determination of values (in blocks).")
+
+        # Convert ks - (e.g. from micrometer per second to mm/hr which is required in SFINCS)
+        da_ks = da_ks * factor_ksat
+
+        # Specify the effective soil retention (seff)
+        da_seff = da_smax
+        da_seff = da_seff * effective
+        da_seff.raster.set_nodata(da_smax.raster.nodata)
+
+        # set grids for seff, smax and ks (saturated hydraulic conductivity)
+        names = ["smax", "seff", "ks"]
+        data = [da_smax, da_seff, da_ks]
+        for name, da in zip(names, data):
+            # Give metadata to the layer and set grid
+            da.attrs.update(**_ATTRS.get(name, {}))
+            self.set_grid(da, name=name)
+
+            # update config: set maps
+            self.model.config.set(f"{name}file", f"sfincs.{name}")  # give it to SFINCS
+
+        # Remove qinf variable in sfincs
+        # FIXME should we remove other infiltration variables?
 
     # %% supporting HydroMT-SFINCS functions:
     # other:

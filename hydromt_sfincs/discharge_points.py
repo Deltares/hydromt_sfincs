@@ -281,6 +281,8 @@ class SfincsDischargePoints(ModelComponent):
             Merge data with existing data, by default True.
         """
 
+        # TODO this should have the same magic as add_point?
+
         if merge:
             self.data = pd.concat([self.data, gdf], ignore_index=True)
         else:
@@ -316,6 +318,7 @@ class SfincsDischargePoints(ModelComponent):
                     "Only GeoDataFrame with a single point in a can be added."
                 )
             gdf = gdf.to_crs(self.model.crs)
+            # FIXME ValueError: Cannot set a DataFrame without columns to the column timeseries
             if "timeseries" not in gdf:
                 gdf["timeseries"] = pd.DataFrame()
         else:
