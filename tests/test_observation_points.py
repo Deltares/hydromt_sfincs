@@ -1,12 +1,9 @@
 import pytest
 import numpy as np
-import geopandas as gpd
-from pyproj import CRS
-import os
+from pathlib import Path
 from os.path import isfile, join
 
 from .conftest import TESTDATADIR, TESTMODELDIR
-
 
 def test_observation_points_io(model_config, tmp_path):
     # goal:
@@ -82,9 +79,12 @@ def test_observation_points_io(model_config, tmp_path):
     # call clear
     model_config.observation_points.clear()
 
-    # writing without data should raise warning
-    with pytest.raises(ValueError):
-        model_config.observation_points.write()
+    # write as new name, result
+    filename2="sfincs_test2.obs"
+    model_config.observation_points.write(filename=filename2)
+    
+    # result should be that no file is created
+    assert Path(join(tmp_path, filename2)).exists() == False
 
 
 def test_observation_points_create(model_config):

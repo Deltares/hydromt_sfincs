@@ -61,26 +61,19 @@ class SfincsObservationPoints(ModelComponent):
         # check that read mode is on
         self.root._assert_read_mode()
 
-        if filename is None:
-            # check if obsfile exists in config (by default is None)
-            filename = self.model.config.get("obsfile", abs_path=True)
-            # always gives back full path
+        # get absolute file path
+        abs_file_path = self.model.config.get_set_file_variable(
+            "obsfile", value=filename
+        )
 
-            # check if obsfile exists in config (by default is None)
-            if filename is None:
-                return
-
-        elif filename is not None and not abspath:
-            # combine with model root if not a path
-            filename = Path(abspath(join(self.root.path, filename)))
-
-        # check if file exists:
-        # if not exists(filename):
-        if not Path(filename).exists():  # pathlib option
-            raise IOError("Path " + filename + " does not exist!")
+        # check if abs_file_path is None or does not exist
+        if abs_file_path is None:
+            return
+        elif not abs_file_path.exists():
+            raise FileNotFoundError(f"Observation points file not found: {abs_file_path}")
 
         # Read input file:
-        gdf = utils.read_xyn(filename, crs=self.model.region.crs)  # =utils.py function
+        gdf = utils.read_xyn(abs_file_path, crs=self.model.region.crs)  # =utils.py function
 
         # Add to self._data
         self.set(gdf, merge=False)
@@ -93,16 +86,12 @@ class SfincsObservationPoints(ModelComponent):
 
         # check if data present:
         if self.data.empty:
-            # raise ValueError("No data in observation_points.data!")
+            logger.debug("No observation points data available to write.")
             return
 
-        # TODO - can be removed, just for info now
-        # call function to get back full filepath of config variable "obsfile"
-        # function also updates the name in case a filename is provided to this function
-        # and if not the case, and obsfile doesn't exist yet, it is initialised with the default of "sfincs.obs"
-
-        file_path = self.model.config.get_set_file_variable(
-            key="obsfile", value=filename, default_filename="sfincs.obs"
+        # Set file name and get absolute path
+        abs_file_path = self.model.config.get_set_file_variable(
+            key="obsfile", value=filename, default="sfincs.obs"
         )
 
         # Change precision of coordinates according to crs
@@ -111,7 +100,7 @@ class SfincsObservationPoints(ModelComponent):
         else:
             fmt = "%11.1f"
 
-        utils.write_xyn(file_path, self.data, fmt=fmt)  # =utils.py function
+        utils.write_xyn(abs_file_path, self.data, fmt=fmt)  # =utils.py function
 
         # write also as geojson:
         if self.model._write_gis:
@@ -185,8 +174,12 @@ class SfincsObservationPoints(ModelComponent):
             If True, merge the new observation points with the existing ones. By default True.
         """
         gdf = self.data_catalog.get_geodataframe(
-            locations, geom=self.model.region, assert_gtype="Point", **kwargs
+            locations, geom=self.model.region, **kwargs
         ).to_crs(self.model.crs)
+
+        # Add check whether all inputs are 'Point'
+        if not all(gdf.geometry.geom_type == 'Point'):
+            raise ValueError("All inputs should be of type 'Point'!")
 
         self.set(gdf, merge)
 
