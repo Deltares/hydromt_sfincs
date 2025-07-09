@@ -129,22 +129,21 @@ class SfincsModel(Model):
 
         self.add_component("config", SfincsConfig(self))
 
-        # Grid types
+        # Grid
         self.add_component("grid", RegularGrid(self))
-        self.add_component("quadtree_grid", QuadtreeGrid(self))
-
-        # Map types
-        self.add_component("quadtree_mask", QuadtreeMask(self))
-        self.add_component("snapwave_quadtree_mask", SnapWaveQuadtreeMask(self))
+        self.add_component("subgrid", SubgridTableRegular(self))
         # self.add_component("mask", SfincsMask(self))
         # self.add_component("bathymetry", SfincsBathymetry(self))
         # self.add_component("infiltration", SfincsInfiltration(self))
         # self.add_component("manning_roughness", SfincsManningRoughness(self))
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
         # self.add_component("storage_volume", SfincsStorageVolume(self))
-        # self.add_component("subgrid", SubgridTableRegular(self))
-        self.add_component("subgrid", SubgridTableRegular(self))
+
+        # Quadtree
+        self.add_component("quadtree_grid", QuadtreeGrid(self))
         self.add_component("quadtree_subgrid", SfincsQuadtreeSubgridTable(self))
+        self.add_component("quadtree_mask", QuadtreeMask(self))
+        self.add_component("snapwave_quadtree_mask", SnapWaveQuadtreeMask(self))
 
         # Geoms types
         self.add_component("observation_points", SfincsObservationPoints(self))
