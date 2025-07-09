@@ -67,16 +67,26 @@ class SubgridTableRegular(ModelComponent):
         # Check that read mode is on
         self.root._assert_read_mode()
 
+        # if filename is not None:
+        #     # If a filename is provided, use it
+        #     filename = os.path.abspath(filename)
+        # else:
+        #     # Otherwise, get the file name from the model config
+        #     filename = self.model.config.get("sbgfile",fallback = None, abs_path=True)
+
+        # if filename is None:
+        #     # File name not defined, so no subgrid in this model
+        #     return
+
         # get absolute file path
         abs_file_path = self.model.config.get_set_file_variable(
             "sbgfile", value=filename
         )
 
+        # check if abs_file_path is None or does not exist
         if abs_file_path is None:
-            # File name not defined, so no subgrid in this model
             return
-
-        if not abs_file_path.exists():
+        elif not abs_file_path.exists():
             raise FileNotFoundError(f"Subgrid file not found: {abs_file_path}")
 
         # get the mask from the model
