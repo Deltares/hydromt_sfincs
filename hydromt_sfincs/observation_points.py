@@ -101,7 +101,7 @@ class SfincsObservationPoints(ModelComponent):
         # function also updates the name in case a filename is provided to this function
         # and if not the case, and obsfile doesn't exist yet, it is initialised with the default of "sfincs.obs"
 
-        file_path = self.model.config.get_set_config_file_variable(
+        file_path = self.model.config.get_set_file_variable(
             key="obsfile", value=filename, default_filename="sfincs.obs"
         )
 

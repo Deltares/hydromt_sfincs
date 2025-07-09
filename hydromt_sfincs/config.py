@@ -185,98 +185,6 @@ class SfincsConfig(ModelComponent):
             # drop regular component
             self.model.components.pop("grid", None)
 
-    def get_set_config_file_variable(
-        self, key: str, value: str, default_filename: str
-    ) -> Path:
-        """Return filepath of a variable 'key', and add key-value to config if not present.
-
-        Actions depending on situation:
-         1) input file variable 'key' is given as input
-            a) value is only the name of variable
-                - add to config directly as value
-                - return file_path including root
-            b) value is a path
-                - get file_directory and value_name through split
-                - update the config
-                    - with only value_name if file_directory==root
-                    - otherwise with full path 'value'
-
-         2) variable 'key' already in config:
-             a) get full file_path using get with abs_path=True
-                - In case not a path, then it adds the root
-
-         3) use default name and root if not yet in config:
-             a) set default name
-             b) update the config
-             c) give back full file_path
-
-        Parameters:
-        -----------
-        key (str):
-            Input filename like 'obsfile'
-        value (str, Optional):
-            Optional input filename corresponding 'obsfile',
-            if not supplied, the default_filename will be used.
-        default_filename (str):
-            Default filename for corresponding 'key' like 'sfincs.obs'
-
-        Returns:
-        -----------
-        file_path (Path):
-            Full filename path of the file, as pathlib.Path
-        """
-        # Use pathlib.Path for modern, readable, and Pythonic code.
-
-        # 1) input file variable 'key' is given as input
-        if value is not None:
-            # Split the file path
-            file_directory, value_name = split(value)
-
-            if file_directory == "":  # dealing with only a file name as input
-                # add to config directly as value:
-                self.model.config.set(key, value)
-                # return file_path including root:
-                file_path = Path(abspath(join(self.model.config.root.path, value)))
-
-            else:  # dealing with a path as input
-                # check if path == root, determines how we add to the config:
-                if Path(abspath(file_directory)) == self.model.config.root.path:
-                    # folders are the same, only write value_name:
-                    self.model.config.set(key, value_name)
-                else:
-                    # file_directory different than root
-
-                    # add the full path to config:
-                    self.model.config.set(key, value)
-
-                # value is the full_path already:
-                file_path = Path(value)
-
-        # 2) variable 'key' already in config:
-        elif value is None and self.model.config.get(key) is not None:
-            # If variable 'key' is not None, it has been set already in config
-            # NOTE Assumes that by default all input file variables in
-            # SfincsInputVariables are initiated as None
-
-            # get existing file name as full path (already adds root, in case not a file);
-            file_path = self.model.config.get(
-                key, abs_path=True
-            )  # return is 'Path' directly
-
-        # 3) use default name and root:
-        elif value is None and self.model.config.get(key) is None:
-            # If variable 'key' is None, it has not been added previously to config
-            # Now add the default_filename to config
-
-            self.model.config.set(key, default_filename)
-
-            # And return the full file_path including root
-            file_path = Path(
-                abspath(join(self.model.config.root.path, default_filename))
-            )
-
-        return file_path
-
     def get_set_file_variable(
         self, key: str, value: str | Path = None, default: str = None
     ) -> Path:
@@ -324,9 +232,13 @@ class SfincsConfig(ModelComponent):
             # Save to config (store relative name if under root)
             try:
                 relative_path = full_path.relative_to(root_path)
-                self.set(key, str(relative_path))
+                # NOTE In Python, if you want to convert a WindowsPath 
+                # object to a string without the double backslashes (\\), 
+                # you can use the as_posix() method instead of 'str'
+                self.set(key, relative_path.as_posix())
+            # If no relative path found, then use the full path:
             except ValueError:
-                self.set(key, str(full_path))
+                self.set(key, full_path.as_posix())
 
             return full_path
 
@@ -334,11 +246,11 @@ class SfincsConfig(ModelComponent):
         config_value = self.get(key)
         if config_value is not None:
             value_path = Path(config_value)
-        # If config value is None, but default is provided
+        # If config value is None, but default is provided:
         elif default is not None:
             value_path = Path(default)
             self.set(key, default)
-        # If no value in config and no default provided
+        # If no value in config and no default provided:
         else:
             return None  # Nothing to return
 
