@@ -76,99 +76,6 @@ def test_config_datetime(model_init):
     assert isinstance(config.get("tref"), datetime)
     assert config.get("tref").year == current_year
 
-
-def test_get_set_config_file_variable(model_config):
-    # test 3 situations of how function get_set_config_file_variable could be used
-
-    # read existing obsfile in model.root
-    config = model_config.config
-
-    varname = "obsfile"
-
-    # 2) variable 'key' already in config
-    obs0 = config.get(varname)  # = sfincs.obs
-    file_path = config.get_set_config_file_variable(
-        key=varname, value=None, default_filename="sfincs.obs"
-    )
-
-    # check if 'key' in config is unchanged
-    obs1 = config.get(varname)  # = sfincs.obs
-    assert obs0 == obs1
-
-    # check if root added to returned file_path
-    assert file_path == Path(abspath(join(config.root.path, obs1)))
-    # assert file_path == join(config.root.path, obs1)
-
-    # add obsfile as random full path
-    random_location = "c:/random/file/location/sfincs.obs"
-    config.set(varname, random_location)  # because of c:/ it is a 'plausible' one
-
-    # see whether it is returned, in case it's already set in the config
-    file_path = config.get_set_config_file_variable(
-        key=varname, value=None, default_filename="sfincs.obs"
-    )
-    assert file_path == Path(random_location)
-
-    # and check whether it has been updated in the config
-    obs2 = config.get(varname)  # = sfincs.obs
-    assert random_location == obs2
-
-    # 3) use default name and root if not yet in config
-    # clear obsfile
-    config.set(varname, None)
-
-    # call without input
-    file_path = config.get_set_config_file_variable(
-        key=varname, value=None, default_filename="sfincs.obs"
-    )
-
-    # check whether added to config
-    obs3 = config.get(varname)  # = sfincs.obs
-    assert obs3 == "sfincs.obs"
-
-    # and whether path is correct
-    assert file_path == Path(abspath(join(config.root.path, "sfincs.obs")))
-
-    # 1) input file variable 'key' is given as input
-
-    # first give in a file_name without path
-    tmpvalue = "sfincs_test.obs"
-    file_path = config.get_set_config_file_variable(
-        key=varname, value=tmpvalue, default_filename="sfincs.obs"
-    )
-
-    # check whether added to config
-    obs4 = config.get(varname)
-    assert obs4 == tmpvalue
-
-    # and whether path is correct
-    assert file_path == Path(abspath(join(config.root.path, tmpvalue)))
-
-    # now give in a path, where the directory includes the model root
-    tmppath = join(config.root.path, "sfincs_test.obs")
-    file_path = config.get_set_config_file_variable(
-        key=varname, value=tmppath, default_filename="sfincs.obs"
-    )
-
-    # check whether added to config, without the full path
-    obs5 = config.get(varname)
-    assert obs5 == tmpvalue
-
-    # and whether path is correct
-    assert file_path == Path(abspath(tmppath))
-
-    # and finally check giving in a random path, different than root
-    file_path = config.get_set_config_file_variable(
-        key=varname, value=random_location, default_filename="sfincs.obs"
-    )
-
-    # and check whether it has been updated in the config
-    obs6 = config.get(varname)
-    assert random_location == obs6
-
-    # and whether path is correct
-    assert file_path == Path(random_location)
-
 def test_get_set_file_variable(model_config):
     # test 3 situations of how function get_set_file_variable could be used
 
@@ -256,8 +163,8 @@ def test_get_set_file_variable(model_config):
 
     # and check whether it has been updated in the config
     obs6 = config.get(varname)
-    # assert random_location == obs6
-    assert Path(random_location) == Path(obs6)
+    # check whether output as string is without the double backslashes \\
+    assert random_location == obs6
 
     # and whether path is correct
     assert file_path == Path(random_location)
