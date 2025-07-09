@@ -324,9 +324,9 @@ class SfincsConfig(ModelComponent):
             # Save to config (store relative name if under root)
             try:
                 relative_path = full_path.relative_to(root_path)
-                self.model.config.set(key, str(relative_path))
+                self.set(key, str(relative_path))
             except ValueError:
-                self.model.config.set(key, str(full_path))
+                self.set(key, str(full_path))
 
             return full_path
 
@@ -337,11 +337,12 @@ class SfincsConfig(ModelComponent):
         # If config value is None, but default is provided
         elif default is not None:
             value_path = Path(default)
-            self.model.config.set(key, default)
+            self.set(key, default)
         # If no value in config and no default provided
         else:
             return None  # Nothing to return
 
+        # Make sure the value is an absolute path
         if not value_path.is_absolute():
             return (root_path / value_path).resolve()
         else:
