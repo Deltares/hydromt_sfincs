@@ -1,16 +1,15 @@
+from pathlib import Path
+from typing import List, Union
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import xarray as xr
-from pathlib import Path
-from typing import Union, List
 import shapely
+import xarray as xr
 from pyproj import Transformer
 
-# from tabulate import tabulate
-
-from hydromt.model.components import ModelComponent
 from hydromt.model import Model
+from hydromt.model.components import ModelComponent
 from hydromt_sfincs import utils
 
 
@@ -20,25 +19,27 @@ class SfincsDischargePoints(ModelComponent):
         model: Model,
     ):
         # self._filename: str = "sfincs.dis"  # FIXME - List(str = "sfincs.dis" and str = "sfincs.src" or str = "sfincs_netbndbzsbzi.nc")
-        self.data = gpd.GeoDataFrame()
+        self._data = None
         super().__init__(
             model=model,
         )
 
-    # @property
-    # def data(self) -> gpd.GeoDataFrame:
-    #     """Water level discharge conditions data.
+    @property
+    def data(self) -> gpd.GeoDataFrame:
+        """Observation point data.
 
-    #     Return pd.GeoDataFrame
-    #     """
-    #     if self._data is None:
-    #         self._initialize()
-    #     return self._data
+        Return geopandas.GeoDataFrame
+        """
+        if self._data is None:
+            self._initialize()
+        return self._data
 
-    # def _initialize(self) -> None:
-    #     """Initialize discharge conditions data."""
-    #     if self._data is None:
-    #         self._data = gpd.GeoDataFrame()
+    def _initialize(self, skip_read=False) -> None:
+        """Initialize geoms."""
+        if self._data is None:
+            self._data = gpd.GeoDataFrame()
+            if self.root.is_reading_mode() and not skip_read:
+                self.read()
 
     def read(self, format: str = None):
         """Read SFINCS discharge points (*.dis, *.src files) or netcdf file.
@@ -114,7 +115,7 @@ class SfincsDischargePoints(ModelComponent):
                 "geometry": point,
             }
             gdf_list.append(d)
-        self.data = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
+        self._data = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
 
     def read_discharge_timeseries(self, filename: str | Path = None):
         """Read SFINCS discharge condition timeseries (*.bzs) file"""
@@ -150,7 +151,7 @@ class SfincsDischargePoints(ModelComponent):
             # # Set the index to time
             # ts.index.name = "time"
             # Add to the point
-            self.data.at[idx, "timeseries"] = ts
+            self._data.at[idx, "timeseries"] = ts
 
     def read_discharge_conditions_netcdf(self, filename: str | Path = None):
         """Read SFINCS discharge conditions netcdf file"""
@@ -188,7 +189,7 @@ class SfincsDischargePoints(ModelComponent):
             # Get the astro for this point
             astro = ds["astro"].sel(point=ip).to_dataframe()
             # Add to the point
-            self.data.at[ip, "astro"] = astro
+            self._data.at[ip, "astro"] = astro
 
     def write(self, format: str = None):
         """Write SFINCS discharges (*.src, *.dis files) or netcdf file.
@@ -281,12 +282,17 @@ class SfincsDischargePoints(ModelComponent):
             Merge data with existing data, by default True.
         """
 
-        # TODO this should have the same magic as add_point?
+        # when merge = False, clear the data with
+        if not merge:
+            self.clear()
 
-        if merge:
-            self.data = pd.concat([self.data, gdf], ignore_index=True)
-        else:
-            self.data = gdf
+        # TODO can this be done more efficiently?
+        for i, row in gdf.iterrows():
+            single_gdf = gdf.loc[[i]]
+            # set discharge to zero
+            self.add_point(
+                gdf=single_gdf,
+            )
 
     def add_point(
         self,
@@ -318,9 +324,10 @@ class SfincsDischargePoints(ModelComponent):
                     "Only GeoDataFrame with a single point in a can be added."
                 )
             gdf = gdf.to_crs(self.model.crs)
-            # FIXME ValueError: Cannot set a DataFrame without columns to the column timeseries
             if "timeseries" not in gdf:
-                gdf["timeseries"] = pd.DataFrame()
+                gdf["timeseries"] = [pd.DataFrame()] * len(gdf)
+            # reset index
+            gdf = gdf.reset_index(drop=True)
         else:
             # Create a GeoDataFrame with a single point
             if x is None or y is None or name is None:
@@ -362,7 +369,7 @@ class SfincsDischargePoints(ModelComponent):
                 )
 
         # Add to self.data
-        self.data = pd.concat([self.data, gdf], ignore_index=True)
+        self._data = pd.concat([self.data, gdf], ignore_index=True)
 
     def delete(self, index: Union[int, List[int]]):
         """Delete a single point from the discharge data.
@@ -381,7 +388,7 @@ class SfincsDischargePoints(ModelComponent):
         # Check if indices are within range
         if any(x > (len(self.data.index) - 1) for x in index):
             raise ValueError("One of the indices exceeds length of index range!")
-        self.data = self.data.drop(index).reset_index(drop=True)
+        self._data = self.data.drop(index).reset_index(drop=True)
 
         if self.data.empty:
             self.model.config.set("srcfile", None)
@@ -390,7 +397,7 @@ class SfincsDischargePoints(ModelComponent):
 
     def clear(self):
         """Clean GeoDataFrame with discharge points."""
-        self.data = gpd.GeoDataFrame()
+        self._data = gpd.GeoDataFrame()
 
     def set_timeseries(
         self,
@@ -474,7 +481,7 @@ class SfincsDischargePoints(ModelComponent):
             df["time"] = times
             df["q"] = q
             df = df.set_index("time")
-            self.data.at[i, "timeseries"] = df
+            self._data.at[i, "timeseries"] = df
 
 
 # def to_fwf(df, fname, floatfmt=".3f"):

@@ -143,7 +143,7 @@ class SfincsModel(Model):
         self.add_component("quadtree_grid", QuadtreeGrid(self))
         self.add_component("quadtree_subgrid", SfincsQuadtreeSubgridTable(self))
         self.add_component("quadtree_mask", QuadtreeMask(self))
-        self.add_component("snapwave_quadtree_mask", SnapWaveQuadtreeMask(self))
+        self.add_component("quadtree_snapwave_mask", SnapWaveQuadtreeMask(self))
 
         # Geoms types
         self.add_component("observation_points", SfincsObservationPoints(self))
@@ -408,16 +408,26 @@ class SfincsModel(Model):
         """
         import matplotlib.pyplot as plt
 
+        _GEOMS = {
+            "observation_points": "obs",
+            "cross_sections": "crs",
+            "weirs": "weir",
+            "thin_dams": "thd",
+            "drainage_structures": "drn",
+            "rivers": "rivers",
+            "discharge_points": "src",
+            # "boundary_conditions": "bnd",
+        }  # parsed to dict of geopandas.GeoDataFrame
+
         # combine geoms and forcing locations
-        # FIXME: no generic geoms component, but geoms are stored for each individual component
         sg = {}
-        # sg = self.geoms.copy()
-        # for fname, gname in self._FORCING_1D.values():
-        #     if fname[0] in self.forcing and gname is not None:
-        #         try:
-        #             sg.update({gname: self.forcing[fname[0]].vector.to_gdf()})
-        #         except ValueError:
-        #             self.logger.debug(f'unable to plot forcing location: "{fname}"')
+        for component, name in _GEOMS.items():
+            # check if component exists and has data
+            if self.components.get(component) is not None:
+                gdf = self.components[component].data
+                if isinstance(gdf, gpd.GeoDataFrame) and not gdf.empty:
+                    sg.update({name: gdf})
+
         if plot_region:  # and "region" not in self.geoms:
             sg.update({"region": self.region})
 

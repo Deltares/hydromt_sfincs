@@ -184,19 +184,12 @@ class SfincsRivers(ModelComponent):
             logger=logger,
         )
         if gdf_src.empty:
+            logger.info("No river source points found.")
             return
 
         # set forcing src pnts
         gdf_src.index = gdf_src.index + first_index
-        # loop through source points and set discharge
-        # FIXME update this to proper set function
-        for i, row in gdf_src.iterrows():
-            single_row_gdf = gdf_src.iloc[[i]]
-            # set discharge to zero
-            self.model.discharge_points.add_point(
-                gdf=single_row_gdf.copy(deep=True),
-            )
-        # self.model.discharge_points.set(gdf_src.copy(deep=True), merge=merge)
+        self.model.discharge_points.set(gdf_src.copy(deep=True), merge=merge)
 
         # set river
         if keep_rivers_geom:
