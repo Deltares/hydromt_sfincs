@@ -94,6 +94,15 @@ class QuadtreeGrid(ModelComponent):
         )
         return xu.UgridDataArray(da0, self.data.grid)
 
+    @property
+    def mask(self) -> xu.UgridDataArray:
+        """Return the mask of the quadtree grid."""
+        if "mask" in self.data:
+            da_mask = self.data["mask"]
+        else:
+            da_mask = self.empty_mask
+        return da_mask
+
     # %% core HydroMT-SFINCS functions:
     # _data (coming from MeshComponent)
     # _initialize (coming from MeshComponent)

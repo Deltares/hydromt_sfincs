@@ -34,11 +34,11 @@ from hydromt.model import Model
 from hydromt_sfincs.config import SfincsConfig
 
 # Grid types
-from hydromt_sfincs.regulargrid import RegularGrid
+from hydromt_sfincs.regulargrid import SfincsGrid
 from hydromt_sfincs.quadtree import QuadtreeGrid
 
 # Map types
-# from hydromt_sfincs.mask import SfincsMask
+from hydromt_sfincs.mask import SfincsMask
 from hydromt_sfincs.quadtree_mask import QuadtreeMask
 from hydromt_sfincs.snapwave_quadtree_mask import SnapWaveQuadtreeMask
 from hydromt_sfincs.quadtree_subgrid import SfincsQuadtreeSubgridTable
@@ -130,9 +130,9 @@ class SfincsModel(Model):
         self.add_component("config", SfincsConfig(self))
 
         # Grid
-        self.add_component("grid", RegularGrid(self))
+        self.add_component("grid", SfincsGrid(self))
+        self.add_component("mask", SfincsMask(self))
         self.add_component("subgrid", SubgridTableRegular(self))
-        # self.add_component("mask", SfincsMask(self))
         # self.add_component("bathymetry", SfincsBathymetry(self))
         # self.add_component("infiltration", SfincsInfiltration(self))
         # self.add_component("manning_roughness", SfincsManningRoughness(self))
@@ -180,34 +180,35 @@ class SfincsModel(Model):
     #             handler.close()
     #             self.logger.removeHandler(handler)
 
+    ## Properties of the model components to ensure python recognizes them ##
     @property
     def config(self) -> SfincsConfig:
         """Returns the config object."""
         return self.components["config"]
 
     @property
-    def grid(self) -> RegularGrid:
+    def grid(self) -> SfincsGrid:
         """Returns the grid object."""
         return self.components["grid"]
 
     @property
-    def quadtree(self) -> QuadtreeGrid:
+    def mask(self) -> SfincsMask:
+        """Returns the mask object."""
+        return self.components["mask"]
+
+    @property
+    def quadtree_grid(self) -> QuadtreeGrid:
         """Returns the quadtree object."""
         return self.components["quadtree_grid"]
 
+    ## Real properties of the model ##
     @property
-    def mask(self) -> xr.DataArray | None:
-        """Returns model mask"""
+    def crs(self) -> CRS | None:
+        """Returns the model crs"""
         if self.grid_type == "regular":
-            if "msk" in self.grid.data:
-                return self.grid.data["msk"]
-            elif self.grid is not None:
-                return self.grid.empty_mask
+            return self.grid.crs
         elif self.grid_type == "quadtree":
-            if "mask" in self.quadtree_grid.data:
-                return self.quadtree_grid.data["mask"]
-            elif self.quadtree_grid is not None:
-                return self.quadtree.empty_mask
+            return self.quadtree_grid.crs
 
     @property
     def region(self) -> gpd.GeoDataFrame:
@@ -215,12 +216,7 @@ class SfincsModel(Model):
         # NOTE overwrites property in GridModel
         region = gpd.GeoDataFrame()
         if self.grid_type == "regular":
-            if "msk" in self.grid.data and np.any(self.grid.data["msk"] > 0):
-                da = xr.where(self.mask > 0, 1, 0).astype(np.int16)
-                da.raster.set_nodata(0)
-                region = da.raster.vectorize().dissolve()
-            elif self.grid is not None:
-                region = self.grid.empty_mask.raster.box
+            region = self.grid.region
         elif self.grid_type == "quadtree":
             region = self.quadtree_grid.exterior
         return region
@@ -229,26 +225,18 @@ class SfincsModel(Model):
     def bounds(self) -> List[float]:
         """Returns the bounding box of the model grid."""
         if self.grid_type == "regular":
-            return self.mask.raster.bounds
+            return self.grid.empty_mask.raster.bounds
         elif self.grid_type == "quadtree":
             # By are we getting the total bounds of the mask and not the grid?
-            return self.mask.ugrid.total_bounds
+            return self.quadtree_grid.empty_mask.ugrid.total_bounds
 
     @property
     def bbox(self) -> tuple:
         """Returns the bounding box in WGS 84 of the model grid."""
         if self.grid_type == "regular":
-            return self.mask.raster.transform_bounds(4326)
+            return self.grid.empty_mask.raster.transform_bounds(4326)
         elif self.grid_type == "quadtree":
-            return self.mask.ugrid.to_crs(4326).ugrid.total_bounds
-
-    @property
-    def crs(self) -> CRS | None:
-        """Returns the model crs"""
-        if self.grid_type == "regular":
-            return self.grid.crs
-        elif self.grid_type == "quadtree":
-            return self.quadtree_grid.data.grid.crs
+            return self.quadtree_grid.empty_mask.ugrid.to_crs(4326).ugrid.total_bounds
 
     ## I/O
     def read(self) -> None:
@@ -280,6 +268,7 @@ class SfincsModel(Model):
 
     def clear_spatial_components(self):
         """Clear all spatial components."""
+        # TODO if we want this, all components should have a clear method
         return
         # Do something like this
         for name, comp in self.components.items():
@@ -380,7 +369,7 @@ class SfincsModel(Model):
             Add shade to variable (only for variable = 'dep' and non-rotated grids),
             by default False
         plot_bounds : bool, optional
-            Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
+            Add waterlevel (mask=2) and open (mask=3) boundary conditions to plot.
         plot_region : bool, optional
             If True, plot region outline.
         plot_geoms : bool, optional
@@ -438,16 +427,18 @@ class SfincsModel(Model):
         elif isinstance(variable, xu.UgridDataArray):
             ds = variable.to_dataset()
             variable = variable.name
-        elif variable.startswith("subgrid.") and self.subgrid is not None:
-            ds = self.subgrid.copy()
+        elif variable.startswith("subgrid.") and self.subgrid.data is not None:
+            ds = self.subgrid.data.copy()
             variable = variable.replace("subgrid.", "")
         else:
             if self.grid_type == "regular":
                 ds = self.grid.data.copy()
+                if "mask" not in ds:
+                    ds["mask"] = self.grid.mask
             elif self.grid_type == "quadtree":
-                ds = self.quadtree.data.copy()
-            if "msk" not in ds:
-                ds["msk"] = self.mask
+                ds = self.quadtree_grid.data.copy()
+                if "mask" not in ds:
+                    ds["mask"] = self.quadtree_grid.mask
 
         fig, ax = plots.plot_basemap(
             ds,

@@ -198,11 +198,11 @@ class SfincsRivers(ModelComponent):
         # update mask if river_width > 0
         if "rivwth" in gdf_src.columns:
             river_width = gdf_src["rivwth"].fillna(river_width)
-        if np.any(river_width > 0) and np.any(self.model.mask > 1):
+        if np.any(river_width > 0) and np.any(self.model.grid.mask > 1):
             # apply buffer
             gdf_src["geometry"] = gdf_src.buffer(river_width / 2)
             # find intersect of buffer and model grid
-            da_mask = self.model.mask
+            da_mask = self.model.grid.mask
             da_include = da_mask.raster.geometry_mask(gdf_src, all_touched=all_touched)
             reset_msk = np.logical_and(da_include, da_mask > 1)
             # update model mask

@@ -2,20 +2,21 @@
 
 import logging
 import math
-import glob
 import os
+import glob
 from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Union
 
-import geopandas as gpd
 import numpy as np
 import xarray as xr
+import geopandas as gpd
 from affine import Affine
-from pyflwdir.regions import region_area
 from pyproj import CRS, Transformer
 from scipy import ndimage
 from shapely.geometry import LineString
+
+from pyflwdir.regions import region_area
 
 from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
@@ -43,7 +44,7 @@ _ATTRS = {
 }
 
 
-class RegularGrid(GridComponent):
+class SfincsGrid(GridComponent):
     def __init__(
         self,
         model: "SfincsModel",
@@ -131,11 +132,21 @@ class RegularGrid(GridComponent):
     @property
     def mask(self) -> xr.DataArray:
         """Return the mask of the regular grid."""
-        if "msk" in self.data:
-            da_mask = self.data["msk"]
+        if "mask" in self.data:
+            da_mask = self.data["mask"]
         else:
             da_mask = self.empty_mask
         return da_mask
+
+    @property
+    def region(self) -> gpd.Geodataframe:
+        """Return the active region of the regular grid."""
+        if "mask" in self.data and np.any(self.data["mask"] > 0):
+            da = xr.where(self.data["mask"] > 0, 1, 0).astype(np.int16)
+            da.raster.set_nodata(0)
+            return da.raster.vectorize().dissolve()
+        elif self.grid is not None:
+            return self.empty_mask.raster.box
 
     def read(self, data_vars: Union[List, str] = None) -> None:
         """Read SFINCS binary grid files and save to `data` attribute.
@@ -427,16 +438,16 @@ class RegularGrid(GridComponent):
         """
 
         # retrieve model resolution to determine zoom level for xyz-datasets
-        if not self.model.mask.raster.crs.is_geographic:
-            res = np.abs(self.model.mask.raster.res[0])
+        if not self.model.grid.crs.is_geographic:
+            res = np.abs(self.mask.raster.res[0])
         else:
-            res = np.abs(self.model.mask.raster.res[0]) * 111111.0
+            res = np.abs(self.mask.raster.res[0]) * 111111.0
 
         datasets_dep = self.model._parse_datasets_dep(datasets_dep, res=res)
 
         da_dep = workflows.merge_multi_dataarrays(
             da_list=datasets_dep,
-            da_like=self.model.mask,
+            da_like=self.mask,
             buffer_cells=buffer_cells,
             interp_method=interp_method,
             logger=logger,
@@ -690,14 +701,14 @@ class RegularGrid(GridComponent):
 
         # get include / exclude geometries
         gdf_include, gdf_exclude = None, None
-        bbox = self.model.mask.raster.transform_bounds(4326)
+        bbox = self.model.bbox
         if include_mask is not None:
             if not isinstance(include_mask, gpd.GeoDataFrame) and str(
                 include_mask
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_mask), crs=self.region.crs
+                    feats=utils.read_geoms(fn=include_mask), crs=self.model.crs
                 )
             else:
                 gdf_include = self.data_catalog.get_geodataframe(
@@ -706,7 +717,7 @@ class RegularGrid(GridComponent):
             if include_mask_buffer > 0:
                 if self.crs.is_geographic:
                     include_mask_buffer = include_mask_buffer / 111111.0
-                gdf_include["geometry"] = gdf_include.to_crs(self.crs).buffer(
+                gdf_include["geometry"] = gdf_include.to_crs(self.model.crs).buffer(
                     include_mask_buffer
                 )
         if exclude_mask is not None:
@@ -714,7 +725,7 @@ class RegularGrid(GridComponent):
                 exclude_mask
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_mask), crs=self.region.crs
+                    feats=utils.read_geoms(fn=exclude_mask), crs=self.model.crs
                 )
             else:
                 gdf_exclude = self.data_catalog.get_geodataframe(
@@ -832,7 +843,7 @@ class RegularGrid(GridComponent):
         if len(datasets_rgh) > 0:
             da_man = workflows.merge_multi_dataarrays(
                 da_list=datasets_rgh,
-                da_like=self.model.mask,
+                da_like=self.mask,
                 interp_method="linear",
                 logger=logger,
             )
@@ -842,7 +853,7 @@ class RegularGrid(GridComponent):
                 self.data["dep"] >= rgh_lev_land, manning_land, manning_sea
             )
         elif fromdep:
-            da_man0 = xr.full_like(self.model.mask, manning_land, dtype=np.float32)
+            da_man0 = xr.full_like(self.mask, manning_land, dtype=np.float32)
 
         if len(datasets_rgh) > 0 and fromdep:
             logger.warning("nan values in manning roughness array")
@@ -918,10 +929,10 @@ class RegularGrid(GridComponent):
 
         # reproject infiltration data to model grid
         da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
-        da_inf = da_inf.raster.reproject_like(self.model.mask, method=reproj_method)
+        da_inf = da_inf.raster.reproject_like(self.mask, method=reproj_method)
 
         # check on nan values
-        if np.logical_and(np.isnan(da_inf), self.model.mask >= 1).any():
+        if np.logical_and(np.isnan(da_inf), self.mask >= 1).any():
             self.logger.warning("NaN values found in infiltration data; filled with 0")
             da_inf = da_inf.fillna(0)
         da_inf.raster.set_nodata(-9999.0)

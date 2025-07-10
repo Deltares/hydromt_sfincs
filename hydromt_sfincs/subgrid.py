@@ -79,7 +79,7 @@ class SubgridTableRegular(ModelComponent):
             raise FileNotFoundError(f"Subgrid file not found: {abs_file_path}")
 
         # get the mask from the model
-        mask = self.model.mask
+        mask = self.model.grid.mask
 
         self.version = 1
 
@@ -217,7 +217,7 @@ class SubgridTableRegular(ModelComponent):
             return
 
         # get the mask from the model and convert to xarray
-        mask = self.model.mask
+        mask = self.model.grid.mask
         ds = self.to_xarray(dims=mask.raster.dims, coords=mask.raster.coords)
 
         # Need to transpose to match the FORTRAN convention in SFINCS
@@ -312,7 +312,7 @@ class SubgridTableRegular(ModelComponent):
             raise FileNotFoundError(f"Subgrid file not found: {abs_file_path}")
 
         # get the mask from the model
-        mask = self.model.mask
+        mask = self.model.grid.mask
 
         if isinstance(mask, xr.DataArray):
             mask = mask.values
@@ -436,7 +436,7 @@ class SubgridTableRegular(ModelComponent):
         )
 
         # get the mask from the model
-        mask = self.model.mask
+        mask = self.model.grid.mask
 
         if isinstance(mask, xr.DataArray):
             mask = mask.values
@@ -621,10 +621,14 @@ class SubgridTableRegular(ModelComponent):
             to disk at execution of this method. By default False
         """
 
-        if not self.model.mask.raster.crs.is_geographic:
-            res = np.abs(self.model.mask.raster.res[0]) / nr_subgrid_pixels
+        if not self.model.grid.mask.raster.crs.is_geographic:
+            res = np.abs(self.model.grid.mask.raster.res[0]) / nr_subgrid_pixels
         else:
-            res = np.abs(self.model.mask.raster.res[0]) * 111111.0 / nr_subgrid_pixels
+            res = (
+                np.abs(self.model.grid.mask.raster.res[0])
+                * 111111.0
+                / nr_subgrid_pixels
+            )
 
         datasets_dep = self.model._parse_datasets_dep(datasets_dep, res=res)
 
@@ -655,7 +659,7 @@ class SubgridTableRegular(ModelComponent):
             )
 
         # get the mask from the model
-        da_mask = self.model.mask
+        da_mask = self.model.grid.mask
 
         self.version = 1
 
@@ -929,7 +933,8 @@ class SubgridTableRegular(ModelComponent):
 
         # convert to xarray dataset and set to data
         self._data = self.to_xarray(
-            dims=self.model.mask.raster.dims, coords=self.model.mask.raster.coords
+            dims=self.model.grid.mask.raster.dims,
+            coords=self.model.grid.mask.raster.coords,
         )
 
         # Create COG overviews
