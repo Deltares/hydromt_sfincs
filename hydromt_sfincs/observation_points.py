@@ -11,7 +11,6 @@ from hydromt.model.components import ModelComponent
 from hydromt.model import Model
 from hydromt_sfincs import utils
 
-
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
 
@@ -49,19 +48,19 @@ class SfincsObservationPoints(ModelComponent):
     # clear
 
     def _initialize(self, skip_read=False) -> None:
-        """Initialize geoms."""
+        """Initialize observation points."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read in all observation points."""
+        """Read SFINCS observation points (*.obs) file."""
 
         # check that read mode is on
         self.root._assert_read_mode()
 
-        # get absolute file path
+        # get absolute file path and set it in config if obsfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
             "obsfile", value=filename
         )
@@ -79,7 +78,8 @@ class SfincsObservationPoints(ModelComponent):
         self.set(gdf, merge=False)
 
     def write(self, filename=None):
-        """Write obsfile."""
+        """Write SFINCS observation points (*.obs) file,
+        and set obsfile in config (if it was not already set)"""
 
         # check that write mode is on
         self.root._assert_write_mode()
@@ -112,14 +112,14 @@ class SfincsObservationPoints(ModelComponent):
             self.data.to_file(join(root, f"obs.geojson"), driver="GeoJSON")
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
-        """Set observation points.
+        """Set SFINCS observation points.
 
         Arguments
         ---------
         gdf: geopandas.GeoDataFrame
             Set GeoDataFrame with observation points to self.data
-        name: str
-            Geometry name.
+        merge: bool
+            Merge with existing observation points. If False, overwrite existing observation points.
         **NOTE** - coordinates of points in GeoDataFrame need to be in the same CRS as SFINCS model.
         """
         if not gdf.geometry.type.isin(["Point"]).all():
@@ -177,25 +177,32 @@ class SfincsObservationPoints(ModelComponent):
             locations, geom=self.model.region, **kwargs
         ).to_crs(self.model.crs)
 
-        # Add check whether all inputs are 'Point'
-        if not all(gdf.geometry.geom_type == 'Point'):
-            raise ValueError("All inputs should be of type 'Point'!")
+        if not gdf.geometry.type.isin(["Point"]).all():
+            raise ValueError("Observation points should be of type Point")
 
         self.set(gdf, merge)
 
     def delete(
         self,
-        index: int,  # FIXME - now we expect list [int] - does that make sense?/should we specify here?
+        index: Union[list, int],
     ):
-        """Remove (multiple) point(s) from observation points.
+        """Remove one or more observation points.
 
         Arguments
         ---------
-        index: int
-            Specify indices (int) of point(s) to be dropped from GeoDataFrame of observations.
+        index: list, int
+            Specify observation points to be dropped from GeoDataFrame.
+            If int, drop a single observation point based on index.
+            If list, drop multiple observation points based on index.
         """
-        if any(x > (len(self.data.index) - 1) for x in index):
+        # Turn int or str into list
+        if type(index) == int:
+            index = [index]
+
+        # Check that any integer in list is not larger than the number of points
+        if max(index) > (len(self.data) - 1) or min(index) < 0:
             raise ValueError("One of the indices exceeds length of index range!")
+        # FIXME len(self.data.index) or len(self.data.index)
 
         self._data = self.data.drop(index).reset_index(drop=True)
         logger.info("Dropping point(s) from observations")
@@ -203,6 +210,8 @@ class SfincsObservationPoints(ModelComponent):
     def clear(self):
         """Clean GeoDataFrame with observation points."""
         self._data = gpd.GeoDataFrame()
+        # Set obsfile to None
+        self.model.config.set("thdfile", None) #FIXME - TL: do we want that?
 
     # %% DDB GUI focused additional functions:
     # add_point
@@ -234,7 +243,6 @@ class SfincsObservationPoints(ModelComponent):
         gdf = gpd.GeoDataFrame([d], crs=self.model.region.crs)
 
         self.set(gdf, merge=True)
-        # self._data = self.data.append(d)  # add point directly to gdf > has been deprecated...
 
     def delete_point(
         self,
@@ -260,7 +268,7 @@ class SfincsObservationPoints(ModelComponent):
         else:
             raise ValueError("Wrong input type given for function delete_point")
 
-        self.delete(index=[index])  # calls the generic delete function as list
+        self.delete(index)
         return
 
     def list_names(self):
