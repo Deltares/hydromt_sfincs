@@ -1,12 +1,10 @@
 import logging
 import geopandas as gpd
-
-# import shapely
+from shapely.geometry import LineString
 import pandas as pd
 from pathlib import Path
 from typing import TYPE_CHECKING, Union, List
-
-# import os
+import os
 from os.path import abspath, join, exists
 
 from hydromt.model.components import ModelComponent
@@ -15,6 +13,7 @@ from hydromt_sfincs import utils
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,20 +22,21 @@ class SfincsThinDams(ModelComponent):
         self,
         model: "SfincsModel",
     ):
-        self.data = gpd.GeoDataFrame()
+        self._filename: str = "sfincs.thd"
+        self._data: gpd.GeoDataFrame = None
         super().__init__(
             model=model,
         )
 
-    # @property
-    # def data(self) -> gpd.GeoDataFrame:
-    #     """Cross-section lines data.
+    @property
+    def data(self) -> gpd.GeoDataFrame:
+        """Thin dam data.
 
-    #     Return geopandas.GeoDataFrame
-    #     """
-    #     if self._data is None:
-    #         self._initialize()
-    #     return self._data
+        Return geopandas.GeoDataFrame
+        """
+        if self._data is None:
+            self._initialize()
+        return self._data
 
     # %% core HydroMT-SFINCS functions:
     # _initialize
@@ -47,32 +47,29 @@ class SfincsThinDams(ModelComponent):
     # delete
     # clear
 
-    # def _initialize(self, skip_read=False) -> None:
-    #     """Initialize cross-section lines."""
-    #     if self._data is None:
-    #         # self._data = dict()
-    #         self._data = gpd.GeoDataFrame()  # FIXME - right?
-    #         if self.root.is_reading_mode() and not skip_read:
-    #             self.read()
+    def _initialize(self, skip_read=False) -> None:
+        """Initialize thin dams."""
+        if self._data is None:
+            # self._data = dict()
+            self._data = gpd.GeoDataFrame()  # FIXME - right?
+            if self.root.is_reading_mode() and not skip_read:
+                self.read()
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS thin dams (*.thd) file"""
+        """Read SFINCS thin dams (*.thd) file."""
 
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Get absolute file name and set it in config if crsfile is not None
+        # get absolute file path and set it in config if thdfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
             "thdfile", value=filename
         )
 
-        # Check if abs_file_path is None
+        # check if abs_file_path is None or does not exist
         if abs_file_path is None:
-            # File name not defined, so no thin dams in this model
             return
-
-        # Check if thd file exists
-        if not abs_file_path.exists():
+        elif not abs_file_path.exists():
             raise FileNotFoundError(f"Thin dams file not found: {abs_file_path}")
 
         # Read thd file
@@ -86,14 +83,17 @@ class SfincsThinDams(ModelComponent):
         """Write SFINCS thin dams (*.thd) file,
         and set thdfile in config (if it was not already set)"""
 
-        # Check that data is not empty
+        # check that write mode is on
+        self.root._assert_write_mode()
+
+        # check if data present:
         if self.data.empty:
-            logger.info("No thin dams available to write.")
+            logger.debug("No thin dams data available to write.")
             return
 
         # Set file name and get absolute path
         abs_file_path = self.model.config.get_set_file_variable(
-            "thdfile",
+            key="thdfile",
             value=filename,
             default="sfincs.thd",
         )
@@ -106,14 +106,23 @@ class SfincsThinDams(ModelComponent):
 
         # Get linestring geometries from gdf
         struct = utils.gdf2linestring(self.data)
+
         # Write to thd file
         utils.write_geoms(abs_file_path, struct, stype="thd", fmt=fmt)
 
-        # TODO - write also as geojson - TL: at what level do we want to do that?
-        # if self._write_gis:
-        #     self.write_vector(variables=["geoms"])
+        # write also as geojson:
+        if self.model._write_gis:
+            root = join(self.model.root.path, "gis")
 
-    def set(self, gdf: Union[gpd.GeoDataFrame, str, Path], merge: bool = True):
+            if not os.path.isdir(root):
+                os.makedirs(root)
+
+            self.data.to_file(join(root, f"thd.geojson"), driver="GeoJSON")
+
+    def set(
+            self, 
+            gdf: gpd.GeoDataFrame, 
+            merge: bool = True):
         """Set SFINCS thin dams.
 
         Arguments
@@ -122,13 +131,8 @@ class SfincsThinDams(ModelComponent):
             data source name, Path, or geopandas object with LineString geometries.
         merge: bool
             Merge with existing thin dams. If False, overwrite existing thin dams.
+        **NOTE** - coordinates of points in GeoDataFrame need to be in the same CRS as SFINCS model.
         """
-
-        # Check if gdf is a string or Path. If so, read the file.
-        if isinstance(gdf, (str, Path)):
-            gdf = self.data_catalog.get_geodataframe(
-                gdf, geom=self.model.region, assert_gtype="LineString"
-            ).to_crs(self.model.crs)
 
         if not gdf.geometry.type.isin(["LineString"]).all():
             raise ValueError("Thin dams must be of type LineString.")
@@ -144,15 +148,53 @@ class SfincsThinDams(ModelComponent):
 
         # Check if there are any cross sections left
         if gdf.empty:
-            logger.warning("All thin dams fall outside model domain!")
-            return
+            # logger.warning("All thin dams fall outside model domain!")
+            # return
+            raise ValueError("All thin dams fall outside model domain!")
 
-        if merge:
-            self.data = pd.concat([self.gdf, gdf], ignore_index=True)
-            logger.info("Adding new thin dams to existing ones")
-        else:
-            self.data = gdf
-            logger.info("Setting new thin dams")
+        if merge and self.data is not None:
+            gdf0 = self.data
+            # add the new data behind the original
+            gdf = gpd.GeoDataFrame(pd.concat([gdf0, gdf], ignore_index=True))
+            logger.info("Adding new thin dams to existing ones.")
+
+        self._data = gdf  # set gdf in self._data
+
+    def create(
+            self, 
+            locations: Union[gpd.GeoDataFrame, str, Path], 
+            merge: bool = True,
+            **kwargs):
+        """Create model thin dams.
+        (old name: setup_structures)
+
+        Adds model layers:
+
+        * **thd** geom: thin dams
+
+        Arguments
+        ---------
+        locations: str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for thin dam locations.
+        merge: bool, optional
+            If True, merge the new thin dams with the existing ones. By default True.
+        """
+        gdf = self.data_catalog.get_geodataframe(
+            locations, geom=self.model.region, **kwargs,
+        ).to_crs(self.model.crs)
+
+        # make sure MultiLineString are converted to LineString
+        gdf = gdf.explode(index_parts=True).reset_index(drop=True)
+
+        if not gdf.geometry.type.isin(["LineString"]).all():
+            raise ValueError("Thin dams must be of type LineString.")
+                    
+        # If Linestring z, e.g. when you put in a geojson with height from a weirfile
+        # then get rid of the z component
+        if gdf.has_z.any():
+            gdf['geometry'] = gdf['geometry'].apply(lambda geom: LineString([(x, y) for x, y, z in geom.coords]))
+
+        self.set(gdf, merge)
 
     def delete(
         self,
@@ -176,7 +218,7 @@ class SfincsThinDams(ModelComponent):
             raise ValueError("One of the indices exceeds length of index range!")
 
         # Drop lines from GeoDataFrame
-        self.data = self.data.drop(index).reset_index(drop=True)
+        self._data = self.data.drop(index).reset_index(drop=True)
         logger.info("Dropping line(s) from thin dams")
 
         # Check if any cross sections are left
@@ -187,9 +229,13 @@ class SfincsThinDams(ModelComponent):
 
     def clear(self):
         """Clean GeoDataFrame with thin dams."""
-        self.data = gpd.GeoDataFrame()
-        # Set crsfile to None
-        self.model.config.set("thdfile", None)
+        self._data = gpd.GeoDataFrame()
+        # Set thdfile to None
+        self.model.config.set("thdfile", None) #FIXME - TL: do we want that?
+
+    # %% DDB GUI focused additional functions:
+    # list_names
+    # snap_to_grid
 
     def list_names(self):
         """Give list of names of thin dams."""
