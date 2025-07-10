@@ -139,7 +139,7 @@ class SfincsGrid(GridComponent):
         return da_mask
 
     @property
-    def region(self) -> gpd.Geodataframe:
+    def region(self) -> gpd.GeoDataFrame:
         """Return the active region of the regular grid."""
         if "mask" in self.data and np.any(self.data["mask"] > 0):
             da = xr.where(self.data["mask"] > 0, 1, 0).astype(np.int16)
