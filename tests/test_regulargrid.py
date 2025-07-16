@@ -41,7 +41,7 @@ def test_grid_io(model_config, tmp_path):
     assert model.grid.data.raster.shape == (36, 84)
 
     # check the variables in the grid
-    assert "msk" in model.grid.data.variables
+    assert "mask" in model.grid.data.variables
     assert len(model.grid.data.data_vars) == 1
 
     # now write the model grid

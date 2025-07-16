@@ -322,7 +322,14 @@ class SfincsModel(Model):
         # Note: this is now done in the read method of each component
         for name, comp in self.components.items():
             if name != "config":
-                comp.read()
+                try:
+                    comp.read()
+                except Exception as e:
+                    print(str(e))
+                    continue
+            elif "quadtree" in name and self.grid_type == "regular":
+                # skip reading quadtree components if grid_type is regular
+                continue
 
     def write(self):
         # loop over all components and write

@@ -60,54 +60,58 @@ def test_states(mod):
     assert np.allclose(mod1.states["zsini"], mod.states["zsini"])
 
 
-def test_infiltration(mod):
+def test_infiltration(model):
     # set constant infiltration
-    qinf = xr.where(mod.grid["dep"] < -0.5, -9999, 0.1)
+    qinf = xr.where(model.grid.data["dep"] < -0.5, -9999, 0.1)
     qinf.raster.set_nodata(-9999.0)
-    qinf.raster.set_crs(mod.crs)
-    mod.setup_constant_infiltration(qinf, reproj_method="nearest")
-    assert "qinf" not in mod.config  # qinf removed from config
-    assert "qinffile" in mod.config
-    assert "qinf" in mod.grid
+    qinf.raster.set_crs(model.crs)
+    model.infiltration.create_constant(qinf, reproj_method="nearest")
+    assert "qinf" not in model.config  # qinf removed from config
+    assert "qinffile" in model.config
+    assert "qinf" in model.grid
 
     # set cn infiltration
-    cn = xr.where(mod.grid["dep"] < -0.5, 0, 50)
+    cn = xr.where(model.grid.data["dep"] < -0.5, 0, 50)
     cn.raster.set_nodata(-1)
-    cn.raster.set_crs(mod.crs)
-    mod.setup_cn_infiltration(cn, reproj_method="nearest")
-    assert "scsfile" in mod.config
-    assert "scs" in mod.grid
-    assert (mod.grid["scs"].where(mod.mask > 0)).min() == 10
+    cn.raster.set_crs(model.crs)
+    model.infiltration.create_cn(cn, reproj_method="nearest")
+    assert "scsfile" in model.config
+    assert "scs" in model.grid
+    assert (model.grid.data["scs"].where(model.grid.mask > 0)).min() == 10
 
     # set cn infiltration with recovery
-    lulc = xr.where(mod.grid["dep"] < -0.5, 70, 30)
-    hsg = xr.where(mod.grid["dep"] < 2, 1, 3)
-    ksat = xr.where(mod.grid["dep"] < 1, 0.01, 0.2)
+    lulc = xr.where(model.grid.data["dep"] < -0.5, 70, 30)
+    hsg = xr.where(model.grid.data["dep"] < 2, 1, 3)
+    ksat = xr.where(model.grid.data["dep"] < 1, 0.01, 0.2)
     # create pandas reclass table for lulc and hsg to cn
     reclass_table = pd.DataFrame([[0, 35], [0, 56]], index=[70, 30], columns=[1, 3])
     effective = 0.5
-    mod.setup_cn_infiltration_with_ks(
+    model.infiltration.create_cn_with_recovery(
         lulc=lulc, hsg=hsg, ksat=ksat, reclass_table=reclass_table, effective=effective
     )
 
     # Check if variables are there
-    assert "smax" in mod.grid
-    assert "seff" in mod.grid
-    assert "ks" in mod.grid
+    assert "smax" in model.grid.data
+    assert "seff" in model.grid.data
+    assert "ks" in model.grid.data
 
     # Write model
-    mod.write_grid()
-    mod.write_config()
+    model.grid.write()
+    model.config.write()
 
     # read and check if identical
-    mod1 = SfincsModel(root=mod.root, mode="r")
+    mod1 = SfincsModel(root=model.root, mode="r")
+    mod1.config.read()
+    mod1.grid.read()
 
     # assure the sum of smax is close to earlier calculated value
-    assert np.isclose(mod1.grid["smax"].where(mod.mask > 0).sum(), 37.918575)
     assert np.isclose(
-        mod1.grid["seff"].where(mod.mask > 0).sum(), 37.918575 * effective
+        mod1.grid.data["smax"].where(model.grid.mask > 0).sum(), 37.918575
     )
-    assert np.isclose(mod1.grid["ks"].where(mod.mask > 0).sum(), 351.10803)
+    assert np.isclose(
+        mod1.grid.data["seff"].where(model.grid.mask > 0).sum(), 37.918575 * effective
+    )
+    assert np.isclose(mod1.grid.data["ks"].where(model.grid.mask > 0).sum(), 351.10803)
 
 
 def test_subgrid_io(tmpdir):
