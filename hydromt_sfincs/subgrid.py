@@ -20,7 +20,7 @@ from hydromt_sfincs import utils, workflows
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SubgridTableRegular(ModelComponent):

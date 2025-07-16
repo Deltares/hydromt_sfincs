@@ -28,7 +28,7 @@ from hydromt_sfincs.workflows.tiling import int2png, tile_window
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 _MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
 _ATTRS = {
@@ -145,7 +145,7 @@ class SfincsGrid(GridComponent):
             da = xr.where(self.data["mask"] > 0, 1, 0).astype(np.int16)
             da.raster.set_nodata(0)
             return da.raster.vectorize().dissolve()
-        elif self.grid is not None:
+        elif self.data is not None:
             return self.empty_mask.raster.box
 
     def read(self, data_vars: Union[List, str] = None) -> None:

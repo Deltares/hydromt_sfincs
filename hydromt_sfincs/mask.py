@@ -28,8 +28,7 @@ except ImportError:
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
 
-# TODO actually use the logger instead of print statements
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 _ATTRS = {"mask": {"standard_name": "mask", "unit": "-"}}

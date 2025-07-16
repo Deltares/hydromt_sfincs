@@ -73,11 +73,8 @@ from hydromt_sfincs.output import SfincsOutput
 # from hydromt_sfincs.plots import SfincsPlots
 
 __all__ = ["SfincsModel"]
-
 __hydromt_eps__ = ["SfincsModel"]  # core entrypoints
-
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 # %% SfincsModel class - in V1 style:
@@ -112,11 +109,9 @@ class SfincsModel(Model):
 
         """
 
-        # model folders
-        self._write_gis = write_gis
-        # if write_gis and "gis" not in self._FOLDERS:
-        # self._FOLDERS.append("gis")
-        # self.name = "SfincsModel"
+        # define some default model properties
+        self.grid_type = "regular"
+        self.write_gis = write_gis
 
         super().__init__(
             root=root,
@@ -124,9 +119,6 @@ class SfincsModel(Model):
             data_libs=data_libs,
         )
         # Initialize model components:
-
-        self.grid_type = "regular"
-
         self.add_component("config", SfincsConfig(self))
 
         # Grid
@@ -170,15 +162,15 @@ class SfincsModel(Model):
         # self.add_component("output", SfincsOutput(self))
         # self.add_component("plots", SfincsPlots(self))
 
-    # def __del__(self):
-    #     """Close the model and remove the logger file handler."""
-    #     for handler in self.logger.handlers:
-    #         if (
-    #             isinstance(handler, logging.FileHandler)
-    #             and "hydromt.log" in handler.baseFilename
-    #         ):
-    #             handler.close()
-    #             self.logger.removeHandler(handler)
+    def __del__(self):
+        """Close the model and remove the logger file handler."""
+        for handler in logger.handlers:
+            if (
+                isinstance(handler, logging.FileHandler)
+                and "hydromt.log" in handler.baseFilename
+            ):
+                handler.close()
+                logger.removeHandler(handler)
 
     ## Properties of the model components to ensure python recognizes them ##
     @property
