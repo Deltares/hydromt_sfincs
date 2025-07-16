@@ -128,8 +128,8 @@ class SfincsModel(Model):
         # self.add_component("bathymetry", SfincsBathymetry(self))
         self.add_component("infiltration", SfincsInfiltration(self))
         self.add_component("roughness", SfincsRoughness(self))
+        self.add_component("storage_volume", SfincsStorageVolume(self))
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
-        # self.add_component("storage_volume", SfincsStorageVolume(self))
 
         # Quadtree
         self.add_component("quadtree_grid", QuadtreeGrid(self))
@@ -197,6 +197,11 @@ class SfincsModel(Model):
     def infiltration(self) -> SfincsInfiltration:
         """Returns the infiltration object."""
         return self.components["infiltration"]
+
+    @property
+    def storage_volume(self) -> SfincsStorageVolume:
+        """Returns the storage volume object."""
+        return self.components["storage_volume"]
 
     @property
     def subgrid(self) -> SubgridTableRegular:

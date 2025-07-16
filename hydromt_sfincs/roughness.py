@@ -37,11 +37,6 @@ class SfincsRoughness(ModelComponent):
         """Get an empty mask with the same shape as the model grid."""
         return self.model.grid.mask
 
-    @property
-    def transform(self):
-        """Get the affine transform of the model grid."""
-        return self.model.grid.transform
-
     def read(self):
         # TODO discuss what we want to return/read here, pass is not so informative ..
         # The mask values are read when the quadtree grid is read
