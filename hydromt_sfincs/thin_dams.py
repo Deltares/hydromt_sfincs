@@ -234,7 +234,7 @@ class SfincsThinDams(ModelComponent):
 
     def snap_to_grid(self):
         """Returns GeoDataFrame with thin dams snapped to model grid."""
-        # TODO - this probably only works for quadtree grids for now
+        # FIXME - this probably only works for quadtree grids for now
         snap_gdf = self.model.grid.snap_to_grid(self.data)
         return snap_gdf
 
