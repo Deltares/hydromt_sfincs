@@ -226,7 +226,7 @@ class SfincsThinDams(ModelComponent):
         """Clean GeoDataFrame with thin dams."""
         self._data = gpd.GeoDataFrame()
         # Set thdfile to None in config
-        self.model.config.set("thdfile", None) #FIXME - TL: do we want that?
+        self.model.config.set("thdfile", None)
 
     # %% DDB GUI focused additional functions:
     # snap_to_grid
@@ -234,7 +234,7 @@ class SfincsThinDams(ModelComponent):
 
     def snap_to_grid(self):
         """Returns GeoDataFrame with thin dams snapped to model grid."""
-        # TODO - this probably only works for quadtree grids for now
+        # FIXME - this probably only works for quadtree grids for now
         snap_gdf = self.model.grid.snap_to_grid(self.data)
         return snap_gdf
 
