@@ -31,17 +31,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(f"hydromt.{__name__}")
 
 _MAPS = ["mask", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
-_ATTRS = {
-    "dep": {"standard_name": "elevation", "unit": "m+ref"},
-    "mask": {"standard_name": "mask", "unit": "-"},
-    "scs": {
-        "standard_name": "potential maximum soil moisture retention",
-        "unit": "in",
-    },
-    "qinf": {"standard_name": "infiltration rate", "unit": "mm.hr-1"},
-    "manning": {"standard_name": "manning roughness", "unit": "s.m-1/3"},
-    "vol": {"standard_name": "storage volume", "unit": "m3"},
-}
 
 
 class SfincsGrid(GridComponent):
@@ -427,60 +416,6 @@ class SfincsGrid(GridComponent):
 
         # update the grid attributes in the model config
         self.update_config_from_grid()
-
-    def create_dep(
-        self,
-        datasets_dep: List[dict],
-        buffer_cells: int = 0,  # not in list
-        interp_method: str = "linear",  # used for buffer cells only
-    ):
-        """Interpolate topobathy (dep) data to the model grid.
-
-        Adds model grid layers:
-
-        * **dep**: combined elevation/bathymetry [m+ref]
-
-        Parameters
-        ----------
-        datasets_dep : List[dict]
-            List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
-            [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
-            For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
-        buffer_cells : int, optional
-            Number of cells between datasets to ensure smooth transition of bed levels, by default 0
-        interp_method : str, optional
-            Interpolation method used to fill the buffer cells , by default "linear"
-        """
-
-        # retrieve model resolution to determine zoom level for xyz-datasets
-        if not self.model.grid.crs.is_geographic:
-            res = np.abs(self.mask.raster.res[0])
-        else:
-            res = np.abs(self.mask.raster.res[0]) * 111111.0
-
-        datasets_dep = self.model._parse_datasets_dep(datasets_dep, res=res)
-
-        da_dep = workflows.merge_multi_dataarrays(
-            da_list=datasets_dep,
-            da_like=self.mask,
-            buffer_cells=buffer_cells,
-            interp_method=interp_method,
-            logger=logger,
-        )
-
-        # check if no nan data is present in the bed levels
-        nmissing = int(np.sum(np.isnan(da_dep.values)))
-        if nmissing > 0:
-            logger.warning(f"Interpolate elevation at {nmissing} cells")
-            da_dep = da_dep.raster.interpolate_na(method="rio_idw", extrapolate=True)
-
-        # set the dep layer in the model data
-        mname = "dep"
-        da_dep.attrs.update(**_ATTRS.get(mname, {}))
-        self.set(da_dep, name=mname)
-
-        # TODO add to config, or is that only done when writing?
-        self.model.config.set("depfile", "sfincs.dep")
 
     # %% supporting HydroMT-SFINCS functions:
     # other:

@@ -43,7 +43,7 @@ from hydromt_sfincs.quadtree_mask import QuadtreeMask
 from hydromt_sfincs.snapwave_quadtree_mask import SnapWaveQuadtreeMask
 from hydromt_sfincs.quadtree_subgrid import SfincsQuadtreeSubgridTable
 
-# from hydromt_sfincs.bathymetry import SfincsBathymetry
+from hydromt_sfincs.elevation import SfincsElevation
 from hydromt_sfincs.subgrid import SubgridTableRegular
 from hydromt_sfincs.infiltration import SfincsInfiltration
 from hydromt_sfincs.roughness import SfincsRoughness
@@ -123,12 +123,12 @@ class SfincsModel(Model):
 
         # Grid
         self.add_component("grid", SfincsGrid(self))
+        self.add_component("elevation", SfincsElevation(self))
         self.add_component("mask", SfincsMask(self))
-        self.add_component("subgrid", SubgridTableRegular(self))
-        # self.add_component("bathymetry", SfincsBathymetry(self))
         self.add_component("infiltration", SfincsInfiltration(self))
         self.add_component("roughness", SfincsRoughness(self))
         self.add_component("storage_volume", SfincsStorageVolume(self))
+        self.add_component("subgrid", SubgridTableRegular(self))
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
 
         # Quadtree
@@ -182,6 +182,11 @@ class SfincsModel(Model):
     def grid(self) -> SfincsGrid:
         """Returns the grid object."""
         return self.components["grid"]
+
+    @property
+    def elevation(self) -> SfincsElevation:
+        """Returns the elevation object."""
+        return self.components["elevation"]
 
     @property
     def mask(self) -> SfincsMask:
