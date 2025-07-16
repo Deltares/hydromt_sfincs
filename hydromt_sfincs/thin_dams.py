@@ -109,7 +109,7 @@ class SfincsThinDams(ModelComponent):
         utils.write_geoms(abs_file_path, struct, stype="thd", fmt=fmt)
 
         # write also as geojson:
-        if self.model._write_gis:
+        if self.model.write_gis:
             root = join(self.model.root.path, "gis")
 
             if not os.path.isdir(root):

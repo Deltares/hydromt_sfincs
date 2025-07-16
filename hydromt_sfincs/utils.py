@@ -640,7 +640,7 @@ def read_geoms(fn: Union[str, Path]) -> List[Dict]:
             if cols > 2:
                 for c in col_names[2:]:
                     if np.unique(feat[c]).size == 1:
-                        feat[c] = feat[c][0]
+                        feat[c] = feat[c]#[0] # TODO: check if we want [0] in case of reading existing weir file!
             feats.append(feat)
     return feats
 

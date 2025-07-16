@@ -9,7 +9,6 @@ import numpy as np
 from hydromt import DataCatalog
 from hydromt.model import Model
 from hydromt_sfincs.sfincs import SfincsModel
-from hydromt_sfincs.regulargrid import RegularGrid
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
 TESTMODELDIR = join(TESTDATADIR, "sfincs_test")
