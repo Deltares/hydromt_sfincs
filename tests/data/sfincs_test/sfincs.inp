@@ -49,6 +49,7 @@ obsfile              = sfincs.obs
 crsfile              = sfincs.crs
 thdfile              = sfincs.thd
 weirfile             = sfincs.weir
+wvmfile              = sfincs.wvm
 inputformat          = bin
 outputformat         = net
 cdnrb                = 3
