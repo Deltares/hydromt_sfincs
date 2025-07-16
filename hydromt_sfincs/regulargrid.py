@@ -182,14 +182,18 @@ class SfincsGrid(GridComponent):
         if not isfile(ind_fn):
             raise IOError(f".ind path {ind_fn} does not exist")
 
-        dtypes = {"msk": "u1"}
-        mvs = {"msk": 0}
+        dtypes = {"mask": "u1"}
+        mvs = {"mask": 0}
         ind = self.read_ind(ind_fn=ind_fn)
 
         for name in data_vars:
-            fn = self.model.config.get(
-                f"{name}file", fallback=f"sfincs.{name}", abs_path=True
-            )
+            if name == "mask":
+                # mask is special, it is always read
+                fn = self.model.config.get_set_file_variable("mskfile", "sfincs.msk")
+            else:
+                fn = self.model.config.get(
+                    f"{name}file", fallback=f"sfincs.{name}", abs_path=True
+                )
             if not isfile(fn):
                 if provide_warnings:
                     logger.warning(f"{name}file not found at {fn}")
@@ -478,71 +482,6 @@ class SfincsGrid(GridComponent):
         # TODO add to config, or is that only done when writing?
         self.model.config.set("depfile", "sfincs.dep")
 
-    # Roughness
-    def create_manning_roughness(
-        self,
-        datasets_rgh: List[dict] = [],
-        manning_land=0.04,
-        manning_sea=0.02,
-        rgh_lev_land=0,
-    ):
-        """Setup model manning roughness map (manningfile) from gridded manning data or a combinataion of gridded
-        land-use/land-cover map and manning roughness mapping table.
-
-        Adds model layers:
-
-        * **man** map: manning roughness coefficient [s.m-1/3]
-
-        Parameters
-        ---------
-        datasets_rgh : List[dict], optional
-            List of dictionaries with Manning's n datasets. Each dictionary should at least contain one of the following:
-            * (1) manning: filename (or Path) of gridded data with manning values
-            * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a mapping table.
-            In additon, optional merge arguments can be provided e.g.: merge_method, gdf_valid_fn
-        manning_land, manning_sea : float, optional
-            Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
-            Note that these values are only used when no Manning's n datasets are provided, or to fill the nodata values
-        rgh_lev_land : float, optional
-            Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
-        """
-
-        if len(datasets_rgh) > 0:
-            datasets_rgh = self.model._parse_datasets_rgh(datasets_rgh)
-        else:
-            datasets_rgh = []
-
-        # fromdep keeps track of whether any manning values should be based on the depth or not
-        fromdep = len(datasets_rgh) == 0
-        if len(datasets_rgh) > 0:
-            da_man = workflows.merge_multi_dataarrays(
-                da_list=datasets_rgh,
-                da_like=self.mask,
-                interp_method="linear",
-                logger=logger,
-            )
-            fromdep = np.isnan(da_man).where(self.mask > 0, False).any()
-        if "dep" in self.data and fromdep:
-            da_man0 = xr.where(
-                self.data["dep"] >= rgh_lev_land, manning_land, manning_sea
-            )
-        elif fromdep:
-            da_man0 = xr.full_like(self.mask, manning_land, dtype=np.float32)
-
-        if len(datasets_rgh) > 0 and fromdep:
-            logger.warning("nan values in manning roughness array")
-            da_man = da_man.where(~np.isnan(da_man), da_man0)
-        elif fromdep:
-            da_man = da_man0
-        da_man.raster.set_nodata(-9999.0)
-
-        # set grid
-        mname = "manning"
-        da_man.attrs.update(**_ATTRS.get(mname, {}))
-        self.set(da_man, name=mname)
-        # set file name in config
-        self.model.config.set(f"{mname}file", f"sfincs.{mname[:3]}")
-
     # %% supporting HydroMT-SFINCS functions:
     # other:
     # - ind
@@ -550,7 +489,7 @@ class SfincsGrid(GridComponent):
     # - read_map
     # - write_ind
     # - write_map
-    # - to_vector_lines
+    # - to_gdf
 
     def ind(self, mask: np.ndarray) -> np.ndarray:
         """Return indices of active cells in mask."""
@@ -656,7 +595,7 @@ class SfincsGrid(GridComponent):
             }
         )
 
-    def to_vector_lines(self):
+    def to_gdf(self):
         """Return a geopandas GeoDataFrame with a geometry for each grid line."""
 
         x, y = self.edges
