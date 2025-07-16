@@ -88,7 +88,7 @@ class SfincsModel(Model):
         self,
         root: str = None,
         mode: str = "w",
-        write_gis: bool = False,
+        write_gis: bool = True,
         data_libs: Union[List[str], str] = None,
     ):
         """
@@ -189,9 +189,69 @@ class SfincsModel(Model):
         return self.components["mask"]
 
     @property
+    def subgrid(self) -> SubgridTableRegular:
+        """Returns the subgrid object."""
+        return self.components["subgrid"]
+
+    @property
     def quadtree_grid(self) -> QuadtreeGrid:
         """Returns the quadtree object."""
         return self.components["quadtree_grid"]
+
+    @property
+    def quadtree_mask(self) -> QuadtreeMask:
+        """Returns the quadtree mask object."""
+        return self.components["quadtree_mask"]
+
+    @property
+    def quadtree_snapwave_mask(self) -> SnapWaveQuadtreeMask:
+        """Returns the quadtree snapwave mask object."""
+        return self.components["quadtree_snapwave_mask"]
+
+    @property
+    def quadtree_subgrid(self) -> SfincsQuadtreeSubgridTable:
+        """Returns the quadtree subgrid object."""
+        return self.components["quadtree_subgrid"]
+
+    @property
+    def observation_points(self) -> SfincsObservationPoints:
+        """Returns the observation points object."""
+        return self.components["observation_points"]
+
+    @property
+    def cross_sections(self) -> SfincsCrossSections:
+        """Returns the cross sections object."""
+        return self.components["cross_sections"]
+
+    @property
+    def thin_dams(self) -> SfincsThinDams:
+        """Returns the thin dams object."""
+        return self.components["thin_dams"]
+
+    @property
+    def wave_makers(self) -> SfincsWaveMakers:
+        """Returns the wave makers object."""
+        return self.components["wave_makers"]
+
+    @property
+    def rivers(self) -> SfincsRivers:
+        """Returns the rivers object."""
+        return self.components["rivers"]
+
+    @property
+    def boundary_conditions(self) -> SfincsBoundaryConditions:
+        """Returns the boundary conditions object."""
+        return self.components["boundary_conditions"]
+
+    @property
+    def discharge_points(self) -> SfincsDischargePoints:
+        """Returns the discharge points object."""
+        return self.components["discharge_points"]
+
+    @property
+    def snapwave_boundary_conditions(self) -> SnapWaveBoundaryConditions:
+        """Returns the snapwave boundary conditions object."""
+        return self.components["snapwave_boundary_conditions"]
 
     ## Real properties of the model ##
     @property

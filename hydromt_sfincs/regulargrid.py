@@ -30,10 +30,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_MAPS = ["msk", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
+_MAPS = ["mask", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol"]
 _ATTRS = {
     "dep": {"standard_name": "elevation", "unit": "m+ref"},
-    "msk": {"standard_name": "mask", "unit": "-"},
+    "mask": {"standard_name": "mask", "unit": "-"},
     "scs": {
         "standard_name": "potential maximum soil moisture retention",
         "unit": "in",
@@ -229,7 +229,8 @@ class SfincsGrid(GridComponent):
         #     ds.close()
 
     def write(
-        self, data_vars: Union[List, str] = None, write_gis: bool = False
+        self,
+        data_vars: Union[List, str] = None,
     ) -> None:
         """Write SFINCS grid to binary files including map index file.
         Filenames are taken from the `config` attribute (i.e. input file).
@@ -241,18 +242,16 @@ class SfincsGrid(GridComponent):
         ----------
         data_vars : Union[List, str], optional
             List of data variables to write, by default None (all)
-        write_gis : bool, optional
-            Write grid variables to geotiff files, by default False
         """
         self.root._assert_write_mode
 
-        dtypes = {"msk": "u1"}  # default to f4
-        if len(self.data.data_vars) > 0 and "msk" in self.data:
+        dtypes = {"mask": "u1"}  # default to f4
+        if len(self.data.data_vars) > 0 and "mask" in self.data:
             # make sure orientation is S->N
             ds_out = self.data
             if ds_out.raster.res[1] < 0:
                 ds_out = ds_out.raster.flipud()
-            mask = ds_out["msk"].values
+            mask = ds_out["mask"].values
 
             logger.debug("Write binary map indices based on mask.")
             if self.model.config.get("indexfile") is None:
@@ -265,17 +264,23 @@ class SfincsGrid(GridComponent):
                 data_vars = [v for v in _MAPS if v in ds_out]
             elif isinstance(data_vars, str):
                 data_vars = list(data_vars)
+                # always rewrite the mask
+                data_vars.append("mask") if "mask" not in data_vars else data_vars
+
             logger.debug(f"Write binary map files: {data_vars}.")
             for name in data_vars:
                 # Set file name and get absolute path
-                abs_file_path = self.model.config.get_set_file_variable(
-                    f"{name}file",
-                    f"sfincs.{name}",
-                )
+                if name == "mask":
+                    abs_file_path = self.model.config.get_set_file_variable(
+                        "mskfile", "sfincs.msk"
+                    )
+                else:
+                    abs_file_path = self.model.config.get_set_file_variable(
+                        f"{name}file",
+                        f"sfincs.{name}",
+                    )
 
-                # do not write depfile if subgrid is used
-                # if (name == "dep" or name == "manning") and self.subgrid:
-                #     continue
+                # write to binary model files
                 self.write_map(
                     map_fn=abs_file_path,
                     data=ds_out[name].values,
@@ -283,8 +288,14 @@ class SfincsGrid(GridComponent):
                     dtype=dtypes.get(name, "f4"),
                 )
 
-        # if self._write_gis:
-        #     self.write_raster("grid")
+                # write to gis-files for visualization
+                if self.model.write_gis:
+                    utils.write_raster(
+                        ds_out[name],
+                        root=join(self.model.root.path, "gis"),
+                        mask=mask,
+                        logger=logger,
+                    )
 
     def create(
         self,

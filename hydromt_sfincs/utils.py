@@ -7,6 +7,7 @@ import copy
 import io
 import logging
 from datetime import datetime
+import os
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
@@ -43,6 +44,8 @@ __all__ = [
     "write_geoms",
     "read_drn",
     "write_drn",
+    "write_vector",
+    "write_raster",
     "gdf2linestring",
     "gdf2polygon",
     "linestring2gdf",
@@ -851,6 +854,127 @@ def read_sfincs_his_results(
         ds_his.vector.set_crs(crs)
 
     return ds_his
+
+
+def write_vector(
+    data: Union[xr.Dataset, gpd.GeoDataFrame],
+    name: str,
+    root: Union[str, Path],
+    logger=logger,
+    **kwargs,
+):
+    """Write model vector (geoms) variables to geojson files.
+
+    NOTE: these files are not used by the model by just saved for visualization/
+    analysis purposes.
+
+    Parameters
+    ----------
+    data: geopandas.GeoDataFrame, xr.Dataset
+        The data to write to file. If an xr.Dataset is provided, it should contain geometry variables
+        that can be converted to a geopandas.GeoDataFrame.
+    name: str
+        The name of the variable to write to file. This will be used as the filename.
+    root: Path, str, optional
+        The output folder path.
+    kwargs:
+        Key-word arguments passed to geopandas.GeoDataFrame.to_file(driver='GeoJSON').
+    """
+    kwargs.update(driver="GeoJSON")  # fixed
+
+    # check root
+    if not os.path.isdir(root):
+        os.makedirs(root)
+
+    if isinstance(data, gpd.GeoDataFrame):
+        gdf = data
+    else:
+        try:
+            gdf = data.vector.to_gdf()
+        except:
+            logger.debug(f"Variable {name} could not be written to vector file.")
+            pass
+
+    gdf.to_file(os.path.join(root, f"{name}.geojson"), **kwargs)
+
+
+def write_raster(
+    data: Union[xr.Dataset, xr.DataArray],
+    root: Union[str, Path],
+    mask: xr.DataArray = None,
+    driver="GTiff",
+    compress="deflate",
+    logger=logger,
+    **kwargs,
+):
+    """Write model 2D raster variables to geotiff files.
+
+    NOTE: these files are not used by the model by just saved for visualization/
+    analysis purposes.
+
+    Parameters
+    ----------
+    variables: str, list, optional
+        Model variables are a combination of attribute and layer (optional) using <attribute>.<layer> syntax.
+        Known ratster attributes are ["grid", "states", "results"].
+        Different variables can be combined in a list.
+        By default, variables is ["grid", "states", "results.hmax"]
+    root: Path, str, optional
+        The output folder path. If None it defaults to the <model_root>/gis folder (Default)
+    kwargs:
+        Key-word arguments passed to hydromt.RasterDataset.to_raster(driver='GTiff', compress='lzw').
+    """
+
+    # check variables
+    if isinstance(data, xr.Dataset):
+        variables = list(data.data_vars.keys())
+        variables = [variables]
+    elif isinstance(data, xr.DataArray):
+        variables = [data.name]
+    else:
+        raise ValueError(
+            f"Unsupported data type for writing raster: {type(data)}. "
+            "Expected xr.Dataset or xr.DataArray."
+        )
+
+    # check mask
+    if mask is None:
+        if "mask" in data:
+            mask = data["mask"]
+        else:
+            raise ValueError("No mask provided and no 'mask' variable found in data.")
+
+    # check root
+    if not os.path.isdir(root):
+        os.makedirs(root)
+
+    # save to file
+    for var in variables:
+        da = data[var] if isinstance(data, xr.Dataset) else data
+        name = da.name
+        if len(da.dims) != 2:
+            # try to reduce to 2D by taking maximum over time dimension
+            if "time" in da.dims:
+                da = da.max("time")
+            elif "timemax" in da.dims:
+                da = da.max("timemax")
+            # if still not 2D, skip
+            if len(da.dims) != 2:
+                logger.warning(f"Variable {name} has more than 2 dimensions: skipping.")
+                continue
+        # If the raster type is float, set nodata to np.nan
+        if da.dtype == "float32" or da.dtype == "float64":
+            da.raster.set_nodata(np.nan)
+        # only write active cells to gis files
+        da = da.where(mask > 0, da.raster.nodata).raster.mask_nodata()
+        if da.raster.res[1] > 0:  # make sure orientation is N->S
+            da = da.raster.flipud()
+        da.raster.to_raster(
+            os.path.join(root, f"{name}.tif"),
+            driver=driver,
+            compress=compress,
+            **kwargs,
+        )
 
 
 def downscale_floodmap(

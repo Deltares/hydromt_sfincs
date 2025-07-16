@@ -14,7 +14,7 @@ from hydromt_sfincs import utils
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsObservationPoints(ModelComponent):
@@ -69,10 +69,14 @@ class SfincsObservationPoints(ModelComponent):
         if abs_file_path is None:
             return
         elif not abs_file_path.exists():
-            raise FileNotFoundError(f"Observation points file not found: {abs_file_path}")
+            raise FileNotFoundError(
+                f"Observation points file not found: {abs_file_path}"
+            )
 
         # Read input file:
-        gdf = utils.read_xyn(abs_file_path, crs=self.model.region.crs)  # =utils.py function
+        gdf = utils.read_xyn(
+            abs_file_path, crs=self.model.region.crs
+        )  # =utils.py function
 
         # Add to self._data
         self.set(gdf, merge=False)
@@ -103,13 +107,13 @@ class SfincsObservationPoints(ModelComponent):
         utils.write_xyn(abs_file_path, self.data, fmt=fmt)  # =utils.py function
 
         # write also as geojson:
-        if self.model._write_gis:
-            root = join(self.model.root.path, "gis")
-
-            if not os.path.isdir(root):
-                os.makedirs(root)
-
-            self.data.to_file(join(root, f"obs.geojson"), driver="GeoJSON")
+        if self.model.write_gis:
+            utils.write_vector(
+                self.data,
+                name="obs",
+                root=join(self.model.root.path, "gis"),
+                logger=logger,
+            )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
         """Set SFINCS observation points.
@@ -211,7 +215,7 @@ class SfincsObservationPoints(ModelComponent):
         """Clean GeoDataFrame with observation points."""
         self._data = gpd.GeoDataFrame()
         # Set obsfile to None in config
-        self.model.config.set("obsfile", None) #FIXME - TL: do we want that?
+        self.model.config.set("obsfile", None)  # FIXME - TL: do we want that?
 
     # %% DDB GUI focused additional functions:
     # add_point
