@@ -168,7 +168,7 @@ class SfincsObservationPoints(ModelComponent):
 
         Arguments
         ---------
-        locations: str, Path, gpd.GeoDataFrame, optional
+        locations: str, Path, gpd.GeoDataFrame
             Path, data source name, or geopandas object for observation point locations.
         merge: bool, optional
             If True, merge the new observation points with the existing ones. By default True.
@@ -210,8 +210,8 @@ class SfincsObservationPoints(ModelComponent):
     def clear(self):
         """Clean GeoDataFrame with observation points."""
         self._data = gpd.GeoDataFrame()
-        # Set obsfile to None
-        self.model.config.set("thdfile", None) #FIXME - TL: do we want that?
+        # Set obsfile to None in config
+        self.model.config.set("obsfile", None) #FIXME - TL: do we want that?
 
     # %% DDB GUI focused additional functions:
     # add_point

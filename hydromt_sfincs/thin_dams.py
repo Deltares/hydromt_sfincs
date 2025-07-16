@@ -50,8 +50,7 @@ class SfincsThinDams(ModelComponent):
     def _initialize(self, skip_read=False) -> None:
         """Initialize thin dams."""
         if self._data is None:
-            # self._data = dict()
-            self._data = gpd.GeoDataFrame()  # FIXME - right?
+            self._data = gpd.GeoDataFrame()
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
@@ -63,8 +62,7 @@ class SfincsThinDams(ModelComponent):
 
         # get absolute file path and set it in config if thdfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "thdfile", value=filename
-        )
+            "thdfile", value=filename)
 
         # check if abs_file_path is None or does not exist
         if abs_file_path is None:
@@ -73,10 +71,10 @@ class SfincsThinDams(ModelComponent):
             raise FileNotFoundError(f"Thin dams file not found: {abs_file_path}")
 
         # Read thd file
-        struct = utils.read_geoms(abs_file_path)
-        gdf = utils.linestring2gdf(struct, crs=self.model.crs)
+        struct = utils.read_geoms(abs_file_path)  # =utils.py function
+        gdf = utils.linestring2gdf(struct, crs=self.model.crs)  # =utils.py function
 
-        # Add to self.data
+        # Add to self._data
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
@@ -119,19 +117,16 @@ class SfincsThinDams(ModelComponent):
 
             self.data.to_file(join(root, f"thd.geojson"), driver="GeoJSON")
 
-    def set(
-            self, 
-            gdf: gpd.GeoDataFrame, 
-            merge: bool = True):
+    def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
         """Set SFINCS thin dams.
 
         Arguments
         ---------
-        str, Path, gpd.GeoDataFrame :
-            data source name, Path, or geopandas object with LineString geometries.
+        gpd.GeoDataFrame :
+            Set geopandas object with LineString geometries.
         merge: bool
             Merge with existing thin dams. If False, overwrite existing thin dams.
-        **NOTE** - coordinates of points in GeoDataFrame need to be in the same CRS as SFINCS model.
+        **NOTE** - coordinates of LineString geometries in GeoDataFrame need to be in the same CRS as SFINCS model.
         """
 
         if not gdf.geometry.type.isin(["LineString"]).all():
@@ -162,7 +157,7 @@ class SfincsThinDams(ModelComponent):
 
     def create(
             self, 
-            locations: Union[gpd.GeoDataFrame, str, Path], 
+            locations: Union[str, Path, gpd.GeoDataFrame], 
             merge: bool = True,
             **kwargs):
         """Create model thin dams.
@@ -174,7 +169,7 @@ class SfincsThinDams(ModelComponent):
 
         Arguments
         ---------
-        locations: str, Path, gpd.GeoDataFrame, optional
+        locations: str, Path, gpd.GeoDataFrame
             Path, data source name, or geopandas object for thin dam locations.
         merge: bool, optional
             If True, merge the new thin dams with the existing ones. By default True.
@@ -230,22 +225,24 @@ class SfincsThinDams(ModelComponent):
     def clear(self):
         """Clean GeoDataFrame with thin dams."""
         self._data = gpd.GeoDataFrame()
-        # Set thdfile to None
+        # Set thdfile to None in config
         self.model.config.set("thdfile", None) #FIXME - TL: do we want that?
 
     # %% DDB GUI focused additional functions:
-    # list_names
     # snap_to_grid
-
-    def list_names(self):
-        """Give list of names of thin dams."""
-        # The thin dams do not really have names,
-        # but we can use the index and turn into strings
-        names = [str(i + 1) for i in self.data.index]
-        return names
+    # list_names
 
     def snap_to_grid(self):
         """Returns GeoDataFrame with thin dams snapped to model grid."""
         # TODO - this probably only works for quadtree grids for now
         snap_gdf = self.model.grid.snap_to_grid(self.data)
         return snap_gdf
+
+    def list_names(self):
+        """Give list of names of thin dams."""
+        if self.data.empty:
+            return []        
+        # The thin dams do not really have names,
+        # but we can use the index and turn into strings
+        names = [str(i + 1) for i in self.data.index]
+        return names
