@@ -171,6 +171,7 @@ class SfincsWaveMakers(ModelComponent):
             Path, data source name, or geopandas object for thin dam locations.
         merge: bool, optional
             If True, merge the new wave makers with the existing ones. By default True.
+        **NOTE** - check whether you have specified the points in the right directional order.            
         """
         gdf = self.data_catalog.get_geodataframe(
             locations, geom=self.model.region, **kwargs,
