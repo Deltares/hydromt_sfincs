@@ -103,7 +103,7 @@ class SfincsObservationPoints(ModelComponent):
         utils.write_xyn(abs_file_path, self.data, fmt=fmt)  # =utils.py function
 
         # write also as geojson:
-        if self.model._write_gis:
+        if self.model.write_gis:
             root = join(self.model.root.path, "gis")
 
             if not os.path.isdir(root):

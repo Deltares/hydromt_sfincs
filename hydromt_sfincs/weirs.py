@@ -61,7 +61,7 @@ class SfincsWeirs(ModelComponent):
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # get absolute file path and set it in config if thdfile is not None
+        # get absolute file path and set it in config if weirfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
             "weirfile", value=filename)
 
@@ -110,7 +110,7 @@ class SfincsWeirs(ModelComponent):
         utils.write_geoms(abs_file_path, struct, stype="weir", fmt=fmt)
 
         # write also as geojson:
-        if self.model._write_gis:
+        if self.model.write_gis:
             root = join(self.model.root.path, "gis")
 
             if not os.path.isdir(root):
@@ -181,9 +181,13 @@ class SfincsWeirs(ModelComponent):
         locations: str, Path, gpd.GeoDataFrame
             Path, data source name, or geopandas object for weir lines.
         dep : str, Path, xr.DataArray, optional
-            Path, data source name, or xarray raster object ('elevtn') describing the depth in an
+            Data source name, Path, or xarray raster object ('elevtn') describing the depth in an
             alternative resolution which is used for sampling the weir.
-            **NOTE** - currently, you can only supply one datasource for dep, not your whole datasets_dep list!
+            **NOTE** - currently, you can only supply one datasource for dep, 
+                or use the -courser- active dep data in self.grid.data if dep not provided,
+                but not your whole datasets_dep list!
+            **NOTE** Tip: use fine resolution dep_subgrid.tif for merged high-res data 
+                in case of using multiple elevation datasets.
         buffer : float, optional
             If provided, describes the distance from the centerline to the foot of the structure.
             This distance is supplied to the raster.sample as the window (wdw).
@@ -201,7 +205,7 @@ class SfincsWeirs(ModelComponent):
         gdf = gdf.explode(index_parts=True).reset_index(drop=True)
 
         if not gdf.geometry.type.isin(["LineString"]).all():
-            raise ValueError("Thin dams must be of type LineString.")
+            raise ValueError("Weirs must be of type LineString.")
         
         # expected columns in gdf
         cols = {
@@ -217,8 +221,11 @@ class SfincsWeirs(ModelComponent):
                 "Weir structure requires z values, or 'dep' or 'dz' input to determine these on the fly."
             )
         elif dep is not None or dz is not None:
+        
             # determine elevation from dep and dz, if data parsed
             gdf = self.determine_weir_elevation(gdf, dep, buffer, dz)
+            # if dep is not provided, the active dep data in self.grid.data is loaded,
+            # within function determine_weir_elevation            
             logger.info("Determined elevations for weir based on elevation data.")
 
         self.set(gdf, merge)
@@ -279,11 +286,11 @@ class SfincsWeirs(ModelComponent):
 
         # get elevation data either from model itself, or separate input
         if dep is None or dep == "dep":
-            assert "dep" in self.model.grid, "dep layer not found"
-            elv = self.model.grid["dep"]
+            assert "dep" in self.model.grid.data, "dep layer not found"
+            elv = self.model.grid.data["dep"]
         else:
             elv = self.data_catalog.get_rasterdataset(
-                dep, geom=self.region, buffer=5, variables=["elevtn"]
+                dep, geom=self.model.region, buffer=5, variables=["elevtn"]
             )
 
         # calculate window size from buffer
@@ -294,14 +301,14 @@ class SfincsWeirs(ModelComponent):
             window_size = int(np.ceil(buffer / res))
         else:
             window_size = 0
-        self.logger.debug(f"Sampling elevation with window size {window_size}")
+        logger.debug(f"Sampling elevation with window size {window_size}")
 
         # interpolate dep data to points of weirs
         structs_out = []
         for s in structs:
             pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
             zb = elv.raster.sample(
-                gpd.GeoDataFrame(geometry=pnts, crs=self.crs), wdw=window_size
+                gpd.GeoDataFrame(geometry=pnts, crs=self.model.crs), wdw=window_size
             )
             if zb.ndim > 1:
                 zb = zb.max(axis=1)
@@ -314,7 +321,7 @@ class SfincsWeirs(ModelComponent):
 
             structs_out.append(s)
 
-        gdf = utils.linestring2gdf(structs_out, crs=self.crs)
+        gdf = utils.linestring2gdf(structs_out, crs=self.model.crs)
 
         return gdf
 

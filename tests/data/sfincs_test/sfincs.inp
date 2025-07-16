@@ -48,6 +48,7 @@ sbgfile              = sfincs_subgrid.nc
 obsfile              = sfincs.obs
 crsfile              = sfincs.crs
 thdfile              = sfincs.thd
+weirfile             = sfincs.weir
 inputformat          = bin
 outputformat         = net
 cdnrb                = 3

@@ -89,7 +89,7 @@ def test_thin_dams_io(model_config, tmp_path):
     assert Path(join(tmp_path, filename2)).exists() == False
 
 
-def test_observation_points_create(model_config):
+def test_thin_dams_create(model_config):
     # goal: test if thdfile can be made from an existing geojson
     # goal: compare to similar values from existing ascii sfincs.thd file
     # goal: check behaviour merge = False and True
@@ -99,7 +99,7 @@ def test_observation_points_create(model_config):
 
     # read in related geojson
     gdf = model_config.data_catalog.get_geodataframe(
-        join(TESTMODELDIR, "gis", "thd.geojson")
+        join(TESTMODELDIR, "gis", "thd_clean.geojson")
     )
 
     # call create
