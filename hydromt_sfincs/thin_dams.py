@@ -226,7 +226,7 @@ class SfincsThinDams(ModelComponent):
         """Clean GeoDataFrame with thin dams."""
         self._data = gpd.GeoDataFrame()
         # Set thdfile to None in config
-        self.model.config.set("thdfile", None) #FIXME - TL: do we want that?
+        self.model.config.set("thdfile", None)
 
     # %% DDB GUI focused additional functions:
     # snap_to_grid

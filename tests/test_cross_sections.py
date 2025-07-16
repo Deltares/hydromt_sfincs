@@ -99,7 +99,7 @@ def test_cross_sections_create(model_config):
 
     # read in related geojson
     gdf = model_config.data_catalog.get_geodataframe(
-        join(TESTMODELDIR, "gis", "thd_clean.geojson")
+        join(TESTMODELDIR, "gis", "crs.geojson")
     )
 
     # call create
@@ -125,11 +125,11 @@ def test_cross_sections_create(model_config):
         # assert np.isclose(obs0coords.x.values, obs1coords.x.values, rtol=0.001).all()
         assert np.isclose(obs0coords, obs1coords, rtol=0.001).all()
 
-    # add again with merge = True and should have 2 gdfs now
+    # add again with merge = True and should have 6 gdfs now
     model_config.cross_sections.create(locations=gdf, merge=True)
     obs2 = model_config.cross_sections.data
 
-    assert obs2.shape[0] == 2
+    assert obs2.shape[0] == 6
 
 
 def test_cross_sections_add_delete(model_config):
@@ -145,10 +145,10 @@ def test_cross_sections_add_delete(model_config):
 
     # check if points are added
     obs1 = model_config.cross_sections.data
-    assert obs1.shape[0] == 2
+    assert obs1.shape[0] == 6 #=2 time 3 cross-sections
 
     # delete indexes 1
-    model_config.cross_sections.delete(index=[1])
+    model_config.cross_sections.delete(index=[1,2,3,4,5])
     obs2 = model_config.cross_sections.data
 
     # remaining should be only the first cross-section dam

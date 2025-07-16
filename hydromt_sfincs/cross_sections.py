@@ -103,7 +103,7 @@ class SfincsCrossSections(ModelComponent):
         # Get linestring geometries from gdf
         struct = utils.gdf2linestring(self.data)
 
-        # Write to thd file
+        # Write to crs file
         utils.write_geoms(abs_file_path, struct, stype="crs", fmt=fmt)
 
         # write also as geojson:
@@ -113,7 +113,7 @@ class SfincsCrossSections(ModelComponent):
             if not os.path.isdir(root):
                 os.makedirs(root)
 
-            self.data.to_file(join(root, f"thd.geojson"), driver="GeoJSON")
+            self.data.to_file(join(root, f"crs.geojson"), driver="GeoJSON")
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
         """Set SFINCS cross-sections.
@@ -131,14 +131,14 @@ class SfincsCrossSections(ModelComponent):
             raise ValueError("Cross-sections must be of type LineString.")
 
         # Check that gdf has a name column
-        if "name" not in gdf.columns:
-            raise ValueError("Cross-sections must have a 'name' column.")
-        # FIXME - TL: should we check on this for observation points, weirs and thin dams too?
+        # if "name" not in gdf.columns:
+        #     raise ValueError("Cross-sections must have a 'name' column.")
+        # FIXME - TL: should we check on this for cross-sections, observation points, weirs and thin dams (too)?
 
         # Check that all rows have a unique name
-        if not gdf["name"].is_unique:
-            raise ValueError("Cross-section names must be unique.")
-        # FIXME - TL: should we check on this for observation points, weirs and thin dams too?
+        # if not gdf["name"].is_unique:
+            # raise ValueError("Cross-section names must be unique.")
+        # FIXME - TL: should we check on this for cross-sections, observation points, weirs and thin dams (too)?
 
         # Check if any of the cross sections fall completely outside the model domain
         # If so, give a warning and remove these lines
@@ -221,7 +221,7 @@ class SfincsCrossSections(ModelComponent):
             raise ValueError("One of the indices exceeds length of index range!")
 
         # Drop lines from GeoDataFrame
-        self.data = self.data.drop(index).reset_index(drop=True)
+        self._data = self.data.drop(index).reset_index(drop=True)
         logger.info("Dropping line(s) from cross-sections")
 
         # Check if any cross sections are left
