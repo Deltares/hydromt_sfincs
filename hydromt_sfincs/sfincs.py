@@ -126,7 +126,7 @@ class SfincsModel(Model):
         self.add_component("mask", SfincsMask(self))
         self.add_component("subgrid", SubgridTableRegular(self))
         # self.add_component("bathymetry", SfincsBathymetry(self))
-        # self.add_component("infiltration", SfincsInfiltration(self))
+        self.add_component("infiltration", SfincsInfiltration(self))
         # self.add_component("manning_roughness", SfincsManningRoughness(self))
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
         # self.add_component("storage_volume", SfincsStorageVolume(self))
@@ -187,6 +187,11 @@ class SfincsModel(Model):
     def mask(self) -> SfincsMask:
         """Returns the mask object."""
         return self.components["mask"]
+
+    @property
+    def infiltration(self) -> SfincsInfiltration:
+        """Returns the infiltration object."""
+        return self.components["infiltration"]
 
     @property
     def subgrid(self) -> SubgridTableRegular:
