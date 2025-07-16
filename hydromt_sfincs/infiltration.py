@@ -145,7 +145,16 @@ class SfincsInfiltration(ModelComponent):
 
         # update config: remove default inf and set qinf map
         self.model.config.set(f"{mname}file", f"sfincs.{mname}")
-        # FIXME remove default or other infiltration methods?
+        # set spatially unfiform qinf to None in config
+        self.model.config.set("qinf", None)
+
+        # loop over other infiltration methods ATTRS and remove them from config when present
+        for name in _ATTRS.keys():
+            if name != mname:
+                # get from config
+                if self.model.config.get(f"{name}file", None) is not None:
+                    logger.info(f"Removing {name}file from model config.")
+                    self.model.config.set(f"{name}file", None)
 
     # Function to create curve number for SFINCS
     def create_cn(self, cn, antecedent_moisture="avg", reproj_method="med"):
@@ -201,8 +210,17 @@ class SfincsInfiltration(ModelComponent):
         da_scs.attrs.update(**_ATTRS.get(mname, {}))
         self.model.grid.set(da_scs, name=mname)
         # update config:
-        # FIXME remove default infiltration values and set scs map??
         self.model.config.set(f"{mname}file", f"sfincs.{mname}")
+        # set spatially unfiform qinf to None in config
+        self.model.config.set("qinf", None)
+
+        # loop over other infiltration methods ATTRS and remove them from config when present
+        for name in _ATTRS.keys():
+            if name != mname:
+                # get from config
+                if self.model.config.get(f"{name}file", None) is not None:
+                    logger.info(f"Removing {name}file from model config.")
+                    self.model.config.set(f"{name}file", None)
 
     # Function to create curve number for SFINCS including recovery via saturated hydraulic conductivity [mm/hr]
     def create_cn_with_recovery(
@@ -340,5 +358,13 @@ class SfincsInfiltration(ModelComponent):
             # update config: set maps
             self.model.config.set(f"{name}file", f"sfincs.{name}")  # give it to SFINCS
 
-        # Remove qinf variable in sfincs
-        # FIXME should we remove other infiltration variables?
+        # set spatially unfiform qinf to None in config
+        self.model.config.set("qinf", None)
+
+        # loop over other infiltration methods ATTRS and remove them from config when present
+        for name in _ATTRS.keys():
+            if name not in names:
+                # get from config
+                if self.model.config.get(f"{name}file", None) is not None:
+                    logger.info(f"Removing {name}file from model config.")
+                    self.model.config.set(f"{name}file", None)

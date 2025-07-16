@@ -148,7 +148,7 @@ class SfincsGrid(GridComponent):
         """
         # check if in read mode and initialize grid
         self.root._assert_read_mode()
-        self._initialize_grid(skip_read=True)
+        # self._initialize_grid(skip_read=True)
 
         # first update grid from config
         self.update_grid_from_config()

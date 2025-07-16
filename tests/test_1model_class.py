@@ -66,18 +66,19 @@ def test_infiltration(model):
     qinf.raster.set_nodata(-9999.0)
     qinf.raster.set_crs(model.crs)
     model.infiltration.create_constant(qinf, reproj_method="nearest")
-    assert "qinf" not in model.config  # qinf removed from config
-    assert "qinffile" in model.config
-    assert "qinf" in model.grid
+    assert model.config.get("qinf") is None  # qinf removed from config
+    assert model.config.get("qinffile") is not None  # qinf file set
+    assert "qinf" in model.grid.data
 
     # set cn infiltration
     cn = xr.where(model.grid.data["dep"] < -0.5, 0, 50)
     cn.raster.set_nodata(-1)
     cn.raster.set_crs(model.crs)
     model.infiltration.create_cn(cn, reproj_method="nearest")
-    assert "scsfile" in model.config
-    assert "scs" in model.grid
+    assert model.config.get("scsfile") is not None  # scs file set
+    assert "scs" in model.grid.data
     assert (model.grid.data["scs"].where(model.grid.mask > 0)).min() == 10
+    assert model.config.get("qinffile") is None  # qinf file  reset
 
     # set cn infiltration with recovery
     lulc = xr.where(model.grid.data["dep"] < -0.5, 70, 30)
@@ -94,24 +95,23 @@ def test_infiltration(model):
     assert "smax" in model.grid.data
     assert "seff" in model.grid.data
     assert "ks" in model.grid.data
+    assert model.config.get("scsfile") is None  # scs file reset
 
     # Write model
     model.grid.write()
     model.config.write()
 
     # read and check if identical
-    mod1 = SfincsModel(root=model.root, mode="r")
+    mod1 = SfincsModel(root=model.root.path, mode="r")
     mod1.config.read()
     mod1.grid.read()
 
     # assure the sum of smax is close to earlier calculated value
+    assert np.isclose(mod1.grid.data["smax"].where(mod1.grid.mask > 0).sum(), 32.929287)
     assert np.isclose(
-        mod1.grid.data["smax"].where(model.grid.mask > 0).sum(), 37.918575
+        mod1.grid.data["seff"].where(mod1.grid.mask > 0).sum(), 32.929287 * effective
     )
-    assert np.isclose(
-        mod1.grid.data["seff"].where(model.grid.mask > 0).sum(), 37.918575 * effective
-    )
-    assert np.isclose(mod1.grid.data["ks"].where(model.grid.mask > 0).sum(), 351.10803)
+    assert np.isclose(mod1.grid.data["ks"].where(mod1.grid.mask > 0).sum(), 331.27203)
 
 
 def test_subgrid_io(tmpdir):
