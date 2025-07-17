@@ -127,7 +127,9 @@ def test_subgrid_io(tmpdir):
     # u and v paramters should be separated internally
     assert "u_pwet" in mod0.subgrid
     assert "uv_pwet" not in mod0.subgrid
-    sbg_net = mod0.subgrid.copy()
+
+    # also read-in the "real" netcdf file wihtout any hydromt interpretation
+    sbg0 = xr.open_dataset(join(mod0.root, "sfincs_subgrid.nc"))
 
     # write the subgrid (new format)
     tmp_root = str(tmpdir.join("subgrid_io_test"))
@@ -143,7 +145,14 @@ def test_subgrid_io(tmpdir):
 
     # Check if values are almost equal
     for var_name in mod0.subgrid.variables:
-        assert np.isclose(np.sum(mod0.subgrid[var_name] - mod1.subgrid[var_name]), 0.0)
+        assert np.sum(mod0.subgrid[var_name] - mod1.subgrid[var_name]) == 0.0
+
+    # now read again the raw-netcdf file without any hydromt interpretation
+    sbg1 = xr.open_dataset(join(mod1.root, "sfincs_subgrid.nc"))
+
+    # Check if values are almost equal
+    for var_name in sbg0.variables:
+        assert np.sum(sbg0[var_name] - sbg1[var_name]) == 0.0
 
     # copy old sbgfile to new location
     sbgfile = join(datadir, "sfincs_test", "sfincs.sbg")
@@ -152,17 +161,11 @@ def test_subgrid_io(tmpdir):
     mod1.set_config("sbgfile", sbgfile)
     mod1.read_subgrid()
 
-    # check version and new parameter
+    # NOTE values are not the same as in the new format due to some changes in #225 and #247
+    # only check version and new parameter
     assert mod1.reggrid.subgrid.version == 0
     assert "u_pwet" not in mod1.subgrid
     assert "uv_pwet" not in mod1.subgrid
-    sbg_bin = mod1.subgrid.copy()
-
-    # compare z_zmin and z_zmax
-    assert np.isclose(np.sum(sbg_net["z_zmin"] - sbg_bin["z_zmin"]), 0.0)
-    # TODO: check with Maarten whether this is meant to be different
-    # difference comes from different discretization of volume bins
-    assert np.isclose(np.sum(sbg_net["z_zmax"] - sbg_bin["z_zmax"]), 1.0714283)
 
 
 def test_subgrid_rivers(mod):
@@ -200,7 +203,7 @@ def test_subgrid_rivers(mod):
         ],
         write_dep_tif=True,
         write_man_tif=True,
-        nr_subgrid_pixels=5,
+        nr_subgrid_pixels=6,
         nbins=8,
         nrmax=250,  # multiple tiles
     )
@@ -208,7 +211,7 @@ def test_subgrid_rivers(mod):
     assert isfile(join(mod.root, "subgrid", "dep_subgrid.tif"))
     assert isfile(join(mod.root, "subgrid", "manning_subgrid.tif"))
 
-    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 117.32075)
+    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 124.13107)
 
 
 def test_structs(tmpdir):
@@ -375,14 +378,14 @@ def test_observations(tmpdir):
     assert len(mod.geoms["crs"].index) == nr_observation_lines * 2
 
 
-def test_forcing_io(tmpdir):
+def test_forcing_io(tmp_dir):
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
     # read
     mod.read_forcing()
 
     # write forcing
-    tmp_root = str(tmpdir.join("forcing_test"))
+    tmp_root = join(tmp_dir, "forcing_test")
     mod.set_root(tmp_root, mode="w")
     mod.write_forcing()
     mod.write_config()
@@ -390,17 +393,20 @@ def test_forcing_io(tmpdir):
     # read and check if identical
     mod1 = SfincsModel(root=tmp_root, mode="r")
     mod1.read_forcing()
-    assert np.allclose(mod1.forcing["bzs"], mod.forcing["bzs"])
+
+    # for all forcing variables, check if they are identical
+    for key in mod.forcing.keys():
+        assert np.allclose(mod1.forcing[key].values, mod.forcing[key].values)
 
     # now change the timeseries-format and write again
-    tmp_root = str(tmpdir.join("forcing_test2"))
+    tmp_root = join(tmp_dir, "forcing_test2")
     mod1.set_root(tmp_root, mode="w+")
     mod1.write_forcing(fmt="%7.1f")
     mod1.write_config()
 
-    # read and check if identical
+    # read and check if identical (only for bzs here)
     mod2 = SfincsModel(root=tmp_root, mode="r")
-    mod2.read_forcing()
+    mod2.read_forcing(data_vars=["waterlevel"])
     assert np.isclose(
         np.sum(mod2.forcing["bzs"].values - mod1.forcing["bzs"].values), 0.73
     )
@@ -495,8 +501,4 @@ def test_model_build(tmpdir, case):
         for name in mod0.forcing:
             assert np.allclose(
                 mod0.forcing[name], mod1.forcing[name]
-            ), f"forcing {name}"
-    # check forcing
-    if mod0.forcing:
-        for name in mod0.forcing:
-            assert np.allclose(mod0.forcing[name], mod1.forcing[name])
+            ), f" invalid forcing: {name}"

@@ -6,6 +6,7 @@ as well as some common data conversions.
 import copy
 import io
 import logging
+import os
 from datetime import datetime
 import os
 from pathlib import Path
@@ -56,6 +57,8 @@ __all__ = [
     "rotated_grid",
     "build_overviews",
     "find_uv_indices",
+    "xu_open_dataset",
+    "check_exists_and_lazy",
 ]
 
 logger = logging.getLogger(__name__)
@@ -640,7 +643,9 @@ def read_geoms(fn: Union[str, Path]) -> List[Dict]:
             if cols > 2:
                 for c in col_names[2:]:
                     if np.unique(feat[c]).size == 1:
-                        feat[c] = feat[c]#[0] # TODO: check if we want [0] in case of reading existing weir file!
+                        feat[c] = feat[
+                            c
+                        ]  # [0] # TODO: check if we want [0] in case of reading existing weir file!
             feats.append(feat)
     return feats
 
@@ -1462,3 +1467,30 @@ def xu_open_dataset(*args, **kwargs):
     """
     with xr.open_dataset(*args, **kwargs) as ds:
         return xu.UgridDataset(ds)
+
+
+def check_exists_and_lazy(ds, file_name):
+    """If a netcdf file is read lazily, the file can not be overwritten.
+    This function checks whether the file already exists, if so, it checks
+    if the data is lazily loaded. If so, data should be loaded before writing.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset, xu.UgridDataset
+        The dataset to be written to a netcdf file.
+    file_name : str
+        The path to the netcdf file.
+    """
+    if not os.path.exists(file_name):
+        return
+
+    # Check for lazy loading
+    lazy_vars = [not data_array._in_memory for data_array in ds.data_vars.values()]
+
+    # if all(lazy_vars):
+    #     return  # All variables are lazy-loaded, skip writing?
+
+    if any(lazy_vars):
+        ds.load()  # Some variables are lazy-loaded, load them into memory
+        ds.close()
+    return

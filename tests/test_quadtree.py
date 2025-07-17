@@ -1,6 +1,14 @@
+from datetime import datetime
+import gc
 from os.path import join, dirname, abspath
 import numpy as np
+import os
+from pathlib import Path
 from pyproj import CRS
+import pytest
+import shutil
+import xarray as xr
+import xugrid as xu
 
 from hydromt_sfincs import SfincsModel
 from hydromt import Model
@@ -41,3 +49,65 @@ def test_quadtree_io(tmp_path):
     assert np.sum(qtr2.data["msk"].values) == 4298
     # assert the dep variable is the same
     assert np.sum(qtr.data["dep"].values) == np.sum(qtr2.data["dep"].values)
+
+    # remove the files, they both get locked because of loading after closure?
+    os.remove(fn)
+
+
+def test_xu_open_dataset_delete(tmp_dir):
+    # copy the test data to the tmp_path
+    fn = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
+    fn_copy = tmp_dir.joinpath("sfincs.nc")
+
+    shutil.copy(fn, fn_copy)
+
+    ds = xu.open_dataset(fn_copy)
+    ds.close()
+    os.remove(fn_copy)
+
+
+def test_xu_open_dataset_overwrite(tmp_dir):
+    # copy the test data to the tmp_path
+    fn = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
+    fn_copy = tmp_dir.joinpath("sfincs.nc")
+
+    shutil.copy(fn, fn_copy)
+
+    # lazy load
+    ds = xu.open_dataset(fn_copy)
+    ds.close()
+
+    # now perform a computation on the dataset
+    ds = ds.ugrid.to_dataset()
+
+    # NOTE this will raise a PermissionError because the file is lazily loaded
+    with pytest.raises(PermissionError):
+        ds.to_netcdf(fn_copy)
+
+    # # Now perform the check and lazy loading check
+    # utils.check_exists_and_lazy(ds, fn_copy)
+
+    # # Try to overwrite the file
+    # ds.to_netcdf(fn_copy)
+
+    # # Remove the copied file
+    # os.remove(fn_copy)
+
+
+# def test_lazy_xu_open_dataset(tmp_dir):
+#     # copy the test data to the tmp_path
+#     fn = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
+#     fn_copy = tmp_dir.joinpath("sfincs.nc")
+
+#     shutil.copy(fn, fn_copy)
+
+#     # lazy load
+#     ds = xu.open_dataset(fn_copy)
+#     ds.close()
+
+#     # further down the code, you would like to obtain the data
+#     ds.load().close()
+
+#     # now it can't be removed
+#     with pytest.raises(PermissionError):
+#         os.remove(fn_copy)

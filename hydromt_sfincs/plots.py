@@ -1,4 +1,5 @@
 """Plotting functions for SFINCS model data."""
+
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
