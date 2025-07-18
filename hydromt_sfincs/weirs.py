@@ -315,31 +315,28 @@ class SfincsWeirs(ModelComponent):
 
             if zb.isnull().any():
 
-                # get id of nan point
+                # get id and coordinates of nan point(s)
                 nan_id = zb.isnull().idxmax().values
-
-                # Interpolate missing values
-                zb = zb.interpolate_na(dim="index", method='nearest')
 
                 xtmp = s["x"][nan_id]
                 ytmp = s["y"][nan_id]
 
                 logger.warning(f"Weir point {xtmp} {ytmp} has no elevation data. Filled now with nearest non-NaN value. Please check your input!")
 
+                # Interpolate missing values
+                zb = zb.interpolate_na(dim="index", method='nearest')
+
+                # Forward fill to handle NaN at the ends
+                zb = zb.ffill(dim="index")
+                
+                # Backward fill to handle NaN at the ends
+                zb = zb.bfill(dim="index")
+
                 if zb.isnull().any():
-                    # might still fail if first or last point is NaN, because then we need to extrapolate
-
-                    # Forward fill to handle NaN at the ends
-                    zb = zb.ffill(dim="index")
-                    
-                    # Backward fill to handle NaN at the ends
-                    zb = zb.bfill(dim="index")
-
-                    if zb.isnull().any():
-                        # if still didn't work, raise error        
-                        raise ValueError(
-                            "Filling NaN values failed for weirs "
-                        )
+                    # if still didn't work, raise error        
+                    raise ValueError(
+                        "Filling NaN values failed for weirs "
+                    )
 
             s["z"] = zb.values
 
