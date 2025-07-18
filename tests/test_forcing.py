@@ -12,7 +12,7 @@ def test_setup_meteo_latlon(tmp_dir):
 
     # create a model instance with geographical coordinates
     mod = SfincsModel(root=tmp_dir, mode="w+")
-    mod.setup_grid_from_region(
+    mod.grid.create_from_region(
         region={"geom": region}, crs=4326, res=0.01, rotated=False, dec_origin=3
     )
     mod.setup_mask_active(mask=region)

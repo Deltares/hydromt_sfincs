@@ -34,7 +34,7 @@ def test_grid_io(model_config, tmp_path):
     # even though properties are set, the grid is not created yet
     assert model.grid._data is None
 
-    # now read the grid
+    # now read the grid, this reads the mask and dep
     model.grid.read()
 
     # check the shape model.grid.data
@@ -42,7 +42,7 @@ def test_grid_io(model_config, tmp_path):
 
     # check the variables in the grid
     assert "mask" in model.grid.data.variables
-    assert len(model.grid.data.data_vars) == 1
+    assert len(model.grid.data.data_vars) == 2
 
     # now write the model grid
     model.root.set(tmp_path, mode="w+")
