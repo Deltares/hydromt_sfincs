@@ -1303,7 +1303,7 @@ def _downscale_floodmap_da(
             )
 
         # Get the no_data value from the indices array
-        nan_val_indices = int(indices.raster.nodata)  # indices.attrs["_FillValue"]
+        nan_val_indices = indices.raster.nodata  # indices.attrs["_FillValue"]
         # Set the no_data mask
         no_data_mask = indices == nan_val_indices
 

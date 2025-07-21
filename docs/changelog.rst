@@ -6,6 +6,14 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+v1.2.1 (27-6-2025)
+==================
+** This release contains some minor bugfixes and updates**
+
+Fixed
+-----
+- removed instable behavior of np.size() for .size (#264)
+
 v1.2.0 (23-4-2025)
 ==================
 **This release contains new functionality on reading/writing quadtree models and some minor bugfixes and updates.
