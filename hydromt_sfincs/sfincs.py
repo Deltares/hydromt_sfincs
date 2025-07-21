@@ -1743,23 +1743,22 @@ class SfincsModel(GridModel):
         height: Union[float, List[float]] = None,
         merge: bool = True,
     ):
-        """Setup storage volume.
+        """Add storage volumes to the model.
 
         Adds model layer:
-        * **vol** map: storage volume for green infrastructure
+        * **vol** map: storage volume [m3] for green infrastructure
 
         Parameters
         ----------
-        storage_locs : str, Path
-            Path, data source name, or geopandas object to storage location polygon or point geometry file.
-            Optional "volume" or "height" attributes can be provided to set the storage volume.
-        volume : float, optional
-            Storage volume [m3], by default None
-        height : float, optional
-            Storage height [m], by default None
+        storage_locs : str, Path, or gpd.GeoDataFrame
+            Storage location polygons or points. May include "volume" or "height" attributes.
+        volume : float or list of float, optional
+            Storage volume [m3] per location. Used if not present in storage_locs.
+        height : float or list of float, optional
+            Storage height [m] per polygon. Used if not present in storage_locs.
+            Only applies to polygons.
         merge : bool, optional
-            If True, merge with existing storage volumes, by default True.
-
+            If True, add to existing storage volumes. Default is True.
         """
 
         # read, clip and reproject
