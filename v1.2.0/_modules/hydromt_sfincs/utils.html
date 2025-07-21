@@ -1595,7 +1595,12 @@
                                     <span class="s2">&quot;xc&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">x_coords</span><span class="p">),</span>
                                 <span class="p">},</span>
                             <span class="p">)</span>
+
+                    <span class="c1"># make sure the nodata value and crs are set</span>
                     <span class="n">block_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">())</span>
+                    <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">block_indices</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">indices_src</span><span class="o">.</span><span class="n">nodata</span><span class="p">))</span>
+                        <span class="n">block_indices</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">indices_src</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_epsg</span><span class="p">())</span>
 
                     <span class="n">block_hmax</span> <span class="o">=</span> <span class="n">_downscale_floodmap_da</span><span class="p">(</span>
                         <span class="n">zsmax</span><span class="o">=</span><span class="n">zsmax</span><span class="p">,</span>
