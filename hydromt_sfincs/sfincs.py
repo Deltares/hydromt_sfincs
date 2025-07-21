@@ -1743,7 +1743,8 @@ class SfincsModel(GridModel):
         height: Union[float, List[float]] = None,
         merge: bool = True,
     ):
-        """Add storage volumes to the model.
+        """Add storage volumes to the model. Note that this functionality only works for models
+        with subgrid tables (regular grid or quadtree).
 
         Adds model layer:
         * **vol** map: storage volume [m3] for green infrastructure
