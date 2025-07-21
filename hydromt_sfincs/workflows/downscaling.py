@@ -8,11 +8,11 @@ from rasterio.windows import Window
 from hydromt_sfincs.utils import build_overviews
 
 if TYPE_CHECKING:
-    from hydromt_sfincs.sfincs import SfincsModel
+    from hydromt_sfincs import SfincsModel
 
 
 def make_index_cog(
-    model: SfincsModel,
+    model: "SfincsModel",
     indices_fn: Union[str, Path],
     topobathy_fn: Union[str, Path],
     nrmax: int = 2000,

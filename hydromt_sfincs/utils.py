@@ -1113,7 +1113,12 @@ def downscale_floodmap(
                                     "xc": (("y", "x"), x_coords),
                                 },
                             )
+
+                    # make sure the nodata value and crs are set
                     block_dep.raster.set_crs(src.crs.to_epsg())
+                    if indices is not None:
+                        block_indices.raster.set_nodata(int(indices_src.nodata))
+                        block_indices.raster.set_crs(indices_src.crs.to_epsg())
 
                     block_hmax = _downscale_floodmap_da(
                         zsmax=zsmax,
@@ -1298,7 +1303,7 @@ def _downscale_floodmap_da(
             )
 
         # Get the no_data value from the indices array
-        nan_val_indices = indices.raster.nodata  # indices.attrs["_FillValue"]
+        nan_val_indices = int(indices.raster.nodata)  # indices.attrs["_FillValue"]
         # Set the no_data mask
         no_data_mask = indices == nan_val_indices
 

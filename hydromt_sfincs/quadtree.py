@@ -238,7 +238,7 @@ class QuadtreeGrid:
             nm_lev.append(mm * nmax_lev[level] + nn)
 
         # Initialize index array
-        indx = np.full(np.shape(x), -999, dtype=np.uint32)
+        indx = np.full(np.shape(x), -999, dtype=np.int32)
 
         for ilev in range(nr_refinement_levels):
             nmax = nmax_lev[ilev]
