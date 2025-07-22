@@ -627,7 +627,7 @@
 <td><p>Read geometry files and save to <cite>geoms</cite> attribute.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read_grid.html#hydromt_sfincs.SfincsModel.read_grid" title="hydromt_sfincs.SfincsModel.read_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_grid</span></code></a>([data_vars])</p></td>
-<td><p>Read SFINCS binary grid files and save to <cite>grid</cite> attribute.</p></td>
+<td><p>Read SFINCS binary grid files and save to <cite>grid</cite> attribute or read netcdf quadtree files and store in <cite>quadtree</cite> attribute.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_maps</span></code>([fn])</p></td>
 <td><p>Read model map at &lt;root&gt;/&lt;fn&gt; and add to maps component.</p></td>
@@ -777,7 +777,7 @@
 <td><p>Setup open boundary cells (mask=3) where a river flows out of the model domain.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_storage_volume.html#hydromt_sfincs.SfincsModel.setup_storage_volume" title="hydromt_sfincs.SfincsModel.setup_storage_volume"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_storage_volume</span></code></a>(storage_locs[, volume, ...])</p></td>
-<td><p>Setup storage volume.</p></td>
+<td><p>Add storage volumes to the model.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.setup_structures.html#hydromt_sfincs.SfincsModel.setup_structures" title="hydromt_sfincs.SfincsModel.setup_structures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_structures</span></code></a>(structures, stype[, dep, ...])</p></td>
 <td><p>Setup thin dam or weir structures.</p></td>
@@ -828,7 +828,7 @@
 <td><p>Write geoms to bnd/src/obs xy files and thd/weir structure files.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.write_grid.html#hydromt_sfincs.SfincsModel.write_grid" title="hydromt_sfincs.SfincsModel.write_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_grid</span></code></a>([data_vars])</p></td>
-<td><p>Write SFINCS grid to binary files including map index file.</p></td>
+<td><p>Write SFINCS grid to binary files including map index file for regular models, and to netcdf files for quadtree models.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_maps</span></code>([fn])</p></td>
 <td><p>Write maps to netcdf file at &lt;root&gt;/&lt;fn&gt;.</p></td>

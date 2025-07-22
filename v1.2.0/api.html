@@ -625,7 +625,7 @@
 <td><p>Setup drainage structures.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_storage_volume.html#hydromt_sfincs.SfincsModel.setup_storage_volume" title="hydromt_sfincs.SfincsModel.setup_storage_volume"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_storage_volume</span></code></a>(storage_locs)</p></td>
-<td><p>Setup storage volume.</p></td>
+<td><p>Add storage volumes to the model.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.setup_waterlevel_forcing.html#hydromt_sfincs.SfincsModel.setup_waterlevel_forcing" title="hydromt_sfincs.SfincsModel.setup_waterlevel_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.setup_waterlevel_forcing</span></code></a>([...])</p></td>
 <td><p>Setup waterlevel forcing.</p></td>
@@ -782,10 +782,10 @@
 <td><p>Add data to grid.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.read_grid.html#hydromt_sfincs.SfincsModel.read_grid" title="hydromt_sfincs.SfincsModel.read_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.read_grid</span></code></a>([data_vars])</p></td>
-<td><p>Read SFINCS binary grid files and save to <cite>grid</cite> attribute.</p></td>
+<td><p>Read SFINCS binary grid files and save to <cite>grid</cite> attribute or read netcdf quadtree files and store in <cite>quadtree</cite> attribute.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.write_grid.html#hydromt_sfincs.SfincsModel.write_grid" title="hydromt_sfincs.SfincsModel.write_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.write_grid</span></code></a>([data_vars])</p></td>
-<td><p>Write SFINCS grid to binary files including map index file.</p></td>
+<td><p>Write SFINCS grid to binary files including map index file for regular models, and to netcdf files for quadtree models.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="_generated/hydromt_sfincs.SfincsModel.read_subgrid.html#hydromt_sfincs.SfincsModel.read_subgrid" title="hydromt_sfincs.SfincsModel.read_subgrid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SfincsModel.read_subgrid</span></code></a>()</p></td>
 <td><p>Read SFINCS subgrid file and add to <cite>subgrid</cite> attribute.</p></td>

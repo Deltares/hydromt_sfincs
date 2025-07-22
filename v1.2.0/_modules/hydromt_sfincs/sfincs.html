@@ -480,6 +480,7 @@
     <span class="p">}</span>
     <span class="n">_FORCING_SPW</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;spiderweb&quot;</span><span class="p">:</span> <span class="s2">&quot;spw&quot;</span><span class="p">}</span>  <span class="c1"># TODO add read and write functions</span>
     <span class="n">_MAPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">,</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="s2">&quot;scs&quot;</span><span class="p">,</span> <span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="s2">&quot;smax&quot;</span><span class="p">,</span> <span class="s2">&quot;seff&quot;</span><span class="p">,</span> <span class="s2">&quot;ks&quot;</span><span class="p">,</span> <span class="s2">&quot;vol&quot;</span><span class="p">]</span>
+    <span class="n">_QT_MAPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;vol&quot;</span><span class="p">]</span>
     <span class="n">_STATES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;rst&quot;</span><span class="p">,</span> <span class="s2">&quot;ini&quot;</span><span class="p">]</span>
     <span class="n">_FOLDERS</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">_CLI_ARGS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;setup_grid_from_region&quot;</span><span class="p">,</span> <span class="s2">&quot;res&quot;</span><span class="p">:</span> <span class="s2">&quot;setup_grid_from_region&quot;</span><span class="p">}</span>
@@ -2205,23 +2206,23 @@
         <span class="n">height</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup storage volume.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add storage volumes to the model. Note that this functionality only works for models</span>
+<span class="sd">        with subgrid tables (regular grid or quadtree).</span>
 
 <span class="sd">        Adds model layer:</span>
-<span class="sd">        * **vol** map: storage volume for green infrastructure</span>
+<span class="sd">        * **vol** map: storage volume [m3] for green infrastructure</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        storage_locs : str, Path</span>
-<span class="sd">            Path, data source name, or geopandas object to storage location polygon or point geometry file.</span>
-<span class="sd">            Optional &quot;volume&quot; or &quot;height&quot; attributes can be provided to set the storage volume.</span>
-<span class="sd">        volume : float, optional</span>
-<span class="sd">            Storage volume [m3], by default None</span>
-<span class="sd">        height : float, optional</span>
-<span class="sd">            Storage height [m], by default None</span>
+<span class="sd">        storage_locs : str, Path, or gpd.GeoDataFrame</span>
+<span class="sd">            Storage location polygons or points. May include &quot;volume&quot; or &quot;height&quot; attributes.</span>
+<span class="sd">        volume : float or list of float, optional</span>
+<span class="sd">            Storage volume [m3] per location. Used if not present in storage_locs.</span>
+<span class="sd">        height : float or list of float, optional</span>
+<span class="sd">            Storage height [m] per polygon. Used if not present in storage_locs.</span>
+<span class="sd">            Only applies to polygons.</span>
 <span class="sd">        merge : bool, optional</span>
-<span class="sd">            If True, merge with existing storage volumes, by default True.</span>
-
+<span class="sd">            If True, add to existing storage volumes. Default is True.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># read, clip and reproject</span>
@@ -2252,7 +2253,28 @@
             <span class="n">da_vol</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">da_vol</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
             <span class="c1"># update config</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">merge</span> <span class="ow">and</span> <span class="s2">&quot;vol&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                <span class="n">da_vol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;vol&quot;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">da_vol</span> <span class="o">=</span> <span class="n">xu</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+            <span class="c1"># add storage volumes form gdf to da_vol</span>
+            <span class="n">da_vol</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">add_storage_volume_qt</span><span class="p">(</span>
+                <span class="n">da_vol</span><span class="p">,</span>
+                <span class="n">gdf</span><span class="p">,</span>
+                <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
+                <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">mname</span> <span class="o">=</span> <span class="s2">&quot;vol&quot;</span>
+            <span class="n">da_vol</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">mname</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_vol</span>
+            <span class="c1"># update config</span>
+            <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">)[</span><span class="s2">&quot;standard_name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">.nc&quot;</span><span class="p">)</span></div>
 
 
     <span class="c1">### FORCING</span>
@@ -3404,16 +3426,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">read_config</span><span class="p">(</span><span class="n">epsg</span><span class="o">=</span><span class="n">epsg</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">epsg</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;epsg&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Please specify epsg to read this model&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">read_grid</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
-            <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;qtrfile&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">&quot;sfincs.nc&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.nc path </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2"> does not exist&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="n">fn</span><span class="p">)</span>
-            <span class="c1"># remove grid from api and model</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_API</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_grid</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">read_subgrid</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">read_forcing</span><span class="p">()</span>
@@ -3425,12 +3438,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the complete model schematization and configuration to file.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Writing model data to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="c1"># TODO - add check for subgrid &amp; quadtree &gt; give flags to self.write_grid() and self.write_config()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">write_grid</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
-            <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;qtrfile&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="n">fn</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_grid</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_subgrid</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_geoms</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_forcing</span><span class="p">()</span>
@@ -3448,7 +3456,8 @@
 <div class="viewcode-block" id="SfincsModel.read_grid">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read_grid.html#hydromt_sfincs.SfincsModel.read_grid">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">read_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS binary grid files and save to `grid` attribute.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS binary grid files and save to `grid` attribute</span>
+<span class="sd">        or read netcdf quadtree files and store in `quadtree` attribute.</span>
 <span class="sd">        Filenames are taken from the `config` attribute (i.e. input file).</span>
 
 <span class="sd">        Parameters</span>
@@ -3456,75 +3465,107 @@
 <span class="sd">        data_vars : Union[List, str], optional</span>
 <span class="sd">            List of data variables to read, by default None (all)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>  <span class="c1"># avoid reading grid twice</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_assert_read_mode</span>
 
-        <span class="n">da_lst</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">data_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_vars</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">data_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_vars</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Grid type is not set. Please read configuration file (sfincs.inp) first.&quot;</span>
+            <span class="p">)</span>
 
-        <span class="c1"># read index file</span>
-        <span class="n">ind_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;indexfile&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">&quot;sfincs.ind&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">ind_fn</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.ind path </span><span class="si">{</span><span class="n">ind_fn</span><span class="si">}</span><span class="s2"> does not exist&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>  <span class="c1"># avoid reading grid twice</span>
 
-        <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;msk&quot;</span><span class="p">:</span> <span class="s2">&quot;u1&quot;</span><span class="p">}</span>
-        <span class="n">mvs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;msk&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">read_ind</span><span class="p">(</span><span class="n">ind_fn</span><span class="o">=</span><span class="n">ind_fn</span><span class="p">)</span>
+            <span class="n">da_lst</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">data_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_vars</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">data_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_vars</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data_vars</span><span class="p">:</span>
-                <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
-                    <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span>
-                    <span class="p">)</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file not found at </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                        <span class="k">continue</span>
-                    <span class="n">dtype</span> <span class="o">=</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;f4&quot;</span><span class="p">)</span>
-                    <span class="n">mv</span> <span class="o">=</span> <span class="n">mvs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">)</span>
-                    <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">read_map</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">mv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-                    <span class="n">da_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">da</span><span class="p">)</span>
-            <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">da_lst</span><span class="p">)</span>
-            <span class="n">epsg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;epsg&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">epsg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">epsg</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+            <span class="c1"># read index file</span>
+            <span class="n">ind_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;indexfile&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">&quot;sfincs.ind&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">ind_fn</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.ind path </span><span class="si">{</span><span class="n">ind_fn</span><span class="si">}</span><span class="s2"> does not exist&quot;</span><span class="p">)</span>
 
-            <span class="c1"># TODO - fix this properly; but to create overlays in GUIs,</span>
-            <span class="c1"># we always convert regular grids to a UgridDataArray</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span> <span class="o">=</span> <span class="n">QuadtreeGrid</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rotation&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># This is a rotated regular grid</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">UgridDataArray</span><span class="o">.</span><span class="n">from_structured</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="s2">&quot;xc&quot;</span><span class="p">,</span> <span class="s2">&quot;yc&quot;</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">UgridDataArray</span><span class="o">.</span><span class="n">from_structured</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+            <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;msk&quot;</span><span class="p">:</span> <span class="s2">&quot;u1&quot;</span><span class="p">}</span>
+            <span class="n">mvs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;msk&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">read_ind</span><span class="p">(</span><span class="n">ind_fn</span><span class="o">=</span><span class="n">ind_fn</span><span class="p">)</span>
 
-            <span class="c1"># keep some metadata maps from gis directory</span>
-            <span class="n">fns</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">,</span> <span class="s2">&quot;*.tif&quot;</span><span class="p">))</span>
-            <span class="n">fns</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">fn</span>
-                <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">fns</span>
-                <span class="k">if</span> <span class="n">basename</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data_vars</span>
-            <span class="p">]</span>
-            <span class="k">if</span> <span class="n">fns</span><span class="p">:</span>
-                <span class="n">ds</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">open_mfraster</span><span class="p">(</span><span class="n">fns</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data_vars</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+                        <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file not found at </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                            <span class="k">continue</span>
+                        <span class="n">dtype</span> <span class="o">=</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;f4&quot;</span><span class="p">)</span>
+                        <span class="n">mv</span> <span class="o">=</span> <span class="n">mvs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">)</span>
+                        <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">read_map</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">mv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+                        <span class="n">da_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">da</span><span class="p">)</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">da_lst</span><span class="p">)</span>
+                <span class="n">epsg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;epsg&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">epsg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">epsg</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
-                <span class="n">ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+                <span class="c1"># TODO - fix this properly; but to create overlays in GUIs,</span>
+                <span class="c1"># we always convert regular grids to a UgridDataArray</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span> <span class="o">=</span> <span class="n">QuadtreeGrid</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rotation&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span>
+                <span class="p">):</span>  <span class="c1"># This is a rotated regular grid</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">UgridDataArray</span><span class="o">.</span><span class="n">from_structured</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="s2">&quot;xc&quot;</span><span class="p">,</span> <span class="s2">&quot;yc&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">UgridDataArray</span><span class="o">.</span><span class="n">from_structured</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+
+                <span class="c1"># keep some metadata maps from gis directory</span>
+                <span class="n">fns</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">,</span> <span class="s2">&quot;*.tif&quot;</span><span class="p">))</span>
+                <span class="n">fns</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">fn</span>
+                    <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">fns</span>
+                    <span class="k">if</span> <span class="n">basename</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data_vars</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="n">fns</span><span class="p">:</span>
+                    <span class="n">ds</span> <span class="o">=</span> <span class="n">hydromt</span><span class="o">.</span><span class="n">open_mfraster</span><span class="p">(</span><span class="n">fns</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+                    <span class="n">ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;qtrfile&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">&quot;sfincs.nc&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.nc path </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2"> does not exist&quot;</span><span class="p">)</span>
+            <span class="c1"># check which seperate data variables should be read</span>
+            <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">data_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_QT_MAPS</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_vars</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">data_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_vars</span><span class="p">)</span>
+            <span class="n">variables</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">data_vars</span><span class="p">:</span>
+                <span class="n">fn_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">.nc&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn_var</span><span class="p">):</span>
+                    <span class="n">variables</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="n">var</span><span class="p">,</span> <span class="s2">&quot;file_name&quot;</span><span class="p">:</span> <span class="n">fn_var</span><span class="p">})</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="n">variables</span><span class="p">)</span>
+            <span class="c1"># remove grid from api and model</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_API</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="SfincsModel.write_grid">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write_grid.html#hydromt_sfincs.SfincsModel.write_grid">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SFINCS grid to binary files including map index file.</span>
-<span class="sd">        Filenames are taken from the `config` attribute (i.e. input file).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SFINCS grid to binary files including map index file for regular models,</span>
+<span class="sd">        and to netcdf files for quadtree models. Filenames are taken from the `config`</span>
+<span class="sd">        attribute (i.e. input file).</span>
 
 <span class="sd">        If `write_gis` property is True, all grid variables are written to geotiff</span>
-<span class="sd">        files in a &quot;gis&quot; subfolder.</span>
+<span class="sd">        files in a &quot;gis&quot; subfolder (for regular models).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -3533,38 +3574,54 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_assert_write_mode</span>
 
-        <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;msk&quot;</span><span class="p">:</span> <span class="s2">&quot;u1&quot;</span><span class="p">}</span>  <span class="c1"># default to f4</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data_vars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="s2">&quot;msk&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">:</span>
-            <span class="c1"># make sure orientation is S-&gt;N</span>
-            <span class="n">ds_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span>
-            <span class="k">if</span> <span class="n">ds_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">ds_out</span> <span class="o">=</span> <span class="n">ds_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">flipud</span><span class="p">()</span>
-            <span class="n">mask</span> <span class="o">=</span> <span class="n">ds_out</span><span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
+            <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;msk&quot;</span><span class="p">:</span> <span class="s2">&quot;u1&quot;</span><span class="p">}</span>  <span class="c1"># default to f4</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data_vars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="s2">&quot;msk&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">:</span>
+                <span class="c1"># make sure orientation is S-&gt;N</span>
+                <span class="n">ds_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span>
+                <span class="k">if</span> <span class="n">ds_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">ds_out</span> <span class="o">=</span> <span class="n">ds_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">flipud</span><span class="p">()</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">ds_out</span><span class="p">[</span><span class="s2">&quot;msk&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Write binary map indices based on mask.&quot;</span><span class="p">)</span>
-            <span class="n">ind_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;indexfile&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">write_ind</span><span class="p">(</span><span class="n">ind_fn</span><span class="o">=</span><span class="n">ind_fn</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Write binary map indices based on mask.&quot;</span><span class="p">)</span>
+                <span class="n">ind_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;indexfile&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">write_ind</span><span class="p">(</span><span class="n">ind_fn</span><span class="o">=</span><span class="n">ind_fn</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># write all maps</span>
-                <span class="n">data_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ds_out</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># write all maps</span>
+                    <span class="n">data_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAPS</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ds_out</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_vars</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">data_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_vars</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Write binary map files: </span><span class="si">{</span><span class="n">data_vars</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data_vars</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="c1"># do not write depfile if subgrid is used</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;dep&quot;</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;manning&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">subgrid</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">write_map</span><span class="p">(</span>
+                        <span class="n">map_fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                        <span class="n">data</span><span class="o">=</span><span class="n">ds_out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                        <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
+                        <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;f4&quot;</span><span class="p">),</span>
+                    <span class="p">)</span>
+
+            <span class="c1"># TODO implement something like this for unstructured grids</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span><span class="s2">&quot;grid&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;qtrfile&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="c1"># check which data variables should be written separately</span>
+            <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">data_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_QT_MAPS</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_vars</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="n">data_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_vars</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Write binary map files: </span><span class="si">{</span><span class="n">data_vars</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data_vars</span><span class="p">:</span>
-                <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="c1"># do not write depfile if subgrid is used</span>
-                <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;dep&quot;</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;manning&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">subgrid</span><span class="p">:</span>
-                    <span class="k">continue</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">reggrid</span><span class="o">.</span><span class="n">write_map</span><span class="p">(</span>
-                    <span class="n">map_fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-                    <span class="n">data</span><span class="o">=</span><span class="n">ds_out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
-                    <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
-                    <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;f4&quot;</span><span class="p">),</span>
-                <span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_gis</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span><span class="s2">&quot;grid&quot;</span><span class="p">)</span></div>
+            <span class="n">variables</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">data_vars</span><span class="p">:</span>
+                <span class="n">fn_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">fn_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">variables</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="n">var</span><span class="p">,</span> <span class="s2">&quot;file_name&quot;</span><span class="p">:</span> <span class="n">fn_var</span><span class="p">})</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">quadtree</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="n">variables</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SfincsModel.read_subgrid">

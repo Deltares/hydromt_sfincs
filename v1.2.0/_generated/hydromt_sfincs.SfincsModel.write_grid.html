@@ -559,10 +559,11 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.write_grid">
 <span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">write_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.13)"><span class="pre">List</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.write_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.write_grid" title="Link to this definition">#</a></dt>
-<dd><p>Write SFINCS grid to binary files including map index file.
-Filenames are taken from the <cite>config</cite> attribute (i.e. input file).</p>
+<dd><p>Write SFINCS grid to binary files including map index file for regular models,
+and to netcdf files for quadtree models. Filenames are taken from the <cite>config</cite>
+attribute (i.e. input file).</p>
 <p>If <cite>write_gis</cite> property is True, all grid variables are written to geotiff
-files in a “gis” subfolder.</p>
+files in a “gis” subfolder (for regular models).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>data_vars</strong> (<em>Union</em><em>[</em><em>List</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em><em>, </em><em>optional</em>) – List of data variables to write, by default None (all)</p>
