@@ -5,36 +5,29 @@ SfincsModel class
 # %% Import packages
 from __future__ import annotations
 
-import glob
 import logging
 import os
-from os.path import abspath, basename, dirname, isabs, isfile, join
-from pathlib import Path
+from os.path import dirname, join
 from typing import Any, Dict, List, Tuple, Union, Literal
 
 import geopandas as gpd
 import hydromt
 import numpy as np
-import pandas as pd
 import xarray as xr
 import xugrid as xu
 from hydromt.model import Model
-from hydromt.gis.vector import GeoDataArray, GeoDataset
-from hydromt.model.processes.meteo import da_to_timedelta
 from pyproj import CRS
-from shapely.geometry import LineString, box
-from xugrid.core.wrap import UgridDataArray
 
-from hydromt_sfincs import DATADIR, plots, utils, workflows
+from hydromt_sfincs import DATADIR, plots, utils
 
 # %% Import model components
 from hydromt.model import Model
 
 # Input component
-from hydromt_sfincs.config import SfincsConfig
+from hydromt_sfincs.components.config import SfincsConfig
 
 # Regular Grid components
-from hydromt_sfincs.grid import (
+from hydromt_sfincs.components.grid import (
     SfincsGrid,
     SfincsMask,
     SfincsElevation,
@@ -46,7 +39,7 @@ from hydromt_sfincs.grid import (
 )
 
 # Quadtree components
-from hydromt_sfincs.quadtree import (
+from hydromt_sfincs.components.quadtree import (
     QuadtreeGrid,
     QuadtreeMask,
     SfincsQuadtreeSubgridTable,
@@ -54,7 +47,7 @@ from hydromt_sfincs.quadtree import (
 )
 
 # Geomatries/structures components
-from hydromt_sfincs.geometries import (
+from hydromt_sfincs.components.geometries import (
     SfincsCrossSections,
     SfincsDrainageStructures,
     SfincsObservationPoints,
@@ -64,7 +57,7 @@ from hydromt_sfincs.geometries import (
 )
 
 # Boundary conditions / forcing components
-from hydromt_sfincs.forcing import (
+from hydromt_sfincs.components.forcing import (
     SfincsBoundaryConditions,
     SfincsDischargePoints,
     SfincsPrecipitation,
@@ -75,9 +68,7 @@ from hydromt_sfincs.forcing import (
 )
 
 # output / visualization types:
-from hydromt_sfincs.output import SfincsOutput
-
-# from hydromt_sfincs.plots import SfincsPlots
+from hydromt_sfincs.components.output import SfincsOutput
 
 __all__ = ["SfincsModel"]
 __hydromt_eps__ = ["SfincsModel"]  # core entrypoints

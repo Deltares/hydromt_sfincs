@@ -232,8 +232,8 @@ class SfincsConfig(ModelComponent):
             # Save to config (store relative name if under root)
             try:
                 relative_path = full_path.relative_to(root_path)
-                # NOTE In Python, if you want to convert a WindowsPath 
-                # object to a string without the double backslashes (\\), 
+                # NOTE In Python, if you want to convert a WindowsPath
+                # object to a string without the double backslashes (\\),
                 # you can use the as_posix() method instead of 'str'
                 self.set(key, relative_path.as_posix())
             # If no relative path found, then use the full path:
