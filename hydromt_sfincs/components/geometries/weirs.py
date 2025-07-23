@@ -1,14 +1,15 @@
 import logging
+import os
+from os.path import join
+from pathlib import Path
+from typing import TYPE_CHECKING, Union
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from pathlib import Path
-from typing import TYPE_CHECKING, Union
-import os
-from os.path import join
-
 from hydromt.model.components import ModelComponent
+
 from hydromt_sfincs import utils
 
 if TYPE_CHECKING:

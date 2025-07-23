@@ -1,7 +1,7 @@
 import xarray as xr
 
-from hydromt.model.components import SpatialDatasetsComponent
 from hydromt.model import Model
+from hydromt.model.components import SpatialDatasetsComponent
 
 
 class SfincsOutput(SpatialDatasetsComponent):

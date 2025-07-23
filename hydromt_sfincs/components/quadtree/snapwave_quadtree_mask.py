@@ -1,18 +1,18 @@
 import logging
 import os
+import warnings
+from typing import TYPE_CHECKING
+
 import numpy as np
+import shapely
+import xarray as xr
+import xugrid as xu
 from matplotlib import path
 from pyproj import Transformer
-import shapely
-from typing import TYPE_CHECKING
-import xugrid as xu
-import xarray as xr
-import warnings
 
 np.warnings = warnings
 import geopandas as gpd
 import pandas as pd
-
 from hydromt.model.components import ModelComponent
 
 # optional dependency

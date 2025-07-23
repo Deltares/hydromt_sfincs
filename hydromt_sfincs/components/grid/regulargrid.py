@@ -7,16 +7,14 @@ from os.path import isfile, join
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Union
 
+import geopandas as gpd
 import numpy as np
 import xarray as xr
-import geopandas as gpd
 from affine import Affine
-from pyproj import CRS, Transformer
-from shapely.geometry import LineString
-
-
 from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
+from pyproj import CRS, Transformer
+from shapely.geometry import LineString
 
 from hydromt_sfincs import utils
 from hydromt_sfincs.workflows.tiling import int2png, tile_window

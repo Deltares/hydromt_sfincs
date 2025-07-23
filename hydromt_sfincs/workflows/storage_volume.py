@@ -1,11 +1,10 @@
 import logging
-from typing import Union, List
+from typing import List, Union
 
 import geopandas as gpd
 import numpy as np
 import xarray as xr
 import xugrid as xu
-
 from hydromt.gis import _gis_utils as gis_utils
 
 logger = logging.getLogger(__name__)

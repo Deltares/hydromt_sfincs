@@ -1,10 +1,10 @@
 """HydroMT SFINCS workflows"""
 
-from .landuse import *
 from .bathymetry import *
+from .curvenumber import *
 from .discharge import *
 from .flwdir import *
+from .landuse import *
 from .merge import *
-from .tiling import *
-from .curvenumber import *
 from .storage_volume import *
+from .tiling import *

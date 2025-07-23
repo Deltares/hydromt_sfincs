@@ -1,16 +1,17 @@
+from pathlib import Path
+from typing import List, Union
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import xarray as xr
-from pathlib import Path
-from typing import Union, List
 import shapely
-from pyproj import Transformer
+import xarray as xr
+from hydromt.model import Model
 
 # from tabulate import tabulate
-
 from hydromt.model.components import ModelComponent
-from hydromt.model import Model
+from pyproj import Transformer
+
 from hydromt_sfincs import utils
 
 

@@ -1,13 +1,15 @@
 from os.path import isfile
+
 import numpy as np
 import pandas as pd
 import xarray as xr
 
 import hydromt
-from hydromt.model.components import SpatialDatasetsComponent
 from hydromt.model import Model
-from hydromt_sfincs import utils
+from hydromt.model.components import SpatialDatasetsComponent
 from hydromt.model.processes.meteo import da_to_timedelta
+
+from hydromt_sfincs import utils
 
 # %% Original HydroMT-SFINCS setup_ functions:
 # setup_precip_forcing

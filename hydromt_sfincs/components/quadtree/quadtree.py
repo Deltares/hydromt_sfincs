@@ -10,9 +10,8 @@ import pandas as pd
 import shapely
 import xarray as xr
 import xugrid as xu
-from pyproj import CRS, Transformer
-
 from hydromt.model.components import ModelComponent
+from pyproj import CRS, Transformer
 
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 

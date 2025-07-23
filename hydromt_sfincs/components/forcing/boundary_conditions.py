@@ -1,18 +1,20 @@
+from pathlib import Path
+from typing import List, Union
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import xarray as xr
-from pathlib import Path
-from typing import Union, List
-import shapely
 from pyproj import Transformer
-
-from hydromt.model.components import ModelComponent
-from hydromt.model import Model
-from hydromt_sfincs import utils
+import shapely
+import xarray as xr
 
 # Are we now importing from CHT packages ?!
 from cht_tide import predict
+from hydromt.model import Model
+from hydromt.model.components import ModelComponent
+
+from hydromt_sfincs import utils
+
 from .deltares_ini import IniStruct
 
 

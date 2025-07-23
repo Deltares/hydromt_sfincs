@@ -2,8 +2,8 @@ import logging
 from typing import TYPE_CHECKING, List
 
 import numpy as np
-
 from hydromt.model.components import ModelComponent
+
 from hydromt_sfincs import workflows
 
 if TYPE_CHECKING:

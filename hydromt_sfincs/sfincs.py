@@ -12,28 +12,27 @@ from typing import Dict, List, Tuple, Union
 
 import geopandas as gpd
 import numpy as np
+from pyproj import CRS
 import xarray as xr
 import xugrid as xu
-from hydromt.model import Model
-from pyproj import CRS
-
-from hydromt_sfincs import DATADIR, plots, utils
 
 # %% Import model components
 from hydromt.model import Model
+
+from hydromt_sfincs import DATADIR, plots, utils
 
 # Input component
 from hydromt_sfincs.components.config import SfincsConfig
 
 # Regular Grid components
 from hydromt_sfincs.components.grid import (
-    SfincsGrid,
-    SfincsMask,
     SfincsElevation,
-    SfincsRoughness,
+    SfincsGrid,
     SfincsInfiltration,
-    SfincsStorageVolume,
     SfincsInitialConditions,
+    SfincsMask,
+    SfincsRoughness,
+    SfincsStorageVolume,
     SfincsSubgridTable,
 )
 
@@ -45,25 +44,25 @@ from hydromt_sfincs.components.quadtree import (
     SnapWaveQuadtreeMask,
 )
 
-# Geomatries/structures components
-from hydromt_sfincs.components.geometries import (
-    SfincsCrossSections,
-    SfincsDrainageStructures,
-    SfincsObservationPoints,
-    SfincsThinDams,
-    SfincsWeirs,
-    SfincsWaveMakers,
-)
-
 # Boundary conditions / forcing components
 from hydromt_sfincs.components.forcing import (
     SfincsBoundaryConditions,
     SfincsDischargePoints,
     SfincsPrecipitation,
     SfincsPressure,
+    SfincsRivers,
     SfincsWind,
     SnapWaveBoundaryConditions,
-    SfincsRivers,
+)
+
+# Geomatries/structures components
+from hydromt_sfincs.components.geometries import (
+    SfincsCrossSections,
+    SfincsDrainageStructures,
+    SfincsObservationPoints,
+    SfincsThinDams,
+    SfincsWaveMakers,
+    SfincsWeirs,
 )
 
 # output / visualization types:

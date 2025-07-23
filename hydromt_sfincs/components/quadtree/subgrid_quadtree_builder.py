@@ -5,13 +5,12 @@ Created on Mon Mar 03 2025
 
 @author: ormondt
 """
-import numpy as np
-from pyproj import CRS
-
-import xarray as xr
 import time
 
+import numpy as np
+import xarray as xr
 from numba import njit
+from pyproj import CRS
 
 from hydromt_sfincs.workflows.subgrid import *
 

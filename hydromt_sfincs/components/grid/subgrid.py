@@ -10,10 +10,9 @@ from typing import TYPE_CHECKING, List
 import numpy as np
 import rasterio
 import xarray as xr
+from hydromt.model.components import ModelComponent
 from numba import njit
 from rasterio.windows import Window
-
-from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import utils, workflows
 from hydromt_sfincs.workflows.subgrid import *

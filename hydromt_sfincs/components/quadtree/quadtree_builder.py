@@ -1,15 +1,14 @@
-import numpy as np
 import time
+import warnings
+
+import numpy as np
 import xarray as xr
+import xugrid as xu
 from matplotlib import path
 from pyproj import CRS
 from scipy.interpolate import RegularGridInterpolator
-
 from shapely.geometry import Polygon
 from shapely.prepared import prep
-
-import xugrid as xu
-import warnings
 
 np.warnings = warnings
 

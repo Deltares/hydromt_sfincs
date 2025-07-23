@@ -125,6 +125,7 @@ class IniStruct:
 
     def write(self, file_name):
         import datetime
+
         import numpy as np
 
         try:

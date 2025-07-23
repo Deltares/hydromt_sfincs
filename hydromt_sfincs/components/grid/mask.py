@@ -2,15 +2,13 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
-
-import numpy as np
 import geopandas as gpd
+import numpy as np
 import pandas as pd
+from hydromt.model.components import ModelComponent
+from pyflwdir.regions import region_area
 from scipy import ndimage
 
-from pyflwdir.regions import region_area
-
-from hydromt.model.components import ModelComponent
 from hydromt_sfincs import utils
 
 # optional dependency

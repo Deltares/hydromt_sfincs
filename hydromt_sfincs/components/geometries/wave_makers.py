@@ -1,13 +1,14 @@
 import logging
-import geopandas as gpd
-from shapely.geometry import LineString
-import pandas as pd
-from pathlib import Path
-from typing import TYPE_CHECKING, Union
 import os
 from os.path import join
+from pathlib import Path
+from typing import TYPE_CHECKING, Union
 
+import geopandas as gpd
+import pandas as pd
 from hydromt.model.components import ModelComponent
+from shapely.geometry import LineString
+
 from hydromt_sfincs import utils
 
 if TYPE_CHECKING:

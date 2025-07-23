@@ -9,7 +9,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Union, Optional
+from typing import Dict, List, Optional, Tuple, Union
 
 import geopandas as gpd
 import numpy as np
@@ -24,9 +24,9 @@ from rasterio.windows import Window
 from shapely.geometry import LineString, Polygon
 
 import hydromt
+from hydromt._io import _write_xy as write_xy
 from hydromt.data_catalog.drivers import RasterioDriver
 from hydromt.gis._gis_utils import _zoom_to_overview_level
-from hydromt._io import _write_xy as write_xy
 
 __all__ = [
     "read_binary_map",
