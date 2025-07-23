@@ -14,9 +14,8 @@ from pyproj import CRS, Transformer
 
 from hydromt.model.components import MeshComponent, ModelComponent
 from hydromt_sfincs.utils import xu_open_dataset
-from hydromt_sfincs.subgrid import SubgridTableQuadtree
 
-from hydromt_sfincs.quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
+from hydromt_sfincs.quadtree import build_quadtree_xugrid, cut_inactive_cells
 
 # optional dependency
 try:
@@ -45,8 +44,6 @@ class QuadtreeGrid(ModelComponent):
         self.data: xu.UgridDataset = None
         self._data: xu.UgridDataset = None
         self.version = 0
-        # Subgrid should be separate model component
-        # self.subgrid = SubgridTableQuadtree()
         self.datashader_dataframe = pd.DataFrame()
 
         super().__init__(

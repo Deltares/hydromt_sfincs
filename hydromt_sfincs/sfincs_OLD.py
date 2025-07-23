@@ -28,7 +28,7 @@ from hydromt_sfincs import DATADIR, plots, utils, workflows
 from hydromt_sfincs.quadtree import QuadtreeGrid
 from hydromt_sfincs.regulargrid import RegularGrid
 from hydromt_sfincs.config_variables import SfincsInput
-from hydromt_sfincs.subgrid import SubgridTableRegular
+from hydromt_sfincs.grid.subgrid import SubgridTableRegular
 
 __all__ = ["SfincsModel"]
 

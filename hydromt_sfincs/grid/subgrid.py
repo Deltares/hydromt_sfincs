@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(f"hydromt.{__name__}")
 
 
-class SubgridTableRegular(ModelComponent):
+class SfincsSubgridTable(ModelComponent):
     def __init__(
         self,
         model: "SfincsModel",
@@ -1016,39 +1016,39 @@ class SubgridTableRegular(ModelComponent):
             setattr(self, name, ds_sbg[name].values)
 
 
-class SubgridTableQuadtree:
-    # This code is still slow as it does not use numba
+# class SubgridTableQuadtree:
+#     # This code is still slow as it does not use numba
 
-    def __init__(self, version=0):
-        # A quadtree subgrid table contains data for EACH cell, u and v point in the quadtree mesh,
-        # regardless of the mask value!
-        self.version = version
-        self.data = None
+#     def __init__(self, version=0):
+#         # A quadtree subgrid table contains data for EACH cell, u and v point in the quadtree mesh,
+#         # regardless of the mask value!
+#         self.version = version
+#         self.data = None
 
-    def read(self, file_name):
-        """Read XArray dataset from netcdf file"""
+#     def read(self, file_name):
+#         """Read XArray dataset from netcdf file"""
 
-        if not os.path.isfile(file_name):
-            logger.info("File " + file_name + " does not exist!")
-            return
+#         if not os.path.isfile(file_name):
+#             logger.info("File " + file_name + " does not exist!")
+#             return
 
-        # Read from netcdf file with xarray
-        with xr.open_dataset(file_name) as ds:
-            # Transpose to ensure bins is first dimension (convert from FORTRAN convention in SFINCS to Python)
-            ds = ds.transpose("levels", "npuv", "np")
-            self.data = ds
+#         # Read from netcdf file with xarray
+#         with xr.open_dataset(file_name) as ds:
+#             # Transpose to ensure bins is first dimension (convert from FORTRAN convention in SFINCS to Python)
+#             ds = ds.transpose("levels", "npuv", "np")
+#             self.data = ds
 
-    def write(self, file_name):
-        """Write XArray dataset to netcdf file"""
-        # ensure levels is last dimension to match the FORTRAN convention in SFINCS
-        ds = self.data.transpose("npuv", "np", "levels")
+#     def write(self, file_name):
+#         """Write XArray dataset to netcdf file"""
+#         # ensure levels is last dimension to match the FORTRAN convention in SFINCS
+#         ds = self.data.transpose("npuv", "np", "levels")
 
-        # fix names to match SFINCS convention
-        # ds = ds.rename_vars({"uv_navg": "uv_navg_w", "uv_ffit": "uv_fnfit"})
+#         # fix names to match SFINCS convention
+#         # ds = ds.rename_vars({"uv_navg": "uv_navg_w", "uv_ffit": "uv_fnfit"})
 
-        # before writing, check if the file already exists while data is still lazily loaded
-        utils.check_exists_and_lazy(ds, file_name)
-        ds.to_netcdf(file_name)
+#         # before writing, check if the file already exists while data is still lazily loaded
+#         utils.check_exists_and_lazy(ds, file_name)
+#         ds.to_netcdf(file_name)
 
 
 @njit

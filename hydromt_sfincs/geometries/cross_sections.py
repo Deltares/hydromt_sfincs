@@ -17,20 +17,20 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class SfincsWaveMakers(ModelComponent):
+class SfincsCrossSections(ModelComponent):
     def __init__(
         self,
         model: "SfincsModel",
     ):
-        self._filename: str = "sfincs.wvm"
-        self._data: gpd.GeoDataFrame = None        
+        self._filename: str = "sfincs.crs"
+        self._data: gpd.GeoDataFrame = None
         super().__init__(
             model=model,
         )
 
     @property
     def data(self) -> gpd.GeoDataFrame:
-        """Wavemaker lines data.
+        """Cross-section lines data.
 
         Return geopandas.GeoDataFrame
         """
@@ -48,21 +48,21 @@ class SfincsWaveMakers(ModelComponent):
     # clear
 
     def _initialize(self, skip_read=False) -> None:
-        """Initialize wavemaker lines."""
+        """Initialize cross-section lines."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS wave makers (*.wvm) file"""
+        """Read SFINCS cross-sections (*.crs) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Get absolute file name and set it in config if crsfile is not None
+        # Get absolute file path and set it in config if crsfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "wvmfile", value=filename
+            "crsfile", value=filename
         )
 
         # check if abs_file_path is None or does not exist
@@ -71,7 +71,7 @@ class SfincsWaveMakers(ModelComponent):
         elif not abs_file_path.exists():
             raise FileNotFoundError(f"Cross-sections file not found: {abs_file_path}")
 
-        # Read wvm file
+        # Read crs file
         struct = utils.read_geoms(abs_file_path)
         gdf = utils.linestring2gdf(struct, crs=self.model.crs)
 
@@ -79,19 +79,19 @@ class SfincsWaveMakers(ModelComponent):
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS wave makers (*.wvm) file,
-        and set wvmfile in config (if it was not already set)"""
+        """Write SFINCS cross-sections (*.crs) file,
+        and set crsfile in config (if it was not already set)"""
 
         # Check that data is not empty
         if self.data.empty:
-            logger.info("No wave makers available to write.")
+            logger.info("No cross-sections available to write.")
             return
 
         # Set file name and get absolute path
         abs_file_path = self.model.config.get_set_file_variable(
-            "wvmfile",
+            "crsfile",
             value=filename,
-            default="sfincs.wvm",
+            default="sfincs.crs",
         )
 
         # Change precision of coordinates according to crs
@@ -103,8 +103,8 @@ class SfincsWaveMakers(ModelComponent):
         # Get linestring geometries from gdf
         struct = utils.gdf2linestring(self.data)
 
-        # Write to wvm file
-        utils.write_geoms(abs_file_path, struct, stype="wvm", fmt=fmt)
+        # Write to crs file
+        utils.write_geoms(abs_file_path, struct, stype="crs", fmt=fmt)
 
         # write also as geojson:
         if self.model.write_gis:
@@ -113,80 +113,94 @@ class SfincsWaveMakers(ModelComponent):
             if not os.path.isdir(root):
                 os.makedirs(root)
 
-            self.data.to_file(join(root, f"wvm.geojson"), driver="GeoJSON")
+            self.data.to_file(join(root, f"crs.geojson"), driver="GeoJSON")
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
-        """Set SFINCS wave makers.
+        """Set SFINCS cross-sections.
 
         Arguments
         ---------
         gpd.GeoDataFrame :
             Set geopandas object with LineString geometries.
         merge: bool
-            Merge with existing wave makers. If False, overwrite existing wave makers.
+            Merge with existing thin dams. If False, overwrite existing thin dams.
         **NOTE** - coordinates of LineString geometries in GeoDataFrame need to be in the same CRS as SFINCS model.
         """
 
         if not gdf.geometry.type.isin(["LineString"]).all():
-            raise ValueError("Wave makers must be of type LineString.")
+            raise ValueError("Cross-sections must be of type LineString.")
 
-        # Check if any of the wave makers fall completely outside the model domain
+        # Check that gdf has a name column
+        # if "name" not in gdf.columns:
+        #     raise ValueError("Cross-sections must have a 'name' column.")
+        # FIXME - TL: should we check on this for cross-sections, observation points, weirs and thin dams (too)?
+
+        # Check that all rows have a unique name
+        # if not gdf["name"].is_unique:
+        # raise ValueError("Cross-section names must be unique.")
+        # FIXME - TL: should we check on this for cross-sections, observation points, weirs and thin dams (too)?
+
+        # Check if any of the cross sections fall completely outside the model domain
         # If so, give a warning and remove these lines
         outside = gdf.disjoint(self.model.region)
         if outside.any():
             logger.warning(
-                "Some wave makers fall outside model domain. Removing these lines."
+                "Some cross-sections fall outside model domain. Removing these lines."
             )
             gdf = gdf[~outside]
 
-        # Check if there are any wave makers left
+        # Check if there are any cross sections left
         if gdf.empty:
-            # logger.warning("All wave makers fall outside model domain!")
+            # logger.warning("All cross-sections fall outside model domain!")
             # return
-            raise ValueError("All wave makers fall outside model domain!")
+            raise ValueError("All cross-sections fall outside model domain!")
 
         if merge and self.data is not None:
             gdf0 = self.data
             # add the new data behind the original
             gdf = gpd.GeoDataFrame(pd.concat([gdf0, gdf], ignore_index=True))
-            logger.info("Adding new wave makers to existing ones.")
+            logger.info("Adding new cross-sections to existing ones.")
 
         self._data = gdf  # set gdf in self._data
 
     def create(
-            self, 
-            locations: Union[str, Path, gpd.GeoDataFrame], 
-            merge: bool = True,
-            **kwargs):
-        """Create model wave makers.
-        (old name: none existent)
+        self,
+        locations: Union[str, Path, gpd.GeoDataFrame],
+        merge: bool = True,
+        **kwargs,
+    ):
+        """Create model cross-sections.
+        (old name: setup_observation_lines)
 
         Adds model layers:
 
-        * **wvm** geom: wave makers
+        * **crs** geom: cross-section lines
 
         Arguments
         ---------
         locations: str, Path, gpd.GeoDataFrame
-            Path, data source name, or geopandas object for thin dam locations.
+            Path, data source name, or geopandas object for thin cross-section locations.
         merge: bool, optional
-            If True, merge the new wave makers with the existing ones. By default True.
-        **NOTE** - check whether you have specified the points in the right directional order.            
+            If True, merge the new cross-sections with the existing ones. By default True.
         """
         gdf = self.data_catalog.get_geodataframe(
-            locations, geom=self.model.region, **kwargs,
+            locations,
+            geom=self.model.region,
+            **kwargs,
         ).to_crs(self.model.crs)
 
         # make sure MultiLineString are converted to LineString
         gdf = gdf.explode(index_parts=True).reset_index(drop=True)
 
         if not gdf.geometry.type.isin(["LineString"]).all():
-            raise ValueError("wave makers must be of type LineString.")
-                    
+            raise ValueError("Thin dams must be of type LineString.")
+
         # If Linestring z, e.g. when you put in a geojson with height from a weirfile
         # then get rid of the z component
         if gdf.has_z.any():
-            gdf['geometry'] = gdf['geometry'].apply(lambda geom: LineString([(x, y) for x, y, z in geom.coords]))
+            gdf["geometry"] = gdf["geometry"].apply(
+                lambda geom: LineString([(x, y) for x, y, z in geom.coords])
+            )
 
         self.set(gdf, merge)
 
@@ -194,14 +208,14 @@ class SfincsWaveMakers(ModelComponent):
         self,
         index: Union[list, int],
     ):
-        """Remove one or more wave makers.
+        """Remove one or more cross-sections.
 
         Arguments
         ---------
         index: list, int
-            Specify wave makers to be dropped from GeoDataFrame.
-            If int, drop a single wave maker based on index.
-            If list, drop multiple wave makers based on index.
+            Specify cross-sections to be dropped from GeoDataFrame.
+            If int, drop a single cross-section based on index.
+            If list, drop multiple cross-sections based on index.
         """
         # Turn int or str into list
         if type(index) == int:
@@ -213,33 +227,55 @@ class SfincsWaveMakers(ModelComponent):
 
         # Drop lines from GeoDataFrame
         self._data = self.data.drop(index).reset_index(drop=True)
-        logger.info("Dropping line(s) from wave makers")
+        logger.info("Dropping line(s) from cross-sections")
 
-        # Check if any wave makers are left
+        # Check if any cross sections are left
         if self.data.empty:
-            logger.warning("All wave makers have been removed!")
+            logger.warning("All cross-sections have been removed!")
             # Set crsfile to None
-            self.model.config.set("wvmfile", None)
+            self.model.config.set("crsfile", None)
 
     def clear(self):
-        """Clean GeoDataFrame with wave makers."""
+        """Clean GeoDataFrame with cross sections."""
         self._data = gpd.GeoDataFrame()
-        # Set crsfile to None
-        self.model.config.set("wvmfile", None)
+        # Set crsfile to None in config
+        self.model.config.set("crsfile", None)  # FIXME - TL: do we want that?
 
     # %% DDB GUI focused additional functions:
     # snap_to_grid
     # list_names
+    # delete_line - FIXME - do we want to have this as option to remove a single on by name (string) for weir/observation point/wavemaker?
 
     def snap_to_grid(self):
-        """Returns GeoDataFrame with wave makers snapped to model grid."""
+        """Returns GeoDataFrame with cross-sections snapped to model grid."""
         # FIXME - this probably only works for quadtree grids for now
         snap_gdf = self.model.grid.snap_to_grid(self.data)
         return snap_gdf
 
     def list_names(self):
-        """Give list of names of wave makers."""
-        # The wave makers do not really have names,
-        # but we can use the index and turn into strings
-        names = [str(i + 1) for i in self.data.index]
+        """Give list of names of cross sections."""
+        if self.data.empty:
+            return []
+        names = list(self.data["name"])
         return names
+
+    def delete_line(self, index: Union[int, str]):
+        """Remove one cross-section based on index or name.
+
+        Arguments
+        ---------
+        index: int, str
+            Specify cross-section to be dropped from GeoDataFrame.
+            If int or str, drop a single cross-section based on index or name.
+        """
+
+        # Replace names with indices
+        if type(index) == str:
+            # Find row index of name
+            names = list(self.data.name)
+
+            if index not in names:
+                raise ValueError("Cross section " + index + " not found!")
+
+        self.delete(index)
+        return

@@ -62,7 +62,8 @@ class SfincsThinDams(ModelComponent):
 
         # get absolute file path and set it in config if thdfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "thdfile", value=filename)
+            "thdfile", value=filename
+        )
 
         # check if abs_file_path is None or does not exist
         if abs_file_path is None:
@@ -156,10 +157,11 @@ class SfincsThinDams(ModelComponent):
         self._data = gdf  # set gdf in self._data
 
     def create(
-            self, 
-            locations: Union[str, Path, gpd.GeoDataFrame], 
-            merge: bool = True,
-            **kwargs):
+        self,
+        locations: Union[str, Path, gpd.GeoDataFrame],
+        merge: bool = True,
+        **kwargs,
+    ):
         """Create model thin dams.
         (old name: setup_structures)
 
@@ -175,7 +177,9 @@ class SfincsThinDams(ModelComponent):
             If True, merge the new thin dams with the existing ones. By default True.
         """
         gdf = self.data_catalog.get_geodataframe(
-            locations, geom=self.model.region, **kwargs,
+            locations,
+            geom=self.model.region,
+            **kwargs,
         ).to_crs(self.model.crs)
 
         # make sure MultiLineString are converted to LineString
@@ -183,11 +187,13 @@ class SfincsThinDams(ModelComponent):
 
         if not gdf.geometry.type.isin(["LineString"]).all():
             raise ValueError("Thin dams must be of type LineString.")
-                    
+
         # If Linestring z, e.g. when you put in a geojson with height from a weirfile
         # then get rid of the z component
         if gdf.has_z.any():
-            gdf['geometry'] = gdf['geometry'].apply(lambda geom: LineString([(x, y) for x, y, z in geom.coords]))
+            gdf["geometry"] = gdf["geometry"].apply(
+                lambda geom: LineString([(x, y) for x, y, z in geom.coords])
+            )
 
         self.set(gdf, merge)
 
@@ -241,7 +247,7 @@ class SfincsThinDams(ModelComponent):
     def list_names(self):
         """Give list of names of thin dams."""
         if self.data.empty:
-            return []        
+            return []
         # The thin dams do not really have names,
         # but we can use the index and turn into strings
         names = [str(i + 1) for i in self.data.index]

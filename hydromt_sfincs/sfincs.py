@@ -30,45 +30,48 @@ from hydromt_sfincs import DATADIR, plots, utils, workflows
 # %% Import model components
 from hydromt.model import Model
 
-# Input types
+# Input component
 from hydromt_sfincs.config import SfincsConfig
 
-# Grid types
-from hydromt_sfincs.regulargrid import SfincsGrid
-from hydromt_sfincs.quadtree import QuadtreeGrid
+# Regular Grid components
+from hydromt_sfincs.grid import (
+    SfincsGrid,
+    SfincsMask,
+    SfincsElevation,
+    SfincsRoughness,
+    SfincsInfiltration,
+    SfincsStorageVolume,
+    SfincsInitialConditions,
+    SfincsSubgridTable,
+)
 
-# Map types
-from hydromt_sfincs.mask import SfincsMask
-from hydromt_sfincs.quadtree_mask import QuadtreeMask
-from hydromt_sfincs.snapwave_quadtree_mask import SnapWaveQuadtreeMask
-from hydromt_sfincs.quadtree_subgrid import SfincsQuadtreeSubgridTable
+# Quadtree components
+from hydromt_sfincs.quadtree import (
+    QuadtreeGrid,
+    QuadtreeMask,
+    SfincsQuadtreeSubgridTable,
+    SnapWaveQuadtreeMask,
+)
 
-from hydromt_sfincs.elevation import SfincsElevation
-from hydromt_sfincs.subgrid import SubgridTableRegular
-from hydromt_sfincs.infiltration import SfincsInfiltration
-from hydromt_sfincs.roughness import SfincsRoughness
-from hydromt_sfincs.initial_conditions import SfincsInitialConditions
-from hydromt_sfincs.storage_volume import SfincsStorageVolume
+# Geomatries/structures components
+from hydromt_sfincs.geometries import (
+    SfincsCrossSections,
+    SfincsDrainageStructures,
+    SfincsObservationPoints,
+    SfincsThinDams,
+    SfincsWeirs,
+    SfincsWaveMakers,
+)
 
-# Geoms types
-from hydromt_sfincs.observation_points import SfincsObservationPoints
-from hydromt_sfincs.cross_sections import SfincsCrossSections
-from hydromt_sfincs.weirs import SfincsWeirs
-from hydromt_sfincs.thin_dams import SfincsThinDams
-from hydromt_sfincs.wave_makers import SfincsWaveMakers
-from hydromt_sfincs.drainage_structures import SfincsDrainageStructures
-from hydromt_sfincs.rivers import SfincsRivers
-
-# Forcing types
-from hydromt_sfincs.forcing import SfincsBoundaryConditions
-from hydromt_sfincs.forcing import SfincsDischargePoints
-from hydromt_sfincs.snapwave_boundary_conditions import SnapWaveBoundaryConditions
-
-# from hydromt_sfincs.meteo import SfincsMeteo
+# Boundary conditions / forcing components
 from hydromt_sfincs.forcing import (
+    SfincsBoundaryConditions,
+    SfincsDischargePoints,
     SfincsPrecipitation,
     SfincsPressure,
     SfincsWind,
+    SnapWaveBoundaryConditions,
+    SfincsRivers,
 )
 
 # output / visualization types:
@@ -132,7 +135,7 @@ class SfincsModel(Model):
         self.add_component("infiltration", SfincsInfiltration(self))
         self.add_component("roughness", SfincsRoughness(self))
         self.add_component("storage_volume", SfincsStorageVolume(self))
-        self.add_component("subgrid", SubgridTableRegular(self))
+        self.add_component("subgrid", SfincsSubgridTable(self))
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
 
         # Quadtree

@@ -63,25 +63,26 @@ class SfincsWeirs(ModelComponent):
 
         # get absolute file path and set it in config if weirfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "weirfile", value=filename)
+            "weirfile", value=filename
+        )
 
         # check if abs_file_path is None or does not exist
         if abs_file_path is None:
             return
         elif not abs_file_path.exists():
             raise FileNotFoundError(f"Weir file not found: {abs_file_path}")
-        
+
         # Read weir file:
         struct = utils.read_geoms(abs_file_path)  # =utils.py function
         gdf = utils.linestring2gdf(struct, crs=self.model.crs)  # =utils.py function
 
         # Add to self._data
-        self.set(gdf, merge=False)  
+        self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
         """Write SFINCS weir (*.weir) file,
         and set weirfile in config (if it was not already set)"""
-        
+
         # check that write mode is on
         self.root._assert_write_mode()
 
@@ -167,9 +168,9 @@ class SfincsWeirs(ModelComponent):
         """Create model weir lines.
         (old name: setup_structures)
 
-        If elevation 'z' at weir locations is not provided, it can be calculated 
+        If elevation 'z' at weir locations is not provided, it can be calculated
         from the model elevation directly (dep supplied, but not dz),
-        or from the model elevation plus an additional set elevation 'dz' 
+        or from the model elevation plus an additional set elevation 'dz'
         (dep & dz supplied).
 
         Adds model layers:
@@ -183,10 +184,10 @@ class SfincsWeirs(ModelComponent):
         dep : str, Path, xr.DataArray, optional
             Data source name, Path, or xarray raster object ('elevtn') describing the depth in an
             alternative resolution which is used for sampling the weir.
-            **NOTE** - currently, you can only supply one datasource for dep, 
+            **NOTE** - currently, you can only supply one datasource for dep,
                 or use the -courser- active dep data in self.grid.data if dep not provided,
                 but not your whole datasets_dep list!
-            **NOTE** Tip: use fine resolution dep_subgrid.tif for merged high-res data 
+            **NOTE** Tip: use fine resolution dep_subgrid.tif for merged high-res data
                 in case of using multiple elevation datasets.
         buffer : float, optional
             If provided, describes the distance from the centerline to the foot of the structure.
@@ -206,7 +207,7 @@ class SfincsWeirs(ModelComponent):
 
         if not gdf.geometry.type.isin(["LineString"]).all():
             raise ValueError("Weirs must be of type LineString.")
-        
+
         # expected columns in gdf
         cols = {
             "weir": ["name", "z", "par1", "geometry"],
@@ -221,11 +222,10 @@ class SfincsWeirs(ModelComponent):
                 "Weir structure requires z values, or 'dep' or 'dz' input to determine these on the fly."
             )
         elif dep is not None or dz is not None:
-        
             # determine elevation from dep and dz, if data parsed
             gdf = self.determine_weir_elevation(gdf, dep, buffer, dz)
             # if dep is not provided, the active dep data in self.grid.data is loaded,
-            # within function determine_weir_elevation            
+            # within function determine_weir_elevation
             logger.info("Determined elevations for weir based on elevation data.")
 
         self.set(gdf, merge)
@@ -265,7 +265,7 @@ class SfincsWeirs(ModelComponent):
         """Clean GeoDataFrame with weirs."""
         self._data = gpd.GeoDataFrame()
         # Set weirfile to None in config
-        self.model.config.set("weirfile", None) #FIXME - TL: do we want that?        
+        self.model.config.set("weirfile", None)  # FIXME - TL: do we want that?
 
     # %% HydroMT-SFINCS focused additional functions:
     # determine_weir_elevation
@@ -278,7 +278,7 @@ class SfincsWeirs(ModelComponent):
         dz: float = None,
     ):
         """Determine z values for weir structures.
-        Called by .create() function if dep (/and dz) are provided.        
+        Called by .create() function if dep (/and dz) are provided.
         """
         # taken from old 'sfincs.py'>setup_structures function
 
@@ -314,29 +314,28 @@ class SfincsWeirs(ModelComponent):
                 zb = zb.max(axis=1)
 
             if zb.isnull().any():
-
                 # get id and coordinates of nan point(s)
                 nan_id = zb.isnull().idxmax().values
 
                 xtmp = s["x"][nan_id]
                 ytmp = s["y"][nan_id]
 
-                logger.warning(f"Weir point {xtmp} {ytmp} has no elevation data. Filled now with nearest non-NaN value. Please check your input!")
+                logger.warning(
+                    f"Weir point {xtmp} {ytmp} has no elevation data. Filled now with nearest non-NaN value. Please check your input!"
+                )
 
                 # Interpolate missing values
-                zb = zb.interpolate_na(dim="index", method='nearest')
+                zb = zb.interpolate_na(dim="index", method="nearest")
 
                 # Forward fill to handle NaN at the ends
                 zb = zb.ffill(dim="index")
-                
+
                 # Backward fill to handle NaN at the ends
                 zb = zb.bfill(dim="index")
 
                 if zb.isnull().any():
-                    # if still didn't work, raise error        
-                    raise ValueError(
-                        "Filling NaN values failed for weirs "
-                    )
+                    # if still didn't work, raise error
+                    raise ValueError("Filling NaN values failed for weirs ")
 
             s["z"] = zb.values
 

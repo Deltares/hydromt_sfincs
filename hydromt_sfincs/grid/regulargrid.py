@@ -22,7 +22,6 @@ from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs import workflows, utils
-from hydromt_sfincs.subgrid import SubgridTableRegular
 from hydromt_sfincs.workflows.tiling import int2png, tile_window
 
 if TYPE_CHECKING:
