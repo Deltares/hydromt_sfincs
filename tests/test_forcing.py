@@ -15,7 +15,7 @@ def test_setup_meteo_latlon(tmp_dir):
     mod.grid.create_from_region(
         region={"geom": region}, crs=4326, res=0.01, rotated=False, dec_origin=3
     )
-    mod.setup_mask_active(mask=region)
+    mod.mask.create(mask=region)
 
     # get the forcing data from the data catalog
     ds = mod.data_catalog.get_rasterdataset("era5_hourly_zarr")

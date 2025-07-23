@@ -13,7 +13,7 @@ from hydromt_sfincs import utils
 
 # Are we now importing from CHT packages ?!
 from cht_tide import predict
-from hydromt_sfincs.deltares_ini import IniStruct
+from .deltares_ini import IniStruct
 
 
 class SfincsBoundaryConditions(ModelComponent):

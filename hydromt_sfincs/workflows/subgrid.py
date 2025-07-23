@@ -21,7 +21,7 @@ def subgrid_v_table(
     elevation: np.ndarray,
     dx: float,
     dy: float,
-    nlevels: int,
+    nr_levels: int,
     zvolmin: float,
     max_gradient: float,
 ):
@@ -37,7 +37,7 @@ def subgrid_v_table(
         x-directional cell size (typically not known at this level) [m]
     dy: float
         y-directional cell size (typically not known at this level) [m]
-    nlevels: int
+    nr_levels: int
         number of levels to use for the hypsometric curve
     zvolmin: float
         minimum elevation value to use for volume calculation (typically -20 m)
@@ -69,9 +69,9 @@ def subgrid_v_table(
     volume[1:] = np.cumsum((np.diff(depth) * dx * dy) * np.arange(1, depth.size))
 
     # Resample volumes to discrete levels
-    steps = np.arange(nlevels) / (nlevels - 1)
+    steps = np.arange(nr_levels) / (nr_levels - 1)
     V = steps * volume.max()
-    dvol = volume.max() / (nlevels - 1)
+    dvol = volume.max() / (nr_levels - 1)
     # scipy not supported in numba jit
     # z = interpolate.interp1d(volume, ele_sort)(V)
     z = np.interp(V, volume, ele_sort)
@@ -79,7 +79,7 @@ def subgrid_v_table(
     n = 0
     while (
         dzdh.max() > max_gradient and not (isclose(dzdh.max(), max_gradient))
-    ) and n < nlevels:
+    ) and n < nr_levels:
         # reshape until gradient is satisfactory
         idx = np.where(dzdh == dzdh.max())[0]
         z[idx + 1] = z[idx] + max_gradient * (dvol / a)
@@ -107,18 +107,18 @@ def subgrid_q_table(
     manning : np.ndarray (nr of pixels in one cell) containing subgrid manning roughness values for one grid cell [s m^(-1/3)]
     nr_levels : int, number of vertical levels [-]
     huthresh : float, threshold depth [m]
-    option : int, option to use "old" or "new" method for computing conveyance depth at u/v points
+    option : int, option to use "old" or "new" method for computing conveyance depth at u/v points, recommended to always use 2
     z_zmin_a : float, elevation of lowest pixel in neighboring cell A [m]
     z_zmin_b : float, elevation of lowest pixel in neighboring cell B [m]
-    weight_option : str, weight of q between sides A and B ("min" or "mean")
+    weight_option : str, weight of q between sides A and B ("min" or "mean"), recommended to always use min
 
     Returns
     -------
     zmin : float, minimum elevation [m]
     zmax : float, maximum elevation [m]
     havg : np.ndarray (nr_levels) grid-average depth for vertical levels [m]
-    nrep : np.ndarray (nr_levels) representative roughness for vertical levels [m1/3/s] ?
-    pwet : np.ndarray (nr_levels) wet fraction for vertical levels [-] ?
+    nrep : np.ndarray (nr_levels) representative roughness for vertical levels [m1/3/s]
+    pwet : np.ndarray (nr_levels) wet fraction for vertical levels [-]
     navg : float, grid-average Manning's n [m 1/3 / s]
     ffit : float, fitting coefficient [-]
     zz   : np.ndarray (nr_levels) elevation of vertical levels [m]
@@ -129,7 +129,7 @@ def subgrid_q_table(
     pwet = np.zeros(nr_levels)
     zz = np.zeros(nr_levels)
 
-    n = int(np.size(elevation))  # Nr of pixels in grid cell
+    n = int(elevation.size)  # Nr of pixels in grid cell
     n05 = int(n / 2)  # Nr of pixels in half grid cell
 
     # Sort elevation and manning values by side A and B
@@ -161,7 +161,7 @@ def subgrid_q_table(
 
     # Option can be either 1 ("old") or 2 ("new")
     # Should never use option 1 !
-    option = 2
+    option = option
 
     # Loop through levels
     for ibin in range(nr_levels):
@@ -172,34 +172,30 @@ def subgrid_q_table(
         h = np.maximum(zbin - elevation, 0.0)  # water depth in each pixel
 
         # Side A
-        h_a = np.maximum(
-            zbin - dd_a, 0.0
-        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        h_a = np.maximum(zbin - dd_a, 0.0)
         q_a = h_a ** (5.0 / 3.0) / manning_a  # Determine 'flux' for each pixel
         q_a = np.mean(q_a)  # Grid-average flux through all the pixels
         h_a = np.mean(h_a)  # Grid-average depth through all the pixels
 
         # Side B
-        h_b = np.maximum(
-            zbin - dd_b, 0.0
-        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
+        h_b = np.maximum(zbin - dd_b, 0.0)
         q_b = h_b ** (5.0 / 3.0) / manning_b  # Determine 'flux' for each pixel
         q_b = np.mean(q_b)  # Grid-average flux through all the pixels
         h_b = np.mean(h_b)  # Grid-average depth through all the pixels
 
         # Compute q and h
-        q_all = np.mean(
-            h ** (5.0 / 3.0) / manning
-        )  # Determine grid average 'flux' for each pixel
+        # Determine grid average 'flux' for each pixel
+        q_all = np.mean(h ** (5.0 / 3.0) / manning)
         h_all = np.mean(h)  # grid averaged depth of A and B combined
         q_min = np.minimum(q_a, q_b)
         h_min = np.minimum(h_a, h_b)
 
         if option == 1:
             # Use old 1 option (weighted average of q_ab and q_all) option (min at bottom bin, mean at top bin)
-            w = (ibin) / (
-                nr_levels - 1
-            )  # Weight (increase from 0 to 1 from bottom to top bin)
+            # Weight (increase from 0 to 1 from bottom to top bin)
+            w = (ibin) / (nr_levels - 1)
             q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
             hmean = h_all
             # Wet fraction
@@ -228,9 +224,8 @@ def subgrid_q_table(
                 # Weight increases linearly from 0 to 1 from bottom to top bin use percentage wet in sides A and B
                 w = 2 * np.minimum(pwet_a, pwet_b) / max(pwet_a + pwet_b, 1.0e-9)
                 q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
-                hmean = (
-                    1.0 - w
-                ) * h_min + w * h_all  # Weighted average of h_min and h_all
+                # Weighted average of h_min and h_all
+                hmean = (1.0 - w) * h_min + w * h_all
 
             else:
                 # Take minimum of q_a and q_b
@@ -253,10 +248,9 @@ def subgrid_q_table(
 
     # Determine nfit at zfit
     zfit = zmax + zmax - zmin
-    hfit = (
-        havg_top + zmax - zmin
-    )  # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
+    # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
 
+    hfit = havg_top + zmax - zmin
     # Compute q and navg
     if weight_option == "mean":
         # Use entire uv point
