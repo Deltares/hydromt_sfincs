@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class QuadtreeMask(ModelComponent):
+class SfincsQuadtreeMask(ModelComponent):
     def __init__(
         self,
         model: "SfincsModel",

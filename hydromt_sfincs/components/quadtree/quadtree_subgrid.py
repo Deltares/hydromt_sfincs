@@ -3,7 +3,7 @@ import xarray as xr
 from pathlib import Path
 
 from hydromt.model.components import ModelComponent
-from hydromt_sfincs.subgrid_quadtree_builder import build_subgrid_table_quadtree
+from .subgrid_quadtree_builder import build_subgrid_table_quadtree
 
 logger = logging.getLogger(__name__)
 

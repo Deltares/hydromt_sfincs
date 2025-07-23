@@ -40,8 +40,8 @@ from hydromt_sfincs.components.grid import (
 
 # Quadtree components
 from hydromt_sfincs.components.quadtree import (
-    QuadtreeGrid,
-    QuadtreeMask,
+    SfincsQuadtreeGrid,
+    SfincsQuadtreeMask,
     SfincsQuadtreeSubgridTable,
     SnapWaveQuadtreeMask,
 )
@@ -130,9 +130,9 @@ class SfincsModel(Model):
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
 
         # Quadtree
-        self.add_component("quadtree_grid", QuadtreeGrid(self))
+        self.add_component("quadtree_grid", SfincsQuadtreeGrid(self))
+        self.add_component("quadtree_mask", SfincsQuadtreeMask(self))
         self.add_component("quadtree_subgrid", SfincsQuadtreeSubgridTable(self))
-        self.add_component("quadtree_mask", QuadtreeMask(self))
         self.add_component("quadtree_snapwave_mask", SnapWaveQuadtreeMask(self))
 
         # Geoms types

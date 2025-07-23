@@ -13,9 +13,8 @@ import xugrid as xu
 from pyproj import CRS, Transformer
 
 from hydromt.model.components import MeshComponent, ModelComponent
-from hydromt_sfincs.utils import xu_open_dataset
 
-from hydromt_sfincs.quadtree import build_quadtree_xugrid, cut_inactive_cells
+from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
 # optional dependency
 try:
@@ -35,7 +34,7 @@ logger = logging.getLogger(__name__)
 _QT_MAPS = ["vol"]
 
 
-class QuadtreeGrid(ModelComponent):
+class SfincsQuadtreeGrid(ModelComponent):
     def __init__(
         self,
         model: "SfincsModel",
