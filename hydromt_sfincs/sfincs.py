@@ -60,12 +60,12 @@ from hydromt_sfincs.drainage_structures import SfincsDrainageStructures
 from hydromt_sfincs.rivers import SfincsRivers
 
 # Forcing types
-from hydromt_sfincs.boundary_conditions import SfincsBoundaryConditions
-from hydromt_sfincs.boundary_conditions import SfincsDischargePoints
+from hydromt_sfincs.forcing import SfincsBoundaryConditions
+from hydromt_sfincs.forcing import SfincsDischargePoints
 from hydromt_sfincs.snapwave_boundary_conditions import SnapWaveBoundaryConditions
 
 # from hydromt_sfincs.meteo import SfincsMeteo
-from hydromt_sfincs.boundary_conditions import (
+from hydromt_sfincs.forcing import (
     SfincsPrecipitation,
     SfincsPressure,
     SfincsWind,
