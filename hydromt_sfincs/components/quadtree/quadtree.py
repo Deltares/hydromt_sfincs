@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING, List, Optional, Union
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from pyproj import CRS, Transformer
 import shapely
 import xarray as xr
 import xugrid as xu
+
 from hydromt.model.components import ModelComponent
-from pyproj import CRS, Transformer
 
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 

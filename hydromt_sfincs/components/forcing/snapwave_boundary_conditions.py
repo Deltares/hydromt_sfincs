@@ -4,13 +4,12 @@ from typing import List, Union
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from pyproj import Transformer
 import shapely
 import xarray as xr
-from hydromt.model import Model
 
-# from tabulate import tabulate
+from hydromt.model import Model
 from hydromt.model.components import ModelComponent
-from pyproj import Transformer
 
 from hydromt_sfincs import utils
 

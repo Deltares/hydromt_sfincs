@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Union
 import geopandas as gpd
 import pandas as pd
 import shapely
+
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import utils

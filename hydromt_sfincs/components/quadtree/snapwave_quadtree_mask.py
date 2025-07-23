@@ -3,17 +3,18 @@ import os
 import warnings
 from typing import TYPE_CHECKING
 
+import geopandas as gpd
 import numpy as np
+import pandas as pd
 import shapely
 import xarray as xr
 import xugrid as xu
 from matplotlib import path
 from pyproj import Transformer
 
-np.warnings = warnings
-import geopandas as gpd
-import pandas as pd
 from hydromt.model.components import ModelComponent
+
+np.warnings = warnings
 
 # optional dependency
 try:
