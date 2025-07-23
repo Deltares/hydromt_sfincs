@@ -1,7 +1,6 @@
 """hydroMT plugin for sfincs models."""
 
-from os.path import dirname, join, abspath
-
+from os.path import abspath, dirname, join
 
 __version__ = "2.0.0.dev"
 

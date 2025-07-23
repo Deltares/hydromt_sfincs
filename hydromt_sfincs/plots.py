@@ -1,15 +1,14 @@
 """Plotting functions for SFINCS model data."""
 
+import logging
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
-import logging
 import pandas as pd
 import xarray as xr
 import xugrid as xu
 
 from .utils import get_bounds_vector
-
 
 logger = logging.getLogger(__name__)
 

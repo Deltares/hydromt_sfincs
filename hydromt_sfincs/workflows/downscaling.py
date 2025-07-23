@@ -1,7 +1,7 @@
-import numpy as np
 from pathlib import Path
-from typing import Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
+import numpy as np
 import rasterio
 from rasterio.windows import Window
 

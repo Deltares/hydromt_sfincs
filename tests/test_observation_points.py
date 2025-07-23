@@ -5,6 +5,7 @@ from os.path import isfile, join
 
 from .conftest import TESTDATADIR, TESTMODELDIR
 
+
 def test_observation_points_io(model_config, tmp_path):
     # goal:
     # - test read existing sfincs.obs file
@@ -80,9 +81,9 @@ def test_observation_points_io(model_config, tmp_path):
     model_config.observation_points.clear()
 
     # write as new name, result
-    filename2="sfincs_test2.obs"
+    filename2 = "sfincs_test2.obs"
     model_config.observation_points.write(filename=filename2)
-    
+
     # result should be that no file is created
     assert Path(join(tmp_path, filename2)).exists() == False
 

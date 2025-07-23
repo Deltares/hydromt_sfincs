@@ -5,72 +5,68 @@ SfincsModel class
 # %% Import packages
 from __future__ import annotations
 
-import glob
 import logging
 import os
-from os.path import abspath, basename, dirname, isabs, isfile, join
-from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union, Literal
+from os.path import dirname, join
+from typing import Dict, List, Tuple, Union
 
 import geopandas as gpd
-import hydromt
 import numpy as np
-import pandas as pd
+from pyproj import CRS
 import xarray as xr
 import xugrid as xu
-from hydromt.model import Model
-from hydromt.gis.vector import GeoDataArray, GeoDataset
-from hydromt.model.processes.meteo import da_to_timedelta
-from pyproj import CRS
-from shapely.geometry import LineString, box
-from xugrid.core.wrap import UgridDataArray
-
-from hydromt_sfincs import DATADIR, plots, utils, workflows
 
 # %% Import model components
 from hydromt.model import Model
 
-# Input types
-from hydromt_sfincs.config import SfincsConfig
+from hydromt_sfincs import DATADIR, plots, utils
 
-# Grid types
-from hydromt_sfincs.regulargrid import SfincsGrid
-from hydromt_sfincs.quadtree import QuadtreeGrid
+# Input component
+from hydromt_sfincs.components.config import SfincsConfig
 
-# Map types
-from hydromt_sfincs.mask import SfincsMask
-from hydromt_sfincs.quadtree_mask import QuadtreeMask
-from hydromt_sfincs.snapwave_quadtree_mask import SnapWaveQuadtreeMask
-from hydromt_sfincs.quadtree_subgrid import SfincsQuadtreeSubgridTable
+# Regular Grid components
+from hydromt_sfincs.components.grid import (
+    SfincsElevation,
+    SfincsGrid,
+    SfincsInfiltration,
+    SfincsInitialConditions,
+    SfincsMask,
+    SfincsRoughness,
+    SfincsStorageVolume,
+    SfincsSubgridTable,
+)
 
-from hydromt_sfincs.elevation import SfincsElevation
-from hydromt_sfincs.subgrid import SubgridTableRegular
-from hydromt_sfincs.infiltration import SfincsInfiltration
-from hydromt_sfincs.roughness import SfincsRoughness
-from hydromt_sfincs.initial_conditions import SfincsInitialConditions
-from hydromt_sfincs.storage_volume import SfincsStorageVolume
+# Quadtree components
+from hydromt_sfincs.components.quadtree import (
+    SfincsQuadtreeGrid,
+    SfincsQuadtreeMask,
+    SfincsQuadtreeSubgridTable,
+    SnapWaveQuadtreeMask,
+)
 
-# Geoms types
-from hydromt_sfincs.observation_points import SfincsObservationPoints
-from hydromt_sfincs.cross_sections import SfincsCrossSections
-from hydromt_sfincs.weirs import SfincsWeirs
-from hydromt_sfincs.thin_dams import SfincsThinDams
-from hydromt_sfincs.wave_makers import SfincsWaveMakers
-from hydromt_sfincs.drainage_structures import SfincsDrainageStructures
-from hydromt_sfincs.rivers import SfincsRivers
+# Boundary conditions / forcing components
+from hydromt_sfincs.components.forcing import (
+    SfincsBoundaryConditions,
+    SfincsDischargePoints,
+    SfincsPrecipitation,
+    SfincsPressure,
+    SfincsRivers,
+    SfincsWind,
+    SnapWaveBoundaryConditions,
+)
 
-# Forcing types
-from hydromt_sfincs.boundary_conditions import SfincsBoundaryConditions
-from hydromt_sfincs.discharge_points import SfincsDischargePoints
-from hydromt_sfincs.snapwave_boundary_conditions import SnapWaveBoundaryConditions
-
-# from hydromt_sfincs.meteo import SfincsMeteo
-from hydromt_sfincs.meteo import SfincsPrecipitation, SfincsPressure, SfincsWind
+# Geomatries/structures components
+from hydromt_sfincs.components.geometries import (
+    SfincsCrossSections,
+    SfincsDrainageStructures,
+    SfincsObservationPoints,
+    SfincsThinDams,
+    SfincsWaveMakers,
+    SfincsWeirs,
+)
 
 # output / visualization types:
-from hydromt_sfincs.output import SfincsOutput
-
-# from hydromt_sfincs.plots import SfincsPlots
+from hydromt_sfincs.components.output import SfincsOutput
 
 __all__ = ["SfincsModel"]
 __hydromt_eps__ = ["SfincsModel"]  # core entrypoints
@@ -128,13 +124,13 @@ class SfincsModel(Model):
         self.add_component("infiltration", SfincsInfiltration(self))
         self.add_component("roughness", SfincsRoughness(self))
         self.add_component("storage_volume", SfincsStorageVolume(self))
-        self.add_component("subgrid", SubgridTableRegular(self))
+        self.add_component("subgrid", SfincsSubgridTable(self))
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
 
         # Quadtree
-        self.add_component("quadtree_grid", QuadtreeGrid(self))
+        self.add_component("quadtree_grid", SfincsQuadtreeGrid(self))
+        self.add_component("quadtree_mask", SfincsQuadtreeMask(self))
         self.add_component("quadtree_subgrid", SfincsQuadtreeSubgridTable(self))
-        self.add_component("quadtree_mask", QuadtreeMask(self))
         self.add_component("quadtree_snapwave_mask", SnapWaveQuadtreeMask(self))
 
         # Geoms types

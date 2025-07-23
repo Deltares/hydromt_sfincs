@@ -7,6 +7,7 @@ from shapely.geometry import LineString
 
 from .conftest import TESTDATADIR, TESTMODELDIR
 
+
 def test_wave_makers_io(model_config, tmp_path):
     # goal:
     # - test read existing sfincs.wvm file
@@ -74,17 +75,15 @@ def test_wave_makers_io(model_config, tmp_path):
 
     # reading random nonexisting file > should raise warning
     with pytest.raises(IOError):
-        model_config.wave_makers.read(
-            filename="random/nonexistent/path/sfincs.wvm"
-        )
+        model_config.wave_makers.read(filename="random/nonexistent/path/sfincs.wvm")
 
     # call clear
     model_config.wave_makers.clear()
 
     # write as new name, result
-    filename2="sfincs_test2.wvm"
+    filename2 = "sfincs_test2.wvm"
     model_config.wave_makers.write(filename=filename2)
-    
+
     # result should be that no file is created
     assert Path(join(tmp_path, filename2)).exists() == False
 
@@ -108,7 +107,7 @@ def test_wave_makers_create(model_config):
     # check if sizes are the same
     obs1 = model_config.wave_makers.data
 
-    # after convert multilinestring of obs0 to linestring, 
+    # after convert multilinestring of obs0 to linestring,
     # which is now done as part of wave_makers.create()
     obs0 = obs0.explode()
     # assert obs1.shape == obs0.shape  # FIXME-obs0 has "name" included, while obs1 does not. Problem ?
@@ -120,7 +119,7 @@ def test_wave_makers_create(model_config):
 
     # check if coordinates are similar (due to rounding in ascii sfincs.wvm not exactly the same)
     for geom_a, geom_b in zip(obs0.geometry, obs1.geometry):
-        obs0coords = list(geom_a.coords) 
+        obs0coords = list(geom_a.coords)
         obs1coords = list(geom_b.coords)
         # assert np.isclose(obs0coords.x.values, obs1coords.x.values, rtol=0.001).all()
         assert np.isclose(obs0coords, obs1coords, rtol=0.001).all()

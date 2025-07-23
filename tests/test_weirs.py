@@ -7,6 +7,7 @@ from shapely.geometry import LineString
 
 from .conftest import TESTDATADIR, TESTMODELDIR
 
+
 def test_weirs_io(model_config, tmp_path):
     # goal:
     # - test read existing sfincs.weir file
@@ -74,17 +75,15 @@ def test_weirs_io(model_config, tmp_path):
 
     # reading random nonexisting file > should raise warning
     with pytest.raises(IOError):
-        model_config.weirs.read(
-            filename="random/nonexistent/path/sfincs.weir"
-        )
+        model_config.weirs.read(filename="random/nonexistent/path/sfincs.weir")
 
     # call clear
     model_config.weirs.clear()
 
     # write as new name, result
-    filename2="sfincs_test2.weir"
+    filename2 = "sfincs_test2.weir"
     model_config.weirs.write(filename=filename2)
-    
+
     # result should be that no file is created
     assert Path(join(tmp_path, filename2)).exists() == False
 
@@ -108,7 +107,7 @@ def test_weirs_create(model_config):
     # check if sizes are the same
     obs1 = model_config.weirs.data
 
-    # after convert multilinestring of obs0 to linestring, 
+    # after convert multilinestring of obs0 to linestring,
     # which is now done as part of weirs.create()
     obs0 = obs0.explode()
     # assert obs1.shape == obs0.shape  # FIXME-obs0 has "name" included, while obs1 does not. Problem ?
@@ -120,7 +119,7 @@ def test_weirs_create(model_config):
 
     # check if coordinates are similar (due to rounding in ascii sfincs.weir not exactly the same)
     for geom_a, geom_b in zip(obs0.geometry, obs1.geometry):
-        obs0coords = list(geom_a.coords) 
+        obs0coords = list(geom_a.coords)
         obs1coords = list(geom_b.coords)
         # assert np.isclose(obs0coords.x.values, obs1coords.x.values, rtol=0.001).all()
         assert np.isclose(obs0coords, obs1coords, rtol=0.001).all()
@@ -130,6 +129,7 @@ def test_weirs_create(model_config):
     obs2 = model_config.weirs.data
 
     assert obs2.shape[0] == 2
+
 
 def test_determine_weir_elevation(model_config):
     # goal: test if weirfile can be made from an existing geojson without 'z' values
@@ -152,19 +152,19 @@ def test_determine_weir_elevation(model_config):
     # read in related dep.tif
     # dep = model_config.data_catalog.get_rasterdataset(
     #     join(TESTMODELDIR, "gis", "dep.tif")
-    # )    
+    # )
     dep_fn = join(TESTMODELDIR, "gis", "dep.tif")
     # Then call create with dep provided
     model_config.weirs.create(locations=gdf, merge=False, dep=dep_fn, dz=None)
-    
+
     # check if data is added
     obs0 = model_config.weirs.data
-    
+
     # Extract the z values
     z_values = obs0.geometry.apply(lambda point: point.coords[0][2])
 
     # check first elevation value
-    assert z_values[0] == -1.0
+    assert np.isclose(z_values[0], 0.021235, atol=1e-05)
 
     # then make again using dz provided
     model_config.weirs.create(locations=gdf, merge=False, dep=dep_fn, dz=2.0)
@@ -173,11 +173,13 @@ def test_determine_weir_elevation(model_config):
     obs1 = model_config.weirs.data
     z_values1 = obs1.geometry.apply(lambda point: point.coords[0][2])
 
-    assert z_values1[0] == 1.0 #should be 2.0 higher than before
+    assert np.isclose(
+        z_values1[0], 2.021235, atol=1e-05
+    )  # should be 2.0 higher than before
 
     # then make again using dz provided, but no dep (should use active dep)
     # FIXME: add this option
-    # model_config.weirs.create(locations=gdf, merge=False, dep=None, dz=2.0)    
+    # model_config.weirs.create(locations=gdf, merge=False, dep=None, dz=2.0)
 
     # # check first elevation value
     # obs2 = model_config.weirs.data

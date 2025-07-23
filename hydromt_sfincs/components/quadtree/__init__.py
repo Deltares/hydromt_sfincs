@@ -1,0 +1,5 @@
+# import all components that are stored in the subfolders
+from .quadtree import *
+from .quadtree_mask import *
+from .quadtree_subgrid import *
+from .snapwave_quadtree_mask import *
