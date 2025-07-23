@@ -60,54 +60,58 @@ def test_states(mod):
     assert np.allclose(mod1.states["zsini"], mod.states["zsini"])
 
 
-def test_infiltration(mod):
+def test_infiltration(model):
     # set constant infiltration
-    qinf = xr.where(mod.grid["dep"] < -0.5, -9999, 0.1)
+    qinf = xr.where(model.grid.data["dep"] < -0.5, -9999, 0.1)
     qinf.raster.set_nodata(-9999.0)
-    qinf.raster.set_crs(mod.crs)
-    mod.setup_constant_infiltration(qinf, reproj_method="nearest")
-    assert "qinf" not in mod.config  # qinf removed from config
-    assert "qinffile" in mod.config
-    assert "qinf" in mod.grid
+    qinf.raster.set_crs(model.crs)
+    model.infiltration.create_constant(qinf, reproj_method="nearest")
+    assert model.config.get("qinf") is None  # qinf removed from config
+    assert model.config.get("qinffile") is not None  # qinf file set
+    assert "qinf" in model.grid.data
 
     # set cn infiltration
-    cn = xr.where(mod.grid["dep"] < -0.5, 0, 50)
+    cn = xr.where(model.grid.data["dep"] < -0.5, 0, 50)
     cn.raster.set_nodata(-1)
-    cn.raster.set_crs(mod.crs)
-    mod.setup_cn_infiltration(cn, reproj_method="nearest")
-    assert "scsfile" in mod.config
-    assert "scs" in mod.grid
-    assert (mod.grid["scs"].where(mod.mask > 0)).min() == 10
+    cn.raster.set_crs(model.crs)
+    model.infiltration.create_cn(cn, reproj_method="nearest")
+    assert model.config.get("scsfile") is not None  # scs file set
+    assert "scs" in model.grid.data
+    assert (model.grid.data["scs"].where(model.grid.mask > 0)).min() == 10
+    assert model.config.get("qinffile") is None  # qinf file  reset
 
     # set cn infiltration with recovery
-    lulc = xr.where(mod.grid["dep"] < -0.5, 70, 30)
-    hsg = xr.where(mod.grid["dep"] < 2, 1, 3)
-    ksat = xr.where(mod.grid["dep"] < 1, 0.01, 0.2)
+    lulc = xr.where(model.grid.data["dep"] < -0.5, 70, 30)
+    hsg = xr.where(model.grid.data["dep"] < 2, 1, 3)
+    ksat = xr.where(model.grid.data["dep"] < 1, 0.01, 0.2)
     # create pandas reclass table for lulc and hsg to cn
     reclass_table = pd.DataFrame([[0, 35], [0, 56]], index=[70, 30], columns=[1, 3])
     effective = 0.5
-    mod.setup_cn_infiltration_with_ks(
+    model.infiltration.create_cn_with_recovery(
         lulc=lulc, hsg=hsg, ksat=ksat, reclass_table=reclass_table, effective=effective
     )
 
     # Check if variables are there
-    assert "smax" in mod.grid
-    assert "seff" in mod.grid
-    assert "ks" in mod.grid
+    assert "smax" in model.grid.data
+    assert "seff" in model.grid.data
+    assert "ks" in model.grid.data
+    assert model.config.get("scsfile") is None  # scs file reset
 
     # Write model
-    mod.write_grid()
-    mod.write_config()
+    model.grid.write()
+    model.config.write()
 
     # read and check if identical
-    mod1 = SfincsModel(root=mod.root, mode="r")
+    mod1 = SfincsModel(root=model.root.path, mode="r")
+    mod1.config.read()
+    mod1.grid.read()
 
     # assure the sum of smax is close to earlier calculated value
-    assert np.isclose(mod1.grid["smax"].where(mod.mask > 0).sum(), 37.918575)
+    assert np.isclose(mod1.grid.data["smax"].where(mod1.grid.mask > 0).sum(), 32.929287)
     assert np.isclose(
-        mod1.grid["seff"].where(mod.mask > 0).sum(), 37.918575 * effective
+        mod1.grid.data["seff"].where(mod1.grid.mask > 0).sum(), 32.929287 * effective
     )
-    assert np.isclose(mod1.grid["ks"].where(mod.mask > 0).sum(), 351.10803)
+    assert np.isclose(mod1.grid.data["ks"].where(mod1.grid.mask > 0).sum(), 331.27203)
 
 
 def test_subgrid_io(tmpdir):
@@ -123,7 +127,9 @@ def test_subgrid_io(tmpdir):
     # u and v paramters should be separated internally
     assert "u_pwet" in mod0.subgrid
     assert "uv_pwet" not in mod0.subgrid
-    sbg_net = mod0.subgrid.copy()
+
+    # also read-in the "real" netcdf file wihtout any hydromt interpretation
+    sbg0 = xr.open_dataset(join(mod0.root, "sfincs_subgrid.nc"))
 
     # write the subgrid (new format)
     tmp_root = str(tmpdir.join("subgrid_io_test"))
@@ -139,7 +145,14 @@ def test_subgrid_io(tmpdir):
 
     # Check if values are almost equal
     for var_name in mod0.subgrid.variables:
-        assert np.isclose(np.sum(mod0.subgrid[var_name] - mod1.subgrid[var_name]), 0.0)
+        assert np.sum(mod0.subgrid[var_name] - mod1.subgrid[var_name]) == 0.0
+
+    # now read again the raw-netcdf file without any hydromt interpretation
+    sbg1 = xr.open_dataset(join(mod1.root, "sfincs_subgrid.nc"))
+
+    # Check if values are almost equal
+    for var_name in sbg0.variables:
+        assert np.sum(sbg0[var_name] - sbg1[var_name]) == 0.0
 
     # copy old sbgfile to new location
     sbgfile = join(datadir, "sfincs_test", "sfincs.sbg")
@@ -148,17 +161,11 @@ def test_subgrid_io(tmpdir):
     mod1.set_config("sbgfile", sbgfile)
     mod1.read_subgrid()
 
-    # check version and new parameter
+    # NOTE values are not the same as in the new format due to some changes in #225 and #247
+    # only check version and new parameter
     assert mod1.reggrid.subgrid.version == 0
     assert "u_pwet" not in mod1.subgrid
     assert "uv_pwet" not in mod1.subgrid
-    sbg_bin = mod1.subgrid.copy()
-
-    # compare z_zmin and z_zmax
-    assert np.isclose(np.sum(sbg_net["z_zmin"] - sbg_bin["z_zmin"]), 0.0)
-    # TODO: check with Maarten whether this is meant to be different
-    # difference comes from different discretization of volume bins
-    assert np.isclose(np.sum(sbg_net["z_zmax"] - sbg_bin["z_zmax"]), 1.0714283)
 
 
 def test_subgrid_rivers(mod):
@@ -196,7 +203,7 @@ def test_subgrid_rivers(mod):
         ],
         write_dep_tif=True,
         write_man_tif=True,
-        nr_subgrid_pixels=5,
+        nr_subgrid_pixels=6,
         nbins=8,
         nrmax=250,  # multiple tiles
     )
@@ -204,7 +211,7 @@ def test_subgrid_rivers(mod):
     assert isfile(join(mod.root, "subgrid", "dep_subgrid.tif"))
     assert isfile(join(mod.root, "subgrid", "manning_subgrid.tif"))
 
-    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 117.32075)
+    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 124.13107)
 
 
 def test_structs(tmpdir):
@@ -261,75 +268,109 @@ def test_drainage_structures(tmpdir):
     assert len(mod.geoms["drn"].index) == nr_drainage_structures * 2
 
 
-def test_storage_volume(tmpdir):
-    tmp_root = str(tmpdir.join("storage_volume_test"))
+@pytest.mark.parametrize("case", list(_cases.keys()))
+def test_storage_volume(tmp_dir, case):
+    # define the roots of the models
+    root = join(TESTDATADIR, _cases[case]["example"])
+    tmp_root = join(tmp_dir, "storage_volume_test")
 
-    # create two arbitrary but overlapping polygons
+    # create two aribitrary polygons and a point
     coords1 = [
-        (3.5, 3.5),
-        (6.5, 3.5),
-        (6.5, 6.5),
-        (4.5, 6.5),
-        (4.5, 7.25),
-        (6.5, 7.25),
-        (6.5, 8),
-        (3, 8),
+        (318000.0, 5043000.0),
+        (321000.0, 5043000.0),
+        (321000.0, 5045500.0),
+        (318000.0, 5045500.0),
+        (318000.0, 5043000.0),
     ]
     poly1 = Polygon(coords1)
-    # second polygon which overlaps aprtly with the first but is smaller
-    coords2 = [(6, 3), (7, 3), (7, 4), (6, 4)]
+    coords2 = [
+        (320500.0, 5044500.0),
+        (321500.0, 5044500.0),
+        (321500.0, 5046000.0),
+        (320500.0, 5046000.0),
+        (320500.0, 5044500.0),
+    ]
     poly2 = Polygon(coords2)
+
     # create a geodataframe with the two polygons
-    gdf = gpd.GeoDataFrame({"geometry": [poly1, poly2]}, crs=4326)
+    gdf = gpd.GeoDataFrame({"geometry": [poly1, poly2]}, crs=32633)
     gdf["volume"] = [None, 1000]
 
     # also create an arbitrary point
-    point = Point(5, 6)
-    point_gdf = gpd.GeoDataFrame({"geometry": [point]}, crs=4326)
+    point = Point(320000, 5044000)
+    point_gdf = gpd.GeoDataFrame({"geometry": [point]}, crs=32633)
     point_gdf["volume"] = 20
 
-    # create a sfincs model
-    mod = SfincsModel(root=tmp_root, mode="w+")
-    mod.setup_grid_from_region(region={"bbox": [0, 0, 10, 10]}, res=20000, crs="utm")
+    # read the sfincs model and change the root
+    mod = SfincsModel(root=root, mode="r")
+    mod.read()
+    mod.set_root(tmp_root, mode="w+")
 
     # test setup_storage_volume with polygons
     # one polygon has no volume specifed, the other has a volume of 1000
     # the non-specified gets the volume of the input argument
     mod.setup_storage_volume(storage_locs=gdf, volume=10000)
 
-    assert mod.grid["vol"].sum() == 11000
+    if case == "test1":
+        assert mod.grid["vol"].sum() == 11000
+    elif case == "test2":
+        assert mod.quadtree.data["vol"].sum() == 11000
 
     # test setup_storage_volume with points
     mod.setup_storage_volume(storage_locs=point_gdf, merge=True)
 
-    assert mod.grid["vol"].sum() == 11020
+    if case == "test1":
+        assert mod.grid["vol"].sum() == 11020
+    elif case == "test2":
+        assert mod.quadtree.data["vol"].sum() == 11020
 
-    # now redo the tests with a rotated grid
-    config = mod.config.copy()
-    mod = SfincsModel(root=tmp_root, mode="w+")
+    # write the model to test IO
+    mod.write()
 
-    # get the config from the first model and add a rotation
-    config["rotation"] = 10
-    mod.config.update(config)
-    mod.update_grid_from_config()
+    # read the model again
+    mod1 = SfincsModel(root=tmp_root, mode="r")
+    mod1.read_config()
+    mod1.read_grid(data_vars=["vol"])
 
-    # test setup_storage_volume with
-    # drop volume column from gdf
-    gdf = gdf.drop(columns=["volume"])
-    mod.setup_storage_volume(storage_locs=gdf, volume=[350, 800])
+    # now compare the storage volumes
+    if case == "test1":
+        assert np.isclose(
+            mod1.grid["vol"].raster.mask_nodata().sum().values
+            - mod.grid["vol"].sum().values,
+            0,
+        )
+    elif case == "test2":
+        assert np.isclose(
+            (mod1.quadtree.data["vol"] - mod.quadtree.data["vol"]).sum(), 0
+        )
 
-    # check if the volumes are correct
-    assert np.isclose(mod.grid["vol"].sum(), 1150)
+    # now redo the tests with a rotated grid for the regular grid only
+    if case == "test1":
+        config = mod.config.copy()
+        mod = SfincsModel(root=tmp_root, mode="w+")
 
-    # drop volume column from gdf
-    point_gdf = point_gdf.drop(columns=["volume"])
-    mod.setup_storage_volume(storage_locs=point_gdf, volume=34.5, merge=False)
+        # get the config from the first model and add a rotation
+        config["rotation"] = 10
+        mod.config.update(config)
+        mod.update_grid_from_config()
 
-    assert np.isclose(mod.grid["vol"].sum(), 34.5)
+        # test setup_storage_volume with
+        # drop volume column from gdf
+        gdf = gdf.drop(columns=["volume"])
+        mod.setup_storage_volume(storage_locs=gdf, volume=[350, 800])
 
-    # check index of the point with maximum volume
-    index = mod.grid["vol"].argmax()
-    assert index == 1601
+        # check if the volumes are correct
+        assert np.isclose(mod.grid["vol"].sum(), 1150)
+
+        # drop volume column from gdf
+        point_gdf = point_gdf.drop(columns=["volume"])
+        mod.setup_storage_volume(storage_locs=point_gdf, volume=34.5, merge=False)
+
+        assert np.isclose(mod.grid["vol"].sum(), 34.5)
+
+        # check index of the point with maximum volume
+        index = mod.grid["vol"].argmax()
+        assert index == 2113
 
 
 def test_observations(tmpdir):
@@ -371,14 +412,14 @@ def test_observations(tmpdir):
     assert len(mod.geoms["crs"].index) == nr_observation_lines * 2
 
 
-def test_forcing_io(tmpdir):
+def test_forcing_io(tmp_dir):
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
     # read
     mod.read_forcing()
 
     # write forcing
-    tmp_root = str(tmpdir.join("forcing_test"))
+    tmp_root = join(tmp_dir, "forcing_test")
     mod.set_root(tmp_root, mode="w")
     mod.write_forcing()
     mod.write_config()
@@ -386,17 +427,20 @@ def test_forcing_io(tmpdir):
     # read and check if identical
     mod1 = SfincsModel(root=tmp_root, mode="r")
     mod1.read_forcing()
-    assert np.allclose(mod1.forcing["bzs"], mod.forcing["bzs"])
+
+    # for all forcing variables, check if they are identical
+    for key in mod.forcing.keys():
+        assert np.allclose(mod1.forcing[key].values, mod.forcing[key].values)
 
     # now change the timeseries-format and write again
-    tmp_root = str(tmpdir.join("forcing_test2"))
+    tmp_root = join(tmp_dir, "forcing_test2")
     mod1.set_root(tmp_root, mode="w+")
     mod1.write_forcing(fmt="%7.1f")
     mod1.write_config()
 
-    # read and check if identical
+    # read and check if identical (only for bzs here)
     mod2 = SfincsModel(root=tmp_root, mode="r")
-    mod2.read_forcing()
+    mod2.read_forcing(data_vars=["waterlevel"])
     assert np.isclose(
         np.sum(mod2.forcing["bzs"].values - mod1.forcing["bzs"].values), 0.73
     )
@@ -491,8 +535,4 @@ def test_model_build(tmpdir, case):
         for name in mod0.forcing:
             assert np.allclose(
                 mod0.forcing[name], mod1.forcing[name]
-            ), f"forcing {name}"
-    # check forcing
-    if mod0.forcing:
-        for name in mod0.forcing:
-            assert np.allclose(mod0.forcing[name], mod1.forcing[name])
+            ), f" invalid forcing: {name}"

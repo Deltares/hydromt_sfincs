@@ -39,9 +39,10 @@ jobs:
             miniforge-version: latest
             use-mamba: true
 
+      ## mamba required to install pandoc with nbsphinx (does not work via pip)
       - name: Setup env
         run: |
-          python make_env.py full -p 3.11 -n hydromt-sfincs -o environment-doc.yml
+          python make_env.py doc,examples -p 3.11 -n hydromt-sfincs -o environment-doc.yml
           mamba env create -f environment-doc.yml
           mamba run -n hydromt-sfincs pip install -e .
 

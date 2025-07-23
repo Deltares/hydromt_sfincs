@@ -28,17 +28,27 @@ class SfincsConfig(ModelComponent):
             self._data = SfincsConfigVariables()
         return self._data
 
-    def read(self, filename: str = "sfincs.inp") -> None:
-        """Read a text file and populate SfincsConfig.
-        This function also determines the grid type and updates the grid properties.
-        """
+    @property
+    def filename(self) -> str:
+        """Return the filename of the SFINCS input file."""
+        if not Path(self._filename).is_absolute():
+            # If not absolute, join with the model root path
+            root_path = self.model.root.path.resolve()
+            self._filename = root_path / self._filename
+        return self._filename
 
-        # Set the filename and check if it is an absolute path
-        self._filename = filename
-        if not isabs(filename):
-            self._filename = join(self.root.path, filename)
+    def read(self) -> None:
+        """Read a text file and populate SfincsConfig. This function also determines the grid type and updates the grid properties."""
 
-        with open(self._filename, "r") as fid:
+        self.root._assert_read_mode
+
+        if not exists(self.filename):
+            raise FileNotFoundError(
+                f"SFINCS input file '{self.filename}' does not exist."
+            )
+
+        # Read the file line by line
+        with open(self.filename, "r") as fid:
             lines = fid.readlines()
 
         inp_dict = {}
@@ -75,6 +85,7 @@ class SfincsConfig(ModelComponent):
 
             inp_dict[name] = val
 
+        # FIXME: when reading an existing config, you don't want to start with all possible variables?
         # Convert dictionary to SfincsConfig instance
         self._data = self.data.copy(update=inp_dict)
 
@@ -174,193 +185,80 @@ class SfincsConfig(ModelComponent):
             # drop regular component
             self.model.components.pop("grid", None)
 
-    def get_set_config_file_variable(
-        self, key: str, value: str, default_filename: str
-    ) -> Path:
-        """Return filepath of a variable 'key', and add key-value to config if not present.
-
-        Actions depending on situation:
-         1) input file variable 'key' is given as input
-            a) value is only the name of variable
-                - add to config directly as value
-                - return file_path including root
-            b) value is a path
-                - get file_directory and value_name through split
-                - update the config
-                    - with only value_name if file_directory==root
-                    - otherwise with full path 'value'
-
-         2) variable 'key' already in config:
-             a) get full file_path using get with abs_path=True
-                - In case not a path, then it adds the root
-
-         3) use default name and root if not yet in config:
-             a) set default name
-             b) update the config
-             c) give back full file_path
-
-        Parameters:
-        -----------
-        key (str):
-            Input filename like 'obsfile'
-        value (str, Optional):
-            Optional input filename corresponding 'obsfile',
-            if not supplied, the default_filename will be used.
-        default_filename (str):
-            Default filename for corresponding 'key' like 'sfincs.obs'
-
-        Returns:
-        -----------
-        file_path (Path):
-            Full filename path of the file, as pathlib.Path
-        """
-        # Use pathlib.Path for modern, readable, and Pythonic code.
-
-        # 1) input file variable 'key' is given as input
-        if value is not None:
-            # Split the file path
-            file_directory, value_name = split(value)
-
-            if file_directory == "":  # dealing with only a file name as input
-                # add to config directly as value:
-                self.model.config.set(key, value)
-                # return file_path including root:
-                file_path = Path(abspath(join(self.model.config.root.path, value)))
-
-            else:  # dealing with a path as input
-                # check if path == root, determines how we add to the config:
-                if Path(abspath(file_directory)) == self.model.config.root.path:
-                    # folders are the same, only write value_name:
-                    self.model.config.set(key, value_name)
-                else:
-                    # file_directory different than root
-
-                    # add the full path to config:
-                    self.model.config.set(key, value)
-
-                # value is the full_path already:
-                file_path = Path(value)
-
-        # 2) variable 'key' already in config:
-        elif value is None and self.model.config.get(key) is not None:
-            # If variable 'key' is not None, it has been set already in config
-            # NOTE Assumes that by default all input file variables in
-            # SfincsInputVariables are initiated as None
-
-            # get existing file name as full path (already adds root, in case not a file);
-            file_path = self.model.config.get(
-                key, abs_path=True
-            )  # return is 'Path' directly
-
-        # 3) use default name and root:
-        elif value is None and self.model.config.get(key) is None:
-            # If variable 'key' is None, it has not been added previously to config
-            # Now add the default_filename to config
-
-            self.model.config.set(key, default_filename)
-
-            # And return the full file_path including root
-            file_path = Path(
-                abspath(join(self.model.config.root.path, default_filename))
-            )
-
-        return file_path
-
     def get_set_file_variable(
         self, key: str, value: str | Path = None, default: str = None
     ) -> Path:
-        """Return filepath of a variable 'key', and add key-value to config if not present.
+        """
+        Return the absolute file path for a given 'key'. If 'value' is provided,
+        it is used and saved to config; otherwise, retrieves from config or uses default.
 
         Parameters:
         -----------
-        key (str):
-            Input keyword, e.g. "obsfile"
-        value (str, Optional):
-            Optional input filename, e.g. "sfincs.obs"
-        default (str, Optional):
-            Default filename for corresponding 'key', e.g. 'sfincs.obs'
+        key: str
+            The config key, e.g., "obsfile"
+        value: str | Path, optional
+            Provided file name or path
+        default: str, optional
+            Default file name to use if no config value is found
 
-        When getting the input path to READ the file, default should NOT be provided.
-        When setting the output path to WRITE the file, default SHOULD be provided.
-
-        This method does NOT check if the file exists or not.
+        Recommended Usage:
+        ------------------
+        - For reading a file path from config:
+            `get_set_file_variable("obsfile")`
+        - For reading a custom file path and saving it to config:
+            `get_set_file_variable("obsfile", value="sfincs_custom.obs")`
+        - For setting a file path to config, always provide default value:
+            `get_set_file_variable("obsfile", default="sfincs.obs")`
 
         Returns:
-        -----------
-        file_path (Path):
-            Full filename path of the file, as pathlib.Path
+        --------
+        Path: Absolute file path (not checked for existence)
         """
-
-        # If value is a string, turn it into a Path
-        if isinstance(value, str):
-            value = Path(value)
 
         root_path = self.model.root.path.resolve()
 
+        # Convert to Path if needed
+        if isinstance(value, str):
+            value = Path(value)
+
+        # If value is provided, use it and save to config
         if value is not None:
-            # File name is given as input
-            file_directory = value.parent
-            file_name = value.name
-            if file_directory == ".":
-                # Dealing with only a file name as input
-                # Add to config directly
-                self.model.config.set(key, file_name)
-                # Return file path including root
-                full_file_path = root_path / file_name
-
+            # Input value is provided
+            if not value.is_absolute():
+                full_path = (root_path / value).resolve()
             else:
-                # Dealing with a path as input
-                # Check if path is same as root
-                if Path(file_directory).resolve() == root_path:
-                    # Folders are the same, only write file_name
-                    self.model.config.set(key, file_name)
-                    full_file_path = root_path / file_name
-                else:
-                    # File directory different than root
-                    # Check if file_directory is an absolute or relative path
-                    if Path(file_directory).is_absolute():
-                        # Add the full path to config
-                        self.model.config.set(key, str(value))
-                        full_file_path = value
-                    else:
-                        # Relative path
-                        self.model.config.set(key, str(value))
-                        full_file_path = (root_path / value).resolve()
+                full_path = value
 
-        else:  # Input file name not provided so get it from the config
-            # Get existing file name from config
-            value = self.get(key)
-            if value is None:
-                if default is None:
-                    # File name not defined in config, so return None
-                    return None
-                else:
-                    # Default file name is provided
-                    self.model.config.set(key, default)
-                    full_file_path = root_path / default
-            else:
-                value = Path(value)
-                file_directory = value.parent
-                file_name = value.name
-                if file_directory == ".":
-                    # Dealing with only a file name as input
-                    full_file_path = root_path / file_name
-                else:
-                    # Dealing with a path as input
-                    if Path(file_directory).resolve() == root_path:
-                        # Folders are the same, only write file_name
-                        full_file_path = root_path / file_name
-                    else:
-                        # File directory different than root
-                        # Check if file_directory is an absolute or relative path
-                        if Path(file_directory).is_absolute():
-                            # Absolute
-                            full_file_path = value
-                        else:
-                            # Relative
-                            full_file_path = (root_path / value).resolve()
+            # Save to config (store relative name if under root)
+            try:
+                relative_path = full_path.relative_to(root_path)
+                # NOTE In Python, if you want to convert a WindowsPath 
+                # object to a string without the double backslashes (\\), 
+                # you can use the as_posix() method instead of 'str'
+                self.set(key, relative_path.as_posix())
+            # If no relative path found, then use the full path:
+            except ValueError:
+                self.set(key, full_path.as_posix())
 
-        return full_file_path
+            return full_path
+
+        # No value provided, try to get from config
+        config_value = self.get(key)
+        if config_value is not None:
+            value_path = Path(config_value)
+        # If config value is None, but default is provided:
+        elif default is not None:
+            value_path = Path(default)
+            self.set(key, default)
+        # If no value in config and no default provided:
+        else:
+            return None  # Nothing to return
+
+        # Make sure the value is an absolute path
+        if not value_path.is_absolute():
+            return (root_path / value_path).resolve()
+        else:
+            return value_path
 
 
 def convert_to_number(value):

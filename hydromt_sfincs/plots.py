@@ -1,4 +1,5 @@
 """Plotting functions for SFINCS model data."""
+
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
@@ -18,8 +19,8 @@ geom_style = {
     "rivers": dict(linestyle="-", linewidth=1.0, color="darkblue"),
     "rivers_inflow": dict(linestyle=":", linewidth=1.0, color="darkblue"),
     "rivers_outflow": dict(linestyle=":", linewidth=1.0, color="darkgreen"),
-    "msk2": dict(linestyle="-", linewidth=1.5, color="r"),
-    "msk3": dict(linestyle="-", linewidth=1.5, color="m"),
+    "mask2": dict(linestyle="-", linewidth=1.5, color="r"),
+    "mask3": dict(linestyle="-", linewidth=1.5, color="m"),
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=False),
     "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=False),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
@@ -151,7 +152,7 @@ def plot_basemap(
     shaded : bool, optional
         Add shade to variable (only for variable = 'dep'), by default False
     plot_bounds : bool, optional
-        Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
+        Add waterlevel (mask=2) and open (mask=3) boundary conditions to plot.
     plot_region : bool, optional
         If True, plot region outline.
     plot_geoms : bool, optional
@@ -283,7 +284,7 @@ def plot_basemap(
             norm = colors.Normalize(vmin=vmin, vmax=vmax)
             cmap, norm = kwargs.pop("cmap", cmap), kwargs.pop("norm", norm)
             kwargs0.update(norm=norm, cmap=cmap)
-        elif variable == "msk" and "msk" in ds:
+        elif variable == "mask" and "mask" in ds:
             cmap = colors.LinearSegmentedColormap.from_list(
                 "Set1", ["grey", "r", "m"], N=3
             )
@@ -293,8 +294,8 @@ def plot_basemap(
 
     if variable in ds:
         da = ds[variable]
-        if "msk" in ds and np.any(ds["msk"] > 0):
-            da = da.where(ds["msk"] > 0)
+        if "mask" in ds and np.any(ds["mask"] > 0):
+            da = da.where(ds["mask"] > 0)
         if isinstance(da, xr.DataArray):
             # mask_nodata converts it to an xr.DataArray, so performed inside if-else statement
             da = da.raster.mask_nodata()
@@ -335,24 +336,26 @@ def plot_basemap(
         ],
     )
     # plot mask boundaries
-    if plot_bounds and "msk" not in ds:
+    if plot_bounds and "mask" not in ds:
         raise ValueError(
-            "No 'msk' (sfincs.msk) found in ds required to plot the model bounds "
-            "Set plot_bounds=False or add 'msk' to ds"
+            "No 'mask' (sfincs.mask) found in ds required to plot the model bounds "
+            "Set plot_bounds=False or add 'mask' to ds"
         )
     elif plot_bounds and isinstance(ds, xu.UgridDataset):
         raise NotImplementedError(
             "Plotting of the boundaries for quadtree grids is not yet implemented. "
             "Set plot_bounds=False to proceed."
         )
-    elif plot_bounds and (ds["msk"] >= 1).any():
-        gdf_msk = get_bounds_vector(ds["msk"])
+    elif plot_bounds and (ds["mask"] >= 1).any():
+        gdf_msk = get_bounds_vector(ds["mask"])
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
         gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
         if gdf_msk2.index.size > 0:
-            gdf_msk2.plot(ax=ax, zorder=3, label="waterlevel bnd", **geom_style["msk2"])
+            gdf_msk2.plot(
+                ax=ax, zorder=3, label="waterlevel bnd", **geom_style["mask2"]
+            )
         if gdf_msk3.index.size > 0:
-            gdf_msk3.plot(ax=ax, zorder=3, label="outflow bnd", **geom_style["msk3"])
+            gdf_msk3.plot(ax=ax, zorder=3, label="outflow bnd", **geom_style["mask3"])
 
     # plot static geoms
     if plot_geoms:

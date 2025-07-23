@@ -99,9 +99,11 @@ def merge_multi_dataarrays(
             # no data in da1 so use an empty array like da_like
             logger.debug("No data da1, start with empty array")
             da1 = xr.full_like(da_like, np.nan)
+            da1 = da1.raster.mask_nodata()
+            da1.raster.set_nodata(np.nan)
         else:
             # TODO: this applies to the whole dataset, not only the clipped part
-            da1 = da1.load().raster.reproject_like(da_like)
+            da1 = da1.load().raster.reproject_like(da_like, method=method)
     elif reproj_kwargs:
         # TODO
         da1 = da1.raster.reproject(method=method, **reproj_kwargs).load()

@@ -6,23 +6,28 @@ as well as some common data conversions.
 import copy
 import io
 import logging
+import os
 from datetime import datetime
+import os
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Optional
 
 import geopandas as gpd
-import hydromt
 import numpy as np
 import pandas as pd
 import rasterio
 import xarray as xr
 import xugrid as xu
-from hydromt._io import _write_xy as write_xy
 from pyproj.crs.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.rio.overview import get_maximum_overview_level
 from rasterio.windows import Window
 from shapely.geometry import LineString, Polygon
+
+import hydromt
+from hydromt.data_catalog.drivers import RasterioDriver
+from hydromt.gis._gis_utils import _zoom_to_overview_level
+from hydromt._io import _write_xy as write_xy
 
 __all__ = [
     "read_binary_map",
@@ -43,6 +48,8 @@ __all__ = [
     "write_geoms",
     "read_drn",
     "write_drn",
+    "write_vector",
+    "write_raster",
     "gdf2linestring",
     "gdf2polygon",
     "linestring2gdf",
@@ -53,6 +60,9 @@ __all__ = [
     "rotated_grid",
     "build_overviews",
     "find_uv_indices",
+    "partition_quadtree",
+    "xu_open_dataset",
+    "check_exists_and_lazy",
 ]
 
 logger = logging.getLogger(__name__)
@@ -555,9 +565,9 @@ def write_geoms(
         List of dictionaries describing structures.
         For pli, pol, thd anc crs files "x" and "y" are required, "name" is optional.
         For weir files "x", "y" and "z" are required, "name" and "par1" are optional.
-    stype: {'pli', 'pol', 'thd', 'weir', 'crs', 'wvm}
-        Geom type polylines (pli), polygons (pol) thin dams (thd), weirs (weir)
-        , cross-sections (crs) or wavemaker (wvm).
+    stype: {'pli', 'pol', 'thd', 'weir', 'crs', 'wvm'}
+        Geom type polylines (pli), polygons (pol) thin dams (thd), weirs (weir),
+        cross-sections (crs) or wavemaker (wvm).
     fmt: str
         format for "x" and "y" fields.
     fmt_z: str
@@ -637,7 +647,9 @@ def read_geoms(fn: Union[str, Path]) -> List[Dict]:
             if cols > 2:
                 for c in col_names[2:]:
                     if np.unique(feat[c]).size == 1:
-                        feat[c] = feat[c][0]
+                        feat[c] = feat[
+                            c
+                        ]  # [0] # TODO: check if we want [0] in case of reading existing weir file!
             feats.append(feat)
     return feats
 
@@ -853,13 +865,136 @@ def read_sfincs_his_results(
     return ds_his
 
 
+def write_vector(
+    data: Union[xr.Dataset, gpd.GeoDataFrame],
+    name: str,
+    root: Union[str, Path],
+    logger=logger,
+    **kwargs,
+):
+    """Write model vector (geoms) variables to geojson files.
+
+    NOTE: these files are not used by the model by just saved for visualization/
+    analysis purposes.
+
+    Parameters
+    ----------
+    data: geopandas.GeoDataFrame, xr.Dataset
+        The data to write to file. If an xr.Dataset is provided, it should contain geometry variables
+        that can be converted to a geopandas.GeoDataFrame.
+    name: str
+        The name of the variable to write to file. This will be used as the filename.
+    root: Path, str, optional
+        The output folder path.
+    kwargs:
+        Key-word arguments passed to geopandas.GeoDataFrame.to_file(driver='GeoJSON').
+    """
+    kwargs.update(driver="GeoJSON")  # fixed
+
+    # check root
+    if not os.path.isdir(root):
+        os.makedirs(root)
+
+    if isinstance(data, gpd.GeoDataFrame):
+        gdf = data
+    else:
+        try:
+            gdf = data.vector.to_gdf()
+        except:
+            logger.debug(f"Variable {name} could not be written to vector file.")
+            pass
+
+    gdf.to_file(os.path.join(root, f"{name}.geojson"), **kwargs)
+
+
+def write_raster(
+    data: Union[xr.Dataset, xr.DataArray],
+    root: Union[str, Path],
+    mask: xr.DataArray = None,
+    driver="GTiff",
+    compress="deflate",
+    logger=logger,
+    **kwargs,
+):
+    """Write model 2D raster variables to geotiff files.
+
+    NOTE: these files are not used by the model by just saved for visualization/
+    analysis purposes.
+
+    Parameters
+    ----------
+    variables: str, list, optional
+        Model variables are a combination of attribute and layer (optional) using <attribute>.<layer> syntax.
+        Known ratster attributes are ["grid", "states", "results"].
+        Different variables can be combined in a list.
+        By default, variables is ["grid", "states", "results.hmax"]
+    root: Path, str, optional
+        The output folder path. If None it defaults to the <model_root>/gis folder (Default)
+    kwargs:
+        Key-word arguments passed to hydromt.RasterDataset.to_raster(driver='GTiff', compress='lzw').
+    """
+
+    # check variables
+    if isinstance(data, xr.Dataset):
+        variables = list(data.data_vars.keys())
+        variables = [variables]
+    elif isinstance(data, xr.DataArray):
+        variables = [data.name]
+    else:
+        raise ValueError(
+            f"Unsupported data type for writing raster: {type(data)}. "
+            "Expected xr.Dataset or xr.DataArray."
+        )
+
+    # check mask
+    if mask is None:
+        if "mask" in data:
+            mask = data["mask"]
+        else:
+            raise ValueError("No mask provided and no 'mask' variable found in data.")
+
+    # check root
+    if not os.path.isdir(root):
+        os.makedirs(root)
+
+    # save to file
+    for var in variables:
+        da = data[var] if isinstance(data, xr.Dataset) else data
+        name = da.name
+        if len(da.dims) != 2:
+            # try to reduce to 2D by taking maximum over time dimension
+            if "time" in da.dims:
+                da = da.max("time")
+            elif "timemax" in da.dims:
+                da = da.max("timemax")
+            # if still not 2D, skip
+            if len(da.dims) != 2:
+                logger.warning(f"Variable {name} has more than 2 dimensions: skipping.")
+                continue
+        # If the raster type is float, set nodata to np.nan
+        if da.dtype == "float32" or da.dtype == "float64":
+            da.raster.set_nodata(np.nan)
+        # only write active cells to gis files
+        da = da.where(mask > 0, da.raster.nodata).raster.mask_nodata()
+        if da.raster.res[1] > 0:  # make sure orientation is N->S
+            da = da.raster.flipud()
+        da.raster.to_raster(
+            os.path.join(root, f"{name}.tif"),
+            driver=driver,
+            compress=compress,
+            **kwargs,
+        )
+
+
 def downscale_floodmap(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
     dep: Union[Path, str, xr.DataArray],
+    indices: Union[Path, str, xr.DataArray] = None,
     hmin: float = 0.05,
     gdf_mask: gpd.GeoDataFrame = None,
     floodmap_fn: Union[Path, str] = None,
     reproj_method: str = "nearest",
+    zoom_level: Optional[Union[int, tuple]] = None,
     nrmax: int = 2000,
     logger=logger,
     **kwargs,
@@ -876,6 +1011,8 @@ def downscale_floodmap(
         is written to disk (recommened for datasets that do not fit in memory.)
         * If a xr.DataArray is provided, the floodmap is returned as xr.DataArray
         and only written to disk when floodmap_fn is provided.
+    indices: Path, str, xr.DataArray, optional
+        Indices of the corresponding SFINCS cells to the DEM cells.
     hmin : float, optional
         Minimum water depth (m) to be considered as "flooded", by default 0.05
     gdf_mask : gpd.GeoDataFrame, optional
@@ -886,11 +1023,14 @@ def downscale_floodmap(
     reproj_method : str, optional
         Reprojection method for downscaling the water levels, by default "nearest".
         Other option is "bilinear".
+    zoom_level : int, tuple, optional
+        Overview level of the raster dataset (0 is highest resolution), if present.
+        Using a tuple the zoom level can be specified as (<zoom_resolution>, <unit>), e.g., (1000, 'meter')
+        Note, this only works when dep is a Path or str.
     nrmax : int, optional
         Maximum number of cells per block, by default 2000. These blocks are used to prevent memory issues.
     kwargs : dict, optional
         Additional keyword arguments passed to `RasterDataArray.to_raster`.
-
     Returns
     -------
     hmax: xr.Dataset
@@ -914,10 +1054,26 @@ def downscale_floodmap(
     if isinstance(floodmap_fn, Path):
         floodmap_fn = str(floodmap_fn)
 
+    # indices (if provided) should be of the same type as dep
+    if indices is not None:
+        if isinstance(indices, (str, Path)):
+            if not isinstance(dep, (str, Path)):
+                raise ValueError(
+                    "index should be a xr.DataArray when dep is a xr.DataArray."
+                )
+        elif isinstance(indices, xr.DataArray):
+            if not isinstance(dep, xr.DataArray):
+                raise ValueError(
+                    "index should be a str or Path when dep is a str or Path."
+                )
+        else:
+            raise ValueError("index should be a str, Path or xr.DataArray.")
+
     if isinstance(dep, xr.DataArray):
         hmax = _downscale_floodmap_da(
             zsmax=zsmax,
             dep=dep,
+            indices=indices,
             hmin=hmin,
             gdf_mask=gdf_mask,
             reproj_method=reproj_method,
@@ -950,7 +1106,23 @@ def downscale_floodmap(
                 "floodmap_fn should be provided when dep is a Path or str."
             )
 
-        with rasterio.open(dep) as src:
+        if zoom_level is not None:
+            zls_dict, crs = RasterioDriver._get_zoom_levels_and_crs(dep)
+            overview_level = _zoom_to_overview_level(
+                zoom=zoom_level, zls_dict=zls_dict, crs=crs
+            )
+            if overview_level:
+                # NOTE: overview levels start at zoom_level 1, see _get_zoom_levels_and_crs
+                overview_level -= 1
+        else:
+            # use highest resolution by default
+            overview_level = 0
+
+        with rasterio.open(dep, overview_level=overview_level) as src:
+            # check if index is provided and open it if it is
+            if indices is not None:
+                indices_src = rasterio.open(indices, overview_level=overview_level)
+
             # Define block size
             n1, m1 = src.shape
             nrcb = nrmax  # nr of cells in a block
@@ -1011,6 +1183,10 @@ def downscale_floodmap(
                     if np.all(np.isnan(block_data)):
                         continue
 
+                    if indices is not None:
+                        # Read the corresponding index block
+                        block_indices = indices_src.read(window=window)
+
                     # Determine if rotation is zero
                     if src.transform[1] == 0 and src.transform[3] == 0:  # No rotation
                         # Compute the 1D coordinates for x and y using the affine transformation
@@ -1032,6 +1208,16 @@ def downscale_floodmap(
                                 "x": ("x", x_coords),
                             },
                         )
+                        # create xarray DataArray with coordinates for index
+                        if indices is not None:
+                            block_indices = xr.DataArray(
+                                block_indices.squeeze(),
+                                dims=("y", "x"),
+                                coords={
+                                    "y": ("y", y_coords),
+                                    "x": ("x", x_coords),
+                                },
+                            )
                     else:
                         # Convert row and column indices to pixel coordinates
                         cols, rows = np.meshgrid(
@@ -1048,11 +1234,27 @@ def downscale_floodmap(
                                 "xc": (("y", "x"), x_coords),
                             },
                         )
+                        # create xarray DataArray with coordinates for index
+                        if indices is not None:
+                            block_indices = xr.DataArray(
+                                block_indices.squeeze(),
+                                dims=("y", "x"),
+                                coords={
+                                    "yc": (("y", "x"), y_coords),
+                                    "xc": (("y", "x"), x_coords),
+                                },
+                            )
+
+                    # make sure the nodata value and crs are set
                     block_dep.raster.set_crs(src.crs.to_epsg())
+                    if indices is not None:
+                        block_indices.raster.set_nodata(int(indices_src.nodata))
+                        block_indices.raster.set_crs(indices_src.crs.to_epsg())
 
                     block_hmax = _downscale_floodmap_da(
                         zsmax=zsmax,
                         dep=block_dep,
+                        indices=block_indices if indices is not None else None,
                         hmin=hmin,
                         gdf_mask=gdf_mask,
                         reproj_method=reproj_method,
@@ -1180,6 +1382,7 @@ def build_overviews(
 def _downscale_floodmap_da(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
     dep: xr.DataArray,
+    indices: xr.DataArray = None,
     hmin: float = 0.05,
     gdf_mask: gpd.GeoDataFrame = None,
     reproj_method: str = "nearest",
@@ -1199,31 +1402,64 @@ def _downscale_floodmap_da(
         Note that the area outside the polygons is set to nodata.
     """
 
-    # interpolate zsmax to dep grid
-    if isinstance(zsmax, xr.DataArray):
-        zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
+    if indices is None:
+        # interpolate zsmax to dep grid
+        if isinstance(zsmax, xr.DataArray):
+            zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
+        elif isinstance(zsmax, xu.UgridDataArray):
+            # if non-rotated grid, use xugrid rasterize_like
+            if dep.raster.transform[1] == 0 and dep.raster.transform[3] == 0:
+                zsmax = zsmax.ugrid.rasterize_like(dep)
+            # if rotated grid, use xugrid regridder
+            else:
+                # need to convert dep to unstructured to enable xugrid regridder
+                uda_dep = xu.UgridDataArray.from_structured(dep, "xc", "yc")
+                regridder = xu.CentroidLocatorRegridder(source=zsmax, target=uda_dep)
+                result = regridder.regrid(zsmax)
+                # map back to structured
+                zsmax = dep.copy(data=result.values.reshape(dep.shape))
 
-    elif isinstance(zsmax, xu.UgridDataArray):
-        # if non-rotated grid, use xugrid rasterize_like
-        if dep.raster.transform[1] == 0 and dep.raster.transform[3] == 0:
-            zsmax = zsmax.ugrid.rasterize_like(dep)
-        # if rotated grid, use xugrid regridder
-        else:
-            # need to convert dep to unstructured to enable xugrid regridder
-            uda_dep = xu.UgridDataArray.from_structured(dep, "xc", "yc")
-            regridder = xu.CentroidLocatorRegridder(source=zsmax, target=uda_dep)
-            result = regridder.regrid(zsmax)
-            # map back to structured
-            zsmax = dep.copy(data=result.values.reshape(dep.shape))
+        zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
 
-    zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
+        # get flood depth
+        hmax = (zsmax - dep).astype("float32")
+        hmax.raster.set_nodata(np.nan)
+    else:
+        # make sure index is same shape as dep
+        if indices.shape != dep.shape:
+            raise ValueError(
+                "Indices shape {} does not match dep shape {}.".format(
+                    indices.shape, dep.shape
+                )
+            )
 
-    # get flood depth
-    hmax = (zsmax - dep).astype("float32")
-    hmax.raster.set_nodata(np.nan)
+        # Get the no_data value from the indices array
+        nan_val_indices = indices.raster.nodata  # indices.attrs["_FillValue"]
+        # Set the no_data mask
+        no_data_mask = indices == nan_val_indices
+
+        # Turn indices into numpy array and set no_data values to 0
+        indices = np.squeeze(indices.values[:])
+        indices[np.where(indices == nan_val_indices)] = 0
+
+        zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
+
+        # Compute water depth
+        zs_numpy = zsmax.values[:].flatten()
+        h = zs_numpy[indices] - dep.values[:]
+
+        # Set water depth to NaN where indices are no data
+        h[no_data_mask] = np.nan
+
+        # Turn h into a DataArray with the same dimensions as zb
+        # ds = xr.Dataset()
+        hmax = xr.DataArray(h, dims=["y", "x"], coords={"y": dep.y, "x": dep.x})
+        hmax.raster.set_nodata(np.nan)
+        hmax.raster.set_crs(dep.raster.crs)
 
     # mask floodmap
     hmax = hmax.where(hmax > hmin)
+
     if gdf_mask is not None:
         mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
         hmax = hmax.where(mask)
@@ -1338,3 +1574,30 @@ def xu_open_dataset(*args, **kwargs):
     """
     with xr.open_dataset(*args, **kwargs) as ds:
         return xu.UgridDataset(ds)
+
+
+def check_exists_and_lazy(ds, file_name):
+    """If a netcdf file is read lazily, the file can not be overwritten.
+    This function checks whether the file already exists, if so, it checks
+    if the data is lazily loaded. If so, data should be loaded before writing.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset, xu.UgridDataset
+        The dataset to be written to a netcdf file.
+    file_name : str
+        The path to the netcdf file.
+    """
+    if not os.path.exists(file_name):
+        return
+
+    # Check for lazy loading
+    lazy_vars = [not data_array._in_memory for data_array in ds.data_vars.values()]
+
+    # if all(lazy_vars):
+    #     return  # All variables are lazy-loaded, skip writing?
+
+    if any(lazy_vars):
+        ds.load()  # Some variables are lazy-loaded, load them into memory
+        ds.close()
+    return

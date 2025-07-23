@@ -11,11 +11,10 @@ from hydromt.model.components import ModelComponent
 from hydromt.model import Model
 from hydromt_sfincs import utils
 
-
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsObservationPoints(ModelComponent):
@@ -49,60 +48,54 @@ class SfincsObservationPoints(ModelComponent):
     # clear
 
     def _initialize(self, skip_read=False) -> None:
-        """Initialize geoms."""
+        """Initialize observation points."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read in all observation points."""
+        """Read SFINCS observation points (*.obs) file."""
 
         # check that read mode is on
         self.root._assert_read_mode()
 
-        if filename is None:
-            # check if obsfile exists in config (by default is None)
-            filename = self.model.config.get("obsfile", abs_path=True)
-            # always gives back full path
+        # get absolute file path and set it in config if obsfile is not None
+        abs_file_path = self.model.config.get_set_file_variable(
+            "obsfile", value=filename
+        )
 
-            # check if obsfile exists in config (by default is None)
-            if filename is None:
-                return
-
-        elif filename is not None and not abspath:
-            # combine with model root if not a path
-            filename = Path(abspath(join(self.root.path, filename)))
-
-        # check if file exists:
-        # if not exists(filename):
-        if not Path(filename).exists():  # pathlib option
-            raise IOError("Path " + filename + " does not exist!")
+        # check if abs_file_path is None or does not exist
+        if abs_file_path is None:
+            return
+        elif not abs_file_path.exists():
+            raise FileNotFoundError(
+                f"Observation points file not found: {abs_file_path}"
+            )
 
         # Read input file:
-        gdf = utils.read_xyn(filename, crs=self.model.region.crs)  # =utils.py function
+        gdf = utils.read_xyn(
+            abs_file_path, crs=self.model.region.crs
+        )  # =utils.py function
 
         # Add to self._data
         self.set(gdf, merge=False)
 
     def write(self, filename=None):
-        """Write obsfile."""
+        """Write SFINCS observation points (*.obs) file,
+        and set obsfile in config (if it was not already set)"""
 
         # check that write mode is on
         self.root._assert_write_mode()
 
         # check if data present:
         if self.data.empty:
-            raise ValueError("No data in observation_points.data!")
-            # return
+            logger.debug("No observation points data available to write.")
+            return
 
-        # TODO - can be removed, just for info now
-        # call function to get back full filepath of config variable "obsfile"
-        # function also updates the name in case a filename is provided to this function
-        # and if not the case, and obsfile doesn't exist yet, it is initialised with the default of "sfincs.obs"
-
-        file_path = self.model.config.get_set_config_file_variable(
-            key="obsfile", value=filename, default_filename="sfincs.obs"
+        # Set file name and get absolute path
+        abs_file_path = self.model.config.get_set_file_variable(
+            key="obsfile", value=filename, default="sfincs.obs"
         )
 
         # Change precision of coordinates according to crs
@@ -111,26 +104,26 @@ class SfincsObservationPoints(ModelComponent):
         else:
             fmt = "%11.1f"
 
-        utils.write_xyn(file_path, self.data, fmt=fmt)  # =utils.py function
+        utils.write_xyn(abs_file_path, self.data, fmt=fmt)  # =utils.py function
 
         # write also as geojson:
-        if self.model._write_gis:
-            root = join(self.model.root.path, "gis")
-
-            if not os.path.isdir(root):
-                os.makedirs(root)
-
-            self.data.to_file(join(root, f"obs.geojson"), driver="GeoJSON")
+        if self.model.write_gis:
+            utils.write_vector(
+                self.data,
+                name="obs",
+                root=join(self.model.root.path, "gis"),
+                logger=logger,
+            )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
-        """Set observation points.
+        """Set SFINCS observation points.
 
         Arguments
         ---------
         gdf: geopandas.GeoDataFrame
             Set GeoDataFrame with observation points to self.data
-        name: str
-            Geometry name.
+        merge: bool
+            Merge with existing observation points. If False, overwrite existing observation points.
         **NOTE** - coordinates of points in GeoDataFrame need to be in the same CRS as SFINCS model.
         """
         if not gdf.geometry.type.isin(["Point"]).all():
@@ -179,30 +172,41 @@ class SfincsObservationPoints(ModelComponent):
 
         Arguments
         ---------
-        locations: str, Path, gpd.GeoDataFrame, optional
+        locations: str, Path, gpd.GeoDataFrame
             Path, data source name, or geopandas object for observation point locations.
         merge: bool, optional
             If True, merge the new observation points with the existing ones. By default True.
         """
         gdf = self.data_catalog.get_geodataframe(
-            locations, geom=self.model.region, assert_gtype="Point", **kwargs
+            locations, geom=self.model.region, **kwargs
         ).to_crs(self.model.crs)
+
+        if not gdf.geometry.type.isin(["Point"]).all():
+            raise ValueError("Observation points should be of type Point")
 
         self.set(gdf, merge)
 
     def delete(
         self,
-        index: int,  # FIXME - now we expect list [int] - does that make sense?/should we specify here?
+        index: Union[list, int],
     ):
-        """Remove (multiple) point(s) from observation points.
+        """Remove one or more observation points.
 
         Arguments
         ---------
-        index: int
-            Specify indices (int) of point(s) to be dropped from GeoDataFrame of observations.
+        index: list, int
+            Specify observation points to be dropped from GeoDataFrame.
+            If int, drop a single observation point based on index.
+            If list, drop multiple observation points based on index.
         """
-        if any(x > (len(self.data.index) - 1) for x in index):
+        # Turn int or str into list
+        if type(index) == int:
+            index = [index]
+
+        # Check that any integer in list is not larger than the number of points
+        if max(index) > (len(self.data) - 1) or min(index) < 0:
             raise ValueError("One of the indices exceeds length of index range!")
+        # FIXME len(self.data.index) or len(self.data.index)
 
         self._data = self.data.drop(index).reset_index(drop=True)
         logger.info("Dropping point(s) from observations")
@@ -210,6 +214,8 @@ class SfincsObservationPoints(ModelComponent):
     def clear(self):
         """Clean GeoDataFrame with observation points."""
         self._data = gpd.GeoDataFrame()
+        # Set obsfile to None in config
+        self.model.config.set("obsfile", None)  # FIXME - TL: do we want that?
 
     # %% DDB GUI focused additional functions:
     # add_point
@@ -241,7 +247,6 @@ class SfincsObservationPoints(ModelComponent):
         gdf = gpd.GeoDataFrame([d], crs=self.model.region.crs)
 
         self.set(gdf, merge=True)
-        # self._data = self.data.append(d)  # add point directly to gdf > has been deprecated...
 
     def delete_point(
         self,
@@ -267,7 +272,7 @@ class SfincsObservationPoints(ModelComponent):
         else:
             raise ValueError("Wrong input type given for function delete_point")
 
-        self.delete(index=[index])  # calls the generic delete function as list
+        self.delete(index)
         return
 
     def list_names(self):

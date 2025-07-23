@@ -10,7 +10,7 @@ import logging
 import os
 from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, Literal
 
 import geopandas as gpd
 import hydromt
@@ -34,19 +34,19 @@ from hydromt.model import Model
 from hydromt_sfincs.config import SfincsConfig
 
 # Grid types
-from hydromt_sfincs.regulargrid import RegularGrid
+from hydromt_sfincs.regulargrid import SfincsGrid
 from hydromt_sfincs.quadtree import QuadtreeGrid
 
 # Map types
-# from hydromt_sfincs.mask import SfincsMask
+from hydromt_sfincs.mask import SfincsMask
 from hydromt_sfincs.quadtree_mask import QuadtreeMask
 from hydromt_sfincs.snapwave_quadtree_mask import SnapWaveQuadtreeMask
 from hydromt_sfincs.quadtree_subgrid import SfincsQuadtreeSubgridTable
 
-# from hydromt_sfincs.bathymetry import SfincsBathymetry
+from hydromt_sfincs.elevation import SfincsElevation
 from hydromt_sfincs.subgrid import SubgridTableRegular
 from hydromt_sfincs.infiltration import SfincsInfiltration
-from hydromt_sfincs.manning_roughness import SfincsManningRoughness
+from hydromt_sfincs.roughness import SfincsRoughness
 from hydromt_sfincs.initial_conditions import SfincsInitialConditions
 from hydromt_sfincs.storage_volume import SfincsStorageVolume
 
@@ -77,11 +77,8 @@ from hydromt_sfincs.output import SfincsOutput
 # from hydromt_sfincs.plots import SfincsPlots
 
 __all__ = ["SfincsModel"]
-
 __hydromt_eps__ = ["SfincsModel"]  # core entrypoints
-
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 # %% SfincsModel class - in V1 style:
@@ -95,7 +92,7 @@ class SfincsModel(Model):
         self,
         root: str = None,
         mode: str = "w",
-        write_gis: bool = False,
+        write_gis: bool = True,
         data_libs: Union[List[str], str] = None,
     ):
         """
@@ -116,11 +113,9 @@ class SfincsModel(Model):
 
         """
 
-        # model folders
-        self._write_gis = write_gis
-        # if write_gis and "gis" not in self._FOLDERS:
-        # self._FOLDERS.append("gis")
-        # self.name = "SfincsModel"
+        # define some default model properties
+        self.grid_type = "regular"
+        self.write_gis = write_gis
 
         super().__init__(
             root=root,
@@ -128,35 +123,32 @@ class SfincsModel(Model):
             data_libs=data_libs,
         )
         # Initialize model components:
-
-        self.grid_type = "regular"
-
         self.add_component("config", SfincsConfig(self))
 
-        # Grid types
-        self.add_component("grid", RegularGrid(self))
-        self.add_component("quadtree_grid", QuadtreeGrid(self))
-
-        # Map types
-        self.add_component("quadtree_mask", QuadtreeMask(self))
-        self.add_component("snapwave_quadtree_mask", SnapWaveQuadtreeMask(self))
-        # self.add_component("mask", SfincsMask(self))
-        # self.add_component("bathymetry", SfincsBathymetry(self))
-        # self.add_component("infiltration", SfincsInfiltration(self))
-        # self.add_component("manning_roughness", SfincsManningRoughness(self))
+        # Grid
+        self.add_component("grid", SfincsGrid(self))
+        self.add_component("elevation", SfincsElevation(self))
+        self.add_component("mask", SfincsMask(self))
+        self.add_component("infiltration", SfincsInfiltration(self))
+        self.add_component("roughness", SfincsRoughness(self))
+        self.add_component("storage_volume", SfincsStorageVolume(self))
+        self.add_component("subgrid", SubgridTableRegular(self))
         # self.add_component("initial_conditions", SfincsInitialConditions(self))
-        # self.add_component("storage_volume", SfincsStorageVolume(self))
-        # self.add_component("subgrid", SubgridTableRegular(self))
+
+        # Quadtree
+        self.add_component("quadtree_grid", QuadtreeGrid(self))
         self.add_component("quadtree_subgrid", SfincsQuadtreeSubgridTable(self))
+        self.add_component("quadtree_mask", QuadtreeMask(self))
+        self.add_component("quadtree_snapwave_mask", SnapWaveQuadtreeMask(self))
 
         # Geoms types
         self.add_component("observation_points", SfincsObservationPoints(self))
         self.add_component("cross_sections", SfincsCrossSections(self))
         self.add_component("thin_dams", SfincsThinDams(self))
-        # self.add_component("weirs", SfincsWeirs(self))
+        self.add_component("weirs", SfincsWeirs(self))
         self.add_component("wave_makers", SfincsWaveMakers(self))
         # self.add_component("drainage_structures", SfincsDrainageStructures(self))
-        # self.add_component("rivers", SfincsRivers(self))
+        self.add_component("rivers", SfincsRivers(self))
 
         # Forcing types
         self.add_component("boundary_conditions", SfincsBoundaryConditions(self))
@@ -174,44 +166,125 @@ class SfincsModel(Model):
         # self.add_component("output", SfincsOutput(self))
         # self.add_component("plots", SfincsPlots(self))
 
-    # def __del__(self):
-    #     """Close the model and remove the logger file handler."""
-    #     for handler in self.logger.handlers:
-    #         if (
-    #             isinstance(handler, logging.FileHandler)
-    #             and "hydromt.log" in handler.baseFilename
-    #         ):
-    #             handler.close()
-    #             self.logger.removeHandler(handler)
+    def __del__(self):
+        """Close the model and remove the logger file handler."""
+        for handler in logger.handlers:
+            if (
+                isinstance(handler, logging.FileHandler)
+                and "hydromt.log" in handler.baseFilename
+            ):
+                handler.close()
+                logger.removeHandler(handler)
 
+    ## Properties of the model components to ensure python recognizes them ##
     @property
     def config(self) -> SfincsConfig:
         """Returns the config object."""
         return self.components["config"]
 
     @property
-    def grid(self) -> RegularGrid:
+    def grid(self) -> SfincsGrid:
         """Returns the grid object."""
         return self.components["grid"]
 
     @property
-    def quadtree(self) -> QuadtreeGrid:
+    def elevation(self) -> SfincsElevation:
+        """Returns the elevation object."""
+        return self.components["elevation"]
+
+    @property
+    def mask(self) -> SfincsMask:
+        """Returns the mask object."""
+        return self.components["mask"]
+
+    @property
+    def roughness(self) -> SfincsRoughness:
+        """Returns the roughness object."""
+        return self.components["roughness"]
+
+    @property
+    def infiltration(self) -> SfincsInfiltration:
+        """Returns the infiltration object."""
+        return self.components["infiltration"]
+
+    @property
+    def storage_volume(self) -> SfincsStorageVolume:
+        """Returns the storage volume object."""
+        return self.components["storage_volume"]
+
+    @property
+    def subgrid(self) -> SubgridTableRegular:
+        """Returns the subgrid object."""
+        return self.components["subgrid"]
+
+    @property
+    def quadtree_grid(self) -> QuadtreeGrid:
         """Returns the quadtree object."""
         return self.components["quadtree_grid"]
 
     @property
-    def mask(self) -> xr.DataArray | None:
-        """Returns model mask"""
+    def quadtree_mask(self) -> QuadtreeMask:
+        """Returns the quadtree mask object."""
+        return self.components["quadtree_mask"]
+
+    @property
+    def quadtree_snapwave_mask(self) -> SnapWaveQuadtreeMask:
+        """Returns the quadtree snapwave mask object."""
+        return self.components["quadtree_snapwave_mask"]
+
+    @property
+    def quadtree_subgrid(self) -> SfincsQuadtreeSubgridTable:
+        """Returns the quadtree subgrid object."""
+        return self.components["quadtree_subgrid"]
+
+    @property
+    def observation_points(self) -> SfincsObservationPoints:
+        """Returns the observation points object."""
+        return self.components["observation_points"]
+
+    @property
+    def cross_sections(self) -> SfincsCrossSections:
+        """Returns the cross sections object."""
+        return self.components["cross_sections"]
+
+    @property
+    def thin_dams(self) -> SfincsThinDams:
+        """Returns the thin dams object."""
+        return self.components["thin_dams"]
+
+    @property
+    def wave_makers(self) -> SfincsWaveMakers:
+        """Returns the wave makers object."""
+        return self.components["wave_makers"]
+
+    @property
+    def rivers(self) -> SfincsRivers:
+        """Returns the rivers object."""
+        return self.components["rivers"]
+
+    @property
+    def boundary_conditions(self) -> SfincsBoundaryConditions:
+        """Returns the boundary conditions object."""
+        return self.components["boundary_conditions"]
+
+    @property
+    def discharge_points(self) -> SfincsDischargePoints:
+        """Returns the discharge points object."""
+        return self.components["discharge_points"]
+
+    @property
+    def snapwave_boundary_conditions(self) -> SnapWaveBoundaryConditions:
+        """Returns the snapwave boundary conditions object."""
+        return self.components["snapwave_boundary_conditions"]
+
+    ## Real properties of the model ##
+    @property
+    def crs(self) -> CRS | None:
+        """Returns the model crs"""
         if self.grid_type == "regular":
-            if "msk" in self.grid.data:
-                return self.grid.data["msk"]
-            elif self.grid is not None:
-                return self.grid.empty_mask
+            return self.grid.crs
         elif self.grid_type == "quadtree":
-            if "mask" in self.quadtree_grid.data:
-                return self.quadtree_grid.data["mask"]
-            elif self.quadtree_grid is not None:
-                return self.quadtree.empty_mask
+            return self.quadtree_grid.crs
 
     @property
     def region(self) -> gpd.GeoDataFrame:
@@ -219,12 +292,7 @@ class SfincsModel(Model):
         # NOTE overwrites property in GridModel
         region = gpd.GeoDataFrame()
         if self.grid_type == "regular":
-            if "msk" in self.grid.data and np.any(self.grid.data["msk"] > 0):
-                da = xr.where(self.mask > 0, 1, 0).astype(np.int16)
-                da.raster.set_nodata(0)
-                region = da.raster.vectorize().dissolve()
-            elif self.grid is not None:
-                region = self.grid.empty_mask.raster.box
+            region = self.grid.region
         elif self.grid_type == "quadtree":
             region = self.quadtree_grid.exterior
         return region
@@ -233,56 +301,58 @@ class SfincsModel(Model):
     def bounds(self) -> List[float]:
         """Returns the bounding box of the model grid."""
         if self.grid_type == "regular":
-            return self.mask.raster.bounds
+            return self.grid.empty_mask.raster.bounds
         elif self.grid_type == "quadtree":
             # By are we getting the total bounds of the mask and not the grid?
-            return self.mask.ugrid.total_bounds
+            return self.quadtree_grid.empty_mask.ugrid.total_bounds
 
     @property
     def bbox(self) -> tuple:
         """Returns the bounding box in WGS 84 of the model grid."""
         if self.grid_type == "regular":
-            return self.mask.raster.transform_bounds(4326)
+            return self.grid.empty_mask.raster.transform_bounds(4326)
         elif self.grid_type == "quadtree":
-            return self.mask.ugrid.to_crs(4326).ugrid.total_bounds
-
-    @property
-    def crs(self) -> CRS | None:
-        """Returns the model crs"""
-        if self.grid_type == "regular":
-            return self.grid.crs
-        elif self.grid_type == "quadtree":
-            return self.quadtree_grid.data.grid.crs
+            return self.quadtree_grid.empty_mask.ugrid.to_crs(4326).ugrid.total_bounds
 
     ## I/O
-    def read(self, filename: str = None) -> None:
-        """Read model components from config file and initialize model grid.
+    def read(self) -> None:
+        """Read model components from config file and initialize model grid."""
 
-        Parameters
-        ----------
-        filename : str, optional
-            Path to config file, by default None
-        """
         # always read config first
-        if filename is None:
-            filename = self.root.path / "sfincs.inp"
-        self.config.read(filename=filename)
+        self.config.read()
 
         # loop over all components (except config) and read
         # TODO add check if files are present in each component otherwise skip-read
         # Note: this is now done in the read method of each component
         for name, comp in self.components.items():
-            if name != "config":
+            if name == "config":
+                continue  # skip config
+            elif "quadtree" in name and self.grid_type == "regular":
+                # skip reading quadtree components if grid_type is regular
+                continue
+            try:
                 comp.read()
+            except Exception as e:
+                print(str(e))
+                continue
 
     def write(self):
         # loop over all components and write
         # TODO make sure that all components are in the config (in their individual write functions?)
         for name, comp in self.components.items():
+            if name == "config":
+                continue
+            elif "quadtree" in name and self.grid_type == "regular":
+                continue
+            elif "grid" in name and self.grid_type == "quadtree":
+                continue
             comp.write()
+        # write config last
+        self.config.write()
 
     def clear_spatial_components(self):
         """Clear all spatial components."""
+        # TODO if we want this, all components should have a clear method
         return
         # Do something like this
         for name, comp in self.components.items():
@@ -326,12 +396,10 @@ class SfincsModel(Model):
                 forcings = [forcings]
             for name in forcings:
                 if name not in self.forcing:
-                    self.logger.warning(f'No forcing named "{name}" found in model.')
+                    logger.warning(f'No forcing named "{name}" found in model.')
                     continue
                 if isinstance(self.forcing[name], xr.Dataset):
-                    self.logger.warning(
-                        f'Skipping forcing "{name}" as it is a dataset.'
-                    )
+                    logger.warning(f'Skipping forcing "{name}" as it is a dataset.')
                     continue
                 # plot only dataarrays
                 forcing[name] = self.forcing[name].copy()
@@ -385,7 +453,7 @@ class SfincsModel(Model):
             Add shade to variable (only for variable = 'dep' and non-rotated grids),
             by default False
         plot_bounds : bool, optional
-            Add waterlevel (msk=2) and open (msk=3) boundary conditions to plot.
+            Add waterlevel (mask=2) and open (mask=3) boundary conditions to plot.
         plot_region : bool, optional
             If True, plot region outline.
         plot_geoms : bool, optional
@@ -413,15 +481,27 @@ class SfincsModel(Model):
         """
         import matplotlib.pyplot as plt
 
+        _GEOMS = {
+            "observation_points": "obs",
+            "cross_sections": "crs",
+            "weirs": "weir",
+            "thin_dams": "thd",
+            "drainage_structures": "drn",
+            "rivers": "rivers",
+            "discharge_points": "src",
+            # "boundary_conditions": "bnd",
+        }  # parsed to dict of geopandas.GeoDataFrame
+
         # combine geoms and forcing locations
-        sg = self.geoms.copy()
-        for fname, gname in self._FORCING_1D.values():
-            if fname[0] in self.forcing and gname is not None:
-                try:
-                    sg.update({gname: self.forcing[fname[0]].vector.to_gdf()})
-                except ValueError:
-                    self.logger.debug(f'unable to plot forcing location: "{fname}"')
-        if plot_region and "region" not in self.geoms:
+        sg = {}
+        for component, name in _GEOMS.items():
+            # check if component exists and has data
+            if self.components.get(component) is not None:
+                gdf = self.components[component].data
+                if isinstance(gdf, gpd.GeoDataFrame) and not gdf.empty:
+                    sg.update({name: gdf})
+
+        if plot_region:  # and "region" not in self.geoms:
             sg.update({"region": self.region})
 
         # make sure grid are set
@@ -431,16 +511,18 @@ class SfincsModel(Model):
         elif isinstance(variable, xu.UgridDataArray):
             ds = variable.to_dataset()
             variable = variable.name
-        elif variable.startswith("subgrid.") and self.subgrid is not None:
-            ds = self.subgrid.copy()
+        elif variable.startswith("subgrid.") and self.subgrid.data is not None:
+            ds = self.subgrid.data.copy()
             variable = variable.replace("subgrid.", "")
         else:
             if self.grid_type == "regular":
-                ds = self.grid.copy()
+                ds = self.grid.data.copy()
+                if "mask" not in ds:
+                    ds["mask"] = self.grid.mask
             elif self.grid_type == "quadtree":
-                ds = self.quadtree.data.copy()
-            if "msk" not in ds:
-                ds["msk"] = self.mask
+                ds = self.quadtree_grid.data.copy()
+                if "mask" not in ds:
+                    ds["mask"] = self.quadtree_grid.mask
 
         fig, ax = plots.plot_basemap(
             ds,
@@ -456,7 +538,7 @@ class SfincsModel(Model):
             geom_names=geom_names,
             geom_kwargs=geom_kwargs,
             legend_kwargs=legend_kwargs,
-            logger=self.logger,
+            logger=logger,
             **kwargs,
         )
 
@@ -512,7 +594,7 @@ class SfincsModel(Model):
                 # TODO remove ValueError after fix in hydromt core
                 except (IndexError, ValueError):
                     data_name = dataset.get("elevtn")
-                    self.logger.warning(f"No data in domain for {data_name}, skipped.")
+                    logger.warning(f"No data in domain for {data_name}, skipped.")
                     continue
                 dd.update({"da": da_elv})
             else:
@@ -543,7 +625,7 @@ class SfincsModel(Model):
                 if key in copy_keys and key not in dd:
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
-                    self.logger.warning(f"Unknown key {key} in datasets_dep. Ignoring.")
+                    logger.warning(f"Unknown key {key} in datasets_dep. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out
@@ -596,7 +678,9 @@ class SfincsModel(Model):
                     buffer=10,
                     variables=["lulc"],
                 )
-                df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
+                df_map = self.data_catalog.get_dataframe(reclass_table)
+                # set the index_column to 0
+                df_map.set_index(df_map.columns[0], inplace=True)
                 # reclassify
                 da_man = da_lulc.raster.reclassify(df_map[["N"]])["N"]
                 dd.update({"da": da_man})
@@ -616,7 +700,7 @@ class SfincsModel(Model):
                 if key in copy_keys and key not in dd:
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
-                    self.logger.warning(f"Unknown key {key} in datasets_rgh. Ignoring.")
+                    logger.warning(f"Unknown key {key} in datasets_rgh. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out
@@ -703,7 +787,7 @@ class SfincsModel(Model):
                 if key in copy_keys and key not in dd:
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
-                    self.logger.warning(f"Unknown key {key} in datasets_riv. Ignoring.")
+                    logger.warning(f"Unknown key {key} in datasets_riv. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out

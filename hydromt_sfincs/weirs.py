@@ -1,19 +1,27 @@
+import logging
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING, Union, List
+import os
+from os.path import abspath, join, exists
 
 from hydromt.model.components import ModelComponent
 from hydromt.model import Model
 from hydromt_sfincs import utils
 
+if TYPE_CHECKING:
+    from hydromt_sfincs.sfincs import SfincsModel
+
+logger = logging.getLogger(__name__)
+
 
 class SfincsWeirs(ModelComponent):
     def __init__(
         self,
-        model: Model,
+        model: "SfincsModel",
     ):
         self._filename: str = "sfincs.weir"
         self._data: gpd.GeoDataFrame = None
@@ -37,81 +45,119 @@ class SfincsWeirs(ModelComponent):
     # write
     # set
     # create
-    # add
     # delete
     # clear
 
     def _initialize(self, skip_read=False) -> None:
         """Initialize weir lines."""
         if self._data is None:
-            self._data = gpd.GeoDataFrame()  # FIXME - right?
+            self._data = gpd.GeoDataFrame()
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
-    def read(self):
-        """Read in all weir lines."""
-        # Read input file:
-        struct = utils.read_geoms(self._filename)  # =utils.py function
+    def read(self, filename: str | Path = None):
+        """Read SFINCS weir (*.weir) file."""
+
+        # Check that read mode is on
+        self.root._assert_read_mode()
+
+        # get absolute file path and set it in config if weirfile is not None
+        abs_file_path = self.model.config.get_set_file_variable(
+            "weirfile", value=filename)
+
+        # check if abs_file_path is None or does not exist
+        if abs_file_path is None:
+            return
+        elif not abs_file_path.exists():
+            raise FileNotFoundError(f"Weir file not found: {abs_file_path}")
+        
+        # Read weir file:
+        struct = utils.read_geoms(abs_file_path)  # =utils.py function
         gdf = utils.linestring2gdf(struct, crs=self.model.crs)  # =utils.py function
 
-        self.set(gdf, merge=False)  # Add to self._data
+        # Add to self._data
+        self.set(gdf, merge=False)  
 
-    def write(self, filename=None):  # TODO - TL: filename=None - still needed?
-        """Write weirfile."""
+    def write(self, filename: str | Path = None):
+        """Write SFINCS weir (*.weir) file,
+        and set weirfile in config (if it was not already set)"""
+        
+        # check that write mode is on
+        self.root._assert_write_mode()
+
+        # check if data present:
+        if self.data.empty:
+            logger.debug("No weir data available to write.")
+            return
+
+        # Set file name and get absolute path
+        abs_file_path = self.model.config.get_set_file_variable(
+            key="weirfile",
+            value=filename,
+            default="sfincs.weir",
+        )
+
         # change precision of coordinates according to crs
         if self.model.crs.is_geographic:
-            fmt = "%.6f"
+            fmt = "%11.6f"
         else:
-            fmt = "%.1f"
+            fmt = "%11.1f"
 
-        # #TODO add to config -
-        # # If filename is not None:
-        # self.config.XXX
-        # self._filename = XXX
+        # Get linestring geometries from gdf
         struct = utils.gdf2linestring(self.data)
-        utils.write_geoms(
-            self._filename, struct, stype="weir", fmt=fmt
-        )  # =utils.py function
 
-        # TODO - write also as geojson - TL: at what level do we want to do that?
-        # if self._write_gis:
-        #     self.write_vector(variables=["geoms"])
+        # Write to weirfile
+        utils.write_geoms(abs_file_path, struct, stype="weir", fmt=fmt)
+
+        # write also as geojson:
+        if self.model.write_gis:
+            root = join(self.model.root.path, "gis")
+
+            if not os.path.isdir(root):
+                os.makedirs(root)
+
+            self.data.to_file(join(root, f"weir.geojson"), driver="GeoJSON")
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
-        """Set weir lines.
+        """Set SFINCS weir lines.
 
         Arguments
         ---------
         gdf: geopandas.GeoDataFrame
             Set GeoDataFrame with weir lines to self.data
-        name: str
-            Geometry name.
+        merge: bool
+            Merge with existing weir. If False, overwrite existing weirs.
+        **NOTE** - coordinates of LineString geometries in GeoDataFrame need to be in the same CRS as SFINCS model.
         """
         if not gdf.geometry.type.isin(["LineString"]).all():
             raise ValueError("Weirs must be of type LineString.")
 
-        # Clip points outside of model region:
-        within = gdf.within(self.model.region)  # same as 'inpolygon' function
-        # FYI - An object is said to be within `region` if at least one of its points is located
-        # in the `interior` and no points are located in the `exterior` of the other.
+        # Check if any of the cross sections fall completely outside the model domain
+        # If so, give a warning and remove these lines
+        outside = gdf.disjoint(self.model.region)
+        if outside.any():
+            logger.warning(
+                "Some weirs fall outside model domain. Removing these lines."
+            )
+            gdf = gdf[~outside]
 
-        if within.all() == False:
-            raise ValueError("None of weirs fall within model domain.")
-        elif within.any() == False:
-            gdf = gdf[~within]
-            self.logger.info("Some of weirs fall out of model domain. Removing lines.")
+        # Check if there are any cross sections left
+        if gdf.empty:
+            # logger.warning("All thin dams fall outside model domain!")
+            # return
+            raise ValueError("All weirs fall outside model domain!")
 
         if merge and self.data is not None:
             gdf0 = self.data
-            gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf0], ignore_index=True))
-            self.logger.info("Adding new weirs to existing ones.")
+            # add the new data behind the original
+            gdf = gpd.GeoDataFrame(pd.concat([gdf0, gdf], ignore_index=True))
+            logger.info("Adding new weirs to existing ones.")
 
-        # set gdf in self.data
-        self._data = gdf
+        self._data = gdf  # set gdf in self._data
 
     def create(
         self,
-        structures: Union[str, Path, gpd.GeoDataFrame],
+        locations: Union[str, Path, gpd.GeoDataFrame],
         dep: Union[str, Path, xr.DataArray] = None,
         buffer: float = None,
         dz: float = None,
@@ -121,7 +167,10 @@ class SfincsWeirs(ModelComponent):
         """Create model weir lines.
         (old name: setup_structures)
 
-        If elevation at weir locations is not provided, it can be calculated from the model elevation (dep) plus dz.
+        If elevation 'z' at weir locations is not provided, it can be calculated 
+        from the model elevation directly (dep supplied, but not dz),
+        or from the model elevation plus an additional set elevation 'dz' 
+        (dep & dz supplied).
 
         Adds model layers:
 
@@ -129,11 +178,16 @@ class SfincsWeirs(ModelComponent):
 
         Arguments
         ---------
-        structures: str, Path, gpd.GeoDataFrame, optional
+        locations: str, Path, gpd.GeoDataFrame
             Path, data source name, or geopandas object for weir lines.
         dep : str, Path, xr.DataArray, optional
-            Path, data source name, or xarray raster object ('elevtn') describing the depth in an
+            Data source name, Path, or xarray raster object ('elevtn') describing the depth in an
             alternative resolution which is used for sampling the weir.
+            **NOTE** - currently, you can only supply one datasource for dep, 
+                or use the -courser- active dep data in self.grid.data if dep not provided,
+                but not your whole datasets_dep list!
+            **NOTE** Tip: use fine resolution dep_subgrid.tif for merged high-res data 
+                in case of using multiple elevation datasets.
         buffer : float, optional
             If provided, describes the distance from the centerline to the foot of the structure.
             This distance is supplied to the raster.sample as the window (wdw).
@@ -143,13 +197,16 @@ class SfincsWeirs(ModelComponent):
         merge: bool, optional
             If True, merge the new weir lines with the existing ones. By default True.
         """
-        # FIXME ensure the catalog is loaded before adding any new entries
-        # self.data_catalog.sources TODO: check if still needed
-
         gdf = self.data_catalog.get_geodataframe(
-            structures, geom=self.model.region, assert_gtype=None, **kwargs
+            locations, geom=self.model.region, **kwargs
         ).to_crs(self.model.crs)
 
+        # make sure MultiLineString are converted to LineString
+        gdf = gdf.explode(index_parts=True).reset_index(drop=True)
+
+        if not gdf.geometry.type.isin(["LineString"]).all():
+            raise ValueError("Weirs must be of type LineString.")
+        
         # expected columns in gdf
         cols = {
             "weir": ["name", "z", "par1", "geometry"],
@@ -164,75 +221,76 @@ class SfincsWeirs(ModelComponent):
                 "Weir structure requires z values, or 'dep' or 'dz' input to determine these on the fly."
             )
         elif dep is not None or dz is not None:
+        
             # determine elevation from dep and dz, if data parsed
             gdf = self.determine_weir_elevation(gdf, dep, buffer, dz)
-
-        # make sure MultiLineString are converted to LineString
-        gdf = gdf.explode(index_parts=True).reset_index(drop=True)
+            # if dep is not provided, the active dep data in self.grid.data is loaded,
+            # within function determine_weir_elevation            
+            logger.info("Determined elevations for weir based on elevation data.")
 
         self.set(gdf, merge)
 
-        # TODO - add to config: self.model.config
-        # self.model.config(f"{name}file", f"sfincs.{name}")
-        # self.set_config(f"{name}file", f"sfincs.{name}")
-
-    def add(
-        self,
-        gdf: gpd.GeoDataFrame,
-    ):
-        """Add multiple lines to weirs.
-
-        Arguments
-        ---------
-        gdf: gpd.GeoDataFrame
-            GeoDataFrame with locations and names of weir lines to be added.
-        **NOTE** - coordinates of weirs in GeoDataFrame need to be in the same CRS as SFINCS model.
-        """
-        self.set(gdf, merge=True)
-
     def delete(
         self,
-        index: int,  # FIXME - should this be List(int)?
+        index: Union[list, int],
     ):
-        """Remove (multiple) line(s) from weirs.
+        """Remove one or more weir.
 
         Arguments
         ---------
-        index: int
-            Specify indices (int) of weir(s) to be dropped from GeoDataFrame of weirs.
+        index: list, int
+            Specify thin dams to be dropped from GeoDataFrame.
+            If int, drop a single weir based on index.
+            If list, drop multiple weir based on index.
         """
-        if index.any() > (len(self.data.index) - 1):  # TODO - check if this is correct
+        # Turn int or str into list
+        if type(index) == int:
+            index = [index]
+
+        # Check that any integer in list is not larger than the number of lines
+        if max(index) > (len(self.data) - 1) or min(index) < 0:
             raise ValueError("One of the indices exceeds length of index range!")
 
-        self.data.drop(index).reset_index(drop=True)
-        self.logger.info("Dropping line(s) from weirs")
+        # Drop lines from GeoDataFrame
+        self._data = self.data.drop(index).reset_index(drop=True)
+        logger.info("Dropping line(s) from weirs")
+
+        # Check if any cross sections are left
+        if self.data.empty:
+            logger.warning("All weirs have been removed!")
+            # Set crsfile to None
+            self.model.config.set("weirfile", None)
 
     def clear(self):
         """Clean GeoDataFrame with weirs."""
-        self.data = gpd.GeoDataFrame()
+        self._data = gpd.GeoDataFrame()
+        # Set weirfile to None in config
+        self.model.config.set("weirfile", None) #FIXME - TL: do we want that?        
 
     # %% HydroMT-SFINCS focused additional functions:
     # determine_weir_elevation
 
-    def determine_weir_elevation(  # FIXME - should this be in utils.py or not?
+    def determine_weir_elevation(  # FIXME - TL: should this be in utils.py or not?
         self,
         gdf: gpd.GeoDataFrame,
         dep: Union[str, Path, xr.DataArray] = None,
         buffer: float = None,
         dz: float = None,
     ):
-        """Determine z values for weir structures."""
+        """Determine z values for weir structures.
+        Called by .create() function if dep (/and dz) are provided.        
+        """
         # taken from old 'sfincs.py'>setup_structures function
 
         structs = utils.gdf2linestring(gdf)  # check if it parsed correct
 
         # get elevation data either from model itself, or separate input
         if dep is None or dep == "dep":
-            assert "dep" in self.model.grid, "dep layer not found"
-            elv = self.model.grid["dep"]
+            assert "dep" in self.model.grid.data, "dep layer not found"
+            elv = self.model.grid.data["dep"]
         else:
             elv = self.data_catalog.get_rasterdataset(
-                dep, geom=self.region, buffer=5, variables=["elevtn"]
+                dep, geom=self.model.region, buffer=5, variables=["elevtn"]
             )
 
         # calculate window size from buffer
@@ -243,17 +301,42 @@ class SfincsWeirs(ModelComponent):
             window_size = int(np.ceil(buffer / res))
         else:
             window_size = 0
-        self.logger.debug(f"Sampling elevation with window size {window_size}")
+        logger.debug(f"Sampling elevation with window size {window_size}")
 
         # interpolate dep data to points of weirs
         structs_out = []
         for s in structs:
             pnts = gpd.points_from_xy(x=s["x"], y=s["y"])
             zb = elv.raster.sample(
-                gpd.GeoDataFrame(geometry=pnts, crs=self.crs), wdw=window_size
+                gpd.GeoDataFrame(geometry=pnts, crs=self.model.crs), wdw=window_size
             )
             if zb.ndim > 1:
                 zb = zb.max(axis=1)
+
+            if zb.isnull().any():
+
+                # get id and coordinates of nan point(s)
+                nan_id = zb.isnull().idxmax().values
+
+                xtmp = s["x"][nan_id]
+                ytmp = s["y"][nan_id]
+
+                logger.warning(f"Weir point {xtmp} {ytmp} has no elevation data. Filled now with nearest non-NaN value. Please check your input!")
+
+                # Interpolate missing values
+                zb = zb.interpolate_na(dim="index", method='nearest')
+
+                # Forward fill to handle NaN at the ends
+                zb = zb.ffill(dim="index")
+                
+                # Backward fill to handle NaN at the ends
+                zb = zb.bfill(dim="index")
+
+                if zb.isnull().any():
+                    # if still didn't work, raise error        
+                    raise ValueError(
+                        "Filling NaN values failed for weirs "
+                    )
 
             s["z"] = zb.values
 
@@ -263,7 +346,7 @@ class SfincsWeirs(ModelComponent):
 
             structs_out.append(s)
 
-        gdf = utils.linestring2gdf(structs_out, crs=self.crs)
+        gdf = utils.linestring2gdf(structs_out, crs=self.model.crs)
 
         return gdf
 
@@ -279,5 +362,7 @@ class SfincsWeirs(ModelComponent):
 
     def list_names(self):
         """Give list of names of cross sections."""
-        names = list(self.data.name)
+        if self.data.empty:
+            return []
+        names = list(self.data["name"])
         return names
