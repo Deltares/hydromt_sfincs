@@ -11,47 +11,49 @@ import xarray as xr
 import xugrid as xu
 
 from hydromt_sfincs import SfincsModel
-from hydromt import Model
-from hydromt_sfincs.quadtree import QuadtreeGrid
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
 
 
-def test_quadtree_io(tmp_path):
+def test_quadtree_io(tmp_dir):
     # Start with model to make sure the root is set
-    model0 = Model(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
+    mod0 = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
 
-    # Initialize a QuadtreeGrid object
-    qtr = QuadtreeGrid(model0)
-    # Read a quadtree netcdf file
-    qtr.read()
+    # read the config
+    mod0.config.read()
+    # read the quadtree grid from the netcdf file
+    mod0.quadtree_grid.read()
     # Check the face coordinates
-    face_coordinates = qtr.face_coordinates
+    face_coordinates = mod0.quadtree_grid.face_coordinates
     assert len(face_coordinates[0] == 4452)
-    # Check the msk variable
-    msk = qtr.data["msk"]
+    # Check the mask variable
+    msk = mod0.quadtree_grid.data["mask"]
     assert np.sum(msk.values) == 4298
     # Check the crs
-    crs = qtr.crs
+    crs = mod0.quadtree_grid.crs
     assert crs == CRS.from_epsg(32633)
 
-    # now write the quadtree to a new file
-    fn = join(tmp_path, "sfincs.nc")
-    qtr.write(fn)
+    # now write the quadtree to a new location
+    mod0.root.set(tmp_dir, mode="w+")
+    mod0.quadtree_grid.write()
+    mod0.config.write()
 
-    model1 = Model(root=tmp_path, mode="r")
+    # now read the quadtree from the new location
+    mod1 = SfincsModel(root=mod0.root.path, mode="r")
     # read the new file and check the msk variable
-    qtr2 = QuadtreeGrid(model1)
-    qtr2.read(fn)
+    mod1.config.read()
+    mod1.quadtree_grid.read()
     # assert the crs is the same
-    assert qtr2.crs == qtr.crs
+    assert mod1.quadtree_grid.crs == mod0.quadtree_grid.crs
     # assert the msk variable is the same
-    assert np.sum(qtr2.data["msk"].values) == 4298
+    assert np.sum(mod1.quadtree_grid.data["mask"].values) == 4298
     # assert the dep variable is the same
-    assert np.sum(qtr.data["dep"].values) == np.sum(qtr2.data["dep"].values)
+    assert np.sum(mod0.quadtree_grid.data["dep"].values) == np.sum(
+        mod1.quadtree_grid.data["dep"].values
+    )
 
     # remove the files, they both get locked because of loading after closure?
-    os.remove(fn)
+    os.remove(mod1.root.path / "sfincs.nc")
 
 
 def test_xu_open_dataset_delete(tmp_dir):

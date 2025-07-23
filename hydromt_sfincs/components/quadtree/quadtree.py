@@ -12,7 +12,7 @@ import shapely
 import xarray as xr
 import xugrid as xu
 
-from hydromt.model.components import ModelComponent
+from hydromt.model.components import MeshComponent
 
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
@@ -34,13 +34,12 @@ logger = logging.getLogger(__name__)
 _QT_MAPS = ["vol"]
 
 
-class SfincsQuadtreeGrid(ModelComponent):
+class SfincsQuadtreeGrid(MeshComponent):
     def __init__(
         self,
         model: "SfincsModel",
     ):
-        self._filename: str = "sfincs_grid.nc"
-        self.data: xu.UgridDataset = None
+        self._filename: str = "sfincs.nc"
         self._data: xu.UgridDataset = None
         self.version = 0
         self.datashader_dataframe = pd.DataFrame()
@@ -48,6 +47,8 @@ class SfincsQuadtreeGrid(ModelComponent):
         super().__init__(
             model=model,
         )
+
+    # NOTE @data and @initialize are inherited from the MeshComponent
 
     @property
     def crs(self):
@@ -101,16 +102,8 @@ class SfincsQuadtreeGrid(ModelComponent):
             da_mask = self.empty_mask
         return da_mask
 
-    # %% core HydroMT-SFINCS functions:
-    # _data (coming from MeshComponent)
-    # _initialize (coming from MeshComponent)
-    # read
-    # write
-    # set (coming from MeshComponent)
-    # create
-
     def read(
-        self, filename: Union[str, Path] = "sfincs.nc", variables: List[dict] = []
+        self, filename: Union[str, Path] = "sfincs.nc", data_vars: List[dict] = None
     ):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object.
 
@@ -118,10 +111,10 @@ class SfincsQuadtreeGrid(ModelComponent):
         ----------
         file_name : str or Path, optional
             Path to the netcdf file to read, by default "sfincs.nc".
-        variables : List[dict], optional
+        data_vars : List[dict], optional
             List of dictionaries with variable names and file names to read additional variables,
             by default None. Each dictionary should have keys "variable" and "file_name", e.g.:
-            variables = [{"variable":"vol", "file_name":"storage_volume.nc"}]
+            data_vars = [{"variable":"vol", "file_name":"storage_volume.nc"}]
         """
 
         # check if in read mode and initialize grid
@@ -141,15 +134,25 @@ class SfincsQuadtreeGrid(ModelComponent):
             raise FileNotFoundError(f"Quadtree grid file not found: {abs_file_path}")
 
         # load dataset and set CRS
-        ds = xu.load_dataset(abs_file_path)
-        ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
+        with xu.load_dataset(abs_file_path) as ds:
+            ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
 
-        # store attributes
-        self.nr_cells = ds.sizes["mesh2d_nFaces"]
-        for key, value in ds.attrs.items():
-            setattr(self, key, value)
+            # rename variables to match Python conventions
+            ds = ds.rename({"z": "dep"}) if "z" in ds else ds
+            # and for backwards compatibility msk (old) -> mask (new)
+            ds = ds.rename({"msk": "mask"}) if "msk" in ds else ds
+            ds = (
+                ds.rename({"snapwave_msk": "snapwave_mask"})
+                if "snapwave_msk" in ds
+                else ds
+            )
 
-        self.data = ds
+            # store attributes
+            self.nr_cells = ds.sizes["mesh2d_nFaces"]
+            for key, value in ds.attrs.items():
+                setattr(self, key, value)
+
+            self._data = ds
 
         # check which seperate data variables should be read
         if data_vars is None:
@@ -168,13 +171,13 @@ class SfincsQuadtreeGrid(ModelComponent):
             for var in variables:
                 try:
                     with xu.load_dataset(var["file_name"]) as ds:
-                        self.data[var["variable"]] = ds[var["variable"]]
+                        self._data[var["variable"]] = ds[var["variable"]]
                 except Exception as e:
                     logger.error(f"Error reading variable {var['variable']}: {e}")
                     continue
 
     def write(
-        self, filename: Union[str, Path] = "sfincs.nc", variables: List[dict] = []
+        self, filename: Union[str, Path] = "sfincs.nc", data_vars: List[dict] = None
     ):
         """Writes a quadtree SFINCS netcdf file.
 
@@ -182,13 +185,19 @@ class SfincsQuadtreeGrid(ModelComponent):
         ----------
         filename : str or Path, optional
             Path to the netcdf file to write, by default "sfincs.nc".
-        variables : List[dict], optional
+        data_vars : List[dict], optional
             List of dictionaries with variable names and file names to write additional variables,
             by default None. Each dictionary should have keys "variable" and "file_name", e.g.:
-            variables = [{"variable":"vol", "file_name":"storage_volume.nc"}]
+            data_vars = [{"variable":"vol", "file_name":"storage_volume.nc"}]
         """
 
         # TODO do we want to cut inactive cells here? Or already when creating the mask?
+
+        attrs = self.data.attrs
+        ds = self.data.ugrid.to_dataset()
+        # FIXME set the CRS manually, since when is this needed?
+        ds["crs"] = self.crs.to_epsg()
+        ds["crs"].attrs = self.crs.to_cf()
 
         # certain variables are stored as individual netcdfs because they might change between scnearios;
         # in Python we keep everything in the same object so they are splitted here
@@ -218,13 +227,8 @@ class SfincsQuadtreeGrid(ModelComponent):
                     logger.error(f"Error writing variable {var['variable']}: {e}")
                     continue
 
-        # TODO make similar to fortran conventions
         # RENAME TO FORTRAN CONVENTION
         ds = ds.rename({"dep": "z"}) if "dep" in ds else ds
-        ds = ds.rename({"msk": "mask"}) if "msk" in ds else ds
-        ds = (
-            ds.rename({"snapwave_msk": "snapwave_mask"}) if "snapwave_msk" in ds else ds
-        )
 
         # Get absolute file name and set it in config if bndfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
@@ -232,12 +236,11 @@ class SfincsQuadtreeGrid(ModelComponent):
         )
 
         # And write the file
-        ds = self.data.ugrid.to_dataset()
-        ds.attrs = self.data.attrs
+        ds.attrs = attrs
         ds.to_netcdf(abs_file_path)
         ds.close()
 
-    def set(
+    def create(
         self,
         x0: float,
         y0: float,
@@ -285,7 +288,7 @@ class SfincsQuadtreeGrid(ModelComponent):
         crs = CRS.from_epsg(epsg) if epsg is not None else CRS.from_epsg(4326)
 
         # Build the quadtree grid
-        self.data = build_quadtree_xugrid(
+        self._data = build_quadtree_xugrid(
             x0,
             y0,
             nmax,
@@ -304,7 +307,7 @@ class SfincsQuadtreeGrid(ModelComponent):
         self.clear_datashader_dataframe()
         self.model.quadtree_mask.clear_datashader_dataframe()
         # Cut inactive cells
-        self.data = cut_inactive_cells(self.data)
+        self._data = cut_inactive_cells(self.data)
 
     def snap_to_grid(self, polyline, max_snap_distance=1.0):
         if len(polyline) == 0:

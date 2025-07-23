@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, List, Union
 
 import geopandas as gpd
 import numpy as np
-import xarray as xr
+import xugrid as xu
 
 from hydromt.model.components import ModelComponent
 
@@ -18,8 +18,8 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 _ATTRS = {"vol": {"standard_name": "storage volume", "unit": "m3"}}
 
 
-class SfincsStorageVolume(ModelComponent):
-    """SFINCS storage volume component."""
+class SfincsQuadtreeStorageVolume(ModelComponent):
+    """SFINCS storage volume component for quadtree grids."""
 
     def __init__(
         self,
@@ -33,12 +33,12 @@ class SfincsStorageVolume(ModelComponent):
     @property
     def data(self):
         """Get the data from the model grid."""
-        return self.model.grid.data
+        return self.model.quadtree_grid.data
 
     @property
     def mask(self):
         """Get an empty mask with the same shape as the model grid."""
-        return self.model.grid.mask
+        return self.model.quadtree_grid.mask
 
     def read(self):
         # TODO discuss what we want to return/read here, pass is not so informative ..
@@ -86,10 +86,10 @@ class SfincsStorageVolume(ModelComponent):
         if merge and "vol" in self.data:
             da_vol = self.data["vol"]
         else:
-            da_vol = xr.full_like(self.mask, 0, dtype=np.float64)
+            da_vol = xu.full_like(self.mask, 0, dtype=np.float64)
 
         # add storage volumes form gdf to da_vol
-        da_vol = workflows.add_storage_volume(
+        da_vol = workflows.add_storage_volume_qt(
             da_vol,
             gdf,
             volume=volume,
@@ -100,6 +100,6 @@ class SfincsStorageVolume(ModelComponent):
         # set grid
         mname = "vol"
         da_vol.attrs.update(**_ATTRS.get(mname, {}))
-        self.model.grid.set(da_vol, name=mname)
+        self.model.quadtree_grid.set(da_vol, name=mname)
         # update config
         self.model.config.set(f"{mname}file", f"sfincs.{mname[:3]}")

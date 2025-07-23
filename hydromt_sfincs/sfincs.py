@@ -40,6 +40,7 @@ from hydromt_sfincs.components.grid import (
 from hydromt_sfincs.components.quadtree import (
     SfincsQuadtreeGrid,
     SfincsQuadtreeMask,
+    SfincsQuadtreeStorageVolume,
     SfincsQuadtreeSubgridTable,
     SnapWaveQuadtreeMask,
 )
@@ -130,6 +131,7 @@ class SfincsModel(Model):
         # Quadtree
         self.add_component("quadtree_grid", SfincsQuadtreeGrid(self))
         self.add_component("quadtree_mask", SfincsQuadtreeMask(self))
+        self.add_component("quadtree_storage_volume", SfincsQuadtreeStorageVolume(self))
         self.add_component("quadtree_subgrid", SfincsQuadtreeSubgridTable(self))
         self.add_component("quadtree_snapwave_mask", SnapWaveQuadtreeMask(self))
 
@@ -205,19 +207,24 @@ class SfincsModel(Model):
         return self.components["storage_volume"]
 
     @property
-    def subgrid(self) -> SubgridTableRegular:
+    def subgrid(self) -> SfincsSubgridTable:
         """Returns the subgrid object."""
         return self.components["subgrid"]
 
     @property
-    def quadtree_grid(self) -> QuadtreeGrid:
+    def quadtree_grid(self) -> SfincsQuadtreeGrid:
         """Returns the quadtree object."""
         return self.components["quadtree_grid"]
 
     @property
-    def quadtree_mask(self) -> QuadtreeMask:
+    def quadtree_mask(self) -> SfincsQuadtreeMask:
         """Returns the quadtree mask object."""
         return self.components["quadtree_mask"]
+
+    @property
+    def quadtree_storage_volume(self) -> SfincsQuadtreeStorageVolume:
+        """Returns the quadtree storage volume object."""
+        return self.components["quadtree_storage_volume"]
 
     @property
     def quadtree_snapwave_mask(self) -> SnapWaveQuadtreeMask:
@@ -336,8 +343,7 @@ class SfincsModel(Model):
                 continue
             elif "quadtree" in name and self.grid_type == "regular":
                 continue
-            elif "grid" in name and self.grid_type == "quadtree":
-                continue
+            # TODO skip regular components for quadtree models?
             comp.write()
         # write config last
         self.config.write()

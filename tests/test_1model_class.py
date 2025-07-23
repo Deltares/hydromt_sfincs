@@ -277,6 +277,13 @@ def test_drainage_structures(tmpdir):
 
 @pytest.mark.parametrize("case", list(_cases.keys()))
 def test_storage_volume(tmp_dir, case):
+    # create two helper functions to get regular/quadtree components
+    def get_grid(mod):
+        return mod.grid if case == "test1" else mod.quadtree_grid
+
+    def get_storage_component(mod):
+        return mod.storage_volume if case == "test1" else mod.quadtree_storage_volume
+
     # define the roots of the models
     root = join(TESTDATADIR, _cases[case]["example"])
     tmp_root = join(tmp_dir, "storage_volume_test")
@@ -311,72 +318,71 @@ def test_storage_volume(tmp_dir, case):
     # read the sfincs model and change the root
     mod = SfincsModel(root=root, mode="r")
     mod.read()
-    mod.set_root(tmp_root, mode="w+")
+    mod.root.set(tmp_root, mode="w+")
+
+    # use correct storage component
+    storage = get_storage_component(mod)
+    grid = get_grid(mod)
 
     # test setup_storage_volume with polygons
     # one polygon has no volume specifed, the other has a volume of 1000
     # the non-specified gets the volume of the input argument
-    mod.setup_storage_volume(storage_locs=gdf, volume=10000)
-
-    if case == "test1":
-        assert mod.grid["vol"].sum() == 11000
-    elif case == "test2":
-        assert mod.quadtree.data["vol"].sum() == 11000
+    storage.create(storage_locs=gdf, volume=10000)
+    assert grid.data["vol"].sum() == 11000
 
     # test setup_storage_volume with points
-    mod.setup_storage_volume(storage_locs=point_gdf, merge=True)
-
-    if case == "test1":
-        assert mod.grid["vol"].sum() == 11020
-    elif case == "test2":
-        assert mod.quadtree.data["vol"].sum() == 11020
+    storage.create(storage_locs=point_gdf, merge=True)
+    assert grid.data["vol"].sum() == 11020
 
     # write the model to test IO
     mod.write()
 
     # read the model again
     mod1 = SfincsModel(root=tmp_root, mode="r")
-    mod1.read_config()
-    mod1.read_grid(data_vars=["vol"])
+    mod1.config.read()
+
+    # again get right component
+    grid1 = get_grid(mod1)
+    grid1.read(data_vars=["vol"])
 
     # now compare the storage volumes
     if case == "test1":
         assert np.isclose(
-            mod1.grid["vol"].raster.mask_nodata().sum().values
-            - mod.grid["vol"].sum().values,
+            mod1.grid.data["vol"].raster.mask_nodata().sum().values
+            - mod.grid.data["vol"].sum().values,
             0,
         )
     elif case == "test2":
         assert np.isclose(
-            (mod1.quadtree.data["vol"] - mod.quadtree.data["vol"]).sum(), 0
+            (mod1.quadtree_grid.data["vol"] - mod.quadtree_grid.data["vol"]).sum(), 0
         )
 
     # now redo the tests with a rotated grid for the regular grid only
     if case == "test1":
-        config = mod.config.copy()
+        config = mod.config.data.copy()
         mod = SfincsModel(root=tmp_root, mode="w+")
 
         # get the config from the first model and add a rotation
-        config["rotation"] = 10
-        mod.config.update(config)
-        mod.update_grid_from_config()
+        config.__setattr__("rotation", 10)
+        mod.config._data = config
+        mod.grid.update_grid_from_config()
 
         # test setup_storage_volume with
         # drop volume column from gdf
         gdf = gdf.drop(columns=["volume"])
-        mod.setup_storage_volume(storage_locs=gdf, volume=[350, 800])
+        mod.storage_volume.create(storage_locs=gdf, volume=[350, 800])
 
         # check if the volumes are correct
-        assert np.isclose(mod.grid["vol"].sum(), 1150)
+        assert np.isclose(mod.grid.data["vol"].sum(), 1150)
 
         # drop volume column from gdf
         point_gdf = point_gdf.drop(columns=["volume"])
-        mod.setup_storage_volume(storage_locs=point_gdf, volume=34.5, merge=False)
+        mod.storage_volume.create(storage_locs=point_gdf, volume=34.5, merge=False)
 
-        assert np.isclose(mod.grid["vol"].sum(), 34.5)
+        assert np.isclose(mod.grid.data["vol"].sum(), 34.5)
 
         # check index of the point with maximum volume
-        index = mod.grid["vol"].argmax()
+        index = mod.grid.data["vol"].argmax()
         assert index == 2113
 
 
