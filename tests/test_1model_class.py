@@ -268,75 +268,109 @@ def test_drainage_structures(tmpdir):
     assert len(mod.geoms["drn"].index) == nr_drainage_structures * 2
 
 
-def test_storage_volume(tmpdir):
-    tmp_root = str(tmpdir.join("storage_volume_test"))
+@pytest.mark.parametrize("case", list(_cases.keys()))
+def test_storage_volume(tmp_dir, case):
+    # define the roots of the models
+    root = join(TESTDATADIR, _cases[case]["example"])
+    tmp_root = join(tmp_dir, "storage_volume_test")
 
-    # create two arbitrary but overlapping polygons
+    # create two aribitrary polygons and a point
     coords1 = [
-        (3.5, 3.5),
-        (6.5, 3.5),
-        (6.5, 6.5),
-        (4.5, 6.5),
-        (4.5, 7.25),
-        (6.5, 7.25),
-        (6.5, 8),
-        (3, 8),
+        (318000.0, 5043000.0),
+        (321000.0, 5043000.0),
+        (321000.0, 5045500.0),
+        (318000.0, 5045500.0),
+        (318000.0, 5043000.0),
     ]
     poly1 = Polygon(coords1)
-    # second polygon which overlaps aprtly with the first but is smaller
-    coords2 = [(6, 3), (7, 3), (7, 4), (6, 4)]
+    coords2 = [
+        (320500.0, 5044500.0),
+        (321500.0, 5044500.0),
+        (321500.0, 5046000.0),
+        (320500.0, 5046000.0),
+        (320500.0, 5044500.0),
+    ]
     poly2 = Polygon(coords2)
+
     # create a geodataframe with the two polygons
-    gdf = gpd.GeoDataFrame({"geometry": [poly1, poly2]}, crs=4326)
+    gdf = gpd.GeoDataFrame({"geometry": [poly1, poly2]}, crs=32633)
     gdf["volume"] = [None, 1000]
 
     # also create an arbitrary point
-    point = Point(5, 6)
-    point_gdf = gpd.GeoDataFrame({"geometry": [point]}, crs=4326)
+    point = Point(320000, 5044000)
+    point_gdf = gpd.GeoDataFrame({"geometry": [point]}, crs=32633)
     point_gdf["volume"] = 20
 
-    # create a sfincs model
-    mod = SfincsModel(root=tmp_root, mode="w+")
-    mod.setup_grid_from_region(region={"bbox": [0, 0, 10, 10]}, res=20000, crs="utm")
+    # read the sfincs model and change the root
+    mod = SfincsModel(root=root, mode="r")
+    mod.read()
+    mod.set_root(tmp_root, mode="w+")
 
     # test setup_storage_volume with polygons
     # one polygon has no volume specifed, the other has a volume of 1000
     # the non-specified gets the volume of the input argument
     mod.setup_storage_volume(storage_locs=gdf, volume=10000)
 
-    assert mod.grid["vol"].sum() == 11000
+    if case == "test1":
+        assert mod.grid["vol"].sum() == 11000
+    elif case == "test2":
+        assert mod.quadtree.data["vol"].sum() == 11000
 
     # test setup_storage_volume with points
     mod.setup_storage_volume(storage_locs=point_gdf, merge=True)
 
-    assert mod.grid["vol"].sum() == 11020
+    if case == "test1":
+        assert mod.grid["vol"].sum() == 11020
+    elif case == "test2":
+        assert mod.quadtree.data["vol"].sum() == 11020
 
-    # now redo the tests with a rotated grid
-    config = mod.config.copy()
-    mod = SfincsModel(root=tmp_root, mode="w+")
+    # write the model to test IO
+    mod.write()
 
-    # get the config from the first model and add a rotation
-    config["rotation"] = 10
-    mod.config.update(config)
-    mod.update_grid_from_config()
+    # read the model again
+    mod1 = SfincsModel(root=tmp_root, mode="r")
+    mod1.read_config()
+    mod1.read_grid(data_vars=["vol"])
 
-    # test setup_storage_volume with
-    # drop volume column from gdf
-    gdf = gdf.drop(columns=["volume"])
-    mod.setup_storage_volume(storage_locs=gdf, volume=[350, 800])
+    # now compare the storage volumes
+    if case == "test1":
+        assert np.isclose(
+            mod1.grid["vol"].raster.mask_nodata().sum().values
+            - mod.grid["vol"].sum().values,
+            0,
+        )
+    elif case == "test2":
+        assert np.isclose(
+            (mod1.quadtree.data["vol"] - mod.quadtree.data["vol"]).sum(), 0
+        )
 
-    # check if the volumes are correct
-    assert np.isclose(mod.grid["vol"].sum(), 1150)
+    # now redo the tests with a rotated grid for the regular grid only
+    if case == "test1":
+        config = mod.config.copy()
+        mod = SfincsModel(root=tmp_root, mode="w+")
 
-    # drop volume column from gdf
-    point_gdf = point_gdf.drop(columns=["volume"])
-    mod.setup_storage_volume(storage_locs=point_gdf, volume=34.5, merge=False)
+        # get the config from the first model and add a rotation
+        config["rotation"] = 10
+        mod.config.update(config)
+        mod.update_grid_from_config()
 
-    assert np.isclose(mod.grid["vol"].sum(), 34.5)
+        # test setup_storage_volume with
+        # drop volume column from gdf
+        gdf = gdf.drop(columns=["volume"])
+        mod.setup_storage_volume(storage_locs=gdf, volume=[350, 800])
 
-    # check index of the point with maximum volume
-    index = mod.grid["vol"].argmax()
-    assert index == 1601
+        # check if the volumes are correct
+        assert np.isclose(mod.grid["vol"].sum(), 1150)
+
+        # drop volume column from gdf
+        point_gdf = point_gdf.drop(columns=["volume"])
+        mod.setup_storage_volume(storage_locs=point_gdf, volume=34.5, merge=False)
+
+        assert np.isclose(mod.grid["vol"].sum(), 34.5)
+
+        # check index of the point with maximum volume
+        index = mod.grid["vol"].argmax()
+        assert index == 2113
 
 
 def test_observations(tmpdir):

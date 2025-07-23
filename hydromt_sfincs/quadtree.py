@@ -33,6 +33,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_QT_MAPS = ["vol"]
+
 
 class QuadtreeGrid(ModelComponent):
     def __init__(
@@ -111,8 +113,20 @@ class QuadtreeGrid(ModelComponent):
     # set (coming from MeshComponent)
     # create
 
-    def read(self, filename: str | Path = None):
-        """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object."""
+    def read(
+        self, filename: Union[str, Path] = "sfincs.nc", variables: List[dict] = []
+    ):
+        """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object.
+
+        Parameters
+        ----------
+        file_name : str or Path, optional
+            Path to the netcdf file to read, by default "sfincs.nc".
+        variables : List[dict], optional
+            List of dictionaries with variable names and file names to read additional variables,
+            by default None. Each dictionary should have keys "variable" and "file_name", e.g.:
+            variables = [{"variable":"vol", "file_name":"storage_volume.nc"}]
+        """
 
         # check if in read mode and initialize grid
         self.root._assert_read_mode()
@@ -121,7 +135,6 @@ class QuadtreeGrid(ModelComponent):
         abs_file_path = self.model.config.get_set_file_variable(
             "qtrfile", value=filename
         )
-
         # Check if abs_file_path is None
         if abs_file_path is None:
             # File name not defined
@@ -131,16 +144,95 @@ class QuadtreeGrid(ModelComponent):
         if not abs_file_path.exists():
             raise FileNotFoundError(f"Quadtree grid file not found: {abs_file_path}")
 
-        self.data = xu.load_dataset(abs_file_path)
-        # set CRS (not sure if that should be stored in the netcdf in this way)
-        self.data.grid.set_crs(CRS.from_wkt(self.data["crs"].crs_wkt))
+        # load dataset and set CRS
+        ds = xu.load_dataset(abs_file_path)
+        ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
 
-    def write(self, filename: str | Path = None, version: int = 0):
-        """Writes a QuadTree SFINCS netcdf file."""
+        # store attributes
+        self.nr_cells = ds.sizes["mesh2d_nFaces"]
+        for key, value in ds.attrs.items():
+            setattr(self, key, value)
+
+        self.data = ds
+
+        # check which seperate data variables should be read
+        if data_vars is None:
+            data_vars = _QT_MAPS
+        elif isinstance(data_vars, str):
+            data_vars = list(data_vars)
+        variables = []
+        for var in data_vars:
+            fn_var = self.model.config.get(
+                f"{var}file", fallback=f"{var}.nc", abs_path=True
+            )
+            if isfile(fn_var):
+                variables.append({"variable": var, "file_name": fn_var})
+
+        if len(variables) > 0:
+            for var in variables:
+                try:
+                    with xu.load_dataset(var["file_name"]) as ds:
+                        self.data[var["variable"]] = ds[var["variable"]]
+                except Exception as e:
+                    logger.error(f"Error reading variable {var['variable']}: {e}")
+                    continue
+
+    def write(
+        self, filename: Union[str, Path] = "sfincs.nc", variables: List[dict] = []
+    ):
+        """Writes a quadtree SFINCS netcdf file.
+
+        Parameters
+        ----------
+        filename : str or Path, optional
+            Path to the netcdf file to write, by default "sfincs.nc".
+        variables : List[dict], optional
+            List of dictionaries with variable names and file names to write additional variables,
+            by default None. Each dictionary should have keys "variable" and "file_name", e.g.:
+            variables = [{"variable":"vol", "file_name":"storage_volume.nc"}]
+        """
+
+        # TODO do we want to cut inactive cells here? Or already when creating the mask?
+
+        # certain variables are stored as individual netcdfs because they might change between scnearios;
+        # in Python we keep everything in the same object so they are splitted here
+        # check which data variables should be written separately
+        if data_vars is None:
+            data_vars = _QT_MAPS
+        elif isinstance(data_vars, str):
+            data_vars = list(data_vars)
+        variables = []
+        for var in data_vars:
+            fn_var = self.model.config.get(f"{var}file", abs_path=True)
+            if fn_var is not None:
+                variables.append({"variable": var, "file_name": fn_var})
+
+        if len(variables) > 0:
+            for var in variables:
+                try:
+                    # get the single variable and convert to dataset
+                    # NOTE this allows to read as a standalone file with spatial metadata
+                    ds_var = self.data[
+                        [var["variable"], "mesh2d_node_x", "mesh2d_node_y"]
+                    ].ugrid.to_dataset()
+                    ds_var.to_netcdf(var["file_name"])
+                    # drop the variable from ds
+                    ds = ds.drop_vars(var["variable"])
+                except Exception as e:
+                    logger.error(f"Error writing variable {var['variable']}: {e}")
+                    continue
+
+        # TODO make similar to fortran conventions
+        # RENAME TO FORTRAN CONVENTION
+        ds = ds.rename({"dep": "z"}) if "dep" in ds else ds
+        ds = ds.rename({"msk": "mask"}) if "msk" in ds else ds
+        ds = (
+            ds.rename({"snapwave_msk": "snapwave_mask"}) if "snapwave_msk" in ds else ds
+        )
 
         # Get absolute file name and set it in config if bndfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "qtrfile", value=filename, default="sfincs.qtr"
+            "qtrfile", value=filename, default="sfincs.nc"
         )
 
         # And write the file
@@ -296,9 +388,109 @@ class QuadtreeGrid(ModelComponent):
         except Exception as e:
             return False
 
+    def get_indices_at_points(self, x, y):
+        # x and y are 2D arrays of coordinates (x, y) in the same projection as the model
+        # if x is a float, convert to 2D array
+        if np.ndim(x) == 0:
+            x = np.array([[x]])
+        if np.ndim(y) == 0:
+            y = np.array([[y]])
+
+        x0 = self.data.attrs["x0"]
+        y0 = self.data.attrs["y0"]
+        dx = self.data.attrs["dx"]
+        dy = self.data.attrs["dy"]
+        nmax = self.data.attrs["nmax"]
+        mmax = self.data.attrs["mmax"]
+        rotation = self.data.attrs["rotation"]
+        nr_refinement_levels = self.data.attrs["nr_levels"]
+
+        nr_cells = len(self.data["level"])
+
+        cosrot = np.cos(-rotation * np.pi / 180)
+        sinrot = np.sin(-rotation * np.pi / 180)
+
+        # Now rotate around origin of SFINCS model
+        x00 = x - x0
+        y00 = y - y0
+        xg = x00 * cosrot - y00 * sinrot
+        yg = x00 * sinrot + y00 * cosrot
+
+        # Find index of first cell in each level
+        if not hasattr(self.data, "ifirst"):
+            ifirst = np.zeros(nr_refinement_levels, dtype=int)
+            for ilev in range(0, nr_refinement_levels):
+                # Find index of first cell with this level
+                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)[
+                    0
+                ][0]
+            self.ifirst = ifirst
+
+        ifirst = self.ifirst
+
+        i0_lev = []
+        i1_lev = []
+        nmax_lev = []
+        mmax_lev = []
+        nm_lev = []
+
+        for level in range(nr_refinement_levels):
+            i0 = ifirst[level]
+            if level < nr_refinement_levels - 1:
+                i1 = ifirst[level + 1]
+            else:
+                i1 = nr_cells
+            i0_lev.append(i0)
+            i1_lev.append(i1)
+            nmax_lev.append(np.amax(self.data["n"].to_numpy()[i0:i1]) + 1)
+            mmax_lev.append(np.amax(self.data["m"].to_numpy()[i0:i1]) + 1)
+            nn = self.data["n"].to_numpy()[i0:i1] - 1
+            mm = self.data["m"].to_numpy()[i0:i1] - 1
+            nm_lev.append(mm * nmax_lev[level] + nn)
+
+        # Initialize index array
+        indx = np.full(np.shape(x), -999, dtype=np.int32)
+
+        for ilev in range(nr_refinement_levels):
+            nmax = nmax_lev[ilev]
+            mmax = mmax_lev[ilev]
+            i0 = i0_lev[ilev]
+            i1 = i1_lev[ilev]
+            dxr = dx / 2**ilev
+            dyr = dy / 2**ilev
+            iind = np.floor(xg / dxr).astype(int)
+            jind = np.floor(yg / dyr).astype(int)
+            # Now check whether this cell exists on this level
+            ind = iind * nmax + jind
+            ind[iind < 0] = -999
+            ind[jind < 0] = -999
+            ind[iind >= mmax] = -999
+            ind[jind >= nmax] = -999
+
+            ingrid = np.isin(
+                ind, nm_lev[ilev], assume_unique=False
+            )  # return boolean for each pixel that falls inside a grid cell
+            incell = np.where(
+                ingrid
+            )  # tuple of arrays of pixel indices that fall in a cell
+
+            if incell[0].size > 0:
+                # Now find the cell indices
+                try:
+                    cell_indices = (
+                        binary_search(nm_lev[ilev], ind[incell[0], incell[1]])
+                        + i0_lev[ilev]
+                    )
+                    indx[incell[0], incell[1]] = cell_indices
+                except Exception as e:
+                    print("Error in binary search: ", str(e))
+                    pass
+
+        return indx
+
+    # Internal functions
     def get_datashader_dataframe(self):
         """Creates a dataframe with line elements for datashader"""
-        # Create a dataframe with line elements
         x1 = self.data.grid.edge_node_coordinates[:, 0, 0]
         x2 = self.data.grid.edge_node_coordinates[:, 1, 0]
         y1 = self.data.grid.edge_node_coordinates[:, 0, 1]
@@ -319,3 +511,18 @@ class QuadtreeGrid(ModelComponent):
     def clear_datashader_dataframe(self):
         """Clears the datashader dataframe"""
         self.datashader_dataframe = pd.DataFrame()
+
+
+def binary_search(val_array, vals):
+    indx = np.searchsorted(val_array, vals)  # ind is size of vals
+    not_ok = np.where(indx == len(val_array))[
+        0
+    ]  # size of vals, points that are out of bounds
+    indx[
+        np.where(indx == len(val_array))[0]
+    ] = 0  # Set to zero to avoid out of bounds error
+    is_ok = np.where(val_array[indx] == vals)[0]  # size of vals
+    indices = np.zeros(len(vals), dtype=int) - 1
+    indices[is_ok] = indx[is_ok]
+    indices[not_ok] = -1
+    return indices

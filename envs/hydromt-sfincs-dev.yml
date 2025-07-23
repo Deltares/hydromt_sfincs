@@ -13,6 +13,7 @@ dependencies:
 - hydromt>=1.0, <1.1
 - jupyterlab
 - matplotlib
+- mapbox_earcut
 - nbsphinx
 - numba
 - numpy
