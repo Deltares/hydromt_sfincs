@@ -114,63 +114,68 @@ def test_infiltration(model):
     assert np.isclose(mod1.grid.data["ks"].where(mod1.grid.mask > 0).sum(), 331.27203)
 
 
-def test_subgrid_io(tmpdir):
+def test_subgrid_io(model_config, tmp_dir):
     # test the backward compatibility of reading/writing subgrid
-    root = TESTMODELDIR
-    datadir = TESTDATADIR
 
-    mod0 = SfincsModel(root=root, mode="r")
     # read-in the current subgrid (netcdf format)
-    mod0.read()
+    model_config.config.read()
+    model_config.grid.read()
+    model_config.subgrid.read()
+
     # check version and new parameter
-    assert mod0.reggrid.subgrid.version == 1
+    assert model_config.subgrid.version == 1
     # u and v paramters should be separated internally
-    assert "u_pwet" in mod0.subgrid
-    assert "uv_pwet" not in mod0.subgrid
+    assert "u_pwet" in model_config.subgrid.data
+    assert "uv_pwet" not in model_config.subgrid.data
 
     # also read-in the "real" netcdf file wihtout any hydromt interpretation
-    sbg0 = xr.open_dataset(join(mod0.root, "sfincs_subgrid.nc"))
+    sbg0 = xr.load_dataset(model_config.root.path / "sfincs_subgrid.nc")
 
     # write the subgrid (new format)
-    tmp_root = str(tmpdir.join("subgrid_io_test"))
-    mod0.set_root(tmp_root, mode="w")
-    mod0.write()
-    assert isfile(join(mod0.root, "sfincs_subgrid.nc"))
+    tmp_root = tmp_dir / "subgrid_io_test"
+    model_config.root.set(tmp_root, mode="w")
+    model_config.write()
+    assert isfile(join(model_config.root.path / "sfincs_subgrid.nc"))
 
     # read back-in
     mod1 = SfincsModel(root=tmp_root, mode="r")
     mod1.read()
     # Check if variables are the same
-    assert mod0.subgrid.variables.keys() == mod1.subgrid.variables.keys()
+    assert (
+        model_config.subgrid.data.variables.keys() == mod1.subgrid.data.variables.keys()
+    )
 
     # Check if values are almost equal
-    for var_name in mod0.subgrid.variables:
-        assert np.sum(mod0.subgrid[var_name] - mod1.subgrid[var_name]) == 0.0
+    for var_name in model_config.subgrid.data.variables:
+        assert (
+            np.sum(model_config.subgrid.data[var_name] - mod1.subgrid.data[var_name])
+            == 0.0
+        )
 
     # now read again the raw-netcdf file without any hydromt interpretation
-    sbg1 = xr.open_dataset(join(mod1.root, "sfincs_subgrid.nc"))
+    sbg1 = xr.load_dataset(mod1.root.path / "sfincs_subgrid.nc")
 
     # Check if values are almost equal
     for var_name in sbg0.variables:
         assert np.sum(sbg0[var_name] - sbg1[var_name]) == 0.0
 
     # copy old sbgfile to new location
-    sbgfile = join(datadir, "sfincs_test", "sfincs.sbg")
+    sbgfile = join(TESTDATADIR, "sfincs_test", "sfincs.sbg")
 
     # change the subgrid to the old format (binary format)
-    mod1.set_config("sbgfile", sbgfile)
-    mod1.read_subgrid()
+    mod1.config.set("sbgfile", sbgfile)
+    mod1.subgrid.read()
 
     # NOTE values are not the same as in the new format due to some changes in #225 and #247
     # only check version and new parameter
-    assert mod1.reggrid.subgrid.version == 0
-    assert "u_pwet" not in mod1.subgrid
-    assert "uv_pwet" not in mod1.subgrid
+    assert mod1.subgrid.version == 0
+    assert "u_pwet" not in mod1.subgrid.data
+    assert "uv_pwet" not in mod1.subgrid.data
 
 
-def test_subgrid_rivers(mod):
-    gdf_riv = mod.data_catalog.get_geodataframe(
-        "hydro_rivers_lin", geom=mod.region, buffer=1e3
+def test_subgrid_rivers(model):
+    gdf_riv = model.data_catalog.get_geodataframe(
+        "hydro_rivers_lin", geom=model.region, buffer=1e3
     )
 
     # create dummy depths for the river based on the width
@@ -180,9 +185,9 @@ def test_subgrid_rivers(mod):
     # set the depth of the river with "COMID": 21002062 to nan
     gdf_riv.loc[gdf_riv["COMID"] == 21002062, "rivdph"] = np.nan
 
-    sbg_org = mod.subgrid.copy()
+    sbg_org = model.subgrid.data.copy()
 
-    mod.setup_subgrid(
+    model.subgrid.create(
         datasets_dep=[
             {"elevtn": "merit_hydro", "zmin": 0.001},
             {"elevtn": "gebco"},
@@ -204,14 +209,16 @@ def test_subgrid_rivers(mod):
         write_dep_tif=True,
         write_man_tif=True,
         nr_subgrid_pixels=6,
-        nbins=8,
+        nr_levels=8,
         nrmax=250,  # multiple tiles
     )
 
-    assert isfile(join(mod.root, "subgrid", "dep_subgrid.tif"))
-    assert isfile(join(mod.root, "subgrid", "manning_subgrid.tif"))
+    assert isfile(model.root.path / "subgrid" / "dep_subgrid.tif")
+    assert isfile(model.root.path / "subgrid" / "manning_subgrid.tif")
 
-    assert np.isclose(np.sum(sbg_org["z_zmin"] - mod.subgrid["z_zmin"]), 124.13107)
+    assert np.isclose(
+        np.sum(sbg_org["z_zmin"] - model.subgrid.data["z_zmin"]), 124.13107
+    )
 
 
 def test_structs(tmpdir):

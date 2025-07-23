@@ -49,11 +49,11 @@ def model_config():
 
 # read full model instance and set to write mode in a temporary directory
 @pytest.fixture
-def model(tmp_path):
+def model(tmp_dir):
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
     mod.read()
-    mod.root.set(str(tmp_path), mode="r+")
+    mod.root.set(tmp_dir, mode="r+")
     return mod
 
 

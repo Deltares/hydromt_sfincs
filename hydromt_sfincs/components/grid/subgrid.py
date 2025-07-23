@@ -79,10 +79,20 @@ class SfincsSubgridTable(ModelComponent):
         elif not abs_file_path.exists():
             raise FileNotFoundError(f"Subgrid file not found: {abs_file_path}")
 
+        # check if the file is a netcdf file
+        if abs_file_path.suffix == ".nc":
+            # read netcdf file
+            self.read_netcdf(filename=abs_file_path)
+        else:
+            # read binary file
+            self.read_binary(filename=abs_file_path)
+
+    def read_netcdf(self, filename: str = None):
+        # netcdf, so set version to 1
+        self.version = 1
+
         # get the mask from the model
         mask = self.model.grid.mask
-
-        self.version = 1
 
         # Read data from netcdf file with xarray
         with xr.open_dataset(filename) as ds:
@@ -208,113 +218,12 @@ class SfincsSubgridTable(ModelComponent):
         # store the data in the _data attribute
         self._data = self.to_xarray(dims=mask.raster.dims, coords=mask.raster.coords)
 
-    # new way of writing netcdf subgrid tables
-    def write(self, filename: str = None):
-        """Write subgrid table to netcdf file for a regular grid with given mask.
-        Values are only written for active cells (mask > 0)."""
-
-        # Check that write mode is on
-        self.root._assert_write_mode()
-
-        # Check that data is not empty
-        if len(self.data.data_vars) == 0:
-            logger.info("No subgrid table available to write.")
-            return
-
-        # get the mask from the model and convert to xarray
-        mask = self.model.grid.mask
-        ds = self.to_xarray(dims=mask.raster.dims, coords=mask.raster.coords)
-
-        # Need to transpose to match the FORTRAN convention in SFINCS
-        ds = ds.transpose("levels", "x", "y")
-
-        # find indices of active cells
-        index_nm, index_mu1, index_nu1 = utils.find_uv_indices(mask)
-
-        # get number of levels
-        nr_levels = self.nr_levels
-
-        active_cells = index_nm > -1
-        active_indices = np.where(active_cells)[0]
-
-        # get nr of active points (where index_nm > -1)
-        nr_z_points = index_nm.max() + 1
-        nr_uv_points = max(index_mu1.max(), index_nu1.max()) + 1
-
-        # Make a new xarray dataset where we only keep the values of the active cells (index_nm > -1)
-        # use index_nm to put the values of the active cells in the new dataset
-        ds_new = xr.Dataset(attrs={"_FillValue": np.nan})
-
-        # Z points
-        variables = ["z_zmin", "z_zmax", "z_volmax"]
-        for var in variables:
-            ds_new[var] = xr.DataArray(
-                ds[var].values.flatten()[active_cells], dims=("np")
-            )
-
-        z_level = np.zeros((nr_levels, nr_z_points))
-        for ilevel in range(nr_levels):
-            z_level[ilevel] = ds["z_level"][ilevel].values.flatten()[active_cells]
-        ds_new["z_level"] = xr.DataArray(z_level, dims=("levels", "np"))
-
-        # u and v points
-        var_list = ["zmin", "zmax", "ffit", "navg"]
-        for var in var_list:
-            uv_var = np.zeros(nr_uv_points)
-            uv_var[index_mu1[index_mu1 > -1]] = ds["u_" + var].values.flatten()[
-                index_mu1 > -1
-            ]
-            uv_var[index_nu1[index_nu1 > -1]] = ds["v_" + var].values.flatten()[
-                index_nu1 > -1
-            ]
-            ds_new[f"uv_{var}"] = xr.DataArray(uv_var, dims=("npuv"))
-
-        var_list_levels = ["havg", "nrep", "pwet"]
-        for var in var_list_levels:
-            uv_var = np.zeros((nr_levels, nr_uv_points))
-            for ilevel in range(nr_levels):
-                uv_var[ilevel, index_mu1[index_mu1 > -1]] = ds["u_" + var][
-                    ilevel
-                ].values.flatten()[index_mu1 > -1]
-                uv_var[ilevel, index_nu1[index_nu1 > -1]] = ds["v_" + var][
-                    ilevel
-                ].values.flatten()[index_nu1 > -1]
-            ds_new[f"uv_{var}"] = xr.DataArray(uv_var, dims=("levels", "npuv"))
-
-        # ensure levels is last dimension
-        ds_new = ds_new.transpose("npuv", "np", "levels")
-
-        # Set file name and get absolute path
-        abs_file_path = self.model.config.get_set_file_variable(
-            "sbgfile",
-            value=filename,
-            default="sfincs_subgrid.nc",
-        )
-
-        # Write to netcdf file
-        ds_new.to_netcdf(abs_file_path)
-
     # Following remains for backward compatibility, but should soon not be used anymore
     def read_binary(self, filename: str = None):
         """Load subgrid table from file for a regular grid with given mask."""
 
-        # Check that write mode is on
-        self.root._assert_read_mode()
-
         # set version to old binary format
         self.version = 0
-
-        # get absolute file path
-        abs_file_path = self.model.config.get_set_file_variable(
-            "sbgfile", value=filename
-        )
-
-        if abs_file_path is None:
-            # File name not defined, so no subgrid in this model
-            return
-
-        if not abs_file_path.exists():
-            raise FileNotFoundError(f"Subgrid file not found: {abs_file_path}")
 
         # get the mask from the model
         mask = self.model.grid.mask
@@ -419,11 +328,15 @@ class SfincsSubgridTable(ModelComponent):
         file.close()
 
         # store the data in the _data attribute
-        self._data = self.to_xarray(dims=mask.raster.dims, coords=mask.raster.coords)
+        self._data = self.to_xarray(
+            dims=self.model.grid.mask.raster.dims,
+            coords=self.model.grid.mask.raster.coords,
+        )
 
-    # Following remains for backward compatibility, but should soon not be used anymore
-    def write_binary(self, filename: str = None):
-        """Save the subgrid data to a binary file."""
+    # new way of writing netcdf subgrid tables
+    def write(self, filename: str = None):
+        """Write subgrid table to netcdf file for a regular grid with given mask.
+        Values are only written for active cells (mask > 0)."""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -437,8 +350,87 @@ class SfincsSubgridTable(ModelComponent):
         abs_file_path = self.model.config.get_set_file_variable(
             "sbgfile",
             value=filename,
-            default="sfincs.sbg",
+            default="sfincs_subgrid.nc",
         )
+
+        # check if the file is a netcdf file
+        if abs_file_path.suffix == ".nc":
+            # read netcdf file
+            self.write_netcdf(filename=abs_file_path)
+        else:
+            # read binary file
+            self.write_binary(filename=abs_file_path)
+
+    def write_netcdf(self, filename: str = None):
+        # get the mask from the model and convert to xarray
+        mask = self.model.grid.mask
+        ds = self.to_xarray(dims=mask.raster.dims, coords=mask.raster.coords)
+
+        # Need to transpose to match the FORTRAN convention in SFINCS
+        ds = ds.transpose("levels", "x", "y")
+
+        # find indices of active cells
+        index_nm, index_mu1, index_nu1 = utils.find_uv_indices(mask)
+
+        # get number of levels
+        nr_levels = self.nr_levels
+
+        active_cells = index_nm > -1
+        active_indices = np.where(active_cells)[0]
+
+        # get nr of active points (where index_nm > -1)
+        nr_z_points = index_nm.max() + 1
+        nr_uv_points = max(index_mu1.max(), index_nu1.max()) + 1
+
+        # Make a new xarray dataset where we only keep the values of the active cells (index_nm > -1)
+        # use index_nm to put the values of the active cells in the new dataset
+        ds_new = xr.Dataset(attrs={"_FillValue": np.nan})
+
+        # Z points
+        variables = ["z_zmin", "z_zmax", "z_volmax"]
+        for var in variables:
+            ds_new[var] = xr.DataArray(
+                ds[var].values.flatten()[active_cells], dims=("np")
+            )
+
+        z_level = np.zeros((nr_levels, nr_z_points))
+        for ilevel in range(nr_levels):
+            z_level[ilevel] = ds["z_level"][ilevel].values.flatten()[active_cells]
+        ds_new["z_level"] = xr.DataArray(z_level, dims=("levels", "np"))
+
+        # u and v points
+        var_list = ["zmin", "zmax", "ffit", "navg"]
+        for var in var_list:
+            uv_var = np.zeros(nr_uv_points)
+            uv_var[index_mu1[index_mu1 > -1]] = ds["u_" + var].values.flatten()[
+                index_mu1 > -1
+            ]
+            uv_var[index_nu1[index_nu1 > -1]] = ds["v_" + var].values.flatten()[
+                index_nu1 > -1
+            ]
+            ds_new[f"uv_{var}"] = xr.DataArray(uv_var, dims=("npuv"))
+
+        var_list_levels = ["havg", "nrep", "pwet"]
+        for var in var_list_levels:
+            uv_var = np.zeros((nr_levels, nr_uv_points))
+            for ilevel in range(nr_levels):
+                uv_var[ilevel, index_mu1[index_mu1 > -1]] = ds["u_" + var][
+                    ilevel
+                ].values.flatten()[index_mu1 > -1]
+                uv_var[ilevel, index_nu1[index_nu1 > -1]] = ds["v_" + var][
+                    ilevel
+                ].values.flatten()[index_nu1 > -1]
+            ds_new[f"uv_{var}"] = xr.DataArray(uv_var, dims=("levels", "npuv"))
+
+        # ensure levels is last dimension
+        ds_new = ds_new.transpose("npuv", "np", "levels")
+
+        # Write to netcdf file
+        ds_new.to_netcdf(filename)
+
+    # Following remains for backward compatibility, but should soon not be used anymore
+    def write_binary(self, filename: str = None):
+        """Save the subgrid data to a binary file."""
 
         # get the mask from the model
         mask = self.model.grid.mask
@@ -455,7 +447,7 @@ class SfincsSubgridTable(ModelComponent):
         # Add 1 because indices in SFINCS start with 1, not 0
         ind = np.ravel_multi_index(iok, (nmax, mmax), order="F") + 1
 
-        file = open(abs_file_path, "wb")
+        file = open(filename, "wb")
         # file.write(np.int32(self.version))  # version
         file.write(np.int32(np.size(ind)))  # Nr of active points
         file.write(np.int32(1))  # min
