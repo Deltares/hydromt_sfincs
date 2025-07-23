@@ -1,15 +1,13 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import geopandas as gpd
 import numpy as np
-import pandas as pd
-from scipy import ndimage
 import xarray as xr
 
 from hydromt.model.components import ModelComponent
-from hydromt_sfincs import utils, workflows
+from hydromt_sfincs import workflows
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel

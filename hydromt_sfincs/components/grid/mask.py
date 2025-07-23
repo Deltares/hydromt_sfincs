@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Union
 
 
 import numpy as np
-import xarray as xr
 import geopandas as gpd
 import pandas as pd
 from scipy import ndimage
@@ -234,7 +233,7 @@ class SfincsMask(ModelComponent):
                 )
                 da_mask = np.logical_or(da_mask, _msk)  # NOTE logical OR statement
             except:
-                logger.debug(f"No mask cells found within include polygon!")
+                logger.debug("No mask cells found within include polygon!")
         if gdf_exclude is not None:
             try:
                 _msk = da_mask.raster.geometry_mask(
@@ -242,7 +241,7 @@ class SfincsMask(ModelComponent):
                 )
                 da_mask = np.logical_and(da_mask, ~_msk)
             except:
-                logger.debug(f"No mask cells found within exclude polygon!")
+                logger.debug("No mask cells found within exclude polygon!")
 
         # update sfincs mask name, nodata value and crs
         da_mask = da_mask.where(da_mask, 0).astype(np.uint8).rename("mask")
@@ -464,7 +463,7 @@ class SfincsMask(ModelComponent):
 
     def get_datashader_dataframe(self):
         raise NotImplementedError(
-            f"Datashader dataframe not yet implemented for regular models"
+            "Datashader dataframe not yet implemented for regular models"
         )
 
     def clear_datashader_dataframe(self):
@@ -473,4 +472,4 @@ class SfincsMask(ModelComponent):
             self.datashader_dataframe = pd.DataFrame()
 
     def map_overlay(self):
-        raise NotImplementedError(f"Map overlay not yet implemented for regular models")
+        raise NotImplementedError("Map overlay not yet implemented for regular models")

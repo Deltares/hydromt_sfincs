@@ -144,7 +144,7 @@ class IniStruct:
 
                     kwstr = "   " + kw.name.ljust(20) + " = "
 
-                    if not value is None:
+                    if value is not None:
                         if isinstance(value, float):
                             valstr = str(value)
                         elif isinstance(value, int):

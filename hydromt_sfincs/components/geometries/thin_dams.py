@@ -3,12 +3,11 @@ import geopandas as gpd
 from shapely.geometry import LineString
 import pandas as pd
 from pathlib import Path
-from typing import TYPE_CHECKING, Union, List
+from typing import TYPE_CHECKING, Union
 import os
-from os.path import abspath, join, exists
+from os.path import join
 
 from hydromt.model.components import ModelComponent
-from hydromt.model import Model
 from hydromt_sfincs import utils
 
 if TYPE_CHECKING:
@@ -116,7 +115,7 @@ class SfincsThinDams(ModelComponent):
             if not os.path.isdir(root):
                 os.makedirs(root)
 
-            self.data.to_file(join(root, f"thd.geojson"), driver="GeoJSON")
+            self.data.to_file(join(root, "thd.geojson"), driver="GeoJSON")
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
         """Set SFINCS thin dams.

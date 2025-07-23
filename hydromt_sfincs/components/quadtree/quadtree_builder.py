@@ -1,25 +1,17 @@
 import numpy as np
 import time
 import xarray as xr
-import time
-import os
-import numpy as np
 from matplotlib import path
-from pyproj import CRS, Transformer
-import shapely
-from scipy.interpolate import RegularGridInterpolator, griddata
+from pyproj import CRS
+from scipy.interpolate import RegularGridInterpolator
 
 from shapely.geometry import Polygon
 from shapely.prepared import prep
 
 import xugrid as xu
-import xarray as xr
 import warnings
-import geopandas as gpd
 
 np.warnings = warnings
-
-import pandas as pd
 
 
 def build_quadtree_xugrid(

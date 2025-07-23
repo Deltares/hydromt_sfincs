@@ -1,11 +1,7 @@
-import os
 from os.path import isfile
-import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from pathlib import Path
-from typing import Union, List
 
 import hydromt
 from hydromt.model.components import SpatialDatasetsComponent

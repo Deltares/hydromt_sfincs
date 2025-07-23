@@ -1,6 +1,6 @@
 import logging
 import os
-from os.path import abspath, basename, dirname, isabs, isfile, join
+from os.path import isfile
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Union
 
@@ -12,7 +12,7 @@ import xarray as xr
 import xugrid as xu
 from pyproj import CRS, Transformer
 
-from hydromt.model.components import MeshComponent, ModelComponent
+from hydromt.model.components import ModelComponent
 
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
@@ -381,7 +381,7 @@ class SfincsQuadtreeGrid(ModelComponent):
             name = os.path.splitext(name)[0]
             export_image(img, name, export_path=path)
             return True
-        except Exception as e:
+        except Exception:
             return False
 
     def get_indices_at_points(self, x, y):

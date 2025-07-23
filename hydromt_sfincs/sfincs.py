@@ -8,10 +8,9 @@ from __future__ import annotations
 import logging
 import os
 from os.path import dirname, join
-from typing import Any, Dict, List, Tuple, Union, Literal
+from typing import Dict, List, Tuple, Union
 
 import geopandas as gpd
-import hydromt
 import numpy as np
 import xarray as xr
 import xugrid as xu

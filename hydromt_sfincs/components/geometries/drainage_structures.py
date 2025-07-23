@@ -1,13 +1,7 @@
 import geopandas as gpd
-import numpy as np
-import pandas as pd
-import xarray as xr
-from pathlib import Path
-from typing import Union
 
 from hydromt.model.components import ModelComponent
 from hydromt.model import Model
-from hydromt_sfincs import utils
 
 
 class SfincsDrainageStructures(ModelComponent):

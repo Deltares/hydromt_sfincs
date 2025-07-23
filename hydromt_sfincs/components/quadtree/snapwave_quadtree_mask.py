@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import path
 from pyproj import Transformer
 import shapely
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING
 import xugrid as xu
 import xarray as xr
 import warnings

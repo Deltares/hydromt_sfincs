@@ -3,25 +3,22 @@
 import logging
 import math
 import os
-import glob
-from os.path import abspath, basename, dirname, isabs, isfile, join
+from os.path import isfile, join
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, List, Union
 
 import numpy as np
 import xarray as xr
 import geopandas as gpd
 from affine import Affine
 from pyproj import CRS, Transformer
-from scipy import ndimage
 from shapely.geometry import LineString
 
-from pyflwdir.regions import region_area
 
 from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
-from hydromt_sfincs import workflows, utils
+from hydromt_sfincs import utils
 from hydromt_sfincs.workflows.tiling import int2png, tile_window
 
 if TYPE_CHECKING:

@@ -3,12 +3,10 @@ import geopandas as gpd
 import shapely
 import pandas as pd
 from pathlib import Path
-from typing import TYPE_CHECKING, Union, List
-import os
-from os.path import abspath, join, exists
+from typing import TYPE_CHECKING, Union
+from os.path import join
 
 from hydromt.model.components import ModelComponent
-from hydromt.model import Model
 from hydromt_sfincs import utils
 
 if TYPE_CHECKING:

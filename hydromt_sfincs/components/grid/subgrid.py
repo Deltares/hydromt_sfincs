@@ -5,7 +5,7 @@ SubgridTableRegular class to create, read and write sfincs subgrid (sbg) files.
 import gc
 import logging
 import os
-from typing import TYPE_CHECKING, Union, List
+from typing import TYPE_CHECKING, List
 
 import numpy as np
 import rasterio

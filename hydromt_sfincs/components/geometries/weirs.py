@@ -4,12 +4,11 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from pathlib import Path
-from typing import TYPE_CHECKING, Union, List
+from typing import TYPE_CHECKING, Union
 import os
-from os.path import abspath, join, exists
+from os.path import join
 
 from hydromt.model.components import ModelComponent
-from hydromt.model import Model
 from hydromt_sfincs import utils
 
 if TYPE_CHECKING:
@@ -117,7 +116,7 @@ class SfincsWeirs(ModelComponent):
             if not os.path.isdir(root):
                 os.makedirs(root)
 
-            self.data.to_file(join(root, f"weir.geojson"), driver="GeoJSON")
+            self.data.to_file(join(root, "weir.geojson"), driver="GeoJSON")
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
         """Set SFINCS weir lines.
@@ -217,7 +216,7 @@ class SfincsWeirs(ModelComponent):
         gdf = gdf[[c for c in cols["weir"] if c in gdf.columns]]
 
         # check if z values are provided or can be calculated
-        if not "z" in gdf.columns and (dep is None and dz is None):
+        if "z" not in gdf.columns and (dep is None and dz is None):
             raise ValueError(
                 "Weir structure requires z values, or 'dep' or 'dz' input to determine these on the fly."
             )
