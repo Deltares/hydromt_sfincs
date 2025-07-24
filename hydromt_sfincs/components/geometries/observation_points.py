@@ -7,6 +7,7 @@ import geopandas as gpd
 import pandas as pd
 import shapely
 
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import utils
@@ -157,6 +158,7 @@ class SfincsObservationPoints(ModelComponent):
 
         self._data = gdf  # set gdf in self.data
 
+    @hydromt_step
     def create(
         self,
         locations: Union[str, Path, gpd.GeoDataFrame],

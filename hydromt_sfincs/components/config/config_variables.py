@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import List
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -657,6 +657,18 @@ class SfincsConfigVariables(BaseSettings):
     #
     bcafile: str | None = Field(None, description="Name of the calibration file")
     corfile: str | None = Field(None, description="Name of the correction file")
+
+    @field_validator("tref", "tstart", "tstop", mode="before")
+    @classmethod
+    def parse_custom_datetime(cls, v):
+        if isinstance(v, str):
+            try:
+                return datetime.strptime(v.strip(), "%Y%m%d %H%M%S")
+            except ValueError:
+                raise ValueError(
+                    f"Invalid datetime format: {v}. Expected format: YYYYMMDD HHMMSS"
+                )
+        return v
 
 
 sfincs_config_variables = SfincsConfigVariables()

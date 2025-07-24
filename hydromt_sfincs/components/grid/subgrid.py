@@ -13,6 +13,7 @@ import xarray as xr
 from numba import njit
 from rasterio.windows import Window
 
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import utils, workflows
@@ -494,6 +495,7 @@ class SfincsSubgridTable(ModelComponent):
         file.close()
 
     # This is the new way of building subgrid tables, that will end up in netcdf files
+    @hydromt_step
     def create(
         self,
         datasets_dep: List[dict],

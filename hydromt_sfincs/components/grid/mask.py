@@ -8,6 +8,7 @@ import pandas as pd
 from pyflwdir.regions import region_area
 from scipy import ndimage
 
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import utils
@@ -74,6 +75,7 @@ class SfincsMask(ModelComponent):
         # The mask values are written when the quadtree grid is written
         pass
 
+    @hydromt_step
     def create(
         self,
         mask: Union[str, Path, gpd.GeoDataFrame] = None,
@@ -255,6 +257,7 @@ class SfincsMask(ModelComponent):
         # add msk and ind to config
         self.model.config.update({"indexfile": "sfincs.ind", "mskfile": "sfincs.msk"})
 
+    @hydromt_step
     def set_bounds(
         self,
         btype: str = "waterlevel",

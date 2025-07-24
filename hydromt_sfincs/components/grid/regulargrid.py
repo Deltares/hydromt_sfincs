@@ -14,6 +14,7 @@ from affine import Affine
 from pyproj import CRS, Transformer
 from shapely.geometry import LineString
 
+from hydromt import hydromt_step
 from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
@@ -285,6 +286,7 @@ class SfincsGrid(GridComponent):
                         logger=logger,
                     )
 
+    @hydromt_step
     def create(
         self,
         x0: float,
@@ -336,6 +338,7 @@ class SfincsGrid(GridComponent):
         # set the grid in the model data
         self.set(ds)
 
+    @hydromt_step
     def create_from_region(
         self,
         region: dict,

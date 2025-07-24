@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import xarray as xr
 
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import workflows
@@ -69,6 +70,7 @@ class SfincsInfiltration(ModelComponent):
         pass
 
     # Function to create constant spatially varying infiltration
+    @hydromt_step
     def create_constant(
         self,
         qinf=None,
@@ -158,6 +160,7 @@ class SfincsInfiltration(ModelComponent):
                     self.model.config.set(f"{name}file", None)
 
     # Function to create curve number for SFINCS
+    @hydromt_step
     def create_cn(self, cn, antecedent_moisture="avg", reproj_method="med"):
         """Setup model potential maximum soil moisture retention map (scsfile)
         from gridded curve number map.
@@ -224,6 +227,7 @@ class SfincsInfiltration(ModelComponent):
                     self.model.config.set(f"{name}file", None)
 
     # Function to create curve number for SFINCS including recovery via saturated hydraulic conductivity [mm/hr]
+    @hydromt_step
     def create_cn_with_recovery(
         self, lulc, hsg, ksat, reclass_table, effective, factor_ksat=1, block_size=2000
     ):

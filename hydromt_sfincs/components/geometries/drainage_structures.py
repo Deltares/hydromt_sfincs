@@ -1,6 +1,7 @@
 import geopandas as gpd
 
 from hydromt.model import Model
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 
@@ -9,7 +10,7 @@ class SfincsDrainageStructures(ModelComponent):
         self,
         model: Model,
     ):
-        self._filename: str = "sfincs.drain"
+        self._filename: str = "sfincs.drn"
         self._data: gpd.GeoDataFrame = None
         super().__init__(
             model=model,

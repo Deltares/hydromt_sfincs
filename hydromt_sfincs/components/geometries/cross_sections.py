@@ -8,6 +8,7 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
 
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import utils
@@ -164,6 +165,7 @@ class SfincsCrossSections(ModelComponent):
 
         self._data = gdf  # set gdf in self._data
 
+    @hydromt_step
     def create(
         self,
         locations: Union[str, Path, gpd.GeoDataFrame],

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import utils
@@ -157,6 +158,7 @@ class SfincsWeirs(ModelComponent):
 
         self._data = gdf  # set gdf in self._data
 
+    @hydromt_step
     def create(
         self,
         locations: Union[str, Path, gpd.GeoDataFrame],

@@ -1,15 +1,19 @@
+import logging
 from ast import literal_eval
 from datetime import datetime
 from os.path import abspath, exists, isabs, join
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from .config_variables import SfincsConfigVariables
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
+
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsConfig(ModelComponent):
@@ -147,25 +151,35 @@ class SfincsConfig(ModelComponent):
 
         if not skip_validation:
             # Validate the new data
-            # FIXME implement this in a better way
-            # It works, but it is quite slow when all the variables are set in a loop
-            # Therefore the skip_validation option is added
             self.data.model_validate({key: value})
 
         self.data.__setattr__(key, value)
 
-    def update(self, dict: Dict[str, Any]) -> None:
+    @hydromt_step
+    def update(self, dict: Optional[Dict[str, Any]] = None, **kwargs) -> None:
         """
-        Update multiple attributes with validation from a dictionary with key-value pairs.
+        Update attributes using a dictionary or keyword arguments.
 
         Parameters:
         -----------
-        dict (Dict[str, Any]):
+        dict (Dict[str, Any], optional):
             A dictionary containing key-value pairs to update the attributes.
-            For example, dict = {'mmax': 100, 'nmax': 50}.
+            Example: dict = {'mmax': 100, 'nmax': 50}.
+        kwargs:
+            Key-value pairs passed as keyword arguments.
+            Example: update(mmax=100, nmax=50)
         """
-        # set each key-value pair in the dictionary
-        for key, value in dict.items():
+        updates = dict or {}
+        updates.update(kwargs)
+
+        if updates:
+            logger.debug("Updating model attributes/config.")
+
+        for key, value in updates.items():
+            # if key in ["tref", "tstart", "tstop"]:
+            #     # check if val is a datetime string
+            #     if isinstance(value, str):
+            #         value = datetime.strptime(value, "%Y%m%d %H%M%S")
             self.set(key, value)
 
     def update_grid_from_config(self) -> None:

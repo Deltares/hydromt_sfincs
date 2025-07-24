@@ -1,43 +1,47 @@
 observations:
-  crs: 4326
+  uri: local_data/observations.csv
   data_type: GeoDataFrame
-  driver: csv
-  path: local_data/observations.csv
+  driver: geodataframe_table
+  metadata:
+    crs: 4326
 
 discharge:
+  uri: local_data/discharge.csv
   data_type: DataFrame
-  driver: csv
-  driver_kwargs:
-    index_col: 0
-    parse_dates: true
-  path: local_data/discharge.csv
+  driver:
+    name: pandas
+    options:
+      index_col: 0
+      parse_dates: true
 
 wind:
+  uri: local_data/wind.csv
   data_type: DataFrame
-  driver: csv
-  driver_kwargs:
-    index_col: 0
-    parse_dates: true
-  path: local_data/wind.csv
+  driver:
+    name: pandas
+    options:
+      index_col: 0
+      parse_dates: true
 
 weir:
+  uri: local_data/weir.geojson
   data_type: GeoDataFrame
-  driver: vector
-  path: local_data/weir.geojson
+  driver: pyogrio
 
 drainage:
+  uri: local_data/drainage.geojson
   data_type: GeoDataFrame
-  driver: vector
-  path: local_data/drainage.geojson
+  driver: pyogrio
 
 observation_lines:
+  uri: local_data/observation_lines.geojson
   data_type: GeoDataFrame
-  driver: vector
-  path: local_data/observation_lines.geojson
+  driver: pyogrio
 
 vito_mapping:
+  uri: local_data/vito_mapping.csv
   data_type: DataFrame
-  driver: csv
-  driver_kwargs:
-    index_col: 0
-  path: local_data/vito_mapping.csv
+  driver:
+    name: pandas
+    options:
+      index_col: 0

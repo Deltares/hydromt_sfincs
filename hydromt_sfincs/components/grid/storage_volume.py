@@ -6,6 +6,7 @@ import geopandas as gpd
 import numpy as np
 import xarray as xr
 
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import workflows
@@ -49,6 +50,7 @@ class SfincsStorageVolume(ModelComponent):
         # The mask values are written when the quadtree grid is written
         pass
 
+    @hydromt_step
     def create(
         self,
         storage_locs: Union[str, Path, gpd.GeoDataFrame],
