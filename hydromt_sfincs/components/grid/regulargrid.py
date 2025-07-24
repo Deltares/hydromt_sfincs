@@ -347,7 +347,7 @@ class SfincsGrid(GridComponent):
         rotated: bool = False,
         hydrography_fn: str = None,
         basin_index_fn: str = None,
-        align: bool = False,
+        align: bool = True,
         dec_origin: int = 0,
         dec_rotation: int = 3,
     ):
@@ -408,6 +408,11 @@ class SfincsGrid(GridComponent):
             dec_origin=dec_origin,
             dec_rotation=dec_rotation,
         )
+
+        # check for y-resolution
+        # TODO discuss with hydrom-core if this behavior is desired
+        if ds.raster.res[1] < 0:
+            ds = ds.raster.flipud()
 
         # add the grid to the model
         self.set(ds)
