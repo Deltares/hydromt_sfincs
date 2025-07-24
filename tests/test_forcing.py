@@ -1,4 +1,5 @@
 from os.path import abspath, dirname, join
+from datetime import datetime
 
 import numpy as np
 
@@ -13,9 +14,22 @@ def test_setup_meteo_latlon(tmp_dir):
     # create a model instance with geographical coordinates
     mod = SfincsModel(root=tmp_dir, mode="w+")
     mod.grid.create_from_region(
-        region={"geom": region}, crs=4326, res=0.01, rotated=False, dec_origin=3
+        region={"geom": region},
+        crs=4326,
+        res=0.01,
+        rotated=False,
+        dec_origin=3,
     )
     mod.mask.create(mask=region)
+
+    # set the model time
+    mod.config.update(
+        {
+            "tref": datetime(2010, 2, 1),
+            "tstart": datetime(2010, 2, 5),
+            "tstop": datetime(2010, 2, 7),
+        }
+    )
 
     # get the forcing data from the data catalog
     ds = mod.data_catalog.get_rasterdataset("era5_hourly_zarr")
@@ -30,15 +44,18 @@ def test_setup_meteo_latlon(tmp_dir):
     ds = ds.rename({"u10": "wind10_u", "v10": "wind10_v"})
 
     # add precipitation, wind and presssure to the model
-    mod.setup_precip_forcing_from_grid(precip=ds)
-    mod.setup_wind_forcing_from_grid(wind=ds)
-    mod.setup_pressure_forcing_from_grid(press=ds)
+    mod.precipitation.create(precip=ds, buffer=30e3)
+    assert "precip_2d" in mod.precipitation.data
+    mod.wind.create(wind=ds, buffer=30e3)
+    assert "wind10_u" in mod.wind.data
+    assert "wind10_v" in mod.wind.data
+    mod.pressure.create(press=ds, buffer=30e3)
+    assert "press_2d" in mod.pressure.data
 
-    # first make sure the forcing data is set correctly
-    assert ["precip_2d", "wind10_u", "wind10_v", "press_2d"] == list(mod.forcing.keys())
-
-    # now check the dimensions of the forcing data
-    for key, da in mod.forcing.items():
-        # spatial coordinates should always be (y, x)
-        assert da.dims == ("time", "y", "x")
-        assert da.raster.crs == "EPSG:4326"
+    # now check the dimensions of the forcing data of each model component
+    # should allways be (time, y, x) following sfincs conventions
+    components = [mod.precipitation, mod.wind, mod.pressure]
+    for comp in components:
+        assert comp.data is not None
+        assert comp.data.raster.dims == ("y", "x")
+        assert comp.data.raster.crs == "EPSG:4326"

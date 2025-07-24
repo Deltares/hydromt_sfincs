@@ -150,11 +150,9 @@ class SfincsModel(Model):
         self.add_component(
             "snapwave_boundary_conditions", SnapWaveBoundaryConditions(self)
         )
-        # self.add_component("meteo", SfincsMeteo(self))
-        # self.add_component("precipitation", SfincsPrecipitation(self))
-        # self.add_component("pressure", SfincsPressure(self))
-        # self.add_component("wind", SfincsWind(self))
-        # self.add_component("forcing", SfincsForcing(self))
+        self.add_component("precipitation", SfincsPrecipitation(self))
+        self.add_component("pressure", SfincsPressure(self))
+        self.add_component("wind", SfincsWind(self))
 
         # output / visualization types:
         self.add_component("output", SfincsOutput(self))
@@ -280,6 +278,21 @@ class SfincsModel(Model):
     def discharge_points(self) -> SfincsDischargePoints:
         """Returns the discharge points object."""
         return self.components["discharge_points"]
+
+    @property
+    def precipitation(self) -> SfincsPrecipitation:
+        """Returns the precipitation object."""
+        return self.components["precipitation"]
+
+    @property
+    def pressure(self) -> SfincsPressure:
+        """Returns the pressure object."""
+        return self.components["pressure"]
+
+    @property
+    def wind(self) -> SfincsWind:
+        """Returns the wind object."""
+        return self.components["wind"]
 
     @property
     def snapwave_boundary_conditions(self) -> SnapWaveBoundaryConditions:
@@ -566,8 +579,8 @@ class SfincsModel(Model):
 
     def get_model_time(self):
         """Return (tstart, tstop) tuple with parsed model start and end time"""
-        tstart = utils.parse_datetime(self.config["tstart"])
-        tstop = utils.parse_datetime(self.config["tstop"])
+        tstart = utils.parse_datetime(self.config.get("tstart"))
+        tstop = utils.parse_datetime(self.config.get("tstop"))
         return tstart, tstop
 
     ## helper method

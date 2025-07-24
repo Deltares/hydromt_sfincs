@@ -84,7 +84,30 @@ def test_grid_create_from_region(model_init):
         os.path.join(TESTDATADIR, "region.geojson"),
     )
 
-    # create the grid (note this actually calls model.reggrid.create)
+    model.grid.create_from_region(
+        region={"geom": region},
+        res=150,
+        crs="utm",
+        rotated=False,
+        align=True,
+    )
+
+    assert model.crs == CRS.from_epsg(32633)
+    assert model.grid.mmax == 91
+    assert model.grid.nmax == 70
+    assert np.isclose(model.grid.dx, 150, atol=1e-3)
+    assert np.isclose(model.grid.dy, 150, atol=1e-3)
+    assert np.isclose(model.grid.x0, 316200.0, atol=1e-3)
+    assert np.isclose(model.grid.y0, 5040000.0, atol=1e-3)
+    assert np.isclose(model.grid.rotation, 0, atol=1e-3)
+
+
+def test_grid_create_from_region_rotated(model_init):
+    model = model_init
+    region = model.data_catalog.get_geodataframe(
+        os.path.join(TESTDATADIR, "region.geojson"),
+    )
+
     model.grid.create_from_region(
         region={"geom": region}, res=150, crs="utm", rotated=True
     )

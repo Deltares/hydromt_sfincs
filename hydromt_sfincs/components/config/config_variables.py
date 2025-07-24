@@ -407,7 +407,7 @@ class SfincsConfigVariables(BaseSettings):
     )
     precipfile: str | None = Field(
         None,
-        description="LEGACY OPTION- Name of the spatially uniform precipitation file > now use: prcfile",
+        description="LEGACY OPTION - Name of the spatially uniform precipitation file > now use: prcfile",
     )
     amufile: str | None = Field(
         None, description="Name of the u-component of the wind file"
