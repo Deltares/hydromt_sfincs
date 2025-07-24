@@ -141,7 +141,7 @@ class SfincsModel(Model):
         self.add_component("thin_dams", SfincsThinDams(self))
         self.add_component("weirs", SfincsWeirs(self))
         self.add_component("wave_makers", SfincsWaveMakers(self))
-        # self.add_component("drainage_structures", SfincsDrainageStructures(self))
+        self.add_component("drainage_structures", SfincsDrainageStructures(self))
         self.add_component("rivers", SfincsRivers(self))
 
         # Forcing types
@@ -250,6 +250,16 @@ class SfincsModel(Model):
     def thin_dams(self) -> SfincsThinDams:
         """Returns the thin dams object."""
         return self.components["thin_dams"]
+
+    @property
+    def weirs(self) -> SfincsWeirs:
+        """Returns the weirs object."""
+        return self.components["weirs"]
+
+    @property
+    def drainage_structures(self) -> SfincsDrainageStructures:
+        """Returns the drainage structures object."""
+        return self.components["drainage_structures"]
 
     @property
     def wave_makers(self) -> SfincsWaveMakers:

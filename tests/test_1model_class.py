@@ -221,58 +221,54 @@ def test_subgrid_rivers(model):
     )
 
 
-def test_structs(tmpdir):
-    root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r")
+def test_structs(model_config, tmp_dir):
     # read
-    mod.set_config("thdfile", "sfincs.thd")
-    mod.read_grid()
-    mod.read_geoms()
-    assert "thd" in mod.geoms
+    model_config.grid.read()
+    model_config.thin_dams.read()
+    assert not model_config.thin_dams.data.empty
+    nr_thin_dams = len(model_config.thin_dams.data.index)
     # write thd file only
-    tmp_root = str(tmpdir.join("struct_test"))
-    mod.set_root(tmp_root, mode="w")
-    mod.write_geoms(data_vars=["thd"])
-    assert isfile(join(mod.root, "sfincs.thd"))
-    assert not isfile(join(mod.root, "sfincs.obs"))
-    fn_thd_gis = join(mod.root, "gis", "thd.geojson")
+    tmp_root = tmp_dir / "struct_test"
+    model_config.root.set(tmp_root, mode="w+")
+    model_config.thin_dams.write()
+    assert isfile(join(model_config.root.path, "sfincs.thd"))
+    fn_thd_gis = join(model_config.root.path, "gis", "thd.geojson")
     assert isfile(fn_thd_gis)
     # add second thd file
-    mod.setup_structures(fn_thd_gis, stype="thd")
-    assert len(mod.geoms["thd"].index) == 2
+    model_config.thin_dams.create(fn_thd_gis, merge=True)
+    assert len(model_config.thin_dams.data.index) == nr_thin_dams * 2
     # setup weir file from thd.geojson using dz option
     with pytest.raises(ValueError, match="Weir structure requires z"):
-        mod.setup_structures(fn_thd_gis, stype="weir")
-    mod.setup_structures(fn_thd_gis, stype="weir", dz=2)
-    assert "weir" in mod.geoms
-    assert "weirfile" in mod.config
-    mod.write_geoms()
-    assert isfile(join(mod.root, "sfincs.weir"))
+        model_config.weirs.create(fn_thd_gis)
+    model_config.weirs.create(fn_thd_gis, dz=2)
+    assert not model_config.weirs.data.empty
+    assert model_config.config.get("weirfile") is not None
+    model_config.weirs.write()
+    model_config.thin_dams.write()
+    assert isfile(join(model_config.root.path, "sfincs.weir"))
+    fn_weir_gis = join(model_config.root.path, "gis", "weir.geojson")
+    assert isfile(fn_weir_gis)
     # test with buffer
-    mod.setup_structures(fn_thd_gis, stype="weir", buffer=5, dep="dep", merge=False)
-    assert len(mod.geoms["weir"].index) == 2
+    model_config.weirs.create(fn_thd_gis, buffer=5, dep="dep", merge=False)
+    assert len(model_config.weirs.data.index) == 2
 
 
-def test_drainage_structures(tmpdir):
-    root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r")
-    # read
-    mod.set_config("drnfile", "sfincs.drn")
-    mod.read_grid()
-    mod.read_geoms()
-    assert "drn" in mod.geoms
-    nr_drainage_structures = len(mod.geoms["drn"].index)
+def test_drainage_structures(model_config, tmp_dir):
+    model_config.drainage_structures.read()
+    assert not model_config.drainage_structures.data.empty
+    nr_drainage_structures = len(model_config.drainage_structures.data.index)
     # write drn file only
-    tmp_root = str(tmpdir.join("drainage_struct_test"))
-    mod.set_root(tmp_root, mode="w")
-    mod.write_geoms(data_vars=["drn"])
-    assert isfile(join(mod.root, "sfincs.drn"))
-    assert not isfile(join(mod.root, "sfincs.obs"))
-    fn_drn_gis = join(mod.root, "gis", "drn.geojson")
+    tmp_root = tmp_dir / "drainage_struct_test"
+    model_config.root.set(tmp_root, mode="w+")
+    model_config.drainage_structures.write()
+    assert isfile(model_config.root.path / "sfincs.drn")
+    fn_drn_gis = join(model_config.root.path, "gis", "drn.geojson")
     assert isfile(fn_drn_gis)
     # add more drainage structures
-    mod.setup_drainage_structures(fn_drn_gis, merge=True)
-    assert len(mod.geoms["drn"].index) == nr_drainage_structures * 2
+    model_config.drainage_structures.create(fn_drn_gis, merge=True)
+    assert (
+        len(model_config.drainage_structures.data.index) == nr_drainage_structures * 2
+    )
 
 
 @pytest.mark.parametrize("case", list(_cases.keys()))
@@ -386,43 +382,40 @@ def test_storage_volume(tmp_dir, case):
         assert index == 2113
 
 
-def test_observations(tmpdir):
-    root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r+")
+def test_observations(model_config, tmp_dir):
     # read
-    mod.set_config("obsfile", "sfincs.obs")
-    mod.read_grid()
-    mod.read_geoms()
+    model_config.observation_points.read()
+    model_config.cross_sections.read()
 
     # observation points
-    assert "obs" in mod.geoms
-    nr_observation_points = len(mod.geoms["obs"].index)
+    assert not model_config.observation_points.data.empty
+    nr_observation_points = len(model_config.observation_points.data.index)
     # write obs file only
-    tmp_root = str(tmpdir.join("observation_points_test"))
-    mod.set_root(tmp_root, mode="w")
-    mod.write_geoms(data_vars=["obs"])
-    assert isfile(join(mod.root, "sfincs.obs"))
-    assert not isfile(join(mod.root, "sfincs.crs"))
-    fn_obs_gis = join(mod.root, "gis", "obs.geojson")
+    tmp_root = tmp_dir / "observation_points_test"
+    model_config.root.set(tmp_root, mode="w+")
+    model_config.observation_points.write()
+    assert isfile(join(model_config.root.path, "sfincs.obs"))
+    assert not isfile(join(model_config.root.path, "sfincs.crs"))
+    fn_obs_gis = join(model_config.root.path, "gis", "obs.geojson")
     assert isfile(fn_obs_gis)
     # add more observation points
-    mod.setup_observation_points(fn_obs_gis, merge=True)
-    assert len(mod.geoms["obs"].index) == nr_observation_points * 2
+    model_config.observation_points.create(fn_obs_gis, merge=True)
+    assert len(model_config.observation_points.data.index) == nr_observation_points * 2
 
     # observation lines
-    assert "crs" in mod.geoms
-    nr_observation_lines = len(mod.geoms["crs"].index)
+    assert not model_config.cross_sections.data.empty
+    nr_observation_lines = len(model_config.cross_sections.data.index)
     # write crs file only
-    tmp_root = str(tmpdir.join("observation_lines_test"))
-    mod.set_root(tmp_root, mode="w")
-    mod.write_geoms(data_vars=["crs"])
-    assert isfile(join(mod.root, "sfincs.crs"))
-    assert not isfile(join(mod.root, "sfincs.obs"))
-    fn_crs_gis = join(mod.root, "gis", "crs.geojson")
+    tmp_root = tmp_dir / "observation_lines_test"
+    model_config.root.set(tmp_root, mode="w+")
+    model_config.cross_sections.write()
+    assert isfile(join(model_config.root.path, "sfincs.crs"))
+    assert not isfile(join(model_config.root.path, "sfincs.obs"))
+    fn_crs_gis = join(model_config.root.path, "gis", "crs.geojson")
     assert isfile(fn_crs_gis)
     # add more observation lines
-    mod.setup_observation_lines(fn_crs_gis, merge=True)
-    assert len(mod.geoms["crs"].index) == nr_observation_lines * 2
+    model_config.cross_sections.create(fn_crs_gis, merge=True)
+    assert len(model_config.cross_sections.data.index) == nr_observation_lines * 2
 
 
 def test_forcing_io(tmp_dir):
