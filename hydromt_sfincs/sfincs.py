@@ -157,7 +157,7 @@ class SfincsModel(Model):
         # self.add_component("forcing", SfincsForcing(self))
 
         # output / visualization types:
-        # self.add_component("output", SfincsOutput(self))
+        self.add_component("output", SfincsOutput(self))
         # self.add_component("plots", SfincsPlots(self))
 
     def __del__(self):
@@ -285,6 +285,11 @@ class SfincsModel(Model):
     def snapwave_boundary_conditions(self) -> SnapWaveBoundaryConditions:
         """Returns the snapwave boundary conditions object."""
         return self.components["snapwave_boundary_conditions"]
+
+    @property
+    def output(self) -> SfincsOutput:
+        """Returns the output object."""
+        return self.components["output"]
 
     ## Real properties of the model ##
     @property

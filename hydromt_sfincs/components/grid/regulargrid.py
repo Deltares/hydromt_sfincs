@@ -101,7 +101,7 @@ class SfincsGrid(GridComponent):
             dims=("y", "x"),
             attrs={"_FillValue": 0},
         )
-        da_mask.raster.set_crs(self.model.crs)
+        da_mask.raster.set_crs(self.crs)
         return da_mask
 
     @property
