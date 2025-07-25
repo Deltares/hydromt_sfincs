@@ -1,14 +1,48 @@
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, isfile
 from datetime import datetime
-
-import numpy as np
 
 from hydromt_sfincs.sfincs import SfincsModel
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
 
 
-def test_setup_meteo_latlon(tmp_dir):
+def test_meteo_io(model_config, tmp_dir):
+    # this model contains uniform wnd, so it should use read_uniform
+    model_config.wind.read()
+    assert "wind" in model_config.wind.data
+
+    # this model contains gridded precipitation, so it should use read_gridded
+    model_config.precipitation.read()
+    assert "precip_2d" in model_config.precipitation.data
+
+    # now change the root of the model to a temporary directory and write the data
+    model_config.root.set(tmp_dir, mode="w+")
+    model_config.wind.write()
+    fn = model_config.config.get("wndfile", abs_path=True)
+    assert isfile(fn)
+    model_config.precipitation.write()
+    fn = model_config.config.get("netamprfile", abs_path=True)
+    assert isfile(fn)
+    model_config.config.write()
+
+    # now read the data back in
+    mod = SfincsModel(root=tmp_dir, mode="r")
+    mod.config.read()
+    mod.wind.read()
+    assert mod.wind.test_equal(model_config.wind)
+    mod.precipitation.read()
+    assert mod.precipitation.test_equal(model_config.precipitation)
+
+
+def test_create_uniform_precip(model_config):
+    timeseries = join(TESTDATADIR, "local_data", "discharge.csv")
+
+    model_config.precipitation.create_uniform(timeseries=timeseries)
+
+    assert "precip" in model_config.precipitation.data
+
+
+def test_create_meteo_latlon(tmp_dir):
     region = join(TESTDATADIR, "region.geojson")
 
     # create a model instance with geographical coordinates

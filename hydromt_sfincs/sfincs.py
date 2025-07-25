@@ -704,9 +704,10 @@ class SfincsModel(Model):
                     buffer=10,
                     variables=["lulc"],
                 )
-                df_map = self.data_catalog.get_dataframe(reclass_table)
-                # set the index_column to 0
-                df_map.set_index(df_map.columns[0], inplace=True)
+                df_map = self.data_catalog.get_dataframe(
+                    reclass_table,
+                    driver={"name": "pandas", "options": {"index_col": 0}},
+                )
                 # reclassify
                 da_man = da_lulc.raster.reclassify(df_map[["N"]])["N"]
                 dd.update({"da": da_man})

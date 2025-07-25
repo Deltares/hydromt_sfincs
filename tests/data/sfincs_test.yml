@@ -51,15 +51,15 @@ cross_sections.create:
 thin_dams.create:
   locations: weir
 
-# drainage_structures.create:
-#   structures: drainage
+drainage_structures.create:
+  locations: drainage
 
-# setup_river_inflow:
-#   hydrography: merit_hydro
-#   buffer: 100
-#   river_upa: 10
-#   river_len: 1000
-#   keep_rivers_geom: True
+rivers.create_river_inflow:
+  hydrography: merit_hydro
+  buffer: 100
+  river_upa: 10
+  river_len: 1000
+  keep_rivers_geom: True
 
 # setup_discharge_forcing:
 #   timeseries: discharge
@@ -68,9 +68,9 @@ thin_dams.create:
 #   geodataset: gtsmv3_eu_era5
 #   buffer: 2000                                                     # m: find points within 2 km of waterlevel boundary
 
-# setup_precip_forcing_from_grid:
-#   precip: era5_hourly
-#   aggregate: False
+precipitation.create:
+  precip: era5_hourly
+  aggregate: False
 
-# setup_wind_forcing:
-#   timeseries: wind
+wind.create_uniform:
+  timeseries: wind

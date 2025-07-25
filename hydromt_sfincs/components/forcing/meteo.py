@@ -8,7 +8,7 @@ import pandas as pd
 import xarray as xr
 
 from hydromt import hydromt_step
-from hydromt.model.components import ModelComponent, SpatialDatasetsComponent
+from hydromt.model.components import ModelComponent
 from hydromt.model.processes.meteo import da_to_timedelta
 
 from hydromt_sfincs import utils
@@ -18,11 +18,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_FORCING = {
-    "precip": (["precip"], None),
-    "wind": (["wnd"], None),
+# dictionary of meteo variables and their corresponding SFINCS file names and renaming conventions
+_METEO = {
+    "precip": ("precip", None),
     "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
     "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
+    "wind": ("wnd", None),
     "wind_2d": (
         "netamuamv",
         {"eastward_wind": "wind10_u", "northward_wind": "wind10_v"},
@@ -36,14 +37,14 @@ class SfincsMeteo(ModelComponent):
         model: "SfincsModel",
     ):
         self._filename: str = None  # set in subclasses
-        self._data: Optional[Union[pd.DataFrame, xr.Dataset]] = None
+        self._data: Optional[Union[xr.DataArray, xr.Dataset]] = None
         super().__init__(
             model=model,
         )
 
     @property
     def data(self) -> Union[xr.DataArray, xr.Dataset]:
-        """Meteo data. Returns a pandas DataFrame or xarray Dataset."""
+        """Meteo data. Returns a xr.DataArray or xarray Dataset."""
         if self._data is None:
             self._initialize()
 
@@ -57,35 +58,59 @@ class SfincsMeteo(ModelComponent):
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
-    def read(self, filename: str | Path = None):
-        """Read meteo data from file."""
+    def read(
+        self,
+        variable: str,
+        filename: str | Path = None,
+    ):
+        """Read meteo data from file. Possible variables are 'precip', 'wind', 'press'."""
         # check that read mode is on
         self.root._assert_read_mode()
 
-        # check if filename is None or does not exist
-        if filename is None:
-            return
-        elif not filename.exists():
-            raise FileNotFoundError(f"File not found: {filename}")
+        assert variable in [
+            "precip",
+            "wind",
+            "press",
+        ], f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
 
-        # check whether we are reading gridded (always netcdf) or uniform data
-        if filename.suffix == ".nc":
-            self.read_gridded()
-        else:
-            self.read_uniform()
+        filtered_dict = {key: value for key, value in _METEO.items() if variable in key}
 
-    def read_gridded(self, filename: str | Path = None):
+        # Check which type of meteo for this variable is present in the model
+        for name in filtered_dict:
+            fname, rename = _METEO[name]
+            # get absolute file path and set it in config if obsfile is not None
+            abs_file_path = self.model.config.get_set_file_variable(
+                f"{fname}file", value=filename
+            )
+            # check if abs_file_path is None or does not exist
+            if abs_file_path is None:
+                continue  # skip if no file is set
+            elif not abs_file_path.exists():
+                raise FileNotFoundError(f"{fname}file not found: {abs_file_path}")
+
+            # check whether we are reading gridded (always netcdf) or uniform data
+            if abs_file_path.suffix == ".nc":
+                self.read_gridded(filename=abs_file_path, rename=rename)
+            else:
+                self.read_uniform(filename=abs_file_path, variable=name)
+
+            # also update the default filename (potentially used for writing)
+            self._filename = abs_file_path.name
+
+    def read_gridded(self, filename: str | Path = None, rename: Optional[dict] = None):
         """Read in gridded meteo data."""
         # open the netcdf file
         ds = xr.open_dataset(filename, chunks="auto")
 
-        # set the data
-        self.set(ds, split_dataset=True)
+        # check if variables need to be renamed
+        rename = {k: v for k, v in rename.items() if k in ds}
+        if len(rename) > 0:
+            ds = ds.rename(rename).squeeze(drop=True)[list(rename.values())]
 
-        # Add to self._data
+        # set the data
         self.set(ds)
 
-    def read_uniform(self, filename: str | Path = None):
+    def read_uniform(self, variable: str, filename: str | Path = None):
         """Read in spatially uniform precipitation data."""
         tref = utils.parse_datetime(self.model.config.get("tref"))
 
@@ -93,30 +118,41 @@ class SfincsMeteo(ModelComponent):
         df.index.name = "time"
 
         # spatially uniform forcing
-        da = xr.DataArray(df[df.columns[0]], dims=("time"), name="precip")
+        da = xr.DataArray(df[df.columns[0]], dims=("time"), name=variable)
 
         # Add to self._data
         self.set(da)
 
-    def write(self, filename: str | Path = None, fmt: str = "%7.2f"):
-        """Write meteo data to file."""
+    def write(self, variable: str, filename: str | Path = None, fmt: str = "%7.2f"):
+        """Write meteo data to file. Possible variables are 'precip', 'wind', 'press'."""
+
         # check that write mode is on
         self.root._assert_write_mode()
 
-        # check if filename is None or does not exist
-        if filename is None:
-            return
-        elif not filename.exists():
-            raise FileNotFoundError(f"File not found: {filename}")
+        assert variable in [
+            "precip",
+            "wind",
+            "press",
+        ], f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
+        filtered_dict = {key: value for key, value in _METEO.items() if variable in key}
 
-        if filename.suffix == ".nc":
-            self.write_gridded(filename)
-        else:
-            self.write_uniform(filename, fmt=fmt)
+        for name in filtered_dict:
+            fname, rename = _METEO[name]
+            # check if data present:
+            if name not in self.data:
+                continue
 
-    def write_gridded(
-        self, filename: str | Path = None
-    ):  # TODO - TL: filename=None - still needed?
+            # Set file name and get absolute path
+            abs_file_path = self.model.config.get_set_file_variable(
+                key=f"{fname}file", value=filename, default=self._filename
+            )
+
+            if abs_file_path.suffix == ".nc":
+                self.write_gridded(filename=abs_file_path, rename=rename)
+            else:
+                self.write_uniform(filename=abs_file_path, fmt=fmt)
+
+    def write_gridded(self, filename: str | Path = None, rename: Optional[dict] = None):
         """Write spatially varying meteo file as netcdf."""
 
         tref = self.model.config.get("tref")
@@ -124,14 +160,15 @@ class SfincsMeteo(ModelComponent):
 
         encoding = dict(time={"units": f"minutes since {tref_str}", "dtype": "float64"})
 
+        # assign self.data to ds
+        ds = self.data
+
         # combine variables and rename to output names
-        # rename = {v: k for k, v in rename.items() if v in self.forcing}
-        # ds = xr.merge([self.forcing[v] for v in rename.keys()]).rename(rename)
+        rename = {v: k for k, v in rename.items() if v in ds}
+        if len(rename) > 0:
+            ds = xr.merge([ds[v] for v in rename.keys()]).rename(rename)
 
         # write 2D gridded timeseries
-        ds = (
-            self.data.to_dataset() if isinstance(self.data, xr.DataArray) else self.data
-        )
         ds.to_netcdf(filename, encoding=encoding)
 
     def write_uniform(self, filename: str | Path = None, fmt: str = "%7.2f"):
@@ -178,6 +215,8 @@ class SfincsMeteo(ModelComponent):
         elif not isinstance(data, xr.Dataset):
             raise ValueError(f"cannot set data of type {type(data).__name__}")
 
+        # TODO: don't we always want to reset the data when setting new data?
+        # that would mean that you can never have 1D and 2D data at the same time
         if len(self._data) == 0:  # empty grid
             self._data = data
         else:
@@ -192,6 +231,11 @@ class SfincsMeteo(ModelComponent):
 
 
 class SfincsPrecipitation(SfincsMeteo):
+    """
+    SFINCS precipitation forcing. This component handles the creation and management of precipitation data for the SFINCS model.
+    It supports both spatially distributed precipitation data (as a NetCDF file) and uniform precipitation data (as a time series).
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -200,12 +244,16 @@ class SfincsPrecipitation(SfincsMeteo):
         super().__init__(model=model)
 
     def read(self, filename: str | Path = None):
+        """Read precipitation data from file."""
+
         super().read(
+            variable="precip",
             filename=filename,
         )
 
     def write(self, filename: str | Path = None, fmt: str = "%7.2f"):
         super().write(
+            variable="precip",
             filename=filename,
             fmt=fmt,
         )
@@ -334,7 +382,7 @@ class SfincsPrecipitation(SfincsMeteo):
             )  # make sure we have a single (multi)polygon
             precip_out = precip.raster.zonal_stats(zone, stats=stat)[f"precip_{stat}"]
             df_ts = precip_out.where(precip_out >= 0, 0).fillna(0).squeeze().to_pandas()
-            self.create_uniform(df_ts.to_frame())
+            self.create_uniform(timeseries=df_ts.to_frame())
         else:
             # reproject to model utm crs
             # downscaling to model grid is not recommended
@@ -355,7 +403,14 @@ class SfincsPrecipitation(SfincsMeteo):
             # add to data
             self.set(precip_out, name="precip_2d")
             # update the model config
-            self.model.config.set("netamprfile", "precip_2d.nc")
+            self.model.config.set("netamprfile", "sfincs_netampr.nc")
+            if self.model.config.get("precipfile", None) is not None:
+                logger.warning(
+                    "precipfile was previously set, but is now replaced by netamprfile."
+                )
+                self.model.config.set("precipfile", None)
+            # update the default filename
+            self._filename = "sfincs.netampr.nc"
 
     @hydromt_step
     def create_uniform(self, timeseries=None, magnitude=None):
@@ -379,10 +434,11 @@ class SfincsPrecipitation(SfincsMeteo):
         if timeseries is not None:
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
-                time_tuple=(tstart, tstop),
-                # kwargs below only applied if timeseries not in data catalog
-                parse_dates=True,
-                index_col=0,
+                time_range=(tstart, tstop),
+                driver={
+                    "name": "pandas",
+                    "options": {"parse_dates": True, "index_col": 0},
+                },
             )
         elif magnitude is not None:
             times = pd.date_range(*self.model.get_model_time(), freq="10T")
@@ -401,7 +457,13 @@ class SfincsPrecipitation(SfincsMeteo):
         self.set(df_ts.to_xarray(), name="precip")
         # update the model config
         self.model.config.set("precipfile", "sfincs.precip")
-        # TODO: remove the 2D precip forcing from the model config when present?
+        if self.model.config.get("netamprfile", None) is not None:
+            logger.warning(
+                "netamprfile was previously set, but is now replaced by precipfile."
+            )
+            self.model.config.set("netamprfile", None)
+        # update the default filename
+        self._filename = "sfincs.precip"
 
 
 # %% Pressure
@@ -418,11 +480,13 @@ class SfincsPressure(SfincsMeteo):
 
     def read(self, filename: str | Path = None):
         super().read(
+            variable="press",
             filename=filename,
         )
 
     def write(self, filename: str | Path = None, fmt: str = "%7.2f"):
         super().write(
+            variable="press",
             filename=filename,
             fmt=fmt,
         )
@@ -507,7 +571,7 @@ class SfincsPressure(SfincsMeteo):
         # add to forcing
         self.set(press_out, name="press_2d")
         # update the model config
-        self.model.config.set("netampfile", "press_2d.nc")
+        self.model.config.set("netampfile", "sfincs_netamp.nc")
 
 
 # %% Wind
@@ -524,11 +588,13 @@ class SfincsWind(SfincsMeteo):
 
     def read(self, filename: str | Path = None):
         super().read(
+            variable="wind",
             filename=filename,
         )
 
     def write(self, filename: str | Path = None, fmt: str = "%7.2f"):
         super().write(
+            variable="wind",
             filename=filename,
             fmt=fmt,
         )
@@ -606,7 +672,14 @@ class SfincsWind(SfincsMeteo):
         # add to forcing
         self.set(wind_out, name="wind_2d")
         # update the model config
-        self.model.config.set("netamuamvfile", "wind_2d.nc")
+        self.model.config.set("netamuamvfile", "sfincs_netamuv.nc")
+        if self.model.config.get("wndfile", None) is not None:
+            logger.warning(
+                "wndfile was previously set, but is now replaced by netamuamvfile."
+            )
+            self.model.config.set("wndfile", None)
+        # update the default filename
+        self._filename = "sfincs_netamuv.nc"
 
     @hydromt_step
     def create_uniform(self, timeseries=None, magnitude=None, direction=None):
@@ -632,10 +705,11 @@ class SfincsWind(SfincsMeteo):
         if timeseries is not None:
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
-                time_tuple=(tstart, tstop),
-                # kwargs below only applied if timeseries not in data catalog
-                parse_dates=True,
-                index_col=0,
+                time_range=(tstart, tstop),
+                driver={
+                    "name": "pandas",
+                    "options": {"parse_dates": True, "index_col": 0},
+                },
             )
         elif magnitude is not None and direction is not None:
             df_ts = pd.DataFrame(
@@ -660,7 +734,13 @@ class SfincsWind(SfincsMeteo):
 
         # update the model config
         self.model.config.set("wndfile", "sfincs.wnd")
-        # TODO: remove the 2D wind forcing from the model config when present?
+        if self.model.config.get("netamuamvfile", None) is not None:
+            logger.warning(
+                "netamuamvfile was previously set, but is now replaced by wndfile."
+            )
+            self.model.config.set("netamuamvfile", None)
+        # update the default filename
+        self._filename = "sfincs.wnd"
 
 
 # %% DDB GUI focused additional functions:

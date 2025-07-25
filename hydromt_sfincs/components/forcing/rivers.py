@@ -1,4 +1,5 @@
 import logging
+from os.path import join
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
@@ -6,9 +7,10 @@ import geopandas as gpd
 import numpy as np
 import xarray as xr
 
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import workflows
+from hydromt_sfincs import utils, workflows
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -17,7 +19,10 @@ logger = logging.getLogger(__name__)
 
 
 class SfincsRivers(ModelComponent):
-    """This is not used by the SFINCS model, but usefull for model creation"""
+    """This class contains functions to create and manage river inflow/outflow points in the SFINCS model.
+    The methods in this class change the model mask and add discharge points where rivers enter the model domain.
+    The rivers themselves are not used by the SFINCS model, but useful for visualization.
+    """
 
     def __init__(
         self,
@@ -30,7 +35,7 @@ class SfincsRivers(ModelComponent):
 
     @property
     def data(self) -> gpd.GeoDataFrame:
-        """Discharge points data.
+        """River geometry data.
 
         Return gpd.GeoDataFrame
         """
@@ -54,8 +59,17 @@ class SfincsRivers(ModelComponent):
         pass
 
     def write(self):
-        pass
+        """Write the river inflow data to a gis-file. Note: this is not used by SFINCS, but useful for model visualization."""
+        # write also as geojson:
+        if self.model.write_gis:
+            utils.write_vector(
+                self.data,
+                name="rivers_inflow",
+                root=join(self.model.root.path, "gis"),
+                logger=logger,
+            )
 
+    @hydromt_step
     def create_river_inflow(
         self,
         rivers: Union[str, Path, gpd.GeoDataFrame] = None,
