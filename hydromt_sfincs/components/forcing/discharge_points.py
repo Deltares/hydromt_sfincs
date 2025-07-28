@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import List, Union
 
@@ -12,6 +13,8 @@ from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import utils
 
+logger = logging.getLogger(f"hydromt.{__name__}")
+
 
 class SfincsDischargePoints(ModelComponent):
     def __init__(
@@ -20,6 +23,7 @@ class SfincsDischargePoints(ModelComponent):
     ):
         # self._filename: str = "sfincs.dis"  # FIXME - List(str = "sfincs.dis" and str = "sfincs.src" or str = "sfincs_netbndbzsbzi.nc")
         self._data = None
+        self.xarray = None  # xarray.Dataset with discharge conditions
         super().__init__(
             model=model,
         )
@@ -66,7 +70,7 @@ class SfincsDischargePoints(ModelComponent):
                 self.read_discharge_timeseries()
         elif format == "netcdf":
             # Read netcdf file
-            self.read_discharges_netcdf()
+            self.read_discharge_conditions_netcdf()
 
     def read_discharge_points(self, filename: str | Path = None):
         """Read SFINCS discharge points (*.src) file"""
@@ -159,9 +163,9 @@ class SfincsDischargePoints(ModelComponent):
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Get absolute file name and set it in config if netbndbzsbzifile is not None
+        # Get absolute file name and set it in config if netsrcdisfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "netbndbzsbzifile", value=filename
+            "netsrcdisfile", value=filename
         )
 
         # Check if abs_file_path is None
@@ -217,7 +221,7 @@ class SfincsDischargePoints(ModelComponent):
             self.write_discharge_points()
             self.write_discharge_timeseries()
         else:
-            self.write_discharges_netcdf()
+            self.write_discharge_conditions_netcdf()
 
     def write_discharge_points(self, filename: str | Path = None):
         """Write SFINCS discharge points (*.src) file"""
@@ -270,6 +274,38 @@ class SfincsDischargePoints(ModelComponent):
         )
 
         # to_fwf(df, abs_file_path)
+
+    def write_discharge_conditions_netcdf(self, filename: str | Path = None):
+        """Write SFINCS discharge conditions netcdf file"""
+
+        # Check that write mode is on
+        self.root._assert_write_mode()
+
+        # Get absolute file name and set it in config if netsrcdisfile is not None
+        abs_file_path = self.model.config.get_set_file_variable(
+            "netsrcdisfile", value=filename, default="sfincs_netsrcdisfile.nc"
+        )
+
+        # Create a new xarray dataset
+        ds = xr.Dataset()
+
+        # Loop through discharge points
+        for ip, point in self.data.iterrows():
+            # Add timeseries to dataset
+            ds["timeseries"] = xr.DataArray(
+                point["timeseries"]["q"].values,
+                dims=["time"],
+                coords={"time": point["timeseries"].index},
+            )
+            # Add astro to dataset
+            ds["astro"] = xr.DataArray(
+                point["astro"].values,
+                dims=["time"],
+                coords={"time": point["astro"].index},
+            )
+
+        # Write dataset to netcdf file
+        ds.to_netcdf(abs_file_path)
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
         """Set discharge data.
@@ -399,7 +435,7 @@ class SfincsDischargePoints(ModelComponent):
         """Clean GeoDataFrame with discharge points."""
         self._data = gpd.GeoDataFrame()
 
-    def set_timeseries(
+    def create_timeseries(
         self,
         index: Union[int, List[int]] = None,
         shape: str = "constant",
@@ -464,8 +500,9 @@ class SfincsDischargePoints(ModelComponent):
         elif shape == "gaussian":
             q = offset + peak * np.exp(-(((tsec - tpeak) / (0.25 * duration)) ** 2))
         else:
-            # Not implemented
-            return
+            raise NotImplementedError(
+                f"Shape '{shape}' is not implemented. Use 'constant', 'sine', or 'gaussian'."
+            )
 
         times = pd.date_range(
             start=t0, end=t1, freq=pd.tseries.offsets.DateOffset(seconds=dtsec)

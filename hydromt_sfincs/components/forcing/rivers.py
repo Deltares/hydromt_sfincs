@@ -60,6 +60,9 @@ class SfincsRivers(ModelComponent):
 
     def write(self):
         """Write the river inflow data to a gis-file. Note: this is not used by SFINCS, but useful for model visualization."""
+        if self.data.empty:
+            return
+
         # write also as geojson:
         if self.model.write_gis:
             utils.write_vector(
