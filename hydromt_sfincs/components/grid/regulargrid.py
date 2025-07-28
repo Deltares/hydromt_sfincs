@@ -290,8 +290,8 @@ class SfincsGrid(GridComponent):
             if self.model.write_gis:
                 utils.write_vector(
                     self.region,
+                    name="region",
                     root=join(self.model.root.path, "gis"),
-                    filename=self._region_filename,
                     logger=logger,
                 )
 
