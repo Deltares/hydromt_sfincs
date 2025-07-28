@@ -25,6 +25,7 @@ from shapely.geometry import LineString, Polygon
 
 import hydromt
 from hydromt._io import _write_xy as write_xy
+from hydromt._io import _open_vector as open_vector
 from hydromt.data_catalog.drivers import RasterioDriver
 from hydromt.gis._gis_utils import _zoom_to_overview_level
 
@@ -206,9 +207,6 @@ def write_ascii_map(fn: Union[str, Path], data: np.ndarray, fmt: str = "%8.3f") 
 
 
 ## XY files: bnd / src ##
-# write_xy defined in hydromt.io
-
-
 def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFrame:
     """Read sfincs xy files and parse to GeoDataFrame.
 
@@ -224,7 +222,7 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
     gdf: gpd.GeoDataFrame
         GeoDataFrame with point geomtries
     """
-    gdf = hydromt.open_vector(fn, crs=crs, driver="xy")
+    gdf = open_vector(fn, crs=crs, driver="xy")
     gdf.index = np.arange(1, gdf.index.size + 1, dtype=int)  # index starts at 1
     return gdf
 
