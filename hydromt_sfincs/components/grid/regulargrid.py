@@ -286,6 +286,15 @@ class SfincsGrid(GridComponent):
                         logger=logger,
                     )
 
+            # write the model region to a geojson file for visualization
+            if self.model.write_gis:
+                utils.write_vector(
+                    self.region,
+                    root=join(self.model.root.path, "gis"),
+                    filename=self._region_filename,
+                    logger=logger,
+                )
+
     @hydromt_step
     def create(
         self,
