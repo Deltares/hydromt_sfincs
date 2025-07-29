@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import List, Union
 
@@ -17,30 +18,35 @@ from hydromt_sfincs import utils
 
 from .deltares_ini import IniStruct
 
+logger = logging.getLogger(f"hydromt.{__name__}")
+
 
 class SfincsBoundaryConditions(ModelComponent):
     def __init__(
         self,
         model: Model,
     ):
-        self._data = gpd.GeoDataFrame()
+        self._data: gpd.GeoDataFrame = None
         super().__init__(
             model=model,
         )
 
     @property
     def data(self) -> gpd.GeoDataFrame:
-        """Water level boundary conditions data.
+        """Observation point data.
 
-        Return pd.GeoDataFrame
+        Return geopandas.GeoDataFrame
         """
-        if self._data.is_empty:
-            # Does this not lead to an inifinite loop,
-            # if self._data is empty and we use self.data?
-            # At least it seems to, if we use self.data in the other methods
-            # I still don't really understand why need this.
-            self.read()
+        if self._data is None:
+            self._initialize()
         return self._data
+
+    def _initialize(self, skip_read=False) -> None:
+        """Initialize geoms."""
+        if self._data is None:
+            self._data = gpd.GeoDataFrame()
+            if self.root.is_reading_mode() and not skip_read:
+                self.read()
 
     def read(self, format: str = None):
         """Read SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
@@ -63,7 +69,7 @@ class SfincsBoundaryConditions(ModelComponent):
         if format == "asc":
             self.read_boundary_points()
             # Check if there are any points
-            if not self._data.empty:
+            if not self.data.empty:
                 self.read_boundary_conditions_timeseries()
                 # Read astro if bcafile is defined
                 if self.model.config.get("bcafile"):
@@ -84,7 +90,7 @@ class SfincsBoundaryConditions(ModelComponent):
             Format of the boundary conditions files, "asc" (default), or "netcdf".
         """
 
-        if self._data.empty:
+        if self.data.empty:
             # There are no boundary points
             return
 
@@ -114,7 +120,7 @@ class SfincsBoundaryConditions(ModelComponent):
         """
 
         if merge:
-            self._data = pd.concat([self._data, gdf], ignore_index=True)
+            self._data = pd.concat([self.data, gdf], ignore_index=True)
         else:
             self._data = gdf
 
@@ -482,7 +488,7 @@ class SfincsBoundaryConditions(ModelComponent):
         # Add to self._data
         self.set(gdf, merge=merge)
 
-    def set_timeseries(
+    def create_timeseries(
         self,
         index: Union[int, List[int]] = None,
         shape: str = "constant",
