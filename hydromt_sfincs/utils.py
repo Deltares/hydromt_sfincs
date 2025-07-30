@@ -252,7 +252,7 @@ def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, fmt: str = "
             try:
                 name = point["properties"]["name"]
             except:
-                name = "obs" + str(point["id"])
+                name = "point" + str(point["id"])
             string = f'{x:{fmt}} {y:{fmt}} "{name}"\n'
             fid.write(string)
 
@@ -289,7 +289,7 @@ def read_timeseries(fn: Union[str, Path], tref: Union[str, datetime]) -> pd.Data
     tref = parse_datetime(tref)
     df = pd.read_csv(fn, index_col=0, header=None, sep="\s+")
     df.index = pd.to_datetime(df.index.values, unit="s", origin=tref)
-    df.columns = df.columns.values.astype(int)
+    df.columns = df.columns.values.astype(int) - 1  # convert to zero-based index
     df.index.name = "time"
     df.columns.name = "index"
     return df
