@@ -523,9 +523,14 @@ class SfincsModel(Model):
         for component, name in _GEOMS.items():
             # check if component exists and has data
             if self.components.get(component) is not None:
-                gdf = self.components[component].data
-                if isinstance(gdf, gpd.GeoDataFrame) and not gdf.empty:
-                    sg.update({name: gdf})
+                data = self.components[component].data
+                if isinstance(data, gpd.GeoDataFrame):
+                    if not data.empty:
+                        sg.update({name: data})
+                elif isinstance(data, xr.DataArray):
+                    gdf = data.vector.to_gdf()
+                    if not gdf.empty:
+                        sg.update({name: gdf})
 
         if plot_region:  # and "region" not in self.geoms:
             sg.update({"region": self.region})
