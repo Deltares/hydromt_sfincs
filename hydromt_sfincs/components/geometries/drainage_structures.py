@@ -153,31 +153,31 @@ class SfincsDrainageStructures(ModelComponent):
     @hydromt_step
     def create(
         self,
-        structures: Union[str, Path, gpd.GeoDataFrame],
+        locations: Union[str, Path, gpd.GeoDataFrame],
         stype: str = "pump",
         discharge: float = 0.0,
         merge: bool = True,
         **kwargs,
     ):
-        """Setup drainage structures.
+        """Setup drainage locations.
 
         Adds model layer:
         * **drn** geom: drainage pump or culvert
 
         Parameters
         ----------
-        structures : str, Path
+        locations : str, Path
             Path, data source name, or geopandas object to structure line geometry file.
             The line should consist of only 2 points (else first and last points are used), ordered from up to downstream.
-            The "type" (1 for pump and 2 for culvert), "par1" ("discharge" also accepted) variables are optional.
+            The "type" (1 for pump, 2 for culvert and 3 for valve), "par1" ("discharge" also accepted) variables are optional.
             If "type" or "par1" are not provided, they are based on stype or discharge arguments.
-        stype : {'pump', 'culvert'}, optional
+        stype : {'pump', 'culvert', 'valve'}, optional
             Structure type, by default "pump". stype is converted to integer "type" to match with SFINCS expectations.
         discharge : float, optional
-            Discharge of the structure, by default 0.0. For culverts, this is the maximum discharge,
+            Discharge of the structure, by default 0.0. For culverts and one-way-valves, this is the maximum discharge,
             since actual discharge depends on waterlevel gradient
         merge : bool, optional
-            If True, merge with existing drainage structures, by default True.
+            If True, merge with existing drainage locations, by default True.
         """
 
         stype = stype.lower()
@@ -188,7 +188,7 @@ class SfincsDrainageStructures(ModelComponent):
 
         # read, clip and reproject
         gdf_structures = self.data_catalog.get_geodataframe(
-            structures, geom=self.model.region, **kwargs
+            locations, geom=self.model.region, **kwargs
         ).to_crs(self.model.crs)
 
         # check if type (int) is present in gdf, else overwrite from args
