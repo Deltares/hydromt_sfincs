@@ -507,43 +507,80 @@ def test_model_build(tmpdir, case):
     mod1.read()
     # TODO using hydromt core Model._check_equal after fix https://github.com/Deltares/hydromt/issues/253
     # check config
-    if mod0.config:
-        assert mod0.config == mod1.config, "config mismatch"
-    # check maps
+    if mod0.config.data:
+        assert mod0.config.data == mod1.config.data, "config mismatch"
+    # check grid
     invalid_maps = []
-    if len(mod0.grid) > 0:
+    if len(mod0.grid.data) > 0:
         assert np.all(mod0.crs == mod1.crs), "map crs"
-        mask = (mod0.grid["msk"] > 0).values  # compare only active cells
-        mask1 = (mod1.grid["msk"] > 0).values
+        mask = (mod0.grid.data["mask"] > 0).values  # compare only active cells
+        mask1 = (mod1.grid.data["mask"] > 0).values
         assert np.allclose(mask, mask1), "mask mismatch"
-        for name in mod0.grid.raster.vars:
-            if name == "msk":
+        for name in mod0.grid.data.raster.vars:
+            if name == "mask":
                 continue
-            map0 = mod0.grid[name].values
-            map1 = mod1.grid[name].values
+            map0 = mod0.grid.data[name].values
+            map1 = mod1.grid.data[name].values
             if not np.allclose(map0[mask], map1[mask]):
                 invalid_maps.append(name)
     invalid_map_str = ", ".join(invalid_maps)
     assert len(invalid_maps) == 0, f"invalid maps: {invalid_map_str}"
-    # check geoms
+    # check geometries
+    geom_components = [
+        "observation_points",
+        "cross_sections",
+        "thin_dams",
+        "weirs",
+        "drainage_structures",
+    ]
     invalid_geoms = []
-    if mod0.geoms:
-        for name in mod0.geoms:
+    for name in geom_components:
+        if mod0.components[name].data.empty:
+            continue
+        try:
+            assert_geodataframe_equal(
+                mod0.components[name].data,
+                mod1.components[name].data,
+                check_less_precise=True,  # allow for rounding errors in geoms
+                check_like=True,  # order may be different
+                check_geom_type=True,  # geometry types should be the same
+                normalize=True,  # normalize geometry
+            )
+        except AssertionError:  # re-raise error with geom name
+            invalid_geoms.append(name)
+    assert len(invalid_geoms) == 0, f"invalid geoms: {invalid_geoms}"
+    # check forcing conditions
+    forcing_components = [
+        "boundary_conditions",
+        "discharge_points",
+        "wind",
+        "pressure",
+        "precipitation",
+    ]
+    invalid_forcing = []
+    for name in forcing_components:
+        data = mod0.components[name].data
+        if isinstance(data, gpd.GeoDataFrame) and not data.empty:
             try:
                 assert_geodataframe_equal(
-                    mod0.geoms[name],
-                    mod1.geoms[name],
+                    mod0.components[name].data,
+                    mod1.components[name].data,
                     check_less_precise=True,  # allow for rounding errors in geoms
                     check_like=True,  # order may be different
                     check_geom_type=True,  # geometry types should be the same
                     normalize=True,  # normalize geometry
                 )
             except AssertionError:  # re-raise error with geom name
-                invalid_geoms.append(name)
-    assert len(invalid_geoms) == 0, f"invalid geoms: {invalid_geoms}"
-    # check forcing
-    if mod0.forcing:
-        for name in mod0.forcing:
-            assert np.allclose(
-                mod0.forcing[name], mod1.forcing[name]
-            ), f" invalid forcing: {name}"
+                invalid_forcing.append(name)
+        elif isinstance(data, xr.DataArray) or isinstance(data, xr.Dataset):
+            # Only compare if mod0.forcing[name] is not empty
+            data0 = mod0.forcing[name]
+            data1 = mod1.forcing[name]
+            if (isinstance(data0, xr.DataArray) and data0.size > 0) or (
+                isinstance(data0, xr.Dataset) and len(data0.data_vars) > 0
+            ):
+                try:
+                    assert np.allclose(data0.values, data1.values)
+                except AssertionError:  # re-raise error with forcing name
+                    invalid_forcing.append(name)
+        assert len(invalid_forcing) == 0, f"invalid forcing: {invalid_forcing}"
