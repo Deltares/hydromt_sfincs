@@ -6,13 +6,24 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
-v1.2.1 (27-6-2025)
+v1.2.1 (31-7-2025)
 ==================
-** This release contains some minor bugfixes and updates**
+**This release contains some minor bugfixes and updates, which are mostly relevant for users of FloodAdapt in combination with Quadtree models.**
+
+
+Added
+-----
+- introduced setup_storage_volume for existing quadtree models for FloodAdapt (#260)
+- add creation of cloud-optimized-geotiffs with indices and optimize downscale_floodmap accordingly (#263)
 
 Fixed
 -----
+- fix reading/writing of wnd-file where the direction column got ignored, including updated tests (#262)
 - removed instable behavior of np.size() for .size (#264)
+
+Changed
+-------
+- always rename x and y dimensions into x,y (so no lat lon etc) to match SFINCS conventions of netcdf meteo forcing (#263)
 
 v1.2.0 (23-4-2025)
 ==================
