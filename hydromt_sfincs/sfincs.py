@@ -523,12 +523,16 @@ class SfincsModel(Model):
         for component, name in _GEOMS.items():
             # check if component exists and has data
             if self.components.get(component) is not None:
-                data = self.components[component].data
-                if isinstance(data, gpd.GeoDataFrame):
-                    if not data.empty:
-                        sg.update({name: data})
-                elif isinstance(data, xr.DataArray):
-                    gdf = data.vector.to_gdf()
+                comp = self.components[component]
+                # vector geometries have data as gpd.GeoDataFrame
+                if isinstance(comp.data, gpd.GeoDataFrame):
+                    gdf = comp.data
+                    if not gdf.empty:
+                        sg.update({name: gdf})
+                # forcing components have data as GeoDataArray(xr.DataArray)
+                elif isinstance(comp.data, xr.DataArray):
+                    # the property gdf returns a gpd.GeoDataFrame
+                    gdf = comp.gdf
                     if not gdf.empty:
                         sg.update({name: gdf})
 

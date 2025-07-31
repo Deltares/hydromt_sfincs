@@ -51,21 +51,21 @@ class SfincsDischargePoints(ModelComponent):
                 self.read()
 
     @property
-    def gdf(self) -> gpd.GeoDataFrame:
-        """Discharge boundary conditions point data as GeoDataFrame."""
-        if hasattr(self.data, "vector"):
-            # If data is a GeoDataArray, convert to GeoDataFrame
-            return self.data.vector.to_gdf()
-        else:
-            return gpd.GeoDataFrame()
-
-    @property
     def nr_points(self) -> int:
         """Number of discharge points."""
         if hasattr(self.data, "index"):
             return len(self.data.index)
         else:
             return 0
+
+    @property
+    def gdf(self) -> gpd.GeoDataFrame:
+        """Discharge boundary conditions point data as GeoDataFrame."""
+        if self.nr_points > 0:
+            # If data is a GeoDataArray, convert to GeoDataFrame
+            return self.data.vector.to_gdf()
+        else:
+            return gpd.GeoDataFrame()
 
     def read(self, format: str = None):
         """Read SFINCS discharge points (*.dis, *.src files) or netcdf file.
@@ -90,7 +90,7 @@ class SfincsDischargePoints(ModelComponent):
             # Check if there are any points
             if not gdf.empty:
                 df = self.read_discharge_timeseries()
-            self.set(df=df, gdf=gdf, merge=False)
+                self.set(df=df, gdf=gdf, merge=False)
         elif format == "netcdf":
             # Read netcdf file
             da = self.read_discharge_conditions_netcdf()
@@ -110,7 +110,7 @@ class SfincsDischargePoints(ModelComponent):
         # Check if abs_file_path is None
         if abs_file_path is None:
             # File name not defined
-            return
+            return gpd.GeoDataFrame()
 
         # Check if src file exists
         if not abs_file_path.exists():
