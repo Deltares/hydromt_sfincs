@@ -76,6 +76,14 @@ def test_config_datetime(model_init):
     assert isinstance(config.get("tref"), datetime)
     assert config.get("tref").year == current_year
 
+    # now set a datestr instead of datetime
+    datestr = "20100201 000000"  # YYYYMMDD HHMMSS
+    config.set("tref", datestr)
+
+    # check if it is converted to datetime
+    assert isinstance(config.get("tref"), datetime)
+    assert config.get("tref").year == 2010
+
 
 def test_get_set_file_variable(model_config):
     # test 3 situations of how function get_set_file_variable could be used

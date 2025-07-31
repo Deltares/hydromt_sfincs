@@ -143,20 +143,28 @@ class SfincsConfig(ModelComponent):
 
         return value
 
-    def set(self, key: str, value: Any, skip_validation=False) -> None:
-        """Set a value with validation using Pydantic's model_copy."""
+    def set(self, key: str, value: Any, skip_validation: bool = False) -> None:
+        """Set a value with validation using Pydantic's model_validate."""
 
         if not hasattr(self.data, key):
             raise KeyError(f"'{key}' is not a valid attribute of SfincsConfig.")
 
         if not skip_validation:
-            # Validate the new data
-            self.data.model_validate({key: value})
-
-        self.data.__setattr__(key, value)
+            # Merge full data to run full validation, including mode="before" for datetimes
+            new_data = self.data.model_dump()
+            new_data[key] = value
+            self._data = self.data.__class__.model_validate(new_data)
+        else:
+            setattr(self._data, key, value)
 
     @hydromt_step
-    def update(self, dict: Optional[Dict[str, Any]] = None, **kwargs) -> None:
+    def update(
+        self,
+        dict: Optional[Dict[str, Any]] = None,
+        *,
+        skip_validation: bool = False,
+        **kwargs,
+    ) -> None:
         """
         Update attributes using a dictionary or keyword arguments.
 
@@ -165,6 +173,9 @@ class SfincsConfig(ModelComponent):
         dict (Dict[str, Any], optional):
             A dictionary containing key-value pairs to update the attributes.
             Example: dict = {'mmax': 100, 'nmax': 50}.
+        skip_validation (bool, optional):
+            If True, skips validation of the new values.
+            Default is False, meaning pydantic validation will be performed.
         kwargs:
             Key-value pairs passed as keyword arguments.
             Example: update(mmax=100, nmax=50)
@@ -173,14 +184,14 @@ class SfincsConfig(ModelComponent):
         updates.update(kwargs)
 
         if updates:
-            logger.debug("Updating model attributes/config.")
-
-        for key, value in updates.items():
-            # if key in ["tref", "tstart", "tstop"]:
-            #     # check if val is a datetime string
-            #     if isinstance(value, str):
-            #         value = datetime.strptime(value, "%Y%m%d %H%M%S")
-            self.set(key, value)
+            logger.info(f"Updating {len(updates)} attributes in model config.")
+            if skip_validation:
+                # Bulk update without validation
+                self._data = self._data.model_update(updates)
+            else:
+                new_data = self.data.model_dump()
+                new_data.update(updates)
+                self._data = self.data.__class__.model_validate(new_data)
 
     def update_grid_from_config(self) -> None:
         """Update the grid properties from the configuration."""
