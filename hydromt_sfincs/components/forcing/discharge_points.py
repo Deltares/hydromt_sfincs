@@ -260,20 +260,9 @@ class SfincsDischargePoints(ModelComponent):
             df = pd.concat([df, point["timeseries"]["q"]], axis=1)
 
         # Write to file
-        # This does NOT work at the moment!
-        # utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
-
-        # For now use 'ugly' to_csv method without control of column width
-        # Convert time index to datetime64
-        time = pd.to_datetime(df.index)
-        tref = self.model.config.get("tref")
-        time = (time - tref).total_seconds()
-        df.index = time
-        df.to_csv(
-            abs_file_path, index=True, sep=" ", header=False, float_format="%0.3f"
-        )
-
-        # to_fwf(df, abs_file_path)
+        # TODO check why this is needed (wasn't before?)
+        df.index = pd.to_datetime(df.index)
+        utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
 
     def write_discharge_conditions_netcdf(self, filename: str | Path = None):
         """Write SFINCS discharge conditions netcdf file"""
