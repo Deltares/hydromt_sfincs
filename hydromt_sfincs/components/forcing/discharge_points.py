@@ -43,17 +43,21 @@ class SfincsDischargePoints(ModelComponent):
         assert self._data is not None
         return self._data
 
-    @property
-    def gdf(self) -> gpd.GeoDataFrame:
-        """Discharge boundary conditions point data as GeoDataFrame."""
-        return self.data.vector.to_gdf()
-
     def _initialize(self, skip_read=False) -> None:
         """Initialize geoms."""
         if self._data is None:
             self._data = xr.DataArray()
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
+
+    @property
+    def gdf(self) -> gpd.GeoDataFrame:
+        """Discharge boundary conditions point data as GeoDataFrame."""
+        if hasattr(self.data, "vector"):
+            # If data is a GeoDataArray, convert to GeoDataFrame
+            return self.data.vector.to_gdf()
+        else:
+            return gpd.GeoDataFrame()
 
     @property
     def nr_points(self) -> int:
