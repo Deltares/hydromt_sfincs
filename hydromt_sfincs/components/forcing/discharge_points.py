@@ -25,7 +25,7 @@ class SfincsDischargePoints(ModelComponent):
         self,
         model: "SfincsModel",
     ):
-        # self._filename: str = "sfincs.dis"  # FIXME - List(str = "sfincs.dis" and str = "sfincs.src" or str = "sfincs_netbndbzsbzi.nc")
+        # self._filename: str = "sfincs.dis"  # FIXME - List(str = "sfincs.dis" and str = "sfincs.src" or str = "sfincs_netsrcdisfile.nc")
         self._data = None
         super().__init__(
             model=model,
