@@ -23,7 +23,7 @@ class SfincsElevation(ModelComponent):
         self,
         model: "SfincsModel",
     ):
-        # The data for the mask is stored in the model.grid.data["mask"]
+        # The data for the mask is stored in the model.grid.data["dep"]
         super().__init__(
             model=model,
         )
