@@ -5,7 +5,7 @@ import numpy as np
 import xarray as xr
 
 from hydromt import hydromt_step
-from hydromt.model.components import SpatialDatasetsComponent
+from hydromt.model.components import ModelComponent
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -15,14 +15,14 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 _ATTRS = {"initial_conditions": {"standard_name": "initial water level", "unit": "m+ref"}}
 
 
-class SfincsInitialConditions(SpatialDatasetsComponent):
+class SfincsInitialConditions(ModelComponent):
 
     """SFINCS initial conditions component."""
     def __init__(
         self,
         model: "SfincsModel",
     ):
-        # The data for the mask is stored in the model.grid.data["manning"]
+        # The data for the mask is stored in the model.grid.data["ini"]
         super().__init__(
             model=model,
         )    
