@@ -126,7 +126,7 @@ class SfincsModel(Model):
         self.add_component("roughness", SfincsRoughness(self))
         self.add_component("storage_volume", SfincsStorageVolume(self))
         self.add_component("subgrid", SfincsSubgridTable(self))
-        # self.add_component("initial_conditions", SfincsInitialConditions(self))
+        self.add_component("initial_conditions", SfincsInitialConditions(self))
 
         # Quadtree
         self.add_component("quadtree_grid", SfincsQuadtreeGrid(self))
