@@ -566,13 +566,20 @@ class SfincsDischargePoints(ModelComponent):
             #     df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
 
             if "name" in gdf0.columns and "name" in gdf.columns:
-                if set(gdf0.name) != set(gdf.name):
-                    # merge locations; overwrite existing locations with the same name
-                    gdf0 = gdf0[
-                        ~gdf0.name.isin(gdf.name)
-                    ]  # drop rows with matching names
-                    df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
+                # Drop rows with matching names
+                gdf0 = gdf0[~gdf0["name"].isin(gdf["name"])]
+                df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
+            else:
+                # Fall back to geometry-based matching
+                # Round coordinates to avoid float precision issues
+                gdf0["__coords__"] = gdf0.geometry.apply(lambda geom: (round(geom.x, 6), round(geom.y, 6)))
+                gdf["__coords__"] = gdf.geometry.apply(lambda geom: (round(geom.x, 6), round(geom.y, 6)))
 
+                gdf0 = gdf0[~gdf0["__coords__"].isin(gdf["__coords__"])]
+                df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
+
+                gdf0 = gdf0.drop(columns="__coords__")
+                gdf = gdf.drop(columns="__coords__")
             # create a similar df with the same index as the first point but with columns of gdf
             df_new = pd.DataFrame(index=df0.index, columns=gdf.index, data=discharge)
 
