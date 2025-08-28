@@ -47,16 +47,13 @@ class SfincsInitialConditions(ModelComponent):
         pass
 
     # Original HydroMT-SFINCS setup_ functions:
-    # not yet implemented
-
-    #FIXME, so only for inifile? No config manipulation needed for zsini and/or rstfile/dtrstout/rstout?
+    # was not yet implemented
 
     # %% core HydroMT-SFINCS functions:
     # read
     # write
     # set > already in grid.set()
     # create
-    # clear >TODO?
 
     # Initial water level
     @hydromt_step
@@ -110,6 +107,3 @@ class SfincsInitialConditions(ModelComponent):
         self.model.config.set(f"{mname}file", f"sfincs.{mname}")
         # set spatially uniform zsini to None in config
         self.model.config.set("zsini", None)
-
-# %% DDB GUI focused additional functions:
-# interpolate >FIXME > not needed?
