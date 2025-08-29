@@ -860,8 +860,10 @@ def downscale_floodmap(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
     dep: Union[Path, str, xr.DataArray],
     hmin: float = 0.05,
+    zbmin: float = None,
     gdf_mask: gpd.GeoDataFrame = None,
     floodmap_fn: Union[Path, str] = None,
+    floodmap_scaling: float = 1.0,
     reproj_method: str = "nearest",
     nrmax: int = 2000,
     logger=logger,
@@ -881,11 +883,15 @@ def downscale_floodmap(
         and only written to disk when floodmap_fn is provided.
     hmin : float, optional
         Minimum water depth (m) to be considered as "flooded", by default 0.05
+    zbmin: float, optional,
+        Minimum depth value (m) to be plotted (to mask out ocean points below datum)
     gdf_mask : gpd.GeoDataFrame, optional
         Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
         Note that the area outside the polygons is set to nodata.
     floodmap_fn : Union[Path, str], optional
         Name (path) of output floodmap, by default None. If provided, the floodmap is written to disk.
+    floodmap_scaling: float, optional,
+        scaling of the values (e.g., to convert to ft) to be output to floodmap, by default 1.0
     reproj_method : str, optional
         Reprojection method for downscaling the water levels, by default "nearest".
         Other option is "bilinear".
@@ -922,6 +928,7 @@ def downscale_floodmap(
             zsmax=zsmax,
             dep=dep,
             hmin=hmin,
+            zbmin=zbmin,
             gdf_mask=gdf_mask,
             reproj_method=reproj_method,
         )
@@ -938,7 +945,7 @@ def downscale_floodmap(
                     predictor=2,
                     profile="COG",
                 )
-            hmax.raster.to_raster(floodmap_fn, **kwargs)
+            (hmax * floodmap_scaling).raster.to_raster(floodmap_fn, **kwargs)
 
             # add overviews
             build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
@@ -1184,6 +1191,7 @@ def _downscale_floodmap_da(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
     dep: xr.DataArray,
     hmin: float = 0.05,
+    zbmin: float = None,
     gdf_mask: gpd.GeoDataFrame = None,
     reproj_method: str = "nearest",
 ) -> xr.DataArray:
@@ -1197,6 +1205,8 @@ def _downscale_floodmap_da(
         High-resolution DEM (m) of model region:
     hmin : float, optional
         Minimum water depth (m) to be considered as "flooded", by default 0.05
+    zbmin: float, optional,
+        Minimum depth value (m) to be plotted (to mask out ocean points below datum)
     gdf_mask : gpd.GeoDataFrame, optional
         Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
         Note that the area outside the polygons is set to nodata.
@@ -1227,6 +1237,8 @@ def _downscale_floodmap_da(
 
     # mask floodmap
     hmax = hmax.where(hmax > hmin)
+    if zbmin is not None:
+        hmax = hmax.where(dep > zbmin)
     if gdf_mask is not None:
         mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
         hmax = hmax.where(mask)
