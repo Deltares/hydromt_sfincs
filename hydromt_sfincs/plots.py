@@ -62,7 +62,7 @@ def plot_forcing(forcing: Dict, **kwargs):
             if name.startswith("press"):
                 da = da.min(dim=[da.raster.x_dim, da.raster.y_dim])
                 prefix = "min "
-            elif name.startswith("wind_u") or name.startswith("wind_v"):
+            elif name.startswith("wind"):
                 da = da.max(dim=[da.raster.x_dim, da.raster.y_dim])
                 prefix = "max "
             else:
