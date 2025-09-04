@@ -221,14 +221,8 @@ class SfincsDischargePoints(ModelComponent):
         else:
             fmt = "%11.1f"
 
-        # parse data to geodataframe
-        try:
-            gdf = self.data.vector.to_gdf()
-        except Exception:
-            raise ValueError(f"Locations missing for discharge forcing")
-
         # TODO check whether write_xyn or write_xy
-        utils.write_xyn(abs_file_path, gdf, fmt=fmt)
+        utils.write_xyn(abs_file_path, self.gdf, fmt=fmt)
 
     def write_discharge_timeseries(self, filename: str | Path = None):
         """Write SFINCS discharge timeseries (*.dis) file"""

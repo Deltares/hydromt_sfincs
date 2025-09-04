@@ -58,3 +58,4 @@ cdval                = 0.001 0.0025 0.0015
 drnfile              = sfincs.drn
 netamprfile          = precip_2d.nc
 wndfile              = sfincs.wnd
+bcafile              = tide_FES2014.bca

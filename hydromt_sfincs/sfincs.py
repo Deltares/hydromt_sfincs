@@ -53,6 +53,7 @@ from hydromt_sfincs.components.forcing import (
     SfincsPressure,
     SfincsRivers,
     SfincsWind,
+    SfincsWaterLevel,
     SnapWaveBoundaryConditions,
 )
 
@@ -146,6 +147,7 @@ class SfincsModel(Model):
 
         # Forcing types
         self.add_component("boundary_conditions", SfincsBoundaryConditions(self))
+        self.add_component("water_level", SfincsWaterLevel(self))
         self.add_component("discharge_points", SfincsDischargePoints(self))
         self.add_component(
             "snapwave_boundary_conditions", SnapWaveBoundaryConditions(self)
@@ -278,6 +280,11 @@ class SfincsModel(Model):
     def discharge_points(self) -> SfincsDischargePoints:
         """Returns the discharge points object."""
         return self.components["discharge_points"]
+    
+    @property
+    def water_level(self) -> SfincsWaterLevel:
+        """Returns the water level object."""
+        return self.components["water_level"]
 
     @property
     def precipitation(self) -> SfincsPrecipitation:
