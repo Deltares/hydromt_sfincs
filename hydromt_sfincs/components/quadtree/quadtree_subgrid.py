@@ -94,7 +94,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
     ):
         """Build SFINCS subgrid table for quadtree grid
 
-        WARNING: this only works when called from Delft Dashboard
+        FIXME WARNING: this only works when called from Delft Dashboard
         The hydromt_sfincs.subgrid_quadtree_builder needs to be updated
         to work with data catalogs
 
@@ -133,7 +133,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             zmax=zmax,
             weight_option=weight_option,
             bathymetry_database=bathymetry_database,
-            quiet=False,
+            quiet=quiet,
             progress_bar=progress_bar,
             logger=logger,
         )
