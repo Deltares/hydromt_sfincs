@@ -146,7 +146,7 @@ class SubgridTableQuadtree:
         uv_flags_level = np.zeros(npuv, dtype=int)
         uv_flags_type = np.zeros(npuv, dtype=int)
 
-        # Determine what type of uv point it is
+        # Determine what type of uv point it is # TODO - TL: we didn't have this in _insiders?
         ip = -1
         for ic in range(nr_cells):
             if mu[ic] <= 0:
@@ -242,6 +242,8 @@ class SubgridTableQuadtree:
 
             if nr_cells_in_level == 0:
                 continue
+
+            # TODO - TL: here missing is "# Check if active SFINCS cells exist in mask"        
 
             n0 = np.min(n[ifirst[ilev] : ilast[ilev] + 1])
             n1 = np.max(
@@ -349,6 +351,8 @@ class SubgridTableQuadtree:
                     if nr_cells_in_block == 0: 
                         # No cells in this block
                         continue
+
+                    # TODO - TL: here missing is "# Check if active SFINCS cells exist in mask"        
 
                     index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
 
@@ -682,7 +686,7 @@ class SubgridTableQuadtree:
                             return
                         ibt += 1
 
-        # Now create the xarray dataset (do we transpose here? is this necessary for fortan?)
+        # Now create the xarray dataset (FIXME do we transpose here? is this necessary for fortan?)
         self.ds = xr.Dataset()
         self.ds.attrs["version"] = version
         self.ds["z_zmin"] = xr.DataArray(self.z_zmin, dims=["np"])
