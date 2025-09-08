@@ -618,7 +618,7 @@ class QuadtreeGrid:
         self.uv_index_z_nm = np.zeros((self.nr_cells * 4), dtype=int)
         self.uv_index_z_nmu = np.zeros((self.nr_cells * 4), dtype=int)
         self.uv_dir = np.zeros((self.nr_cells * 4), dtype=int)
-        # Loop through points (SHOULD TRY TO VECTORIZE THIS, but try to keep same order of uv points
+        # Loop through points (FIXME SHOULD TRY TO VECTORIZE THIS, but try to keep same order of uv points
         nuv = 0
         for ip in range(self.nr_cells):
             if self.mu1[ip] >= 0:
@@ -662,13 +662,89 @@ class QuadtreeGrid:
         self.ilast = np.zeros(self.nr_refinement_levels, dtype=int)
         for ilev in range(0, self.nr_refinement_levels):
             # Find index of first cell with this level
-            self.ifirst[ilev] = np.where(self.level == ilev)[0][0]
+            ifirst = np.where(self.level == ilev)[0]
+            if ifirst.size == 0:
+                self.ifirst[ilev] = -1
+            else:
+                self.ifirst[ilev] = ifirst[0]
+            #self.ifirst[ilev] = np.where(self.level == ilev)[0][0]
             # Find index of last cell with this level
             if ilev < self.nr_refinement_levels - 1:
-                self.ilast[ilev] = np.where(self.level == ilev + 1)[0][0] - 1
+                # self.ilast[ilev] = np.where(self.level == ilev + 1)[0][0] - 1
+                self.ilast[ilev] = np.where(self.level > ilev)[0][0] - 1                
             else:
                 self.ilast[ilev] = self.nr_cells - 1
 
+    def find_lower_level_neighbors(self, ind_ref, ilev):
+
+        # ind_ref are the indices of the cells that need to be refined
+
+        n = self.n[ind_ref]
+        m = self.m[ind_ref]
+
+        n_odd = np.where(odd(n))
+        m_odd = np.where(odd(m))
+        n_even = np.where(even(n))
+        m_even = np.where(even(m))
+        
+        ill   = np.intersect1d(n_even, m_even)
+        iul   = np.intersect1d(n_odd, m_even)
+        ilr   = np.intersect1d(n_even, m_odd)
+        iur   = np.intersect1d(n_odd, m_odd)
+
+        n_nbr = np.zeros((2, np.size(n)), dtype=int)        
+        m_nbr = np.zeros((2, np.size(n)), dtype=int)
+
+        # LL
+        n0 = np.int32(n[ill] / 2)
+        m0 = np.int32(m[ill] / 2)
+        n_nbr[0, ill] = n0 - 1
+        m_nbr[0, ill] = m0
+        n_nbr[1, ill] = n0
+        m_nbr[1, ill] = m0 - 1
+        # UL
+        n0 = np.int32((n[iul] - 1) / 2)
+        m0 = np.int32(m[iul] / 2)
+        n_nbr[0, iul] = n0 + 1
+        m_nbr[0, iul] = m0
+        n_nbr[1, iul] = n0
+        m_nbr[1, iul] = m0 - 1
+        # LR
+        n0 = np.int32(n[ilr] / 2)
+        m0 = np.int32((m[ilr] - 1) / 2)
+        n_nbr[0, ilr] = n0 - 1
+        m_nbr[0, ilr] = m0
+        n_nbr[1, ilr] = n0
+        m_nbr[1, ilr] = m0 + 1
+        # UR
+        n0 = np.int32((n[iur] - 1) / 2)
+        m0 = np.int32((m[iur] - 1) / 2)
+        n_nbr[0, iur] = n0 + 1
+        m_nbr[0, iur] = m0
+        n_nbr[1, iur] = n0
+        m_nbr[1, iur] = m0 + 1
+
+        nmax = self.nmax * 2**(ilev - 1) + 1
+
+        n_nbr = n_nbr.flatten()
+        m_nbr = m_nbr.flatten()
+        nm_nbr = m_nbr * nmax + n_nbr
+        nm_nbr = np.sort(np.unique(nm_nbr, return_index=False))
+
+        # Actual cells in the coarser level 
+        n_level = self.n[self.ifirst[ilev - 1]:self.ilast[ilev - 1] + 1]
+        m_level = self.m[self.ifirst[ilev - 1]:self.ilast[ilev - 1] + 1]
+        nm_level = m_level * nmax + n_level
+
+        # Find  
+        ind_nbr = binary_search(nm_level, nm_nbr)
+        ind_nbr = ind_nbr[ind_nbr>=0]
+
+        if np.any(ind_nbr):
+            ind_nbr += self.ifirst[ilev - 1]
+
+        return ind_nbr
+    
     def compute_cell_center_coordinates(self):
         # Compute cell center coordinates
         # Loop through refinement levels
@@ -1023,9 +1099,8 @@ def inpolygon(
 
 def binary_search(val_array, vals):
     indx = np.searchsorted(val_array, vals)  # ind is size of vals
-    not_ok = np.where(indx == len(val_array))[
-        0
-    ]  # size of vals, points that are out of bounds
+    not_ok = np.where(indx == len(val_array))[0]  
+    # size of vals, points that are out of bounds
     indx[
         np.where(indx == len(val_array))[0]
     ] = 0  # Set to zero to avoid out of bounds error
