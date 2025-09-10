@@ -65,7 +65,7 @@ def test_add_point(model_config):
     point = gdf.geometry.unary_union.centroid
 
     model_config.water_level.add_point(
-        x=point.x, y=point.y, wlev=-10.0, name="test_point"
+        x=point.x, y=point.y, value=-10.0, name="test_point"
     )
 
     # Check that the number of points has increased and value is set correctly

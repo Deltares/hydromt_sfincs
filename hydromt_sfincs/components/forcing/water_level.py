@@ -6,16 +6,15 @@ from cht_tide import predict
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from pyproj import CRS, Transformer
+from pyproj import Transformer
 import shapely
 import xarray as xr
 
 from hydromt import hydromt_step
-from hydromt.gis.vector import GeoDataArray, GeoDataset
-from hydromt.model.components import ModelComponent
-
+from hydromt.gis.vector import GeoDataset
 from hydromt_sfincs import utils
 from .deltares_ini import IniStruct
+from .boundary_conditions import SfincsBoundaryBase
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -23,52 +22,16 @@ if TYPE_CHECKING:
 logger = logging.getLogger(f"hydromt.{__name__}")
 
 
-class SfincsWaterLevel(ModelComponent):
-    def __init__(
-        self,
-        model: "SfincsModel",
-    ):
-        # self._filename: str = "sfincs.dis"  # FIXME - List(str = "sfincs.dis" and str = "sfincs.src" or str = "sfincs_netsrcdisfile.nc")
-        self._data = None
-        super().__init__(
-            model=model,
-        )
+class SfincsWaterLevel(SfincsBoundaryBase):
+    """Water level boundary component for SFINCS models.
 
-    @property
-    def data(self) -> xr.Dataset:
-        """Discharge boundary conditions point data.
+    Adds astronomical constituent handling on top of the common base.
+    """
 
-        Return xr.DataArray
-        """
-        if self._data is None:
-            self._initialize()
+    _default_varname = "bzs"
 
-        assert self._data is not None
-        return self._data
-
-    def _initialize(self, skip_read=False) -> None:
-        """Initialize geoms."""
-        if self._data is None:
-            self._data = xr.Dataset()
-            if self.root.is_reading_mode() and not skip_read:
-                self.read()
-
-    @property
-    def nr_points(self) -> int:
-        """Number of discharge points."""
-        if hasattr(self.data, "index"):
-            return len(self.data.index)
-        else:
-            return 0
-
-    @property
-    def gdf(self) -> gpd.GeoDataFrame:
-        """Discharge boundary conditions point data as GeoDataFrame."""
-        if self.nr_points > 0:
-            # If data is a GeoDataArray, convert to GeoDataFrame
-            return self.data.vector.to_gdf()
-        else:
-            return gpd.GeoDataFrame()
+    def __init__(self, model: "SfincsModel"):
+        super().__init__(model)
 
     def read(self, format: str = None):
         """Read SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
@@ -346,310 +309,24 @@ class SfincsWaterLevel(ModelComponent):
         ds = self.data
         ds.vector.to_netcdf(abs_file_path)
 
-    def set(
-        self,
-        df: pd.DataFrame = None,
-        gdf: gpd.GeoDataFrame = None,
-        geodataset: "GeoDataArray" = None,
-        merge: bool = True,
-    ):
-        """Set waterlevel boundary data using a GeoDataArray or df + gdf combo."""
-        if geodataset is not None:
-            if df is not None or gdf is not None:
-                raise ValueError(
-                    "Provide either 'geodataset' or ('df' and 'gdf'), not both."
-                )
-            if not hasattr(geodataset, "vector") or not hasattr(geodataset, "dims"):
-                raise ValueError("Invalid GeoDataArray provided")
-            if geodataset.vector.crs != self.model.crs:
-                geodataset = geodataset.vector.to_crs(self.model.crs)
-            self._data = geodataset.transpose("time", "index", ...)
-            return
-
-        if df is None and gdf is None:
-            raise ValueError("Must provide 'df' or 'gdf' (or a GeoDataArray)")
-
-        # update locations and timeseries
-        if gdf is not None:
-            new_indices = self.set_locations(gdf, merge=merge)
-            # merging might alter the indices, so we need to update df
-            if df is not None:
-                df.columns = new_indices
-        if df is not None:
-            self.set_timeseries(df)
-
-    def set_locations(
-        self, gdf: gpd.GeoDataFrame, wlev: float = 0.0, merge: bool = True
-    ):
-        """Add or update water level locations. Create dummy timeseries if needed."""
-        gdf = self._validate_and_prepare_gdf(gdf)
-
-        if self.nr_points > 0 and merge:            
-            # parse data to dataframe, #NOTE this drops the astronomical constituents
-            if "constituent" in self.data.dims:
-                # drop vars with constituent dimension
-                self._data = self.data.drop_dims("constituent")
-                logger.warning("Dropped astronomical constituents from water level data, since points were added." \
-                "Consider re-generating them if needed.")
-            df0 = self.data["bzs"].transpose(..., self.data.vector.index_dim).to_pandas()
-            gdf0 = self.data.vector.to_gdf()
-
-            # TODO drop based on name instead of index?
-            # if set(gdf0.index) != set(gdf.index):
-            #     # merge locations; overwrite existing locations with the same index/name
-            #     gdf0 = gdf0.drop(gdf.index, errors="ignore")
-            #     df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
-
-            if "name" in gdf0.columns and "name" in gdf.columns:
-                # Drop rows with matching names
-                gdf0 = gdf0[~gdf0["name"].isin(gdf["name"])]
-                df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
-            else:
-                # Fall back to geometry-based matching
-                # Round coordinates to avoid float precision issues
-                gdf0["__coords__"] = gdf0.geometry.apply(lambda geom: (round(geom.x, 6), round(geom.y, 6)))
-                gdf["__coords__"] = gdf.geometry.apply(lambda geom: (round(geom.x, 6), round(geom.y, 6)))
-
-                gdf0 = gdf0[~gdf0["__coords__"].isin(gdf["__coords__"])]
-                df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
-
-                gdf0 = gdf0.drop(columns="__coords__")
-                gdf = gdf.drop(columns="__coords__")
-            # create a similar df with the same index as the first point but with columns of gdf
-            df_new = pd.DataFrame(index=df0.index, columns=gdf.index, data=wlev)
-
-            gdf = self._align_gdf_and_df(gdf, df_new)
-
-            # merge the new data with the existing data
-            gdf_combined = pd.concat([gdf0, gdf], ignore_index=True)
-            df_combined = pd.concat([df0, df_new], axis=1)
-            df_combined.columns = gdf_combined.index
-
-            # set the data and return new indices
-            new_indices = gdf_combined.index.difference(range(len(gdf0)))
-            self._finalize_set(df_combined, gdf_combined)
-        else:
-            # make sure indices start at 0 and are unique
-            gdf = gdf.reset_index(drop=True)
-
-            # Overwrite with dummy timeseries
-            df_new = pd.DataFrame(
-                index=pd.date_range(*self.model.get_model_time(), periods=2),
-                columns=gdf.index,
-                data=wlev,
-            )
-            gdf = self._align_gdf_and_df(gdf, df_new)
-
-            # Set the data and return new indices
-            new_indices = gdf.index
-            self._finalize_set(df_new, gdf)
-
-        return new_indices
-
-    def set_timeseries(self, df: pd.DataFrame, varname: str = "bzs"):
-        """
-        Add or update timeseries for existing locations.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Indexed by time, columns are point indices.
-        varname : str
-            Name of the variable to set/update.
-        """
-        df = self._validate_and_prepare_df(df)
-
-        if self.nr_points == 0:
-            raise ValueError("Cannot set timeseries without existing locations")
-
-        # Build new DataArray
-        new_da = xr.DataArray(
-            df,
-            dims=("time", "index"),
-            coords={"time": df.index, "index": df.columns},
-            name=varname,
-        )
-
-        if len(new_da.indexes["index"]) == self.nr_points:
-            # Case 1: full replacement → no interpolation needed
-            combined = new_da
-        else:
-            # Case 2: partial update → align times and merge with existing
-            all_times = self.data[varname].indexes["time"].union(new_da.indexes["time"])
-            existing = self.data[varname].reindex(time=all_times)
-            new_da = new_da.reindex(time=all_times)
-
-            combined = existing.copy()
-            combined.loc[dict(index=new_da.indexes["index"])] = new_da
-
-            # Fill missing values along time
-            combined = (
-                combined.interpolate_na(dim="time")
-                .bfill("time")
-                .fillna(0)
-            )
-
-        # Replace variable in dataset
-        self._data = self._data.reindex(time=combined.time)
-        self._data[varname] = combined
-
-    def _validate_and_prepare_gdf(self, gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-        """Validate and prepare GeoDataFrame for waterlevel boundary points. If gdf is None, use existing data."""
-        if gdf is None:
-            if self.nr_points > 0:
-                gdf = self.data.vector.to_gdf()
-            else:
-                raise ValueError("gdf must be provided if no data exists yet")
-
-        if not isinstance(gdf, gpd.GeoDataFrame):
-            raise ValueError("gdf must be a GeoDataFrame")
-        if not gdf.index.is_integer() and gdf.index.is_unique:
-            raise ValueError("gdf index must be unique integers")
-        if not gdf.geometry.type.isin(["Point"]).all():
-            raise ValueError("gdf geometry must be Point")
-        if gdf.crs != self.model.crs:
-            gdf = gdf.to_crs(self.model.crs)
-
-        # Make sure gdf is within model.region
-        # FIXME : this will drop points and always needs the grid to be availabel ... therefore tests fail
-        # if not gdf.geometry.within(self.model.region).all():
-        #     logger.warning(
-        #         "Some discharge points are outside the active model region. They will be ignored."
-        #     )
-        #     gdf = gdf[gdf.geometry.within(self.model.region)]
-
-        return gdf
-
-    def _validate_and_prepare_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Validate and prepare DataFrame for waterlevel timeseries."""
-        if df is None:
-            return
-        if not isinstance(df, pd.DataFrame):
-            raise ValueError("df must be a DataFrame")
-        if not df.columns.is_integer() and df.columns.is_unique:
-            raise ValueError("df column names must be unique integers")
-
-        if df.index.inferred_type in ["integer", "floating"]:
-            if self.model.config.get("tref") is None:
-                raise ValueError(
-                    "tref must be set in config to convert numeric index to datetime"
-                )
-            tref = self.model.config.get("tref")
-            df.index = tref + pd.to_timedelta(df.index, unit="s")
-
-        tstart, tstop = self.model.get_model_time()
-        if df.index.min() > tstart or df.index.max() < tstop:
-            logger.warning(
-                "The provided timeseries does not cover the entire model time period."
-            )
-        if df.shape[0] < 2:
-            raise ValueError(
-                "The provided timeseries must have at least two data points."
-            )
-
-        return df
-
-    def _align_gdf_and_df(
-        self, gdf: gpd.GeoDataFrame, df: pd.DataFrame
-    ) -> gpd.GeoDataFrame:
-        if gdf.index.size == df.columns.size and not set(gdf.index) == set(df.columns):
-            for col in gdf.select_dtypes(include=np.integer).columns:
-                if set(gdf[col]) == set(df.columns):
-                    gdf = gdf.set_index(col)
-                    logger.info(f"Setting gdf index to column '{col}'")
-                    break
-            else:
-                gdf = gdf.set_index(df.columns)
-                logger.info(
-                    "No matching column found in gdf; assuming order is correct"
-                )
-
-        if not set(gdf.index) == set(df.columns):
-            raise ValueError("gdf index and df columns must match")
-
-        return gdf
-
-    def _finalize_set(self, df: pd.DataFrame, gdf: gpd.GeoDataFrame, varname: str = "bzs"):
-        """Finalize internal state update."""
-        gdf.index.name = "index"
-        df.columns.name = "index"
-        df.index.name = "time"
-
-        da = GeoDataArray.from_gdf(gdf.to_crs(self.model.crs), data=df, name=varname)
-        ds = da.to_dataset()
-        self._data = ds.transpose("time", "index")
-
-    def add_point(
-        self,
-        x: float,
-        y: float,
-        name: str = None,
-        wlev: float = 0.0,
-    ):
-        """Add a single point to the discharge data.
-
-        Parameters
-        ----------
-        x : float
-            x-coordinate of the point
-        y : float
-            y-coordinate of the point
-        name : str, optional
-            Name of the point.
-        wlev : float, optional
-            Water level of the point. Defaults to 0.0.
-        """
-
-        # Check how many points are present
-        new_index = self.nr_points + 1
-
-        # Create a GeoDataFrame with a single point
-        if name is None:
-            name = f"point_{new_index}"
-
-        gdf = gpd.GeoDataFrame(
-            geometry=gpd.points_from_xy([x], [y]), crs=self.model.crs
-        )
-        gdf["name"] = name
-
-        self.set_locations(gdf=gdf, wlev=wlev, merge=True)
-
     def delete(self, index: Union[int, List[int]]):
-        """Delete a single point from the discharge data.
-
-        Parameters
-        ----------
-        index : int or list of int
-            Index or list of indices of points to be deleted.
-        """
-
-        if self.nr_points == 0:
-            return
-
-        if not isinstance(index, list):
-            index = [index]
-
-        # Check if indices are within range
-        if any(x > (self.nr_points - 1) for x in index):
-            raise ValueError("One of the indices exceeds length of index range!")
-        self._data = self.data.drop_isel(index=index)
-
+        "Delete boundary points and clear config when no points remain."
+        super().delete(index)
         if self.nr_points == 0:
             self.model.config.set("bndfile", None)
             self.model.config.set("bzsfile", None)
             self.model.config.set("bcafile", None)
             self.model.config.set("netbndbzsbzifile", None)
 
-
     def clear(self):
-        """Clean GeoDataFrame with boundary points."""
-        self._data = gpd.GeoDataFrame()
-
+        "Clear boundary points and unset associated config keys."
+        super().clear()
         self.model.config.set("bndfile", None)
         self.model.config.set("bzsfile", None)
         self.model.config.set("bcafile", None)
         self.model.config.set("netbndbzsbzifile", None)
 
+    @hydromt_step
     def create(
         self,
         geodataset: Union[str, Path, xr.Dataset] = None,
