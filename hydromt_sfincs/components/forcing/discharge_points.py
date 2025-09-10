@@ -172,7 +172,7 @@ class SfincsDischargePoints(ModelComponent):
             )
 
         # Read netcdf file
-        ds = GeoDataArray.from_netcdf(abs_file_path, crs=self.model.crs, chunks="auto")
+        ds = GeoDataset.from_netcdf(abs_file_path, crs=self.model.crs, chunks="auto")
         return ds
 
     def write(self, format: str = None):
@@ -236,7 +236,7 @@ class SfincsDischargePoints(ModelComponent):
         )
 
         # parse data to dataframe
-        da = self.data.transpose("time", ...)
+        da = self.data["dis"].transpose("time", ...)
         df = da.to_pandas()
 
         # Write to file
@@ -550,7 +550,7 @@ class SfincsDischargePoints(ModelComponent):
 
         if self.nr_points > 0 and merge:
             # parse data to dataframe
-            df0 = self.data.transpose(..., self.data.vector.index_dim).to_pandas()
+            df0 = self.data["dis"].transpose(..., self.data.vector.index_dim).to_pandas()
             gdf0 = self.data.vector.to_gdf()
 
             # TODO drop based on name instead of index?
@@ -605,23 +605,52 @@ class SfincsDischargePoints(ModelComponent):
 
         return new_indices
 
-    def set_timeseries(self, df: pd.DataFrame):
-        """Add or update timeseries for existing locations. Only works if locations already exist."""
+    def set_timeseries(self, df: pd.DataFrame, varname: str = "dis"):
+        """
+        Add or update timeseries for existing locations.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Indexed by time, columns are point indices.
+        varname : str
+            Name of the variable to set/update.
+        """
         df = self._validate_and_prepare_df(df)
 
         if self.nr_points == 0:
             raise ValueError("Cannot set timeseries without existing locations")
 
-        gdf = self.data.vector.to_gdf()
-        existing_df = self.data.transpose(..., "index").to_pandas()
+        # Build new DataArray
+        new_da = xr.DataArray(
+            df,
+            dims=("time", "index"),
+            coords={"time": df.index, "index": df.columns},
+            name=varname,
+        )
 
-        # Merge time series
-        existing_df = existing_df.drop(columns=df.columns, errors="ignore")
-        df = pd.concat([existing_df, df], axis=1).sort_index()
-        df = df.interpolate().bfill().fillna(0)
+        if len(new_da.indexes["index"]) == self.nr_points:
+            # Case 1: full replacement → no interpolation needed
+            combined = new_da
+        else:
+            # Case 2: partial update → align times and merge with existing
+            all_times = self.data[varname].indexes["time"].union(new_da.indexes["time"])
+            existing = self.data[varname].reindex(time=all_times)
+            new_da = new_da.reindex(time=all_times)
 
-        self._finalize_set(df, gdf)
+            combined = existing.copy()
+            combined.loc[dict(index=new_da.indexes["index"])] = new_da
 
+            # Fill missing values along time
+            combined = (
+                combined.interpolate_na(dim="time")
+                .bfill("time")
+                .fillna(0)
+            )
+
+        # Replace variable in dataset
+        self._data = self._data.reindex(time=combined.time)
+        self._data[varname] = combined
     def _validate_and_prepare_gdf(self, gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         """Validate and prepare GeoDataFrame for discharge points. If gdf is None, use existing data."""
         if gdf is None:
@@ -698,11 +727,12 @@ class SfincsDischargePoints(ModelComponent):
 
         return gdf
 
-    def _finalize_set(self, df: pd.DataFrame, gdf: gpd.GeoDataFrame):
+    def _finalize_set(self, df: pd.DataFrame, gdf: gpd.GeoDataFrame, varname: str = "dis"):
         """Finalize internal state update."""
         gdf.index.name = "index"
         df.columns.name = "index"
         df.index.name = "time"
 
-        da = GeoDataArray.from_gdf(gdf.to_crs(self.model.crs), data=df, name="dis")
-        self._data = da.transpose("time", "index")
+        da = GeoDataArray.from_gdf(gdf.to_crs(self.model.crs), data=df, name=varname)
+        ds = da.to_dataset()
+        self._data = ds.transpose("time", "index")

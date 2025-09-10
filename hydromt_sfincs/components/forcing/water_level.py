@@ -35,7 +35,7 @@ class SfincsWaterLevel(ModelComponent):
         )
 
     @property
-    def data(self) -> xr.DataArray:
+    def data(self) -> xr.Dataset:
         """Discharge boundary conditions point data.
 
         Return xr.DataArray
@@ -49,7 +49,7 @@ class SfincsWaterLevel(ModelComponent):
     def _initialize(self, skip_read=False) -> None:
         """Initialize geoms."""
         if self._data is None:
-            self._data = xr.DataArray()
+            self._data = xr.Dataset()
             if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
@@ -569,13 +569,13 @@ class SfincsWaterLevel(ModelComponent):
 
         return gdf
 
-    def _finalize_set(self, df: pd.DataFrame, gdf: gpd.GeoDataFrame):
+    def _finalize_set(self, df: pd.DataFrame, gdf: gpd.GeoDataFrame, varname: str = "bzs"):
         """Finalize internal state update."""
         gdf.index.name = "index"
         df.columns.name = "index"
         df.index.name = "time"
 
-        da = GeoDataArray.from_gdf(gdf.to_crs(self.model.crs), data=df, name="bzs")
+        da = GeoDataArray.from_gdf(gdf.to_crs(self.model.crs), data=df, name=varname)
         ds = da.to_dataset()
         self._data = ds.transpose("time", "index")
 

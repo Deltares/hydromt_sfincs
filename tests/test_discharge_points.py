@@ -69,7 +69,7 @@ def test_add_point(model_config):
 
     # Check that the number of points has increased and value is set correctly
     assert model_config.discharge_points.nr_points == nr_points + 1
-    assert np.mean(model_config.discharge_points.data.isel(index=-1).values) == 1000.0
+    assert np.mean(model_config.discharge_points.data["dis"].isel(index=-1).values) == 1000.0
 
 
 def test_create_timeseries(model_config):
@@ -84,10 +84,10 @@ def test_create_timeseries(model_config):
 
     # Check that the timeseries is created correctly
     for idx in range(model_config.discharge_points.nr_points):
-        point_data = model_config.discharge_points.data.isel(index=idx)
+        point_data = model_config.discharge_points.data["dis"].isel(index=idx)
         assert point_data.values.min() == 10
         assert point_data.values.max() == 10
-        assert len(point_data.time) == 3
+        assert len(point_data.time) == 2
 
     # now add a Gaussian timeseries for the first point
     model_config.discharge_points.create_timeseries(
@@ -101,14 +101,14 @@ def test_create_timeseries(model_config):
     )
 
     # Check that the timeseries is created correctly
-    point_data = model_config.discharge_points.data.isel(index=0)
+    point_data = model_config.discharge_points.data["dis"].isel(index=0)
     assert np.isclose(point_data.values.min(), 0.1, atol=1e-2)
     assert np.isclose(point_data.values.max(), 5, atol=1e-2)
     assert len(point_data.time) == 49  # 49 hours with 1 hour timestep
 
     # also check that the min, max of the other points are still the same
     for idx in range(1, model_config.discharge_points.nr_points):
-        point_data = model_config.discharge_points.data.isel(index=idx)
+        point_data = model_config.discharge_points.data["dis"].isel(index=idx)
         assert point_data.values.min() == 10
         assert point_data.values.max() == 10
         # but length has changed accordingly
@@ -125,7 +125,7 @@ def test_create_timeseries(model_config):
     )
     # Check that the timeseries is created correctly
     for idx in range(1, model_config.discharge_points.nr_points):
-        point_data = model_config.discharge_points.data.isel(index=idx)
+        point_data = model_config.discharge_points.data["dis"].isel(index=idx)
         assert point_data.values.min() == -1
         assert point_data.values.max() == 1
         # but length has changed accordingly
@@ -143,7 +143,7 @@ def test_create(model_config):
     assert model_config.discharge_points.nr_points == 3
     # show that dummy data is set
     for idx in range(0, model_config.discharge_points.nr_points):
-        point_data = model_config.discharge_points.data.sel(index=idx)
+        point_data = model_config.discharge_points.data["dis"].sel(index=idx)
         assert point_data.values.min() == 0.0
         assert point_data.values.max() == 0.0
         assert len(point_data.time) == 2
@@ -152,7 +152,7 @@ def test_create(model_config):
     csv_file = Path(TESTDATADIR) / "local_data" / "discharge.csv"
     model_config.discharge_points.create(timeseries=csv_file)
     # show that index 1 is changed into timeseries
-    point_data = model_config.discharge_points.data.sel(index=1)
+    point_data = model_config.discharge_points.data["dis"].sel(index=1)
     assert point_data.values.min() == 2.0
     assert point_data.values.max() == 5.0
     assert len(point_data.time) == 3
@@ -167,7 +167,7 @@ def test_create(model_config):
     assert model_config.discharge_points.nr_points == 3
     # show that dummy data is set for point 0, 2 and timeseries for point 1
     for idx in range(model_config.discharge_points.nr_points):
-        point_data = model_config.discharge_points.data.sel(index=idx)
+        point_data = model_config.discharge_points.data["dis"].sel(index=idx)
         if idx == 1:
             assert point_data.values.min() == 2.0
             assert point_data.values.max() == 5.0
@@ -192,7 +192,7 @@ def test_create(model_config):
     )
     # Check that the number of points is correct and values are set in the last point
     assert model_config.discharge_points.nr_points == 4
-    assert model_config.discharge_points.data.isel(index=-1).values.max() == 10.0
+    assert model_config.discharge_points.data["dis"].isel(index=-1).values.max() == 10.0
 
     # now with indices that do not exist yet; should be reset to 0
     df = df.mul(0.3)
@@ -203,7 +203,7 @@ def test_create(model_config):
     )
 
     assert model_config.discharge_points.nr_points == 1
-    assert model_config.discharge_points.data.index[-1] == 0
+    assert model_config.discharge_points.data["dis"].index[-1] == 0
 
 
 def test_delete_clear(model_config):
