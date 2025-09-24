@@ -618,7 +618,7 @@ class SfincsModel(Model):
                         bbox=self.bbox,
                         buffer=10,
                         variables=["elevtn"],
-                        zoom_level=(res, "meter"),
+                        zoom=(res, "meter"),
                     )
                 # TODO remove ValueError after fix in hydromt core
                 except (IndexError, ValueError):

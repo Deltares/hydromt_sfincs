@@ -24,7 +24,7 @@ from rasterio.windows import Window
 from shapely.geometry import LineString, Polygon
 
 import hydromt
-from hydromt._io import _write_xy as write_xy
+from hydromt._io import write_xy
 from hydromt._io import _open_vector as open_vector
 from hydromt.data_catalog.drivers import RasterioDriver
 from hydromt.gis._gis_utils import _zoom_to_overview_level

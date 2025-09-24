@@ -1,0 +1,25 @@
+meta:
+  version: v1.0.0
+  root: c://delftdashboard//data//bathymetry
+  name: delft_dashboard
+  hydromt_version: '>1.0a,<2'
+
+gebco_2024:
+  data_type: RasterDataset
+  uri: "gebco_2024"
+  driver:
+    name: tiled_web_map
+    options:
+      encoder: terrarium16
+      max_zoom: 8
+      s3_bucket: "deltares-ddb"
+      s3_key: "data/bathymetry/gebco_2024"
+      s3_region: "eu-west-1"
+  metadata:
+    crs: 3857
+    source: BODC
+    coord_ref_sys_name: WGS 84 / Pseudo-Mercator
+    coord_ref_sys_kind: projected
+    vertical_reference_level: unknown
+    vertical_units: m
+    difference_with_msl: 0.0
