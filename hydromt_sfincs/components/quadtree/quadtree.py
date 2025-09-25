@@ -1,6 +1,8 @@
 import logging
 import os
+import gc
 from os.path import isfile
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Union
 
@@ -16,8 +18,12 @@ from rasterio.enums import Resampling
 import xarray as xr
 import xugrid as xu
 
+from hydromt import hydromt_step
 from hydromt.model.components import MeshComponent
+from hydromt.model.processes.grid import create_grid_from_region
 
+from hydromt_sfincs.utils import make_regular_grid, partition_quadtree
+from hydromt_sfincs.workflows.merge import merge_multi_dataarrays_on_mesh
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
 # optional dependency
@@ -55,10 +61,12 @@ class SfincsQuadtreeGrid(MeshComponent):
     # NOTE @data and @initialize are inherited from the MeshComponent
 
     @property
-    def crs(self):
-        if self.data is None:
-            return None
-        return self.data.grid.crs
+    def crs(self) -> CRS:
+        """Return the coordinate reference system of the regular grid."""
+        if self.data.grid.crs is not None:
+            return self.data.grid.crs
+        else:
+            raise ValueError("No CRS defined for the quadtree grid.")
 
     @property
     def face_coordinates(self):
@@ -255,9 +263,9 @@ class SfincsQuadtreeGrid(MeshComponent):
         dx: float,
         dy: float,
         rotation: float,
+        epsg: int,
         refinement_polygons: Optional[gpd.GeoDataFrame] = None,
-        bathymetry_sets: Optional[List] = None,
-        bathymetry_database: Optional = None,
+        datasets_dep: List[List[dict]] = None,  
     ):
         """Build the Quadtree grid.
 
@@ -277,21 +285,47 @@ class SfincsQuadtreeGrid(MeshComponent):
             Cell size in y-direction.
         rotation : float
             Rotation angle of the grid in degrees.
+        epsg : int
+            EPSG code of the coordinate reference system.
         refinement_polygons : gpd.GeoDataFrame, optional
             GeoDataFrame with polygons that define areas where the grid should be refined.
-        bathymetry_sets : list, optional
-            List of bathymetry sets.
-        bathymetry_database : str, optional
-            Path to the bathymetry database.
+        datasets_dep : List[List[dict]], optional
+            List of lists of dictionaries with variable names and dataset names to use for depth
         """
 
         # Clear datashader dataframes
         self.clear_datashader_dataframe()
         self.model.quadtree_mask.clear_datashader_dataframe()
 
-        # Get the CRS from the model config
-        epsg = self.model.config.get("epsg", None)
-        crs = CRS.from_epsg(epsg) if epsg is not None else CRS.from_epsg(4326)
+        # Set grid type and crs in model
+        self.model.grid_type = "quadtree"
+        crs = CRS.from_epsg(epsg) 
+
+        datasets_dep_per_level = []
+        if datasets_dep is not None:
+            # Create grid without refinement first
+            # NOTE this is used to determine model properties while parsing datasets_dep
+            self._data = make_regular_grid(
+                x0, y0,
+                dx, dy,
+                nmax, mmax,
+                rotation,
+                crs,
+                make_ugrid=True
+            )
+            # Parse the datasets for all refinement levels
+            res = dx  # coarsest level
+            levels =  set(refinement_polygons["refinement_level"].unique())
+            # convert to meters if geographic
+            if crs.is_geographic:
+                res = res * 111111.0
+            # append parsed datasets per level
+            for lev in range(max(levels)):
+                # compute resolution at level
+                res_level = res / (2**lev)
+                datasets_dep_per_level.append(
+                    self.model._parse_datasets_dep(datasets_dep, res=res_level)
+                )
 
         # Build the quadtree grid
         self._data = build_quadtree_xugrid(
@@ -304,11 +338,280 @@ class SfincsQuadtreeGrid(MeshComponent):
             rotation,
             crs,
             refinement_polygons=refinement_polygons,
-            bathymetry_sets=bathymetry_sets,
-            bathymetry_database=bathymetry_database,
+            datasets_dep=datasets_dep_per_level,
         )
 
         # self.get_exterior() # FIXME - TL: why is this needed in cht_sfincs? > also, is now a property
+
+    def create_from_region(
+        self,
+        region: dict,
+        res: float = 100,
+        crs: Union[str, int] = "utm",
+        rotated: bool = False,
+        hydrography_fn: str = None,
+        basin_index_fn: str = None,
+        align: bool = True,
+        dec_origin: int = 0,
+        dec_rotation: int = 3,
+        refinement_polygons: Optional[gpd.GeoDataFrame] = None,
+        datasets_dep: List[List[dict]] = None,
+    ):
+        """Setup a quadtree grid from a region.
+
+        Parameters
+        ----------
+        region : dict
+            Dictionary describing region of interest, e.g.:
+
+            * {'bbox': [xmin, ymin, xmax, ymax]}
+            * {'geom': 'path/to/polygon_geometry'}
+
+            Note: For the 'bbox' option the coordinates need to be provided in WG84/EPSG:4326.
+
+            For a complete overview of all region options,
+            see :py:func:`hydromt.workflows.basin_mask.parse_region`
+        res : float, optional
+            grid resolution, by default 100 m
+        crs : Union[str, int], optional
+            coordinate reference system of the grid
+            if "utm" (default) the best UTM zone is selected
+            else a pyproj crs string or epsg code (int) can be provided
+        rotated : bool, optional
+            if True, a minimum rotated rectangular grid is fitted around the region, by default False
+        hydrography_fn : str
+            Name of data source for hydrography data.
+        basin_index_fn : str
+            Name of data source with basin (bounding box) geometries associated with
+            the 'basins' layer of `hydrography_fn`. Only required if the `region` is
+            based on a (sub)(inter)basins without a 'bounds' argument.
+        align : bool, optional
+            If True (default), align target transform to resolution.
+            Note that this has only been implemented for non-rotated grids.
+        dec_origin : int, optional
+            number of decimals to round the origin coordinates, by default 0
+        dec_rotation : int, optional
+            number of decimals to round the rotation angle, by default 3
+        refinement_polygons : gpd.GeoDataFrame, optional
+            GeoDataFrame with polygons that define areas where the grid should be refined.
+        datasets_dep : List[List[dict]], optional
+            List of lists of dictionaries with variable names and dataset names to use for depth            
+
+        See Also
+        --------
+        hydromt.workflows.basin_mask.parse_region
+        """
+
+        ds = create_grid_from_region(
+            region=region,
+            data_catalog=self.model.data_catalog,
+            res=res,
+            crs=crs,
+            region_crs=4326,
+            rotated=rotated,
+            hydrography_path=hydrography_fn,
+            basin_index_path=basin_index_fn,
+            add_mask=False,
+            align=align,
+            dec_origin=dec_origin,
+            dec_rotation=dec_rotation,
+        )
+
+        # check for y-resolution
+        # TODO discuss with hydrom-core if this behavior is desired
+        if ds.raster.res[1] < 0:
+            ds = ds.raster.flipud()
+
+        # derive grid properties from grid
+        nmax, mmax = ds.raster.shape
+        dx, dy = ds.raster.res
+        x0, y0 = ds.raster.origin
+        rotation = ds.raster.rotation
+        epsg = ds.raster.crs.to_epsg()
+
+        # now parse everything to the quadtree create method
+        self.create(
+            x0=x0,
+            y0=y0,
+            nmax=nmax,
+            mmax=mmax,
+            dx=dx,
+            dy=dy,
+            rotation=rotation,
+            epsg=epsg,
+            refinement_polygons=refinement_polygons,
+            datasets_dep=datasets_dep,
+        )            
+
+    def interpolate_bathymetry(self, x, y, z, method="linear"):
+        """x, y, and z are numpy arrays with coordinates and bathymetry values"""
+        xy = self.data.grid.face_coordinates
+        # zz = np.full(self.nr_cells, np.nan)
+        xz = xy[:, 0]
+        yz = xy[:, 1]
+        zz = interp2(x, y, z, xz, yz, method=method)
+        ugrid2d = self.data.grid
+        self.data["z"] = xu.UgridDataArray(xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d)
+
+    def set_uniform_bathymetry(self, zb):
+        self.data["z"][:] = zb
+
+    def set_bathymetry(self, bathymetry_database, bathymetry_sets, zmin=-1.0e9, zmax=1.0e9, quiet=True):
+        
+        # Number of refinement levels
+        nlev = self.data.attrs["nr_levels"]
+        # Cell centre coordinates
+        xy = self.data.grid.face_coordinates
+        # Get number of cells
+        nr_cells = len(xy)
+        # Initialize bathymetry array
+        zz = np.full(nr_cells, np.nan)
+        # cell size of coarsest level
+        dx = self.data.attrs["dx"]
+
+        # Determine first indices and number of cells per refinement level
+        # This is also done when the grid is built, but that information is not stored
+        ifirst = np.zeros(nlev, dtype=int)
+        ilast = np.zeros(nlev, dtype=int)
+        level = self.data["level"].values[:] - 1 # 0-based
+        for ilev in range(0, nlev):
+            # Find index of first cell with this level
+            ifirst[ilev] = np.where(level == ilev)[0][0]
+            # Find index of last cell with this level
+            if ilev < nlev - 1:
+                ilast[ilev] = np.where(level == ilev + 1)[0][0] - 1
+            else:
+                ilast[ilev] = nr_cells - 1
+
+        # Loop through all levels
+        for ilev in range(nlev):
+
+            if not quiet:
+                print("Processing bathymetry level " + str(ilev + 1) + " of " + str(nlev) + " ...")
+
+            # First and last cell indices in this level            
+            i0 = ifirst[ilev]
+            i1 = ilast[ilev]
+            
+            # Make blocks of cells in this level only
+            cell_indices_in_level = np.arange(i0, i1 + 1, dtype=int)
+                  
+            xz  = xy[cell_indices_in_level, 0]
+            yz  = xy[cell_indices_in_level, 1]
+            dxmin = dx / 2**ilev
+
+            # if self.data.grid.crs.is_geographic:
+            if self.model.crs.is_geographic:
+                dxmin = dxmin * 111000.0
+
+            zgl = bathymetry_database.get_bathymetry_on_points(xz,
+                                                               yz,
+                                                               dxmin,
+                                                               self.model.crs,
+                                                               bathymetry_sets)
+            
+            # Limit zgl to zmin and zmax
+            zgl = np.maximum(zgl, zmin)
+            zgl = np.minimum(zgl, zmax)
+
+            zz[cell_indices_in_level] = zgl
+
+        ugrid2d = self.data.grid
+        self.data["z"] = xu.UgridDataArray(xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d)
+
+    @hydromt_step
+    def create_elevation(
+        self,
+        datasets_dep: List[dict],
+        partition_by_level: bool = True,
+        partition_in_blocks: bool = False,
+        nrmax: int = 2000,  # not in list
+        buffer_cells: int = 0,  # not in list
+        interp_method: str = "linear",  # used for buffer cells only
+    ):
+        """Interpolate topobathy (dep) data to the model grid.
+
+        Adds model grid layers:
+
+        * **dep**: combined elevation/bathymetry [m+ref]
+
+        Parameters
+        ----------
+        datasets_dep : List[dict]
+            List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
+            [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
+            For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
+        buffer_cells : int, optional
+            Number of cells between datasets to ensure smooth transition of bed levels, by default 0
+        interp_method : str, optional
+            Interpolation method used to fill the buffer cells , by default "linear"
+        """
+
+        # get resolution and number of level
+        res = self.data.attrs["dx"]
+        nrlevels = self.data.attrs["nr_levels"]
+
+        # convert to meters if geographic
+        if self.model.crs.is_geographic:
+            res = res * 111111.0
+        # append parsed datasets per level
+        datasets_dep_per_level = []
+        for ilev in range(nrlevels):
+            # compute resolution at level
+            res_level = res / (2**ilev)
+            datasets_dep_per_level.append(
+                self.model._parse_datasets_dep(datasets_dep, res=res_level)
+            )
+
+        # check if partitions are already defined
+        if partition_by_level or partition_in_blocks:
+            # create partitions if not already done
+            if not hasattr(self, "partitions"):
+                t0 = time.time()
+                self.partitions = partition_quadtree(
+                    quadtree=self.data, 
+                    partition_by_level=partition_by_level, 
+                    partition_in_blocks=partition_in_blocks, 
+                    nrmax=nrmax, 
+                    logger=logger
+                )
+                t1 = time.time()
+                logger.debug(f"Partitioning quadtree took {t1-t0:.2f} s.")
+            count = 0
+            for partition in self.partitions:
+                # time each partition
+                t0 = time.time()
+                ilev = partition.level.max().values - 1
+                # merge multiple datasets on mesh
+                uda = merge_multi_dataarrays_on_mesh(
+                    da_list=datasets_dep_per_level[ilev],
+                    mesh2d=partition.grid,
+                )
+                partition["z"] = uda
+                t1 = time.time()
+                logger.debug(
+                    f"Dep merged for partition {count} at level {ilev} in {t1-t0:.2f} s."
+                )
+                count += 1
+                gc.collect()
+            t0 = time.time()
+            merged = xu.merge_partitions(self.partitions)
+            t1 = time.time()
+            logger.debug(f"Merging partitions took {t1-t0:.2f} s.")
+            reordered = merged.ugrid.reindex_like(self.data.grid)
+            # add data to grid
+            self.data["z"] = reordered["z"]
+        else:
+            t0 = time.time()
+            # when not partitioned, use the full grid with the highest resolution data
+            uda = merge_multi_dataarrays_on_mesh(
+                da_list=datasets_dep_per_level[-1], mesh2d=self.data.grid, logger=logger
+            )
+            t1 = time.time()
+            logger.debug(f"Merging dep took {t1-t0:.2f} s.")
+            # add data to grid
+            self.data["z"] = uda        
+
 
     def cut_inactive_cells(self):
         # Clear datashader dataframes (new ones will be created when needed by map_overlay methods)
@@ -689,3 +992,19 @@ def binary_search(val_array, vals):
     indices[is_ok] = indx[is_ok]
     indices[not_ok] = -1
     return indices
+
+def interp2(x0, y0, z0, x1, y1, method="linear"):
+    f = RegularGridInterpolator(
+        (y0, x0), z0, bounds_error=False, fill_value=np.nan, method=method
+    )
+    # reshape x1 and y1
+    if x1.ndim > 1:
+        sz = x1.shape
+        x1 = x1.reshape(sz[0] * sz[1])
+        y1 = y1.reshape(sz[0] * sz[1])
+        # interpolate
+        z1 = f((y1, x1)).reshape(sz)
+    else:
+        z1 = f((y1, x1))
+
+    return z1
