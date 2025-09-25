@@ -47,12 +47,12 @@ from hydromt_sfincs.components.quadtree import (
 
 # Boundary conditions / forcing components
 from hydromt_sfincs.components.forcing import (
-    SfincsBoundaryConditions,
     SfincsDischargePoints,
     SfincsPrecipitation,
     SfincsPressure,
     SfincsRivers,
     SfincsWind,
+    SfincsWaterLevel,
     SnapWaveBoundaryConditions,
 )
 
@@ -145,7 +145,7 @@ class SfincsModel(Model):
         self.add_component("rivers", SfincsRivers(self))
 
         # Forcing types
-        self.add_component("boundary_conditions", SfincsBoundaryConditions(self))
+        self.add_component("water_level", SfincsWaterLevel(self))
         self.add_component("discharge_points", SfincsDischargePoints(self))
         self.add_component(
             "snapwave_boundary_conditions", SnapWaveBoundaryConditions(self)
@@ -270,14 +270,14 @@ class SfincsModel(Model):
         return self.components["rivers"]
 
     @property
-    def boundary_conditions(self) -> SfincsBoundaryConditions:
-        """Returns the boundary conditions object."""
-        return self.components["boundary_conditions"]
-
-    @property
     def discharge_points(self) -> SfincsDischargePoints:
         """Returns the discharge points object."""
         return self.components["discharge_points"]
+    
+    @property
+    def water_level(self) -> SfincsWaterLevel:
+        """Returns the water level object."""
+        return self.components["water_level"]
 
     @property
     def precipitation(self) -> SfincsPrecipitation:
@@ -414,37 +414,81 @@ class SfincsModel(Model):
         import matplotlib.dates as mdates
         import matplotlib.pyplot as plt
 
-        if self.forcing:
-            forcing = {}
-            if forcings == "all":
-                forcings = list(self.forcing.keys())
-            elif isinstance(forcings, str):
-                forcings = [forcings]
-            for name in forcings:
-                if name not in self.forcing:
-                    logger.warning(f'No forcing named "{name}" found in model.')
-                    continue
-                if isinstance(self.forcing[name], xr.Dataset):
-                    logger.warning(f'Skipping forcing "{name}" as it is a dataset.')
-                    continue
-                # plot only dataarrays
-                forcing[name] = self.forcing[name].copy()
-                # update missing attributes for plot labels
-                forcing[name].attrs.update(**self._ATTRS.get(name, {}))
-            if len(forcing) > 0:
-                fig, axes = plots.plot_forcing(forcing, **kwargs)
-                # set xlim to model tstart - tend
-                tstart, tstop = self.get_model_time()
-                axes[-1].set_xlim(mdates.date2num([tstart, tstop]))
 
-                # save figure
-                if fn_out is not None:
-                    if not os.path.isabs(fn_out):
-                        fn_out = join(self.root, "figs", fn_out)
-                    if not os.path.isdir(dirname(fn_out)):
-                        os.makedirs(dirname(fn_out))
-                    plt.savefig(fn_out, dpi=225, bbox_inches="tight")
-                return fig, axes
+        _FORCING = {
+            "water_level": {
+                "bzs": {"standard_name": "waterlevel", "unit": "m+ref"},
+                "bzi": {"standard_name": "wave height", "unit": "m"},
+            },
+            "discharge_points": {
+                "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
+            },
+            "precipitation": {
+                "precip": {"standard_name": "precipitation", "unit": "mm.hr-1"},
+                "precip_2d": {"standard_name": "precipitation", "unit": "mm.hr-1"},
+            },
+            "pressure": {
+                "press_2d": {"standard_name": "barometric pressure", "unit": "Pa"},
+            },
+            "wind": {
+                "wind": {"standard_name": "wind", "unit": "m/s"},
+                "wind10_u": {"standard_name": "eastward wind", "unit": "m/s"},
+                "wind10_v": {"standard_name": "northward wind", "unit": "m/s"},
+            },
+            "snapwave_boundary_conditions": {
+                "hs": {},
+                "tp": {},
+                "dir": {},
+                "ds": {},
+            },
+        }
+
+        forcing = {}
+        for component, vars_dict in _FORCING.items():
+            if self.components.get(component) is not None:
+                comp = self.components.get(component)
+                if comp is None or not hasattr(comp, "data"):
+                    continue
+                data = comp.data
+                if isinstance(data, xr.Dataset):
+                    for name, attrs in vars_dict.items():
+                        if name in data:
+                            arr = data[name]
+                            # check that the DataArray has data
+                            if arr.size > 0 and not arr.isnull().all():
+                                arr = arr.copy()
+                                arr.attrs.update(**attrs)
+                                forcing[name] = arr
+
+                elif isinstance(data, xr.DataArray):
+                    arr = data
+                    if arr.size > 0 and not arr.isnull().all():
+                        # assign to the one variable key if known
+                        if len(vars_dict) == 1:
+                            name, attrs = next(iter(vars_dict.items()))
+                            arr = arr.copy()
+                            arr.attrs.update(**attrs)
+                            forcing[name] = arr
+                        elif arr.name in vars_dict:
+                            attrs = vars_dict[arr.name]
+                            arr = arr.copy()
+                            arr.attrs.update(**attrs)
+                            forcing[arr.name] = arr
+
+        if len(forcing) > 0:
+            fig, axes = plots.plot_forcing(forcing, **kwargs)
+            # set xlim to model tstart - tend
+            tstart, tstop = self.get_model_time()
+            axes[-1].set_xlim(mdates.date2num([tstart, tstop]))
+
+            # save figure
+            if fn_out is not None:
+                if not os.path.isabs(fn_out):
+                    fn_out = join(self.root, "figs", fn_out)
+                if not os.path.isdir(dirname(fn_out)):
+                    os.makedirs(dirname(fn_out))
+                plt.savefig(fn_out, dpi=225, bbox_inches="tight")
+            return fig, axes
         else:
             raise ValueError("No forcing found in model.")
 
@@ -515,7 +559,7 @@ class SfincsModel(Model):
             "drainage_structures": "drn",
             "rivers": "rivers",
             "discharge_points": "src",
-            # "boundary_conditions": "bnd",
+            "water_level": "bnd",
         }  # parsed to dict of geopandas.GeoDataFrame
 
         # combine geoms and forcing locations
@@ -529,8 +573,8 @@ class SfincsModel(Model):
                     gdf = comp.data
                     if not gdf.empty:
                         sg.update({name: gdf})
-                # forcing components have data as GeoDataArray(xr.DataArray)
-                elif isinstance(comp.data, xr.DataArray):
+                # forcing components have data as GeoDataArray(xr.Dataset)
+                elif isinstance(comp.data, xr.Dataset):
                     # the property gdf returns a gpd.GeoDataFrame
                     gdf = comp.gdf
                     if not gdf.empty:

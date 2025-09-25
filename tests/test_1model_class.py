@@ -417,41 +417,6 @@ def test_observations(model_config, tmp_dir):
     model_config.cross_sections.create(fn_crs_gis, merge=True)
     assert len(model_config.cross_sections.data.index) == nr_observation_lines * 2
 
-
-def test_forcing_io(tmp_dir):
-    root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r")
-    # read
-    mod.read_forcing()
-
-    # write forcing
-    tmp_root = join(tmp_dir, "forcing_test")
-    mod.set_root(tmp_root, mode="w")
-    mod.write_forcing()
-    mod.write_config()
-
-    # read and check if identical
-    mod1 = SfincsModel(root=tmp_root, mode="r")
-    mod1.read_forcing()
-
-    # for all forcing variables, check if they are identical
-    for key in mod.forcing.keys():
-        assert np.allclose(mod1.forcing[key].values, mod.forcing[key].values)
-
-    # now change the timeseries-format and write again
-    tmp_root = join(tmp_dir, "forcing_test2")
-    mod1.set_root(tmp_root, mode="w+")
-    mod1.write_forcing(fmt="%7.1f")
-    mod1.write_config()
-
-    # read and check if identical (only for bzs here)
-    mod2 = SfincsModel(root=tmp_root, mode="r")
-    mod2.read_forcing(data_vars=["waterlevel"])
-    assert np.isclose(
-        np.sum(mod2.forcing["bzs"].values - mod1.forcing["bzs"].values), 0.73
-    )
-
-
 @pytest.mark.parametrize("case", list(_cases.keys()))
 def test_read_results(case):
     root = join(TESTDATADIR, _cases[case]["example"])
