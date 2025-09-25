@@ -107,7 +107,9 @@ class SfincsBoundaryBase(ModelComponent):
         """
         if geodataset is not None:
             if df is not None or gdf is not None:
-                raise ValueError("Provide either 'geodataset' or ('df' and 'gdf'), not both.")
+                raise ValueError(
+                    "Provide either 'geodataset' or ('df' and 'gdf'), not both."
+                )
             if not hasattr(geodataset, "vector") or not hasattr(geodataset, "dims"):
                 raise ValueError("Invalid GeoDataArray provided")
             if geodataset.vector.crs != self.model.crs:
@@ -128,7 +130,9 @@ class SfincsBoundaryBase(ModelComponent):
         if df is not None:
             self.set_timeseries(df)
 
-    def set_locations(self, gdf: gpd.GeoDataFrame, value: float = 0.0, merge: bool = True):
+    def set_locations(
+        self, gdf: gpd.GeoDataFrame, value: float = 0.0, merge: bool = True
+    ):
         """
         Add or update point locations. When merging with existing data, the
         new locations are appended; duplicates are removed by name or geometry.
@@ -147,7 +151,11 @@ class SfincsBoundaryBase(ModelComponent):
 
         if self.nr_points > 0 and merge:
             # parse existing to dataframe
-            df0 = self.data[self._default_varname].transpose(..., self.data.vector.index_dim).to_pandas()
+            df0 = (
+                self.data[self._default_varname]
+                .transpose(..., self.data.vector.index_dim)
+                .to_pandas()
+            )
             gdf0 = self.data.vector.to_gdf()
 
             if "name" in gdf0.columns and "name" in gdf.columns:
@@ -156,8 +164,12 @@ class SfincsBoundaryBase(ModelComponent):
                 df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
             else:
                 # fallback to geometry-based matching to avoid duplicates
-                gdf0["__coords__"] = gdf0.geometry.apply(lambda geom: (round(geom.x, 6), round(geom.y, 6)))
-                gdf["__coords__"] = gdf.geometry.apply(lambda geom: (round(geom.x, 6), round(geom.y, 6)))
+                gdf0["__coords__"] = gdf0.geometry.apply(
+                    lambda geom: (round(geom.x, 6), round(geom.y, 6))
+                )
+                gdf["__coords__"] = gdf.geometry.apply(
+                    lambda geom: (round(geom.x, 6), round(geom.y, 6))
+                )
                 gdf0 = gdf0[~gdf0["__coords__"].isin(gdf["__coords__"])]
                 df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
                 gdf0 = gdf0.drop(columns="__coords__")
@@ -209,7 +221,10 @@ class SfincsBoundaryBase(ModelComponent):
             varname = self._default_varname
 
         new_da = xr.DataArray(
-            df, dims=("time", "index"), coords={"time": df.index, "index": df.columns}, name=varname
+            df,
+            dims=("time", "index"),
+            coords={"time": df.index, "index": df.columns},
+            name=varname,
         )
 
         if len(new_da.indexes["index"]) == self.nr_points:
@@ -262,7 +277,6 @@ class SfincsBoundaryBase(ModelComponent):
 
         return gdf
 
-
     def _validate_and_prepare_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Validate a timeseries DataFrame. Convert numeric indexes to datetimes
@@ -294,8 +308,10 @@ class SfincsBoundaryBase(ModelComponent):
             )
 
         return df
-    
-    def _align_gdf_and_df(self, gdf: gpd.GeoDataFrame, df: pd.DataFrame) -> gpd.GeoDataFrame:
+
+    def _align_gdf_and_df(
+        self, gdf: gpd.GeoDataFrame, df: pd.DataFrame
+    ) -> gpd.GeoDataFrame:
         """
         Align gdf index with dataframe columns. If sizes match but indices differ,
         try to infer an index column in gdf to set as the index. Otherwise assume
@@ -318,7 +334,9 @@ class SfincsBoundaryBase(ModelComponent):
 
         return gdf
 
-    def _finalize_set(self, df: pd.DataFrame, gdf: gpd.GeoDataFrame, varname: str = None):
+    def _finalize_set(
+        self, df: pd.DataFrame, gdf: gpd.GeoDataFrame, varname: str = None
+    ):
         """
         Finalize updating internal dataset from (df, gdf) by creating a GeoDataArray
         and storing a dataset transposed to ('time', 'index').
@@ -333,8 +351,6 @@ class SfincsBoundaryBase(ModelComponent):
         da = GeoDataArray.from_gdf(gdf.to_crs(self.model.crs), data=df, name=varname)
         ds = da.to_dataset()
         self._data = ds.transpose("time", "index")
-
-
 
     def add_point(self, x: float, y: float, name: str = None, value: float = 0.0):
         """
@@ -353,7 +369,9 @@ class SfincsBoundaryBase(ModelComponent):
         if name is None:
             name = f"point_{new_index}"
 
-        gdf = gpd.GeoDataFrame(geometry=gpd.points_from_xy([x], [y]), crs=self.model.crs)
+        gdf = gpd.GeoDataFrame(
+            geometry=gpd.points_from_xy([x], [y]), crs=self.model.crs
+        )
         gdf["name"] = name
         self.set_locations(gdf=gdf, value=value, merge=True)
 

@@ -142,7 +142,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         if self.nr_points == 0:
             return
-        
+
         # Read bca file, which is actually some sort of toml file
         d = IniStruct(filename=abs_file_path)
 
@@ -150,9 +150,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         section_data = [d.section[i].data for i in range(self.nr_points)]
 
         # Add constituents
-        self._data = add_constituents(
-            self.data, section_data
-        )
+        self._data = add_constituents(self.data, section_data)
 
     def read_boundary_conditions_netcdf(self, filename: str | Path = None):
         """Read SFINCS boundary conditions netcdf file"""
@@ -276,7 +274,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                 fid.write(f"Function                        = astronomic\n")
                 fid.write(f"Quantity                        = astronomic component\n")
                 fid.write(f"Unit                            = -\n")
-                fid.write(f"Quantity                        = waterlevelbnd amplitude\n")
+                fid.write(
+                    f"Quantity                        = waterlevelbnd amplitude\n"
+                )
                 fid.write(f"Unit                            = m\n")
                 fid.write(f"Quantity                        = waterlevelbnd phase\n")
                 fid.write(f"Unit                            = deg\n")
@@ -289,7 +289,6 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                         fid.write(f"{constituent:6s}{a:10.5f}{p:10.2f}\n")
 
                 fid.write("\n")
-
 
     def write_boundary_conditions_netcdf(self, filename: str | Path = None):
         """Write SFINCS boundary condition netcdf (*.nc) file"""
@@ -375,7 +374,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         tstart, tstop = self.model.get_model_time()  # model time
         # buffer around msk==2 values
         if np.any(self.model.grid.mask == 2) and not self.model.grid_type == "quadtree":
-            region = self.model.grid.mask.where(self.model.grid.mask == 2, 0).raster.vectorize()
+            region = self.model.grid.mask.where(
+                self.model.grid.mask == 2, 0
+            ).raster.vectorize()
         else:
             region = self.model.region
         # read waterlevel data from geodataset or geodataframe
@@ -406,7 +407,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         # read location data (if not already read from geodataset)
         if gdf_locs is None and locations is not None:
             gdf_locs = self.data_catalog.get_geodataframe(
-                locations, geom=region, buffer=buffer,
+                locations,
+                geom=region,
+                buffer=buffer,
             ).to_crs(self.model.crs)
             if "index" in gdf_locs.columns:
                 gdf_locs = gdf_locs.set_index("index")
@@ -417,7 +420,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         elif gdf_locs is None and "bzs" in self.data:
             # no locations provided, using existing waterlevel boundary points from data
             used_existing = True
-            gdf_locs = self.data["bzs"].vector.to_gdf() #NOTE this is now done in set_timeseries ...
+            gdf_locs = self.data[
+                "bzs"
+            ].vector.to_gdf()  # NOTE this is now done in set_timeseries ...
         elif gdf_locs is None:
             raise ValueError("No waterlevel boundary (bnd) points provided.")
         # It is still possible that all points are outside the region+buffer, this error should provide clear feedback
@@ -441,9 +446,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                 df_offset = offset_pnts.to_pandas().reindex(df_ts.columns).fillna(0)
                 df_ts = df_ts + df_offset
                 offset = offset_pnts.mean().values
-            logger.debug(
-                f"waterlevel forcing: applied offset (avg: {offset:+.2f})"
-            )
+            logger.debug(f"waterlevel forcing: applied offset (avg: {offset:+.2f})")
 
         # set/ update forcing
         if used_existing:
@@ -525,7 +528,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             raise NotImplementedError(
                 f"Shape '{shape}' is not implemented. Use 'constant', 'sine', 'gaussian' or 'astronomical'."
             )
-        
+
         times = pd.date_range(
             start=t0, end=t1, freq=pd.tseries.offsets.DateOffset(seconds=dtsec)
         )
@@ -570,12 +573,14 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         df_ts = pd.DataFrame(index=times)
         for ip in self.data.index.values:
-            df = pd.DataFrame({
-                "constituent": self.data.constituent.values,
-                "amplitude": self.data["amplitude"].loc[ip].values,
-                "phase": self.data["phase"].loc[ip].values,
-            })
-            df = df.dropna(subset=["amplitude","phase"])  # remove NaN paddings
+            df = pd.DataFrame(
+                {
+                    "constituent": self.data.constituent.values,
+                    "amplitude": self.data["amplitude"].loc[ip].values,
+                    "phase": self.data["phase"].loc[ip].values,
+                }
+            )
+            df = df.dropna(subset=["amplitude", "phase"])  # remove NaN paddings
             df = df.set_index("constituent")
 
             v = predict(df, times) + offset
@@ -619,8 +624,10 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                     points.append((point.x, point.y))
 
             # create geodataframe with points
-            gdf = gpd.GeoDataFrame(geometry=gpd.points_from_xy(*zip(*points)), crs=self.model.crs)            
-        elif self.model.grid_type == "quadtree": 
+            gdf = gpd.GeoDataFrame(
+                geometry=gpd.points_from_xy(*zip(*points)), crs=self.model.crs
+            )
+        elif self.model.grid_type == "quadtree":
             if min_dist is None:
                 # Set minimum distance between to grid boundary points on polyline to 2 * dx
                 min_dist = self.model.quadtree_grid.data.attrs["dx"] * 2
@@ -738,6 +745,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             gdf = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
 
         self.set_locations(gdf, merge=False)
+
 
 def add_constituents(ds, section_data):
     """

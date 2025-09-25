@@ -87,7 +87,7 @@ class SfincsModel(Model):
         mode: str = "w",
         write_gis: bool = True,
         data_libs: Union[List[str], str] = None,
-        **catalog_keys
+        **catalog_keys,
     ):
         """
         The SFINCS model class (SfincsModel) contains methods to read, write, setup and edit
@@ -276,7 +276,7 @@ class SfincsModel(Model):
     def discharge_points(self) -> SfincsDischargePoints:
         """Returns the discharge points object."""
         return self.components["discharge_points"]
-    
+
     @property
     def water_level(self) -> SfincsWaterLevel:
         """Returns the water level object."""
@@ -416,7 +416,6 @@ class SfincsModel(Model):
         """
         import matplotlib.dates as mdates
         import matplotlib.pyplot as plt
-
 
         _FORCING = {
             "water_level": {

@@ -69,7 +69,10 @@ def test_add_point(model_config):
 
     # Check that the number of points has increased and value is set correctly
     assert model_config.discharge_points.nr_points == nr_points + 1
-    assert np.mean(model_config.discharge_points.data["dis"].isel(index=-1).values) == 1000.0
+    assert (
+        np.mean(model_config.discharge_points.data["dis"].isel(index=-1).values)
+        == 1000.0
+    )
 
 
 def test_create_timeseries(model_config):

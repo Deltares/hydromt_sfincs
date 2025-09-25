@@ -417,6 +417,7 @@ def test_observations(model_config, tmp_dir):
     model_config.cross_sections.create(fn_crs_gis, merge=True)
     assert len(model_config.cross_sections.data.index) == nr_observation_lines * 2
 
+
 @pytest.mark.parametrize("case", list(_cases.keys()))
 def test_read_results(case):
     root = join(TESTDATADIR, _cases[case]["example"])

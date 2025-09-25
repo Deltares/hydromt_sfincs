@@ -20,8 +20,7 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsDischargePoints(SfincsBoundaryBase):
-    """Discharge point component for SFINCS models.
-    """
+    """Discharge point component for SFINCS models."""
 
     _default_varname = "dis"
 
@@ -228,7 +227,6 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             self.model.config.set("srcfile", None)
             self.model.config.set("disfile", None)
             self.model.config.set("netsrcdisfile", None)
-
 
     def clear(self):
         "Clear boundary points and unset associated config keys."

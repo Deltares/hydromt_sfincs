@@ -33,7 +33,11 @@ def test_water_level_boundary_io(model_config, tmp_dir):
 
     # now change the filename in the configuration
     mod.config.update(
-        {"bndfile": None, "bzsfile": None, "netbndbzsbzifile": "sfincs_netbndbzsbzifile.nc"}
+        {
+            "bndfile": None,
+            "bzsfile": None,
+            "netbndbzsbzifile": "sfincs_netbndbzsbzifile.nc",
+        }
     )
     # delete the old files
     for f in ["sfincs.bnd", "sfincs.bzs"]:
@@ -135,6 +139,7 @@ def test_create_timeseries(model_config):
         # but length has changed accordingly
         assert len(point_data.time) == 49
 
+
 def test_create_timeseries_from_astro(model_config):
     model_config.water_level.read()
     assert model_config.water_level.nr_points > 0
@@ -154,7 +159,8 @@ def test_create_timeseries_from_astro(model_config):
 
     # now create timeseries from astro, with different freq then already present
     model_config.water_level.create_timeseries_from_astro(
-        dt = 300, offset = 0,
+        dt=300,
+        offset=0,
     )
 
     # check that values changed back from 0s to real tidal values
@@ -164,6 +170,7 @@ def test_create_timeseries_from_astro(model_config):
         assert point_data.values.max() > 0
         # length has changed accordingly
         assert len(point_data.time) == 577
+
 
 def test_create(model_config):
     """Test creating discharge points from a GeoDataFrame and csv file."""
@@ -220,9 +227,7 @@ def test_create(model_config):
     df = df.mul(2)
     df.columns = [2]
     points_gdf.index = [2]
-    model_config.water_level.create(
-        locations=points_gdf, timeseries=df, merge=True
-    )
+    model_config.water_level.create(locations=points_gdf, timeseries=df, merge=True)
     # Check that the number of points is correct and values are set in the last point
     assert model_config.water_level.nr_points == 3
     assert model_config.water_level.data["bzs"].isel(index=-1).values.max() == 10.0
@@ -231,9 +236,7 @@ def test_create(model_config):
     df = df.mul(0.3)
     df.columns = [7]
     points_gdf.index = [7]
-    model_config.water_level.create(
-        locations=points_gdf, timeseries=df, merge=False
-    )
+    model_config.water_level.create(locations=points_gdf, timeseries=df, merge=False)
 
     assert model_config.water_level.nr_points == 1
     assert model_config.water_level.data["bzs"].index[-1] == 0
