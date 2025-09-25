@@ -87,6 +87,7 @@ class SfincsModel(Model):
         mode: str = "w",
         write_gis: bool = True,
         data_libs: Union[List[str], str] = None,
+        **catalog_keys
     ):
         """
         The SFINCS model class (SfincsModel) contains methods to read, write, setup and edit
@@ -103,7 +104,8 @@ class SfincsModel(Model):
             Write model files additionally to geotiff and geojson, by default True
         data_libs: List, str
             List of data catalog yaml files, by default None
-
+        **catalog_keys:
+            Additional keyword arguments to be passed down to the DataCatalog.
         """
 
         # define some default model properties
@@ -114,6 +116,7 @@ class SfincsModel(Model):
             root=root,
             mode=mode,
             data_libs=data_libs,
+            **catalog_keys,
         )
         # Initialize model components:
         self.add_component("config", SfincsConfig(self))
