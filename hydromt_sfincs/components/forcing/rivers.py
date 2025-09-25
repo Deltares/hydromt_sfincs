@@ -204,8 +204,11 @@ class SfincsRivers(ModelComponent):
             return
 
         # set forcing src pnts
+        # TODO is this first_index variable still needed here? This depends on how we filter index/name/location
         gdf_src.index = gdf_src.index + first_index
-        self.model.discharge_points.set(gdf_src.copy(deep=True), merge=merge)
+        self.model.discharge_points.set_locations(
+            gdf=gdf_src.copy(deep=True), merge=merge
+        )
 
         # set river
         if keep_rivers_geom:
