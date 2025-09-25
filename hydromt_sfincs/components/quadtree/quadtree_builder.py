@@ -667,16 +667,15 @@ class QuadtreeGrid:
                 self.ifirst[ilev] = -1
             else:
                 self.ifirst[ilev] = ifirst[0]
-            #self.ifirst[ilev] = np.where(self.level == ilev)[0][0]
+            # self.ifirst[ilev] = np.where(self.level == ilev)[0][0]
             # Find index of last cell with this level
             if ilev < self.nr_refinement_levels - 1:
                 # self.ilast[ilev] = np.where(self.level == ilev + 1)[0][0] - 1
-                self.ilast[ilev] = np.where(self.level > ilev)[0][0] - 1                
+                self.ilast[ilev] = np.where(self.level > ilev)[0][0] - 1
             else:
                 self.ilast[ilev] = self.nr_cells - 1
 
     def find_lower_level_neighbors(self, ind_ref, ilev):
-
         # ind_ref are the indices of the cells that need to be refined
 
         n = self.n[ind_ref]
@@ -686,13 +685,13 @@ class QuadtreeGrid:
         m_odd = np.where(odd(m))
         n_even = np.where(even(n))
         m_even = np.where(even(m))
-        
-        ill   = np.intersect1d(n_even, m_even)
-        iul   = np.intersect1d(n_odd, m_even)
-        ilr   = np.intersect1d(n_even, m_odd)
-        iur   = np.intersect1d(n_odd, m_odd)
 
-        n_nbr = np.zeros((2, np.size(n)), dtype=int)        
+        ill = np.intersect1d(n_even, m_even)
+        iul = np.intersect1d(n_odd, m_even)
+        ilr = np.intersect1d(n_even, m_odd)
+        iur = np.intersect1d(n_odd, m_odd)
+
+        n_nbr = np.zeros((2, np.size(n)), dtype=int)
         m_nbr = np.zeros((2, np.size(n)), dtype=int)
 
         # LL
@@ -724,27 +723,27 @@ class QuadtreeGrid:
         n_nbr[1, iur] = n0
         m_nbr[1, iur] = m0 + 1
 
-        nmax = self.nmax * 2**(ilev - 1) + 1
+        nmax = self.nmax * 2 ** (ilev - 1) + 1
 
         n_nbr = n_nbr.flatten()
         m_nbr = m_nbr.flatten()
         nm_nbr = m_nbr * nmax + n_nbr
         nm_nbr = np.sort(np.unique(nm_nbr, return_index=False))
 
-        # Actual cells in the coarser level 
-        n_level = self.n[self.ifirst[ilev - 1]:self.ilast[ilev - 1] + 1]
-        m_level = self.m[self.ifirst[ilev - 1]:self.ilast[ilev - 1] + 1]
+        # Actual cells in the coarser level
+        n_level = self.n[self.ifirst[ilev - 1] : self.ilast[ilev - 1] + 1]
+        m_level = self.m[self.ifirst[ilev - 1] : self.ilast[ilev - 1] + 1]
         nm_level = m_level * nmax + n_level
 
-        # Find  
+        # Find
         ind_nbr = binary_search(nm_level, nm_nbr)
-        ind_nbr = ind_nbr[ind_nbr>=0]
+        ind_nbr = ind_nbr[ind_nbr >= 0]
 
         if np.any(ind_nbr):
             ind_nbr += self.ifirst[ilev - 1]
 
         return ind_nbr
-    
+
     def compute_cell_center_coordinates(self):
         # Compute cell center coordinates
         # Loop through refinement levels
@@ -1099,7 +1098,7 @@ def inpolygon(
 
 def binary_search(val_array, vals):
     indx = np.searchsorted(val_array, vals)  # ind is size of vals
-    not_ok = np.where(indx == len(val_array))[0]  
+    not_ok = np.where(indx == len(val_array))[0]
     # size of vals, points that are out of bounds
     indx[
         np.where(indx == len(val_array))[0]

@@ -64,7 +64,7 @@ class SfincsQuadtreeMask(ModelComponent):
         open_boundary_polygon=None,
         outflow_boundary_polygon=None,
         neumann_boundary_polygon=None,
-        downstream_boundary_polygon=None,        
+        downstream_boundary_polygon=None,
         include_zmin=-99999.0,
         include_zmax=99999.0,
         exclude_zmin=-99999.0,
@@ -74,10 +74,10 @@ class SfincsQuadtreeMask(ModelComponent):
         outflow_boundary_zmin=-99999.0,
         outflow_boundary_zmax=99999.0,
         neumann_boundary_zmin=-99999.0,
-        neumann_boundary_zmax= 99999.0,
+        neumann_boundary_zmax=99999.0,
         downstream_boundary_zmin=-99999.0,
-        downstream_boundary_zmax= 99999.0,
-        update_datashader_dataframe=False,        
+        downstream_boundary_zmax=99999.0,
+        update_datashader_dataframe=False,
         quiet=True,
     ):
         if not quiet:
@@ -122,19 +122,39 @@ class SfincsQuadtreeMask(ModelComponent):
 
         # Open boundary polygons
         if open_boundary_polygon is not None:
-            self.set_boundary_mask(mask, open_boundary_polygon, open_boundary_zmin, open_boundary_zmax, 2)
+            self.set_boundary_mask(
+                mask, open_boundary_polygon, open_boundary_zmin, open_boundary_zmax, 2
+            )
 
         # Outflow boundary polygons
         if outflow_boundary_polygon is not None:
-            self.set_boundary_mask(mask, outflow_boundary_polygon, outflow_boundary_zmin, outflow_boundary_zmax, 3)
+            self.set_boundary_mask(
+                mask,
+                outflow_boundary_polygon,
+                outflow_boundary_zmin,
+                outflow_boundary_zmax,
+                3,
+            )
 
         # Downstream river boundary polygons
         if downstream_boundary_polygon is not None:
-            self.set_boundary_mask(mask, downstream_boundary_polygon, downstream_boundary_zmin, downstream_boundary_zmax, 5)
+            self.set_boundary_mask(
+                mask,
+                downstream_boundary_polygon,
+                downstream_boundary_zmin,
+                downstream_boundary_zmax,
+                5,
+            )
 
         # Neumann boundary polygons
         if neumann_boundary_polygon is not None:
-            self.set_boundary_mask(mask, neumann_boundary_polygon, neumann_boundary_zmin, neumann_boundary_zmax, 6)
+            self.set_boundary_mask(
+                mask,
+                neumann_boundary_polygon,
+                neumann_boundary_zmin,
+                neumann_boundary_zmax,
+                6,
+            )
 
         if update_datashader_dataframe:
             # For use in DelftDashboard
@@ -149,21 +169,21 @@ class SfincsQuadtreeMask(ModelComponent):
     def set_boundary_mask(self, mask, boundary_polygon, zmin, zmax, mask_value):
         """Set the mask value for a given polygon"""
         x, y = self.model.grid.face_coordinates()
-        z    = self.model.grid.data["z"].values[:]
+        z = self.model.grid.data["z"].values[:]
 
         # Indices are 1-based in SFINCS so subtract 1 for python 0-based indexing
-        mu    = self.model.grid.data["mu"].values[:]
-        mu1   = self.model.grid.data["mu1"].values[:] - 1
-        mu2   = self.model.grid.data["mu2"].values[:] - 1
-        nu    = self.model.grid.data["nu"].values[:]
-        nu1   = self.model.grid.data["nu1"].values[:] - 1
-        nu2   = self.model.grid.data["nu2"].values[:] - 1
-        md    = self.model.grid.data["md"].values[:]
-        md1   = self.model.grid.data["md1"].values[:] - 1
-        md2   = self.model.grid.data["md2"].values[:] - 1
-        nd    = self.model.grid.data["nd"].values[:]
-        nd1   = self.model.grid.data["nd1"].values[:] - 1 
-        nd2   = self.model.grid.data["nd2"].values[:] - 1
+        mu = self.model.grid.data["mu"].values[:]
+        mu1 = self.model.grid.data["mu1"].values[:] - 1
+        mu2 = self.model.grid.data["mu2"].values[:] - 1
+        nu = self.model.grid.data["nu"].values[:]
+        nu1 = self.model.grid.data["nu1"].values[:] - 1
+        nu2 = self.model.grid.data["nu2"].values[:] - 1
+        md = self.model.grid.data["md"].values[:]
+        md1 = self.model.grid.data["md1"].values[:] - 1
+        md2 = self.model.grid.data["md2"].values[:] - 1
+        nd = self.model.grid.data["nd"].values[:]
+        nd1 = self.model.grid.data["nd1"].values[:] - 1
+        nd2 = self.model.grid.data["nd2"].values[:] - 1
 
         for ip, polygon in boundary_polygon.iterrows():
             inpol = inpolygon(x, y, polygon["geometry"])
@@ -172,16 +192,16 @@ class SfincsQuadtreeMask(ModelComponent):
             # 2) Have a mask > 0
             # 3) z>=zmin
             # 4) z<=zmax
-            iok   = np.where((inpol) & (mask>0) & (z>=zmin) & (z<=zmax))
+            iok = np.where((inpol) & (mask > 0) & (z >= zmin) & (z <= zmax))
             for ic in iok[0]:
                 okay = False
                 # Check neighbors, cell must have at least one inactive neighbor
                 # Left
-                if md[ic]<=0:
+                if md[ic] <= 0:
                     # Coarser or equal to the left
-                    if md1[ic]>=0:
+                    if md1[ic] >= 0:
                         # Cell has neighbor to the left
-                        if mask[md1[ic]]==0:
+                        if mask[md1[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
@@ -189,29 +209,29 @@ class SfincsQuadtreeMask(ModelComponent):
                         okay = True
                 else:
                     # Finer to the left
-                    if md1[ic]>=0:
+                    if md1[ic] >= 0:
                         # Cell has neighbor to the left
-                        if mask[md1[ic]]==0:
+                        if mask[md1[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
                         # No neighbor, so set mask = 2
                         okay = True
-                    if md2[ic]>=0:
+                    if md2[ic] >= 0:
                         # Cell has neighbor to the left
-                        if mask[md2[ic]]==0:
+                        if mask[md2[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
                         # No neighbor, so set mask = 2
                         okay = True
-                    
+
                 # Below
-                if nd[ic]<=0:
+                if nd[ic] <= 0:
                     # Coarser or equal below
-                    if nd1[ic]>=0:
+                    if nd1[ic] >= 0:
                         # Cell has neighbor below
-                        if mask[nd1[ic]]==0:
+                        if mask[nd1[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
@@ -219,17 +239,17 @@ class SfincsQuadtreeMask(ModelComponent):
                         okay = True
                 else:
                     # Finer below
-                    if nd1[ic]>=0:
+                    if nd1[ic] >= 0:
                         # Cell has neighbor below
-                        if mask[nd1[ic]]==0:
+                        if mask[nd1[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
                         # No neighbor, so set mask = 2
                         okay = True
-                    if nd2[ic]>=0:
+                    if nd2[ic] >= 0:
                         # Cell has neighbor below
-                        if mask[nd2[ic]]==0:
+                        if mask[nd2[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
@@ -237,11 +257,11 @@ class SfincsQuadtreeMask(ModelComponent):
                         okay = True
 
                 # Right
-                if mu[ic]<=0:
+                if mu[ic] <= 0:
                     # Coarser or equal to the right
-                    if mu1[ic]>=0:
+                    if mu1[ic] >= 0:
                         # Cell has neighbor to the right
-                        if mask[mu1[ic]]==0:
+                        if mask[mu1[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
@@ -249,17 +269,17 @@ class SfincsQuadtreeMask(ModelComponent):
                         okay = True
                 else:
                     # Finer to the left
-                    if mu1[ic]>=0:
+                    if mu1[ic] >= 0:
                         # Cell has neighbor to the right
-                        if mask[mu1[ic]]==0:
+                        if mask[mu1[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
                         # No neighbor, so set mask = 2
                         okay = True
-                    if mu2[ic]>=0:
+                    if mu2[ic] >= 0:
                         # Cell has neighbor to the right
-                        if mask[mu2[ic]]==0:
+                        if mask[mu2[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
@@ -267,11 +287,11 @@ class SfincsQuadtreeMask(ModelComponent):
                         okay = True
 
                 # Above
-                if nu[ic]<=0:
+                if nu[ic] <= 0:
                     # Coarser or equal above
-                    if nu1[ic]>=0:
+                    if nu1[ic] >= 0:
                         # Cell has neighbor above
-                        if mask[nu1[ic]]==0:
+                        if mask[nu1[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
@@ -279,26 +299,25 @@ class SfincsQuadtreeMask(ModelComponent):
                         okay = True
                 else:
                     # Finer below
-                    if nu1[ic]>=0:
+                    if nu1[ic] >= 0:
                         # Cell has neighbor above
-                        if mask[nu1[ic]]==0:
+                        if mask[nu1[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
                         # No neighbor, so set mask = 2
                         okay = True
-                    if nu2[ic]>=0:
+                    if nu2[ic] >= 0:
                         # Cell has neighbor above
-                        if mask[nu2[ic]]==0:
+                        if mask[nu2[ic]] == 0:
                             # And it's inactive
                             okay = True
                     else:
                         # No neighbor, so set mask = 2
                         okay = True
-                    
+
                 if okay:
                     mask[ic] = mask_value
-
 
     def to_gdf(self, option="all"):
         """Returns a geodataframe with points for each cell in the mask"""
@@ -321,7 +340,7 @@ class SfincsQuadtreeMask(ModelComponent):
         elif option == "outflow":
             iok = np.where((mask == 3))
         elif option == "downstream":
-            iok = np.where((mask == 5))            
+            iok = np.where((mask == 5))
         elif option == "neumann":
             iok = np.where((mask == 6))
         else:
@@ -394,7 +413,7 @@ class SfincsQuadtreeMask(ModelComponent):
         boundary_color="red",
         downstream_color="blue",
         neumann_color="purple",
-        outflow_color="green",        
+        outflow_color="green",
         px=2,
         width=800,
     ):
@@ -462,18 +481,28 @@ class SfincsQuadtreeMask(ModelComponent):
             dfbnd = self.datashader_dataframe[self.datashader_dataframe["mask"] == 2]
             dfout = self.datashader_dataframe[self.datashader_dataframe["mask"] == 3]
             dfneu = self.datashader_dataframe[self.datashader_dataframe["mask"] == 5]
-            dfdwn = self.datashader_dataframe[self.datashader_dataframe["mask"] == 6]            
-            img_a = tf.shade(tf.spread(cvs.points(dfact, 'x', 'y', ds.any()), px=px), 
-                             cmap=active_color)
-            img_b = tf.shade(tf.spread(cvs.points(dfbnd, 'x', 'y', ds.any()), px=px), 
-                             cmap=boundary_color)
-            img_o = tf.shade(tf.spread(cvs.points(dfout, 'x', 'y', ds.any()), px=px), 
-                             cmap=outflow_color)
-            img_n = tf.shade(tf.spread(cvs.points(dfneu, 'x', 'y', ds.any()), px=px), 
-                             cmap=neumann_color)
-            img_d = tf.shade(tf.spread(cvs.points(dfdwn, 'x', 'y', ds.any()), px=px), 
-                             cmap=downstream_color)
-            img   = tf.stack(img_a, img_b, img_o, img_n, img_d)
+            dfdwn = self.datashader_dataframe[self.datashader_dataframe["mask"] == 6]
+            img_a = tf.shade(
+                tf.spread(cvs.points(dfact, "x", "y", ds.any()), px=px),
+                cmap=active_color,
+            )
+            img_b = tf.shade(
+                tf.spread(cvs.points(dfbnd, "x", "y", ds.any()), px=px),
+                cmap=boundary_color,
+            )
+            img_o = tf.shade(
+                tf.spread(cvs.points(dfout, "x", "y", ds.any()), px=px),
+                cmap=outflow_color,
+            )
+            img_n = tf.shade(
+                tf.spread(cvs.points(dfneu, "x", "y", ds.any()), px=px),
+                cmap=neumann_color,
+            )
+            img_d = tf.shade(
+                tf.spread(cvs.points(dfdwn, "x", "y", ds.any()), px=px),
+                cmap=downstream_color,
+            )
+            img = tf.stack(img_a, img_b, img_o, img_n, img_d)
 
             path = os.path.dirname(file_name)
             if not path:

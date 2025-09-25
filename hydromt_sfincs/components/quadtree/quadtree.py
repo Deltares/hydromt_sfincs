@@ -525,12 +525,9 @@ class SfincsQuadtreeGrid(MeshComponent):
         """Clears the datashader dataframe"""
         self.datashader_dataframe = pd.DataFrame()
 
-    def make_topobathy_cog(self,
-                           filename,
-                           bathymetry_sets,
-                           bathymetry_database=None,
-                           dx=10.0):
-        
+    def make_topobathy_cog(
+        self, filename, bathymetry_sets, bathymetry_database=None, dx=10.0
+    ):
         """Make a COG file with topobathy. Now only works for projected coordinates. This always make the topobathy COG in the same projection as the model."""
 
         # Get the bounds of the grid
@@ -549,14 +546,18 @@ class SfincsQuadtreeGrid(MeshComponent):
 
         xx = np.arange(x0, x1, dx) + 0.5 * dx
         yy = np.arange(y1, y0, -dx) - 0.5 * dx
-        zz = np.empty((len(yy), len(xx),), dtype=np.float32)
+        zz = np.empty(
+            (
+                len(yy),
+                len(xx),
+            ),
+            dtype=np.float32,
+        )
 
         xx, yy = np.meshgrid(xx, yy)
-        zz = bathymetry_database.get_bathymetry_on_points(xx,
-                                                          yy,
-                                                          dx,
-                                                          self.model.crs,
-                                                          bathymetry_sets)
+        zz = bathymetry_database.get_bathymetry_on_points(
+            xx, yy, dx, self.model.crs, bathymetry_sets
+        )
 
         # And now to cog (use -999 as the nodata value)
         with rasterio.open(
@@ -574,7 +575,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             dst.write(zz, 1)
 
     def make_index_cog(self, filename, filename_topobathy):
-    # def make_index_cog(self, filename, dx=10.0):
+        # def make_index_cog(self, filename, dx=10.0):
         """Make a COG file with indices of the quadtree grid cells."""
 
         # Read coordinates from topobathy file
@@ -626,7 +627,13 @@ class SfincsQuadtreeGrid(MeshComponent):
 
         xx = np.arange(x0, x1, dx) + 0.5 * dx
         yy = np.arange(y1, y0, -dx) - 0.5 * dx
-        ii = np.empty((len(yy), len(xx),), dtype=np.uint32)
+        ii = np.empty(
+            (
+                len(yy),
+                len(xx),
+            ),
+            dtype=np.uint32,
+        )
 
         # # Create empty ds
         # ds = xr.Dataset(
@@ -647,7 +654,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         indices[np.where(indices == -999)] = nodata
 
         # Fill the array with indices
-        ii[:, :] = indices        
+        ii[:, :] = indices
 
         # # Write first to netcdf
         # ds.to_netcdf("index.nc")

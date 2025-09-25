@@ -37,7 +37,6 @@ def build_subgrid_table_quadtree(
     progress_bar=None,
     logger=None,
 ) -> xr.Dataset:
-
     subgrid_table = SubgridTableQuadtree()
 
     subgrid_table.build(
@@ -91,7 +90,6 @@ class SubgridTableQuadtree:
         progress_bar,
         logger,
     ):
-
         version = "1.0"
 
         time_start = time.time()
@@ -230,7 +228,6 @@ class SubgridTableQuadtree:
 
         # Loop through all levels
         for ilev in range(nr_ref_levs):
-
             msg = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
             log_info(msg, logger, quiet)
             msg = f"Processing level {ilev + 1} of {nr_ref_levs} ..."
@@ -243,7 +240,7 @@ class SubgridTableQuadtree:
             if nr_cells_in_level == 0:
                 continue
 
-            # TODO - TL: here missing is "# Check if active SFINCS cells exist in mask"        
+            # TODO - TL: here missing is "# Check if active SFINCS cells exist in mask"
 
             n0 = np.min(n[ifirst[ilev] : ilast[ilev] + 1])
             n1 = np.max(
@@ -300,7 +297,6 @@ class SubgridTableQuadtree:
             ib = -1
             for ii in range(nrbm):
                 for jj in range(nrbn):
-
                     # Count
                     ib += 1
 
@@ -348,11 +344,11 @@ class SubgridTableQuadtree:
                             index_cells_in_block[nr_cells_in_block] = indx
                             nr_cells_in_block += 1
 
-                    if nr_cells_in_block == 0: 
+                    if nr_cells_in_block == 0:
                         # No cells in this block
                         continue
 
-                    # TODO - TL: here missing is "# Check if active SFINCS cells exist in mask"        
+                    # TODO - TL: here missing is "# Check if active SFINCS cells exist in mask"
 
                     index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
 
@@ -371,7 +367,6 @@ class SubgridTableQuadtree:
                     log_info(msg, logger, quiet)
 
                     if bathymetry_database:
-
                         # Delft Dashboard
                         # Get bathymetry on subgrid from bathymetry database
 
@@ -451,7 +446,6 @@ class SubgridTableQuadtree:
             ib = -1
             for ii in range(nrbm):
                 for jj in range(nrbn):
-
                     # Count
                     ib += 1
 
@@ -490,7 +484,6 @@ class SubgridTableQuadtree:
                     iuv = 0
 
                     for ip in range(npuv):
-
                         # Check if this uv point is at the correct level
                         if uv_flags_level[ip] != ilev:
                             continue
@@ -621,7 +614,10 @@ class SubgridTableQuadtree:
                         )
 
                         for roughness_set in roughness_sets:
-                            if "polygon_file" in roughness_set and "value" in roughness_set:
+                            if (
+                                "polygon_file" in roughness_set
+                                and "value" in roughness_set
+                            ):
                                 polygon_file = roughness_set["polygon_file"]
                                 # Read the polygon file and get the values
                                 gdf = gpd.read_file(polygon_file)
@@ -677,7 +673,7 @@ class SubgridTableQuadtree:
                         nr_levels,  # number of levels
                         huthresh,  # huthresh
                         weight_option,  # weight option ("min" or "mean")
-                        roughness_type
+                        roughness_type,
                     )
 
                     if progress_bar:
@@ -752,7 +748,6 @@ def process_block_cells(
     )
 
     for ic in range(nr_cells_in_block):
-
         # Get the index in the entire quadtree
         # indx = index_cells_in_block[ic]
 
@@ -830,12 +825,10 @@ def process_block_uv_points(
     uv_navg = np.full((nr_uv_points_in_block), fill_value=np.nan, dtype=np.float32)
 
     for ip in range(nr_uv_points_in_block):
-
         # Get the pixel indices for this uv point
 
         # Now build the pixel matrix
         if uv_flags_type[ip] <= 0:
-
             # Normal point or fine to coarse
 
             if uv_flags_dir[ip] == 0:
@@ -848,7 +841,6 @@ def process_block_uv_points(
                 mm = (m[ip] - bm0) * refi
 
         else:  # uv_flags_type[ip] == 1
-
             # Coarse to fine
 
             if uv_flags_dir[ip] == 0:
@@ -885,7 +877,7 @@ def process_block_uv_points(
             z_zmin_nm[ip],
             z_zmin_nmu[ip],
             weight_option,
-            roughness_type
+            roughness_type,
         )
 
         uv_zmin[ip] = zmin
@@ -1077,7 +1069,6 @@ def subgrid_q_table(
 
     # Loop through levels
     for ibin in range(nr_levels):
-
         # Top of bin
         zbin = zmin + ibin * dlevel
         zz[ibin] = zbin
@@ -1094,23 +1085,29 @@ def subgrid_q_table(
         # # print min of rgh_a, rgh_b, rgh
         # print("rgh_a = ", np.min(rgh_a))
         # print("rgh_b = ", np.min(rgh_b))
-        # print("rgh = ", np.min(rgh))    
+        # print("rgh = ", np.min(rgh))
 
         if roughness_type == "manning":
             manning_a = rgh_a
             manning_b = rgh_b
-            manning   = rgh
+            manning = rgh
         elif roughness_type == "chezy":
             manning_a = (1.0 / rgh_a) * h_a ** (1.0 / 6.0)
             manning_b = (1.0 / rgh_b) * h_b ** (1.0 / 6.0)
-            manning   = (1.0 / rgh) * h ** (1.0 / 6.0)
-            manning_a = np.maximum(manning_a, 0.001)  # Set minimum value to avoid division by zero
-            manning_b = np.maximum(manning_b, 0.001)  # Set minimum value to avoid division by zero
-            manning   = np.maximum(manning, 0.001)  # Set minimum value to avoid division by zero
+            manning = (1.0 / rgh) * h ** (1.0 / 6.0)
+            manning_a = np.maximum(
+                manning_a, 0.001
+            )  # Set minimum value to avoid division by zero
+            manning_b = np.maximum(
+                manning_b, 0.001
+            )  # Set minimum value to avoid division by zero
+            manning = np.maximum(
+                manning, 0.001
+            )  # Set minimum value to avoid division by zero
 
         # print("manning_a = ", np.min(manning_a))
         # print("manning_b = ", np.min(manning_b))
-        # print("manning = ", np.min(manning))    
+        # print("manning = ", np.min(manning))
 
         # Side A
         q_a = h_a ** (5.0 / 3.0) / manning_a  # Determine 'flux' for each pixel
@@ -1201,19 +1198,23 @@ def subgrid_q_table(
         navg = np.mean(manning)
 
     else:
-
         if roughness_type == "manning":
             manning_a = rgh_a
             manning_b = rgh_b
-            manning   = rgh
+            manning = rgh
         elif roughness_type == "chezy":
             manning_a = (1.0 / rgh_a) * h_a ** (1.0 / 6.0)
             manning_b = (1.0 / rgh_b) * h_b ** (1.0 / 6.0)
-            manning   = (1.0 / rgh) * h ** (1.0 / 6.0)
-            manning_a = np.maximum(manning_a, 0.001)  # Set minimum value to avoid division by zero
-            manning_b = np.maximum(manning_b, 0.001)  # Set minimum value to avoid division by zero
-            manning   = np.maximum(manning, 0.001)  # Set minimum value to avoid division by zero
-
+            manning = (1.0 / rgh) * h ** (1.0 / 6.0)
+            manning_a = np.maximum(
+                manning_a, 0.001
+            )  # Set minimum value to avoid division by zero
+            manning_b = np.maximum(
+                manning_b, 0.001
+            )  # Set minimum value to avoid division by zero
+            manning = np.maximum(
+                manning, 0.001
+            )  # Set minimum value to avoid division by zero
 
         # Use minimum of q_a and q_b
         if q_a < q_b:
@@ -1223,7 +1224,9 @@ def subgrid_q_table(
                 manning_a = rgh_a
             elif roughness_type == "chezy":
                 manning_a = (1.0 / rgh_a) * h ** (1.0 / 6.0)
-                manning_a = np.maximum(manning_a, 0.001)  # Set minimum value to avoid division by zero
+                manning_a = np.maximum(
+                    manning_a, 0.001
+                )  # Set minimum value to avoid division by zero
 
             q = np.mean(
                 h ** (5.0 / 3.0) / manning_a
@@ -1235,7 +1238,9 @@ def subgrid_q_table(
                 manning_b = rgh_b
             elif roughness_type == "chezy":
                 manning_b = (1.0 / rgh_b) * h ** (1.0 / 6.0)
-                manning_b = np.maximum(manning_b, 0.001)  # Set minimum value to avoid division by zero
+                manning_b = np.maximum(
+                    manning_b, 0.001
+                )  # Set minimum value to avoid division by zero
             q = np.mean(h ** (5.0 / 3.0) / manning_b)
             navg = np.mean(manning_b)
 
@@ -1246,12 +1251,11 @@ def subgrid_q_table(
     gnavg2 = float(9.81 * navg**2)
     gnavg_top2 = float(9.81 * nrep_top**2)
 
-    # print("almost done")    
+    # print("almost done")
     # print(f"gnavg2 = {float(gnavg2)}")
     # print(f"gnavg_top2 = {float(gnavg_top2)}")
     # print(f"nrep_top = {float(nrep_top)}")
     # print(f"zfit - zmax = {float(zfit - zmax)}")
-
 
     if gnavg2 / gnavg_top2 > 0.99 and gnavg2 / gnavg_top2 < 1.01:
         # gnavg2 and gnavg_top2 are almost identical
@@ -1275,7 +1279,7 @@ def subgrid_q_table(
     # print(f"gnavg2 - gnfit2 = {gnavg2 - gnfit2}")
     # print(f"zfit - zmax = {zfit - zmax}")
     # print(f"ffit = {ffit}")
-    # print("done")    
+    # print("done")
 
     return zmin, zmax, havg, nrep, pwet, ffit, navg, zz
 
@@ -1286,6 +1290,7 @@ def log_info(msg, logger, quiet):
         logger.info(msg)
     if not quiet:
         print(msg)
+
 
 def inpolygon(xq, yq, p):
     shape = xq.shape
