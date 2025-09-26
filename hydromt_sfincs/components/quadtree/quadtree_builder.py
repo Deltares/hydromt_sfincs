@@ -1,5 +1,4 @@
 import time
-from turtle import xcor
 import warnings
 
 import numpy as np
@@ -962,19 +961,20 @@ class QuadtreeGrid:
         dx = self.dx / 2**ilev
         dy = self.dy / 2**ilev
 
-        # Determine Cell centers
-        xz = self.x0 + self.cosrot * (self.m[ind_ref] + 0.5) * dx - self.sinrot * (self.n[ind_ref] + 0.5) * dy
-        yz = self.y0 + self.sinrot * (self.m[ind_ref] + 0.5) * dx + self.cosrot * (self.n[ind_ref] + 0.5) * dy
+        # # Determine Cell centers
+        # NOTE this is not needed anymore, since n,m indices are used to determine corners directly and select bathymetry
+        # xz = self.x0 + self.cosrot * (self.m[ind_ref] + 0.5) * dx - self.sinrot * (self.n[ind_ref] + 0.5) * dy
+        # yz = self.y0 + self.sinrot * (self.m[ind_ref] + 0.5) * dx + self.cosrot * (self.n[ind_ref] + 0.5) * dy
 
-        # Determine Cell corners
-        offsets = np.array([[-0.5, -0.5],
-                            [ 0.5, -0.5],
-                            [ 0.5,  0.5],
-                            [-0.5,  0.5]])  # local corner offsets
+        # # Determine Cell corners
+        # offsets = np.array([[-0.5, -0.5],
+        #                     [ 0.5, -0.5],
+        #                     [ 0.5,  0.5],
+        #                     [-0.5,  0.5]])  # local corner offsets
 
-        # Apply rotation to offsets (shape: 4 × npoints)
-        xcor = xz[None, :] + self.cosrot * offsets[:, 0][:, None] * dx - self.sinrot * offsets[:, 1][:, None] * dy
-        ycor = yz[None, :] + self.sinrot * offsets[:, 0][:, None] * dx + self.cosrot * offsets[:, 1][:, None] * dy
+        # # Apply rotation to offsets (shape: 4 × npoints)
+        # xcor = xz[None, :] + self.cosrot * offsets[:, 0][:, None] * dx - self.sinrot * offsets[:, 1][:, None] * dy
+        # ycor = yz[None, :] + self.sinrot * offsets[:, 0][:, None] * dx + self.cosrot * offsets[:, 1][:, None] * dy
 
         # Build DataArray covering all corners
         m = self.m[ind_ref]
