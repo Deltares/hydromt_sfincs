@@ -1603,7 +1603,7 @@ def check_exists_and_lazy(ds, file_name):
         ds.close()
     return
 
-def make_regular_grid(x0, y0, dx, dy, nx, ny, rotation=0.0, crs=None, name="var", dtype=float, fill_value=np.nan, make_ugrid=False):
+def make_regular_grid(x0, y0, dx, dy, mmax, nmax, rotation=0.0, crs=None, mmin=0, nmin=0, name="var", dtype=float, fill_value=np.nan, make_ugrid=False):
     """
     Create an xarray.DataArray with spatial coordinates based on grid definition.
     """
@@ -1613,14 +1613,17 @@ def make_regular_grid(x0, y0, dx, dy, nx, ny, rotation=0.0, crs=None, name="var"
         * Affine.scale(dx, dy)
     )
 
+    nx = mmax - mmin
+    ny = nmax - nmin
+
     if transform.b == 0:  # no rotation, rectilinear
         x_coords, _ = transform * (
-            np.arange(nx) + 0.5,
+            np.arange(mmin, mmax) + 0.5,
             np.zeros(nx) + 0.5,
         )
         _, y_coords = transform * (
             np.zeros(ny) + 0.5,
-            np.arange(ny) + 0.5,
+            np.arange(nmin, nmax) + 0.5,
         )
         coords = {"x": x_coords, "y": y_coords}
         dims = ("y", "x")
@@ -1628,10 +1631,13 @@ def make_regular_grid(x0, y0, dx, dy, nx, ny, rotation=0.0, crs=None, name="var"
         x_coords, y_coords = (
             transform
             * Affine.translation(0.5, 0.5)
-            * np.meshgrid(np.arange(nx), np.arange(ny))
+            * np.meshgrid(np.arange(mmin, mmax), np.arange(nmin, nmax))
         )
-        coords = {"xc": (("y", "x"), x_coords),
-                  "yc": (("y", "x"), y_coords)}
+        coords = {
+            "m": ("x", np.arange(mmin, mmax)),
+            "n": ("y", np.arange(nmin, nmax)),
+            "xc": (("y", "x"), x_coords),
+            "yc": (("y", "x"), y_coords)}
         dims = ("y", "x")
 
     data = np.full((ny, nx), fill_value, dtype=dtype)

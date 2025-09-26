@@ -23,7 +23,7 @@ from hydromt.model.components import MeshComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs.utils import make_regular_grid, partition_quadtree
-from hydromt_sfincs.workflows.merge import merge_multi_dataarrays_on_mesh
+from hydromt_sfincs.workflows.merge import merge_multi_dataarrays, merge_multi_dataarrays_on_mesh
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
 # optional dependency
@@ -456,7 +456,7 @@ class SfincsQuadtreeGrid(MeshComponent):
     def set_uniform_bathymetry(self, zb):
         self.data["z"][:] = zb
 
-    def set_bathymetry(self, bathymetry_database, bathymetry_sets, zmin=-1.0e9, zmax=1.0e9, quiet=True):
+    def set_bathymetry(self, datasets_dep, zmin=-1.0e9, zmax=1.0e9, quiet=True):
         
         # Number of refinement levels
         nlev = self.data.attrs["nr_levels"]
@@ -483,6 +483,22 @@ class SfincsQuadtreeGrid(MeshComponent):
             else:
                 ilast[ilev] = nr_cells - 1
 
+        # convert to meters if geographic
+        if self.model.crs.is_geographic:
+            dx = dx * 111111.0
+        # append parsed datasets per level
+        datasets_dep_per_level = []
+        for ilev in range(nlev):
+            # compute resolution at level
+            res_level = dx / (2**ilev)
+            datasets_dep_per_level.append(
+                self.model._parse_datasets_dep(datasets_dep, res=res_level)
+            )
+
+        # get m and n indices
+        n = self.data["n"]
+        m = self.data["m"]
+
         # Loop through all levels
         for ilev in range(nlev):
 
@@ -500,15 +516,44 @@ class SfincsQuadtreeGrid(MeshComponent):
             yz  = xy[cell_indices_in_level, 1]
             dxmin = dx / 2**ilev
 
-            # if self.data.grid.crs.is_geographic:
-            if self.model.crs.is_geographic:
-                dxmin = dxmin * 111000.0
+            da_like = make_regular_grid(
+                x0=self.data.attrs["x0"],
+                y0=self.data.attrs["y0"],
+                dx=dxmin,
+                dy=dxmin,
+                mmax=m[i0:i1+1].max().values + 1,
+                nmax=n[i0:i1+1].max().values + 1,
+                rotation=self.data.attrs["rotation"],
+                crs=self.model.crs,
+                mmin=m[i0:i1+1].min().values,
+                nmin=n[i0:i1+1].min().values,
+                make_ugrid=False,
+            )
 
-            zgl = bathymetry_database.get_bathymetry_on_points(xz,
-                                                               yz,
-                                                               dxmin,
-                                                               self.model.crs,
-                                                               bathymetry_sets)
+            da_dep = merge_multi_dataarrays(
+                da_list=datasets_dep_per_level[ilev],
+                da_like=da_like,
+                # buffer_cells=buffer_cells,
+                # interp_method=interp_method,
+                logger=logger,
+            )
+
+            # Flatten n and m indices of cells in this level
+            n_flat = n[cell_indices_in_level].values
+            m_flat = m[cell_indices_in_level].values
+
+            # Find integer indices along the coordinate arrays
+            idx_y = np.searchsorted(da_dep.n.values, n_flat)
+            idx_x = np.searchsorted(da_dep.m.values, m_flat)
+
+            # Select the values
+            zgl = da_dep.values[idx_y, idx_x]
+
+            # zgl = bathymetry_database.get_bathymetry_on_points(xz,
+            #                                                    yz,
+            #                                                    dxmin,
+            #                                                    self.model.crs,
+            #                                                    bathymetry_sets)
             
             # Limit zgl to zmin and zmax
             zgl = np.maximum(zgl, zmin)
