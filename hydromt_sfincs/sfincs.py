@@ -39,6 +39,7 @@ from hydromt_sfincs.components.grid import (
 # Quadtree components
 from hydromt_sfincs.components.quadtree import (
     SfincsQuadtreeGrid,
+    SfincsQuadtreeElevation,
     SfincsQuadtreeMask,
     SfincsQuadtreeStorageVolume,
     SfincsQuadtreeSubgridTable,
@@ -130,6 +131,7 @@ class SfincsModel(Model):
 
         # Quadtree
         self.add_component("quadtree_grid", SfincsQuadtreeGrid(self))
+        self.add_component("quadtree_elevation", SfincsQuadtreeElevation(self))
         self.add_component("quadtree_mask", SfincsQuadtreeMask(self))
         self.add_component("quadtree_storage_volume", SfincsQuadtreeStorageVolume(self))
         self.add_component("quadtree_subgrid", SfincsQuadtreeSubgridTable(self))
@@ -213,6 +215,11 @@ class SfincsModel(Model):
     def quadtree_grid(self) -> SfincsQuadtreeGrid:
         """Returns the quadtree object."""
         return self.components["quadtree_grid"]
+
+    @property
+    def quadtree_elevation(self) -> SfincsQuadtreeElevation:
+        """Returns the quadtree elevation object."""
+        return self.components["quadtree_elevation"]
 
     @property
     def quadtree_mask(self) -> SfincsQuadtreeMask:
