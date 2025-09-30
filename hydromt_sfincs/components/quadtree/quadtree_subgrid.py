@@ -112,11 +112,14 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         manning_level=1.0,
         nr_levels=10,
         nr_subgrid_pixels=20,
+        nrmax=2000,
         max_gradient=999.0,
         depth_factor=1.0,
         huthresh=0.01,
         zmin=-999999.0,
         zmax=999999.0,
+        write_dep_tif=True,
+        write_man_tif=False,
         weight_option="min",
         bathymetry_database=None,
         quiet=False,
@@ -136,6 +139,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             manning_level (float, optional): Manning's n value for level. Defaults to 1.0.
             nr_levels (int, optional): Number of levels in the quadtree. Defaults to 10.
             nr_subgrid_pixels (int, optional): Number of pixels in the subgrid. Defaults to 20.
+            nrmax (int, optional): Maximum number of points per cell. Defaults to 2000.
             max_gradient (float, optional): Maximum gradient. Defaults to 999.0.
             depth_factor (float, optional): Depth factor. Defaults to 1.0.
             huthresh (float, optional): Huthresh. Defaults to 0.01.
@@ -176,7 +180,15 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
 
             # if len(river+sets) > 0:
             #     rivers_sets = self.model._parse_datasets_riv(river_sets)
+                # folder where high-resolution topobathy and manning geotiffs are stored
 
+            if write_dep_tif or write_man_tif:
+                highres_dir = self.model.root.path / "subgrid"
+                # check if directory exists using pathlib, otherwise create it
+                if not highres_dir.exists():
+                    highres_dir.mkdir(parents=True, exist_ok=True)
+            else:
+                highres_dir = None
 
         self._data = build_subgrid_table_quadtree(
             grid=self.model.quadtree_grid.data,
@@ -186,12 +198,16 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             manning_water=manning_water,
             manning_level=manning_level,
             nr_levels=nr_levels,
+            nrmax=nrmax,
             nr_subgrid_pixels=nr_subgrid_pixels,
             max_gradient=max_gradient,
             depth_factor=depth_factor,
             huthresh=huthresh,
             zmin=zmin,
             zmax=zmax,
+            highres_dir=highres_dir,
+            write_dep_tif=write_dep_tif,
+            write_man_tif=write_man_tif,
             weight_option=weight_option,
             bathymetry_database=bathymetry_database,
             quiet=quiet,

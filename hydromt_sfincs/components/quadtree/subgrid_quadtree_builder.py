@@ -7,14 +7,18 @@ Created on Mon Mar 03 2025
 """
 import time
 import logging
+import os
 
 import numpy as np
 import geopandas as gpd
 import xarray as xr
+import rasterio
 from numba import njit
 from pyproj import CRS
 import matplotlib.path as path
+from rasterio.windows import Window
 
+from hydromt_sfincs import utils, workflows
 from hydromt_sfincs.workflows.subgrid import *
 from hydromt_sfincs.workflows.merge import merge_multi_dataarrays
 from hydromt_sfincs.workflows.bathymetry import burn_river_rect
@@ -31,6 +35,7 @@ def build_subgrid_table_quadtree(
     manning_level: float = 1.0,
     nr_levels: int = 10,
     nr_subgrid_pixels: int = 20,
+    nrmax: int = 2000,
     max_gradient: float = 999.0,
     depth_factor: float = 1.0,
     huthresh: float = 0.01,
@@ -59,6 +64,7 @@ def build_subgrid_table_quadtree(
         manning_level=manning_level,
         nr_levels=nr_levels,
         nr_subgrid_pixels=nr_subgrid_pixels,
+        nrmax=nrmax,
         max_gradient=max_gradient,
         depth_factor=depth_factor,
         huthresh=huthresh,
@@ -66,14 +72,14 @@ def build_subgrid_table_quadtree(
         zmax=zmax,
         weight_option=weight_option,
         roughness_type=roughness_type,
+        write_dep_tif=write_dep_tif,
+        write_man_tif=write_man_tif,
+        highres_dir=highres_dir,
         bathymetry_database=bathymetry_database,
         quiet=quiet,
         progress_bar=progress_bar,
         logger=logger,
         buffer_cells=buffer_cells,
-        write_dep_tif=write_dep_tif,
-        write_man_tif=write_man_tif,
-        highres_dir=highres_dir,
     )
 
     return subgrid_table.ds
@@ -94,6 +100,7 @@ class SubgridTableQuadtree:
         manning_level: float = 1.0,
         nr_levels: int = 10,
         nr_subgrid_pixels: int = 20,
+        nrmax: int = 2000,
         max_gradient: float = 5.0,
         depth_factor: float = 1.0,
         huthresh: float = 0.01,
@@ -126,9 +133,7 @@ class SubgridTableQuadtree:
         refi = nr_subgrid_pixels
         nr_cells = grid.sizes["mesh2d_nFaces"]
         nr_ref_levs = grid.attrs["nr_levels"]  # number of refinement levels
-        cosrot = np.cos(grid.attrs["rotation"] * np.pi / 180)
-        sinrot = np.sin(grid.attrs["rotation"] * np.pi / 180)
-        nrmax = 2000
+        is_geographic = grid.ugrid.grid.crs.is_geographic
         zminimum = zmin
         zmaximum = zmax
 
@@ -246,6 +251,26 @@ class SubgridTableQuadtree:
         for ilev in range(nr_ref_levs):
             nr_cells_per_level[ilev] = ilast[ilev] - ifirst[ilev] + 1
 
+        if write_dep_tif or write_man_tif:
+            # create a regular mask covering the entire domain on the coarsest level
+            # NOTE this is only used for writing the cloud optimized geotiffs to check inputs
+            da_regular = build_pixel_matrix(
+                x0=grid.attrs["x0"],
+                y0=grid.attrs["y0"],
+                dxp=grid.attrs["dx"],
+                dyp=grid.attrs["dy"],
+                bm0=0,
+                bm1=grid.attrs["mmax"],
+                bn0=0,
+                bn1=grid.attrs["nmax"],
+                rotation=grid.attrs["rotation"],
+                refi=1,  # grid without refinement
+            )
+            # Make sure da has the correct CRS
+            da_regular.raster.set_crs(grid.ugrid.grid.crs)
+            x_dim, y_dim = da_regular.raster.x_dim, da_regular.raster.y_dim
+
+
         # Loop through all levels
         for ilev in range(nr_ref_levs):
             msg = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -259,6 +284,51 @@ class SubgridTableQuadtree:
 
             if nr_cells_in_level == 0:
                 continue
+
+            if write_dep_tif or write_man_tif:
+                # determine the output dimensions and transform
+                output_width = da_regular.sizes[x_dim] * nr_subgrid_pixels * 2**ilev
+                output_height = da_regular.sizes[y_dim] * nr_subgrid_pixels * 2**ilev
+                output_transform = (
+                    da_regular.raster.transform
+                    * da_regular.raster.transform.scale(
+                        1 / (nr_subgrid_pixels * 2**ilev)
+                    )
+                )
+
+                # create COGs for topobathy/manning
+                profile = dict(
+                    driver="GTiff",
+                    width=output_width,
+                    height=output_height,
+                    count=1,
+                    dtype=np.float32,
+                    crs=da_regular.raster.crs,
+                    transform=output_transform,
+                    tiled=True,
+                    blockxsize=256,
+                    blockysize=256,
+                    compress="deflate",
+                    predictor=2,
+                    profile="COG",
+                    nodata=np.nan,
+                    BIGTIFF="YES",  # Add the BIGTIFF option here
+                )
+                if write_dep_tif:
+                    # create the CloudOptimizedGeotiff containing the merged topobathy data
+                    fn_dep_tif = os.path.join(
+                        highres_dir, "dep_subgrid_lev{}.tif".format(str(ilev))
+                    )
+                    with rasterio.open(fn_dep_tif, "w", **profile):
+                        pass
+
+                if write_man_tif:
+                    # create the CloudOptimizedGeotiff creating the merged manning roughness
+                    fn_man_tif = os.path.join(
+                        highres_dir, "manning_subgrid_lev{}.tif".format(str(ilev))
+                    )
+                    with rasterio.open(fn_man_tif, "w", **profile):
+                        pass
 
             # TODO - TL: here missing is "# Check if active SFINCS cells exist in mask"
 
@@ -369,6 +439,7 @@ class SubgridTableQuadtree:
                         continue
 
                     # TODO - TL: here missing is "# Check if active SFINCS cells exist in mask"
+                    # RdG: I think this is not needed since cut_inactive_cells should have been applied already
 
                     index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
 
@@ -664,32 +735,43 @@ class SubgridTableQuadtree:
 
                     # Initialize roughness of subgrid at NaN
                     manning_grid = np.full(da_sbg_uv.shape, np.nan)
+                    
+                    if bathymetry_database:
+                        # Loop through roughness sets, check if one has polygon file
+                        manning_grid = bathymetry_database.get_bathymetry_on_grid(
+                            xg, yg, crs, roughness_sets
+                        )
 
-                    if len(roughness_sets) > 0: 
-                        if bathymetry_database:
-                            # Loop through roughness sets, check if one has polygon file
-                            manning_grid = bathymetry_database.get_bathymetry_on_grid(
-                                xg, yg, crs, roughness_sets
-                            )
+                        for roughness_set in roughness_sets:
+                            if (
+                                "polygon_file" in roughness_set
+                                and "value" in roughness_set
+                            ):
+                                polygon_file = roughness_set["polygon_file"]
+                                # Read the polygon file and get the values
+                                gdf = gpd.read_file(polygon_file)
+                                value = roughness_set["value"]
 
-                            for roughness_set in roughness_sets:
-                                if (
-                                    "polygon_file" in roughness_set
-                                    and "value" in roughness_set
-                                ):
-                                    polygon_file = roughness_set["polygon_file"]
-                                    # Read the polygon file and get the values
-                                    gdf = gpd.read_file(polygon_file)
-                                    value = roughness_set["value"]
+                                # Loop through polygons in gdf
+                                inpols = np.full(xg.shape, False)
+                                for ip, polygon in gdf.iterrows():
+                                    inpol = inpolygon(xg, yg, polygon["geometry"])
+                                    inpols = np.logical_or(inpols, inpol)
 
-                                    # Loop through polygons in gdf
-                                    inpols = np.full(xg.shape, False)
-                                    for ip, polygon in gdf.iterrows():
-                                        inpol = inpolygon(xg, yg, polygon["geometry"])
-                                        inpols = np.logical_or(inpols, inpol)
+                                manning_grid[inpols] = value
 
-                                    manning_grid[inpols] = value
-                        else:
+                        # Fill in remaining NaNs with default values
+                        isn = np.where(np.isnan(manning_grid))
+                        try:
+                            manning_grid[
+                                (isn and np.where(zg <= manning_level))
+                            ] = manning_water
+                        except:
+                            pass
+                        manning_grid[(isn and np.where(zg > manning_level))] = manning_land
+
+                    else:
+                        if len(roughness_sets) > 0:
                             da_man = merge_multi_dataarrays(
                                 da_list=roughness_sets,
                                 da_like=da_sbg_uv,
@@ -707,18 +789,13 @@ class SubgridTableQuadtree:
                                 da_dep >= manning_level, manning_land, manning_water
                             )
                             da_man = da_man.where(~np.isnan(da_man), da_man0)
-                            # convert to numpy values
-                            manning_grid=da_man.values
-
-                    # Fill in remaining NaNs with default values
-                    isn = np.where(np.isnan(manning_grid))
-                    try:
-                        manning_grid[
-                            (isn and np.where(zg <= manning_level))
-                        ] = manning_water
-                    except:
-                        pass
-                    manning_grid[(isn and np.where(zg > manning_level))] = manning_land
+                        else:
+                            da_man = xr.where(
+                                da_dep >= manning_level, manning_land, manning_water
+                            )
+                            da_man.raster.set_nodata(np.nan)                            
+                        # convert to numpy values
+                        manning_grid=da_man.values
 
                     # burn rivers in bathymetry and manning
                     if len(river_sets) > 0:
@@ -730,6 +807,30 @@ class SubgridTableQuadtree:
                         zg = da_dep.values
                         manning_grid = da_man.values
 
+                    if bathymetry_database is None:
+                        # optional write tile to file
+                        x_dim_dep, y_dim_dep = da_dep.raster.x_dim, da_dep.raster.y_dim
+                        window = Window(
+                            bm0 * nr_subgrid_pixels,
+                            bn0 * nr_subgrid_pixels,
+                            da_dep[:-refi, :-refi].sizes[x_dim_dep],
+                            da_dep[:-refi, :-refi].sizes[y_dim_dep],
+                        )
+                        if write_dep_tif:
+                            # write the block to the output COG
+                            with rasterio.open(fn_dep_tif, "r+") as dep_tif:
+                                dep_tif.write(
+                                    da_dep[:-refi, :-refi].values,
+                                    window=window,
+                                    indexes=1,
+                                )
+                        if write_man_tif:
+                            with rasterio.open(fn_man_tif, "r+") as man_tif:
+                                man_tif.write(
+                                    da_man[:-refi, :-refi].values,
+                                    window=window,
+                                    indexes=1,
+                                )
 
                     ###############################
                     # Process U/V points in block #
@@ -772,6 +873,23 @@ class SubgridTableQuadtree:
                         if progress_bar.was_canceled():
                             return
                         ibt += 1
+
+            if bathymetry_database is None:            
+                # Create COG overviews for faster visualization
+                if write_dep_tif:
+                    utils.build_overviews(
+                        fn=fn_dep_tif,
+                        resample_method="average",
+                        overviews="auto",
+                        logger=logger,
+                    )
+                if write_man_tif:
+                    utils.build_overviews(
+                        fn=fn_man_tif,
+                        resample_method="average",
+                        overviews="auto",
+                        logger=logger,
+                    )
 
         # Now create the xarray dataset (FIXME do we transpose here? is this necessary for fortan?)
         self.ds = xr.Dataset()
