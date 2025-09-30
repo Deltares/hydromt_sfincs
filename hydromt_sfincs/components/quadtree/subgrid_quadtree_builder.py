@@ -25,6 +25,7 @@ from hydromt_sfincs.workflows.bathymetry import burn_river_rect
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
+
 def build_subgrid_table_quadtree(
     grid: xr.Dataset,
     bathymetry_sets: list[dict],
@@ -46,7 +47,7 @@ def build_subgrid_table_quadtree(
     buffer_cells: int = 0,
     write_dep_tif: bool = False,
     write_man_tif: bool = False,
-    highres_dir: str = None,    
+    highres_dir: str = None,
     bathymetry_database: object = None,
     quiet: bool = True,
     progress_bar: object = None,
@@ -133,7 +134,6 @@ class SubgridTableQuadtree:
         refi = nr_subgrid_pixels
         nr_cells = grid.sizes["mesh2d_nFaces"]
         nr_ref_levs = grid.attrs["nr_levels"]  # number of refinement levels
-        is_geographic = grid.ugrid.grid.crs.is_geographic
         zminimum = zmin
         zmaximum = zmax
 
@@ -269,7 +269,6 @@ class SubgridTableQuadtree:
             # Make sure da has the correct CRS
             da_regular.raster.set_crs(grid.ugrid.grid.crs)
             x_dim, y_dim = da_regular.raster.x_dim, da_regular.raster.y_dim
-
 
         # Loop through all levels
         for ilev in range(nr_ref_levs):
@@ -459,16 +458,16 @@ class SubgridTableQuadtree:
 
                     da_sbg = build_pixel_matrix(
                         x0=grid.attrs["x0"],
-                        y0=grid.attrs["y0"], 
-                        dxp=dxp,  
-                        dyp=dyp, 
-                        bm0=bm0, 
-                        bm1=bm1, 
-                        bn0=bn0, 
-                        bn1=bn1, 
-                        rotation=grid.attrs["rotation"], 
-                        refi=refi
-                        )
+                        y0=grid.attrs["y0"],
+                        dxp=dxp,
+                        dyp=dyp,
+                        bm0=bm0,
+                        bm1=bm1,
+                        bn0=bn0,
+                        bn1=bn1,
+                        rotation=grid.attrs["rotation"],
+                        refi=refi,
+                    )
                     da_sbg.raster.set_crs(crs)
 
                     if bathymetry_database:
@@ -508,7 +507,7 @@ class SubgridTableQuadtree:
 
                         zg = da_dep.values
 
-                        # TODO add burning of rivers .... 
+                        # TODO add burning of rivers ....
                         # FIXME going through merging datasets twice seems very inefficient
 
                     # Multiply zg with depth factor (had to use 0.9746 to get arrival
@@ -735,7 +734,7 @@ class SubgridTableQuadtree:
 
                     # Initialize roughness of subgrid at NaN
                     manning_grid = np.full(da_sbg_uv.shape, np.nan)
-                    
+
                     if bathymetry_database:
                         # Loop through roughness sets, check if one has polygon file
                         manning_grid = bathymetry_database.get_bathymetry_on_grid(
@@ -768,7 +767,9 @@ class SubgridTableQuadtree:
                             ] = manning_water
                         except:
                             pass
-                        manning_grid[(isn and np.where(zg > manning_level))] = manning_land
+                        manning_grid[
+                            (isn and np.where(zg > manning_level))
+                        ] = manning_land
 
                     else:
                         if len(roughness_sets) > 0:
@@ -793,16 +794,19 @@ class SubgridTableQuadtree:
                             da_man = xr.where(
                                 da_dep >= manning_level, manning_land, manning_water
                             )
-                            da_man.raster.set_nodata(np.nan)                            
+                            da_man.raster.set_nodata(np.nan)
                         # convert to numpy values
-                        manning_grid=da_man.values
+                        manning_grid = da_man.values
 
                     # burn rivers in bathymetry and manning
                     if len(river_sets) > 0:
                         logger.debug("Burn rivers in bathymetry and manning data")
                         for riv_kwargs in river_sets:
                             da_dep, da_man = burn_river_rect(
-                                da_elv=da_dep, da_man=da_man, logger=logger, **riv_kwargs
+                                da_elv=da_dep,
+                                da_man=da_man,
+                                logger=logger,
+                                **riv_kwargs,
                             )
                         zg = da_dep.values
                         manning_grid = da_man.values
@@ -874,7 +878,7 @@ class SubgridTableQuadtree:
                             return
                         ibt += 1
 
-            if bathymetry_database is None:            
+            if bathymetry_database is None:
                 # Create COG overviews for faster visualization
                 if write_dep_tif:
                     utils.build_overviews(
@@ -1124,7 +1128,10 @@ def inpolygon(xq, yq, p):
     p = path.Path([(crds[0], crds[1]) for i, crds in enumerate(p.exterior.coords)])
     return p.contains_points(q).reshape(shape)
 
-def build_pixel_matrix(x0, y0, dxp, dyp, bm0, bm1, bn0, bn1, rotation, refi, uv_points=False):
+
+def build_pixel_matrix(
+    x0, y0, dxp, dyp, bm0, bm1, bn0, bn1, rotation, refi, uv_points=False
+):
     """
     Builds a pixel matrix for a given mesh grid with rotation and translation.
 

@@ -950,9 +950,7 @@ class QuadtreeGrid:
             xr.DataArray(data=self.nd2 + 1, dims=[ugrid2d.face_dimension]), ugrid2d
         )
 
-    def get_bathymetry_min_max(
-        self, ind_ref, ilev, datasets_dep, quiet=True
-    ):
+    def get_bathymetry_min_max(self, ind_ref, ilev, datasets_dep, quiet=True):
         """ "Used to determine min and max bathymetry of a cell (used for refinement)"""
 
         if not quiet:
@@ -979,10 +977,7 @@ class QuadtreeGrid:
         # Build DataArray covering all corners
         m = self.m[ind_ref]
         n = self.n[ind_ref]
-        corner_offsets = np.array([[0, 0],
-                                [1, 0],
-                                [1, 1],
-                                [0, 1]])
+        corner_offsets = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
 
         m_corners = (m[:, None] + corner_offsets[:, 0]).T
         n_corners = (n[:, None] + corner_offsets[:, 1]).T
@@ -999,8 +994,13 @@ class QuadtreeGrid:
         # Create the DataArray
         da_corners = xr.DataArray(
             np.full(M_all.shape, np.nan),
-            coords={"n": ("y", n_all), "m": ("x",m_all), "xc": (("y", "x"), x_all), "yc": (("y", "x"), y_all)},
-            dims=("y", "x")
+            coords={
+                "n": ("y", n_all),
+                "m": ("x", m_all),
+                "xc": (("y", "x"), x_all),
+                "yc": (("y", "x"), y_all),
+            },
+            dims=("y", "x"),
         )
         da_corners.raster.set_crs(self.crs)
 

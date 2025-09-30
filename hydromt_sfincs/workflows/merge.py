@@ -22,6 +22,7 @@ __all__ = [
     "merge_multi_dataarrays_on_mesh",
 ]
 
+
 def merge_multi_dataarrays(
     da_list: List[dict],
     gdf_list: List[dict] = [],
@@ -295,6 +296,7 @@ def merge_dataarrays(
     da_out = da_out.fillna(nodata).astype(dtype)
     da_out.raster.set_nodata(nodata)
     return da_out
+
 
 def merge_multi_dataarrays_on_mesh(
     da_list: List[dict],

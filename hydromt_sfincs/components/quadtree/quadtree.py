@@ -23,7 +23,10 @@ from hydromt.model.components import MeshComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs.utils import make_regular_grid, partition_quadtree
-from hydromt_sfincs.workflows.merge import merge_multi_dataarrays, merge_multi_dataarrays_on_mesh
+from hydromt_sfincs.workflows.merge import (
+    merge_multi_dataarrays,
+    merge_multi_dataarrays_on_mesh,
+)
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
 # optional dependency
@@ -263,7 +266,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         rotation: float,
         epsg: int,
         refinement_polygons: Optional[gpd.GeoDataFrame] = None,
-        datasets_dep: List[List[dict]] = None,  
+        datasets_dep: List[List[dict]] = None,
     ):
         """Build the Quadtree grid.
 
@@ -297,23 +300,18 @@ class SfincsQuadtreeGrid(MeshComponent):
 
         # Set grid type and crs in model
         self.model.grid_type = "quadtree"
-        crs = CRS.from_epsg(epsg) 
+        crs = CRS.from_epsg(epsg)
 
         datasets_dep_per_level = []
         if datasets_dep is not None:
             # Create grid without refinement first
             # NOTE this is used to determine model properties while parsing datasets_dep
             self._data = make_regular_grid(
-                x0, y0,
-                dx, dy,
-                nmax, mmax,
-                rotation,
-                crs,
-                make_ugrid=True
+                x0, y0, dx, dy, nmax, mmax, rotation, crs, make_ugrid=True
             )
             # Parse the datasets for all refinement levels
             res = dx  # coarsest level
-            levels =  set(refinement_polygons["refinement_level"].unique())
+            levels = set(refinement_polygons["refinement_level"].unique())
             # convert to meters if geographic
             if crs.is_geographic:
                 res = res * 111111.0
@@ -391,7 +389,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         refinement_polygons : gpd.GeoDataFrame, optional
             GeoDataFrame with polygons that define areas where the grid should be refined.
         datasets_dep : List[List[dict]], optional
-            List of lists of dictionaries with variable names and dataset names to use for depth            
+            List of lists of dictionaries with variable names and dataset names to use for depth
 
         See Also
         --------
@@ -437,7 +435,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             epsg=epsg,
             refinement_polygons=refinement_polygons,
             datasets_dep=datasets_dep,
-        )            
+        )
 
     def cut_inactive_cells(self):
         # Clear datashader dataframes (new ones will be created when needed by map_overlay methods)

@@ -12,12 +12,16 @@ from hydromt import hydromt_step
 from hydromt.model.components import MeshComponent
 
 from hydromt_sfincs.utils import make_regular_grid, partition_quadtree
-from hydromt_sfincs.workflows.merge import merge_multi_dataarrays, merge_multi_dataarrays_on_mesh
+from hydromt_sfincs.workflows.merge import (
+    merge_multi_dataarrays,
+    merge_multi_dataarrays_on_mesh,
+)
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
 
 logger = logging.getLogger(f"hydromt.{__name__}")
+
 
 class SfincsQuadtreeElevation(MeshComponent):
     def __init__(
@@ -33,7 +37,7 @@ class SfincsQuadtreeElevation(MeshComponent):
     def data(self):
         """Get the data from the quadtree grid."""
         return self.model.quadtree_grid.data
-    
+
     @property
     def mask(self):
         """Get the mask from the quadtree grid."""
@@ -97,11 +101,11 @@ class SfincsQuadtreeElevation(MeshComponent):
             if not hasattr(self, "partitions"):
                 t0 = time.time()
                 self.partitions = partition_quadtree(
-                    quadtree=self.data, 
-                    partition_by_level=partition_by_level, 
-                    partition_in_blocks=partition_in_blocks, 
-                    nrmax=nrmax, 
-                    logger=logger
+                    quadtree=self.data,
+                    partition_by_level=partition_by_level,
+                    partition_in_blocks=partition_in_blocks,
+                    nrmax=nrmax,
+                    logger=logger,
                 )
                 t1 = time.time()
                 logger.debug(f"Partitioning quadtree took {t1-t0:.2f} s.")
@@ -141,7 +145,7 @@ class SfincsQuadtreeElevation(MeshComponent):
             logger.debug(f"Merging dep took {t1-t0:.2f} s.")
             # add data to grid
             # FIXME
-            # self.model.quadtree_grid.set(uda, name="z")        
+            # self.model.quadtree_grid.set(uda, name="z")
             self.data["z"] = uda
 
     def interpolate_bathymetry(self, x, y, z, method="linear"):
@@ -152,13 +156,14 @@ class SfincsQuadtreeElevation(MeshComponent):
         yz = xy[:, 1]
         zz = interp2(x, y, z, xz, yz, method=method)
         ugrid2d = self.data.grid
-        self.data["z"] = xu.UgridDataArray(xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["z"] = xu.UgridDataArray(
+            xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d
+        )
 
     def set_uniform_bathymetry(self, zb):
         self.data["z"][:] = zb
 
     def set_bathymetry(self, datasets_dep, zmin=-1.0e9, zmax=1.0e9, quiet=True):
-        
         # Number of refinement levels
         nlev = self.data.attrs["nr_levels"]
         # Cell centre coordinates
@@ -174,7 +179,7 @@ class SfincsQuadtreeElevation(MeshComponent):
         # This is also done when the grid is built, but that information is not stored
         ifirst = np.zeros(nlev, dtype=int)
         ilast = np.zeros(nlev, dtype=int)
-        level = self.data["level"].values[:] - 1 # 0-based
+        level = self.data["level"].values[:] - 1  # 0-based
         for ilev in range(0, nlev):
             # Find index of first cell with this level
             ifirst[ilev] = np.where(level == ilev)[0][0]
@@ -202,19 +207,24 @@ class SfincsQuadtreeElevation(MeshComponent):
 
         # Loop through all levels
         for ilev in range(nlev):
-
             if not quiet:
-                print("Processing bathymetry level " + str(ilev + 1) + " of " + str(nlev) + " ...")
+                print(
+                    "Processing bathymetry level "
+                    + str(ilev + 1)
+                    + " of "
+                    + str(nlev)
+                    + " ..."
+                )
 
-            # First and last cell indices in this level            
+            # First and last cell indices in this level
             i0 = ifirst[ilev]
             i1 = ilast[ilev]
-            
+
             # Make blocks of cells in this level only
             cell_indices_in_level = np.arange(i0, i1 + 1, dtype=int)
-                  
-            xz  = xy[cell_indices_in_level, 0]
-            yz  = xy[cell_indices_in_level, 1]
+
+            xz = xy[cell_indices_in_level, 0]
+            yz = xy[cell_indices_in_level, 1]
             dxmin = dx / 2**ilev
 
             da_like = make_regular_grid(
@@ -222,12 +232,12 @@ class SfincsQuadtreeElevation(MeshComponent):
                 y0=self.data.attrs["y0"],
                 dx=dxmin,
                 dy=dxmin,
-                mmax=m[i0:i1+1].max().values + 1,
-                nmax=n[i0:i1+1].max().values + 1,
+                mmax=m[i0 : i1 + 1].max().values + 1,
+                nmax=n[i0 : i1 + 1].max().values + 1,
                 rotation=self.data.attrs["rotation"],
                 crs=self.model.crs,
-                mmin=m[i0:i1+1].min().values,
-                nmin=n[i0:i1+1].min().values,
+                mmin=m[i0 : i1 + 1].min().values,
+                nmin=n[i0 : i1 + 1].min().values,
                 make_ugrid=False,
             )
 
@@ -255,7 +265,7 @@ class SfincsQuadtreeElevation(MeshComponent):
             #                                                    dxmin,
             #                                                    self.model.crs,
             #                                                    bathymetry_sets)
-            
+
             # Limit zgl to zmin and zmax
             zgl = np.maximum(zgl, zmin)
             zgl = np.minimum(zgl, zmax)
@@ -263,7 +273,10 @@ class SfincsQuadtreeElevation(MeshComponent):
             zz[cell_indices_in_level] = zgl
 
         ugrid2d = self.data.grid
-        self.data["z"] = xu.UgridDataArray(xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d)
+        self.data["z"] = xu.UgridDataArray(
+            xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d
+        )
+
 
 def interp2(x0, y0, z0, x1, y1, method="linear"):
     f = RegularGridInterpolator(

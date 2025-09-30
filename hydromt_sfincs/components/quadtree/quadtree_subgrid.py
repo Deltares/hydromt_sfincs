@@ -32,7 +32,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             self._initialize_grid()
         assert self._data is not None
         return self._data
-    
+
     def _initialize_grid(self, skip_read: bool = False) -> None:
         """Initialize grid object."""
         if self._data is None:
@@ -106,7 +106,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
     def create(
         self,
         bathymetry_sets,
-        roughness_sets: list=[],
+        roughness_sets: list = [],
         manning_land=0.04,
         manning_water=0.020,
         manning_level=1.0,
@@ -151,7 +151,6 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             progress_bar (tqdm, optional): Progress bar. Defaults to None.
         """
 
-
         if bathymetry_database is None:
             # get resolution and number of level
             res = self.model.quadtree_grid.data.attrs["dx"]
@@ -173,14 +172,13 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
                 )
             bathymetry_sets = datasets_dep_per_level
 
-
             if len(roughness_sets) > 0:
                 # NOTE conversion from landuse/landcover to manning happens here
                 roughness_sets = self.model._parse_datasets_rgh(roughness_sets)
 
             # if len(river+sets) > 0:
             #     rivers_sets = self.model._parse_datasets_riv(river_sets)
-                # folder where high-resolution topobathy and manning geotiffs are stored
+            # folder where high-resolution topobathy and manning geotiffs are stored
 
             if write_dep_tif or write_man_tif:
                 highres_dir = self.model.root.path / "subgrid"

@@ -521,7 +521,9 @@ class SfincsQuadtreeMask(ModelComponent):
         if model == "sfincs":
             bvalues = {"waterlevel": 2, "outflow": 3, "downstream": 5, "neumann": 6}
             if btype not in bvalues:
-                raise ValueError('btype must be one of "waterlevel", "outflow", "downstream", "neumann"')
+                raise ValueError(
+                    'btype must be one of "waterlevel", "outflow", "downstream", "neumann"'
+                )
         elif model == "snapwave":
             bvalues = {"waves": 2, "neumann": 3}
             if btype not in bvalues:

@@ -174,7 +174,7 @@ def subgrid_q_table(
         h = np.maximum(zbin - elevation, 0.0)  # water depth in each pixel
 
         # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
-        h_a = np.maximum(zbin - dd_a, 0.0)        
+        h_a = np.maximum(zbin - dd_a, 0.0)
         # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
         h_b = np.maximum(zbin - dd_b, 0.0)
 
@@ -203,7 +203,7 @@ def subgrid_q_table(
 
         # Compute q and h
         # Determine grid average 'flux' for each pixel
-        q_all = np.mean(h ** (5.0 / 3.0) / manning)  
+        q_all = np.mean(h ** (5.0 / 3.0) / manning)
         h_all = np.mean(h)  # grid averaged depth of A and B combined
         q_min = np.minimum(q_a, q_b)
         h_min = np.minimum(h_a, h_b)
@@ -297,7 +297,7 @@ def subgrid_q_table(
             elif roughness_type == "chezy":
                 manning_a = (1.0 / rgh_a) * h ** (1.0 / 6.0)
                 # Set minimum value to avoid division by zero
-                manning_a = np.maximum(manning_a, 0.001)  
+                manning_a = np.maximum(manning_a, 0.001)
 
             q = np.mean(
                 h ** (5.0 / 3.0) / manning_a

@@ -1603,14 +1603,28 @@ def check_exists_and_lazy(ds, file_name):
         ds.close()
     return
 
-def make_regular_grid(x0, y0, dx, dy, mmax, nmax, rotation=0.0, crs=None, mmin=0, nmin=0, name="var", dtype=float, fill_value=np.nan, make_ugrid=False):
+
+def make_regular_grid(
+    x0,
+    y0,
+    dx,
+    dy,
+    mmax,
+    nmax,
+    rotation=0.0,
+    crs=None,
+    mmin=0,
+    nmin=0,
+    name="var",
+    dtype=float,
+    fill_value=np.nan,
+    make_ugrid=False,
+):
     """
     Create an xarray.DataArray with spatial coordinates based on grid definition.
     """
     transform = (
-        Affine.translation(x0, y0)
-        * Affine.rotation(rotation)
-        * Affine.scale(dx, dy)
+        Affine.translation(x0, y0) * Affine.rotation(rotation) * Affine.scale(dx, dy)
     )
 
     nx = mmax - mmin
@@ -1637,7 +1651,8 @@ def make_regular_grid(x0, y0, dx, dy, mmax, nmax, rotation=0.0, crs=None, mmin=0
             "m": ("x", np.arange(mmin, mmax)),
             "n": ("y", np.arange(nmin, nmax)),
             "xc": (("y", "x"), x_coords),
-            "yc": (("y", "x"), y_coords)}
+            "yc": (("y", "x"), y_coords),
+        }
         dims = ("y", "x")
 
     data = np.full((ny, nx), fill_value, dtype=dtype)
@@ -1648,13 +1663,14 @@ def make_regular_grid(x0, y0, dx, dy, mmax, nmax, rotation=0.0, crs=None, mmin=0
             da = UgridDataArray.from_structured(da, "xc", "yc")
         else:
             da = UgridDataArray.from_structured(da)
-                    
+
         # Attach CRS if you want to use rioxarray
         if crs is not None:
             da.grid.set_crs(crs)
     else:
         da.raster.set_crs(crs)
     return da
+
 
 def partition_quadtree(
     quadtree: xu.UgridDataset,
@@ -1742,4 +1758,3 @@ def partition_quadtree(
         return partitions_new
     else:
         return partitions
-
