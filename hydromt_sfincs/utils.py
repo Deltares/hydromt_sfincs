@@ -11,12 +11,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
+from affine import Affine
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import rasterio
 import xarray as xr
 import xugrid as xu
+from xugrid.core.wrap import UgridDataArray
 from pyproj.crs.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.rio.overview import get_maximum_overview_level
@@ -24,7 +26,7 @@ from rasterio.windows import Window
 from shapely.geometry import LineString, Polygon
 
 import hydromt
-from hydromt._io import _write_xy as write_xy
+from hydromt._io import write_xy
 from hydromt._io import _open_vector as open_vector
 from hydromt.data_catalog.drivers import RasterioDriver
 from hydromt.gis._gis_utils import _zoom_to_overview_level
@@ -63,6 +65,8 @@ __all__ = [
     "partition_quadtree",
     "xu_open_dataset",
     "check_exists_and_lazy",
+    "make_regular_ugrid",
+    "partition_quadtree",
 ]
 
 logger = logging.getLogger(__name__)
@@ -1598,3 +1602,159 @@ def check_exists_and_lazy(ds, file_name):
         ds.load()  # Some variables are lazy-loaded, load them into memory
         ds.close()
     return
+
+
+def make_regular_grid(
+    x0,
+    y0,
+    dx,
+    dy,
+    mmax,
+    nmax,
+    rotation=0.0,
+    crs=None,
+    mmin=0,
+    nmin=0,
+    name="var",
+    dtype=float,
+    fill_value=np.nan,
+    make_ugrid=False,
+):
+    """
+    Create an xarray.DataArray with spatial coordinates based on grid definition.
+    """
+    transform = (
+        Affine.translation(x0, y0) * Affine.rotation(rotation) * Affine.scale(dx, dy)
+    )
+
+    nx = mmax - mmin
+    ny = nmax - nmin
+
+    if transform.b == 0:  # no rotation, rectilinear
+        x_coords, _ = transform * (
+            np.arange(mmin, mmax) + 0.5,
+            np.zeros(nx) + 0.5,
+        )
+        _, y_coords = transform * (
+            np.zeros(ny) + 0.5,
+            np.arange(nmin, nmax) + 0.5,
+        )
+        coords = {"x": x_coords, "y": y_coords}
+        dims = ("y", "x")
+    else:  # rotated, need 2D coordinates
+        x_coords, y_coords = (
+            transform
+            * Affine.translation(0.5, 0.5)
+            * np.meshgrid(np.arange(mmin, mmax), np.arange(nmin, nmax))
+        )
+        coords = {
+            "m": ("x", np.arange(mmin, mmax)),
+            "n": ("y", np.arange(nmin, nmax)),
+            "xc": (("y", "x"), x_coords),
+            "yc": (("y", "x"), y_coords),
+        }
+        dims = ("y", "x")
+
+    data = np.full((ny, nx), fill_value, dtype=dtype)
+    da = xr.DataArray(data, dims=dims, coords=coords, name=name)
+
+    if make_ugrid:
+        if rotation != 0.0:
+            da = UgridDataArray.from_structured(da, "xc", "yc")
+        else:
+            da = UgridDataArray.from_structured(da)
+
+        # Attach CRS if you want to use rioxarray
+        if crs is not None:
+            da.grid.set_crs(crs)
+    else:
+        da.raster.set_crs(crs)
+    return da
+
+
+def partition_quadtree(
+    quadtree: xu.UgridDataset,
+    partition_by_level: bool = True,
+    partition_in_blocks: bool = True,
+    nrmax: int = 2000,
+    logger=logger,
+):
+    """Partition a 2D unstructured grid into blocks.
+
+    Parameters
+    ----------
+    quadtree : xu.UgridDataset
+        Unstructured 2D grid.
+    partition_by_level : bool, optional
+        Partition by level, by default True
+    partition_in_blocks : bool, optional
+        Partition in blocks, by default False
+    nrmax : int, optional
+        Maximum number of cells per block, by default 2000
+
+    Returns
+    -------
+    Partitions : List[xu.UgridDataset]
+        List of partitiones, by levels, in spatial blocks, or both.
+    """
+
+    if partition_by_level:
+        if "level" not in quadtree:
+            raise ValueError("No 'level' attribute found in quadtree.")
+        partitions = quadtree.ugrid.partition_by_label(quadtree["level"] - 1)
+    else:
+        partitions = [quadtree]
+
+    partitions_new = []
+    if partition_in_blocks:
+        for level, partition in enumerate(partitions):
+            if len(partition.coords["mesh2d_nFaces"]) > 0:
+                logger.debug(
+                    f"Partition level {level} has {len(partition.coords['mesh2d_nFaces'])} faces: "
+                )
+
+                # approximate nr of cells in x and y direction based on resolution (to prevent too large datasets loaded in memory)
+                dx = partition.dx / (2**level)
+                dy = partition.dy / (2**level)
+                logger.debug(f"dx, dy:  {dx}, {dy}")
+                xmin, ymin, xmax, ymax = partition.ugrid.grid.bounds
+                nmax = int(np.ceil((ymax - ymin) / dy))
+                mmax = int(np.ceil((xmax - xmin) / dx))
+                logger.debug(f"mmax: {mmax}, nmax: {nmax}")
+
+                # check if partition is too large and split in smaller blocks
+                nrbn = int(np.ceil(nmax / nrmax))  # nr of blocks in n direction
+                nrbm = int(np.ceil(mmax / nrmax))  # nr of blocks in m direction
+
+                # if too large, split on spatial extent (so not the traditional partitions ...)
+                if nrbn > 1 or nrbm > 1:
+                    logger.debug(
+                        f"Partition level {level} is too large, splitting in {nrbn} x {nrbm} blocks"
+                    )
+                    # Create coordinate ranges for slicing
+                    x_edges = np.linspace(xmin, xmax, nrbm + 1)
+                    y_edges = np.linspace(ymin, ymax, nrbn + 1)
+                    # Generate all index pairs in a vectorized manner
+                    index_pairs = np.array(
+                        np.meshgrid(np.arange(nrbm), np.arange(nrbn))
+                    ).T.reshape(-1, 2)
+                    # Use a list comprehension with vectorized index pairs
+                    subsets = [
+                        partition.ugrid.sel(
+                            x=slice(x_edges[ii], x_edges[ii + 1]),
+                            y=slice(y_edges[jj], y_edges[jj + 1]),
+                        )
+                        for ii, jj in index_pairs
+                    ]
+                    for subset in subsets:
+                        if len(subset.coords["mesh2d_nFaces"]) > 0:
+                            # subset.level = level
+                            partitions_new.append(subset)
+                else:
+                    # partition.level = level
+                    partitions_new.append(partition)
+
+    if len(partitions_new) > 0:
+        return partitions_new
+    else:
+        return partitions
