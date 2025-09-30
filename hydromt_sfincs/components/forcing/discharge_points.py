@@ -1,49 +1,31 @@
 import logging
 from pathlib import Path
-from typing import List, Union
+from typing import TYPE_CHECKING, List, Union
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import shapely
-import xarray as xr
 
-from hydromt.model import Model
-from hydromt.model.components import ModelComponent
+from hydromt import hydromt_step
+from hydromt.gis.vector import GeoDataset
 
 from hydromt_sfincs import utils
+
+from .boundary_conditions import SfincsBoundaryBase
+
+if TYPE_CHECKING:
+    from hydromt_sfincs import SfincsModel
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
 
-class SfincsDischargePoints(ModelComponent):
-    def __init__(
-        self,
-        model: Model,
-    ):
-        # self._filename: str = "sfincs.dis"  # FIXME - List(str = "sfincs.dis" and str = "sfincs.src" or str = "sfincs_netbndbzsbzi.nc")
-        self._data = None
-        self.xarray = None  # xarray.Dataset with discharge conditions
-        super().__init__(
-            model=model,
-        )
+class SfincsDischargePoints(SfincsBoundaryBase):
+    """Discharge point component for SFINCS models."""
 
-    @property
-    def data(self) -> gpd.GeoDataFrame:
-        """Observation point data.
+    _default_varname = "dis"
 
-        Return geopandas.GeoDataFrame
-        """
-        if self._data is None:
-            self._initialize()
-        return self._data
-
-    def _initialize(self, skip_read=False) -> None:
-        """Initialize geoms."""
-        if self._data is None:
-            self._data = gpd.GeoDataFrame()
-            if self.root.is_reading_mode() and not skip_read:
-                self.read()
+    def __init__(self, model: "SfincsModel"):
+        super().__init__(model)
 
     def read(self, format: str = None):
         """Read SFINCS discharge points (*.dis, *.src files) or netcdf file.
@@ -64,13 +46,15 @@ class SfincsDischargePoints(ModelComponent):
                 format = "asc"
 
         if format == "asc":
-            self.read_discharge_points()
+            gdf = self.read_discharge_points()
             # Check if there are any points
-            if not self.data.empty:
-                self.read_discharge_timeseries()
+            if not gdf.empty:
+                df = self.read_discharge_timeseries()
+                self.set(df=df, gdf=gdf, merge=False)
         elif format == "netcdf":
             # Read netcdf file
-            self.read_discharge_conditions_netcdf()
+            da = self.read_discharge_conditions_netcdf()
+            self.set(geodataset=da, merge=False)
 
     def read_discharge_points(self, filename: str | Path = None):
         """Read SFINCS discharge points (*.src) file"""
@@ -86,40 +70,16 @@ class SfincsDischargePoints(ModelComponent):
         # Check if abs_file_path is None
         if abs_file_path is None:
             # File name not defined
-            return
+            return gpd.GeoDataFrame()
 
         # Check if src file exists
         if not abs_file_path.exists():
             raise FileNotFoundError(f"Discharge points file not found: {abs_file_path}")
 
-        # HydroMT does not have open_vector at the moment ...
         # Read bnd file
-        # gdf = utils.read_xy(abs_file_path, crs=self.model.crs)
-        # # Add columns for timeseries and astro and add empty DataFrames
-        # gdf["timeseries"] = pd.DataFrame()
-        # gdf["astro"] = pd.DataFrame()
-        # # Add to self.data
-        # self.data = gdf
-
-        # Read the bnd file
-        df = pd.read_csv(
-            abs_file_path, index_col=False, header=None, names=["x", "y"], sep="\s+"
-        )
-
-        gdf_list = []
-        # Loop through points
-        for ind in range(len(df.x.values)):
-            name = str(ind + 1).zfill(4)
-            x = df.x.values[ind]
-            y = df.y.values[ind]
-            point = shapely.geometry.Point(x, y)
-            d = {
-                "name": name,
-                "timeseries": pd.DataFrame(),
-                "geometry": point,
-            }
-            gdf_list.append(d)
-        self._data = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
+        # TODO check if we want read_xyn? Before we used read_xy, so without name column
+        gdf = utils.read_xyn(abs_file_path, crs=self.model.crs)
+        return gdf
 
     def read_discharge_timeseries(self, filename: str | Path = None):
         """Read SFINCS discharge condition timeseries (*.bzs) file"""
@@ -145,17 +105,9 @@ class SfincsDischargePoints(ModelComponent):
 
         # Read bzs file (this creates one DataFrame with all timeseries)
         df = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
-
-        # Now we need to split the timeseries into the different points
-        for idx, row in self.data.iterrows():
-            # Get the timeseries for this point
-            ts = pd.DataFrame(df.iloc[:, idx])
-            # Set the column name to wl
-            ts.columns = ["q"]
-            # # Set the index to time
-            # ts.index.name = "time"
-            # Add to the point
-            self._data.at[idx, "timeseries"] = ts
+        df.index.name = "time"
+        df.columns.name = "index"
+        return df
 
     def read_discharge_conditions_netcdf(self, filename: str | Path = None):
         """Read SFINCS discharge conditions netcdf file"""
@@ -180,20 +132,8 @@ class SfincsDischargePoints(ModelComponent):
             )
 
         # Read netcdf file
-        ds = xr.open_dataset(abs_file_path)
-
-        # Loop through discharge points
-        # FIXME - we first need to get the points!
-        for ip, point in self.data.iterrows():
-            # Get the timeseries for this point
-            ts = ds["timeseries"].sel(point=ip).to_dataframe()
-            # Add to the point
-            self.data.at[ip, "timeseries"] = ts
-
-            # Get the astro for this point
-            astro = ds["astro"].sel(point=ip).to_dataframe()
-            # Add to the point
-            self._data.at[ip, "astro"] = astro
+        ds = GeoDataset.from_netcdf(abs_file_path, crs=self.model.crs, chunks="auto")
+        return ds
 
     def write(self, format: str = None):
         """Write SFINCS discharges (*.src, *.dis files) or netcdf file.
@@ -207,7 +147,7 @@ class SfincsDischargePoints(ModelComponent):
             Format of the discharge files, "asc" (default), or "netcdf".
         """
 
-        if self.data.empty:
+        if self.nr_points == 0:
             # There are no discharge points
             return
 
@@ -241,7 +181,8 @@ class SfincsDischargePoints(ModelComponent):
         else:
             fmt = "%11.1f"
 
-        utils.write_xyn(abs_file_path, self.data, fmt=fmt)
+        # TODO check whether write_xyn or write_xy
+        utils.write_xyn(abs_file_path, self.gdf, fmt=fmt)
 
     def write_discharge_timeseries(self, filename: str | Path = None):
         """Write SFINCS discharge timeseries (*.dis) file"""
@@ -254,14 +195,11 @@ class SfincsDischargePoints(ModelComponent):
             "disfile", value=filename, default="sfincs.dis"
         )
 
-        # Get all timeseries and stick in one DataFrame
-        df = pd.DataFrame()
-        for ip, point in self.data.iterrows():
-            df = pd.concat([df, point["timeseries"]["q"]], axis=1)
+        # parse data to dataframe
+        da = self.data["dis"].transpose("time", ...)
+        df = da.to_pandas()
 
         # Write to file
-        # TODO check why this is needed (wasn't before?)
-        df.index = pd.to_datetime(df.index)
         utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
 
     def write_discharge_conditions_netcdf(self, filename: str | Path = None):
@@ -274,156 +212,30 @@ class SfincsDischargePoints(ModelComponent):
         abs_file_path = self.model.config.get_set_file_variable(
             "netsrcdisfile", value=filename, default="sfincs_netsrcdisfile.nc"
         )
-
-        # Create a new xarray dataset
-        ds = xr.Dataset()
-
-        # Loop through discharge points
-        for ip, point in self.data.iterrows():
-            # Add timeseries to dataset
-            ds["timeseries"] = xr.DataArray(
-                point["timeseries"]["q"].values,
-                dims=["time"],
-                coords={"time": point["timeseries"].index},
-            )
-            # Add astro to dataset
-            ds["astro"] = xr.DataArray(
-                point["astro"].values,
-                dims=["time"],
-                coords={"time": point["astro"].index},
-            )
-
-        # Write dataset to netcdf file
-        ds.to_netcdf(abs_file_path)
-
-    def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
-        """Set discharge data.
-
-        Parameters
-        ----------
-        gdf : gpd.GeoDataFrame
-            GeoDataFrame with discharge points.
-        merge : bool, optional
-            Merge data with existing data, by default True.
-        """
-
-        # when merge = False, clear the data with
-        if not merge:
-            self.clear()
-
-        # TODO can this be done more efficiently?
-        for i, row in gdf.iterrows():
-            single_gdf = gdf.loc[[i]]
-            # set discharge to zero
-            self.add_point(
-                gdf=single_gdf,
-            )
-
-    def add_point(
-        self,
-        gdf: gpd.GeoDataFrame = None,
-        name: str = None,
-        x: float = None,
-        y: float = None,
-        q: float = 0.0,
-    ):
-        """Add a single point to the discharge data. Either gdf,
-        or x, y must be provided.
-
-        Parameters
-        ----------
-        gdf : gpd.GeoDataFrame
-            GeoDataFrame with a single point
-        name : str
-            Name of the point
-        x : float
-            x-coordinate of the point
-        y : float
-            y-coordinate of the point
-        wl : float
-            Water level of the point
-        """
-        if gdf is not None:
-            if len(gdf) != 1:
-                raise ValueError(
-                    "Only GeoDataFrame with a single point in a can be added."
-                )
-            gdf = gdf.to_crs(self.model.crs)
-            if "timeseries" not in gdf:
-                gdf["timeseries"] = [pd.DataFrame()] * len(gdf)
-            # reset index
-            gdf = gdf.reset_index(drop=True)
-        else:
-            # Create a GeoDataFrame with a single point
-            if x is None or y is None or name is None:
-                raise ValueError("Either gdf or x, y, and name must be provided.")
-            point = shapely.geometry.Point(x, y)
-            gdf = gpd.GeoDataFrame(
-                [
-                    {
-                        "name": name,
-                        "timeseries": pd.DataFrame(),
-                        "geometry": point,
-                    }
-                ],
-                crs=self.model.crs,
-            )
-
-        # Check if there is data in the timeseries
-        if gdf["timeseries"][0].empty:
-            # Now add the water level
-            if not self.data.empty:
-                # Set water level at same times as first existing point by copying
-                gdf.at[0, "timeseries"] = self.data.iloc[0]["timeseries"].copy()
-                gdf.at[0, "timeseries"]["q"] = q
-            else:
-                # First point, so need to generate df with constant water level
-                time = [self.model.config.get("tstart"), self.model.config.get("tstop")]
-                q = [q] * 2
-                # Create DataFrame with columns time and wl
-                df = pd.DataFrame()
-                df["time"] = time
-                df["q"] = q
-                df = df.set_index("time")
-                gdf.at[0, "timeseries"] = df
-        else:
-            # Check if the timeseries is the same length as the first point
-            if len(gdf["timeseries"][0]) != len(self.data.iloc[0]["timeseries"]):
-                raise ValueError(
-                    "Timeseries in gdf must be the same length as the first point in the discharge conditions data."
-                )
-
-        # Add to self.data
-        self._data = pd.concat([self.data, gdf], ignore_index=True)
-
-    def delete(self, index: Union[int, List[int]]):
-        """Delete a single point from the discharge data.
-
-        Parameters
-        ----------
-        index : int or list of int
-            Index or list of indices of points to be deleted.
-        """
-
-        if self.data.empty:
+        # Check if abs_file_path is None
+        if abs_file_path is None:
+            # File name not defined
             return
 
-        if not isinstance(index, list):
-            index = [index]
-        # Check if indices are within range
-        if any(x > (len(self.data.index) - 1) for x in index):
-            raise ValueError("One of the indices exceeds length of index range!")
-        self._data = self.data.drop(index).reset_index(drop=True)
+        ds = self.data
+        ds.vector.to_netcdf(abs_file_path)
 
-        if self.data.empty:
+    def delete(self, index: Union[int, List[int]]):
+        "Delete boundary points and clear config when no points remain."
+        super().delete(index)
+        if self.nr_points == 0:
             self.model.config.set("srcfile", None)
             self.model.config.set("disfile", None)
             self.model.config.set("netsrcdisfile", None)
 
     def clear(self):
-        """Clean GeoDataFrame with discharge points."""
-        self._data = gpd.GeoDataFrame()
+        "Clear boundary points and unset associated config keys."
+        super().clear()
+        self.model.config.set("srcfile", None)
+        self.model.config.set("disfile", None)
+        self.model.config.set("netsrcdisfile", None)
 
+    @hydromt_step
     def create_timeseries(
         self,
         index: Union[int, List[int]] = None,
@@ -457,13 +269,15 @@ class SfincsDischargePoints(ModelComponent):
         peak : float
             Peak of the Gaussian wave [m]
         tpeak : float
-            Time of the peak of the Gaussian wave [s]
+            Time of the peak of the Gaussian wave [s] with respect to the model reference time
         duration : float
             Duration of the Gaussian wave [s]
         """
 
-        if self.data.empty:
-            return
+        if self.nr_points == 0:
+            raise ValueError(
+                "Cannot create timeseries without existing discharge points"
+            )
 
         t0 = np.datetime64(self.model.config.get("tstart"))
         t1 = np.datetime64(self.model.config.get("tstop"))
@@ -498,22 +312,107 @@ class SfincsDischargePoints(ModelComponent):
         )
 
         if index is None:
-            index = list(self.data.index)
+            index = list(self.data.index.values)
         elif not isinstance(index, list):
             index = [index]
 
-        for i in index:
-            df = pd.DataFrame()
-            df["time"] = times
-            df["q"] = q
-            df = df.set_index("time")
-            self._data.at[i, "timeseries"] = df
+        # Create DataFrame: rows = time, columns = locations (index), values = q (same for all)
+        df = pd.DataFrame(
+            data=np.tile(q, (len(index), 1)).T, index=times, columns=index
+        )
 
+        # Call set_timeseries to update your object's data
+        self.set_timeseries(df)
 
-# def to_fwf(df, fname, floatfmt=".3f"):
-#     indx = df.index.tolist()
-#     vals = df.values.tolist()
-#     for it, t in enumerate(vals):
-#         t.insert(0, indx[it])
-#     content = tabulate(vals, [], tablefmt="plain", floatfmt=floatfmt)
-#     open(fname, "w").write(content)
+    @hydromt_step
+    def create(
+        self,
+        geodataset=None,
+        timeseries=None,
+        locations=None,
+        merge=True,
+        buffer: float = None,
+    ):
+        """Setup discharge forcing.
+
+        Discharge timeseries are read from a `geodataset` (geospatial point timeseries)
+        or a tabular `timeseries` dataframe. At least one of these must be provided.
+
+        The tabular timeseries data is combined with `locations` if provided,
+        or with existing 'src' locations if previously set, e.g., with the
+        `setup_river_inflow` method.
+
+        Adds model layers:
+
+        * **dis** forcing: discharge time series [m3/s]
+
+        Parameters
+        ----------
+        geodataset: str, Path, xr.Dataset, optional
+            Path, data source name, or xarray data object for geospatial point timeseries.
+        timeseries: str, Path, pd.DataFrame, optional
+            Path, data source name, or pandas data object for tabular timeseries.
+        locations: str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for bnd point locations.
+            It should contain a 'index' column matching the column names in `timeseries`.
+        merge : bool, optional
+            If True, merge locations with existing forcing data, by default True.
+        buffer: float, optional
+            Buffer [m] around model boundary within the model region
+            select discharge gauges, by default None.
+
+        See Also
+        --------
+        setup_river_inflow
+        """
+
+        gdf_locs, df_ts = None, None
+        tstart, tstop = self.model.get_model_time()  # model time
+        # buffer
+        region = self.model.region
+        if buffer is not None:  # TODO this assumes the model crs is projected
+            region = region.boundary.buffer(buffer).clip(self.model.region)
+        # read discharge data from geodataset or geodataframe
+        if geodataset is not None:
+            # read and clip data in time & space
+            da = self.data_catalog.get_geodataset(
+                geodataset,
+                geom=region,
+                variables=["discharge"],
+                time_range=(tstart, tstop),
+                crs=self.model.crs,
+            )
+            df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
+            gdf_locs = da.vector.to_gdf()
+        elif timeseries is not None:
+            df_ts = self.data_catalog.get_dataframe(
+                timeseries,
+                time_range=(tstart, tstop),
+                driver={
+                    "name": "pandas",
+                    "options": {"index_col": 0, "parse_dates": True},
+                },
+            )
+            df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
+
+        # read location data (if not already read from geodataset)
+        if gdf_locs is None and locations is not None:
+            gdf_locs = self.data_catalog.get_geodataframe(
+                locations,
+                geom=region,
+            ).to_crs(self.model.crs)
+            if "index" in gdf_locs.columns:
+                gdf_locs = gdf_locs.set_index("index")
+            # filter df_ts timeseries based on gdf_locs index
+            # this allows to use a subset of the locations in the timeseries
+            if df_ts is not None and np.isin(gdf_locs.index, df_ts.columns).all():
+                df_ts = df_ts.reindex(gdf_locs.index, axis=1, fill_value=0)
+        elif gdf_locs is None and self.data is not None:
+            logger.info(
+                "No locations provided, using existing discharge points from data."
+            )
+            # gdf_locs = self.data.vector.to_gdf() #NOTE this is now done in set_timeseries ...
+        elif gdf_locs is None:
+            raise ValueError("No discharge boundary (src) points provided.")
+
+        self.set(df=df_ts, gdf=gdf_locs, merge=merge)
