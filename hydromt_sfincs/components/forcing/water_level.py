@@ -373,10 +373,14 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         gdf_locs, df_ts = None, None
         tstart, tstop = self.model.get_model_time()  # model time
         # buffer around msk==2 values
-        if np.any(self.model.grid.mask == 2) and not self.model.grid_type == "quadtree":
-            region = self.model.grid.mask.where(
-                self.model.grid.mask == 2, 0
-            ).raster.vectorize()
+        if not self.model.grid_type == "quadtree":
+            if np.any(self.model.grid.mask == 2):
+                # get region around waterlevel boundary cells
+                region = self.model.grid.mask.where(
+                    self.model.grid.mask == 2, 0
+                ).raster.vectorize()
+            else:
+                raise ValueError("No waterlevel boundary cells (mask==2) in model grid.")
         else:
             region = self.model.region
         # read waterlevel data from geodataset or geodataframe
