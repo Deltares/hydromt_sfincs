@@ -6,59 +6,74 @@ Created on Mon Mar 03 2025
 @author: ormondt
 """
 import time
+import logging
 
 import numpy as np
+import geopandas as gpd
 import xarray as xr
 from numba import njit
 from pyproj import CRS
 import matplotlib.path as path
 
 from hydromt_sfincs.workflows.subgrid import *
+from hydromt_sfincs.workflows.merge import merge_multi_dataarrays
+from hydromt_sfincs.workflows.bathymetry import burn_river_rect
 
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 def build_subgrid_table_quadtree(
-    grid,
-    bathymetry_sets,
-    roughness_sets,
-    manning_land=0.06,
-    manning_water=0.020,
-    manning_level=1.0,
-    nr_levels=10,
-    nr_subgrid_pixels=20,
-    max_gradient=999.0,
-    depth_factor=1.0,
-    huthresh=0.01,
-    zmin=-999999.0,
-    zmax=999999.0,
-    weight_option="min",
-    roughness_type="manning",
-    bathymetry_database=None,
-    quiet=True,
-    progress_bar=None,
-    logger=None,
+    grid: xr.Dataset,
+    bathymetry_sets: list[dict],
+    roughness_sets: list[dict] = [],
+    river_sets: list[dict] = [],
+    manning_land: float = 0.06,
+    manning_water: float = 0.020,
+    manning_level: float = 1.0,
+    nr_levels: int = 10,
+    nr_subgrid_pixels: int = 20,
+    max_gradient: float = 999.0,
+    depth_factor: float = 1.0,
+    huthresh: float = 0.01,
+    zmin: float = -999999.0,
+    zmax: float = 999999.0,
+    weight_option: str = "min",
+    roughness_type: str = "manning",
+    buffer_cells: int = 0,
+    write_dep_tif: bool = False,
+    write_man_tif: bool = False,
+    highres_dir: str = None,    
+    bathymetry_database: object = None,
+    quiet: bool = True,
+    progress_bar: object = None,
+    logger: logging.Logger = None,
 ) -> xr.Dataset:
     subgrid_table = SubgridTableQuadtree()
 
     subgrid_table.build(
-        grid,
-        bathymetry_sets,
-        roughness_sets,
-        manning_land,
-        manning_water,
-        manning_level,
-        nr_levels,
-        nr_subgrid_pixels,
-        max_gradient,
-        depth_factor,
-        huthresh,
-        zmin,
-        zmax,
-        weight_option,
-        roughness_type,
-        bathymetry_database,
-        quiet,
-        progress_bar,
-        logger,
+        grid=grid,
+        bathymetry_sets=bathymetry_sets,
+        roughness_sets=roughness_sets,
+        river_sets=river_sets,
+        manning_land=manning_land,
+        manning_water=manning_water,
+        manning_level=manning_level,
+        nr_levels=nr_levels,
+        nr_subgrid_pixels=nr_subgrid_pixels,
+        max_gradient=max_gradient,
+        depth_factor=depth_factor,
+        huthresh=huthresh,
+        zmin=zmin,
+        zmax=zmax,
+        weight_option=weight_option,
+        roughness_type=roughness_type,
+        bathymetry_database=bathymetry_database,
+        quiet=quiet,
+        progress_bar=progress_bar,
+        logger=logger,
+        buffer_cells=buffer_cells,
+        write_dep_tif=write_dep_tif,
+        write_man_tif=write_man_tif,
+        highres_dir=highres_dir,
     )
 
     return subgrid_table.ds
@@ -70,25 +85,30 @@ class SubgridTableQuadtree:
 
     def build(
         self,
-        grid,  # xugrid dataset (i.e. model.grid)
-        bathymetry_sets,  # list of bathymetry datasets
-        roughness_sets,  # list of roughness datasets
-        manning_land,
-        manning_water,
-        manning_level,
-        nr_levels,
-        nr_subgrid_pixels,
-        max_gradient,
-        depth_factor,
-        huthresh,
-        zmin,
-        zmax,
-        weight_option,
-        roughness_type,
-        bathymetry_database,
-        quiet,
-        progress_bar,
-        logger,
+        grid: xr.Dataset,
+        bathymetry_sets: list[dict],
+        roughness_sets: list[dict] = [],
+        river_sets: list[dict] = [],
+        manning_land: float = 0.04,
+        manning_water: float = 0.02,
+        manning_level: float = 1.0,
+        nr_levels: int = 10,
+        nr_subgrid_pixels: int = 20,
+        max_gradient: float = 5.0,
+        depth_factor: float = 1.0,
+        huthresh: float = 0.01,
+        zmin: float = -999999.0,
+        zmax: float = 999999.0,
+        weight_option: str = "min",
+        roughness_type: str = "manning",
+        buffer_cells: int = 0,
+        write_dep_tif: bool = False,
+        write_man_tif: bool = False,
+        highres_dir: str = None,
+        bathymetry_database: object = None,
+        quiet: bool = True,
+        progress_bar: object = None,
+        logger: logging.Logger = None,
     ):
         version = "1.0"
 
@@ -366,34 +386,59 @@ class SubgridTableQuadtree:
                     msg = "Getting bathy/topo ..."
                     log_info(msg, logger, quiet)
 
+                    da_sbg = build_pixel_matrix(
+                        x0=grid.attrs["x0"],
+                        y0=grid.attrs["y0"], 
+                        dxp=dxp,  
+                        dyp=dyp, 
+                        bm0=bm0, 
+                        bm1=bm1, 
+                        bn0=bn0, 
+                        bn1=bn1, 
+                        rotation=grid.attrs["rotation"], 
+                        refi=refi
+                        )
+                    da_sbg.raster.set_crs(crs)
+
                     if bathymetry_database:
                         # Delft Dashboard
                         # Get bathymetry on subgrid from bathymetry database
 
-                        # Build the pixel matrix
-                        x00 = 0.5 * dxp + bm0 * refi * dxp
-                        x01 = x00 + (bm1 - bm0 + 1) * refi * dxp
-                        y00 = 0.5 * dyp + bn0 * refi * dyp
-                        y01 = y00 + (bn1 - bn0 + 1) * refi * dyp
-
-                        x0 = np.arange(x00, x01, dxp)
-                        y0 = np.arange(y00, y01, dyp)
-                        xg0, yg0 = np.meshgrid(x0, y0)
-
-                        # Rotate and translate
-                        xg = grid.attrs["x0"] + cosrot * xg0 - sinrot * yg0
-                        yg = grid.attrs["y0"] + sinrot * xg0 + cosrot * yg0
-
-                        # Clear variables
-                        del x0, y0, xg0, yg0
+                        xg = da_sbg["xc"].values
+                        yg = da_sbg["yc"].values
 
                         zg = bathymetry_database.get_bathymetry_on_grid(
                             xg, yg, crs, bathymetry_sets, method="linear"
                         )
+
+                        # replace NaNs with 0.0
+                        # FIXME this is a very bad idea?!!!
+                        zg[np.isnan(zg)] = 0.0
+
                     else:
                         # HydroMT
-                        # zg = da_dep.values
-                        pass
+                        da_dep = merge_multi_dataarrays(
+                            da_list=bathymetry_sets[ilev],
+                            da_like=da_sbg,
+                            buffer_cells=0,
+                            interp_method="linear",
+                        )
+
+                        if np.any(np.isnan(da_dep.values)) > 0:
+                            npx = int(np.sum(np.isnan(da_dep.values)))
+                            logger.warning(
+                                f"Interpolate elevation data at {npx} subgrid pixels"
+                            )
+
+                        # always interpolate/extrapolate to avoid NaN values
+                        da_dep = da_dep.raster.interpolate_na(
+                            method="rio_idw", extrapolate=True
+                        )
+
+                        zg = da_dep.values
+
+                        # TODO add burning of rivers .... 
+                        # FIXME going through merging datasets twice seems very inefficient
 
                     # Multiply zg with depth factor (had to use 0.9746 to get arrival
                     # times right in the Pacific)
@@ -402,9 +447,6 @@ class SubgridTableQuadtree:
                     # Set minimum depth
                     zg = np.maximum(zg, zminimum)
                     zg = np.minimum(zg, zmaximum)
-
-                    # replace NaNs with 0.0
-                    zg[np.isnan(zg)] = 0.0
 
                     ##########################
                     # Process cells in block #
@@ -551,85 +593,123 @@ class SubgridTableQuadtree:
                     msg = "Getting bathy/topo ..."
                     log_info(msg, logger, quiet)
 
+                    da_sbg_uv = build_pixel_matrix(
+                        x0=grid.attrs["x0"],
+                        y0=grid.attrs["y0"],
+                        dxp=dxp,
+                        dyp=dyp,
+                        bm0=bm0,
+                        bm1=bm1,
+                        bn0=bn0,
+                        bn1=bn1,
+                        rotation=grid.attrs["rotation"],
+                        refi=refi,
+                        uv_points=True,
+                    )
+                    da_sbg_uv.raster.set_crs(crs)
+
                     # Get the numpy array zg with bathy/topo values for this block
                     if bathymetry_database:
                         # Delft Dashboard
                         # Get bathymetry on subgrid from bathymetry database
 
-                        # Build the pixel matrix
-                        x00 = (
-                            0.5 * dxp + bm0 * refi * dxp - 0.5 * refi * dxp
-                        )  # start half a cell to the left
-                        x01 = x00 + (bm1 - bm0 + 1) * refi * dxp
-                        y00 = (
-                            0.5 * dyp + bn0 * refi * dyp - 0.5 * refi * dyp
-                        )  # start half a cell below
-                        y01 = y00 + (bn1 - bn0 + 1) * refi * dyp
-
-                        x0 = np.arange(x00, x01, dxp)
-                        y0 = np.arange(y00, y01, dyp)
-                        xg0, yg0 = np.meshgrid(x0, y0)
-
-                        # Rotate and translate
-                        xg = grid.attrs["x0"] + cosrot * xg0 - sinrot * yg0
-                        yg = grid.attrs["y0"] + sinrot * xg0 + cosrot * yg0
-
-                        # Clear variables
-                        del x0, y0, xg0, yg0
+                        xg = da_sbg_uv["xc"].values
+                        yg = da_sbg_uv["yc"].values
 
                         zg = bathymetry_database.get_bathymetry_on_grid(
                             xg, yg, crs, bathymetry_sets
                         )
 
+                        # Multiply zg with depth factor (had to use 0.9746 to get arrival
+                        # times right in the Pacific)
+                        # TODO this depth factor is also an option of the data-catalog stuff ...
+                        zg = zg * depth_factor
+
+                        # Set minimum depth
+                        zg = np.maximum(zg, zminimum)
+                        zg = np.minimum(zg, zmaximum)
+
+                        # replace NaNs with 0.0
+                        # FIXME this is a very bad idea?!!!
+                        zg[np.isnan(zg)] = 0.0
+
                     else:
                         # HydroMT
-                        # zg = da_dep.values
-                        pass
+                        da_dep = merge_multi_dataarrays(
+                            da_list=bathymetry_sets[ilev],
+                            da_like=da_sbg_uv,
+                            buffer_cells=0,
+                            interp_method="linear",
+                        )
 
-                    # Multiply zg with depth factor (had to use 0.9746 to get arrival
-                    # times right in the Pacific)
-                    zg = zg * depth_factor
+                        if np.any(np.isnan(da_dep.values)) > 0:
+                            npx = int(np.sum(np.isnan(da_dep.values)))
+                            logger.warning(
+                                f"Interpolate elevation data at {npx} subgrid pixels"
+                            )
+                        # always interpolate/extrapolate to avoid NaN values
+                        da_dep = da_dep.raster.interpolate_na(
+                            method="rio_idw", extrapolate=True
+                        )
 
-                    # Set minimum depth
-                    zg = np.maximum(zg, zminimum)
-                    zg = np.minimum(zg, zmaximum)
+                        # TODO this depth factor is also an option of the data-catalog stuff ...
+                        da_dep.values = da_dep.values * depth_factor
 
-                    # replace NaNs with 0.0
-                    zg[np.isnan(zg)] = 0.0
+                        # Set minimum depth
+                        da_dep = np.maximum(da_dep, zminimum)
+                        da_dep = np.minimum(da_dep, zmaximum)
+                        zg = da_dep.values
 
                     # Manning's n values
 
-                    # TODO: Implement roughness sets for HydroMT
-
                     # Initialize roughness of subgrid at NaN
-                    manning_grid = np.full(np.shape(xg), np.nan)
+                    manning_grid = np.full(da_sbg_uv.shape, np.nan)
 
-                    if roughness_sets:  # this still needs to be implemented
-                        # manning_grid = bathymetry_database.get_bathymetry_on_grid(
-                        #     xg, yg, crs, roughness_sets
-                        # )
-                        # Loop through roughness sets, check if one has polygon file
-                        manning_grid = bathymetry_database.get_bathymetry_on_grid(
-                            xg, yg, crs, roughness_sets
-                        )
+                    if len(roughness_sets) > 0: 
+                        if bathymetry_database:
+                            # Loop through roughness sets, check if one has polygon file
+                            manning_grid = bathymetry_database.get_bathymetry_on_grid(
+                                xg, yg, crs, roughness_sets
+                            )
 
-                        for roughness_set in roughness_sets:
-                            if (
-                                "polygon_file" in roughness_set
-                                and "value" in roughness_set
-                            ):
-                                polygon_file = roughness_set["polygon_file"]
-                                # Read the polygon file and get the values
-                                gdf = gpd.read_file(polygon_file)
-                                value = roughness_set["value"]
+                            for roughness_set in roughness_sets:
+                                if (
+                                    "polygon_file" in roughness_set
+                                    and "value" in roughness_set
+                                ):
+                                    polygon_file = roughness_set["polygon_file"]
+                                    # Read the polygon file and get the values
+                                    gdf = gpd.read_file(polygon_file)
+                                    value = roughness_set["value"]
 
-                                # Loop through polygons in gdf
-                                inpols = np.full(xg.shape, False)
-                                for ip, polygon in gdf.iterrows():
-                                    inpol = inpolygon(xg, yg, polygon["geometry"])
-                                    inpols = np.logical_or(inpols, inpol)
+                                    # Loop through polygons in gdf
+                                    inpols = np.full(xg.shape, False)
+                                    for ip, polygon in gdf.iterrows():
+                                        inpol = inpolygon(xg, yg, polygon["geometry"])
+                                        inpols = np.logical_or(inpols, inpol)
 
-                                manning_grid[inpols] = value
+                                    manning_grid[inpols] = value
+                        else:
+                            da_man = merge_multi_dataarrays(
+                                da_list=roughness_sets,
+                                da_like=da_sbg_uv,
+                                interp_method="linear",
+                                buffer_cells=buffer_cells,
+                            )
+                            # raise warning if NaN values in active cells
+                            if np.isnan(da_man.values).any():
+                                npx = int(np.sum(np.isnan(da_man.values)))
+                                logger.warning(
+                                    f"Fill manning roughness data at {npx} subgrid pixels with default values"
+                                )
+                            # always fill based on land/sea elevation to avoid NaN values
+                            da_man0 = xr.where(
+                                da_dep >= manning_level, manning_land, manning_water
+                            )
+                            da_man = da_man.where(~np.isnan(da_man), da_man0)
+                            # convert to numpy values
+                            manning_grid=da_man.values
+
                     # Fill in remaining NaNs with default values
                     isn = np.where(np.isnan(manning_grid))
                     try:
@@ -639,6 +719,17 @@ class SubgridTableQuadtree:
                     except:
                         pass
                     manning_grid[(isn and np.where(zg > manning_level))] = manning_land
+
+                    # burn rivers in bathymetry and manning
+                    if len(river_sets) > 0:
+                        logger.debug("Burn rivers in bathymetry and manning data")
+                        for riv_kwargs in river_sets:
+                            da_dep, da_man = burn_river_rect(
+                                da_elv=da_dep, da_man=da_man, logger=logger, **riv_kwargs
+                            )
+                        zg = da_dep.values
+                        manning_grid = da_man.values
+
 
                     ###############################
                     # Process U/V points in block #
@@ -899,391 +990,6 @@ def process_block_uv_points(
     )
 
 
-@njit
-def get_dzdh(z, V, a):
-    # change in level per unit of volume (m/m)
-    dz = np.diff(z)
-    # change in volume (normalized to meters)
-    dh = np.maximum(np.diff(V) / a, 0.001)
-    return dz / dh
-
-
-@njit
-def isclose(a, b, rtol=1e-05, atol=1e-08):
-    return abs(a - b) <= (atol + rtol * abs(b))
-
-
-@njit
-def subgrid_v_table(
-    elevation: np.ndarray,
-    dx: float,
-    dy: float,
-    nlevels: int,
-    zvolmin: float,
-    max_gradient: float,
-):
-    """
-    map vector of elevation values into a hypsometric volume - depth relationship
-    for one grid cell
-
-    Parameters
-    ----------
-    elevation: np.ndarray
-        subgrid elevation values for one grid cell [m]
-    dx: float
-        x-directional cell size (typically not known at this level) [m]
-    dy: float
-        y-directional cell size (typically not known at this level) [m]
-    nlevels: int
-        number of levels to use for the hypsometric curve
-    zvolmin: float
-        minimum elevation value to use for volume calculation (typically -20 m)
-    max_gradient: float
-        maximum gradient to use for volume calculation
-
-    Return
-    ------
-    z, V: np.ndarray
-        sorted elevation values, volume per elevation value
-    zmin, zmax: float
-        minimum, and maximum elevation values
-    """
-
-    # Cell area
-    a = float(elevation.size * dx * dy)
-
-    # Set minimum elevation to -20 (needed with single precision), and sort
-    ele_sort = np.sort(np.maximum(elevation, zvolmin).flatten())
-
-    # Make sure each consecutive point is larger than previous
-    for j in range(1, ele_sort.size):
-        if ele_sort[j] <= ele_sort[j - 1]:
-            ele_sort[j] += 1.0e-6
-
-    depth = ele_sort - ele_sort.min()
-
-    volume = np.zeros_like(depth)
-    volume[1:] = np.cumsum((np.diff(depth) * dx * dy) * np.arange(1, depth.size))
-
-    # Resample volumes to discrete levels
-    steps = np.arange(nlevels) / (nlevels - 1)
-    V = steps * volume.max()
-    dvol = volume.max() / (nlevels - 1)
-    # scipy not supported in numba jit
-    # z = interpolate.interp1d(volume, ele_sort)(V)
-    z = np.interp(V, volume, ele_sort)
-    dzdh = get_dzdh(z, V, a)
-    n = 0
-    while (
-        dzdh.max() > max_gradient and not (isclose(dzdh.max(), max_gradient))
-    ) and n < nlevels:
-        # reshape until gradient is satisfactory
-        idx = np.where(dzdh == dzdh.max())[0]
-        z[idx + 1] = z[idx] + max_gradient * (dvol / a)
-        dzdh = get_dzdh(z, V, a)
-        n += 1
-    return z, V, elevation.min(), z.max()
-
-
-@njit
-def subgrid_q_table(
-    elevation: np.ndarray,
-    rgh: np.ndarray,
-    nr_levels: int,
-    huthresh: float,
-    option: int = 2,
-    z_zmin_a: float = -99999.0,
-    z_zmin_b: float = -99999.0,
-    weight_option: str = "min",
-    roughness_type: str = "manning",
-):
-    """
-    map vector of elevation values into a hypsometric hydraulic radius - depth relationship for one u/v point
-    Parameters
-    ----------
-    elevation : np.ndarray (nr of pixels in one cell) containing subgrid elevation values for one grid cell [m]
-    rgh : np.ndarray (nr of pixels in one cell) containing subgrid roughness values for one grid cell [s m^(-1/3)]
-    nr_levels : int, number of vertical levels [-]
-    huthresh : float, threshold depth [m]
-    option : int, option to use "old" or "new" method for computing conveyance depth at u/v points
-    z_zmin_a : float, elevation of lowest pixel in neighboring cell A [m]
-    z_zmin_b : float, elevation of lowest pixel in neighboring cell B [m]
-    weight_option : str, weight of q between sides A and B ("min" or "mean")
-    roughness_type : str, "manning" or "chezy"
-
-    Returns
-    -------
-    zmin : float, minimum elevation [m]
-    zmax : float, maximum elevation [m]
-    havg : np.ndarray (nr_levels) grid-average depth for vertical levels [m]
-    nrep : np.ndarray (nr_levels) representative roughness for vertical levels [m1/3/s] ?
-    pwet : np.ndarray (nr_levels) wet fraction for vertical levels [-] ?
-    navg : float, grid-average Manning's n [m 1/3 / s]
-    ffit : float, fitting coefficient [-]
-    zz   : np.ndarray (nr_levels) elevation of vertical levels [m]
-    """
-    # Initialize output arrays
-    havg = np.zeros(nr_levels)
-    nrep = np.zeros(nr_levels)
-    pwet = np.zeros(nr_levels)
-    zz = np.zeros(nr_levels)
-
-    n = int(np.size(elevation))  # Nr of pixels in grid cell
-    # print(f"n = {n}")
-    # print(f"n05 = {int(n/2)}")
-    n05 = int(n / 2)  # Nr of pixels in half grid cell
-    # print(f"n05 = {n05}")
-
-    # Sort elevation and manning values by side A and B
-    dd_a = elevation[0:n05]
-    dd_b = elevation[n05:]
-    rgh_a = rgh[0:n05]
-    rgh_b = rgh[n05:]
-
-    # Ensure that pixels are at least as high as the minimum elevation in the neighbouring cells
-    # This should always be the case, but there may be errors in the interpolation to the subgrid pixels
-    dd_a = np.maximum(dd_a, z_zmin_a)
-    dd_b = np.maximum(dd_b, z_zmin_b)
-
-    # Determine min and max elevation
-    zmin_a = np.min(dd_a)
-    zmax_a = np.max(dd_a)
-    zmin_b = np.min(dd_b)
-    zmax_b = np.max(dd_b)
-
-    # Add huthresh to zmin
-    zmin = max(zmin_a, zmin_b) + huthresh
-    zmax = float(max(zmax_a, zmax_b))
-
-    # Make sure zmax is at least 0.01 m higher than zmin
-    zmax = max(zmax, zmin + 0.01)
-
-    # Determine bin size
-    # print("nr_levels -1= ", nr_levels -1)
-    dlevel = (zmax - zmin) / (nr_levels - 1)
-    # print("dlevel = ", dlevel)
-
-    # Option can be either 1 ("old") or 2 ("new")
-    # Should never use option 1 !
-    option = 2
-
-    # Loop through levels
-    for ibin in range(nr_levels):
-        # Top of bin
-        zbin = zmin + ibin * dlevel
-        zz[ibin] = zbin
-
-        h = np.maximum(zbin - elevation, 0.0)  # water depth in each pixel
-
-        h_a = np.maximum(
-            zbin - dd_a, 0.0
-        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
-        h_b = np.maximum(
-            zbin - dd_b, 0.0
-        )  # Depth of all pixels (but set min pixel height to zbot). Can be negative, but not zero (because zmin = zbot + huthresh, so there must be pixels below zb).
-
-        # # print min of rgh_a, rgh_b, rgh
-        # print("rgh_a = ", np.min(rgh_a))
-        # print("rgh_b = ", np.min(rgh_b))
-        # print("rgh = ", np.min(rgh))
-
-        if roughness_type == "manning":
-            manning_a = rgh_a
-            manning_b = rgh_b
-            manning = rgh
-        elif roughness_type == "chezy":
-            manning_a = (1.0 / rgh_a) * h_a ** (1.0 / 6.0)
-            manning_b = (1.0 / rgh_b) * h_b ** (1.0 / 6.0)
-            manning = (1.0 / rgh) * h ** (1.0 / 6.0)
-            manning_a = np.maximum(
-                manning_a, 0.001
-            )  # Set minimum value to avoid division by zero
-            manning_b = np.maximum(
-                manning_b, 0.001
-            )  # Set minimum value to avoid division by zero
-            manning = np.maximum(
-                manning, 0.001
-            )  # Set minimum value to avoid division by zero
-
-        # print("manning_a = ", np.min(manning_a))
-        # print("manning_b = ", np.min(manning_b))
-        # print("manning = ", np.min(manning))
-
-        # Side A
-        q_a = h_a ** (5.0 / 3.0) / manning_a  # Determine 'flux' for each pixel
-        q_a = np.mean(q_a)  # Grid-average flux through all the pixels
-        h_a = np.mean(h_a)  # Grid-average depth through all the pixels
-
-        # Side B
-        q_b = h_b ** (5.0 / 3.0) / manning_b  # Determine 'flux' for each pixel
-        q_b = np.mean(q_b)  # Grid-average flux through all the pixels
-        h_b = np.mean(h_b)  # Grid-average depth through all the pixels
-
-        # Compute q and h
-        q_all = np.mean(
-            h ** (5.0 / 3.0) / manning
-        )  # Determine grid average 'flux' for each pixel
-        h_all = np.mean(h)  # grid averaged depth of A and B combined
-        q_min = np.minimum(q_a, q_b)
-        h_min = np.minimum(h_a, h_b)
-
-        if option == 1:
-            # Use old 1 option (weighted average of q_ab and q_all) option (min at bottom bin, mean at top bin)
-            w = (ibin) / (
-                nr_levels - 1
-            )  # Weight (increase from 0 to 1 from bottom to top bin)
-            q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
-            hmean = h_all
-            # Wet fraction
-            pwet[ibin] = (zbin > elevation + huthresh).sum() / n
-
-        elif option == 2:
-            # Use newer 2 option (minimum of q_a an q_b, minimum of h_a and h_b increasing to h_all, using pwet for weighting) option
-            # This is done by making sure that the wet fraction is 0.0 in the first level on the shallowest side (i.e. if ibin==0, pwet_a or pwet_b must be 0.0).
-            # As a result, the weight w will be 0.0 in the first level on the shallowest side.
-
-            pwet_a = (zbin > dd_a).sum() / int(n / 2)
-            pwet_b = (zbin > dd_b).sum() / int(n / 2)
-
-            if ibin == 0:
-                # Ensure that at bottom level, either pwet_a or pwet_b is 0.0
-                if pwet_a < pwet_b:
-                    pwet_a = 0.0
-                else:
-                    pwet_b = 0.0
-            elif ibin == nr_levels - 1:
-                # Ensure that at top level, both pwet_a and pwet_b are 1.0
-                pwet_a = 1.0
-                pwet_b = 1.0
-
-            if weight_option == "mean":
-                # Weight increases linearly from 0 to 1 from bottom to top bin use percentage wet in sides A and B
-                w = 2 * np.minimum(pwet_a, pwet_b) / max(pwet_a + pwet_b, 1.0e-9)
-                q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
-                hmean = (
-                    1.0 - w
-                ) * h_min + w * h_all  # Weighted average of h_min and h_all
-
-            else:
-                # Take minimum of q_a and q_b
-                if q_a < q_b:
-                    q = q_a
-                    hmean = h_a
-                else:
-                    q = q_b
-                    hmean = h_b
-
-            pwet[ibin] = 0.5 * (pwet_a + pwet_b)  # Combined pwet_a and pwet_b
-
-        havg[ibin] = hmean  # conveyance depth
-        # print(f"q = {q}")
-        nrep[ibin] = hmean ** (5.0 / 3.0) / q  # Representative n for qmean and hmean
-
-    nrep_top = nrep[-1]
-    havg_top = havg[-1]
-
-    ### Fitting for nrep above zmax
-
-    # Determine nfit at zfit
-    zfit = float(zmax + zmax - zmin)
-    hfit = (
-        havg_top + zmax - zmin
-    )  # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
-
-    # Compute q and navg
-    if weight_option == "mean":
-        # Use entire uv point
-        h = np.maximum(zfit - elevation, 0.0)  # water depth in each pixel
-        q = np.mean(h ** (5.0 / 3.0) / manning)  # combined unit discharge for cell
-        navg = np.mean(manning)
-
-    else:
-        if roughness_type == "manning":
-            manning_a = rgh_a
-            manning_b = rgh_b
-            manning = rgh
-        elif roughness_type == "chezy":
-            manning_a = (1.0 / rgh_a) * h_a ** (1.0 / 6.0)
-            manning_b = (1.0 / rgh_b) * h_b ** (1.0 / 6.0)
-            manning = (1.0 / rgh) * h ** (1.0 / 6.0)
-            manning_a = np.maximum(
-                manning_a, 0.001
-            )  # Set minimum value to avoid division by zero
-            manning_b = np.maximum(
-                manning_b, 0.001
-            )  # Set minimum value to avoid division by zero
-            manning = np.maximum(
-                manning, 0.001
-            )  # Set minimum value to avoid division by zero
-
-        # Use minimum of q_a and q_b
-        if q_a < q_b:
-            h = np.maximum(zfit - dd_a, 0.0)  # water depth in each pixel
-
-            if roughness_type == "manning":
-                manning_a = rgh_a
-            elif roughness_type == "chezy":
-                manning_a = (1.0 / rgh_a) * h ** (1.0 / 6.0)
-                manning_a = np.maximum(
-                    manning_a, 0.001
-                )  # Set minimum value to avoid division by zero
-
-            q = np.mean(
-                h ** (5.0 / 3.0) / manning_a
-            )  # combined unit discharge for cell
-            navg = np.mean(manning_a)
-        else:
-            h = np.maximum(zfit - dd_b, 0.0)
-            if roughness_type == "manning":
-                manning_b = rgh_b
-            elif roughness_type == "chezy":
-                manning_b = (1.0 / rgh_b) * h ** (1.0 / 6.0)
-                manning_b = np.maximum(
-                    manning_b, 0.001
-                )  # Set minimum value to avoid division by zero
-            q = np.mean(h ** (5.0 / 3.0) / manning_b)
-            navg = np.mean(manning_b)
-
-    # print(f"qq = {q}")
-    nfit = hfit ** (5.0 / 3.0) / q
-
-    # Actually apply fit on gn2 (this is what is used in sfincs)
-    gnavg2 = float(9.81 * navg**2)
-    gnavg_top2 = float(9.81 * nrep_top**2)
-
-    # print("almost done")
-    # print(f"gnavg2 = {float(gnavg2)}")
-    # print(f"gnavg_top2 = {float(gnavg_top2)}")
-    # print(f"nrep_top = {float(nrep_top)}")
-    # print(f"zfit - zmax = {float(zfit - zmax)}")
-
-    if gnavg2 / gnavg_top2 > 0.99 and gnavg2 / gnavg_top2 < 1.01:
-        # gnavg2 and gnavg_top2 are almost identical
-        ffit = 0.0
-    else:
-        if navg > nrep_top:
-            if nfit > navg:
-                nfit = nrep_top + 0.9 * (navg - nrep_top)
-            if nfit < nrep_top:
-                nfit = nrep_top + 0.1 * (navg - nrep_top)
-        else:
-            if nfit < navg:
-                nfit = nrep_top + 0.9 * (navg - nrep_top)
-            if nfit > nrep_top:
-                nfit = nrep_top + 0.1 * (navg - nrep_top)
-        gnfit2 = float(9.81 * nfit**2)
-        zfit = max(zfit, zmax + 1.0e-6)
-        gnavg2 = max(gnavg2, gnfit2 + 1.0e-8)
-        ffit = (((gnavg2 - gnavg_top2) / (gnavg2 - gnfit2)) - 1) / (zfit - zmax)
-
-    # print(f"gnavg2 - gnfit2 = {gnavg2 - gnfit2}")
-    # print(f"zfit - zmax = {zfit - zmax}")
-    # print(f"ffit = {ffit}")
-    # print("done")
-
-    return zmin, zmax, havg, nrep, pwet, ffit, navg, zz
-
-
 def log_info(msg, logger, quiet):
     """Log info message to logger and print to console"""
     if logger:
@@ -1299,3 +1005,59 @@ def inpolygon(xq, yq, p):
     q = [(xq[i], yq[i]) for i in range(xq.shape[0])]
     p = path.Path([(crds[0], crds[1]) for i, crds in enumerate(p.exterior.coords)])
     return p.contains_points(q).reshape(shape)
+
+def build_pixel_matrix(x0, y0, dxp, dyp, bm0, bm1, bn0, bn1, rotation, refi, uv_points=False):
+    """
+    Builds a pixel matrix for a given mesh grid with rotation and translation.
+
+    Parameters:
+    - dxp: Horizontal step size in the x direction
+    - dyp: Vertical step size in the y direction
+    - bm0, bm1: Horizontal indices defining the bounds of the grid
+    - bn0, bn1: Vertical indices defining the bounds of the grid
+    - rotation: Rotation angle in degrees
+    - refi: Refinement factor
+    - uv_points: Boolean indicating if the matrix is for uv points (default is False)
+
+    Returns:
+    - da: xarray DataArray with the computed pixel matrix
+    """
+    # Calculate the bounds for x and y coordinates
+    if uv_points:
+        x00 = 0.5 * dxp + bm0 * refi * dxp - 0.5 * refi * dxp
+        y00 = 0.5 * dyp + bn0 * refi * dyp - 0.5 * refi * dyp
+    else:
+        x00 = 0.5 * dxp + bm0 * refi * dxp
+        y00 = 0.5 * dyp + bn0 * refi * dyp
+    x01 = x00 + (bm1 - bm0 + 1) * refi * dxp
+    y01 = y00 + (bn1 - bn0 + 1) * refi * dyp
+
+    # Create ranges for x and y coordinates
+    xx = np.arange(x00, x01, dxp)
+    yy = np.arange(y00, y01, dyp)
+
+    # Create meshgrid for the coordinates
+    xg0, yg0 = np.meshgrid(xx, yy)
+
+    # Compute the rotation angle and its cosine and sine
+    cosrot = np.cos(rotation * np.pi / 180)
+    sinrot = np.sin(rotation * np.pi / 180)
+
+    # Apply rotation and translation
+    xg = x0 + cosrot * xg0 - sinrot * yg0
+    yg = y0 + sinrot * xg0 + cosrot * yg0
+
+    # Define coordinates for the DataArray
+    coords = {
+        "yc": (("y", "x"), yg),
+        "xc": (("y", "x"), xg),
+    }
+
+    # Create DataArray with initial zero values
+    da = xr.DataArray(
+        np.zeros(((bn1 - bn0 + 1) * refi, (bm1 - bm0 + 1) * refi)),
+        dims=("y", "x"),
+        coords=coords,
+    )
+
+    return da
