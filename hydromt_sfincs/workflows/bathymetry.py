@@ -10,8 +10,8 @@ from scipy.interpolate import interp1d
 from shapely.geometry import LineString, MultiLineString, MultiPoint, Point
 from shapely.ops import linemerge, snap, split, unary_union
 
-from hydromt.gis._gis_utils import _parse_crs as parse_crs
-from hydromt.gis._vector_utils import _nearest as nearest
+from hydromt.gis.gis_utils import parse_crs
+from hydromt.gis.vector_utils import nearest
 
 logger = logging.getLogger(__name__)
 
