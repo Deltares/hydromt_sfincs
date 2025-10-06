@@ -48,8 +48,8 @@ def test_quadtree_io(tmp_dir):
     # assert the msk variable is the same
     assert np.sum(mod1.quadtree_grid.data["mask"].values) == 4298
     # assert the dep variable is the same
-    assert np.sum(mod0.quadtree_grid.data["dep"].values) == np.sum(
-        mod1.quadtree_grid.data["dep"].values
+    assert np.sum(mod0.quadtree_grid.data["z"].values) == np.sum(
+        mod1.quadtree_grid.data["z"].values
     )
 
     # remove the files, they both get locked because of loading after closure?

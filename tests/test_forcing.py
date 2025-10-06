@@ -54,7 +54,7 @@ def test_create_meteo_latlon(tmp_dir):
         rotated=False,
         dec_origin=3,
     )
-    mod.mask.create(mask=region)
+    mod.mask.create(include_polygon=region)
 
     # set the model time
     mod.config.update(
