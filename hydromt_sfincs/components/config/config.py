@@ -37,7 +37,7 @@ class SfincsConfig(ModelComponent):
         if not Path(self._filename).is_absolute():
             # If not absolute, join with the model root path
             root_path = self.model.root.path.resolve()
-            self._filename = root_path / self._filename
+            self._filename = root_path / "sfincs.inp"
         return self._filename
 
     def read(self) -> None:

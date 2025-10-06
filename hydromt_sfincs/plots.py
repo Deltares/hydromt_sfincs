@@ -272,8 +272,9 @@ def plot_basemap(
     kwargs0.update(kwargs)
     # make nice cmap
     if "cmap" not in kwargs or "norm" not in kwargs:
-        if variable == "dep" and "dep" in ds:
-            vmin, vmax = ds["dep"].raster.mask_nodata().quantile([0.0, 0.98]).values
+        depth_vars = ["dep", "z"]
+        if variable in depth_vars and variable in ds:
+            vmin, vmax = ds[variable].raster.mask_nodata().quantile([0.0, 0.98]).values
             vmin, vmax = int(kwargs.pop("vmin", vmin)), int(kwargs.pop("vmax", vmax))
             c_dem = plt.cm.terrain(np.linspace(0.25, 1, vmax))
             if vmin < 0:

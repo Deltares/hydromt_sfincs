@@ -1,6 +1,8 @@
 import logging
 import os
+import gc
 from os.path import isfile
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Union
 
@@ -9,11 +11,22 @@ import numpy as np
 import pandas as pd
 from pyproj import CRS, Transformer
 import shapely
+import rasterio
+from rasterio.transform import from_origin
+from rasterio.enums import Resampling
+
 import xarray as xr
 import xugrid as xu
 
+from hydromt import hydromt_step
 from hydromt.model.components import MeshComponent
+from hydromt.model.processes.grid import create_grid_from_region
 
+from hydromt_sfincs.utils import make_regular_grid, partition_quadtree
+from hydromt_sfincs.workflows.merge import (
+    merge_multi_dataarrays,
+    merge_multi_dataarrays_on_mesh,
+)
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
 # optional dependency
@@ -29,7 +42,7 @@ except ImportError:
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 _QT_MAPS = ["vol"]
 
@@ -51,10 +64,12 @@ class SfincsQuadtreeGrid(MeshComponent):
     # NOTE @data and @initialize are inherited from the MeshComponent
 
     @property
-    def crs(self):
-        if self.data is None:
-            return None
-        return self.data.grid.crs
+    def crs(self) -> CRS:
+        """Return the coordinate reference system of the regular grid."""
+        if self.data.grid.crs is not None:
+            return self.data.grid.crs
+        else:
+            raise ValueError("No CRS defined for the quadtree grid.")
 
     @property
     def face_coordinates(self):
@@ -138,7 +153,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
 
             # rename variables to match Python conventions
-            ds = ds.rename({"z": "dep"}) if "z" in ds else ds
+            # ds = ds.rename({"z": "dep"}) if "z" in ds else ds
             # and for backwards compatibility msk (old) -> mask (new)
             ds = ds.rename({"msk": "mask"}) if "msk" in ds else ds
             ds = (
@@ -153,6 +168,9 @@ class SfincsQuadtreeGrid(MeshComponent):
                 setattr(self, key, value)
 
             self._data = ds
+
+        # Make sure epsg is stored in the config as well
+        self.model.config.set("epsg", self.model.crs.to_epsg())
 
         # check which seperate data variables should be read
         if data_vars is None:
@@ -235,6 +253,9 @@ class SfincsQuadtreeGrid(MeshComponent):
             "qtrfile", value=filename, default="sfincs.nc"
         )
 
+        # Make sure epsg is stored in the config as well
+        self.model.config.set("epsg", self.model.crs.to_epsg())
+
         # And write the file
         ds.attrs = attrs
         ds.to_netcdf(abs_file_path)
@@ -249,9 +270,9 @@ class SfincsQuadtreeGrid(MeshComponent):
         dx: float,
         dy: float,
         rotation: float,
+        epsg: int,
         refinement_polygons: Optional[gpd.GeoDataFrame] = None,
-        bathymetry_sets: Optional[List] = None,
-        bathymetry_database: Optional = None,
+        datasets_dep: List[List[dict]] = None,
     ):
         """Build the Quadtree grid.
 
@@ -271,21 +292,42 @@ class SfincsQuadtreeGrid(MeshComponent):
             Cell size in y-direction.
         rotation : float
             Rotation angle of the grid in degrees.
+        epsg : int
+            EPSG code of the coordinate reference system.
         refinement_polygons : gpd.GeoDataFrame, optional
             GeoDataFrame with polygons that define areas where the grid should be refined.
-        bathymetry_sets : list, optional
-            List of bathymetry sets.
-        bathymetry_database : str, optional
-            Path to the bathymetry database.
+        datasets_dep : List[List[dict]], optional
+            List of lists of dictionaries with variable names and dataset names to use for depth
         """
 
         # Clear datashader dataframes
         self.clear_datashader_dataframe()
         self.model.quadtree_mask.clear_datashader_dataframe()
 
-        # Get the CRS from the model config
-        epsg = self.model.config.get("epsg", None)
-        crs = CRS.from_epsg(epsg) if epsg is not None else CRS.from_epsg(4326)
+        # Set grid type and crs in model
+        self.model.grid_type = "quadtree"
+        crs = CRS.from_epsg(epsg)
+
+        datasets_dep_per_level = []
+        if datasets_dep is not None:
+            # Create grid without refinement first
+            # NOTE this is used to determine model properties while parsing datasets_dep
+            self._data = make_regular_grid(
+                x0, y0, dx, dy, nmax, mmax, rotation, crs, make_ugrid=True
+            )
+            # Parse the datasets for all refinement levels
+            res = dx  # coarsest level
+            levels = set(refinement_polygons["refinement_level"].unique())
+            # convert to meters if geographic
+            if crs.is_geographic:
+                res = res * 111111.0
+            # append parsed datasets per level
+            for lev in range(max(levels)):
+                # compute resolution at level
+                res_level = res / (2**lev)
+                datasets_dep_per_level.append(
+                    self.model._parse_datasets_dep(datasets_dep, res=res_level)
+                )
 
         # Build the quadtree grid
         self._data = build_quadtree_xugrid(
@@ -298,8 +340,111 @@ class SfincsQuadtreeGrid(MeshComponent):
             rotation,
             crs,
             refinement_polygons=refinement_polygons,
-            bathymetry_sets=bathymetry_sets,
-            bathymetry_database=bathymetry_database,
+            datasets_dep=datasets_dep_per_level,
+        )
+
+        # Make sure epsg is stored in the config as well
+        self.model.config.set("epsg", self.model.crs.to_epsg())
+
+
+    def create_from_region(
+        self,
+        region: dict,
+        res: float = 100,
+        crs: Union[str, int] = "utm",
+        rotated: bool = False,
+        hydrography_fn: str = None,
+        basin_index_fn: str = None,
+        align: bool = True,
+        dec_origin: int = 0,
+        dec_rotation: int = 3,
+        refinement_polygons: Optional[gpd.GeoDataFrame] = None,
+        datasets_dep: List[List[dict]] = None,
+    ):
+        """Setup a quadtree grid from a region.
+
+        Parameters
+        ----------
+        region : dict
+            Dictionary describing region of interest, e.g.:
+
+            * {'bbox': [xmin, ymin, xmax, ymax]}
+            * {'geom': 'path/to/polygon_geometry'}
+
+            Note: For the 'bbox' option the coordinates need to be provided in WG84/EPSG:4326.
+
+            For a complete overview of all region options,
+            see :py:func:`hydromt.workflows.basin_mask.parse_region`
+        res : float, optional
+            grid resolution, by default 100 m
+        crs : Union[str, int], optional
+            coordinate reference system of the grid
+            if "utm" (default) the best UTM zone is selected
+            else a pyproj crs string or epsg code (int) can be provided
+        rotated : bool, optional
+            if True, a minimum rotated rectangular grid is fitted around the region, by default False
+        hydrography_fn : str
+            Name of data source for hydrography data.
+        basin_index_fn : str
+            Name of data source with basin (bounding box) geometries associated with
+            the 'basins' layer of `hydrography_fn`. Only required if the `region` is
+            based on a (sub)(inter)basins without a 'bounds' argument.
+        align : bool, optional
+            If True (default), align target transform to resolution.
+            Note that this has only been implemented for non-rotated grids.
+        dec_origin : int, optional
+            number of decimals to round the origin coordinates, by default 0
+        dec_rotation : int, optional
+            number of decimals to round the rotation angle, by default 3
+        refinement_polygons : gpd.GeoDataFrame, optional
+            GeoDataFrame with polygons that define areas where the grid should be refined.
+        datasets_dep : List[List[dict]], optional
+            List of lists of dictionaries with variable names and dataset names to use for depth
+
+        See Also
+        --------
+        hydromt.workflows.basin_mask.parse_region
+        """
+
+        ds = create_grid_from_region(
+            region=region,
+            data_catalog=self.model.data_catalog,
+            res=res,
+            crs=crs,
+            region_crs=4326,
+            rotated=rotated,
+            hydrography_path=hydrography_fn,
+            basin_index_path=basin_index_fn,
+            add_mask=False,
+            align=align,
+            dec_origin=dec_origin,
+            dec_rotation=dec_rotation,
+        )
+
+        # check for y-resolution
+        # TODO discuss with hydrom-core if this behavior is desired
+        if ds.raster.res[1] < 0:
+            ds = ds.raster.flipud()
+
+        # derive grid properties from grid
+        nmax, mmax = ds.raster.shape
+        dx, dy = ds.raster.res
+        x0, y0 = ds.raster.origin
+        rotation = ds.raster.rotation
+        epsg = ds.raster.crs.to_epsg()
+
+        # now parse everything to the quadtree create method
+        self.create(
+            x0=x0,
+            y0=y0,
+            nmax=nmax,
+            mmax=mmax,
+            dx=dx,
+            dy=dy,
+            rotation=rotation,
+            epsg=epsg,
+            refinement_polygons=refinement_polygons,
+            datasets_dep=datasets_dep,
         )
 
     def cut_inactive_cells(self):
@@ -308,10 +453,17 @@ class SfincsQuadtreeGrid(MeshComponent):
         self.model.quadtree_mask.clear_datashader_dataframe()
         # Cut inactive cells
         self._data = cut_inactive_cells(self.data)
+        # self.get_exterior() # FIXME - TL: why is this needed in cht_sfincs? > also, is now a property
 
-    def snap_to_grid(self, polyline, max_snap_distance=1.0):
+    def snap_to_grid(self, polyline):
         if len(polyline) == 0:
             return gpd.GeoDataFrame()
+        # If geographic coordinates, set max_snap_distance to 0.1 degrees
+        if self.model.crs.is_geographic:
+            max_snap_distance = 1.0e-6
+        else:
+            max_snap_distance = 0.1
+
         geom_list = []
         for _, line in polyline.iterrows():
             geom = line["geometry"]
@@ -420,9 +572,8 @@ class SfincsQuadtreeGrid(MeshComponent):
             ifirst = np.zeros(nr_refinement_levels, dtype=int)
             for ilev in range(0, nr_refinement_levels):
                 # Find index of first cell with this level
-                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)[
-                    0
-                ][0]
+                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)
+                [0][0]
             self.ifirst = ifirst
 
         ifirst = self.ifirst
@@ -510,6 +661,156 @@ class SfincsQuadtreeGrid(MeshComponent):
     def clear_datashader_dataframe(self):
         """Clears the datashader dataframe"""
         self.datashader_dataframe = pd.DataFrame()
+
+    def make_topobathy_cog(
+        self, filename, bathymetry_sets, bathymetry_database=None, dx=10.0
+    ):
+        """Make a COG file with topobathy. Now only works for projected coordinates. This always make the topobathy COG in the same projection as the model."""
+
+        # Get the bounds of the grid
+        bounds = self.bounds()
+
+        x0 = bounds[0]
+        y0 = bounds[1]
+        x1 = bounds[2]
+        y1 = bounds[3]
+
+        # Round up and down to nearest dx
+        x0 = x0 - (x0 % dx)
+        x1 = x1 + (dx - x1 % dx)
+        y0 = y0 - (y0 % dx)
+        y1 = y1 + (dx - y1 % dx)
+
+        xx = np.arange(x0, x1, dx) + 0.5 * dx
+        yy = np.arange(y1, y0, -dx) - 0.5 * dx
+        zz = np.empty(
+            (
+                len(yy),
+                len(xx),
+            ),
+            dtype=np.float32,
+        )
+
+        xx, yy = np.meshgrid(xx, yy)
+        zz = bathymetry_database.get_bathymetry_on_points(
+            xx, yy, dx, self.model.crs, bathymetry_sets
+        )
+
+        # And now to cog (use -999 as the nodata value)
+        with rasterio.open(
+            filename,
+            "w",
+            driver="COG",
+            height=zz.shape[0],
+            width=zz.shape[1],
+            count=1,
+            dtype=zz.dtype,
+            crs=self.model.crs,
+            transform=from_origin(x0, y1, dx, dx),
+            nodata=-999.0,
+        ) as dst:
+            dst.write(zz, 1)
+
+    def make_index_cog(self, filename, filename_topobathy):
+        # def make_index_cog(self, filename, dx=10.0):
+        """Make a COG file with indices of the quadtree grid cells."""
+
+        # Read coordinates from topobathy file
+        with rasterio.open(filename_topobathy) as src:
+            # Get the bounds of the grid
+            bounds = src.bounds
+            dx = src.res[0]
+            # Get the CRS of the grid
+            self.model.crs = src.crs
+            # Get the nodata value
+            nodata = src.nodata
+            # Get the transform of the grid
+            transform = src.transform
+            # Get the width and height of the grid
+            width = src.width
+            height = src.height
+
+        # Now create numpy arrays with the coordinates of geotiff
+        # Get the coordinates of the grid
+        x0 = bounds.left
+        y0 = bounds.bottom
+        x1 = bounds.right
+        y1 = bounds.top
+
+        # # Round up and down to nearest dx
+        # x0 = x0 - (x0 % dx)
+        # x1 = x1 + (dx - x1 % dx)
+        # y0 = y0 - (y0 % dx)
+        # y1 = y1 + (dx - y1 % dx)
+
+        xx = np.arange(x0, x1, dx) + 0.5 * dx
+        yy = np.arange(y1, y0, -dx) - 0.5 * dx
+
+        nodata = 2147483647
+
+        # # # Get the bounds of the grid
+        # # bounds = self.bounds()
+
+        # x0 = bounds[0]
+        # y0 = bounds[1]
+        # x1 = bounds[2]
+        # y1 = bounds[3]
+
+        # # Round up and down to nearest dx
+        # x0 = x0 - (x0 % dx)
+        # x1 = x1 + (dx - x1 % dx)
+        # y0 = y0 - (y0 % dx)
+        # y1 = y1 + (dx - y1 % dx)
+
+        xx = np.arange(x0, x1, dx) + 0.5 * dx
+        yy = np.arange(y1, y0, -dx) - 0.5 * dx
+        ii = np.empty(
+            (
+                len(yy),
+                len(xx),
+            ),
+            dtype=np.uint32,
+        )
+
+        # # Create empty ds
+        # ds = xr.Dataset(
+        #     {
+        #         "index": (["y", "x"], ii),
+        #     },
+        #     coords={
+        #         "x": xx,
+        #         "y": yy,
+        #     },
+        # )
+        # # Set no data value in ds
+        # ds["index"].attrs["_FillValue"] = nodata
+
+        # Go through refinement levels in grid
+        xx, yy = np.meshgrid(xx, yy)
+        indices = self.get_indices_at_points(xx, yy)
+        indices[np.where(indices == -999)] = nodata
+
+        # Fill the array with indices
+        ii[:, :] = indices
+
+        # # Write first to netcdf
+        # ds.to_netcdf("index.nc")
+
+        # And now to cog (use -999 as the nodata value)
+        with rasterio.open(
+            filename,
+            "w",
+            driver="COG",
+            height=height,
+            width=width,
+            count=1,
+            dtype=ii.dtype,
+            crs=self.model.crs,
+            transform=transform,
+            nodata=nodata,
+            overview_resampling=Resampling.nearest,
+        ) as dst:
+            dst.write(ii, 1)
 
 
 def binary_search(val_array, vals):
