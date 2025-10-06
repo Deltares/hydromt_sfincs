@@ -1,7 +1,9 @@
+import logging
 from pathlib import Path
-from typing import List, Union
+from typing import TYPE_CHECKING, List, Union
 
 import geopandas as gpd
+from hydromt import hydromt_step
 import numpy as np
 import pandas as pd
 from pyproj import Transformer
@@ -11,36 +13,39 @@ import xarray as xr
 from hydromt.model import Model
 from hydromt.model.components import ModelComponent
 
+from hydromt.gis.vector import GeoDataset
 from hydromt_sfincs import utils
+from .boundary_conditions import SfincsBoundaryBase
 
+if TYPE_CHECKING:
+    from hydromt_sfincs import SfincsModel
 
-class SnapWaveBoundaryConditions(ModelComponent):
-    def __init__(
-        self,
-        model: Model,
-    ):
-        self.data = gpd.GeoDataFrame()
-        super().__init__(
-            model=model,
-        )
+logger = logging.getLogger(f"hydromt.{__name__}")
 
-    # @property
-    # def data(self) -> gpd.GeoDataFrame:
-    #     """Water level boundary conditions data.
+class SnapWaveBoundaryConditions(SfincsBoundaryBase):
+    """SnapWave boundary component for coupled SFINCS-SnapWave models.
+    This component builds on the SfincsBoundaryBase class of boundary_conditions.py.
+    """
 
-    #     Return pd.GeoDataFrame
-    #     """
-    #     if self._data is None:
-    #         self._initialize()
-    #     return self._data
+    # %% core HydroMT-SFINCS functions:
+    # __init__
+    # read
+    # read_boundary_points
+    # read_boundary_conditions_timeseries
+    # read_boundary_conditions_netcdf
+    # write
+    # write_boundary_points
+    # write_boundary_conditions_timeseries
+    # write_boundary_conditions_netcdf
+    # set > inherited from SfincsBoundaryBase
+    # delete
+    # clear
 
-    # def _initialize(self) -> None:
-    #     """Initialize boundary conditions data."""
-    #     if self._data is None:
-    #         self._data = gpd.GeoDataFrame()
+    def __init__(self, model: "SfincsModel"):
+        super().__init__(model)
 
     def read(self, format: str = None):
-        """Read SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
+        """Read SFINCS-SnapWave wave boundary conditions (snapwave*.bnd, *.bhs/btp/bwd/bds, files) or netcdf file.
 
         The format of the boundary conditions files can be specified,
         otherwise it is determined from the model configuration.
@@ -52,25 +57,29 @@ class SnapWaveBoundaryConditions(ModelComponent):
         """
 
         if format is None:
-            if self.model.config.get("netbndbzsbzifile"):
+            if self.model.config.get("netsnapwavefile"): #FIXME - discuss whether to change name or not
                 format = "netcdf"
             else:
                 format = "asc"
 
         if format == "asc":
-            self.read_boundary_points()
+            gdf = self.read_boundary_points()
             # Check if there are any points
-            if not self.data.empty:
-                self.read_boundary_conditions_timeseries()
-                # Read astro if bcafile is defined
-                if self.model.config.get("bcafile"):
-                    self.read_boundary_conditions_astro()
+            if not gdf.empty:
+                # Read timeseries per file
+                filenames = ["snapwave_bhsfile", "snapwave_btpfile", "snapwave_bwdfile", "snapwave_bdsfile"]
+                vars = ["hs", "tp", "wd", "ds"]
+                for i, varname in enumerate(filenames):  
+                    df = self.read_boundary_conditions_timeseries(var=vars[i], varname=varname)
+                    self.set(df=df, gdf=gdf, merge=False)
+
         elif format == "netcdf":
             # Read netcdf file
-            self.read_boundary_conditions_netcdf()
+            ds = self.read_boundary_conditions_netcdf()
+            self.set(geodataset=ds, merge=False)
 
     def read_boundary_points(self, filename: str | Path = None):
-        """Read SnapWave boundary condition points (*.bnd) file"""
+        """Read SnapWave boundary condition points snapwave_bndfile (*.bnd) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -88,50 +97,25 @@ class SnapWaveBoundaryConditions(ModelComponent):
         # Check if bnd file exists
         if not abs_file_path.exists():
             raise FileNotFoundError(
-                f"Boundary condition points file not found: {abs_file_path}"
+                f"WWave boundary condition points file not found: {abs_file_path}"
             )
 
-        # HydroMT does not have open_vector at the moment ...
-        # Read bnd file
-        # gdf = utils.read_xy(abs_file_path, crs=self.model.crs)
-        # # Add columns for timeseries and astro and add empty DataFrames
-        # gdf["timeseries"] = pd.DataFrame()
-        # gdf["astro"] = pd.DataFrame()
-        # # Add to self.data
-        # self.data = gdf
+        # Read snapwave_bnd file
+        # TODO check if we want read_xyn? Before we used read_xy, so without name column
+        gdf = utils.read_xyn(abs_file_path, crs=self.model.crs)
+        return gdf
 
-        # Read the bnd file
-        df = pd.read_csv(
-            abs_file_path, index_col=False, header=None, names=["x", "y"], sep="\s+"
-        )
-
-        gdf_list = []
-        # Loop through points
-        for ind in range(len(df.x.values)):
-            name = str(ind + 1).zfill(4)
-            x = df.x.values[ind]
-            y = df.y.values[ind]
-            point = shapely.geometry.Point(x, y)
-            d = {
-                "name": name,
-                "timeseries": pd.DataFrame(),
-                "geometry": point,
-            }
-            gdf_list.append(d)
-        self.data = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
-
-    def read_boundary_conditions_timeseries(self, filename: str | Path = None):
-        """Read SFINCS boundary condition timeseries (*.bhs, *.btp, *.bwd, *.bds) files"""
+    def read_boundary_conditions_timeseries(self, var: str, varname: str, filename: str | Path = None):
+        """Read SFINCS boundary condition timeseries (*.bhs, *.btp, *.bwd or *.bds) files"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
-
-        ### BHS file
-
+          
         # Get absolute file name and set it in config if snapwave_bhsfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "snapwave_bhsfile", value=filename
+            varname, value=filename
         )
+        #NOTE - filename=None here
 
         # Check if abs_file_path is None
         if abs_file_path is None:
@@ -141,101 +125,25 @@ class SnapWaveBoundaryConditions(ModelComponent):
         # Check if bzs file exists
         if not abs_file_path.exists():
             raise FileNotFoundError(
-                f"Boundary condition timeseries file not found: {abs_file_path}"
+                f"SnapWave boundary condition timeseries file not found: {abs_file_path}"
             )
 
-        # Read bhs file (this creates one DataFrame with all timeseries)
-        dfhs = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
+        # Read bzs file (this creates one DataFrame with all timeseries)
+        df = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
+        df.index.name = "time"
+        df.columns.name = str(var) # hs, tp, wd or ds
 
-        ### BTP file
-
-        # Get absolute file name and set it in config if snapwave_bhsfile is not None
-        abs_file_path = self.model.config.get_set_file_variable(
-            "snapwave_btpfile", value=filename
-        )
-
-        # Check if abs_file_path is None
-        if abs_file_path is None:
-            # File name not defined
-            return
-
-        # Check if bzs file exists
-        if not abs_file_path.exists():
-            raise FileNotFoundError(
-                f"Boundary condition timeseries file not found: {abs_file_path}"
-            )
-
-        # Read btp file (this creates one DataFrame with all timeseries)
-        dftp = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
-
-        ### BWD file
-
-        # Get absolute file name and set it in config if snapwave_bwdfile is not None
-        abs_file_path = self.model.config.get_set_file_variable(
-            "snapwave_bwdfile", value=filename
-        )
-
-        # Check if abs_file_path is None
-        if abs_file_path is None:
-            # File name not defined
-            return
-
-        # Check if snapwave_bwd file exists
-        if not abs_file_path.exists():
-            raise FileNotFoundError(
-                f"Boundary condition timeseries file not found: {abs_file_path}"
-            )
-
-        # Read bwd file (this creates one DataFrame with all timeseries)
-        dfwd = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
-
-        ### BDS file
-
-        # Get absolute file name and set it in config if snapwave_bdsfile is not None
-        abs_file_path = self.model.config.get_set_file_variable(
-            "snapwave_bdsfile", value=filename
-        )
-
-        # Check if abs_file_path is None
-        if abs_file_path is None:
-            # File name not defined
-            return
-
-        # Check if snapwave_bds file exists
-        if not abs_file_path.exists():
-            raise FileNotFoundError(
-                f"Boundary condition timeseries file not found: {abs_file_path}"
-            )
-
-        # Read bds file (this creates one DataFrame with all timeseries)
-        dfds = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
-
-        # Now we need to split the timeseries into the different points
-        for idx, row in self.data.iterrows():
-            # Get the timeseries for this point
-            tshs = pd.DataFrame(dfhs.iloc[:, idx])
-            tstp = pd.DataFrame(dftp.iloc[:, idx])
-            tswd = pd.DataFrame(dfwd.iloc[:, idx])
-            tsds = pd.DataFrame(dfds.iloc[:, idx])
-            # Set the column name to hs
-            tshs.columns = ["hs"]
-            tstp.columns = ["tp"]
-            tswd.columns = ["wd"]
-            tsds.columns = ["ds"]
-            # Concatenate the DataFrames
-            ts = pd.concat([tshs, tstp, tswd, tsds], axis=1)
-            # Add to the point
-            self.data.at[idx, "timeseries"] = ts
+        return df
 
     def read_boundary_conditions_netcdf(self, filename: str | Path = None):
-        """Read SFINCS boundary conditions netcdf file"""
+        """Read SFINCS-SnapWave boundary conditions netcdf file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Get absolute file name and set it in config if netbndbzsbzifile is not None
+        # Get absolute file name and set it in config if netsnapwavefile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "netbndbzsbzifile", value=filename
+            "netsnapwavefile", value=filename
         )
 
         # Check if abs_file_path is None
@@ -243,24 +151,25 @@ class SnapWaveBoundaryConditions(ModelComponent):
             # File name not defined
             return
 
-        # Check if netbndbzsbzifile exists
+        # Check if netsnapwavefile exists
         if not abs_file_path.exists():
             raise FileNotFoundError(
-                f"Boundary condition netcdf file not found: {abs_file_path}"
+                f"SnapWave boundary condition netcdf file not found: {abs_file_path}"
             )
 
         # Read netcdf file
-        ds = xr.open_dataset(abs_file_path)
+        ds = GeoDataset.from_netcdf(abs_file_path, crs=self.model.crs, chunks="auto")
 
-        # Loop through boundary points
-        # FIXME - we first need to get the points!
-        for ip, point in self.data.iterrows():
-            # Get the timeseries for this point
-            ts = ds["timeseries"].sel(point=ip).to_dataframe()
-            # Add to the point
-            self.data.at[ip, "timeseries"] = ts
-
-        ds.close()
+        # FIXME - should we check if the dataset has the right variables?
+        for var in ["hs", "tp", "wd", "ds"]:
+            if var not in ds.data:
+                raise ValueError(f"Variable {var} not found in SnapWave boundary conditions netcdf file!")
+        # FIXME - Should we check if the right dimensions are present?
+        for dim in ["time", "stations"]:
+            if dim not in ds.data.dims:
+                raise ValueError(f"Dimension {dim} not found in SnapWave boundary conditions netcdf file!")
+            
+        return ds    
 
     def write(self, format: str = None):
         """Write SnapWave boundary conditions (*.bnd, *.bhs, *.btp, *.bwd, *.bds files) or netcdf file.
@@ -271,7 +180,7 @@ class SnapWaveBoundaryConditions(ModelComponent):
         Parameters
         ----------
         format : str, optional
-            Format of the boundary conditions files, "asc" (default), or "netcdf".
+            Format of the boundary conditions files, "asc", or "netcdf" (default).
         """
 
         if self.data.empty:
@@ -279,16 +188,22 @@ class SnapWaveBoundaryConditions(ModelComponent):
             return
 
         if format is None:
-            if self.model.config.get("netbndsnapwavefile"):
-                format = "netcdf"
-            else:
+            if self.model.config.get("snapwave_bhsfile") or self.model.config.get("snapwave_btpfile") or self.model.config.get("snapwave_bwdfile") or self.model.config.get("snapwave_bdsfile"):
                 format = "asc"
+            else:
+                format = "netcdf" 
 
         if format == "asc":
             self.write_boundary_points()
-            self.write_boundary_conditions_timeseries()
+
+            # Write timeseries per file
+            filenames = ["snapwave_bhsfile", "snapwave_btpfile", "snapwave_bwdfile", "snapwave_bdsfile"]
+            vars = ["hs", "tp", "wd", "ds"] #FIXME - should be 'hs' or 'bhs'? in kernel is 'hs', but it's 'bhsfile'...
+            for i, varname in enumerate(filenames):  
+                self.write_boundary_conditions_timeseries(var=vars[i], varname=varname)
         else:
             self.write_boundary_conditions_netcdf()
+            #FIXME add check if right vars are present
 
     def write_boundary_points(self, filename: str | Path = None):
         """Write SnapWave boundary condition points (*.bnd) file"""
@@ -307,126 +222,193 @@ class SnapWaveBoundaryConditions(ModelComponent):
             fmt = "%11.6f"
         else:
             fmt = "%11.1f"
-        utils.write_xy(abs_file_path, self.data, fmt=fmt)
 
-    def write_boundary_conditions_timeseries(self, filename: str | Path = None):
+        # TODO check whether write_xyn or write_xy
+        utils.write_xyn(abs_file_path, self.gdf, fmt=fmt) #FIXME - is self.gdf correct?
+
+    def write_boundary_conditions_timeseries(self, var: str, varname: str, filename: str | Path = None):
         """Write SnapWave boundary condition timeseries (*.bhs, *.btp, *.bwd, *.bds) file"""
+
+        # Check that write mode is on
+        self.root._assert_write_mode()         
+
+        # Get absolute file name and set it in config if bzsfile is not None
+        abs_file_path = self.model.config.get_set_file_variable(
+            varname, value=filename, default="snapwave.b"+var
+        )
+
+        # parse data to dataframe
+        da = self.data[var].transpose("time", ...)
+        df = da.to_pandas()
+
+        # Write to file
+        utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
+
+    def write_boundary_conditions_netcdf(self, filename: str | Path = None):
+        """Write SFINCS boundary condition netcdf (*.nc) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
 
-        # BHS
-
-        # Get absolute file name and set it in config if snapwave_bhsfile is not None
+        # Get absolute file name and set it in config if netsnapwavefile is not None
         abs_file_path = self.model.config.get_set_file_variable(
-            "snapwave_bhsfile", value=filename, default="snapwave.bhs"
+            "netsnapwavefile", value=filename, default="snapwave.nc"
         )
+        # Check if abs_file_path is None
+        if abs_file_path is None:
+            # File name not defined
+            return
 
-        # Get all timeseries and stick in one DataFrame
-        df = pd.DataFrame()
-        for ip, point in self.data.iterrows():
-            df = pd.concat([df, point["timeseries"]["hs"]], axis=1)
+        ds = self.data
 
-        # Write to file
-        # This does NOT work at the moment!
-        # utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
-        # For now use 'ugly' to_csv method without control of column width
-        # Convert time index to datetime64
-        time = pd.to_datetime(df.index)
-        tref = self.model.config.get("tref")
-        time = (time - tref).total_seconds()
-        df.index = time
-        df.to_csv(
-            abs_file_path, index=True, sep=" ", header=False, float_format="%0.3f"
-        )
+        # FIXME - check if right vars are present - usefull?
+        for var in ["hs", "tp", "wd", "ds"]:
+            if var not in ds.data:
+                raise ValueError(f"Variable {var} not found in SnapWave self.data!")
+        # FIXME - check if the right dimensions are present - usefull?
+        for dim in ["time", "stations"]:
+            if dim not in ds.data.dims:
+                raise ValueError(f"Dimension {dim} not found in SnapWave self.data!")                    
 
-        # BTP
+        ds.vector.to_netcdf(abs_file_path)
 
-        # Get absolute file name and set it in config if snapwave_btpfile is not None
-        abs_file_path = self.model.config.get_set_file_variable(
-            "snapwave_btpfile", value=filename, default="snapwave.btp"
-        )
-
-        # Get all timeseries and stick in one DataFrame
-        df = pd.DataFrame()
-        for ip, point in self.data.iterrows():
-            df = pd.concat([df, point["timeseries"]["tp"]], axis=1)
-
-        # Write to file
-        # This does NOT work at the moment!
-        # utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
-        # For now use 'ugly' to_csv method without control of column width
-        # Convert time index to datetime64
-        time = pd.to_datetime(df.index)
-        tref = self.model.config.get("tref")
-        time = (time - tref).total_seconds()
-        df.index = time
-        df.to_csv(
-            abs_file_path, index=True, sep=" ", header=False, float_format="%0.3f"
-        )
-
-        # BWD
-
-        # Get absolute file name and set it in config if snapwave_bwdfile is not None
-        abs_file_path = self.model.config.get_set_file_variable(
-            "snapwave_bwdfile", value=filename, default="snapwave.bwd"
-        )
-
-        # Get all timeseries and stick in one DataFrame
-        df = pd.DataFrame()
-        for ip, point in self.data.iterrows():
-            df = pd.concat([df, point["timeseries"]["wd"]], axis=1)
-
-        # Write to file
-        # This does NOT work at the moment!
-        # utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
-        # For now use 'ugly' to_csv method without control of column width
-        # Convert time index to datetime64
-        time = pd.to_datetime(df.index)
-        tref = self.model.config.get("tref")
-        time = (time - tref).total_seconds()
-        df.index = time
-        df.to_csv(
-            abs_file_path, index=True, sep=" ", header=False, float_format="%0.3f"
-        )
-
-        # BDS
-
-        # Get absolute file name and set it in config if snapwave_bdsfile is not None
-        abs_file_path = self.model.config.get_set_file_variable(
-            "snapwave_bdsfile", value=filename, default="snapwave.bds"
-        )
-
-        # Get all timeseries and stick in one DataFrame
-        # This does NOT work at the moment!
-        # utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
-        # For now use 'ugly' to_csv method without control of column width
-        # Convert time index to datetime64
-        time = pd.to_datetime(df.index)
-        tref = self.model.config.get("tref")
-        time = (time - tref).total_seconds()
-        df.index = time
-        df.to_csv(
-            abs_file_path, index=True, sep=" ", header=False, float_format="%0.3f"
-        )
-
-    def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
-        """Set SnapWave boundary conditions data.
+    def delete(self, index: Union[int, List[int]]):
+        """Delete a single point from the SnapWave boundary conditions data.
 
         Parameters
         ----------
-        gdf : gpd.GeoDataFrame
-            GeoDataFrame with boundary points.
-        merge : bool, optional
-            Merge data with existing data, by default True.
+        index : int or list of int
+            Index or list of indices of points to be deleted.
+        """
+        super().delete(index)
+        if self.nr_points == 0:
+            self.model.config.set("snapwave_bndfile", None)
+            self.model.config.set("snapwave_bhsfile", None)
+            self.model.config.set("snapwave_btpfile", None)
+            self.model.config.set("snapwave_bwdfile", None)
+            self.model.config.set("snapwave_bdsfile", None)
+            self.model.config.set("netsnapwavefile", None)
+
+    def clear(self):
+        "Clear boundary points and unset associated config keys."
+        super().clear()
+        self.model.config.set("snapwave_bndfile", None)
+        self.model.config.set("snapwave_bhsfile", None)
+        self.model.config.set("snapwave_btpfile", None)
+        self.model.config.set("snapwave_bwdfile", None)
+        self.model.config.set("snapwave_bdsfile", None)
+        self.model.config.set("netsnapwavefile", None)
+
+    # %% @hydromt_step
+    # create
+    # create_timeseries #FIXME - to add
+    # create_boundary_points_from_mask #FIXME - to add
+
+    # @hydromt_step
+    # def create(
+    #     self,
+    #     geodataset: Union[str, Path, xr.Dataset] = None,
+    #     timeseries: Union[str, Path, pd.DataFrame] = None,
+    #     locations: Union[str, Path, gpd.GeoDataFrame] = None,
+    #     offset: Union[str, Path, xr.Dataset] = None,
+    #     buffer: float = 5e3,
+    #     merge: bool = True,
+    # ):
+
+    @hydromt_step
+    def create_timeseries(
+        self,
+        index: Union[int, List[int]] = None,
+        shape: str = "constant",
+        timestep: float = 600.0,
+        hs: float = 1.0,
+        tp: float = 10.0,
+        wd: float = 270.0,
+        ds: float = 20.0,
+        tpeak: float = 86400.0,
+        duration: float = 43200.0,
+    ):
+        """Applies time series boundary conditions for each point
+        Create numpy datetime64 array for time series with python datetime.datetime objects
+
+        Parameters
+        ----------
+        shape : str
+            Shape of the time series. Options are "constant" or "gaussian".
+        timestep : float
+            Time step [s]
+        hs : float
+            Wave height [m]
+        tp : float
+            Peak period [s]
+        wd : float
+            Wave direction [degrees]
+        ds : float
+            Directional spread [degrees]
+        tpeak : float
+            Time of the peak of the Gaussian wave [s]
+        duration : float
+            Duration of the Gaussian wave [s]
         """
 
-        if merge:
-            self.data = pd.concat([self.data, gdf], ignore_index=True)
-        else:
-            self.data = gdf
+        if self.data.empty:
+            return
 
-    def add_point(
+        t0 = np.datetime64(self.model.config.get("tstart"))
+        t1 = np.datetime64(self.model.config.get("tstop"))
+        if shape == "constant":
+            dt = np.timedelta64(int((t1 - t0).astype(float) / 1e6), "s")
+        else:
+            dt = np.timedelta64(int(timestep), "s")
+        time = np.arange(t0, t1 + dt, dt)
+        dtsec = dt.astype(float)
+        # Convert time to seconds since tref
+        tsec = (
+            (time - np.datetime64(self.model.config.get("tref")))
+            .astype("timedelta64[s]")
+            .astype(float)
+        )
+        nt = len(tsec)
+        if shape == "constant":
+            hs = [hs] * nt
+            tp = [tp] * nt
+            wd = [wd] * nt
+            ds = [ds] * nt
+        elif shape == "gaussian":
+            hs = hs * np.exp(-(((tsec - tpeak) / (0.25 * duration)) ** 2))
+            tp = [tp] * nt
+            wd = [wd] * nt
+            ds = [ds] * nt
+        else:
+            # Not implemented
+            raise ValueError(
+                f"Shape {shape} not implemented for SnapWave boundary conditions!"
+            )
+
+        times = pd.date_range(
+            start=t0, end=t1, freq=pd.tseries.offsets.DateOffset(seconds=dtsec)
+        )
+
+        if index is None:
+            index = list(self.data.index)
+        elif not isinstance(index, list):
+            index = [index]
+
+        for i in index:
+            df = pd.DataFrame()
+            df["time"] = times
+            df["hs"] = hs
+            df["tp"] = tp
+            df["wd"] = wd
+            df["ds"] = ds
+            df = df.set_index("time")
+            self.data.at[i, "timeseries"] = df
+
+# %% DDB GUI focused additional functions:
+# add_point
+# get_boundary_points_from_mask
+
+    def add_point( #FIXME - still to update
         self,
         gdf: gpd.GeoDataFrame = None,
         x: float = None,
@@ -515,125 +497,8 @@ class SnapWaveBoundaryConditions(ModelComponent):
         # Add to self.data
         self.data = pd.concat([self.data, gdf], ignore_index=True)
 
-    def delete(self, index: Union[int, List[int]]):
-        """Delete a single point from the SnapWave boundary conditions data.
-
-        Parameters
-        ----------
-        index : int or list of int
-            Index or list of indices of points to be deleted.
-        """
-
-        if self.data.empty:
-            return
-
-        if not isinstance(index, list):
-            index = [index]
-        # Check if indices are within range
-        if any(x > (len(self.data.index) - 1) for x in index):
-            raise ValueError("One of the indices exceeds length of index range!")
-        self.data = self.data.drop(index).reset_index(drop=True)
-
-        if self.data.empty:
-            self.model.config.set("snapwave_bndfile", None)
-            self.model.config.set("snapwave_btpfile", None)
-            self.model.config.set("snapwave_bwdfile", None)
-            self.model.config.set("snapwave_bdsfile", None)
-            # self.model.config.set("netbndsnapwavefile", None)
-
-    def clear(self):
-        """Clean GeoDataFrame with boundary points."""
-        self.data = gpd.GeoDataFrame()
-
-    def set_timeseries(
-        self,
-        index: Union[int, List[int]] = None,
-        shape: str = "constant",
-        timestep: float = 600.0,
-        hs: float = 1.0,
-        tp: float = 10.0,
-        wd: float = 270.0,
-        ds: float = 20.0,
-        tpeak: float = 86400.0,
-        duration: float = 43200.0,
-    ):
-        """Applies time series boundary conditions for each point
-        Create numpy datetime64 array for time series with python datetime.datetime objects
-
-        Parameters
-        ----------
-        shape : str
-            Shape of the time series. Options are "constant" or "gaussian".
-        timestep : float
-            Time step [s]
-        hs : float
-            Wave height [m]
-        tp : float
-            Peak period [s]
-        wd : float
-            Wave direction [degrees]
-        ds : float
-            Directional spread [degrees]
-        tpeak : float
-            Time of the peak of the Gaussian wave [s]
-        duration : float
-            Duration of the Gaussian wave [s]
-        """
-
-        if self.data.empty:
-            return
-
-        t0 = np.datetime64(self.model.config.get("tstart"))
-        t1 = np.datetime64(self.model.config.get("tstop"))
-        if shape == "constant":
-            dt = np.timedelta64(int((t1 - t0).astype(float) / 1e6), "s")
-        else:
-            dt = np.timedelta64(int(timestep), "s")
-        time = np.arange(t0, t1 + dt, dt)
-        dtsec = dt.astype(float)
-        # Convert time to seconds since tref
-        tsec = (
-            (time - np.datetime64(self.model.config.get("tref")))
-            .astype("timedelta64[s]")
-            .astype(float)
-        )
-        nt = len(tsec)
-        if shape == "constant":
-            hs = [hs] * nt
-            tp = [tp] * nt
-            wd = [wd] * nt
-            ds = [ds] * nt
-        elif shape == "gaussian":
-            hs = hs * np.exp(-(((tsec - tpeak) / (0.25 * duration)) ** 2))
-            tp = [tp] * nt
-            wd = [wd] * nt
-            ds = [ds] * nt
-        else:
-            # Not implemented
-            raise ValueError(
-                f"Shape {shape} not implemented for SnapWave boundary conditions!"
-            )
-
-        times = pd.date_range(
-            start=t0, end=t1, freq=pd.tseries.offsets.DateOffset(seconds=dtsec)
-        )
-
-        if index is None:
-            index = list(self.data.index)
-        elif not isinstance(index, list):
-            index = [index]
-
-        for i in index:
-            df = pd.DataFrame()
-            df["time"] = times
-            df["hs"] = hs
-            df["tp"] = tp
-            df["wd"] = wd
-            df["ds"] = ds
-            df = df.set_index("time")
-            self.data.at[i, "timeseries"] = df
-
-    def get_boundary_points_from_mask(self, min_dist=None, bnd_dist=5000.0):
+    #FIXME - still to update to water_level.py's create_boundary_points_from_mask:
+    def get_boundary_points_from_mask(self, min_dist=None, bnd_dist=5000.0): 
         # Should move this to mask? Yes.
         if min_dist is None:
             # Set minimum distance between to grid boundary points on polyline to 2 * dx
@@ -758,12 +623,3 @@ class SnapWaveBoundaryConditions(ModelComponent):
             wd=270.0,
             ds=20.0,
         )
-
-
-# def to_fwf(df, fname, floatfmt=".3f"):
-#     indx = df.index.tolist()
-#     vals = df.values.tolist()
-#     for it, t in enumerate(vals):
-#         t.insert(0, indx[it])
-#     content = tabulate(vals, [], tablefmt="plain", floatfmt=floatfmt)
-#     open(fname, "w").write(content)
