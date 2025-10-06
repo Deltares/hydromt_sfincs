@@ -1,5 +1,6 @@
 """Test sfincs model class against hydromt.models.model_api"""
 
+import os
 from os.path import isfile, join
 
 import numpy as np
@@ -9,7 +10,7 @@ import pytest
 from shapely.geometry import Polygon, Point
 import xarray as xr
 from geopandas.testing import assert_geodataframe_equal
-from hydromt.cli._utils import parse_config
+# from hydromt.cli.utils import parse_config
 
 # from hydromt.log import setuplog
 
@@ -134,6 +135,35 @@ def test_initial_conditions(model):
 
     # assure the sum of ini is close to earlier calculated value
     assert np.isclose(mod1.grid.data["ini"].where(mod1.grid.mask > 0).sum(), 890.5)
+
+def test_initial_conditions_from_polygon(model):
+    # set spatially varying initial waterlevel
+    region = model.data_catalog.get_geodataframe(
+        os.path.join(TESTDATADIR, "region.geojson"),
+    )
+    print(region)
+    region['ini'] = 0.5
+
+    model.initial_conditions.create(region, reproj_method="nearest", reset_ini=True)
+
+    # check if values are correctly set
+    assert model.config.get("zsini") is None  # zsini removed from config
+    assert model.config.get("inifile") is not None  # inifile set
+    assert "ini" in model.grid.data
+
+    # Write model
+    model.grid.write()
+    model.config.write()
+
+    # read and check if identical
+    mod1 = SfincsModel(root=model.root.path, mode="r")
+    mod1.config.read()
+    mod1.grid.read()
+
+    # assure the sum of ini is close to earlier calculated value
+    assert np.isclose(mod1.grid.data["ini"].where(mod1.grid.mask > 0).sum(), 1139.5)
+
+
 
 def test_subgrid_io(model_config, tmp_dir):
     # test the backward compatibility of reading/writing subgrid
