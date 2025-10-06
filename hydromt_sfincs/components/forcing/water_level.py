@@ -60,6 +60,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                 # Read astro if bcafile is defined
                 if self.model.config.get("bcafile"):
                     self.read_boundary_conditions_astro()
+
         elif format == "netcdf":
             # Read netcdf file
             ds = self.read_boundary_conditions_netcdf()
@@ -83,7 +84,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         # Check if bnd file exists
         if not abs_file_path.exists():
-            raise FileNotFoundError(f"Discharge points file not found: {abs_file_path}")
+            raise FileNotFoundError(f"Water level points file not found: {abs_file_path}")
 
         # Read bnd file
         # TODO check if we want read_xyn? Before we used read_xy, so without name column
@@ -227,7 +228,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             fmt = "%11.1f"
 
         # TODO check whether write_xyn or write_xy
-        utils.write_xyn(abs_file_path, self.gdf, fmt=fmt)
+        utils.write_xyn(abs_file_path, self.gdf, fmt=fmt) #FIXME - is self.gdf correct?
 
     def write_boundary_conditions_timeseries(self, filename: str | Path = None):
         """Write SFINCS boundary condition timeseries (*.bzs) file"""
@@ -368,7 +369,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         See Also
         --------
-        set_forcing_1d
+        set
         """
         gdf_locs, df_ts = None, None
         tstart, tstop = self.model.get_model_time()  # model time
@@ -383,6 +384,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                 raise ValueError("No waterlevel boundary cells (mask==2) in model grid.")
         else:
             region = self.model.region
+            
         # read waterlevel data from geodataset or geodataframe
         if geodataset is not None:
             # read and clip data in time & space
@@ -451,6 +453,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                 df_ts = df_ts + df_offset
                 offset = offset_pnts.mean().values
             logger.debug(f"waterlevel forcing: applied offset (avg: {offset:+.2f})")
+        # FIXME - is offset actually applied??
 
         # set/ update forcing
         if used_existing:
@@ -468,8 +471,8 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         phase: float = 0.0,
         period: float = 43200.0,
         peak: float = 1.0,
-        tpeak: float = 86400.0,
-        duration: float = 43200.0,
+        tpeak: float = 86400.0, # FIXME - should this be 43200?
+        duration: float = 43200.0, # FIXME - should this be 86400?
     ):
         """Applies time series boundary conditions for each point
         Create numpy datetime64 array for time series with python datetime.datetime objects
