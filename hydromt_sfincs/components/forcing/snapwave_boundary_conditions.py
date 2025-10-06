@@ -69,9 +69,22 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
                 # Read timeseries per file
                 filenames = ["snapwave_bhsfile", "snapwave_btpfile", "snapwave_bwdfile", "snapwave_bdsfile"]
                 vars = ["hs", "tp", "wd", "ds"]
+                da_lst = []
                 for i, varname in enumerate(filenames):  
                     df = self.read_boundary_conditions_timeseries(var=vars[i], varname=varname)
-                    self.set(df=df, gdf=gdf, merge=False)
+                
+                    da = xr.DataArray(df, dims=("time", "index"), name=vars[i])
+                    da_lst.append(da)
+                    
+                ds = xr.merge(da_lst[:])
+            
+                # add the coordinates of the points to the dataset
+                ds['geometry'] = (('points',), gdf['geometry'].apply(lambda geom: geom.wkt).values)
+
+                # set crs to model.crs
+                ds.attrs['crs'] = self.model.crs
+
+                self.set(geodataset=ds, merge=False)
 
         elif format == "netcdf":
             # Read netcdf file
@@ -162,11 +175,15 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         # FIXME - should we check if the dataset has the right variables?
         for var in ["hs", "tp", "wd", "ds"]:
-            if var not in ds.data:
+            if var not in ds:
                 raise ValueError(f"Variable {var} not found in SnapWave boundary conditions netcdf file!")
+        
+        # Rename "stations" dimension back to "index"
+        ds = ds.rename({"stations": "index"})
+
         # FIXME - Should we check if the right dimensions are present?
-        for dim in ["time", "stations"]:
-            if dim not in ds.data.dims:
+        for dim in ["time", "index"]:
+            if dim not in ds.dims:
                 raise ValueError(f"Dimension {dim} not found in SnapWave boundary conditions netcdf file!")
             
         return ds    
@@ -183,7 +200,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             Format of the boundary conditions files, "asc", or "netcdf" (default).
         """
 
-        if self.data.empty:
+        if self.nr_points == 0:
             # There are no boundary points
             return
 
@@ -224,7 +241,9 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             fmt = "%11.1f"
 
         # TODO check whether write_xyn or write_xy
-        utils.write_xyn(abs_file_path, self.gdf, fmt=fmt) #FIXME - is self.gdf correct?
+        gdf_locs = self.data.vector.to_gdf()
+
+        utils.write_xyn(abs_file_path, gdf_locs, fmt=fmt) #FIXME - is self.gdf correct?
 
     def write_boundary_conditions_timeseries(self, var: str, varname: str, filename: str | Path = None):
         """Write SnapWave boundary condition timeseries (*.bhs, *.btp, *.bwd, *.bds) file"""
@@ -263,11 +282,15 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         # FIXME - check if right vars are present - usefull?
         for var in ["hs", "tp", "wd", "ds"]:
-            if var not in ds.data:
+            if var not in ds:
                 raise ValueError(f"Variable {var} not found in SnapWave self.data!")
+        
+        #FIXME - rewrite "index" to "stations"?
+        ds = ds.rename({"index": "stations"})
+
         # FIXME - check if the right dimensions are present - usefull?
         for dim in ["time", "stations"]:
-            if dim not in ds.data.dims:
+            if dim not in ds.dims:
                 raise ValueError(f"Dimension {dim} not found in SnapWave self.data!")                    
 
         ds.vector.to_netcdf(abs_file_path)
@@ -418,6 +441,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         if used_existing:
             gdf_locs = None  # only update timeseries for existing points
         self.set(df=df_ts, gdf=gdf_locs, merge=merge)
+        # self.set(geodataset=da, merge=merge) #FIXME - later do like this
 
     @hydromt_step
     def create_timeseries(

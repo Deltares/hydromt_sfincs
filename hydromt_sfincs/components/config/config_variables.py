@@ -638,6 +638,10 @@ class SfincsConfigVariables(BaseSettings):
         None,
         description="Name of the SnapWave wave spreading time-series file",
     )
+    netsnapwavefile: str | None = Field(
+        None,
+        description="Name of the netcdf SnapWave boundary conditions file",
+    )    
     #
     # Wind drag
     #
