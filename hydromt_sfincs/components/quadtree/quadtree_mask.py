@@ -357,7 +357,7 @@ class SfincsQuadtreeMask(ModelComponent):
         ], "Model must be either 'sfincs' or 'snapwave'!"
 
         if model == "sfincs":
-            varname = "mak"
+            varname = "mask"
         elif model == "snapwave":
             varname = "snapwave_mask"
 
