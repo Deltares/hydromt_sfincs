@@ -124,6 +124,9 @@ def test_initial_conditions(model):
     assert model.config.get("inifile") is not None  # inifile set
     assert "ini" in model.grid.data
 
+    # call again with reset_ini = False
+    model.initial_conditions.create(ini, reproj_method="nearest", reset_ini=False)
+
     # Write model
     model.grid.write()
     model.config.write()
