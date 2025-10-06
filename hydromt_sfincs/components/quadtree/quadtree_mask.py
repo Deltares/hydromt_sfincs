@@ -363,7 +363,32 @@ class SfincsQuadtreeMask(ModelComponent):
         update_datashader_dataframe=False,
     ):
         
-        """Setup model mask."""
+        """Setup active model mask and add boundaries. Note that boundary types can only be set when polygons are provided.
+        
+        Parameters
+        ----------
+        model : str, optional
+            Model type, either 'sfincs' (default) or 'snapwave', for which the mask will be created.
+        zmin, zmax : float, optional
+            Minimum and maximum elevation thresholds for active model cells.
+        include_polygon, exclude_polygon: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name of polygons to include/exclude from the active model domain.
+            Note that include (second last) and exclude (last) areas are processed after other critera,
+            i.e. `zmin`, `zmax` and thus overrule these criteria for active model cells.
+        include_zmin, include_zmax: float, optional
+            Minimum and maximum elevation thresholds for included model cells.
+        exclude_zmin, exclude_zmax: float, optional
+            Minimum and maximum elevation thresholds for excluded model cells.
+        open_boundary_polygon, outflow_boundary_polygon, neumann_boundary_polygon, downstream_boundary_polygon: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name for geometries with areas to include as open boundary, outflow boundary, neumann boundary, or downstream boundary.
+            For each polygon, also the minimum and maximum elevation thresholds can be specified using the corresponding `*_zmin` and `*_zmax` arguments.
+
+        See also:
+        ---------
+        * `create_active` method to setup active model cells
+        * `create_boundary` method to setup boundary cells of a specific type
+        
+        """
 
         # Create active model cells
         self.create_active(
