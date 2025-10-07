@@ -362,7 +362,6 @@ class SfincsQuadtreeMask(ModelComponent):
         all_touched: bool = False,
         update_datashader_dataframe=False,
     ):
-
         """Setup active model mask and add boundaries. Note that boundary types can only be set when polygons are provided.
 
         Parameters
@@ -448,7 +447,6 @@ class SfincsQuadtreeMask(ModelComponent):
         if update_datashader_dataframe:
             # For use in DelftDashboard
             self.get_datashader_dataframe()
-
 
     @hydromt_step
     def create_active(
