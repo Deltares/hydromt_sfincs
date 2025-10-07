@@ -362,9 +362,9 @@ class SfincsQuadtreeMask(ModelComponent):
         all_touched: bool = False,
         update_datashader_dataframe=False,
     ):
-        
+
         """Setup active model mask and add boundaries. Note that boundary types can only be set when polygons are provided.
-        
+
         Parameters
         ----------
         model : str, optional
@@ -387,7 +387,7 @@ class SfincsQuadtreeMask(ModelComponent):
         ---------
         * `create_active` method to setup active model cells
         * `create_boundary` method to setup boundary cells of a specific type
-        
+
         """
 
         # Create active model cells
@@ -496,7 +496,7 @@ class SfincsQuadtreeMask(ModelComponent):
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
         copy_sfincsmask: bool, optional
             If True and model is 'snapwave', copy the SFINCS mask to the SnapWave mask.
-        """        
+        """
 
         logger.info("Building mask ...")
 

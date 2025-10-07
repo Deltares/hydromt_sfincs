@@ -98,7 +98,7 @@ class SfincsMask(ModelComponent):
         all_touched: bool = True,
     ):
         """Setup active model mask and add boundaries. Note that boundary types can only be set when polygons are provided.
-        
+
         Parameters
         ----------
         zmin, zmax : float, optional
@@ -119,7 +119,7 @@ class SfincsMask(ModelComponent):
         ---------
         * `create_active` method to setup active model cells
         * `create_boundary` method to setup boundary cells of a specific type
-        
+
         """
 
         # Create active model cells
@@ -244,7 +244,7 @@ class SfincsMask(ModelComponent):
         elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
             raise ValueError("dep does not match regular grid")
 
-        # initialize mask based on elevation range 
+        # initialize mask based on elevation range
         if zmin is not None or zmax is not None:
             _msk = da_dep != da_dep.raster.nodata
             if zmin is not None:
