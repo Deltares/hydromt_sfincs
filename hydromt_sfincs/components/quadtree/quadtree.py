@@ -273,6 +273,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         epsg: int,
         refinement_polygons: Optional[gpd.GeoDataFrame] = None,
         elevation_sets: List[List[dict]] = None,
+        bathymetry_database: Optional[object] = None,
     ):
         """Build the Quadtree grid.
 
@@ -298,6 +299,8 @@ class SfincsQuadtreeGrid(MeshComponent):
             GeoDataFrame with polygons that define areas where the grid should be refined.
         elevation_sets : List[List[dict]], optional
             List of lists of dictionaries with variable names and dataset names to use for depth
+        bathymetry_database : object, optional
+            Bathymetry database object.
         """
 
         # Clear datashader dataframes
@@ -309,7 +312,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         crs = CRS.from_epsg(epsg)
 
         elevation_sets_per_level = []
-        if elevation_sets is not None:
+        if elevation_sets is not None and bathymetry_database is None:
             # Create grid without refinement first
             # NOTE this is used to determine model properties while parsing elevation_sets
             self._data = make_regular_grid(
@@ -328,6 +331,7 @@ class SfincsQuadtreeGrid(MeshComponent):
                 elevation_sets_per_level.append(
                     self.model._parse_datasets_elevation(elevation_sets, res=res_level)
                 )
+            elevation_sets = elevation_sets_per_level
 
         # Build the quadtree grid
         self._data = build_quadtree_xugrid(
@@ -340,7 +344,8 @@ class SfincsQuadtreeGrid(MeshComponent):
             rotation,
             crs,
             refinement_polygons=refinement_polygons,
-            elevation_sets=elevation_sets_per_level,
+            elevation_sets=elevation_sets,
+            bathymetry_database=bathymetry_database,
         )
 
         # Make sure epsg is stored in the config as well
