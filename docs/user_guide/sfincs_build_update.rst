@@ -51,10 +51,10 @@ in its corresponding section. See the HydroMT core documentation for more info a
     rotated: True               # allow a rotated grid
 
   setup_dep:
-    datasets_dep:
-    - elevtn: merit_hydro       # 1st elevation dataset
+    elevation_sets:
+    - elevation: merit_hydro       # 1st elevation dataset
       zmin: 0.001               # only use where values > 0.001
-    - elevtn: gebco             # 2nd eleveation dataset (to be merged with the first)
+    - elevation: gebco             # 2nd eleveation dataset (to be merged with the first)
 
   setup_mask_active:
     mask: data//region.geojson  # Note that this is local data and only valid for this example
@@ -125,7 +125,7 @@ Typical applications where this approach can be useful are:
     da = da + 1
 
     # use modifed (in-memory) elevation data to create model
-    sf.setup_dep(datasets_dep=[{"da":da}])
+    sf.setup_dep(elevation_sets=[{"da":da}])
 
     sf.plot_basemap()
 

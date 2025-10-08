@@ -504,7 +504,7 @@ class SfincsModel(Model):
     def plot_basemap(
         self,
         fn_out: str = None,
-        variable: Union[str, xr.DataArray] = "dep",
+        variable: Union[str, xr.DataArray] = "elevation",
         shaded: bool = False,
         plot_bounds: bool = True,
         plot_region: bool = False,
@@ -607,10 +607,14 @@ class SfincsModel(Model):
                 ds = self.grid.data.copy()
                 if "mask" not in ds:
                     ds["mask"] = self.grid.mask
+                if variable == "elevation" and "elevation" not in ds:
+                    variable = "dep"
             elif self.grid_type == "quadtree":
                 ds = self.quadtree_grid.data.copy()
                 if "mask" not in ds:
                     ds["mask"] = self.quadtree_grid.mask
+                if variable == "elevation" and "elevation" not in ds:
+                    variable = "z"
 
         fig, ax = plots.plot_basemap(
             ds,
@@ -646,48 +650,48 @@ class SfincsModel(Model):
         return tstart, tstop
 
     ## helper method
-    def _parse_datasets_dep(self, datasets_dep, res):
-        """Parse filenames or paths of Datasets in list of dictionaries datasets_dep
+    def _parse_datasets_elevation(self, elevation_sets, res):
+        """Parse filenames or paths of Datasets in list of dictionaries elevation_sets
         into xr.DataArray and gdf.GeoDataFrames:
 
-        * "elevtn" is parsed into da (xr.DataArray)
+        * "elevation" is parsed into da (xr.DataArray)
         * "offset" is parsed into da_offset (xr.DataArray)
         * "mask" is parsed into gdf (gpd.GeoDataFrame)
 
         Parameters
         ----------
-        datasets_dep : List[dict]
-            List of dictionaries with topobathy data, each containing a dataset name or
+        elevation_sets : List[dict]
+            List of dictionaries with topography and bathymetry data, each containing a dataset name or
             Path (dep) and optional merge arguments.
         res : float
             Resolution of the model grid in meters. Used to obtain the correct zoom
             level of the depth datasets.
         """
-        parse_keys = ["elevtn", "offset", "mask", "da"]
+        parse_keys = ["elevation", "offset", "mask", "da"]
         copy_keys = ["zmin", "zmax", "reproj_method", "merge_method", "offset"]
 
         datasets_out = []
-        for dataset in datasets_dep:
+        for dataset in elevation_sets:
             dd = {}
             # read in depth datasets; replace dep (source name; filename or xr.DataArray)
-            if "elevtn" in dataset or "da" in dataset:
+            if "elevation" in dataset or "da" in dataset:
                 try:
                     da_elv = self.data_catalog.get_rasterdataset(
-                        dataset.get("elevtn", dataset.get("da")),
+                        dataset.get("elevation", dataset.get("da")),
                         bbox=self.bbox,
                         buffer=10,
-                        variables=["elevtn"],
+                        variables=["elevtn"], # NOTE this is still hydromt convention
                         zoom_level=(res, "meter"),
                     )
                 # TODO remove ValueError after fix in hydromt core
                 except (IndexError, ValueError):
-                    data_name = dataset.get("elevtn")
+                    data_name = dataset.get("elevation")
                     logger.warning(f"No data in domain for {data_name}, skipped.")
                     continue
                 dd.update({"da": da_elv})
             else:
                 raise ValueError(
-                    "No 'elevtn' (topobathy) dataset provided in datasets_dep."
+                    "No 'elevation' (topobathy) dataset provided in elevation_sets."
                 )
 
             # read offset filenames
@@ -713,13 +717,13 @@ class SfincsModel(Model):
                 if key in copy_keys and key not in dd:
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
-                    logger.warning(f"Unknown key {key} in datasets_dep. Ignoring.")
+                    logger.warning(f"Unknown key {key} in elevation_sets. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out
 
-    def _parse_datasets_rgh(self, datasets_rgh):
-        """Parse filenames or paths of Datasets in list of dictionaries datasets_rgh
+    def _parse_roughness_sets(self, roughness_sets):
+        """Parse filenames or paths of Datasets in list of dictionaries roughness_sets
         into xr.DataArrays and gdf.GeoDataFrames:
 
         * "manning" is parsed into da (xr.DataArray)
@@ -728,7 +732,7 @@ class SfincsModel(Model):
 
         Parameters
         ----------
-        datasets_rgh : List[dict], optional
+        roughness_sets : List[dict], optional
             List of dictionaries with Manning's n datasets. Each dictionary should at
             least contain one of the following:
             * (1) manning: filename (or Path) of gridded data with manning values
@@ -740,7 +744,7 @@ class SfincsModel(Model):
         copy_keys = ["reproj_method", "merge_method"]
 
         datasets_out = []
-        for dataset in datasets_rgh:
+        for dataset in roughness_sets:
             dd = {}
 
             if "manning" in dataset or "da" in dataset:
@@ -774,7 +778,7 @@ class SfincsModel(Model):
                 da_man = da_lulc.raster.reclassify(df_map[["N"]])["N"]
                 dd.update({"da": da_man})
             else:
-                raise ValueError("No 'manning' dataset provided in datasets_rgh.")
+                raise ValueError("No 'manning' dataset provided in roughness_sets.")
 
             # read geodataframes describing valid areas
             if "mask" in dataset:
@@ -789,14 +793,14 @@ class SfincsModel(Model):
                 if key in copy_keys and key not in dd:
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
-                    logger.warning(f"Unknown key {key} in datasets_rgh. Ignoring.")
+                    logger.warning(f"Unknown key {key} in roughness sets. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out
 
-    def _parse_datasets_riv(self, datasets_riv):
+    def _parse_river_sets(self, river_sets):
         """Parse filenames or paths of Datasets in list of dictionaries
-        datasets_riv into xr.DataArrays and gdf.GeoDataFrames:
+        river_sets into xr.DataArrays and gdf.GeoDataFrames:
 
         see SfincsModel.setup_subgrid for details
         """
@@ -818,7 +822,7 @@ class SfincsModel(Model):
         attrs = ["rivwth", "rivdph", "rivbed", "manning"]
 
         datasets_out = []
-        for dataset in datasets_riv:
+        for dataset in river_sets:
             dd = {}
 
             # parse rivers
@@ -876,7 +880,7 @@ class SfincsModel(Model):
                 if key in copy_keys and key not in dd:
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
-                    logger.warning(f"Unknown key {key} in datasets_riv. Ignoring.")
+                    logger.warning(f"Unknown key {key} in river_sets. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out
