@@ -292,16 +292,16 @@ class QuadtreeGrid:
                 # self.compute_cell_center_coordinates()
                 if self.bathymetry_database is not None:
                     zmin, zmax = self.get_bathymetry_min_max(
-                        ind_ref=ind_ref, 
-                        ilev=ilev, 
-                        elevation_sets=self.elevation_sets, 
-                        bathymetry_database=self.bathymetry_database
-                        )
+                        ind_ref=ind_ref,
+                        ilev=ilev,
+                        elevation_sets=self.elevation_sets,
+                        bathymetry_database=self.bathymetry_database,
+                    )
                 else:
                     zmin, zmax = self.get_bathymetry_min_max(
-                        ind_ref=ind_ref, 
-                        ilev=ilev, 
-                        elevation_sets=self.elevation_sets[ilev], 
+                        ind_ref=ind_ref,
+                        ilev=ilev,
+                        elevation_sets=self.elevation_sets[ilev],
                     )
                 # z = self.data["z"][ind_ref]
                 ind_ref = ind_ref[
@@ -967,13 +967,8 @@ class QuadtreeGrid:
         )
 
     def get_bathymetry_min_max(
-            self, 
-            ind_ref, 
-            ilev, 
-            elevation_sets, 
-            bathymetry_database=None, 
-            quiet=True
-            ):
+        self, ind_ref, ilev, elevation_sets, bathymetry_database=None, quiet=True
+    ):
         """ "Used to determine min and max bathymetry of a cell (used for refinement)"""
 
         if not quiet:
@@ -983,8 +978,16 @@ class QuadtreeGrid:
         dy = self.dy / 2**ilev
 
         if bathymetry_database is not None:
-            xz = self.x0 + self.cosrot * (self.m[ind_ref] + 0.5) * dx - self.sinrot * (self.n[ind_ref] + 0.5) * dy
-            yz = self.y0 + self.sinrot * (self.m[ind_ref] + 0.5) * dx + self.cosrot * (self.n[ind_ref] + 0.5) * dy
+            xz = (
+                self.x0
+                + self.cosrot * (self.m[ind_ref] + 0.5) * dx
+                - self.sinrot * (self.n[ind_ref] + 0.5) * dy
+            )
+            yz = (
+                self.y0
+                + self.sinrot * (self.m[ind_ref] + 0.5) * dx
+                + self.cosrot * (self.n[ind_ref] + 0.5) * dy
+            )
 
             # Compute the four corner coordinates of the cell, given that the cosine of the rotation is cosrot and the sine is sinrot and the cell center is xz, yz
             xcor = np.zeros((4, np.size(xz)))
@@ -996,7 +999,7 @@ class QuadtreeGrid:
             xcor[2, :] = xz + 0.5 * self.cosrot * dx + 0.5 * self.sinrot * dy
             ycor[2, :] = yz + 0.5 * self.sinrot * dx - 0.5 * self.cosrot * dy
             xcor[3, :] = xz - 0.5 * self.cosrot * dx + 0.5 * self.sinrot * dy
-            ycor[3, :] = yz - 0.5 * self.sinrot * dx - 0.5 * self.cosrot * dy 
+            ycor[3, :] = yz - 0.5 * self.sinrot * dx - 0.5 * self.cosrot * dy
 
             if self.crs.is_geographic:
                 dx = dx * 111000.0
@@ -1004,11 +1007,7 @@ class QuadtreeGrid:
             # Now loop through the 4 corners and get the minimum and maximum bathymetry
             for i in range(4):
                 zgl = bathymetry_database.get_bathymetry_on_points(
-                    xcor[i, :],
-                    ycor[i, :],
-                    dx,
-                    self.crs,
-                    elevation_sets
+                    xcor[i, :], ycor[i, :], dx, self.crs, elevation_sets
                 )
                 if i == 0:
                     zmin = zgl
@@ -1017,7 +1016,7 @@ class QuadtreeGrid:
                     zmin = np.minimum(zmin, zgl)
                     zmax = np.maximum(zmax, zgl)
             return zmin, zmax
-        else: 
+        else:
             # Build DataArray covering all corners
             m = self.m[ind_ref]
             n = self.n[ind_ref]

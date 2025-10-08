@@ -680,7 +680,7 @@ class SfincsModel(Model):
                         dataset.get("elevation", dataset.get("da")),
                         bbox=self.bbox,
                         buffer=10,
-                        variables=["elevtn"], # NOTE this is still hydromt convention
+                        variables=["elevtn"],  # NOTE this is still hydromt convention
                         zoom_level=(res, "meter"),
                     )
                 # TODO remove ValueError after fix in hydromt core

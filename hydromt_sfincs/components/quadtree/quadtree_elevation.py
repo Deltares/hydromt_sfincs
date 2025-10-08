@@ -139,7 +139,9 @@ class SfincsQuadtreeElevation(MeshComponent):
             t0 = time.time()
             # when not partitioned, use the full grid with the highest resolution data
             uda = merge_multi_dataarrays_on_mesh(
-                da_list=elevation_sets_per_level[-1], mesh2d=self.data.grid, logger=logger
+                da_list=elevation_sets_per_level[-1],
+                mesh2d=self.data.grid,
+                logger=logger,
             )
             t1 = time.time()
             logger.debug(f"Merging dep took {t1-t0:.2f} s.")
@@ -164,7 +166,7 @@ class SfincsQuadtreeElevation(MeshComponent):
         self.data["z"][:] = zb
 
     def set_bathymetry(
-        self, 
+        self,
         elevation_sets,
         nrmax: int = 2000,
         buffer_cells: int = 0,
@@ -172,7 +174,7 @@ class SfincsQuadtreeElevation(MeshComponent):
         zmin=-1.0e9,
         zmax=1.0e9,
         bathymetry_database=None,
-        quiet=True
+        quiet=True,
     ):
         # Number of refinement levels
         nlev = self.data.attrs["nr_levels"]
@@ -259,7 +261,9 @@ class SfincsQuadtreeElevation(MeshComponent):
                 for ix in range(len(x_chunks)):
                     for iy in range(len(y_chunks)):
                         if not quiet:
-                            print(f"Processing chunk {ix+1}, {iy+1} of {len(x_chunks)}, {len(y_chunks)} ...")
+                            print(
+                                f"Processing chunk {ix+1}, {iy+1} of {len(x_chunks)}, {len(y_chunks)} ..."
+                            )
 
                         # Find points xz and yz in this chunk
                         if ix < len(x_chunks) - 1:
@@ -276,20 +280,20 @@ class SfincsQuadtreeElevation(MeshComponent):
                             y_min_chunk = y_chunks[iy]
                             y_max_chunk = y_max
 
-                        in_chunk = np.where((xz >= x_min_chunk) & (xz < x_max_chunk) &
-                                            (yz >= y_min_chunk) & (yz < y_max_chunk))[0]
-                        
+                        in_chunk = np.where(
+                            (xz >= x_min_chunk)
+                            & (xz < x_max_chunk)
+                            & (yz >= y_min_chunk)
+                            & (yz < y_max_chunk)
+                        )[0]
+
                         if len(in_chunk) > 0:
                             if bathymetry_database is not None:
                                 # Get bathymetry from database, there interpolation on grid is done
                                 xzc = xz[in_chunk]
                                 yzc = yz[in_chunk]
                                 zgc = bathymetry_database.get_bathymetry_on_points(
-                                    xzc,
-                                    yzc,
-                                    dxmin,
-                                    self.model.crs,
-                                    elevation_sets
+                                    xzc, yzc, dxmin, self.model.crs, elevation_sets
                                 )
                                 zgl[in_chunk] = zgc
                             else:
@@ -328,7 +332,7 @@ class SfincsQuadtreeElevation(MeshComponent):
                                 # Select the values
                                 zgc = da_dep.values[idx_y, idx_x]
                                 zgl[in_chunk] = zgc
-                            
+
             else:
                 if bathymetry_database is not None:
                     # Get bathymetry from database
@@ -337,7 +341,7 @@ class SfincsQuadtreeElevation(MeshComponent):
                         yz,
                         dxmin,
                         self.model.crs,
-                        elevation_sets,   
+                        elevation_sets,
                     )
                 else:
                     # Make a regular grid with the extent of the cells in this level
