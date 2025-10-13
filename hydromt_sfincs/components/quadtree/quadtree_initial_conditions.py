@@ -6,6 +6,7 @@ import geopandas as gpd
 import numpy as np
 import xugrid as xu
 
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 if TYPE_CHECKING:
@@ -52,31 +53,93 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
     # write
     # set > already in grid.set()
     # create
+    # create_from_polygon
 
     # Initial water level
+    @hydromt_step
     def create(
         self,
-        ini: Union[str, Path, gpd.GeoDataFrame] = None,
-        ini_buffer: int = 0, #FIXME - meter or pixels?
+        ini: Union[str, Path] = None,
+        fill_value: float = -9999.0,
         reproj_method="average",
-        reset_ini: bool = True,
     ):
-        """Setup spatially varying initial water level (inifile).
+        """Setup spatially varying initial water level (ncinifile).
 
-        Adds model layers to SfincsModel.grid.data:
+        Adds and overwrites model layers to SfincsModel.quadtree_grid.data:
 
         * **ini** map: initial water level [m+ref]
 
         Parameters
         ----------
-        ini : str, Path, RasterDataset or GeoDataFrame with 'ini' column
+        ini : str, Path, RasterDataset
+            Spatially varying initial water level [m+ref]
+        fill_value: float, optional
+            Fill value for areas outside the polygon, by default -9999.0.     
+        reproj_method : str, optional
+            Resampling method for reprojecting the initial water level data to the model grid.
+            By default 'average'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
+
+        """
+
+        mname = "ini"
+
+        # Add logger info
+        logger.info("Creating spatially varying initial water level.")
+
+        # get initial water level data,        
+        # rasterdataset/file with ini values
+        if ini is not None:
+            da_ini = self.data_catalog.get_rasterdataset(
+                ini,
+                bbox=self.model.bbox,
+                buffer=10, #FIXME - meter or pixels?
+            )
+
+        # reproject initial water level data to model grid
+        da_ini = da_ini.raster.mask_nodata()  # set nodata to nan
+        da_ini = da_ini.raster.reproject_like(self.mask, method=reproj_method) 
+        #FIXME - still some interpolation step to quadtree grid needed? Or this works directly?
+
+        # check on nan values
+        if np.logical_and(np.isnan(da_ini), self.mask >= 1).any():
+            logger.warning("NaN values found in initial water level data; filled with fill_value (default -9999.0)")
+            da_ini = da_ini.fillna(fill_value)
+        da_ini.raster.set_nodata(np.nan) # FIXME - or -9999.0 and putting fill_value to -999.0?
+
+        # set grid
+        da_ini.attrs.update(**_ATTRS.get(mname, {}))
+        self.model.quadtree_grid.set(da_ini, name=mname)        
+
+        # update config: remove default zsini and set inifile
+        self.model.config.set(f"nc{mname}file", f"sfincs_ini.nc")
+        # set spatially uniform zsini to None in config
+        self.model.config.set("zsini", None)
+
+
+    # Initial water level
+    @hydromt_step
+    def create_from_polygon(
+        self,
+        ini: Union[str, Path, gpd.GeoDataFrame] = None,
+        ini_buffer: int = 0, #FIXME - meter or pixels?
+        fill_value: float = -9999.0,
+        reset_ini: bool = True,
+    ):
+        """Setup spatially varying initial water level (ncinifile).
+
+        Adds model layers to SfincsModel.quadtree_grid.data:
+
+        * **ini** map: initial water level [m+ref]
+
+        Parameters
+        ----------
+        ini : str, Path, GeoDataFrame with 'ini' column
             Spatially varying initial water level [m+ref]
         ini_buffer: float, optional
             If larger than zero, extend the `ini` gdf geometry with a buffer [m], 
             by default 0.            
-        reproj_method : str, optional
-            Resampling method for reprojecting the initial water level data to the model grid.
-            By default 'average'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
+        fill_value: float, optional
+            Fill value for areas outside the polygon, by default -9999.0.            
         reset_ini: bool, optional
             If True (default), reset existing ini layer. If False updating existing ini layer.
 
@@ -87,58 +150,53 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
         # Add logger info
         logger.info("Creating spatially varying initial water level.")
 
-        # get initial water level data        
-        if isinstance(ini, gpd.GeoDataFrame):            
-            # input is a geodataframe with a value 'ini' to rasterize
-            gdf_ini = self.data_catalog.get_geodataframe(
-                ini, 
-                bbox=self.model.bbox,
+        # get initial water level data geodataframe,       
+        # with a value 'ini' to rasterize
+        gdf_ini = self.data_catalog.get_geodataframe(
+            ini, 
+            bbox=self.model.bbox,
+        )
+
+        if ini_buffer > 0:  # NOTE assumes model in projected CRS!
+            gdf_ini["geometry"] = gdf_ini.to_crs(self.model.crs).buffer(
+                ini_buffer
             )
 
-            if ini_buffer > 0:  # NOTE assumes model in projected CRS!
-                gdf_ini["geometry"] = gdf_ini.to_crs(self.model.crs).buffer(
-                    ini_buffer
-                )
+        # check if input is polygon or multipolygon
+        if not gdf_ini.geometry.geom_type.isin(["Polygon", "MultiPolygon"]).all():
+            raise ValueError("Input geodataframe 'ini' should contain only Polygon or MultiPolygon geometries.")
+        
+        # check if 'ini' column is present
+        if "ini" not in gdf_ini.columns:
+            raise ValueError("Input geodataframe 'ini' should contain a column 'ini' with initial water level values per polygon.")
 
-            # Parse wanted value within polygon:
-            inival = float(gdf_ini["ini"].unique())
+        # Parse wanted value within polygon:
+        inival = float(gdf_ini["ini"].unique())
 
-            # if reset_ini = True start empty, otherwise start with existing ini layer
-            if reset_ini:
-                # start with empty ini layer
-                da_ini = xu.full_like(
-                    self.mask,
-                    fill_value=np.nan,
-                    dtype="float32",
-                )
-            else:
-                # start with existing ini layer
-                da_ini = self.data[mname]         
-
-            # Burn the polygon into the raster: pixels inside polygon get 1, others get 0
-            burned = xu.burn_vector_geometry(
-                gdf_ini["geometry"], self.data, fill=0, all_touched=True
+        # if reset_ini = True start empty, otherwise start with existing ini layer
+        if reset_ini:
+            # start with empty ini layer
+            da_ini = xu.full_like(
+                self.mask,
+                fill_value=np.nan,
+                dtype="float32",
             )
+        else:
+            # start with existing ini layer
+            da_ini = self.data[mname]         
 
-            da_ini = xu.where(burned > 0, inival, da_ini)
+        # Burn the polygon into the raster: pixels inside polygon get 1, others get 0
+        burned = xu.burn_vector_geometry(
+            gdf_ini["geometry"], self.data, fill=0, all_touched=True
+        )
+
+        da_ini = xu.where(burned > 0, inival, da_ini)
             
-        else:  
-            # input is a rasterdataset/file with ini values
-            if ini is not None:
-                da_ini = self.data_catalog.get_rasterdataset(
-                    ini,
-                    bbox=self.model.bbox,
-                    buffer=10,
-                )
-
-            # reproject initial water level data to model grid
-            da_ini = da_ini.raster.mask_nodata()  # set nodata to nan
-            da_ini = da_ini.raster.reproject_like(self.mask, method=reproj_method)
-
         # check on nan values
         if np.logical_and(np.isnan(da_ini), self.mask >= 1).any():
-            logger.warning("NaN values found in initial water level data; filled with 0")
-            da_ini = da_ini.fillna(0)
+            logger.warning("NaN values found in initial water level data; filled with fill_value (default -9999.0)")
+            da_ini = da_ini.fillna(fill_value)
+            # FIXME - should we still set the nodata value? if so to what?
 
         # set grid
         da_ini.attrs.update(**_ATTRS.get(mname, {}))
@@ -147,4 +205,4 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
         # update config: remove default zsini and set inifile
         self.model.config.set(f"nc{mname}file", f"sfincs_ini.nc")
         # set spatially uniform zsini to None in config
-        self.model.config.set("zsini", None)
+        self.model.config.set("zsini", None)        
