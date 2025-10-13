@@ -116,8 +116,8 @@ def test_infiltration(model):
 
 def test_initial_conditions(model):
     # set spatially varying initial waterlevel
-    ini = xr.where(model.grid.data["dep"] < -0.5, -9999, 0.5)
-    ini.raster.set_nodata(-9999.0)
+    ini = xr.where(model.grid.data["dep"] < -0.5, np.nan, 0.5)
+    # ini.raster.set_nodata(-9999.0)
     ini.raster.set_crs(model.crs)
     model.initial_conditions.create(ini, reproj_method="nearest")
     assert model.config.get("zsini") is None  # zsini removed from config
@@ -134,7 +134,7 @@ def test_initial_conditions(model):
     mod1.grid.read()
 
     # assure the sum of ini is close to earlier calculated value
-    assert np.isclose(mod1.grid.data["ini"].where(mod1.grid.mask > 0).sum(), 890.5)
+    assert np.isclose(mod1.grid.data["ini"].where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0)).sum(), 890.5)
 
 def test_initial_conditions_from_polygon(model):
     # set spatially varying initial waterlevel
@@ -144,7 +144,7 @@ def test_initial_conditions_from_polygon(model):
     print(region)
     region['ini'] = 0.5
 
-    model.initial_conditions.create(region, reproj_method="nearest", reset_ini=True)
+    model.initial_conditions.create_from_polygon(region, reset_ini=True)
 
     # check if values are correctly set
     assert model.config.get("zsini") is None  # zsini removed from config
@@ -161,7 +161,7 @@ def test_initial_conditions_from_polygon(model):
     mod1.grid.read()
 
     # assure the sum of ini is close to earlier calculated value
-    assert np.isclose(mod1.grid.data["ini"].where(mod1.grid.mask > 0).sum(), 1139.5)
+    assert np.isclose(mod1.grid.data["ini"].where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0)).sum(), 1139.5)
 
 
 
