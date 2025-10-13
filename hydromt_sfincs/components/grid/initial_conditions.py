@@ -74,7 +74,7 @@ class SfincsInitialConditions(ModelComponent):
 
         Parameters
         ----------
-        ini : str, Path, RasterDataset or GeoDataFrame with 'ini' column
+        ini : str, Path, RasterDataset
             Spatially varying initial water level [m+ref]          
         reproj_method : str, optional
             Resampling method for reprojecting the initial water level data to the model grid.
@@ -196,7 +196,7 @@ class SfincsInitialConditions(ModelComponent):
         
         # check on nan values
         if np.logical_and(np.isnan(da_ini), self.mask >= 1).any():
-            logger.warning("NaN values found in initial water level data; filled with -9999")
+            logger.warning("NaN values found in initial water level data; filled with fill_value (default -9999.0)")
             da_ini = da_ini.fillna(fill_value)
         da_ini.raster.set_nodata(np.nan) # FIXME - or -9999.0 and putting fill_value to -999.0?
 
