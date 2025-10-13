@@ -691,7 +691,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 # %% DDB GUI focused additional functions:
 # add_point
 
-    def add_point( #FIXME - still to update
+    def add_point( #FIXME - do we want to make a copy of add_point in boundary_conditions.py that support multiple vars?
         self,
         gdf: gpd.GeoDataFrame = None,
         x: float = None,

@@ -78,15 +78,15 @@ def test_add_point(model_config):
     point = gdf.geometry.unary_union.centroid
 
     model_config.snapwave_boundary_conditions.add_point(
-        x=point.x, y=point.y, value=-10.0, name="test_point"
+        x=point.x, y=point.y, hs=5.0, tp=12.0, wd=180.0, ds=30.0#, name="test_point"
     )
 
     # Check that the number of points has increased and value is set correctly
     assert model_config.snapwave_boundary_conditions.nr_points == nr_points + 1
-    assert np.mean(model_config.snapwave_boundary_conditions.data["bzs"].isel(index=-1).values) == -10.0
-
-    # assert the astronomic constituents are dropped after adding point
-    assert "constituent" not in model_config.snapwave_boundary_conditions.data.dims
+    assert np.mean(model_config.snapwave_boundary_conditions.data["hs"].isel(index=-1).values) == 5.0
+    assert np.mean(model_config.snapwave_boundary_conditions.data["tp"].isel(index=-1).values) == 12.0
+    assert np.mean(model_config.snapwave_boundary_conditions.data["wd"].isel(index=-1).values) == 180.0
+    assert np.mean(model_config.snapwave_boundary_conditions.data["ds"].isel(index=-1).values) == 30.0
 
 
 def test_create_timeseries(model_config):
@@ -130,23 +130,6 @@ def test_create_timeseries(model_config):
         assert point_data.values.max() == 10
         # but length has changed accordingly
         assert len(point_data.time) == 49
-
-    # # lastly add a sine timeseries for the second and third point
-    # model_config.snapwave_boundary_conditions.create_timeseries(
-    #     index=[1, 2],
-    #     shape="sine",
-    #     offset=0,
-    #     amplitude=1,
-    #     period=86400,
-    #     timestep=3600,
-    # )
-    # # Check that the timeseries is created correctly
-    # for idx in range(1, model_config.snapwave_boundary_conditions.nr_points):
-    #     point_data = model_config.snapwave_boundary_conditions.data["bzs"].isel(index=idx)
-    #     assert point_data.values.min() == -1
-    #     assert point_data.values.max() == 1
-    #     # but length has changed accordingly
-    #     assert len(point_data.time) == 49
 
 
 def test_create(model_config):
