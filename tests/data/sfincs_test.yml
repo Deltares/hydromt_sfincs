@@ -13,7 +13,7 @@ steps:
 
   - grid.create_from_region:
       region:
-        geom: region.geojson
+        geom: region
       res: 150                       # model resolution
       crs: utm                       # model CRS (must be UTM zone)
       rotated: True                  # allow a rotated grid
@@ -24,10 +24,10 @@ steps:
           zmin: 0.001
         - elevtn: gebco
 
-  - mask.create:
+  - mask.create_active:
       zmin: -5
 
-  - mask.set_bounds:
+  - mask.create_boundary:
       btype: waterlevel
       zmax: -1
 
