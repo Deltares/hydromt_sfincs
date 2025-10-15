@@ -107,9 +107,6 @@ def test_initial_conditions(model):
     assert model.config.get("inifile") is not None  # inifile set
     assert "ini" in model.grid.data
 
-    # call again with reset_ini = False
-    model.initial_conditions.create(ini, reproj_method="nearest", reset_ini=False)
-
     # Write model
     model.grid.write()
     model.config.write()
@@ -120,15 +117,20 @@ def test_initial_conditions(model):
     mod1.grid.read()
 
     # assure the sum of ini is close to earlier calculated value
-    assert np.isclose(mod1.grid.data["ini"].where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0)).sum(), 890.5)
+    assert np.isclose(
+        mod1.grid.data["ini"]
+        .where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0))
+        .sum(),
+        890.5,
+    )
+
 
 def test_initial_conditions_from_polygon(model):
     # set spatially varying initial waterlevel
     region = model.data_catalog.get_geodataframe(
-        os.path.join(TESTDATADIR, "region.geojson"),
+        join(TESTDATADIR, "region.geojson"),
     )
-    print(region)
-    region['ini'] = 0.5
+    region["ini"] = 0.5
 
     model.initial_conditions.create_from_polygon(region, reset_ini=True)
 
@@ -147,8 +149,12 @@ def test_initial_conditions_from_polygon(model):
     mod1.grid.read()
 
     # assure the sum of ini is close to earlier calculated value
-    assert np.isclose(mod1.grid.data["ini"].where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0)).sum(), 1139.5)
-
+    assert np.isclose(
+        mod1.grid.data["ini"]
+        .where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0))
+        .sum(),
+        1139.5,
+    )
 
 
 def test_subgrid_io(model_config, tmp_dir):
