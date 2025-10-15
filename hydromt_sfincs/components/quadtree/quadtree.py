@@ -346,7 +346,6 @@ class SfincsQuadtreeGrid(MeshComponent):
         # Make sure epsg is stored in the config as well
         self.model.config.set("epsg", self.model.crs.to_epsg())
 
-
     def create_from_region(
         self,
         region: dict,

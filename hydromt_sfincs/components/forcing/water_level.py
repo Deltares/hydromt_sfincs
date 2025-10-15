@@ -380,7 +380,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                     self.model.grid.mask == 2, 0
                 ).raster.vectorize()
             else:
-                raise ValueError("No waterlevel boundary cells (mask==2) in model grid.")
+                raise ValueError(
+                    "No waterlevel boundary cells (mask==2) in model grid."
+                )
         else:
             region = self.model.region
         # read waterlevel data from geodataset or geodataframe

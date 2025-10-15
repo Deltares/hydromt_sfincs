@@ -95,7 +95,7 @@ class SfincsGrid(GridComponent):
     def empty_mask(self) -> xr.DataArray:
         """Return mask with only inactive cells"""
         da_mask = xr.DataArray(
-            name="msk",
+            name="mask",
             data=np.zeros((self.nmax, self.mmax), dtype=np.uint8),
             coords=self.coordinates,
             dims=("y", "x"),
