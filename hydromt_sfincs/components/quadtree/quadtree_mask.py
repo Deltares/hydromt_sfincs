@@ -339,16 +339,163 @@ class SfincsQuadtreeMask(ModelComponent):
     def create(
         self,
         model: str = "sfincs",
-        mask: Union[str, Path, gpd.GeoDataFrame] = None,
-        include_mask: Union[str, Path, gpd.GeoDataFrame] = None,
-        exclude_mask: Union[str, Path, gpd.GeoDataFrame] = None,
-        mask_buffer: int = 0,
         zmin: float = None,
         zmax: float = None,
+        include_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        include_zmin: float = None,
+        include_zmax: float = None,
+        exclude_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        exclude_zmin: float = None,
+        exclude_zmax: float = None,
+        open_boundary_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        open_boundary_zmin: float = None,
+        open_boundary_zmax: float = None,
+        outflow_boundary_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        outflow_boundary_zmin: float = None,
+        outflow_boundary_zmax: float = None,
+        neumann_boundary_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        neumann_boundary_zmin: float = None,
+        neumann_boundary_zmax: float = None,
+        downstream_boundary_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        downstream_boundary_zmin: float = None,
+        downstream_boundary_zmax: float = None,
         all_touched: bool = False,
-        reset_mask: bool = True,
+        update_datashader_dataframe=False,
+    ):
+        """Setup active model mask and add boundaries. Note that boundary types can only be set when polygons are provided.
+
+        Parameters
+        ----------
+        model : str, optional
+            Model type, either 'sfincs' (default) or 'snapwave', for which the mask will be created.
+        zmin, zmax : float, optional
+            Minimum and maximum elevation thresholds for active model cells.
+        include_polygon, exclude_polygon: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name of polygons to include/exclude from the active model domain.
+            Note that include (second last) and exclude (last) areas are processed after other critera,
+            i.e. `zmin`, `zmax` and thus overrule these criteria for active model cells.
+        include_zmin, include_zmax: float, optional
+            Minimum and maximum elevation thresholds for included model cells.
+        exclude_zmin, exclude_zmax: float, optional
+            Minimum and maximum elevation thresholds for excluded model cells.
+        open_boundary_polygon, outflow_boundary_polygon, neumann_boundary_polygon, downstream_boundary_polygon: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name for geometries with areas to include as open boundary, outflow boundary, neumann boundary, or downstream boundary.
+            For each polygon, also the minimum and maximum elevation thresholds can be specified using the corresponding `*_zmin` and `*_zmax` arguments.
+
+        See also:
+        ---------
+        * `create_active` method to setup active model cells
+        * `create_boundary` method to setup boundary cells of a specific type
+
+        """
+
+        # Create active model cells
+        self.create_active(
+            model=model,
+            zmin=zmin,
+            zmax=zmax,
+            include_polygon=include_polygon,
+            include_zmin=include_zmin,
+            include_zmax=include_zmax,
+            exclude_polygon=exclude_polygon,
+            exclude_zmin=exclude_zmin,
+            exclude_zmax=exclude_zmax,
+            all_touched=all_touched,
+        )
+
+        # Add boundary cels
+        if open_boundary_polygon is not None:
+            self.create_boundary(
+                model=model,
+                btype="waterlevel",
+                include_polygon=open_boundary_polygon,
+                include_zmin=open_boundary_zmin,
+                include_zmax=open_boundary_zmax,
+                all_touched=all_touched,
+            )
+
+        if outflow_boundary_polygon is not None:
+            self.create_boundary(
+                model=model,
+                btype="outflow",
+                include_polygon=outflow_boundary_polygon,
+                include_zmin=outflow_boundary_zmin,
+                include_zmax=outflow_boundary_zmax,
+                all_touched=all_touched,
+            )
+
+        if downstream_boundary_polygon is not None:
+            self.create_boundary(
+                model=model,
+                btype="downstream",
+                include_polygon=downstream_boundary_polygon,
+                include_zmin=downstream_boundary_zmin,
+                include_zmax=downstream_boundary_zmax,
+                all_touched=all_touched,
+            )
+
+        if neumann_boundary_polygon is not None:
+            self.create_boundary(
+                model=model,
+                btype="neumann",
+                include_polygon=neumann_boundary_polygon,
+                include_zmin=neumann_boundary_zmin,
+                include_zmax=neumann_boundary_zmax,
+                all_touched=all_touched,
+            )
+
+        if update_datashader_dataframe:
+            # For use in DelftDashboard
+            self.get_datashader_dataframe()
+
+    @hydromt_step
+    def create_active(
+        self,
+        model: str = "sfincs",
+        zmin: float = None,
+        zmax: float = None,
+        include_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        include_zmin: float = None,
+        include_zmax: float = None,
+        exclude_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        exclude_zmin: float = None,
+        exclude_zmax: float = None,
+        all_touched: bool = False,
         copy_sfincsmask: bool = False,
     ):
+        """Setup active model cells.
+
+        The SFINCS model mask defines inactive (msk=0), active (msk=1), and waterlevel boundary (msk=2)
+        and outflow boundary (msk=3) cells. This method sets the active and inactive cells.
+
+        Active model cells are based on a region and cells with valid elevation (i.e. not nodata),
+        optionally bounded by areas inside the include geomtries, outside the exclude geomtries,
+        larger or equal than a minimum elevation threshhold and smaller or equal than a
+        maximum elevation threshhold.
+        All conditions are combined using a logical AND operation.
+
+        Adds mask layer to quadtree grid:
+
+        * **mask** map: model mask [-]
+
+        Parameters
+        ----------
+        model : str, optional
+            Model type, either 'sfincs' (default) or 'snapwave', for which the mask will be created.
+        zmin, zmax : float, optional
+            Minimum and maximum elevation thresholds for active model cells.
+        include_polygon, exclude_polygon: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name of polygons to include/exclude from the active model domain.
+            Note that include (second last) and exclude (last) areas are processed after other critera,
+            i.e. `zmin`, `zmax` and thus overrule these criteria for active model cells.
+        all_touched: bool, optional
+            if True (default) include (or exclude) a cell in the mask if it touches any of the
+            include (or exclude) geometries. If False, include a cell only if its center is
+            within one of the shapes, or if it is selected by Bresenham's line algorithm.
+        copy_sfincsmask: bool, optional
+            If True and model is 'snapwave', copy the SFINCS mask to the SnapWave mask.
+        """
+
         logger.info("Building mask ...")
 
         assert model in [
@@ -357,7 +504,7 @@ class SfincsQuadtreeMask(ModelComponent):
         ], "Model must be either 'sfincs' or 'snapwave'!"
 
         if model == "sfincs":
-            varname = "mak"
+            varname = "mask"
         elif model == "snapwave":
             varname = "snapwave_mask"
 
@@ -370,58 +517,35 @@ class SfincsQuadtreeMask(ModelComponent):
         logger.info("Build new mask for: " + model + " ...")
 
         # read geometries from file, data catalog or use provided geodataframe
-        gdf_mask, gdf_include, gdf_exclude = None, None, None
+        gdf_include, gdf_exclude = None, None
         bbox = self.model.region.to_crs(4326).total_bounds
-        if mask is not None:
-            if not isinstance(mask, gpd.GeoDataFrame) and str(mask).endswith(".pol"):
-                # NOTE polygons should be in same CRS as model
-                gdf_mask = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=mask), crs=self.model.crs
-                )
-            else:
-                gdf_mask = self.data_catalog.get_geodataframe(mask, bbox=bbox)
-            if mask_buffer > 0:  # NOTE assumes model in projected CRS!
-                gdf_mask["geometry"] = gdf_mask.to_crs(self.model.crs).buffer(
-                    mask_buffer
-                )
-        if include_mask is not None:
-            if not isinstance(include_mask, gpd.GeoDataFrame) and str(
-                include_mask
+
+        # FIXME do we still want to support .pol files?
+        if include_polygon is not None:
+            if not isinstance(include_polygon, gpd.GeoDataFrame) and str(
+                include_polygon
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_mask), crs=self.model.crs
+                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = self.data_catalog.get_geodataframe(
-                    include_mask, bbox=bbox
+                    include_polygon, bbox=bbox
                 )
-        if exclude_mask is not None:
-            if not isinstance(exclude_mask, gpd.GeoDataFrame) and str(
-                exclude_mask
+        if exclude_polygon is not None:
+            if not isinstance(exclude_polygon, gpd.GeoDataFrame) and str(
+                exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_mask), crs=self.model.crs
+                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = self.data_catalog.get_geodataframe(
-                    exclude_mask, bbox=bbox
+                    exclude_polygon, bbox=bbox
                 )
 
-        uda_mask0 = None
-        if not reset_mask and varname in self.data:
-            # use current active mask
-            uda_mask0 = self.data[varname] > 0
-        elif gdf_mask is not None:
-            # initialize mask with given geodataframe
-            uda_mask0 = (
-                xu.burn_vector_geometry(
-                    gdf_mask, self.data, fill=0, all_touched=all_touched
-                )
-                > 0
-            )
-
-        # always initialize an inactive mask
+        # always initialize an inactive mask, note this resets any existing mask
         uda_mask = self.empty_mask > 0
 
         if zmin is not None or zmax is not None:
@@ -434,19 +558,11 @@ class SfincsQuadtreeMask(ModelComponent):
                     _msk = np.logical_and(_msk, uda_dep >= zmin)
                 if zmax is not None:
                     _msk = np.logical_and(_msk, uda_dep <= zmax)
-                if uda_mask0 is not None:
-                    # if mask was provided; keep active mask only within valid elevations
-                    uda_mask = np.logical_and(uda_mask0, _msk)
-                else:
-                    # no mask provided; set mask to valid elevations
-                    uda_mask = _msk
-            elif zmin is None and zmax is None and uda_mask0 is not None:
-                # in case a mask/region was provided, but you didn't want to update the mask based on elevation
-                # just continue with the provided mask
-                uda_mask = uda_mask0
+            uda_mask = _msk
 
         # TODO add fill and drop area?
 
+        # apply include / exclude masks, first include (within zmin/zmax), then exclude (within zmin/zmax)
         if gdf_include is not None:
             try:
                 _msk = (
@@ -455,6 +571,16 @@ class SfincsQuadtreeMask(ModelComponent):
                     )
                     > 0
                 )
+                if include_zmin is not None or include_zmax is not None:
+                    if "z" not in self.data:
+                        raise ValueError(
+                            "z required in combination with include_zmin / include_zmax"
+                        )
+                    uda_dep = self.data["z"]
+                    if include_zmin is not None:
+                        _msk = np.logical_and(_msk, uda_dep >= include_zmin)
+                    if include_zmax is not None:
+                        _msk = np.logical_and(_msk, uda_dep <= include_zmax)
                 uda_mask = np.logical_or(uda_mask, _msk)  # NOTE logical OR statement
             except:
                 logger.debug("No mask cells found within include polygon!")
@@ -466,6 +592,16 @@ class SfincsQuadtreeMask(ModelComponent):
                     )
                     > 0
                 )
+                if exclude_zmin is not None or exclude_zmax is not None:
+                    if "z" not in self.data:
+                        raise ValueError(
+                            "z required in combination with exclude_zmin / exclude_zmax"
+                        )
+                    uda_dep = self.data["z"]
+                    if exclude_zmin is not None:
+                        _msk = np.logical_and(_msk, uda_dep >= exclude_zmin)
+                    if exclude_zmax is not None:
+                        _msk = np.logical_and(_msk, uda_dep <= exclude_zmax)
                 uda_mask = np.logical_and(uda_mask, ~_msk)
             except:
                 logger.debug("No mask cells found within exclude polygon!")
@@ -477,36 +613,83 @@ class SfincsQuadtreeMask(ModelComponent):
         )
 
     @hydromt_step
-    def set_bounds(
+    def create_boundary(
         self,
         model: str = "sfincs",
         btype: str = "waterlevel",
-        include_mask: Union[str, Path, gpd.GeoDataFrame] = None,
-        exclude_mask: Union[str, Path, gpd.GeoDataFrame] = None,
-        include_mask_buffer: int = 0,
         zmin: float = None,
         zmax: float = None,
-        # connectivity: int = 8,
+        include_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        include_zmin: float = None,
+        include_zmax: float = None,
+        include_polygon_buffer: int = 0,
+        exclude_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        exclude_zmin: float = None,
+        exclude_zmax: float = None,
         all_touched: bool = True,
         reset_bounds: bool = True,
         copy_sfincsmask: bool = False,
     ):
+        """Set boundary cells in the model mask.
+
+        The SFINCS model mask defines inactive (mask=0), active (mask=1), and waterlevel boundary (mask=2)
+        and outflow boundary (mask=3), downstream (mask=5) or neumann (mask=6) cells.
+        Active cells set using the `create_active` method,
+        while this method sets the different types of boundary cells, see `btype` argument.
+
+        Boundary cells at the edge of the active model domain,
+        optionally bounded by areas inside the include geomtries, outside the exclude geomtries,
+        larger or equal than a minimum elevation threshhold and smaller or equal than a
+        maximum elevation threshhold. All conditions are combined using a logical AND operation.
+
+        Updates mask layer in quadtree grid:
+
+        * **mask** map: model mask [-]
+
+        Parameters
+        ----------
+        model : str, optional
+            Model type, either 'sfincs' (default) or 'snapwave', for which the mask will be created.
+        btype: str, optional
+            Boundary type {'waterlevel', 'outflow', 'downstream', 'neumann'} for model='sfincs',
+                {'waves', 'neumann'} for model='snapwave'
+        zmin, zmax : float, optional
+            Minimum and maximum elevation thresholds for all boundary cells.
+        include_polygon, exclude_polygon: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name for geometries with areas to include/exclude from
+            the model boundary. These can be combined with `include_zmin` and `include_zmax` to
+            further refine the selection of cells within the polygons.
+        reset_bounds: bool, optional
+            If True, reset existing boundary cells of the selected boundary
+            type (`btype`) before setting new boundary cells, by default False.
+        all_touched: bool, optional
+            if True (default) include (or exclude) a cell in the mask if it touches any of the
+            include (or exclude) geometries. If False, include a cell only if its center is
+            within one of the shapes, or if it is selected by Bresenham's line algorithm.
+        connectivity, {4, 8}:
+            The connectivity used to detect the model edge, if 4 only horizontal and vertical
+            connections are used, if 8 (default) also diagonal connections.
+        """
+
         assert model in [
             "sfincs",
             "snapwave",
         ], "Model must be either 'sfincs' or 'snapwave'!"
 
+        # specify mask variable name based on model
         if model == "sfincs":
             varname = "mask"
         elif model == "snapwave":
             varname = "snapwave_mask"
 
+        # copy SFINCS mask to SnapWave mask when requested
         if copy_sfincsmask and model == "snapwave":
-            assert "msk" in self.data, "SFINCS mask not found!"
+            assert "mask" in self.data, "SFINCS mask not found!"
             logger.info("Using SFINCS mask for SnapWave mask ...")
             self.data[varname] = self.data["mask"]
             return
 
+        # check if mask already exists
         if varname not in self.data:
             raise ValueError("First setup active mask for model: " + model)
         else:
@@ -517,6 +700,7 @@ class SfincsQuadtreeMask(ModelComponent):
         else:
             uda_dep = self.data["z"]
 
+        # check boundary type
         btype = btype.lower()
         if model == "sfincs":
             bvalues = {"waterlevel": 2, "outflow": 3, "downstream": 5, "neumann": 6}
@@ -532,34 +716,34 @@ class SfincsQuadtreeMask(ModelComponent):
         # get include / exclude geometries
         gdf_include, gdf_exclude = None, None
         bbox = self.model.bbox
-        if include_mask is not None:
-            if not isinstance(include_mask, gpd.GeoDataFrame) and str(
-                include_mask
+        if include_polygon is not None:
+            if not isinstance(include_polygon, gpd.GeoDataFrame) and str(
+                include_polygon
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_mask), crs=self.model.crs
+                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = self.data_catalog.get_geodataframe(
-                    include_mask, bbox=bbox
+                    include_polygon, bbox=bbox
                 )
-            if include_mask_buffer > 0:
+            if include_polygon_buffer > 0:
                 if self.model.crs.is_geographic:
-                    include_mask_buffer = include_mask_buffer / 111111.0
+                    include_polygon_buffer = include_polygon_buffer / 111111.0
                 gdf_include["geometry"] = gdf_include.to_crs(self.model.crs).buffer(
-                    include_mask_buffer
+                    include_polygon_buffer
                 )
-        if exclude_mask is not None:
-            if not isinstance(exclude_mask, gpd.GeoDataFrame) and str(
-                exclude_mask
+        if exclude_polygon is not None:
+            if not isinstance(exclude_polygon, gpd.GeoDataFrame) and str(
+                exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_mask), crs=self.model.crs
+                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = self.data_catalog.get_geodataframe(
-                    exclude_mask, bbox=bbox
+                    exclude_polygon, bbox=bbox
                 )
 
         bvalue = bvalues[btype]
@@ -579,14 +763,17 @@ class SfincsQuadtreeMask(ModelComponent):
                 )
                 return
 
-        # find boundary cells of the active mask
-        bounds_org = self._find_boundary_cells(varname)
-        bounds = bounds_org.copy()
+        # find all boundary cells of the active mask
+        bounds0 = self._find_boundary_cells(varname)
+        bounds = bounds0.copy()
 
+        # check general zmin and zmax
         if zmin is not None:
             bounds = np.logical_and(bounds, uda_dep >= zmin)
         if zmax is not None:
             bounds = np.logical_and(bounds, uda_dep <= zmax)
+
+        # apply include / exclude masks, first include (within zmin/zmax), then exclude (within zmin/zmax)
         if gdf_include is not None:
             uda_include = (
                 xu.burn_vector_geometry(
@@ -594,6 +781,16 @@ class SfincsQuadtreeMask(ModelComponent):
                 )
                 > 0
             )
+            if include_zmin is not None or include_zmax is not None:
+                if "z" not in self.data:
+                    raise ValueError(
+                        "z required in combination with include_zmin / include_zmax"
+                    )
+                uda_dep = self.data["z"]
+                if include_zmin is not None:
+                    uda_include = np.logical_and(uda_include, uda_dep >= include_zmin)
+                if include_zmax is not None:
+                    uda_include = np.logical_and(uda_include, uda_dep <= include_zmax)
             bounds = np.logical_and(bounds, uda_include)
         if gdf_exclude is not None:
             uda_exclude = (
@@ -602,14 +799,25 @@ class SfincsQuadtreeMask(ModelComponent):
                 )
                 > 0
             )
+            if exclude_zmin is not None or exclude_zmax is not None:
+                if "z" not in self.data:
+                    raise ValueError(
+                        "z required in combination with exclude_zmin / exclude_zmax"
+                    )
+                uda_dep = self.data["z"]
+                if exclude_zmin is not None:
+                    uda_exclude = np.logical_and(uda_exclude, uda_dep >= exclude_zmin)
+                if exclude_zmax is not None:
+                    uda_exclude = np.logical_and(uda_exclude, uda_dep <= exclude_zmax)
             bounds = np.logical_and(bounds, ~uda_exclude)
 
-        # TODO avoid any msk3 cells neighboring msk2 cells
+        # set new boundary cells, keep same mask value for existing boundary cells
         ncells = np.count_nonzero(bounds.values)
         if ncells > 0:
             uda_mask = uda_mask.where(~bounds, np.uint8(bvalue))
 
-        # # try to include 'diagonally connected msk=2 neighbouring cells'
+        # TODO avoid any msk3 cells neighboring msk2 cells
+        # TODO try to include 'diagonally connected msk=2 neighbouring cells'
         # if connectivity == 4:
         #     self.bounds_msk2 = uda_mask.copy()
         #     bounds_msk2 = self._find_boundary_cells_msk2()  # uda_mask)

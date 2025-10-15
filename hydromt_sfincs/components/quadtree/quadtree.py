@@ -169,6 +169,9 @@ class SfincsQuadtreeGrid(MeshComponent):
 
             self._data = ds
 
+        # Make sure epsg is stored in the config as well
+        self.model.config.set("epsg", self.model.crs.to_epsg())
+
         # check which seperate data variables should be read
         if data_vars is None:
             data_vars = _QT_MAPS
@@ -249,6 +252,9 @@ class SfincsQuadtreeGrid(MeshComponent):
         abs_file_path = self.model.config.get_set_file_variable(
             "qtrfile", value=filename, default="sfincs.nc"
         )
+
+        # Make sure epsg is stored in the config as well
+        self.model.config.set("epsg", self.model.crs.to_epsg())
 
         # And write the file
         ds.attrs = attrs
@@ -336,6 +342,9 @@ class SfincsQuadtreeGrid(MeshComponent):
             refinement_polygons=refinement_polygons,
             datasets_dep=datasets_dep_per_level,
         )
+
+        # Make sure epsg is stored in the config as well
+        self.model.config.set("epsg", self.model.crs.to_epsg())
 
     def create_from_region(
         self,

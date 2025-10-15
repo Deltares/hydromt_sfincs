@@ -26,10 +26,10 @@ from rasterio.windows import Window
 from shapely.geometry import LineString, Polygon
 
 import hydromt
-from hydromt._io import write_xy
-from hydromt._io import _open_vector as open_vector
+from hydromt.io import write_xy
+from hydromt.io import open_vector
 from hydromt.data_catalog.drivers import RasterioDriver
-from hydromt.gis._gis_utils import _zoom_to_overview_level
+from hydromt.gis.gis_utils import zoom_to_overview_level
 
 __all__ = [
     "read_binary_map",
@@ -1109,7 +1109,7 @@ def downscale_floodmap(
 
         if zoom_level is not None:
             zls_dict, crs = RasterioDriver._get_zoom_levels_and_crs(dep)
-            overview_level = _zoom_to_overview_level(
+            overview_level = zoom_to_overview_level(
                 zoom=zoom_level, zls_dict=zls_dict, crs=crs
             )
             if overview_level:
