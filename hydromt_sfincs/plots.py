@@ -92,14 +92,13 @@ def plot_forcing(forcing: Dict, **kwargs):
             or name.startswith("wind10_v")
         ):
             df.plot.line(ax=axes[i])
-        elif name.startswith("wnd"):
-            df.plot(ax=axes[i], kind="line", secondary_y="dir", legend=False)
+        elif name.startswith("wind"):
+            df.plot(ax=axes[i], kind="line", secondary_y="direction", legend=False)
             # set tick color for y-axis of variable 1
             axes[i].tick_params(axis="y", labelcolor="C0")
             axes[i].right_ax.set_ylabel("Wind direction [degrees]")
             # set tick color and label for y-axis of variable 2
             axes[i].right_ax.tick_params(axis="y", labelcolor="C1")
-
         else:
             df.plot.line(ax=axes[i]).legend(
                 title="index",
