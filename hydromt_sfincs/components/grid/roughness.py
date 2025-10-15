@@ -24,7 +24,7 @@ class SfincsRoughness(ModelComponent):
         self,
         model: "SfincsModel",
     ):
-        # The data for the mask is stored in the model.grid.data["mask"]
+        # The data for the mask is stored in the model.grid.data["manning"]
         super().__init__(
             model=model,
         )
@@ -39,13 +39,20 @@ class SfincsRoughness(ModelComponent):
         """Get an empty mask with the same shape as the model grid."""
         return self.model.grid.mask
 
+    # %% core HydroMT-SFINCS functions:
+    # read
+    # write
+    # set > already in grid.set()
+    # create
+    # clear >TODO ?
+
     def read(self):
         # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The mask values are read when the quadtree grid is read
+        # The manning file is read when all grid files are read in regulargrid.py
         pass
 
     def write(self):
-        # The mask values are written when the quadtree grid is written
+        # The manning file is written when all grid files are written in regulargrid.py
         pass
 
     # Roughness

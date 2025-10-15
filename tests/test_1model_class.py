@@ -9,7 +9,7 @@ import pytest
 from shapely.geometry import Polygon, Point
 import xarray as xr
 from geopandas.testing import assert_geodataframe_equal
-from hydromt.cli._utils import parse_config
+from hydromt.io import read_workflow_yaml
 
 # from hydromt.log import setuplog
 
@@ -41,23 +41,6 @@ def test_model_class(case):
         v for v in non_compliant_list if "results" not in v and "mesh" not in v
     ]
     assert len(non_compliant_list) == 0
-
-
-def test_states(mod):
-    # create dummy state and set to states
-    mask = mod.grid["dep"] < -0.5
-    zsini = xr.where(mask, 0.5, -9999.0)
-    zsini.raster.set_nodata(-9999.0)
-    zsini.raster.set_crs(mod.crs)
-    mod.set_states(zsini, "zsini")
-    # write and check if isfile
-    mod.write_grid()  # required to write file
-    mod.write_states()
-    mod.write_config()
-    assert isfile(join(mod.root, "sfincs.zsini"))
-    # read and check if identical
-    mod1 = SfincsModel(root=mod.root, mode="r")
-    assert np.allclose(mod1.states["zsini"], mod.states["zsini"])
 
 
 def test_infiltration(model):
@@ -112,6 +95,66 @@ def test_infiltration(model):
         mod1.grid.data["seff"].where(mod1.grid.mask > 0).sum(), 32.929287 * effective
     )
     assert np.isclose(mod1.grid.data["ks"].where(mod1.grid.mask > 0).sum(), 331.27203)
+
+
+def test_initial_conditions(model):
+    # set spatially varying initial waterlevel
+    ini = xr.where(model.grid.data["dep"] < -0.5, np.nan, 0.5)
+    # ini.raster.set_nodata(-9999.0)
+    ini.raster.set_crs(model.crs)
+    model.initial_conditions.create(ini, reproj_method="nearest")
+    assert model.config.get("zsini") is None  # zsini removed from config
+    assert model.config.get("inifile") is not None  # inifile set
+    assert "ini" in model.grid.data
+
+    # Write model
+    model.grid.write()
+    model.config.write()
+
+    # read and check if identical
+    mod1 = SfincsModel(root=model.root.path, mode="r")
+    mod1.config.read()
+    mod1.grid.read()
+
+    # assure the sum of ini is close to earlier calculated value
+    assert np.isclose(
+        mod1.grid.data["ini"]
+        .where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0))
+        .sum(),
+        890.5,
+    )
+
+
+def test_initial_conditions_from_polygon(model):
+    # set spatially varying initial waterlevel
+    region = model.data_catalog.get_geodataframe(
+        join(TESTDATADIR, "region.geojson"),
+    )
+    region["ini"] = 0.5
+
+    model.initial_conditions.create_from_polygon(region, reset_ini=True)
+
+    # check if values are correctly set
+    assert model.config.get("zsini") is None  # zsini removed from config
+    assert model.config.get("inifile") is not None  # inifile set
+    assert "ini" in model.grid.data
+
+    # Write model
+    model.grid.write()
+    model.config.write()
+
+    # read and check if identical
+    mod1 = SfincsModel(root=model.root.path, mode="r")
+    mod1.config.read()
+    mod1.grid.read()
+
+    # assure the sum of ini is close to earlier calculated value
+    assert np.isclose(
+        mod1.grid.data["ini"]
+        .where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0))
+        .sum(),
+        1139.5,
+    )
 
 
 def test_subgrid_io(model_config, tmp_dir):
@@ -431,9 +474,8 @@ def test_plots(case, tmpdir):
     root = join(TESTDATADIR, _cases[case]["example"])
     mod = SfincsModel(root=root, mode="r")
     mod.read()
-    # TODO add plot forcing
-    # mod.plot_forcing(fn_out=join(tmpdir, "forcing.png"))
-    # assert isfile(join(tmpdir, "forcing.png"))
+    mod.plot_forcing(fn_out=join(tmpdir, "forcing.png"))
+    assert isfile(join(tmpdir, "forcing.png"))
     fn_out = join(tmpdir, "basemap.png")
     if case == "test2":
         mod.plot_basemap(
@@ -453,15 +495,13 @@ def test_model_build(tmpdir, case):
     root0 = TESTMODELDIR
 
     # Build model
-    ini_fn = join(TESTDATADIR, _cases[case]["ini"])
-    config = parse_config(ini_fn)
+    config = join(TESTDATADIR, _cases[case]["ini"])
+    modeltype, kwargs, steps = read_workflow_yaml(config, modeltype="sfincs")
 
     # logger = setuplog(path=join(root, "hydromt.log"), log_level=10)
-    mod1 = SfincsModel(root=root, mode="w", **config.pop("global", {}))
+    mod1 = SfincsModel(root=root, mode="w", **kwargs)
     # convert steps to list of dicts
-    # to be compatible with hydromt core Model.build()
-    # steps = [{key: value} for key, value in steps.items()]
-    mod1.build(steps=config.get("steps"))
+    mod1.build(steps=steps)
     # Check if model is api compliant
     # non_compliant_list = mod1.test_model_api()
     # assert len(non_compliant_list) == 0

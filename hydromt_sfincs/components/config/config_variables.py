@@ -128,7 +128,7 @@ class SfincsConfigVariables(BaseSettings):
         lt=9999,
         description="Elevation level to distinguish land and sea roughness (meters above reference level)",
     )
-    zsini: float = Field(
+    zsini: float | None = Field(
         0.0,
         description="Initial water level in entire domain - where above bed level (meters)",
     )
