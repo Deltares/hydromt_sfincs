@@ -2,7 +2,7 @@ region:
   uri: region.geojson
   data_type: GeoDataFrame
   driver: pyogrio
-  
+
 observations:
   uri: local_data/observations.csv
   data_type: GeoDataFrame
