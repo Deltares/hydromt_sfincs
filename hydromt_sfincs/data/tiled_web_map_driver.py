@@ -42,6 +42,7 @@ class ZoomLevel:
         self.ntiles = 0
         self.ij_available = None
 
+
 class TiledWebMapDriver(RasterDatasetDriver):
     """Driver using rasterio for RasterDataset."""
 
@@ -117,7 +118,10 @@ class TiledWebMapDriver(RasterDatasetDriver):
             else:
                 self.options["availability_exists"] = False
             # If availability info exists but is not yet loaded, load it now
-            if self.options["availability_exists"] and not self.options["availability_loaded"]:
+            if (
+                self.options["availability_exists"]
+                and not self.options["availability_loaded"]
+            ):
                 self._read_availability()
                 self.options["availability_loaded"] = True
             # Check if s3 parameters are provided, if so, set download to True
@@ -133,7 +137,9 @@ class TiledWebMapDriver(RasterDatasetDriver):
             self.options["initialized"] = True
 
         # Determine zoom level, highest resolution is used if not specified
-        izoom = get_zoom_level_for_resolution(zoom=zoom,mask=mask,max_zoom=self.options.get("max_zoom"))
+        izoom = get_zoom_level_for_resolution(
+            zoom=zoom, mask=mask, max_zoom=self.options.get("max_zoom")
+        )
 
         # Determine tile indices to read, if mask is provided, use that to limit the area
         if mask is not None:
@@ -153,11 +159,15 @@ class TiledWebMapDriver(RasterDatasetDriver):
             iy0 = min(ij % zoom_level.ntiles for ij in zoom_level.ij_available)
             iy1 = max(ij % zoom_level.ntiles for ij in zoom_level.ij_available)
         else:
-            raise ValueError("Either bbox/geom or availability information must be provided to read Tiled Web Map data.")
-        
+            raise ValueError(
+                "Either bbox/geom or availability information must be provided to read Tiled Web Map data."
+            )
+
         # Download missing tiles if required
         if self.options["download"]:
-            self._download_missing_tiles(ix0, ix1, iy0, iy1, izoom)#, waitbox=waitbox)
+            self._download_missing_tiles(
+                ix0, ix1, iy0, iy1, izoom
+            )  # , waitbox=waitbox)
 
         # Get dict of available tiles
         tile_dict = self._get_tile_paths(ix0, ix1, iy0, iy1, izoom)
@@ -166,14 +176,23 @@ class TiledWebMapDriver(RasterDatasetDriver):
 
         # Create dask array from tiles, without loading all tiles into memory
         delayed_tiles = [
-            [delayed(png2elevation)(tile_dict[(x, y)]) for x in xs if (x, y) in tile_dict]
+            [
+                delayed(png2elevation)(tile_dict[(x, y)])
+                for x in xs
+                if (x, y) in tile_dict
+            ]
             for y in ys
         ]
         sample_tile = np.array(png2elevation(next(iter(tile_dict.values()))))
-        dask_tiles = da.block([
-            [da.from_delayed(t, shape=sample_tile.shape, dtype=sample_tile.dtype) for t in row]
-            for row in delayed_tiles
-        ])
+        dask_tiles = da.block(
+            [
+                [
+                    da.from_delayed(t, shape=sample_tile.shape, dtype=sample_tile.dtype)
+                    for t in row
+                ]
+                for row in delayed_tiles
+            ]
+        )
 
         # Compute x and y coordinates
         x0, y0 = num2xy(ix0, iy1 + 1, izoom)
@@ -181,17 +200,15 @@ class TiledWebMapDriver(RasterDatasetDriver):
         nx, ny = dask_tiles.shape[1], dask_tiles.shape[0]
         # Data is stored in centres of pixels so we need to shift the coordinates
         dx, dy = (x1 - x0) / nx, (y1 - y0) / ny
-        x = np.linspace(x0 + 0.5*dx, x1 - 0.5*dx, nx)
-        y = np.linspace(y0 + 0.5*dy, y1 - 0.5*dy, ny)
+        x = np.linspace(x0 + 0.5 * dx, x1 - 0.5 * dx, nx)
+        y = np.linspace(y0 + 0.5 * dy, y1 - 0.5 * dy, ny)
 
         data = np.flipud(dask_tiles)
 
         # Create xarray Dataset
         # TODO make name of variable configurable?
         elevation = xr.Dataset(
-            {
-                "elevtn": (("y", "x"), data)  # variable name + dims + data
-            },
+            {"elevtn": (("y", "x"), data)},  # variable name + dims + data
             coords={"x": x, "y": y},
             attrs={"crs": "EPSG:3857", "z_level": izoom},
         )
@@ -201,7 +218,6 @@ class TiledWebMapDriver(RasterDatasetDriver):
             elevation = elevation.chunk(chunks=chunks)
 
         return elevation
-
 
     def write(self, path: StrPath, ds: xr.Dataset, **kwargs) -> str:
         """Write out a RasterDataset using rasterio."""
@@ -248,21 +264,30 @@ class TiledWebMapDriver(RasterDatasetDriver):
                 png_file = os.path.join(self.uri, str(izoom), ifolder, str(j) + ".png")
                 if not os.path.exists(png_file):
                     # Check availability matrix if present
-                    if self.options["availability_exists"] and not self._check_availability(i, j, izoom):
+                    if self.options[
+                        "availability_exists"
+                    ] and not self._check_availability(i, j, izoom):
                         continue
                     download_file_list.append(png_file)
-                    download_key_list.append(f"{self.options.get('s3_key')}/{izoom}/{ifolder}/{j}.png")
+                    download_key_list.append(
+                        f"{self.options.get('s3_key')}/{izoom}/{ifolder}/{j}.png"
+                    )
                     Path(png_file).parent.mkdir(parents=True, exist_ok=True)
 
         if len(download_file_list) > 0:
             if waitbox is not None:
                 wb = waitbox("Downloading topography tiles ...")
             if self.options["s3_client"] is None:
-                self.options["s3_client"] = boto3.client("s3", config=Config(signature_version=UNSIGNED))
+                self.options["s3_client"] = boto3.client(
+                    "s3", config=Config(signature_version=UNSIGNED)
+                )
             with ThreadPool() as pool:
                 pool.starmap(
                     self._download_tile_parallel,
-                    [(self.options.get('s3_bucket'), key, file) for key, file in zip(download_key_list, download_file_list)],
+                    [
+                        (self.options.get("s3_bucket"), key, file)
+                        for key, file in zip(download_key_list, download_file_list)
+                    ],
                 )
             if waitbox is not None:
                 wb.close()
@@ -292,7 +317,7 @@ class TiledWebMapDriver(RasterDatasetDriver):
         filename = os.path.join(self.uri, str(izoom), str(i), str(j) + ".png")
         try:
             self.options["s3_client"].download_file(
-                Bucket=self.options.get('s3_bucket'),  # assign bucket name
+                Bucket=self.options.get("s3_bucket"),  # assign bucket name
                 Key=key,  # key is the file name
                 Filename=filename,
             )  # storage file path
@@ -325,14 +350,19 @@ class TiledWebMapDriver(RasterDatasetDriver):
 
         return okay
 
-def get_zoom_level_for_resolution(zoom, mask:gpd.GeoDataFrame=None, max_zoom:int=23):
+
+def get_zoom_level_for_resolution(
+    zoom, mask: gpd.GeoDataFrame = None, max_zoom: int = 23
+):
     # Get required zoom level
     # Make a dict of zoom levels and resolutions
     zls_dict = {i: 156543.03 / 2**i for i in range(max_zoom + 1)}
 
     if zoom is None:
         overview_level = max_zoom
-        logger.debug(f"No zoom level specified. Using highest resolution zoom level {overview_level}")
+        logger.debug(
+            f"No zoom level specified. Using highest resolution zoom level {overview_level}"
+        )
         return overview_level
     if isinstance(zoom, int):
         overview_level = zoom
@@ -389,10 +419,12 @@ def get_zoom_level_for_resolution(zoom, mask:gpd.GeoDataFrame=None, max_zoom:int
     logger.debug(f"Using overview level {overview_level} ({dst_res:.2f})")
     return overview_level
 
+
 def xy2num(easting, northing, zoom):
     lat, lon = webmercator_to_lat_lon(easting, northing)
     ix, it = lat_lon_to_tile_indices(lat, lon, zoom)
     return ix, it
+
 
 def num2xy(xtile, ytile, zoom):
     """Returns upper left x and y of slippy tile"""
@@ -412,11 +444,13 @@ def webmercator_to_lat_lon(easting, northing):
     )
     return lat, lon
 
+
 def lat_lon_to_webmercator(lat, lon):
     # Convert latitude and longitude to Web Mercator coordinates
     x = lon * 20037508.34 / 180
     y = (math.log(math.tan((90 + lat) * math.pi / 360)) / math.pi) * 20037508.34
     return x, y
+
 
 def lat_lon_to_tile_indices(lat, lon, zoom):
     tile_x = int((lon + 180) / 360 * (2**zoom))
