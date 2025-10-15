@@ -45,7 +45,8 @@ class SfincsInfiltration(ModelComponent):
         self,
         model: "SfincsModel",
     ):
-        # The data for the mask is stored in the model.grid.data["mask"]
+        # The data for the mask is stored in the model.grid.data["qinf"]
+        # (or "scs" or "smax", "seff" & "ks")
         super().__init__(
             model=model,
         )
@@ -60,13 +61,22 @@ class SfincsInfiltration(ModelComponent):
         """Get an empty mask with the same shape as the model grid."""
         return self.model.grid.mask
 
+    # %% core HydroMT-SFINCS functions:
+    # read
+    # write
+    # set > already in grid.set()
+    # create_constant
+    # create_cn
+    # create_cn_with_recovery
+    # clear >TODO?
+
     def read(self):
         # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The mask values are read when the quadtree grid is read
+        # The infiltration file(s) are read when all grid files are read in regulargrid.py
         pass
 
     def write(self):
-        # The mask values are written when the quadtree grid is written
+        # The infiltration file(s) are written when all grid files are written in regulargrid.py
         pass
 
     # Function to create constant spatially varying infiltration
@@ -148,7 +158,7 @@ class SfincsInfiltration(ModelComponent):
 
         # update config: remove default inf and set qinf map
         self.model.config.set(f"{mname}file", f"sfincs.{mname}")
-        # set spatially unfiform qinf to None in config
+        # set spatially uniform qinf to None in config
         self.model.config.set("qinf", None)
 
         # loop over other infiltration methods ATTRS and remove them from config when present

@@ -97,6 +97,66 @@ def test_infiltration(model):
     assert np.isclose(mod1.grid.data["ks"].where(mod1.grid.mask > 0).sum(), 331.27203)
 
 
+def test_initial_conditions(model):
+    # set spatially varying initial waterlevel
+    ini = xr.where(model.grid.data["dep"] < -0.5, np.nan, 0.5)
+    # ini.raster.set_nodata(-9999.0)
+    ini.raster.set_crs(model.crs)
+    model.initial_conditions.create(ini, reproj_method="nearest")
+    assert model.config.get("zsini") is None  # zsini removed from config
+    assert model.config.get("inifile") is not None  # inifile set
+    assert "ini" in model.grid.data
+
+    # Write model
+    model.grid.write()
+    model.config.write()
+
+    # read and check if identical
+    mod1 = SfincsModel(root=model.root.path, mode="r")
+    mod1.config.read()
+    mod1.grid.read()
+
+    # assure the sum of ini is close to earlier calculated value
+    assert np.isclose(
+        mod1.grid.data["ini"]
+        .where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0))
+        .sum(),
+        890.5,
+    )
+
+
+def test_initial_conditions_from_polygon(model):
+    # set spatially varying initial waterlevel
+    region = model.data_catalog.get_geodataframe(
+        join(TESTDATADIR, "region.geojson"),
+    )
+    region["ini"] = 0.5
+
+    model.initial_conditions.create_from_polygon(region, reset_ini=True)
+
+    # check if values are correctly set
+    assert model.config.get("zsini") is None  # zsini removed from config
+    assert model.config.get("inifile") is not None  # inifile set
+    assert "ini" in model.grid.data
+
+    # Write model
+    model.grid.write()
+    model.config.write()
+
+    # read and check if identical
+    mod1 = SfincsModel(root=model.root.path, mode="r")
+    mod1.config.read()
+    mod1.grid.read()
+
+    # assure the sum of ini is close to earlier calculated value
+    assert np.isclose(
+        mod1.grid.data["ini"]
+        .where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0))
+        .sum(),
+        1139.5,
+    )
+
+
 def test_subgrid_io(model_config, tmp_dir):
     # test the backward compatibility of reading/writing subgrid
 
