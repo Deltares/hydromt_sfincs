@@ -8,6 +8,7 @@ import xugrid as xu
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
+from hydromt.model.processes.mesh import mesh2d_from_rasterdataset
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -86,25 +87,29 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
         # Add logger info
         logger.info("Creating spatially varying initial water level.")
 
-        # get initial water level data,        
-        # rasterdataset/file with ini values
-        if ini is not None:
-            da_ini = self.data_catalog.get_rasterdataset(
-                ini,
-                bbox=self.model.bbox,
-                buffer=10, #FIXME - meter or pixels?
-            )
+        # get rasterdataset with initial water level data
+        da_ini = self.data_catalog.get_rasterdataset(
+            ini,
+            bbox=self.model.bbox,
+            buffer=10,
+        )
 
         # reproject initial water level data to model grid
-        da_ini = da_ini.raster.mask_nodata()  # set nodata to nan
-        da_ini = da_ini.raster.reproject_like(self.mask, method=reproj_method) 
-        #FIXME - still some interpolation step to quadtree grid needed? Or this works directly?
+        # da_ini = da_ini.raster.mask_nodata()  # set nodata to nan
+        # reproject single-dataset to mesh
+        mesh2d = self.mask.grid
+        mesh_ini = mesh2d_from_rasterdataset(
+            ds=da_ini,
+            mesh2d=mesh2d,
+            resampling_method=reproj_method,
+        )
 
         # check on nan values
-        if np.logical_and(np.isnan(da_ini), self.mask >= 1).any():
-            logger.warning("NaN values found in initial water level data; filled with fill_value (default -9999.0)")
-            da_ini = da_ini.fillna(fill_value)
-        da_ini.raster.set_nodata(np.nan) # FIXME - or -9999.0 and putting fill_value to -999.0?
+        if np.logical_and(np.isnan(mesh_ini), self.mask >= 1).any():
+            logger.warning("NaN values found in initial water level data; filled with fill_value {}".format(fill_value))
+            mesh_ini = mesh_ini.fillna(fill_value)
+        #FIXME add nodata
+        # mesh_ini..set_nodata(np.nan)
 
         # set grid
         da_ini.attrs.update(**_ATTRS.get(mname, {}))
