@@ -114,7 +114,7 @@ class SfincsConfig(ModelComponent):
             self._filename = join(self.root.path, filename)
 
         with open(self._filename, "w") as fid:
-            for key, value in self.data.dict(exclude_unset=False).items():
+            for key, value in self.data.model_dump(exclude_unset=False).items():
                 if value is None:
                     continue
                 else:
