@@ -397,7 +397,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
             gdf_locs = da.vector.to_gdf()
             # if a geodataset is used, keep the format to netcdf
-            self.model.config.set("netdischargefile", "sfincs_netsrcdisfile.nc")
+            self.model.config.set("netsrcdisfile", "sfincs_netsrcdisfile.nc")
         elif timeseries is not None:
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
