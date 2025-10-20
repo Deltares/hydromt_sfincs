@@ -1,4 +1,5 @@
 import logging
+from os.path import join
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Union
 
@@ -163,6 +164,14 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         else:
             self.write_discharge_conditions_netcdf()
 
+        if self.model.write_gis:
+            utils.write_vector(
+                self.gdf,
+                name="dis",
+                root=join(self.model.root.path, "gis"),
+                logger=logger,
+            )
+
     def write_discharge_points(self, filename: str | Path = None):
         """Write SFINCS discharge points (*.src) file"""
 
@@ -218,7 +227,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             return
 
         ds = self.data
-        ds.vector.to_netcdf(abs_file_path)
+        ds.vector.to_xy().to_netcdf(abs_file_path)
 
     def delete(self, index: Union[int, List[int]]):
         "Delete boundary points and clear config when no points remain."
@@ -384,6 +393,8 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             )
             df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
             gdf_locs = da.vector.to_gdf()
+            # if a geodataset is used, keep the format to netcdf
+            self.model.config.set("netdischargefile", "sfincs_netsrcdisfile.nc")
         elif timeseries is not None:
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
