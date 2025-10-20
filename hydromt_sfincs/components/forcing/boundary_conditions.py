@@ -126,7 +126,9 @@ class SfincsBoundaryBase(ModelComponent):
 
         # update locations and timeseries
         if gdf is not None:
-            new_indices = self.set_locations(gdf, merge=merge, drop_duplicates=drop_duplicates)
+            new_indices = self.set_locations(
+                gdf, merge=merge, drop_duplicates=drop_duplicates
+            )
             # merging might alter the indices, so update df columns if given
             if df is not None:
                 df.columns = new_indices
@@ -134,7 +136,11 @@ class SfincsBoundaryBase(ModelComponent):
             self.set_timeseries(df)
 
     def set_locations(
-        self, gdf: gpd.GeoDataFrame, value: float = 0.0, merge: bool = True, drop_duplicates: bool = True
+        self,
+        gdf: gpd.GeoDataFrame,
+        value: float = 0.0,
+        merge: bool = True,
+        drop_duplicates: bool = True,
     ):
         """
         Add or update point locations. When merging with existing data, the
@@ -175,10 +181,16 @@ class SfincsBoundaryBase(ModelComponent):
                     else:
                         precision = 2
                     gdf0["__coords__"] = gdf0.geometry.apply(
-                        lambda geom: (round(geom.x, precision), round(geom.y, precision))
+                        lambda geom: (
+                            round(geom.x, precision),
+                            round(geom.y, precision),
+                        )
                     )
                     gdf["__coords__"] = gdf.geometry.apply(
-                        lambda geom: (round(geom.x, precision), round(geom.y, precision))
+                        lambda geom: (
+                            round(geom.x, precision),
+                            round(geom.y, precision),
+                        )
                     )
                     gdf0 = gdf0[~gdf0["__coords__"].isin(gdf["__coords__"])]
                     gdf0 = gdf0.drop(columns="__coords__")
@@ -187,7 +199,11 @@ class SfincsBoundaryBase(ModelComponent):
                 df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
                 nr_points_removed = self.nr_points - len(gdf0)
                 if nr_points_removed > 0:
-                    logger.info("Removed {} duplicate points based on 'name' or geometry.".format(nr_points_removed))
+                    logger.info(
+                        "Removed {} duplicate points based on 'name' or geometry.".format(
+                            nr_points_removed
+                        )
+                    )
 
             # create matching dataframe for new points
             df_new = pd.DataFrame(index=df0.index, columns=gdf.index, data=value)
