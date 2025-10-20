@@ -982,8 +982,10 @@ class SfincsSubgridTable(ModelComponent):
         self.model.config.set("manning_sea", None)
         self.model.config.set("rgh_lev_land", None)
         self.model.config.set("manningfile", None)
-        logger.info("Set other manning options to None in config that are unused  in SFINCS in case "
-                    "of subgrid (manning, manning_land, manning_sea, rgh_lev_land, manningfile).")
+        logger.info(
+            "Set other manning options to None in config that are unused  in SFINCS in case"
+            " of subgrid (manning, manning_land, manning_sea, rgh_lev_land, manningfile)."
+        )
 
     def to_xarray(self, dims, coords):
         """Convert old binary subgrid class to xarray dataset."""

@@ -126,5 +126,7 @@ class SfincsRoughness(ModelComponent):
         self.model.config.set("manning_land", None)
         self.model.config.set("manning_sea", None)
         self.model.config.set("rgh_lev_land", None)
-        logger.info("Set other manning options to None in config that are unused in SFINCS in case "
-                    "of specifying manningfile (manning, manning_land, manning_sea, rgh_lev_land).")
+        logger.info(
+            "Set other manning options to None in config that are unused in SFINCS in case"
+            " of specifying manningfile (manning, manning_land, manning_sea, rgh_lev_land)."
+        )

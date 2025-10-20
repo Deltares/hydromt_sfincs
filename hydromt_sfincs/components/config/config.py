@@ -41,7 +41,8 @@ class SfincsConfig(ModelComponent):
         return self._filename
 
     def read(self) -> None:
-        """Read a text file and populate SfincsConfig. This function also determines the grid type and updates the grid properties."""
+        """Read a text file and populate SfincsConfig. This function also
+        determines the grid type and updates the grid properties."""
 
         self.root._assert_read_mode
 
@@ -96,14 +97,14 @@ class SfincsConfig(ModelComponent):
         # This will either drop the quadtree component or the regular component?
         self.update_grid_from_config()
 
-    def write(self, 
-              filename: str = "sfincs.inp",
-              write_description: bool = False) -> None:
+    def write(
+        self, filename: str = "sfincs.inp", write_description: bool = False
+    ) -> None:
         """Write the instance's attributes to a file.
 
         If write_description is True, include variable descriptions in the output.
         Parameters:
-        ----------- 
+        -----------
         filename (str):
             The name of the file to write the configuration to. Default is "sfincs.inp".
         write_description (bool):
@@ -117,11 +118,12 @@ class SfincsConfig(ModelComponent):
             # exclude_defaults: Whether to exclude fields that are set to their default value.
             # exclude_none: Whether to exclude fields that have a value of `None`.
             # include: A set of fields to include in the output.
-            # exclude: A set of fields to exclude from the output.            
+            # exclude: A set of fields to exclude from the output.
 
         with open(self._filename, "w") as fid:
-            for key, value in self.data.model_dump(exclude_unset=False, exclude_defaults=False, exclude_none=True).items():
-
+            for key, value in self.data.model_dump(
+                exclude_unset=False, exclude_defaults=False, exclude_none=True
+            ).items():
                 # Convert a value to a number if possible, otherwise return the original value
                 value = convert_to_number(value)
 
@@ -139,7 +141,6 @@ class SfincsConfig(ModelComponent):
                     string = f"{key.ljust(20)} = {value}"
 
                 if key in self.data.__class__.model_fields:
-
                     description = self.data.__class__.model_fields[key].description
                     if description and write_description:
                         # Add description to string
