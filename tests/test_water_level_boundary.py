@@ -80,6 +80,57 @@ def test_add_point(model_config):
     assert "constituent" not in model_config.water_level.data.dims
 
 
+def test_drop_duplicates(model_config, tmp_dir):
+    """Test dropping duplicate points when writing file.
+    Tested only for add_point method, but would be the same
+    for create equivalents
+    """
+    nr_points = model_config.water_level.nr_points
+
+    # determine point in the middle of the grid
+    gdf = model_config.region
+    point = gdf.geometry.unary_union.centroid
+
+    model_config.water_level.add_point(
+        x=point.x, y=point.y, value=-10.0, name="test_point"
+    )
+
+    assert model_config.water_level.nr_points == nr_points + 1
+
+    # and again
+    model_config.water_level.add_point(
+        x=point.x, y=point.y, value=-10.0, name="test_point"
+    )
+
+    # by default drop_duplicates=True, so no point should be added
+    assert model_config.water_level.nr_points == nr_points + 1
+
+    # and again
+    model_config.water_level.add_point(
+        x=point.x, y=point.y, value=-10.0, name="test_point2", drop_duplicates=False
+    )
+
+    # now point should be added
+    assert model_config.water_level.nr_points == nr_points + 2
+
+    # don't need tide here:
+    model_config.config.set("bcafile", None)
+
+    # write water level to file
+    model_config.root.set(tmp_dir, mode="w+")
+
+    model_config.water_level.write()
+    model_config.config.write()
+
+    # read back-in to check if it remained the same
+    mod2 = SfincsModel(root=tmp_dir, mode="r")
+    mod2.config.read()
+    mod2.water_level.read()
+
+    # now write - here duplicates are not dropped so read in files are not changed
+    assert len(mod2.water_level.data.index) == nr_points + 2
+
+
 def test_create_timeseries(model_config):
     model_config.water_level.read()
     assert model_config.water_level.nr_points > 0

@@ -374,7 +374,14 @@ class SfincsBoundaryBase(ModelComponent):
         ds = da.to_dataset()
         self._data = ds.transpose("time", "index")
 
-    def add_point(self, x: float, y: float, name: str = None, value: float = 0.0):
+    def add_point(
+        self,
+        x: float,
+        y: float,
+        name: str = None,
+        value: float = 0.0,
+        drop_duplicates: bool = True,
+    ):
         """
         Convenience to add a single point with a default value for its timeseries.
 
@@ -386,6 +393,8 @@ class SfincsBoundaryBase(ModelComponent):
             Optional point name.
         value : float, optional
             Default timeseries value assigned to the new point.
+        drop_duplicates : bool, optional
+            If True, drop duplicate points in gdf based on 'name' column or geometry.
         """
         new_index = self.nr_points + 1
         if name is None:
@@ -395,7 +404,9 @@ class SfincsBoundaryBase(ModelComponent):
             geometry=gpd.points_from_xy([x], [y]), crs=self.model.crs
         )
         gdf["name"] = name
-        self.set_locations(gdf=gdf, value=value, merge=True)
+        self.set_locations(
+            gdf=gdf, value=value, merge=True, drop_duplicates=drop_duplicates
+        )
 
     def delete(self, index: Union[int, List[int]]):
         """
