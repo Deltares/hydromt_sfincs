@@ -13,7 +13,7 @@ steps:
 
   - grid.create_from_region:
       region:
-        geom: region.geojson
+        geom: region
       res: 150                       # model resolution
       crs: utm                       # model CRS (must be UTM zone)
       rotated: True                  # allow a rotated grid

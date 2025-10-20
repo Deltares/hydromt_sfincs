@@ -118,7 +118,16 @@ class SfincsMeteo(ModelComponent):
         df.index.name = "time"
 
         # spatially uniform forcing
-        da = xr.DataArray(df[df.columns[0]], dims=("time"), name=variable)
+        if variable == "wind":
+            # wind speed and direction
+            da = xr.DataArray(
+                df,
+                dims=("time", "index"),
+                coords={"time": df.index, "index": ["magnitude", "direction"]},
+                name=variable,
+            )
+        else:
+            da = xr.DataArray(df[df.columns[0]], dims=("time"), name=variable)
 
         # Add to self._data
         self.set(da)
