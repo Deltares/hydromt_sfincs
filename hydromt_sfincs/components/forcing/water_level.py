@@ -57,14 +57,14 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             # Check if there are any points
             if not gdf.empty:
                 df = self.read_boundary_conditions_timeseries()
-                self.set(df=df, gdf=gdf, merge=False)
+                self.set(df=df, gdf=gdf, merge=False, drop_duplicates=False)
                 # Read astro if bcafile is defined
                 if self.model.config.get("bcafile"):
                     self.read_boundary_conditions_astro()
         elif format == "netcdf":
             # Read netcdf file
             ds = self.read_boundary_conditions_netcdf()
-            self.set(geodataset=ds, merge=False)
+            self.set(geodataset=ds, merge=False, drop_duplicates=False)
 
     def read_boundary_points(self, filename: str | Path = None):
         """Read SFINCS boundary condition points (*.bnd) file"""
@@ -343,6 +343,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         offset: Union[str, Path, xr.Dataset] = None,
         buffer: float = 5e3,
         merge: bool = True,
+        drop_duplicates: bool = True,
     ):
         """Setup waterlevel forcing.
 
@@ -374,6 +375,8 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             by default 5 km.
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
+        drop_duplicates : bool, optional
+            If True, drop duplicate points in gdf based on 'name' column or geometry.
 
         See Also
         --------
@@ -468,7 +471,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         # set/ update forcing
         if used_existing:
             gdf_locs = None  # only update timeseries for existing points
-        self.set(df=df_ts, gdf=gdf_locs, merge=merge)
+        self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
 
     @hydromt_step
     def create_timeseries(
