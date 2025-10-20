@@ -90,7 +90,7 @@ class SfincsConfig(ModelComponent):
 
         # FIXME: when reading an existing config, you don't want to start with all possible variables?
         # Convert dictionary to SfincsConfig instance
-        self._data = self.data.copy(update=inp_dict) #FIXME - Pydantic v2 change
+        self._data = self.data.model_copy(update=inp_dict)
 
         # Update the grid properties from the configuration
         # This will either drop the quadtree component or the regular component?
