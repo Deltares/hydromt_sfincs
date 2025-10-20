@@ -138,8 +138,9 @@ class SfincsConfig(ModelComponent):
                 else:
                     string = f"{key.ljust(20)} = {value}"
 
-                if key in self.data.model_fields:  #FIXME - Pydantic v3 change
-                    description = self.data.model_fields[key].description
+                if key in self.data.__class__.model_fields:
+
+                    description = self.data.__class__.model_fields[key].description
                     if description and write_description:
                         # Add description to string
                         string = string.ljust(50) + f" # {description}"
