@@ -96,8 +96,19 @@ class SfincsConfig(ModelComponent):
         # This will either drop the quadtree component or the regular component?
         self.update_grid_from_config()
 
-    def write(self, filename: str = "sfincs.inp") -> None:
-        """Write the instance's attributes to a file."""
+    def write(self, 
+              filename: str = "sfincs.inp",
+              write_description: bool = False) -> None:
+        """Write the instance's attributes to a file.
+
+        If write_description is True, include variable descriptions in the output.
+        Parameters:
+        ----------- 
+        filename (str):
+            The name of the file to write the configuration to. Default is "sfincs.inp".
+        write_description (bool):
+            If True, include variable descriptions in the output file.  Default is False.
+        """
         self.root._assert_write_mode
         if not isabs(filename) and self.root.path:
             self._filename = join(self.root.path, filename)
@@ -123,7 +134,7 @@ class SfincsConfig(ModelComponent):
 
                 if key in self.data.model_fields:
                     description = self.data.model_fields[key].description
-                    if description:
+                    if description and write_description:
                         # Add description to string
                         string = string.ljust(50) + f" # {description}"
 
