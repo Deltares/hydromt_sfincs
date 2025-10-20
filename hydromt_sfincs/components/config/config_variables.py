@@ -24,10 +24,18 @@ class SfincsConfigVariables(BaseSettings):
     nmax: int | None = Field(
         None, examples=10, ge=1, description="Number of grid cells in y-direction"
     )
-    dx: float | None = Field(None, examples=10.0, gt=0, description="Grid size in x-direction")
-    dy: float | None = Field(None, examples=10.0, gt=0, description="Grid size in y-direction")
-    x0: float | None = Field(None, examples=0.0, description="Origin of the grid in the x-direction")
-    y0: float | None = Field(None, examples=0.0, description="Origin of the grid in the y-direction")
+    dx: float | None = Field(
+        None, examples=10.0, gt=0, description="Grid size in x-direction"
+    )
+    dy: float | None = Field(
+        None, examples=10.0, gt=0, description="Grid size in y-direction"
+    )
+    x0: float | None = Field(
+        None, examples=0.0, description="Origin of the grid in the x-direction"
+    )
+    y0: float | None = Field(
+        None, examples=0.0, description="Origin of the grid in the y-direction"
+    )
     rotation: float | None = Field(
         None,
         examples=0.0,
@@ -51,13 +59,17 @@ class SfincsConfigVariables(BaseSettings):
         description="Stop time for the simulation (datetime)",
     )
     tspinup: float | None = Field(
-        None, 
+        None,
         examples=0.0,
         ge=0.0,
         description="Duration of spinup period for boundary conditions after tstart (seconds)",
     )
-    t0out: float | None = Field(None, examples=-999.0, description="Output start time (seconds)")
-    t1out: float | None = Field(None, examples=-999.0, description="Output stop time (seconds)")
+    t0out: float | None = Field(
+        None, examples=-999.0, description="Output start time (seconds)"
+    )
+    t1out: float | None = Field(
+        None, examples=-999.0, description="Output stop time (seconds)"
+    )
 
     dtmapout: float = Field(
         3600.0, ge=0.0, description="Spatial map output interval (seconds)"
@@ -72,7 +84,9 @@ class SfincsConfigVariables(BaseSettings):
     )
 
     trstout: float | None = Field(
-        None, examples=-999.0, description="Restart file output after specific time (seconds)"
+        None,
+        examples=-999.0,
+        description="Restart file output after specific time (seconds)",
     )
     dthisout: float = Field(600.0, description="Timeseries output interval (seconds)")
     dtwave: float | None = Field(
@@ -94,13 +108,13 @@ class SfincsConfigVariables(BaseSettings):
         description="Numerical smoothing factor in momentum equation (-)",
     )
     hmin_cfl: float | None = Field(
-        None, 
+        None,
         examples=0.1,
         gt=0.0,
         description="Minimum water depth for cfl condition in max timestep determination (meters)",
     )
     manning: float | None = Field(
-        None, 
+        None,
         examples=0.04,
         gt=0.0,
         lt=0.5,
@@ -135,27 +149,41 @@ class SfincsConfigVariables(BaseSettings):
         description="Infiltration rate, spatially uniform and constant in time (mm/hr)",
     )
     dtmax: float | None = Field(
-        None, examples=1000.0, gt=0.0, description="Maximum allowed internal timestep (seconds)"
+        None,
+        examples=1000.0,
+        gt=0.0,
+        description="Maximum allowed internal timestep (seconds)",
     )
     huthresh: float = Field(
         0.01, gt=0.0, lt=1.0, description="Threshold water depth (meters)"
     )
-    rhoa: float | None = Field(None, examples=1.15, gt=1.0, lt=1.5, description="Air density (kg/m^3)")
+    rhoa: float | None = Field(
+        None, examples=1.15, gt=1.0, lt=1.5, description="Air density (kg/m^3)"
+    )
     rhow: float | None = Field(
-        None, examples=1024.0, gt=1000.0, lt=1100.0, description="Water density (kg/m^3)"
+        None,
+        examples=1024.0,
+        gt=1000.0,
+        lt=1100.0,
+        description="Water density (kg/m^3)",
     )
     inputformat: str = Field("bin", description="Input file format (bin or asc)")
     outputformat: str = Field(
         "net", description="Output file format (net or asc or bin)"
     )
     outputtype_map: str | None = Field(
-        None, examples="net", description="Output file format for spatial map file (net or asc or bin)"
+        None,
+        examples="net",
+        description="Output file format for spatial map file (net or asc or bin)",
     )
     outputtype_his: str | None = Field(
-        None, examples="net", 
+        None,
+        examples="net",
         description="Output file format for observation his file (net or asc or bin)",
     )
-    nc_deflate_level: int | None = Field(None, examples=2, description="Netcdf deflate level (-))")
+    nc_deflate_level: int | None = Field(
+        None, examples=2, description="Netcdf deflate level (-))"
+    )
     bndtype: int | None = Field(
         None,
         ge=1,
@@ -166,34 +194,37 @@ class SfincsConfigVariables(BaseSettings):
         1, ge=0, le=1, description="Enable advection (1: yes, 0: no)"
     )
     nfreqsig: int | None = Field(
-        None, 
+        None,
         examples=100,
         ge=1,
         le=500,
         description="Wave maker number of frequency bins IG spectrum (-)",
     )
     freqminig: float | None = Field(
-        None, 
+        None,
         examples=0.001,
         ge=0.0,
         le=1.0,
         description="Minimum frequency wave maker IG spectrum (Hz)",
     )
     freqmaxig: float | None = Field(
-        None, 
+        None,
         examples=0.1,
         ge=0.0,
         le=1.0,
         description="Maximum frequency wave maker IG spectrum (Hz)",
     )
     latitude: float | None = Field(
-        0.0, description="Latitude of the grid center (degrees), needed for Coriolis term for projected coordinate systems"
+        0.0,
+        description="Latitude of the grid center (degrees), needed for Coriolis term for projected coordinate systems",
     )
     pavbnd: float | None = Field(
         None, examples=101300.0, description="Atmospheric pressure at boundary (Pa)"
     )
     gapres: float | None = Field(
-        None, examples=101300.0, description="Background atmospheric pressure used by spiderweb pressure conversion (Pa)"
+        None,
+        examples=101300.0,
+        description="Background atmospheric pressure used by spiderweb pressure conversion (Pa)",
     )
     baro: int | None = Field(
         1, description="Enable atmospheric pressure term (1: yes, 0: no)"
@@ -201,7 +232,7 @@ class SfincsConfigVariables(BaseSettings):
     utmzone: str | None = Field(None, description="UTM zone for spatial reference (-)")
     epsg: int | None = Field(None, description="EPSG code for spatial reference system")
     advlim: float | None = Field(
-        None, 
+        None,
         examples=1.0,
         ge=0.0,
         le=9999.9,
@@ -211,21 +242,21 @@ class SfincsConfigVariables(BaseSettings):
         None, examples=9999.9, ge=0.0, le=9999.9, description=">currently not used< (-)"
     )
     qinf_zmin: float | None = Field(
-        None, 
+        None,
         examples=1.0,
         ge=-100,
         le=100,
         description="Minimum elevation level above for what cells the spatially uniform, constant in time infiltration rate 'qinf' is added (meters above reference)",
     )
     btfilter: float | None = Field(
-        None, 
+        None,
         examples=60.0,
         ge=0.0,
         le=3600.0,
         description="Water level boundary timeseries filtering period (seconds)",
     )
     sfacinf: float | None = Field(
-        None, 
+        None,
         examples=0.2,
         ge=0.0,
         le=1.0,
@@ -242,21 +273,21 @@ class SfincsConfigVariables(BaseSettings):
         description="Ability to turn off Coriolis term, only if crsgeo = True and latitude specified for projected CRS (1: on, 0: off)",
     )
     amprblock: int | None = Field(
-        None, 
+        None,
         examples=1,
         ge=0,
         le=1,
         description="Use data in ampr file as block rather than linear interpolation (1: yes, 0: no)",
     )
     spwmergefrac: float | None = Field(
-        None, 
+        None,
         examples=0.5,
         gt=0.0,
         lt=1.0,
         description="Spiderweb merge factor with background wind and pressure (-)",
     )
     usespwprecip: int | None = Field(
-        None, 
+        None,
         examples=1,
         ge=0,
         le=1,
@@ -267,7 +298,7 @@ class SfincsConfigVariables(BaseSettings):
     #     description="Ability to make a global spherical SFINCS model that wraps 'over the edge' (1: on, 0: off)",
     # ) #FIXME > clash with 'global' keyword, leave out for now
     nuvisc: float | None = Field(
-        None, 
+        None,
         examples=0.01,
         ge=0.0,
         description="Viscosity coefficient 'per meter of grid cell length', used if 'viscosity=1' and multiplied internally with the grid cell size (per quadtree level in quadtree mesh mode) (-)",
@@ -276,19 +307,19 @@ class SfincsConfigVariables(BaseSettings):
         1, ge=0, le=1, description="Enable viscosity term (1: yes, 0: no)"
     )
     spinup_meteo: int | None = Field(
-        None, 
+        None,
         examples=1,
         ge=0,
         le=1,
         description="Option to also apply spinup to the meteo forcing (1: on, 0: off)",
     )
     waveage: float | None = Field(
-        None, 
+        None,
         examples=-999.0,
         description="Determine Cd with wave age based on LGX method (-)",
     )
     snapwave: int | None = Field(
-        None, 
+        None,
         examples=0,
         ge=0,
         le=1,
@@ -296,7 +327,7 @@ class SfincsConfigVariables(BaseSettings):
     )
     # dtoutfixed > currently not used
     wmtfilter: float | None = Field(
-        None, 
+        None,
         examples=600.0,
         ge=0.0,
         le=3600.0,
@@ -308,7 +339,9 @@ class SfincsConfigVariables(BaseSettings):
         description="Filtering variable in wave maker to determine mean water level component (-)",
     )
     wmsignal: str | None = Field(
-        None, examples="spectrum", description="Wavemaker options ('spectrum' or 'mon(ochromatic)')"
+        None,
+        examples="spectrum",
+        description="Wavemaker options ('spectrum' or 'mon(ochromatic)')",
     )
     advection_scheme: str | None = Field(
         None, examples="upw1", description="Wavemaker options ('upw1' or 'original')"
@@ -358,11 +391,13 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Option to turn on the use of the tidal boundary condition file (1: on, 0: off)",
-    )    
+    )
     #
     # Domain
     #
-    qtrfile: str | None = Field(None, examples="sfincs.nc", description="Name of the quadtree file")
+    qtrfile: str | None = Field(
+        None, examples="sfincs.nc", description="Name of the quadtree file"
+    )
     depfile: str | None = Field(None, description="Name of the depth file")
     inifile: str | None = Field(
         None, description="Name of the initial water level condition file"
@@ -388,6 +423,9 @@ class SfincsConfigVariables(BaseSettings):
     )
     bzsfile: str | None = Field(
         None, description="Name of the water level time-series file"
+    )
+    bcafile: str | None = Field(
+        None, description="Name of the tidal boundary component file"
     )
     bzifile: str | None = Field(
         None, description="Name of the individual wave water level time-series file"
@@ -663,9 +701,7 @@ class SfincsConfigVariables(BaseSettings):
     # Wind drag
     #
     cdnrb: int | None = Field(
-        None, 
-        examples=3,
-        description="Number of wind speed ranges for drag coefficient"
+        None, examples=3, description="Number of wind speed ranges for drag coefficient"
     )
     cdwnd: List[float] | None = Field(
         None,
@@ -679,8 +715,6 @@ class SfincsConfigVariables(BaseSettings):
     )
     #
     # Other used files - NOTE: not part of nor recognized by SFINCS kernel itself!!!
-    #
-    bcafile: str | None = Field(None, description="Name of the tidal boundary component file")
     # corfile: str | None = Field(None, description="Name of the correction file")
 
     @field_validator("tref", "tstart", "tstop", mode="before")
