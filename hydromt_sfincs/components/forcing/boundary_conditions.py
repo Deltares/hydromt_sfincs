@@ -281,14 +281,6 @@ class SfincsBoundaryBase(ModelComponent):
         if gdf.crs != self.model.crs:
             gdf = gdf.to_crs(self.model.crs)
 
-        # Make sure gdf is within model.region
-        # FIXME : this will drop points and always needs the grid to be availabel ... therefore tests fail
-        # if not gdf.geometry.within(self.model.region).all():
-        #     logger.warning(
-        #         "Some discharge points are outside the active model region. They will be ignored."
-        #     )
-        #     gdf = gdf[gdf.geometry.within(self.model.region)]
-
         return gdf
 
     def _validate_and_prepare_df(self, df: pd.DataFrame) -> pd.DataFrame:
