@@ -116,7 +116,7 @@ Typical applications where this approach can be useful are:
 
     sf = SfincsModel(data_libs=["artifact_data"], root="sfincs_compound")
 
-    sf.setup_grid(x0=318650, y0=5040000, dx=50.0, dy=50.0, nmax=107, mmax=250, rotation=27, epsg=32633)
+    sf.grid.create(x0=318650, y0=5040000, dx=50.0, dy=50.0, nmax=107, mmax=250, rotation=27, epsg=32633)
 
     # retrieve GEBCO elevation data from data catalog
     da = sf.data_catalog.get_rasterdataset("gebco", geom=sf.region, buffer=5)
@@ -125,7 +125,7 @@ Typical applications where this approach can be useful are:
     da = da + 1
 
     # use modifed (in-memory) elevation data to create model
-    sf.setup_dep(elevation_sets=[{"da":da}])
+    sf.elevation.create(elevation_sets=[{"da":da}])
 
     sf.plot_basemap()
 
