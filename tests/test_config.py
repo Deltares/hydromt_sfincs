@@ -12,9 +12,15 @@ from hydromt_sfincs import SfincsModel
 def test_config_get_set(model_init):
     config = model_init.config
 
+    # check that a variable initiated as None is set correctly
+    assert config.get("mmax") == None
+
     # set a new value and get it
     config.set("mmax", 20)
     assert config.get("mmax") == 20
+
+    # check that another variable that has an preset variable is loaded correctly
+    assert config.get("advection") == 1
 
     # set value out of bounds
     with pytest.raises(ValidationError):
@@ -65,6 +71,22 @@ def test_config_io(tmp_path):
     model1 = SfincsModel(root=tmp_path, mode="r")
     model1.config.read()
     assert model0.config.data == model1.config.data
+
+    # write config including descriptions
+    model1.config.write(filename="sfincs_with_description.inp", write_description=True)
+
+    # read ascii file tmp_path/sfincs.inp
+    with open(os.path.join(tmp_path, "sfincs.inp"), "r", encoding="ascii") as file:
+        # Read the contents of the file
+        contents = file.read()
+    with open(
+        os.path.join(tmp_path, "sfincs_with_description.inp"), "r", encoding="ascii"
+    ) as file:
+        # Read the contents of the file
+        contents1 = file.read()
+
+    # Files should differ because of descriptions
+    assert contents != contents1
 
 
 def test_config_datetime(model_init):
