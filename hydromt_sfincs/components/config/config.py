@@ -90,7 +90,7 @@ class SfincsConfig(ModelComponent):
 
         # FIXME: when reading an existing config, you don't want to start with all possible variables?
         # Convert dictionary to SfincsConfig instance
-        self._data = self.data.copy(update=inp_dict)
+        self._data = self.data.copy(update=inp_dict) #FIXME - Pydantic v2 change
 
         # Update the grid properties from the configuration
         # This will either drop the quadtree component or the regular component?
@@ -113,12 +113,18 @@ class SfincsConfig(ModelComponent):
         if not isabs(filename) and self.root.path:
             self._filename = join(self.root.path, filename)
 
+            # exclude_unset: Whether to exclude fields that have not been explicitly set.
+            # exclude_defaults: Whether to exclude fields that are set to their default value.
+            # exclude_none: Whether to exclude fields that have a value of `None`.
+            # include: A set of fields to include in the output.
+            # exclude: A set of fields to exclude from the output.            
+
         with open(self._filename, "w") as fid:
-            for key, value in self.data.model_dump(exclude_unset=False).items():
-                if value is None:
-                    continue
-                else:
-                    value = convert_to_number(value)
+            for key, value in self.data.model_dump(exclude_unset=False, exclude_defaults=False, exclude_none=True).items():
+
+                # Convert a value to a number if possible, otherwise return the original value
+                value = convert_to_number(value)
+
                 if isinstance(value, float):  # remove insignificant traling zeros
                     string = f"{key.ljust(20)} = {value}"
                 elif isinstance(value, int):
@@ -132,7 +138,7 @@ class SfincsConfig(ModelComponent):
                 else:
                     string = f"{key.ljust(20)} = {value}"
 
-                if key in self.data.model_fields:
+                if key in self.data.model_fields:  #FIXME - Pydantic v3 change
                     description = self.data.model_fields[key].description
                     if description and write_description:
                         # Add description to string
