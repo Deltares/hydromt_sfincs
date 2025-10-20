@@ -158,6 +158,7 @@ class SfincsBoundaryBase(ModelComponent):
             )
             gdf0 = self.data.vector.to_gdf()
 
+            # TODO discuss whether we want to filter; or make it users responsibility
             if "name" in gdf0.columns and "name" in gdf.columns:
                 # remove existing points with the same name
                 gdf0 = gdf0[~gdf0["name"].isin(gdf["name"])]

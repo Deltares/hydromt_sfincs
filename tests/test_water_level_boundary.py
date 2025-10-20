@@ -264,3 +264,37 @@ def test_delete_clear(model_config):
     assert model_config.config.get("bndfile") is None
     assert model_config.config.get("bzsfile") is None
     assert model_config.config.get("bcafile") is None
+
+
+def test_netcdf_io(model_config, tmp_dir):
+    """Test reading and writing water level boundary to netcdf file."""
+    model_config.water_level.read()
+    assert model_config.water_level.nr_points > 0
+
+    data = model_config.water_level.data.copy()
+
+    # write to netcdf file
+    model_config.root.set(tmp_dir, mode="r+")
+    netcdf_file = join(tmp_dir, "water_level_boundary.nc")
+    # change in config to netcdf file
+    model_config.config.update(
+        {
+            "bndfile": None,
+            "bzsfile": None,
+            "netbndbzsbzifile": str(netcdf_file),
+        }
+    )
+    model_config.water_level.write()
+    assert isfile(netcdf_file)
+
+    # read back-in to check if it remained the same
+    model_config.water_level.clear()
+    assert model_config.water_level.nr_points == 0
+
+    # set config and read
+    model_config.config.set("netbndbzsbzifile", str(netcdf_file))
+    model_config.water_level.read()
+    assert model_config.water_level.nr_points > 0
+
+    # assert the data is the same as before
+    assert model_config.water_level.data.equals(data)
