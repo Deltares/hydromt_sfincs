@@ -45,6 +45,8 @@ author = "Dirk Eilander"
 
 # The short version which is displayed
 version = hydromt_sfincs.__version__
+bare_version = hydromt_sfincs.__version__
+doc_version = bare_version[: bare_version.find("dev") - 1]
 
 # -- Copy notebooks to include in docs -------
 SKIP_DOC_EXAMPLES = bool(os.environ.get("SKIP_DOC_EXAMPLES", False))
@@ -66,6 +68,7 @@ elif not os.path.isdir("_examples") and not SKIP_DOC_EXAMPLES:
 extensions = [
     "sphinx_design",
     "sphinx.ext.autodoc",
+    "sphinx_autodoc_typehints",  # Better type hint formatting
     "sphinx.ext.viewcode",
     "sphinx.ext.todo",
     "sphinx.ext.napoleon",
@@ -75,6 +78,7 @@ extensions = [
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
     "nbsphinx",
+    # "sphinxcontrib.autodoc_pydantic",
 ]
 
 autosummary_generate = True
@@ -106,6 +110,28 @@ pygments_style = "sphinx"
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+# Napoleon settings
+napoleon_numpy_docstring = True
+napoleon_google_docstring = False
+napoleon_preprocess_types = True
+
+# -- autodoc_pydantic settings -----------------------------------------
+# All subclasses of pydantic.BaseModel that are documented using `autosummary`,
+# will be documented automatically according to the settings below.
+# https://autodoc-pydantic.readthedocs.io/en/stable/users/configuration.html
+# autodoc_pydantic_model_members = True
+# autodoc_pydantic_model_hide_paramlist = True
+# autodoc_pydantic_model_undoc_members = True
+# autodoc_pydantic_model_show_json = False
+# autodoc_pydantic_model_show_config_summary = False
+# autodoc_pydantic_model_show_field_summary = False
+# autodoc_pydantic_model_show_field_constraints = False
+# autodoc_pydantic_model_show_validator_summary = False
+# autodoc_pydantic_model_show_validator_members = False
+# autodoc_pydantic_field_list_validators = False
+# autodoc_pydantic_model_summary_list_order = "bysource"
+# autodoc_pydantic_model_member_order = "bysource"
+
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -114,6 +140,7 @@ todo_include_todos = False
 #
 html_theme = "pydata_sphinx_theme"
 html_logo = "_static/hydromt-icon.svg"
+html_favicon = "_static/hydromt-icon.svg"
 autodoc_member_order = "bysource"  # overwrite default alphabetical sort
 autoclass_content = "both"
 
@@ -127,8 +154,9 @@ autoclass_content = "both"
 html_static_path = ["_static"]
 html_css_files = ["theme-deltares.css"]
 html_theme_options = {
-    "show_nav_level": 3,
-    "navbar_align": "content",
+    "show_nav_level": 2,
+    "navbar_align": "left",
+    "use_edit_page_button": True,
     "icon_links": [
         {
             "name": "GitHub",
@@ -158,7 +186,12 @@ html_theme_options = {
     "logo": {
         "text": "HydroMT SFINCS",
     },
-    "navbar_end": ["navbar-icon-links"],  # remove dark mode switch
+    "navbar_center": ["version-switcher", "navbar-nav"],
+    "navbar_end": ["navbar-icon-links"],
+    "switcher": {
+        "json_url": "https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json",
+        "version_match": doc_version,
+    },
 }
 
 
@@ -254,16 +287,17 @@ texinfo_documents = [
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
-    # "numpy": ("https://numpy.org/doc/stable", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
-    # "numba": ("https://numba.pydata.org/numba-doc/latest", None),
-    # "matplotlib": ("https://matplotlib.org/stable/", None),
-    # "dask": ("https://docs.dask.org/en/latest", None),
+    "numba": ("https://numba.readthedocs.io/en/stable/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "dask": ("https://docs.dask.org/en/latest", None),
     "rasterio": ("https://rasterio.readthedocs.io/en/latest", None),
     "geopandas": ("https://geopandas.org/en/stable", None),
-    "xarray": ("https://docs.xarray.dev/en/stable", None),
+    "xarray": ("https://xarray.pydata.org/en/stable", None),
     "hydromt": ("https://deltares.github.io/hydromt/latest/", None),
 }
+
 
 # -- NBSPHINX --------------------------------------------------------------
 

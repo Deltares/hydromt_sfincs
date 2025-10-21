@@ -52,7 +52,10 @@ doc = [
 	"pydata-sphinx-theme",
 	"sphinx",
     "sphinx_design",
+    "autodoc_pydantic",
+    "sphinx_autodoc_typehints",
 ]
+
 examples = [
     "cartopy",
     "descartes",

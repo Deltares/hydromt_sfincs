@@ -176,17 +176,17 @@ class SfincsModel(Model):
     ## Properties of the model components to ensure python recognizes them ##
     @property
     def config(self) -> SfincsConfig:
-        """Returns the config object."""
+        """Instance of :py:class:`~hydromt_sfincs.components.config.SfincsConfig`."""
         return self.components["config"]
 
     @property
     def grid(self) -> SfincsGrid:
-        """Returns the grid object."""
+        """Instance of :py:class:`~hydromt_sfincs.components.grid.SfincsGrid`."""
         return self.components["grid"]
 
     @property
     def elevation(self) -> SfincsElevation:
-        """Returns the elevation object."""
+        """Instance of :py:class:`~hydromt_sfincs.components.grid.SfincsElevation`."""
         return self.components["elevation"]
 
     @property
