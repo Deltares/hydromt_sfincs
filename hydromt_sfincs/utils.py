@@ -1637,7 +1637,12 @@ def make_regular_grid(
             np.zeros(ny) + 0.5,
             np.arange(nmin, nmax) + 0.5,
         )
-        coords = {"x": x_coords, "y": y_coords}
+        coords = {
+            "m": ("x", np.arange(mmin, mmax)),
+            "n": ("y", np.arange(nmin, nmax)),
+            "x": x_coords,
+            "y": y_coords,
+        }
         dims = ("y", "x")
     else:  # rotated, need 2D coordinates
         x_coords, y_coords = (
