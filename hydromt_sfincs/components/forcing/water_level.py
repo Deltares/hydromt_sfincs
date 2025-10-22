@@ -640,7 +640,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
             mask = self.model.quadtree_grid.data["mask"]
             ibnd = np.where(mask == 2)
-            xz, yz = self.model.quadtree_grid.face_coordinates()
+            xz, yz = self.model.quadtree_grid.face_coordinates
             xp = xz[ibnd]
             yp = yz[ibnd]
 
