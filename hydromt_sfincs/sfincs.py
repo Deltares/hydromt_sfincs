@@ -683,6 +683,8 @@ class SfincsModel(Model):
                         variables=["elevtn"],  # NOTE this is still hydromt convention
                         zoom_level=(res, "meter"),
                     )
+                    # rename elevtn to elevation if present
+                    da_elv.name = "elevation"
                 # TODO remove ValueError after fix in hydromt core
                 except (IndexError, ValueError):
                     data_name = dataset.get("elevation")
