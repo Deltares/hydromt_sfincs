@@ -1157,9 +1157,13 @@ def build_pixel_matrix(
     x01 = x00 + (bm1 - bm0 + 1) * refi * dxp
     y01 = y00 + (bn1 - bn0 + 1) * refi * dyp
 
-    # Create ranges for x and y coordinates
-    xx = np.arange(x00, x01, dxp)
-    yy = np.arange(y00, y01, dyp)
+    # Number of steps in x and y
+    nx = (bm1 - bm0 + 1) * refi
+    ny = (bn1 - bn0 + 1) * refi
+
+    # Create ranges using linspace (inclusive of endpoint)
+    xx = np.linspace(x00, x01 - dxp, nx)
+    yy = np.linspace(y00, y01 - dyp, ny)
 
     # Create meshgrid for the coordinates
     xg0, yg0 = np.meshgrid(xx, yy)

@@ -25,7 +25,8 @@ def build_quadtree_xugrid(
     rotation,
     crs,
     refinement_polygons=None,
-    datasets_dep=None,
+    elevation_sets=None,
+    bathymetry_database=None,
 ):
     """
     Build a quadtree grid using the xugrid library.
@@ -42,8 +43,10 @@ def build_quadtree_xugrid(
         Rotation of the grid in degrees.
     refinement_polygons : geopandas.GeoDataFrame
         GeoDataFrame with polygons that define the refinement levels.
-    datasets_dep : dict
+    elevation_sets : dict
         Dictionary with datasets dependencies.
+    bathymetry_database : object
+        Bathymetry database object.
 
     Returns
     -------
@@ -62,7 +65,8 @@ def build_quadtree_xugrid(
         rotation,
         crs,
         refinement_polygons,
-        datasets_dep=datasets_dep,
+        elevation_sets=elevation_sets,
+        bathymetry_database=bathymetry_database,
     )
 
     return grid.data
@@ -100,7 +104,8 @@ class QuadtreeGrid:
         rotation,
         crs,
         refinement_polygons,
-        datasets_dep,
+        elevation_sets,
+        bathymetry_database,
     ):
         self.x0 = x0
         self.y0 = y0
@@ -118,7 +123,8 @@ class QuadtreeGrid:
         self.version = 0
 
         self.refinement_polygons = refinement_polygons
-        self.datasets_dep = datasets_dep if datasets_dep is not None else []
+        self.elevation_sets = elevation_sets if elevation_sets is not None else []
+        self.bathymetry_database = bathymetry_database
 
         # Make regular grid
         self.get_regular_grid()
@@ -279,14 +285,24 @@ class QuadtreeGrid:
             ind_ref += self.ifirst[ilev]
 
             # But only where elevation is between zmin and zmax
-            if len(self.datasets_dep) > 0 and (
+            if len(self.elevation_sets) > 0 and (
                 polygon["zmin"] > -20000.0 or polygon["zmax"] < 20000.0
             ):
                 # self.to_xugrid()
                 # self.compute_cell_center_coordinates()
-                zmin, zmax = self.get_bathymetry_min_max(
-                    ind_ref, ilev, self.datasets_dep[ilev], quiet=True
-                )
+                if self.bathymetry_database is not None:
+                    zmin, zmax = self.get_bathymetry_min_max(
+                        ind_ref=ind_ref,
+                        ilev=ilev,
+                        elevation_sets=self.elevation_sets,
+                        bathymetry_database=self.bathymetry_database,
+                    )
+                else:
+                    zmin, zmax = self.get_bathymetry_min_max(
+                        ind_ref=ind_ref,
+                        ilev=ilev,
+                        elevation_sets=self.elevation_sets[ilev],
+                    )
                 # z = self.data["z"][ind_ref]
                 ind_ref = ind_ref[
                     np.logical_and(zmax > polygon["zmin"], zmin < polygon["zmax"])
@@ -950,7 +966,9 @@ class QuadtreeGrid:
             xr.DataArray(data=self.nd2 + 1, dims=[ugrid2d.face_dimension]), ugrid2d
         )
 
-    def get_bathymetry_min_max(self, ind_ref, ilev, datasets_dep, quiet=True):
+    def get_bathymetry_min_max(
+        self, ind_ref, ilev, elevation_sets, bathymetry_database=None, quiet=True
+    ):
         """ "Used to determine min and max bathymetry of a cell (used for refinement)"""
 
         if not quiet:
@@ -959,78 +977,103 @@ class QuadtreeGrid:
         dx = self.dx / 2**ilev
         dy = self.dy / 2**ilev
 
-        # # Determine Cell centers
-        # NOTE this is not needed anymore, since n,m indices are used to determine corners directly and select bathymetry
-        # xz = self.x0 + self.cosrot * (self.m[ind_ref] + 0.5) * dx - self.sinrot * (self.n[ind_ref] + 0.5) * dy
-        # yz = self.y0 + self.sinrot * (self.m[ind_ref] + 0.5) * dx + self.cosrot * (self.n[ind_ref] + 0.5) * dy
+        if bathymetry_database is not None:
+            xz = (
+                self.x0
+                + self.cosrot * (self.m[ind_ref] + 0.5) * dx
+                - self.sinrot * (self.n[ind_ref] + 0.5) * dy
+            )
+            yz = (
+                self.y0
+                + self.sinrot * (self.m[ind_ref] + 0.5) * dx
+                + self.cosrot * (self.n[ind_ref] + 0.5) * dy
+            )
 
-        # # Determine Cell corners
-        # offsets = np.array([[-0.5, -0.5],
-        #                     [ 0.5, -0.5],
-        #                     [ 0.5,  0.5],
-        #                     [-0.5,  0.5]])  # local corner offsets
+            # Compute the four corner coordinates of the cell, given that the cosine of the rotation is cosrot and the sine is sinrot and the cell center is xz, yz
+            xcor = np.zeros((4, np.size(xz)))
+            ycor = np.zeros((4, np.size(xz)))
+            xcor[0, :] = xz - 0.5 * self.cosrot * dx - 0.5 * self.sinrot * dy
+            ycor[0, :] = yz - 0.5 * self.sinrot * dx + 0.5 * self.cosrot * dy
+            xcor[1, :] = xz + 0.5 * self.cosrot * dx - 0.5 * self.sinrot * dy
+            ycor[1, :] = yz + 0.5 * self.sinrot * dx + 0.5 * self.cosrot * dy
+            xcor[2, :] = xz + 0.5 * self.cosrot * dx + 0.5 * self.sinrot * dy
+            ycor[2, :] = yz + 0.5 * self.sinrot * dx - 0.5 * self.cosrot * dy
+            xcor[3, :] = xz - 0.5 * self.cosrot * dx + 0.5 * self.sinrot * dy
+            ycor[3, :] = yz - 0.5 * self.sinrot * dx - 0.5 * self.cosrot * dy
 
-        # # Apply rotation to offsets (shape: 4 × npoints)
-        # xcor = xz[None, :] + self.cosrot * offsets[:, 0][:, None] * dx - self.sinrot * offsets[:, 1][:, None] * dy
-        # ycor = yz[None, :] + self.sinrot * offsets[:, 0][:, None] * dx + self.cosrot * offsets[:, 1][:, None] * dy
+            if self.crs.is_geographic:
+                dx = dx * 111000.0
 
-        # Build DataArray covering all corners
-        m = self.m[ind_ref]
-        n = self.n[ind_ref]
-        corner_offsets = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
+            # Now loop through the 4 corners and get the minimum and maximum bathymetry
+            for i in range(4):
+                zgl = bathymetry_database.get_bathymetry_on_points(
+                    xcor[i, :], ycor[i, :], dx, self.crs, elevation_sets
+                )
+                if i == 0:
+                    zmin = zgl
+                    zmax = zgl
+                else:
+                    zmin = np.minimum(zmin, zgl)
+                    zmax = np.maximum(zmax, zgl)
+            return zmin, zmax
+        else:
+            # Build DataArray covering all corners
+            m = self.m[ind_ref]
+            n = self.n[ind_ref]
+            corner_offsets = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
 
-        m_corners = (m[:, None] + corner_offsets[:, 0]).T
-        n_corners = (n[:, None] + corner_offsets[:, 1]).T
+            m_corners = (m[:, None] + corner_offsets[:, 0]).T
+            n_corners = (n[:, None] + corner_offsets[:, 1]).T
 
-        m_all = np.arange(m_corners.ravel().min(), m_corners.ravel().max() + 1)
-        n_all = np.arange(n_corners.ravel().min(), n_corners.ravel().max() + 1)
+            m_all = np.arange(m_corners.ravel().min(), m_corners.ravel().max() + 1)
+            n_all = np.arange(n_corners.ravel().min(), n_corners.ravel().max() + 1)
 
-        M_all, N_all = np.meshgrid(m_all, n_all)
+            M_all, N_all = np.meshgrid(m_all, n_all)
 
-        # Compute rotated coordinates for all corners in full grid
-        x_all = self.x0 + self.cosrot * M_all * dx - self.sinrot * N_all * dy
-        y_all = self.y0 + self.sinrot * M_all * dx + self.cosrot * N_all * dy
+            # Compute rotated coordinates for all corners in full grid
+            x_all = self.x0 + self.cosrot * M_all * dx - self.sinrot * N_all * dy
+            y_all = self.y0 + self.sinrot * M_all * dx + self.cosrot * N_all * dy
 
-        # Create the DataArray
-        da_corners = xr.DataArray(
-            np.full(M_all.shape, np.nan),
-            coords={
-                "n": ("y", n_all),
-                "m": ("x", m_all),
-                "xc": (("y", "x"), x_all),
-                "yc": (("y", "x"), y_all),
-            },
-            dims=("y", "x"),
-        )
-        da_corners.raster.set_crs(self.crs)
+            # Create the DataArray
+            da_corners = xr.DataArray(
+                np.full(M_all.shape, np.nan),
+                coords={
+                    "n": ("y", n_all),
+                    "m": ("x", m_all),
+                    "xc": (("y", "x"), x_all),
+                    "yc": (("y", "x"), y_all),
+                },
+                dims=("y", "x"),
+            )
+            da_corners.raster.set_crs(self.crs)
 
-        # Fill da_corners with topobathy data
-        da_dep = workflows.merge_multi_dataarrays(
-            da_list=datasets_dep,
-            da_like=da_corners,
-            interp_method="linear",
-            buffer_cells=0,
-        )
+            # Fill da_corners with topobathy data
+            da_dep = workflows.merge_multi_dataarrays(
+                da_list=elevation_sets,
+                da_like=da_corners,
+                interp_method="linear",
+                buffer_cells=0,
+            )
 
-        # Flatten the corner indices (4 x ind_ref)
-        n_flat = n_corners.flatten()
-        m_flat = m_corners.flatten()
+            # Flatten the corner indices (4 x ind_ref)
+            n_flat = n_corners.flatten()
+            m_flat = m_corners.flatten()
 
-        # Find integer indices along the coordinate arrays
-        idx_y = np.searchsorted(da_dep.n.values, n_flat)
-        idx_x = np.searchsorted(da_dep.m.values, m_flat)
+            # Find integer indices along the coordinate arrays
+            idx_y = np.searchsorted(da_dep.n.values, n_flat)
+            idx_x = np.searchsorted(da_dep.m.values, m_flat)
 
-        # Select the values
-        z_corners = da_dep.values[idx_y, idx_x]
+            # Select the values
+            z_corners = da_dep.values[idx_y, idx_x]
 
-        # Reshape back to (4, ind_ref)
-        z_corners = z_corners.reshape(n_corners.shape)
+            # Reshape back to (4, ind_ref)
+            z_corners = z_corners.reshape(n_corners.shape)
 
-        # Compute zmin and zmax per cell
-        zmin = np.min(z_corners, axis=0)
-        zmax = np.max(z_corners, axis=0)
+            # Compute zmin and zmax per cell
+            zmin = np.min(z_corners, axis=0)
+            zmax = np.max(z_corners, axis=0)
 
-        return zmin, zmax
+            return zmin, zmax
 
     def cut_inactive_cells(self):
         print("Removing inactive cells ...")

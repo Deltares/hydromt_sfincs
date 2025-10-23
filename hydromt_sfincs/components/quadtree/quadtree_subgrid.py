@@ -160,24 +160,26 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             if self.model.crs.is_geographic:
                 res = res * 111111.0
             # append parsed datasets per level
-            datasets_dep_per_level = []
+            elevation_sets_per_level = []
             for ilev in range(nrlevels):
                 # compute resolution per level
                 res_level = res / (2**ilev)
                 # convert to subgrid resolution for this level
                 res_subgrid = res_level / nr_subgrid_pixels
                 # parse datasets closest to subgrid resolution
-                datasets_dep_per_level.append(
-                    self.model._parse_datasets_dep(bathymetry_sets, res=res_subgrid)
+                elevation_sets_per_level.append(
+                    self.model._parse_datasets_elevation(
+                        bathymetry_sets, res=res_subgrid
+                    )
                 )
-            bathymetry_sets = datasets_dep_per_level
+            bathymetry_sets = elevation_sets_per_level
 
             if len(roughness_sets) > 0:
                 # NOTE conversion from landuse/landcover to manning happens here
-                roughness_sets = self.model._parse_datasets_rgh(roughness_sets)
+                roughness_sets = self.model._parse_roughness_sets(roughness_sets)
 
             # if len(river+sets) > 0:
-            #     rivers_sets = self.model._parse_datasets_riv(river_sets)
+            #     rivers_sets = self.model._parse_river_sets(river_sets)
             # folder where high-resolution topobathy and manning geotiffs are stored
 
             if write_dep_tif or write_man_tif:

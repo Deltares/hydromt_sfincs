@@ -185,11 +185,11 @@ class SfincsWeirs(ModelComponent):
         locations: str, Path, gpd.GeoDataFrame
             Path, data source name, or geopandas object for weir lines.
         dep : str, Path, xr.DataArray, optional
-            Data source name, Path, or xarray raster object ('elevtn') describing the depth in an
+            Data source name, Path, or xarray raster object ('elevation') describing the depth in an
             alternative resolution which is used for sampling the weir.
             **NOTE** - currently, you can only supply one datasource for dep,
                 or use the -courser- active dep data in self.grid.data if dep not provided,
-                but not your whole datasets_dep list!
+                but not your whole elevation_sets list!
             **NOTE** Tip: use fine resolution dep_subgrid.tif for merged high-res data
                 in case of using multiple elevation datasets.
         buffer : float, optional
@@ -293,7 +293,7 @@ class SfincsWeirs(ModelComponent):
             elv = self.model.grid.data["dep"]
         else:
             elv = self.data_catalog.get_rasterdataset(
-                dep, geom=self.model.region, buffer=5, variables=["elevtn"]
+                dep, geom=self.model.region, buffer=5, variables=["elevation"]
             )
 
         # calculate window size from buffer
