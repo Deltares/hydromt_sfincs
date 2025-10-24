@@ -132,7 +132,7 @@ def downscale_floodmap_webmercator(
 def create_topobathy_tiles(
     root: Union[str, Path],
     region: gpd.GeoDataFrame,
-    datasets_dep: List[dict],
+    elevation_sets: List[dict],
     index_path: Union[str, Path] = None,
     zoom_range: Union[int, List[int]] = [0, 13],
     z_range: List[int] = [-20000.0, 20000.0],
@@ -147,7 +147,7 @@ def create_topobathy_tiles(
         Directory where the topobathy tiles will be stored.
     region : gpd.GeoDataFrame
         GeoDataFrame defining the region for which the tiles will be created.
-    datasets_dep : List[dict]
+    elevation_sets : List[dict]
         List of dictionaries containing the bathymetry dataarrays.
     index_path : Union[str, Path], optional
         Directory where index tiles are stored, by default None
@@ -161,7 +161,7 @@ def create_topobathy_tiles(
     # TODO change the order of the zoom_levels
     # basing large scale zoom levels on the high-resolution ones prevents memory errors
 
-    assert len(datasets_dep) > 0, "No DEMs provided"
+    assert len(elevation_sets) > 0, "No DEMs provided"
 
     topobathy_path = os.path.join(root, "topobathy")
     npix = 256
@@ -230,7 +230,7 @@ def create_topobathy_tiles(
 
             # get subgrid bathymetry tile
             da_dep = merge_multi_dataarrays(
-                da_list=datasets_dep,
+                da_list=elevation_sets,
                 da_like=da_dep,
             )
 

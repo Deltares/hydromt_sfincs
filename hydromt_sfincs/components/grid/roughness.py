@@ -59,7 +59,7 @@ class SfincsRoughness(ModelComponent):
     @hydromt_step
     def create(
         self,
-        datasets_rgh: List[dict] = [],
+        roughness_sets: List[dict] = [],
         manning_land=0.04,
         manning_sea=0.02,
         rgh_lev_land=0,
@@ -73,7 +73,7 @@ class SfincsRoughness(ModelComponent):
 
         Parameters
         ---------
-        datasets_rgh : List[dict], optional
+        roughness_sets : List[dict], optional
             List of dictionaries with Manning's n datasets. Each dictionary should at least contain one of the following:
             * (1) manning: filename (or Path) of gridded data with manning values
             * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a mapping table.
@@ -85,16 +85,16 @@ class SfincsRoughness(ModelComponent):
             Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
         """
 
-        if len(datasets_rgh) > 0:
-            datasets_rgh = self.model._parse_datasets_rgh(datasets_rgh)
+        if len(roughness_sets) > 0:
+            roughness_sets = self.model._parse_roughness_sets(roughness_sets)
         else:
-            datasets_rgh = []
+            roughness_sets = []
 
         # fromdep keeps track of whether any manning values should be based on the depth or not
-        fromdep = len(datasets_rgh) == 0
-        if len(datasets_rgh) > 0:
+        fromdep = len(roughness_sets) == 0
+        if len(roughness_sets) > 0:
             da_man = workflows.merge_multi_dataarrays(
-                da_list=datasets_rgh,
+                da_list=roughness_sets,
                 da_like=self.mask,
                 interp_method="linear",
                 logger=logger,
@@ -107,7 +107,7 @@ class SfincsRoughness(ModelComponent):
         elif fromdep:
             da_man0 = xr.full_like(self.mask, manning_land, dtype=np.float32)
 
-        if len(datasets_rgh) > 0 and fromdep:
+        if len(roughness_sets) > 0 and fromdep:
             logger.warning("nan values in manning roughness array")
             da_man = da_man.where(~np.isnan(da_man), da_man0)
         elif fromdep:
@@ -120,3 +120,13 @@ class SfincsRoughness(ModelComponent):
         self.model.grid.set(da_man, name=mname)
         # set file name in config
         self.model.config.set(f"{mname}file", f"sfincs.{mname[:3]}")
+
+        # set other manning options to None in config
+        self.model.config.set("manning", None)
+        self.model.config.set("manning_land", None)
+        self.model.config.set("manning_sea", None)
+        self.model.config.set("rgh_lev_land", None)
+        logger.info(
+            "Set other manning options to None in config that are unused in SFINCS in case"
+            " of specifying manningfile (manning, manning_land, manning_sea, rgh_lev_land)."
+        )

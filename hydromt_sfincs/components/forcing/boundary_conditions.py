@@ -88,6 +88,7 @@ class SfincsBoundaryBase(ModelComponent):
         gdf: gpd.GeoDataFrame = None,
         geodataset: "GeoDataArray" = None,
         merge: bool = True,
+        drop_duplicates: bool = True,
     ):
         """
         Set or update the internal data from either a GeoDataArray (geodataset)
@@ -104,6 +105,8 @@ class SfincsBoundaryBase(ModelComponent):
             Geospatial xarray object with vector attribute for geometry.
         merge : bool, optional
             If True, merge new locations with existing data instead of replacing.
+        drop_duplicates : bool, optional
+            If True, drop duplicate points in gdf based on 'name' column or geometry.
         """
         if geodataset is not None:
             if df is not None or gdf is not None:
@@ -123,7 +126,9 @@ class SfincsBoundaryBase(ModelComponent):
 
         # update locations and timeseries
         if gdf is not None:
-            new_indices = self.set_locations(gdf, merge=merge)
+            new_indices = self.set_locations(
+                gdf, merge=merge, drop_duplicates=drop_duplicates
+            )
             # merging might alter the indices, so update df columns if given
             if df is not None:
                 df.columns = new_indices
@@ -131,7 +136,11 @@ class SfincsBoundaryBase(ModelComponent):
             self.set_timeseries(df)
 
     def set_locations(
-        self, gdf: gpd.GeoDataFrame, value: float = 0.0, merge: bool = True
+        self,
+        gdf: gpd.GeoDataFrame,
+        value: float = 0.0,
+        merge: bool = True,
+        drop_duplicates: bool = True,
     ):
         """
         Add or update point locations. When merging with existing data, the
@@ -146,6 +155,8 @@ class SfincsBoundaryBase(ModelComponent):
             Default value used for dummy timeseries.
         merge : bool, optional
             If True and existing points exist, merge new locations with existing.
+        drop_duplicates : bool, optional
+            If True, drop duplicate points in gdf based on 'name' column or geometry.
         """
         gdf = self._validate_and_prepare_gdf(gdf)
 
@@ -158,22 +169,41 @@ class SfincsBoundaryBase(ModelComponent):
             )
             gdf0 = self.data.vector.to_gdf()
 
-            if "name" in gdf0.columns and "name" in gdf.columns:
-                # remove existing points with the same name
-                gdf0 = gdf0[~gdf0["name"].isin(gdf["name"])]
+            # TODO discuss whether we want to filter; or make it users responsibility
+            if drop_duplicates:
+                if "name" in gdf0.columns and "name" in gdf.columns:
+                    # remove existing points with the same name
+                    gdf0 = gdf0[~gdf0["name"].isin(gdf["name"])]
+                else:
+                    # fallback to geometry-based matching to avoid duplicates
+                    if self.model.crs.is_geographic:
+                        precision = 6
+                    else:
+                        precision = 2
+                    gdf0["__coords__"] = gdf0.geometry.apply(
+                        lambda geom: (
+                            round(geom.x, precision),
+                            round(geom.y, precision),
+                        )
+                    )
+                    gdf["__coords__"] = gdf.geometry.apply(
+                        lambda geom: (
+                            round(geom.x, precision),
+                            round(geom.y, precision),
+                        )
+                    )
+                    gdf0 = gdf0[~gdf0["__coords__"].isin(gdf["__coords__"])]
+                    gdf0 = gdf0.drop(columns="__coords__")
+                    gdf = gdf.drop(columns="__coords__")
+
                 df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
-            else:
-                # fallback to geometry-based matching to avoid duplicates
-                gdf0["__coords__"] = gdf0.geometry.apply(
-                    lambda geom: (round(geom.x, 6), round(geom.y, 6))
-                )
-                gdf["__coords__"] = gdf.geometry.apply(
-                    lambda geom: (round(geom.x, 6), round(geom.y, 6))
-                )
-                gdf0 = gdf0[~gdf0["__coords__"].isin(gdf["__coords__"])]
-                df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
-                gdf0 = gdf0.drop(columns="__coords__")
-                gdf = gdf.drop(columns="__coords__")
+                nr_points_removed = self.nr_points - len(gdf0)
+                if nr_points_removed > 0:
+                    logger.info(
+                        "Removed {} duplicate points based on 'name' or geometry.".format(
+                            nr_points_removed
+                        )
+                    )
 
             # create matching dataframe for new points
             df_new = pd.DataFrame(index=df0.index, columns=gdf.index, data=value)
@@ -267,14 +297,6 @@ class SfincsBoundaryBase(ModelComponent):
         if gdf.crs != self.model.crs:
             gdf = gdf.to_crs(self.model.crs)
 
-        # Make sure gdf is within model.region
-        # FIXME : this will drop points and always needs the grid to be availabel ... therefore tests fail
-        # if not gdf.geometry.within(self.model.region).all():
-        #     logger.warning(
-        #         "Some discharge points are outside the active model region. They will be ignored."
-        #     )
-        #     gdf = gdf[gdf.geometry.within(self.model.region)]
-
         return gdf
 
     def _validate_and_prepare_df(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -352,7 +374,14 @@ class SfincsBoundaryBase(ModelComponent):
         ds = da.to_dataset()
         self._data = ds.transpose("time", "index")
 
-    def add_point(self, x: float, y: float, name: str = None, value: float = 0.0):
+    def add_point(
+        self,
+        x: float,
+        y: float,
+        name: str = None,
+        value: float = 0.0,
+        drop_duplicates: bool = True,
+    ):
         """
         Convenience to add a single point with a default value for its timeseries.
 
@@ -364,6 +393,8 @@ class SfincsBoundaryBase(ModelComponent):
             Optional point name.
         value : float, optional
             Default timeseries value assigned to the new point.
+        drop_duplicates : bool, optional
+            If True, drop duplicate points in gdf based on 'name' column or geometry.
         """
         new_index = self.nr_points + 1
         if name is None:
@@ -373,7 +404,9 @@ class SfincsBoundaryBase(ModelComponent):
             geometry=gpd.points_from_xy([x], [y]), crs=self.model.crs
         )
         gdf["name"] = name
-        self.set_locations(gdf=gdf, value=value, merge=True)
+        self.set_locations(
+            gdf=gdf, value=value, merge=True, drop_duplicates=drop_duplicates
+        )
 
     def delete(self, index: Union[int, List[int]]):
         """
