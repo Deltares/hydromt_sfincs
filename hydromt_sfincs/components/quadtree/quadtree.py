@@ -316,7 +316,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             # Create grid without refinement first
             # NOTE this is used to determine model properties while parsing elevation_sets
             self._data = make_regular_grid(
-                x0, y0, dx, dy, nmax, mmax, rotation, crs, make_ugrid=True
+                x0, y0, dx, dy, mmax, nmax, rotation=rotation, crs=crs, make_ugrid=True
             )
             # Parse the datasets for all refinement levels
             res = dx  # coarsest level

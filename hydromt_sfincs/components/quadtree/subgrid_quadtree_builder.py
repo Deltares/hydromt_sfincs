@@ -120,6 +120,13 @@ class SubgridTableQuadtree:
     ):
         version = "1.0"
 
+        # check if nr_subgrid_pixels is a multiple of 2
+        # this is needed for symmetry around the uv points
+        if nr_subgrid_pixels % 2 != 0:
+            raise ValueError(
+                "nr_subgrid_pixels must be a multiple of 2 for subgrid table"
+            )
+
         time_start = time.time()
 
         crs = CRS(int(grid.crs.values))
@@ -254,17 +261,18 @@ class SubgridTableQuadtree:
         if write_dep_tif or write_man_tif:
             # create a regular mask covering the entire domain on the coarsest level
             # NOTE this is only used for writing the cloud optimized geotiffs to check inputs
-            da_regular = build_pixel_matrix(
+            da_regular = utils.make_regular_grid(
                 x0=grid.attrs["x0"],
                 y0=grid.attrs["y0"],
-                dxp=grid.attrs["dx"],
-                dyp=grid.attrs["dy"],
-                bm0=0,
-                bm1=grid.attrs["mmax"],
-                bn0=0,
-                bn1=grid.attrs["nmax"],
+                dx=grid.attrs["dx"],
+                dy=grid.attrs["dy"],
+                mmax=grid.attrs["mmax"],
+                nmax=grid.attrs["nmax"],
                 rotation=grid.attrs["rotation"],
-                refi=1,  # grid without refinement
+                mmin=0,
+                nmin=0,
+                refi=1,
+                uv_points=True,
             )
             # Make sure da has the correct CRS
             da_regular.raster.set_crs(grid.ugrid.grid.crs)
@@ -456,19 +464,20 @@ class SubgridTableQuadtree:
                     msg = "Getting bathy/topo ..."
                     log_info(msg, logger, quiet)
 
-                    da_sbg = build_pixel_matrix(
+                    da_sbg = utils.make_regular_grid(
                         x0=grid.attrs["x0"],
                         y0=grid.attrs["y0"],
-                        dxp=dxp,
-                        dyp=dyp,
-                        bm0=bm0,
-                        bm1=bm1,
-                        bn0=bn0,
-                        bn1=bn1,
+                        dx=dxp,
+                        dy=dyp,
+                        mmax=bm1,
+                        nmax=bn1,
                         rotation=grid.attrs["rotation"],
+                        mmin=bm0,
+                        nmin=bn0,
                         refi=refi,
+                        uv_points=False,
+                        crs=crs,
                     )
-                    da_sbg.raster.set_crs(crs)
 
                     if bathymetry_database:
                         # Delft Dashboard
@@ -504,7 +513,6 @@ class SubgridTableQuadtree:
                         da_dep = da_dep.raster.interpolate_na(
                             method="rio_idw", extrapolate=True
                         )
-
                         zg = da_dep.values
 
                         # TODO add burning of rivers ....
@@ -663,20 +671,20 @@ class SubgridTableQuadtree:
                     msg = "Getting bathy/topo ..."
                     log_info(msg, logger, quiet)
 
-                    da_sbg_uv = build_pixel_matrix(
+                    da_sbg_uv = utils.make_regular_grid(
                         x0=grid.attrs["x0"],
                         y0=grid.attrs["y0"],
-                        dxp=dxp,
-                        dyp=dyp,
-                        bm0=bm0,
-                        bm1=bm1,
-                        bn0=bn0,
-                        bn1=bn1,
+                        dx=dxp,
+                        dy=dyp,
+                        mmax=bm1,
+                        nmax=bn1,
                         rotation=grid.attrs["rotation"],
+                        mmin=bm0,
+                        nmin=bn0,
                         refi=refi,
                         uv_points=True,
+                        crs=crs,
                     )
-                    da_sbg_uv.raster.set_crs(crs)
 
                     # Get the numpy array zg with bathy/topo values for this block
                     if bathymetry_database:
