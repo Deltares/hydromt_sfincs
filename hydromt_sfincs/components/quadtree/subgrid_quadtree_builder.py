@@ -414,6 +414,7 @@ class SubgridTableQuadtree:
                         crs=crs,
                     )
 
+                    # FIXME, merging dep datasets is now done twice, seems very ineffcicient, especially with burning in rivers etc.
                     if bathymetry_database:
                         # Delft Dashboard
                         # Get bathymetry on subgrid from bathymetry database
@@ -438,6 +439,16 @@ class SubgridTableQuadtree:
                             interp_method="linear",
                         )
 
+                        # burn rivers in bathymetry and manning
+                        if len(river_sets) > 0:
+                            logger.debug("Burn rivers in bathymetry and manning data")
+                            for riv_kwargs in river_sets:
+                                da_dep, _ = burn_river_rect(
+                                    da_elv=da_dep,
+                                    logger=logger,
+                                    **riv_kwargs,
+                                )
+
                         if np.any(np.isnan(da_dep.values)) > 0:
                             npx = int(np.sum(np.isnan(da_dep.values)))
                             logger.warning(
@@ -448,10 +459,8 @@ class SubgridTableQuadtree:
                         da_dep = da_dep.raster.interpolate_na(
                             method="rio_idw", extrapolate=True
                         )
-                        zg = da_dep.values
 
-                        # TODO add burning of rivers ....
-                        # FIXME going through merging datasets twice seems very inefficient
+                        zg = da_dep.values
 
                     # Multiply zg with depth factor (had to use 0.9746 to get arrival
                     # times right in the Pacific)
