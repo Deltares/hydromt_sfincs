@@ -1613,67 +1613,95 @@ def make_regular_grid(
     crs=None,
     mmin=0,
     nmin=0,
+    refi=1,
     name="var",
     dtype=float,
     fill_value=np.nan,
+    uv_points=False,
     make_ugrid=False,
 ):
     """
     Create an xarray.DataArray with spatial coordinates based on grid definition.
+
+    Parameters
+    ----------
+    x0, y0 : float
+        Origin (lower-left corner) in physical coordinates.
+    dx, dy : float
+        Grid spacing in x and y directions (coarse resolution).
+    mmin, mmax, nmin, nmax : int
+        Grid index bounds.
+    refi : int
+        Refinement factor (number of subcells per coarse cell).
+    rotation : float
+        Rotation angle in degrees.
+    uv_points : bool, optional
+        If True, place points at cell corners (UV points);
+        if False, place points at cell centers (default).
     """
-    transform = (
-        Affine.translation(x0, y0) * Affine.rotation(rotation) * Affine.scale(dx, dy)
-    )
 
-    nx = mmax - mmin
-    ny = nmax - nmin
+    dxp = dx #/ refi
+    dyp = dy #/ refi
 
-    if transform.b == 0:  # no rotation, rectilinear
-        x_coords, _ = transform * (
-            np.arange(mmin, mmax) + 0.5,
-            np.zeros(nx) + 0.5,
-        )
-        _, y_coords = transform * (
-            np.zeros(ny) + 0.5,
-            np.arange(nmin, nmax) + 0.5,
-        )
+    # Number of points
+    nx = (mmax - mmin + 1) * refi
+    ny = (nmax - nmin + 1) * refi
+
+    # Index ranges
+    m_range = np.arange(nx)
+    n_range = np.arange(ny)
+
+    # --- Compute offset in physical units ---
+    if uv_points:
+        offset_x = 0.5*dxp + mmin*refi*dxp - 0.5*refi*dxp
+        offset_y = 0.5*dyp + nmin*refi*dyp - 0.5*refi*dyp
+    else:
+        offset_x = 0.5*dxp + mmin*refi*dxp
+        offset_y = 0.5*dyp + nmin*refi*dyp
+
+    # --- Build Affine transform ---
+    transform = Affine.translation(x0, y0) * Affine.rotation(rotation) * Affine.scale(dxp, dyp)
+
+    # --- Create DataArray ---
+    data = np.full((ny, nx), fill_value, dtype=dtype)
+    
+    # --- Rectilinear vs rotated ---
+    if transform.b == 0.0:  # No rotation → rectilinear
+        x_coords, _ = transform * (m_range + offset_x/dxp, np.zeros(nx) + offset_y/dyp)
+        _, y_coords = transform * (np.zeros(ny) + offset_x/dxp, n_range + offset_y/dyp)
         coords = {
-            "m": ("x", np.arange(mmin, mmax)),
-            "n": ("y", np.arange(nmin, nmax)),
+            "m": ("x", np.arange(mmin*refi, (mmax+1)*refi)),
+            "n": ("y", np.arange(nmin*refi, (nmax+1)*refi)),
             "x": x_coords,
             "y": y_coords,
         }
         dims = ("y", "x")
-    else:  # rotated, need 2D coordinates
-        x_coords, y_coords = (
-            transform
-            * Affine.translation(0.5, 0.5)
-            * np.meshgrid(np.arange(mmin, mmax), np.arange(nmin, nmax))
-        )
+    else:  # With rotation → 2D coordinate arrays
+        m_mesh, n_mesh = np.meshgrid(m_range, n_range)
+        x_coords, y_coords = transform * (m_mesh + offset_x/dxp, n_mesh + offset_y/dyp)
         coords = {
-            "m": ("x", np.arange(mmin, mmax)),
-            "n": ("y", np.arange(nmin, nmax)),
+            "m": ("x", np.arange(mmin*refi, (mmax+1)*refi)),
+            "n": ("y", np.arange(nmin*refi, (nmax+1)*refi)),
             "xc": (("y", "x"), x_coords),
             "yc": (("y", "x"), y_coords),
         }
         dims = ("y", "x")
 
-    data = np.full((ny, nx), fill_value, dtype=dtype)
     da = xr.DataArray(data, dims=dims, coords=coords, name=name)
 
+    # --- CRS / UGRID handling ---
     if make_ugrid:
         if rotation != 0.0:
             da = UgridDataArray.from_structured(da, "xc", "yc")
         else:
             da = UgridDataArray.from_structured(da)
-
-        # Attach CRS if you want to use rioxarray
         if crs is not None:
             da.grid.set_crs(crs)
     else:
-        da.raster.set_crs(crs)
-    return da
+        if crs is not None:
+            da.raster.set_crs(crs)
 
+    return da
 
 def partition_quadtree(
     quadtree: xu.UgridDataset,
