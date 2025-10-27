@@ -65,7 +65,7 @@ __all__ = [
     "partition_quadtree",
     "xu_open_dataset",
     "check_exists_and_lazy",
-    "make_regular_ugrid",
+    "make_regular_grid",
     "partition_quadtree",
 ]
 
@@ -1108,7 +1108,7 @@ def downscale_floodmap(
         if zoom_level is not None:
             zls_dict, crs = RasterioDriver._get_zoom_levels_and_crs(dep)
             overview_level = zoom_to_overview_level(
-                zoom=zoom_level, zls_dict=zls_dict, crs=crs
+                zoom=zoom_level, zls_dict=zls_dict, source_crs=crs
             )
             if overview_level:
                 # NOTE: overview levels start at zoom_level 1, see _get_zoom_levels_and_crs
