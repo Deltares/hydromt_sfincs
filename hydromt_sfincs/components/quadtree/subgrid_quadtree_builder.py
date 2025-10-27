@@ -402,8 +402,8 @@ class SubgridTableQuadtree:
                     da_sbg = utils.make_regular_grid(
                         x0=grid.attrs["x0"],
                         y0=grid.attrs["y0"],
-                        dx=dxp,
-                        dy=dyp,
+                        dx=dx,
+                        dy=dy,
                         mmax=bm1,
                         nmax=bn1,
                         rotation=grid.attrs["rotation"],
@@ -504,8 +504,8 @@ class SubgridTableQuadtree:
                 da_regular = utils.make_regular_grid(
                                 x0=grid.attrs["x0"],
                                 y0=grid.attrs["y0"],
-                                dx=dxp,
-                                dy=dyp,
+                                dx=dx,
+                                dy=dy,
                                 mmax=output_width,
                                 nmax=output_height,
                                 rotation=grid.attrs["rotation"],
@@ -663,8 +663,8 @@ class SubgridTableQuadtree:
                     da_sbg_uv = utils.make_regular_grid(
                         x0=grid.attrs["x0"],
                         y0=grid.attrs["y0"],
-                        dx=dxp,
-                        dy=dyp,
+                        dx=dx,
+                        dy=dy,
                         mmax=bm1,
                         nmax=bn1,
                         rotation=grid.attrs["rotation"],
@@ -1124,66 +1124,3 @@ def inpolygon(xq, yq, p):
     q = [(xq[i], yq[i]) for i in range(xq.shape[0])]
     p = path.Path([(crds[0], crds[1]) for i, crds in enumerate(p.exterior.coords)])
     return p.contains_points(q).reshape(shape)
-
-
-def build_pixel_matrix(
-    x0, y0, dxp, dyp, bm0, bm1, bn0, bn1, rotation, refi, uv_points=False
-):
-    """
-    Builds a pixel matrix for a given mesh grid with rotation and translation.
-
-    Parameters:
-    - dxp: Horizontal step size in the x direction
-    - dyp: Vertical step size in the y direction
-    - bm0, bm1: Horizontal indices defining the bounds of the grid
-    - bn0, bn1: Vertical indices defining the bounds of the grid
-    - rotation: Rotation angle in degrees
-    - refi: Refinement factor
-    - uv_points: Boolean indicating if the matrix is for uv points (default is False)
-
-    Returns:
-    - da: xarray DataArray with the computed pixel matrix
-    """
-    # Calculate the bounds for x and y coordinates
-    if uv_points:
-        x00 = 0.5 * dxp + bm0 * refi * dxp - 0.5 * refi * dxp
-        y00 = 0.5 * dyp + bn0 * refi * dyp - 0.5 * refi * dyp
-    else:
-        x00 = 0.5 * dxp + bm0 * refi * dxp
-        y00 = 0.5 * dyp + bn0 * refi * dyp
-    x01 = x00 + (bm1 - bm0 + 1) * refi * dxp
-    y01 = y00 + (bn1 - bn0 + 1) * refi * dyp
-
-    # Number of steps in x and y
-    nx = (bm1 - bm0 + 1) * refi
-    ny = (bn1 - bn0 + 1) * refi
-
-    # Create ranges using linspace (inclusive of endpoint)
-    xx = np.linspace(x00, x01 - dxp, nx)
-    yy = np.linspace(y00, y01 - dyp, ny)
-
-    # Create meshgrid for the coordinates
-    xg0, yg0 = np.meshgrid(xx, yy)
-
-    # Compute the rotation angle and its cosine and sine
-    cosrot = np.cos(rotation * np.pi / 180)
-    sinrot = np.sin(rotation * np.pi / 180)
-
-    # Apply rotation and translation
-    xg = x0 + cosrot * xg0 - sinrot * yg0
-    yg = y0 + sinrot * xg0 + cosrot * yg0
-
-    # Define coordinates for the DataArray
-    coords = {
-        "yc": (("y", "x"), yg),
-        "xc": (("y", "x"), xg),
-    }
-
-    # Create DataArray with initial zero values
-    da = xr.DataArray(
-        np.zeros(((bn1 - bn0 + 1) * refi, (bm1 - bm0 + 1) * refi)),
-        dims=("y", "x"),
-        coords=coords,
-    )
-
-    return da

@@ -1640,8 +1640,8 @@ def make_regular_grid(
         if False, place points at cell centers (default).
     """
 
-    dxp = dx #/ refi
-    dyp = dy #/ refi
+    dxp = dx / refi
+    dyp = dy / refi
 
     # Number of points
     nx = (mmax - mmin + 1) * refi
@@ -1653,11 +1653,11 @@ def make_regular_grid(
 
     # --- Compute offset in physical units ---
     if uv_points:
-        offset_x = 0.5*dxp + mmin*refi*dxp - 0.5*refi*dxp
-        offset_y = 0.5*dyp + nmin*refi*dyp - 0.5*refi*dyp
+        offset_x = 0.5*dxp + mmin*dx - 0.5*dx
+        offset_y = 0.5*dyp + nmin*dy - 0.5*dy
     else:
-        offset_x = 0.5*dxp + mmin*refi*dxp
-        offset_y = 0.5*dyp + nmin*refi*dyp
+        offset_x = 0.5*dxp + mmin*dx
+        offset_y = 0.5*dyp + nmin*dy
 
     # --- Build Affine transform ---
     transform = Affine.translation(x0, y0) * Affine.rotation(rotation) * Affine.scale(dxp, dyp)
