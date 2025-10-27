@@ -258,26 +258,6 @@ class SubgridTableQuadtree:
         for ilev in range(nr_ref_levs):
             nr_cells_per_level[ilev] = ilast[ilev] - ifirst[ilev] + 1
 
-        if write_dep_tif or write_man_tif:
-            # create a regular mask covering the entire domain on the coarsest level
-            # NOTE this is only used for writing the cloud optimized geotiffs to check inputs
-            da_regular = utils.make_regular_grid(
-                x0=grid.attrs["x0"],
-                y0=grid.attrs["y0"],
-                dx=grid.attrs["dx"],
-                dy=grid.attrs["dy"],
-                mmax=grid.attrs["mmax"],
-                nmax=grid.attrs["nmax"],
-                rotation=grid.attrs["rotation"],
-                mmin=0,
-                nmin=0,
-                refi=1,
-                uv_points=True,
-            )
-            # Make sure da has the correct CRS
-            da_regular.raster.set_crs(grid.ugrid.grid.crs)
-            x_dim, y_dim = da_regular.raster.x_dim, da_regular.raster.y_dim
-
         # Loop through all levels
         for ilev in range(nr_ref_levs):
             msg = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -291,51 +271,6 @@ class SubgridTableQuadtree:
 
             if nr_cells_in_level == 0:
                 continue
-
-            if write_dep_tif or write_man_tif:
-                # determine the output dimensions and transform
-                output_width = da_regular.sizes[x_dim] * nr_subgrid_pixels * 2**ilev
-                output_height = da_regular.sizes[y_dim] * nr_subgrid_pixels * 2**ilev
-                output_transform = (
-                    da_regular.raster.transform
-                    * da_regular.raster.transform.scale(
-                        1 / (nr_subgrid_pixels * 2**ilev)
-                    )
-                )
-
-                # create COGs for topobathy/manning
-                profile = dict(
-                    driver="GTiff",
-                    width=output_width,
-                    height=output_height,
-                    count=1,
-                    dtype=np.float32,
-                    crs=da_regular.raster.crs,
-                    transform=output_transform,
-                    tiled=True,
-                    blockxsize=256,
-                    blockysize=256,
-                    compress="deflate",
-                    predictor=2,
-                    profile="COG",
-                    nodata=np.nan,
-                    BIGTIFF="YES",  # Add the BIGTIFF option here
-                )
-                if write_dep_tif:
-                    # create the CloudOptimizedGeotiff containing the merged topobathy data
-                    fn_dep_tif = os.path.join(
-                        highres_dir, "dep_subgrid_lev{}.tif".format(str(ilev))
-                    )
-                    with rasterio.open(fn_dep_tif, "w", **profile):
-                        pass
-
-                if write_man_tif:
-                    # create the CloudOptimizedGeotiff creating the merged manning roughness
-                    fn_man_tif = os.path.join(
-                        highres_dir, "manning_subgrid_lev{}.tif".format(str(ilev))
-                    )
-                    with rasterio.open(fn_man_tif, "w", **profile):
-                        pass
 
             # TODO - TL: here missing is "# Check if active SFINCS cells exist in mask"
 
@@ -561,6 +496,60 @@ class SubgridTableQuadtree:
                         ibt += 1
 
             # UV Points
+            if write_dep_tif or write_man_tif:
+                # determine the output dimensions and transform
+                output_width = (grid.attrs["mmax"]+1) * nr_subgrid_pixels * 2**ilev
+                output_height = (grid.attrs["nmax"]+1) * nr_subgrid_pixels * 2**ilev
+
+                da_regular = utils.make_regular_grid(
+                                x0=grid.attrs["x0"],
+                                y0=grid.attrs["y0"],
+                                dx=dxp,
+                                dy=dyp,
+                                mmax=output_width,
+                                nmax=output_height,
+                                rotation=grid.attrs["rotation"],
+                                crs=crs,
+                                mmin=0,
+                                nmin=0,
+                                refi=refi,
+                                uv_points=True,
+                            )
+
+                # create COGs for topobathy/manning
+                profile = dict(
+                    driver="GTiff",
+                    width=output_width,
+                    height=output_height,
+                    count=1,
+                    dtype=np.float32,
+                    crs=da_regular.raster.crs,
+                    transform=da_regular.raster.transform,
+                    tiled=True,
+                    blockxsize=256,
+                    blockysize=256,
+                    compress="deflate",
+                    predictor=2,
+                    profile="COG",
+                    nodata=np.nan,
+                    BIGTIFF="YES",  # Add the BIGTIFF option here
+                )
+                if write_dep_tif:
+                    # create the CloudOptimizedGeotiff containing the merged topobathy data
+                    fn_dep_tif = os.path.join(
+                        highres_dir, "dep_subgrid_lev{}.tif".format(str(ilev))
+                    )
+                    with rasterio.open(fn_dep_tif, "w", **profile):
+                        pass
+
+                if write_man_tif:
+                    # create the CloudOptimizedGeotiff creating the merged manning roughness
+                    fn_man_tif = os.path.join(
+                        highres_dir, "manning_subgrid_lev{}.tif".format(str(ilev))
+                    )
+                    with rasterio.open(fn_man_tif, "w", **profile):
+                        pass
+
 
             # Loop through blocks
             ib = -1
