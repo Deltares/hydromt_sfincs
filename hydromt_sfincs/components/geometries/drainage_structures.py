@@ -123,10 +123,7 @@ class SfincsDrainageStructures(ModelComponent):
             )
 
         # Clip geometries outside of model region:
-        within = gdf.within(self.model.region.unary_union)
-        # within = gdf.within(self.model.region.union_all)
-        # > FIXME - tried to overcome deprecation warning of unary_union, but suggested alternative does not work
-        # NOTE - .within does same as 'inpolygon' function
+        within = gdf.within(self.model.region.union_all())
 
         if within.any() == True:
             if within.all() == False:

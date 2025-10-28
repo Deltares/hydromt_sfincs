@@ -137,7 +137,7 @@ class SfincsWeirs(ModelComponent):
 
         # Check if any of the cross sections fall completely outside the model domain
         # If so, give a warning and remove these lines
-        outside = gdf.disjoint(self.model.region)
+        outside = gdf.disjoint(self.model.region.union_all())
         if outside.any():
             logger.warning(
                 "Some weirs fall outside model domain. Removing these lines."
@@ -295,6 +295,8 @@ class SfincsWeirs(ModelComponent):
             elv = self.data_catalog.get_rasterdataset(
                 dep, geom=self.model.region, buffer=5, variables=["elevation"]
             )
+        # mask nodata values
+        elv = elv.raster.mask_nodata()
 
         # calculate window size from buffer
         if buffer is not None:

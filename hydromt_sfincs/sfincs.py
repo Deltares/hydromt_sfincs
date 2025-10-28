@@ -386,6 +386,14 @@ class SfincsModel(Model):
         # write config last
         self.config.write()
 
+        if self.write_gis:
+            utils.write_vector(
+                self.region,
+                name="region",
+                root=join(self.root.path, "gis"),
+                logger=logger,
+            )
+
     def clear_spatial_components(self):
         """Clear all spatial components."""
         # TODO if we want this, all components should have a clear method
