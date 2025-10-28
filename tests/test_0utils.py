@@ -68,3 +68,54 @@ def test_geoms(tmp_dir, weirs):
     weirs[1]["name"] = "WEIR02"  # a name is added when writing the file
     for i in range(len(weirs)):
         assert sorted(weirs2[i].items()) == sorted(weirs[i].items())
+
+
+@pytest.mark.parametrize("rotation, uv_points", [
+    (0.0, True),
+    (0.0, False),
+    (15.0, True),
+    (15.0, False),
+])
+def test_make_regular_grid(rotation, uv_points):
+    # grid parameters
+    x0 = 316200
+    y0 = 5051400.0
+    dx = dy = 200
+    mmin, nmin = 0, 0
+    mmax, nmax = 660, 460
+    refi = 10
+
+    # make a regular grid
+    da = utils.make_regular_grid(
+        x0=x0,
+        y0=y0,
+        dx=dx,
+        dy=dy,
+        mmin=mmin,
+        nmin=nmin,
+        mmax=mmax,
+        nmax=nmax,
+        refi=refi,
+        uv_points=uv_points,
+        rotation=rotation,
+    )
+    da_transform = da.raster.transform
+
+    # compute expected transform
+    transform, width, height = utils.make_regular_grid_transform(
+        x0=x0,
+        y0=y0,
+        dx=dx,
+        dy=dy,
+        mmin=mmin,
+        nmin=nmin,
+        mmax=mmax,
+        nmax=nmax,
+        refi=refi,
+        uv_points=uv_points,
+        rotation=rotation,
+    )
+
+    # assertions
+    np.testing.assert_allclose(da_transform, transform, atol=1e-8)
+    assert da.shape == (height, width)

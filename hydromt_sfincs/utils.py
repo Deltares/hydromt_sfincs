@@ -66,6 +66,7 @@ __all__ = [
     "xu_open_dataset",
     "check_exists_and_lazy",
     "make_regular_grid",
+    "make_regular_grid_transform",
     "partition_quadtree",
 ]
 
@@ -1601,7 +1602,6 @@ def check_exists_and_lazy(ds, file_name):
         ds.close()
     return
 
-
 def make_regular_grid(
     x0,
     y0,
@@ -1640,38 +1640,31 @@ def make_regular_grid(
         if False, place points at cell centers (default).
     """
 
-    dxp = dx / refi
-    dyp = dy / refi
+    # Refined spacing
+    dxp, dyp = dx / refi, dy / refi
 
-    # Number of points
-    nx = (mmax - mmin + 1) * refi
-    ny = (nmax - nmin + 1) * refi
+    # Number of points; 1 coarse cell extra for uv_points
+    nx = (mmax - mmin + int(uv_points)) * refi
+    ny = (nmax - nmin + int(uv_points)) * refi
 
     # Index ranges
     m_range = np.arange(nx)
     n_range = np.arange(ny)
 
-    # --- Compute offset in physical units ---
-    if uv_points:
-        offset_x = 0.5*dxp + mmin*dx - 0.5*dx
-        offset_y = 0.5*dyp + nmin*dy - 0.5*dy
-    else:
-        offset_x = 0.5*dxp + mmin*dx
-        offset_y = 0.5*dyp + nmin*dy
+    # Offset in grid units
+    offset_x = 0.5*dxp + mmin*dx - (0.5*dx if uv_points else 0)
+    offset_y = 0.5*dyp + nmin*dy - (0.5*dy if uv_points else 0)
 
-    # --- Build Affine transform ---
+    # Affine transform
     transform = Affine.translation(x0, y0) * Affine.rotation(rotation) * Affine.scale(dxp, dyp)
-
-    # --- Create DataArray ---
-    data = np.full((ny, nx), fill_value, dtype=dtype)
     
-    # --- Rectilinear vs rotated ---
+    # Generate coordinates
     if transform.b == 0.0:  # No rotation → rectilinear
         x_coords, _ = transform * (m_range + offset_x/dxp, np.zeros(nx) + offset_y/dyp)
         _, y_coords = transform * (np.zeros(ny) + offset_x/dxp, n_range + offset_y/dyp)
         coords = {
-            "m": ("x", np.arange(mmin*refi, (mmax+1)*refi)),
-            "n": ("y", np.arange(nmin*refi, (nmax+1)*refi)),
+            "m": ("x", m_range + mmin*refi),
+            "n": ("y", n_range + nmin*refi),
             "x": x_coords,
             "y": y_coords,
         }
@@ -1680,16 +1673,18 @@ def make_regular_grid(
         m_mesh, n_mesh = np.meshgrid(m_range, n_range)
         x_coords, y_coords = transform * (m_mesh + offset_x/dxp, n_mesh + offset_y/dyp)
         coords = {
-            "m": ("x", np.arange(mmin*refi, (mmax+1)*refi)),
-            "n": ("y", np.arange(nmin*refi, (nmax+1)*refi)),
+            "m": ("x", m_range + mmin*refi),
+            "n": ("y", n_range + nmin*refi),
             "xc": (("y", "x"), x_coords),
             "yc": (("y", "x"), y_coords),
         }
         dims = ("y", "x")
 
+    # DataArray with fill value
+    data = np.full((ny, nx), fill_value, dtype=dtype)
     da = xr.DataArray(data, dims=dims, coords=coords, name=name)
 
-    # --- CRS / UGRID handling ---
+    # CRS/Ugrid handling
     if make_ugrid:
         if rotation != 0.0:
             da = UgridDataArray.from_structured(da, "xc", "yc")
@@ -1702,6 +1697,60 @@ def make_regular_grid(
             da.raster.set_crs(crs)
 
     return da
+
+def make_regular_grid_transform(
+    x0, y0, 
+    dx, dy,
+    mmax, nmax,
+    mmin=0, nmin=0, 
+    rotation=0.0, 
+    refi=1, 
+    uv_points=False
+):
+    """
+    Compute affine transform for a regular grid
+    (possibly rotated) without allocating arrays. The affine corresponds
+    to the **bottom-left corner** of the first pixel (raster convention),
+    while preserving original UV offset logic.
+    """
+    dxp = dx / refi
+    dyp = dy / refi
+
+    if uv_points:
+        width = (mmax - mmin + 1) * refi
+        height = (nmax - nmin + 1) * refi
+    else:
+        width = (mmax - mmin) * refi
+        height = (nmax - nmin) * refi
+
+    # offset in pixel units like make_regular_grid
+    if uv_points:
+        offset_x = 0.5*dxp + mmin*dx - 0.5*dx
+        offset_y = 0.5*dyp + nmin*dy - 0.5*dy
+    else:
+        offset_x = 0.5*dxp + mmin*dx
+        offset_y = 0.5*dyp + nmin*dy
+
+    if rotation == 0.0:
+        # non-rotated: simple translation
+        tx = x0 + offset_x - 0.5*dxp
+        ty = y0 + offset_y - 0.5*dyp
+        transform = Affine.translation(tx, ty) * Affine.scale(dxp, dyp)
+    else:
+        # rotated: compute cos/sin once
+        theta = np.deg2rad(rotation)
+        cosrot = np.cos(theta)
+        sinrot = np.sin(theta)
+
+        # apply the half-cell shift in rotated coordinates
+        x0_shifted = x0 + (offset_x - 0.5*dxp) * cosrot - (offset_y - 0.5 * dyp) * sinrot
+        y0_shifted = y0 + (offset_x - 0.5*dxp) * sinrot + (offset_y - 0.5 * dyp) * cosrot
+
+        # base affine for rotation and scaling
+        transform = Affine.translation(x0_shifted, y0_shifted) * Affine.rotation(rotation) * Affine.scale(dxp, dyp)
+
+    return transform, width, height
+
 
 def partition_quadtree(
     quadtree: xu.UgridDataset,

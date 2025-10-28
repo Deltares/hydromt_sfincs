@@ -507,18 +507,14 @@ class SubgridTableQuadtree:
             # UV Points
             if write_dep_tif or write_man_tif:
                 # determine the output dimensions and transform
-                output_width = (grid.attrs["mmax"]+1) * nr_subgrid_pixels * 2**ilev
-                output_height = (grid.attrs["nmax"]+1) * nr_subgrid_pixels * 2**ilev
-
-                da_regular = utils.make_regular_grid(
+                da_transform, da_width, da_height = utils.make_regular_grid_transform(
                                 x0=grid.attrs["x0"],
                                 y0=grid.attrs["y0"],
                                 dx=dx,
                                 dy=dy,
-                                mmax=output_width,
-                                nmax=output_height,
+                                mmax=(grid.attrs["mmax"]) * 2**ilev,
+                                nmax=(grid.attrs["nmax"]) * 2**ilev,
                                 rotation=grid.attrs["rotation"],
-                                crs=crs,
                                 mmin=0,
                                 nmin=0,
                                 refi=refi,
@@ -528,12 +524,12 @@ class SubgridTableQuadtree:
                 # create COGs for topobathy/manning
                 profile = dict(
                     driver="GTiff",
-                    width=output_width,
-                    height=output_height,
+                    width=da_width,
+                    height=da_height,
                     count=1,
                     dtype=np.float32,
-                    crs=da_regular.raster.crs,
-                    transform=da_regular.raster.transform,
+                    crs=crs,
+                    transform=da_transform,
                     tiled=True,
                     blockxsize=256,
                     blockysize=256,
