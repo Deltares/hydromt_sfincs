@@ -133,7 +133,7 @@ class SfincsWaveMakers(ModelComponent):
 
         # Check if any of the wave makers fall completely outside the model domain
         # If so, give a warning and remove these lines
-        outside = gdf.disjoint(self.model.region)
+        outside = gdf.disjoint(self.model.region.union_all())
         if outside.any():
             logger.warning(
                 "Some wave makers fall outside model domain. Removing these lines."
