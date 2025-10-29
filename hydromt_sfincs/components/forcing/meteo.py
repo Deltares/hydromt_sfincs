@@ -159,7 +159,7 @@ class SfincsMeteo(ModelComponent):
             if abs_file_path.suffix == ".nc":
                 self.write_gridded(filename=abs_file_path, rename=rename)
             else:
-                self.write_uniform(filename=abs_file_path, fmt=fmt)
+                self.write_uniform(variable=name, filename=abs_file_path, fmt=fmt)
 
     def write_gridded(self, filename: str | Path = None, rename: Optional[dict] = None):
         """Write spatially varying meteo file as netcdf."""
@@ -180,14 +180,16 @@ class SfincsMeteo(ModelComponent):
         # write 2D gridded timeseries
         ds.to_netcdf(filename, encoding=encoding)
 
-    def write_uniform(self, filename: str | Path = None, fmt: str = "%7.2f"):
+    def write_uniform(
+        self, variable: str, filename: str | Path = None, fmt: str = "%7.2f"
+    ):
         """Write uniform meteo file."""
 
         tref = self.model.config.get("tref")
 
         # parse data to dataframe
         da = self.data.transpose("time", ...)
-        df = da.to_pandas()
+        df = da[variable].to_pandas()
 
         # write timeseries
         utils.write_timeseries(filename, df, tref, fmt=fmt)

@@ -54,7 +54,7 @@ class SfincsQuadtreeElevation(MeshComponent):
     @hydromt_step
     def create(
         self,
-        datasets_dep: List[dict],
+        elevation_sets: List[dict],
         partition_by_level: bool = True,
         partition_in_blocks: bool = False,
         nrmax: int = 2000,  # not in list
@@ -69,9 +69,9 @@ class SfincsQuadtreeElevation(MeshComponent):
 
         Parameters
         ----------
-        datasets_dep : List[dict]
-            List of dictionaries with topobathy data, each containing a dataset name or Path (elevtn) and optional merge arguments e.g.:
-            [{'elevtn': merit_hydro, 'zmin': 0.01}, {'elevtn': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
+        elevation_sets : List[dict]
+            List of dictionaries with topobathy data, each containing a dataset name or Path (elevation) and optional merge arguments e.g.:
+            [{'elevation': merit_hydro, 'zmin': 0.01}, {'elevation': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
             For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
         buffer_cells : int, optional
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
@@ -87,12 +87,12 @@ class SfincsQuadtreeElevation(MeshComponent):
         if self.model.crs.is_geographic:
             res = res * 111111.0
         # append parsed datasets per level
-        datasets_dep_per_level = []
+        elevation_sets_per_level = []
         for ilev in range(nrlevels):
             # compute resolution at level
             res_level = res / (2**ilev)
-            datasets_dep_per_level.append(
-                self.model._parse_datasets_dep(datasets_dep, res=res_level)
+            elevation_sets_per_level.append(
+                self.model._parse_datasets_elevation(elevation_sets, res=res_level)
             )
 
         # check if partitions are already defined
@@ -116,7 +116,7 @@ class SfincsQuadtreeElevation(MeshComponent):
                 ilev = partition.level.max().values - 1
                 # merge multiple datasets on mesh
                 uda = merge_multi_dataarrays_on_mesh(
-                    da_list=datasets_dep_per_level[ilev],
+                    da_list=elevation_sets_per_level[ilev],
                     mesh2d=partition.grid,
                 )
                 partition["z"] = uda
@@ -139,7 +139,9 @@ class SfincsQuadtreeElevation(MeshComponent):
             t0 = time.time()
             # when not partitioned, use the full grid with the highest resolution data
             uda = merge_multi_dataarrays_on_mesh(
-                da_list=datasets_dep_per_level[-1], mesh2d=self.data.grid, logger=logger
+                da_list=elevation_sets_per_level[-1],
+                mesh2d=self.data.grid,
+                logger=logger,
             )
             t1 = time.time()
             logger.debug(f"Merging dep took {t1-t0:.2f} s.")
@@ -163,7 +165,34 @@ class SfincsQuadtreeElevation(MeshComponent):
     def set_uniform_bathymetry(self, zb):
         self.data["z"][:] = zb
 
-    def set_bathymetry(self, datasets_dep, zmin=-1.0e9, zmax=1.0e9, quiet=True):
+    def set_bathymetry(
+        self,
+        elevation_sets: List[dict],
+        nrmax: int = 2000,
+        buffer_cells: int = 0,
+        interp_method: str = "linear",
+        zmin: float = -1.0e9,
+        zmax: float = 1.0e9,
+        bathymetry_database: object = None,
+    ):
+        """Interpolate topobathy (z) data to the model grid.
+
+        Adds model grid layers:
+
+        * **z**: combined elevation/bathymetry [m+ref]
+
+        Parameters
+        ----------
+        elevation_sets : List[dict]
+            List of dictionaries with topobathy data, each containing a dataset name or Path (elevation) and optional merge arguments e.g.:
+            [{'elevation': merit_hydro, 'zmin': 0.01}, {'elevation': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
+            For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
+        buffer_cells : int, optional
+            Number of cells between datasets to ensure smooth transition of bed levels, by default 0
+        interp_method : str, optional
+            Interpolation method used to fill the buffer cells , by default "linear"
+        """
+        # TODO should we make this our create function? It seems faster?
         # Number of refinement levels
         nlev = self.data.attrs["nr_levels"]
         # Cell centre coordinates
@@ -174,6 +203,8 @@ class SfincsQuadtreeElevation(MeshComponent):
         zz = np.full(nr_cells, np.nan)
         # cell size of coarsest level
         dx = self.data.attrs["dx"]
+        dy = self.data.attrs["dy"]
+        res = min(dx, dy)
 
         # Determine first indices and number of cells per refinement level
         # This is also done when the grid is built, but that information is not stored
@@ -191,14 +222,14 @@ class SfincsQuadtreeElevation(MeshComponent):
 
         # convert to meters if geographic
         if self.model.crs.is_geographic:
-            dx = dx * 111111.0
+            res = res * 111111.0
         # append parsed datasets per level
-        datasets_dep_per_level = []
+        elevation_sets_per_level = []
         for ilev in range(nlev):
             # compute resolution at level
-            res_level = dx / (2**ilev)
-            datasets_dep_per_level.append(
-                self.model._parse_datasets_dep(datasets_dep, res=res_level)
+            res_level = res / (2**ilev)
+            elevation_sets_per_level.append(
+                self.model._parse_datasets_elevation(elevation_sets, res=res_level)
             )
 
         # get m and n indices
@@ -207,14 +238,13 @@ class SfincsQuadtreeElevation(MeshComponent):
 
         # Loop through all levels
         for ilev in range(nlev):
-            if not quiet:
-                print(
-                    "Processing bathymetry level "
-                    + str(ilev + 1)
-                    + " of "
-                    + str(nlev)
-                    + " ..."
-                )
+            logger.info(
+                "Processing bathymetry level "
+                + str(ilev + 1)
+                + " of "
+                + str(nlev)
+                + " ..."
+            )
 
             # First and last cell indices in this level
             i0 = ifirst[ilev]
@@ -225,46 +255,152 @@ class SfincsQuadtreeElevation(MeshComponent):
 
             xz = xy[cell_indices_in_level, 0]
             yz = xy[cell_indices_in_level, 1]
+            m_level = m[cell_indices_in_level]
+            n_level = n[cell_indices_in_level]
             dxmin = dx / 2**ilev
+            dymin = dy / 2**ilev
 
-            da_like = make_regular_grid(
-                x0=self.data.attrs["x0"],
-                y0=self.data.attrs["y0"],
-                dx=dxmin,
-                dy=dxmin,
-                mmax=m[i0 : i1 + 1].max().values + 1,
-                nmax=n[i0 : i1 + 1].max().values + 1,
-                rotation=self.data.attrs["rotation"],
-                crs=self.model.crs,
-                mmin=m[i0 : i1 + 1].min().values,
-                nmin=n[i0 : i1 + 1].min().values,
-                make_ugrid=False,
-            )
+            # Perhaps we need to do this in chunks if the cells cover a large area.
+            # In that case, we can determine the bounding box of all cells in this level,
+            # and then process the cells in chunks.
+            x_min = np.min(xz) - dxmin
+            x_max = np.max(xz) + dxmin
+            y_min = np.min(yz) - dymin
+            y_max = np.max(yz) + dymin
+            x_chunks = np.arange(x_min, x_max, nrmax * dxmin)
+            y_chunks = np.arange(y_min, y_max, nrmax * dymin)
 
-            da_dep = merge_multi_dataarrays(
-                da_list=datasets_dep_per_level[ilev],
-                da_like=da_like,
-                # buffer_cells=buffer_cells,
-                # interp_method=interp_method,
-                logger=logger,
-            )
+            if np.size(x_chunks) > 1 or np.size(y_chunks) > 1:
+                # Looks like we need to do it in chunks
+                logger.info(
+                    f"Processing in {len(x_chunks)} x {len(y_chunks)} chunks ..."
+                )
 
-            # Flatten n and m indices of cells in this level
-            n_flat = n[cell_indices_in_level].values
-            m_flat = m[cell_indices_in_level].values
+                zgl = np.full(len(xz), np.nan)
+                # Loop through x and y chunks
+                for ix in range(len(x_chunks)):
+                    for iy in range(len(y_chunks)):
+                        logger.info(
+                            f"Processing chunk {ix+1}, {iy+1} of {len(x_chunks)}, {len(y_chunks)} ..."
+                        )
 
-            # Find integer indices along the coordinate arrays
-            idx_y = np.searchsorted(da_dep.n.values, n_flat)
-            idx_x = np.searchsorted(da_dep.m.values, m_flat)
+                        # Find points xz and yz in this chunk
+                        if ix < len(x_chunks) - 1:
+                            x_min_chunk = x_chunks[ix]
+                            x_max_chunk = x_chunks[ix + 1]
+                        else:
+                            x_min_chunk = x_chunks[ix]
+                            x_max_chunk = x_max
 
-            # Select the values
-            zgl = da_dep.values[idx_y, idx_x]
+                        if iy < len(y_chunks) - 1:
+                            y_min_chunk = y_chunks[iy]
+                            y_max_chunk = y_chunks[iy + 1]
+                        else:
+                            y_min_chunk = y_chunks[iy]
+                            y_max_chunk = y_max
 
-            # zgl = bathymetry_database.get_bathymetry_on_points(xz,
-            #                                                    yz,
-            #                                                    dxmin,
-            #                                                    self.model.crs,
-            #                                                    bathymetry_sets)
+                        in_chunk = np.where(
+                            (xz >= x_min_chunk)
+                            & (xz < x_max_chunk)
+                            & (yz >= y_min_chunk)
+                            & (yz < y_max_chunk)
+                        )[0]
+
+                        if len(in_chunk) > 0:
+                            if bathymetry_database is not None:
+                                # Get bathymetry from database, there interpolation on grid is done
+                                xzc = xz[in_chunk]
+                                yzc = yz[in_chunk]
+                                zgc = bathymetry_database.get_bathymetry_on_points(
+                                    xzc,
+                                    yzc,
+                                    min(dxmin, dymin),
+                                    self.model.crs,
+                                    elevation_sets,
+                                )
+                                zgl[in_chunk] = zgc
+                            else:
+                                # Make a regular grid with the extent of the cells in this chunk
+                                # TODO check whether extent makes sense (are mmin, mmax and nmin, nmax correct?)
+                                da_like = make_regular_grid(
+                                    x0=self.data.attrs["x0"],
+                                    y0=self.data.attrs["y0"],
+                                    dx=dxmin,
+                                    dy=dymin,
+                                    mmax=m_level[in_chunk].max().values + 1,
+                                    nmax=n_level[in_chunk].max().values + 1,
+                                    rotation=self.data.attrs["rotation"],
+                                    crs=self.model.crs,
+                                    mmin=m_level[in_chunk].min().values,
+                                    nmin=n_level[in_chunk].min().values,
+                                    make_ugrid=False,
+                                )
+                                # Interpolate/merge multiple datasets on this grid
+                                da_dep = merge_multi_dataarrays(
+                                    da_list=elevation_sets_per_level[ilev],
+                                    da_like=da_like,
+                                    buffer_cells=buffer_cells,
+                                    interp_method=interp_method,
+                                    logger=logger,
+                                )
+
+                                # Flatten n and m indices of cells in this level
+                                n_flat = n_level[in_chunk].values
+                                m_flat = m_level[in_chunk].values
+
+                                # Find integer indices along the coordinate arrays
+                                idx_y = np.searchsorted(da_dep.n.values, n_flat)
+                                idx_x = np.searchsorted(da_dep.m.values, m_flat)
+
+                                # Select the values
+                                zgc = da_dep.values[idx_y, idx_x]
+                                zgl[in_chunk] = zgc
+
+            else:
+                if bathymetry_database is not None:
+                    # Get bathymetry from database
+                    zgl = bathymetry_database.get_bathymetry_on_points(
+                        xz,
+                        yz,
+                        min(dxmin, dymin),
+                        self.model.crs,
+                        elevation_sets,
+                    )
+                else:
+                    # Make a regular grid with the extent of the cells in this level
+                    da_like = make_regular_grid(
+                        x0=self.data.attrs["x0"],
+                        y0=self.data.attrs["y0"],
+                        dx=dxmin,
+                        dy=dymin,
+                        mmax=m_level.max().values + 1,
+                        nmax=n_level.max().values + 1,
+                        rotation=self.data.attrs["rotation"],
+                        crs=self.model.crs,
+                        mmin=m_level.min().values,
+                        nmin=n_level.min().values,
+                        make_ugrid=False,
+                    )
+
+                    # Interpolate/merge multiple datasets on this grid
+                    da_dep = merge_multi_dataarrays(
+                        da_list=elevation_sets_per_level[ilev],
+                        da_like=da_like,
+                        buffer_cells=buffer_cells,
+                        interp_method=interp_method,
+                        logger=logger,
+                    )
+
+                    # Flatten n and m indices of cells in this level
+                    n_flat = n_level.values
+                    m_flat = m_level.values
+
+                    # Find integer indices along the coordinate arrays
+                    idx_y = np.searchsorted(da_dep.n.values, n_flat)
+                    idx_x = np.searchsorted(da_dep.m.values, m_flat)
+
+                    # Select the values
+                    zgl = da_dep.values[idx_y, idx_x]
 
             # Limit zgl to zmin and zmax
             zgl = np.maximum(zgl, zmin)

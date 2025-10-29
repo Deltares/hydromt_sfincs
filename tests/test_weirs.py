@@ -122,7 +122,7 @@ def test_weirs_create(model_config):
         obs0coords = list(geom_a.coords)
         obs1coords = list(geom_b.coords)
         # assert np.isclose(obs0coords.x.values, obs1coords.x.values, rtol=0.001).all()
-        assert np.isclose(obs0coords, obs1coords, rtol=0.001).all()
+        assert np.isclose(obs0coords, obs1coords, atol=0.001).all()
 
     # add again with merge = True and should have 2 gdfs now
     model_config.weirs.create(locations=gdf, merge=True)

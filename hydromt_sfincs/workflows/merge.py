@@ -397,7 +397,7 @@ def merge_multi_dataarrays_on_mesh(
 
         # merge based merge_method
         da1 = uda_out
-        da2 = mesh["elevtn"]
+        da2 = mesh["elevation"]
         if merge_method == "first":
             mask = ~np.isnan(da1)
         elif merge_method == "last":
