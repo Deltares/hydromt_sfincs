@@ -689,7 +689,7 @@ class SfincsModel(Model):
                         bbox=self.bbox,
                         buffer=10,
                         variables=["elevtn"],  # NOTE this is still hydromt convention
-                        zoom_level=(res, "meter"),
+                        zoom=(res, "meter"),
                     )
                     # rename elevtn to elevation if present
                     da_elv.name = "elevation"
