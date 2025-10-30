@@ -364,6 +364,8 @@ class SfincsModel(GridModel):
         datasets_dep: List[dict],
         buffer_cells: int = 0,  # not in list
         interp_method: str = "linear",  # used for buffer cells only
+        trim: bool = True,
+        fill_missing: bool = True,
     ):
         """Interpolate topobathy (dep) data to the model grid.
 
@@ -381,6 +383,10 @@ class SfincsModel(GridModel):
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         interp_method : str, optional
             Interpolation method used to fill the buffer cells , by default "linear"
+        trim: bool, optional
+            Trim the dataset using the bbox with some buffer, true by default
+        fill_missing: bool, optional
+            Fill in missing values in the raster dataset using IDW, true by default.
         """
 
         # retrieve model resolution to determine zoom level for xyz-datasets
@@ -390,7 +396,7 @@ class SfincsModel(GridModel):
         else:
             res = np.abs(self.mask.raster.res[0]) * 111111.0
 
-        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res, trim=trim)
 
         if self.grid_type == "regular":
             da_dep = workflows.merge_multi_dataarrays(
@@ -402,12 +408,13 @@ class SfincsModel(GridModel):
             )
 
             # check if no nan data is present in the bed levels
-            nmissing = int(np.sum(np.isnan(da_dep.values)))
-            if nmissing > 0:
-                self.logger.warning(f"Interpolate elevation at {nmissing} cells")
-                da_dep = da_dep.raster.interpolate_na(
-                    method="rio_idw", extrapolate=True
-                )
+            if fill_missing:
+                nmissing = int(np.sum(np.isnan(da_dep.values)))
+                if nmissing > 0:
+                    self.logger.warning(f"Interpolate elevation at {nmissing} cells")
+                    da_dep = da_dep.raster.interpolate_na(
+                        method="rio_idw", extrapolate=True
+                    )
 
             self.set_grid(da_dep, name="dep")
             # FIXME this shouldn't be necessary, since da_dep should already have a crs
@@ -671,6 +678,8 @@ class SfincsModel(GridModel):
         rgh_lev_land: float = 0.0,
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
+        trim: bool = True,
+        fill_missing: bool = True,
     ):
         """Setup method for subgrid tables based on a list of
         elevation and Manning's roughness datasets.
@@ -784,11 +793,11 @@ class SfincsModel(GridModel):
         else:
             res = np.abs(self.mask.raster.res[0]) * 111111.0 / nr_subgrid_pixels
 
-        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res)
+        datasets_dep = self._parse_datasets_dep(datasets_dep, res=res, trim=trim)
 
         if len(datasets_rgh) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
-            datasets_rgh = self._parse_datasets_rgh(datasets_rgh)
+            datasets_rgh = self._parse_datasets_rgh(datasets_rgh, trim=trim)
 
         if len(datasets_riv) > 0:
             datasets_riv = self._parse_datasets_riv(datasets_riv)
@@ -833,6 +842,7 @@ class SfincsModel(GridModel):
                 write_dep_tif=write_dep_tif,
                 write_man_tif=write_man_tif,
                 highres_dir=highres_dir,
+                fill_missing=fill_missing,
                 logger=self.logger,
             )
             self.subgrid = self.reggrid.subgrid.to_xarray(
@@ -1409,6 +1419,7 @@ class SfincsModel(GridModel):
         manning_land=0.04,
         manning_sea=0.02,
         rgh_lev_land=0,
+        trim: bool = True,
     ):
         """Setup model manning roughness map (manningfile) from gridded manning data or a combinataion of gridded
         land-use/land-cover map and manning roughness mapping table.
@@ -1432,7 +1443,7 @@ class SfincsModel(GridModel):
         """
 
         if len(datasets_rgh) > 0:
-            datasets_rgh = self._parse_datasets_rgh(datasets_rgh)
+            datasets_rgh = self._parse_datasets_rgh(datasets_rgh, trim=trim)
         else:
             datasets_rgh = []
 
@@ -3517,9 +3528,9 @@ class SfincsModel(GridModel):
                     logger=self.logger,
                     **kwargs,
                 )
-                # save as dict of DataArray
-                self.set_results(ds_face, split_dataset=True)
-                self.set_results(ds_edge, split_dataset=True)
+                # save as datasets (datarray doesn't seem to work)
+                self.set_results(ds_face, "face", split_dataset=False)
+                self.set_results(ds_edge, "edge", split_dataset=False)
             elif self.grid_type == "quadtree":
                 with xu.load_dataset(fn_map, chunks={"time": chunksize}) as dsu:
                     # set coords
@@ -3765,7 +3776,7 @@ class SfincsModel(GridModel):
         return tstart, tstop
 
     ## helper method
-    def _parse_datasets_dep(self, datasets_dep, res):
+    def _parse_datasets_dep(self, datasets_dep, res, trim=True):
         """Parse filenames or paths of Datasets in list of dictionaries datasets_dep
         into xr.DataArray and gdf.GeoDataFrames:
 
@@ -3793,8 +3804,8 @@ class SfincsModel(GridModel):
                 try:
                     da_elv = self.data_catalog.get_rasterdataset(
                         dataset.get("elevtn", dataset.get("da")),
-                        bbox=self.bbox,
-                        buffer=10,
+                        bbox=self.bbox if trim else None,
+                        buffer=10 if trim else None,
                         variables=["elevtn"],
                         zoom_level=(res, "meter"),
                     )
@@ -3814,8 +3825,8 @@ class SfincsModel(GridModel):
             if "offset" in dataset and not isinstance(dataset["offset"], (float, int)):
                 da_offset = self.data_catalog.get_rasterdataset(
                     dataset.get("offset"),
-                    bbox=self.bbox,
-                    buffer=10,
+                    bbox=self.bbox if trim else None,
+                    buffer=10 if trim else None,
                 )
                 dd.update({"offset": da_offset})
 
@@ -3823,7 +3834,7 @@ class SfincsModel(GridModel):
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
                     dataset.get("mask"),
-                    bbox=self.bbox,
+                    bbox=self.bbox if trim else None,
                 )
                 dd.update({"gdf_valid": gdf_valid})
 
@@ -3837,7 +3848,7 @@ class SfincsModel(GridModel):
 
         return datasets_out
 
-    def _parse_datasets_rgh(self, datasets_rgh):
+    def _parse_datasets_rgh(self, datasets_rgh, trim=True):
         """Parse filenames or paths of Datasets in list of dictionaries datasets_rgh
         into xr.DataArrays and gdf.GeoDataFrames:
 
@@ -3865,8 +3876,8 @@ class SfincsModel(GridModel):
             if "manning" in dataset or "da" in dataset:
                 da_man = self.data_catalog.get_rasterdataset(
                     dataset.get("manning", dataset.get("da")),
-                    bbox=self.bbox,
-                    buffer=10,
+                    bbox=self.bbox if trim else None,
+                    buffer=10 if trim else None,
                 )
                 dd.update({"da": da_man})
             elif "lulc" in dataset:
@@ -3881,13 +3892,13 @@ class SfincsModel(GridModel):
                     )
                 da_lulc = self.data_catalog.get_rasterdataset(
                     lulc,
-                    bbox=self.bbox,
-                    buffer=10,
+                    bbox=self.bbox if trim else None,
+                    buffer=10 if trim else None,
                     variables=["lulc"],
                 )
                 df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
                 # reclassify
-                da_man = da_lulc.raster.reclassify(df_map[["N"]])["N"]
+                da_man = da_lulc.raster.reclassify(df_map[["N"]])["N"].compute()
                 dd.update({"da": da_man})
             else:
                 raise ValueError("No 'manning' dataset provided in datasets_rgh.")
@@ -3896,7 +3907,7 @@ class SfincsModel(GridModel):
             if "mask" in dataset:
                 gdf_valid = self.data_catalog.get_geodataframe(
                     dataset.get("mask"),
-                    bbox=self.bbox,
+                    bbox=self.bbox if trim else None,
                 )
                 dd.update({"gdf_valid": gdf_valid})
 
