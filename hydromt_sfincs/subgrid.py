@@ -407,6 +407,7 @@ class SubgridTableRegular:
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
         highres_dir: str = None,
+        fill_missing: bool = True,
         logger=logger,
     ):
         """Create subgrid tables for regular grid based on a list of depth,
@@ -591,6 +592,13 @@ class SubgridTableRegular:
         logger.info(f"Grid size of flux grid            : dx={dx}, dy={dy}")
         logger.info(f"Grid size of subgrid pixels       : dx={dxp}, dy={dyp}")
 
+        # Update the datasets with chunksize of blocks
+        for ds in datasets_dep:
+            ds["da"] = ds["da"].chunk((nrcb, nrcb))
+        if len(datasets_rgh) > 0:
+            for ds in datasets_rgh:
+                ds["da"] = ds["da"].chunk((nrcb, nrcb))
+
         ## Loop through blocks
         ib = -1
         for ii in range(nrbm):
@@ -647,15 +655,18 @@ class SubgridTableRegular:
                 # TODO what to do with remaining cell with nan values
                 # NOTE: this is still open for discussion, but for now we interpolate
                 # raise warning if NaN values in active cells
-                if np.any(np.isnan(da_dep.values[da_mask_sbg > 0])) > 0:
-                    npx = int(np.sum(np.isnan(da_dep.values[da_mask_sbg > 0])))
+                npx = int(np.sum(np.isnan(da_dep.values[da_mask_sbg > 0])))
+                if npx > 0:
                     logger.warning(
                         f"Interpolate elevation data at {npx} subgrid pixels"
                     )
-                # always interpolate/extrapolate to avoid NaN values
-                da_dep = da_dep.raster.interpolate_na(
-                    method="rio_idw", extrapolate=True
-                )
+                if npx > 0 or fill_missing:
+                    # always interpolate/extrapolate to avoid NaN values
+                    da_dep = da_dep.raster.interpolate_na(
+                        method="rio_idw", extrapolate=True
+                    )
+                elif not fill_missing:
+                    da_dep.raster.set_nodata(np.nan)
 
                 # get subgrid manning roughness tile
                 if len(datasets_rgh) > 0:
@@ -666,16 +677,19 @@ class SubgridTableRegular:
                         buffer_cells=buffer_cells,
                     )
                     # raise warning if NaN values in active cells
-                    if np.isnan(da_man.values[da_mask_sbg > 0]).any():
-                        npx = int(np.sum(np.isnan(da_man.values[da_mask_sbg > 0])))
+                    npx = int(np.sum(np.isnan(da_man.values[da_mask_sbg > 0])))
+                    if npx > 0:
                         logger.warning(
                             f"Fill manning roughness data at {npx} subgrid pixels with default values"
                         )
-                    # always fill based on land/sea elevation to avoid NaN values
-                    da_man0 = xr.where(
-                        da_dep >= rgh_lev_land, manning_land, manning_sea
-                    )
-                    da_man = da_man.where(~np.isnan(da_man), da_man0)
+                    if npx > 0 or fill_missing:
+                        # always fill based on land/sea elevation to avoid NaN values
+                        da_man0 = xr.where(
+                            da_dep >= rgh_lev_land, manning_land, manning_sea
+                        )
+                        da_man = da_man.where(~np.isnan(da_man), da_man0)
+                    elif not fill_missing:
+                        da_man.raster.set_nodata(np.nan)
                 else:
                     da_man = xr.where(da_dep >= rgh_lev_land, manning_land, manning_sea)
                     da_man.raster.set_nodata(np.nan)
@@ -714,10 +728,11 @@ class SubgridTableRegular:
                         )
 
                 # check for NaN values for entire tile
-                check_nans = np.all(np.isfinite(da_dep))
-                assert check_nans, "NaN values in depth array"
-                check_nans = np.all(np.isfinite(da_man))
-                assert check_nans, "NaN values in manning roughness array"
+                if fill_missing:
+                    check_nans = np.all(np.isfinite(da_dep))
+                    assert check_nans, "NaN values in depth array"
+                    check_nans = np.all(np.isfinite(da_man))
+                    assert check_nans, "NaN values in manning roughness array"
 
                 yg = da_dep.raster.ycoords.values
                 if yg.ndim == 1:
