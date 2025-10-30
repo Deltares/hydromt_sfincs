@@ -1,6 +1,5 @@
 .. currentmodule:: hydromt_sfincs
 
-
 .. _api_reference:
 
 =============
@@ -9,54 +8,28 @@ API reference
 
 .. _api_model:
 
-SFINCS model class
+SFINCS Model class
 ==================
 
-Initialize
-----------
+The ``hydromt_sfincs.SfincsModel`` class is the main entry point to read, write, build, and update SFINCS models using HydroMT.
+It uses the functionalities provided by the reusable components defined in the ``hydromt_sfincs.components`` module.
 
 .. autosummary::
    :toctree: _generated/
 
    SfincsModel
 
-.. _components:
-
-Setup components
-----------------
+Methods
+-------
 
 .. autosummary::
    :toctree: _generated/
 
-   SfincsModel.setup_config
-   SfincsModel.setup_region
-   SfincsModel.setup_grid
-   SfincsModel.setup_grid_from_region
-   SfincsModel.setup_dep
-   SfincsModel.setup_mask_active
-   SfincsModel.setup_mask_bounds
-   SfincsModel.setup_manning_roughness
-   SfincsModel.setup_constant_infiltration
-   SfincsModel.setup_cn_infiltration
-   SfincsModel.setup_cn_infiltration_with_ks
-   SfincsModel.setup_subgrid
-   SfincsModel.setup_river_inflow
-   SfincsModel.setup_river_outflow
-   SfincsModel.setup_observation_points
-   SfincsModel.setup_observation_lines
-   SfincsModel.setup_structures
-   SfincsModel.setup_drainage_structures
-   SfincsModel.setup_storage_volume
-   SfincsModel.setup_waterlevel_forcing
-   SfincsModel.setup_waterlevel_bnd_from_mask
-   SfincsModel.setup_discharge_forcing
-   SfincsModel.setup_discharge_forcing_from_grid
-   SfincsModel.setup_precip_forcing
-   SfincsModel.setup_precip_forcing_from_grid
-   SfincsModel.setup_pressure_forcing_from_grid
-   SfincsModel.setup_wind_forcing
-   SfincsModel.setup_wind_forcing_from_grid
-   SfincsModel.setup_tiles
+   SfincsModel.read
+   SfincsModel.write
+   SfincsModel.build
+   SfincsModel.update
+   .. SfincsModel.set_root
 
 Plot methods
 ------------
@@ -73,74 +46,160 @@ Attributes
 .. autosummary::
    :toctree: _generated/
 
-   SfincsModel.region
-   SfincsModel.mask
-   SfincsModel.crs
-   SfincsModel.res
    SfincsModel.root
-   SfincsModel.config
-   SfincsModel.grid
-   SfincsModel.geoms
-   SfincsModel.forcing
-   SfincsModel.states
-   SfincsModel.results
+   SfincsModel.crs
+   SfincsModel.region
+   SfincsModel.bbox
 
-High level methods
-------------------
+.. _api_components:
 
-.. autosummary::
-   :toctree: _generated/
+Components
+==========
 
-   SfincsModel.read
-   SfincsModel.write
-   SfincsModel.build
-   SfincsModel.update
-   SfincsModel.set_root
+The ``hydromt_sfincs.components`` module defines reusable data container classes
+that represent configuration, grid, geometries, boundary conditions, outputs,
+and other model data.
 
-Low level methods
------------------
+Configuration
+-------------
 
 .. autosummary::
-   :toctree: _generated/
+   :toctree: _generated
 
-   SfincsModel.update_grid_from_config
-   SfincsModel.update_spatial_attrs
-   SfincsModel.set_forcing_1d
-   SfincsModel.get_model_time
+   components.config.SfincsConfig
+   components.config.SfincsConfig.data
+   components.config.SfincsConfig.read
+   components.config.SfincsConfig.write
+   components.config.SfincsConfig.update
+   components.config.SfincsConfig.update_grid_from_config
+   components.config.SfincsConfig.get
+   components.config.SfincsConfig.set
+   components.config.SfincsConfig.get_set_file_variable
 
-General methods
----------------
+   components.config.SfincsConfigVariables
+
+Grid
+----
 
 .. autosummary::
-   :toctree: _generated/
+   :toctree: _generated
 
-   SfincsModel.setup_config
-   SfincsModel.get_config
-   SfincsModel.set_config
-   SfincsModel.read_config
-   SfincsModel.write_config
+   components.grid.SfincsGrid
+   components.grid.SfincsGrid.data
+   components.grid.SfincsGrid.read
+   components.grid.SfincsGrid.write
+   components.grid.SfincsGrid.create
+   components.grid.SfincsGrid.create_from_region
 
-   SfincsModel.set_grid
-   SfincsModel.read_grid
-   SfincsModel.write_grid
+   components.grid.SfincsElevation
+   components.grid.SfincsElevation.create
 
-   SfincsModel.read_subgrid
-   SfincsModel.write_subgrid
+   components.grid.SfincsMask
+   components.grid.SfincsMask.create_active
+   components.grid.SfincsMask.create_boundary
 
-   SfincsModel.set_geoms
-   SfincsModel.read_geoms
-   SfincsModel.write_geoms
+   components.grid.SfincsRoughness
+   components.grid.SfincsRoughness.create
 
-   SfincsModel.set_forcing
-   SfincsModel.read_forcing
-   SfincsModel.write_forcing
+   components.grid.SfincsInfiltration
+   components.grid.SfincsInfiltration.create_constant
+   components.grid.SfincsInfiltration.create_cn
+   components.grid.SfincsInfiltration.create_cn_with_recovery
 
-   SfincsModel.set_states
-   SfincsModel.read_states
-   SfincsModel.write_states
+   components.grid.SfincsStorageVolume
+   components.grid.SfincsStorageVolume.create
 
-   SfincsModel.set_results
-   SfincsModel.read_results
+   components.grid.SfincsSubgridTable
+   components.grid.SfincsSubgridTable.data
+   components.grid.SfincsSubgridTable.read
+   components.grid.SfincsSubgridTable.write
+   components.grid.SfincsSubgridTable.create
+
+Geometries
+-----------
+
+.. autosummary::
+   :toctree: _generated
+
+   components.geometries.SfincsObservationPoints
+   components.geometries.SfincsObservationPoints.data
+   components.geometries.SfincsObservationPoints.read
+   components.geometries.SfincsObservationPoints.write
+   components.geometries.SfincsObservationPoints.create
+
+   components.geometries.SfincsCrossSections
+   components.geometries.SfincsCrossSections.data
+   components.geometries.SfincsCrossSections.read
+   components.geometries.SfincsCrossSections.write
+   components.geometries.SfincsCrossSections.create
+
+   components.geometries.SfincsThinDams
+   components.geometries.SfincsThinDams.data
+   components.geometries.SfincsThinDams.read
+   components.geometries.SfincsThinDams.write
+   components.geometries.SfincsThinDams.create
+
+   components.geometries.SfincsWeirs
+   components.geometries.SfincsWeirs.data
+   components.geometries.SfincsWeirs.read
+   components.geometries.SfincsWeirs.write
+   components.geometries.SfincsWeirs.create
+
+   components.geometries.SfincsDrainageStructures
+   components.geometries.SfincsDrainageStructures.data
+   components.geometries.SfincsDrainageStructures.read
+   components.geometries.SfincsDrainageStructures.write
+   components.geometries.SfincsDrainageStructures.create
+
+Forcing
+--------
+
+.. autosummary::
+   :toctree: _generated
+
+   components.forcing.SfincsWaterLevel
+   components.forcing.SfincsWaterLevel.data
+   components.forcing.SfincsWaterLevel.read
+   components.forcing.SfincsWaterLevel.write
+   components.forcing.SfincsWaterLevel.create
+   components.forcing.SfincsWaterLevel.create_timeseries
+   components.forcing.SfincsWaterLevel.create_timeseries_from_astro
+   components.forcing.SfincsWaterLevel.create_boundary_points_from_mask
+
+   components.forcing.SfincsDischargePoints
+   components.forcing.SfincsDischargePoints.data
+   components.forcing.SfincsDischargePoints.read
+   components.forcing.SfincsDischargePoints.write
+   components.forcing.SfincsDischargePoints.create
+   components.forcing.SfincsDischargePoints.create_timeseries
+
+   components.forcing.SfincsPrecipitation
+   components.forcing.SfincsPrecipitation.data
+   components.forcing.SfincsPrecipitation.read
+   components.forcing.SfincsPrecipitation.write
+   components.forcing.SfincsPrecipitation.create
+   components.forcing.SfincsPrecipitation.create_uniform
+
+   components.forcing.SfincsPressure
+   components.forcing.SfincsPressure.data
+   components.forcing.SfincsPressure.read
+   components.forcing.SfincsPressure.write
+   components.forcing.SfincsPressure.create
+
+   components.forcing.SfincsWind
+   components.forcing.SfincsWind.data
+   components.forcing.SfincsWind.read
+   components.forcing.SfincsWind.write
+   components.forcing.SfincsWind.create
+   components.forcing.SfincsWind.create_uniform
+
+Output
+------
+
+.. autosummary::
+   :toctree: _generated
+
+   components.output.SfincsOutput
 
 .. _workflows:
 

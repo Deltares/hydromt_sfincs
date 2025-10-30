@@ -26,7 +26,7 @@ class SfincsConfig(ModelComponent):
 
     @property
     def data(self):
-        """Return the SfincsConfig object."""
+        """Return the Pydantic SfincsConfigVariables object."""
         if self._data is None:
             self._data = SfincsConfigVariables()
         return self._data
