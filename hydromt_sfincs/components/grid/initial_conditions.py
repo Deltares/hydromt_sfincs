@@ -25,9 +25,8 @@ class SfincsInitialConditions(ModelComponent):
     This component contains methods to add initial water level data to the SFINCS model
     on regular grids.
 
-    Notes
-    -----
-    The initial water level data is stored in the model grid's data dataset under the key "ini".
+    .. note::
+        The initial water level data is stored in the model grid's data dataset under the key "ini".
 
     See Also
     --------

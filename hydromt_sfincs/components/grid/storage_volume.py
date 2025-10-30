@@ -26,9 +26,8 @@ class SfincsStorageVolume(ModelComponent):
     on regular grids. Storage volume can be used to represent the effect of green-
     infrastructure in urban environments, such as retention basins or rain barrels.
 
-    Notes
-    -----
-    The storage volume data is stored in the model grid's data dataset under the key "vol".
+    .. note::
+        The storage volume data is stored in the model grid's data dataset under the key "vol".
 
     See Also
     --------

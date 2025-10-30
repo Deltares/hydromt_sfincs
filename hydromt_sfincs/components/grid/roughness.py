@@ -26,9 +26,8 @@ class SfincsRoughness(ModelComponent):
     Multiple roughness datasets can be merged together to create a complete
     roughness representation interpolated onto the model grid.
 
-    Notes
-    -----
-    The roughness data is stored in the model grid's data dataset under the key "manning".
+    .. note::
+        The roughness data is stored in the model grid's data dataset under the key "manning".
 
     See Also
     --------

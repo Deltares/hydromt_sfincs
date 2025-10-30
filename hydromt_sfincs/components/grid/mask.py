@@ -40,9 +40,8 @@ class SfincsMask(ModelComponent):
     The mask defines active and inactive cells in the model grid, as well as boundary cells
     for water level and outflow boundaries.
 
-    Notes
-    -----
-    The mask data is stored in the model grid's data dataset under the key "mask".
+    .. note::
+        The mask data is stored in the model grid's data dataset under the key "mask".
 
     See Also
     --------

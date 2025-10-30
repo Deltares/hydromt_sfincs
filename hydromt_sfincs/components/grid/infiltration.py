@@ -45,9 +45,8 @@ class SfincsInfiltration(ModelComponent):
     on regular grids. Various infiltration parameterizations can be used, including
     spatially varying constant infiltration rates and curve number based methods.
 
-    Notes
-    -----
-    The infiltration data is stored in the model grid's data dataset under the keys "qinf", "scs", "smax", "seff" and "ks".
+    .. note::
+        The infiltration data is stored in the model grid's data dataset under the keys "qinf", "scs", "smax", "seff" and "ks".
 
     See Also
     --------

@@ -26,6 +26,16 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsSubgridTable(ModelComponent):
+    """SFINCS Subgrid Table Component.
+
+    This component contains methods to create, read and write subgrid tables for the SFINCS model
+    on regular grids. Subgrid tables are used to represent subgrid-scale variations in bed level
+    and roughness within each grid cell, allowing for more accurate simulations of flow dynamics.
+
+    .. note::
+        The subgrid table data is stored in the component's data attribute as an xarray.Dataset.
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -64,7 +74,9 @@ class SfincsSubgridTable(ModelComponent):
 
     # new way of reading netcdf subgrid tables
     def read(self, filename: str = None):
-        """Load subgrid table from netcdf file."""
+        """Load subgrid table from file for a regular grid with given mask.
+        If filename is not specified, sthe filename is taken from the model configuration.
+        """
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -89,6 +101,7 @@ class SfincsSubgridTable(ModelComponent):
             self.read_binary(filename=abs_file_path)
 
     def read_netcdf(self, filename: str = None):
+        """Load subgrid table from netcdf file for a regular grid with given mask."""
         # netcdf, so set version to 1
         self.version = 1
 
@@ -221,7 +234,7 @@ class SfincsSubgridTable(ModelComponent):
 
     # Following remains for backward compatibility, but should soon not be used anymore
     def read_binary(self, filename: str = None):
-        """Load subgrid table from file for a regular grid with given mask."""
+        """Load subgrid table from binary file for a regular grid with given mask."""
 
         # set version to old binary format
         self.version = 0
@@ -336,8 +349,9 @@ class SfincsSubgridTable(ModelComponent):
 
     # new way of writing netcdf subgrid tables
     def write(self, filename: str = None):
-        """Write subgrid table to netcdf file for a regular grid with given mask.
-        Values are only written for active cells (mask > 0)."""
+        """Write subgrid table to file for a regular grid with given mask. Values are only written
+        for active cells (mask > 0). If filename is not specified, the filename is taken from the model
+        configuration."""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -363,6 +377,8 @@ class SfincsSubgridTable(ModelComponent):
             self.write_binary(filename=abs_file_path)
 
     def write_netcdf(self, filename: str = None):
+        """Save the subgrid data to a netcdf file for a regular grid with given mask. Values are only written
+        for active cells (mask > 0)."""
         # get the mask from the model and convert to xarray
         mask = self.model.grid.mask
         ds = self.to_xarray(dims=mask.raster.dims, coords=mask.raster.coords)
@@ -431,7 +447,7 @@ class SfincsSubgridTable(ModelComponent):
 
     # Following remains for backward compatibility, but should soon not be used anymore
     def write_binary(self, filename: str = None):
-        """Save the subgrid data to a binary file."""
+        """Save the subgrid data to a binary file. Values are only written for active cells (mask > 0)."""
 
         # get the mask from the model
         mask = self.model.grid.mask
@@ -517,7 +533,7 @@ class SfincsSubgridTable(ModelComponent):
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
     ):
-        """Setup method for subgrid tables based on a list of
+        """Create method for subgrid tables based on a list of
         elevation and Manning's roughness datasets.
 
         These datasets are used to derive relations between the water level

@@ -416,7 +416,7 @@ class SfincsGrid(GridComponent):
 
         See Also
         --------
-        :py:func:~`hydromt.model.processes.create_grid_from_region`
+        :py:func:`~hydromt.model.processes.create_grid_from_region`
         """
 
         ds = create_grid_from_region(

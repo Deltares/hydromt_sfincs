@@ -23,9 +23,8 @@ class SfincsElevation(ModelComponent):
     on regular grids. Multiple elevation datasets can be merged together to create a complete
     bed level representation interpolated onto the model grid.
 
-    Notes
-    -----
-    The elevation data is stored in the model grid's data dataset under the key "z".
+    .. note::
+        The elevation data is stored in the model grid's data dataset under the key "z".
 
     See Also
     --------
