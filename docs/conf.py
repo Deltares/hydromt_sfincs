@@ -78,10 +78,14 @@ extensions = [
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
     "nbsphinx",
-    # "sphinxcontrib.autodoc_pydantic",
+    "sphinxcontrib.autodoc_pydantic",
 ]
 
 autosummary_generate = True
+autodoc_default_options = {
+    "members": True,
+    "inherited-members": False,
+}
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 # The suffix(es) of source filenames.
@@ -119,18 +123,18 @@ napoleon_preprocess_types = True
 # All subclasses of pydantic.BaseModel that are documented using `autosummary`,
 # will be documented automatically according to the settings below.
 # https://autodoc-pydantic.readthedocs.io/en/stable/users/configuration.html
-# autodoc_pydantic_model_members = True
-# autodoc_pydantic_model_hide_paramlist = True
-# autodoc_pydantic_model_undoc_members = True
-# autodoc_pydantic_model_show_json = False
-# autodoc_pydantic_model_show_config_summary = False
-# autodoc_pydantic_model_show_field_summary = False
-# autodoc_pydantic_model_show_field_constraints = False
-# autodoc_pydantic_model_show_validator_summary = False
-# autodoc_pydantic_model_show_validator_members = False
-# autodoc_pydantic_field_list_validators = False
-# autodoc_pydantic_model_summary_list_order = "bysource"
-# autodoc_pydantic_model_member_order = "bysource"
+autodoc_pydantic_model_members = True
+autodoc_pydantic_model_hide_paramlist = True
+autodoc_pydantic_model_undoc_members = True
+autodoc_pydantic_model_show_json = False
+autodoc_pydantic_model_show_config_summary = False
+autodoc_pydantic_model_show_field_summary = False
+autodoc_pydantic_model_show_field_constraints = False
+autodoc_pydantic_model_show_validator_summary = False
+autodoc_pydantic_model_show_validator_members = False
+autodoc_pydantic_field_list_validators = False
+autodoc_pydantic_model_summary_list_order = "bysource"
+autodoc_pydantic_model_member_order = "bysource"
 
 
 # -- Options for HTML output ----------------------------------------------
