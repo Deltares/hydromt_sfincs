@@ -34,10 +34,20 @@ _ATTRS = {"mask": {"standard_name": "mask", "unit": "-"}}
 
 
 class SfincsMask(ModelComponent):
-    """SFINCS mask component.
+    """SFINCS Mask Component.
 
-    This component handles the model mask, which defines active and inactive cells in the model grid.
-    The mask is stored in the model grid data under the key "mask".
+    This component contains methods to create a mask for the SFINCS model on regular grid.
+    The mask defines active and inactive cells in the model grid, as well as boundary cells
+    for water level and outflow boundaries.
+
+    Notes
+    -----
+    The mask data is stored in the model grid's data dataset under the key "mask".
+
+    See Also
+    --------
+    :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`
+
     """
 
     def __init__(
@@ -67,11 +77,13 @@ class SfincsMask(ModelComponent):
         return self.model.grid.transform
 
     def read(self):
+        """Not implemented, mask data is read when the grid is read."""
         # TODO discuss what we want to return/read here, pass is not so informative ..
         # The mask values are read when the quadtree grid is read
         pass
 
     def write(self):
+        """Not implemented, mask data is written when the grid is written."""
         # The mask values are written when the quadtree grid is written
         pass
 

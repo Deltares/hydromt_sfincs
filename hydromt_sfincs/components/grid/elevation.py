@@ -17,7 +17,21 @@ _ATTRS = {"dep": {"standard_name": "elevation", "unit": "m+ref"}}
 
 
 class SfincsElevation(ModelComponent):
-    """SFINCS elevation component."""
+    """SFINCS Elevation Component.
+
+    This component contains methods to add elevation (bed level) data to the SFINCS model
+    on regular grids. Multiple elevation datasets can be merged together to create a complete
+    bed level representation interpolated onto the model grid.
+
+    Notes
+    -----
+    The elevation data is stored in the model grid's data dataset under the key "z".
+
+    See Also
+    --------
+    :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`
+
+    """
 
     def __init__(
         self,
@@ -39,12 +53,11 @@ class SfincsElevation(ModelComponent):
         return self.model.grid.mask
 
     def read(self):
-        # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The mask values are read when the quadtree grid is read
+        """Not implemented, elevation data is read when the grid is read."""
         pass
 
     def write(self):
-        # The mask values are written when the quadtree grid is written
+        """Not implemented, elevation data is written when the grid is written."""
         pass
 
     @hydromt_step

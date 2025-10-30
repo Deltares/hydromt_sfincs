@@ -18,7 +18,23 @@ _ATTRS = {"manning": {"standard_name": "manning roughness", "unit": "s.m-1/3"}}
 
 
 class SfincsRoughness(ModelComponent):
-    """SFINCS roughness component."""
+    """SFINCS Roughness Component.
+
+    This component contains methods to add roughness data to the SFINCS model
+    on regular grids. Roughness data can be derived from various sources,
+    including land use/land cover maps, or gridded datasets of Manning's n values.
+    Multiple roughness datasets can be merged together to create a complete
+    roughness representation interpolated onto the model grid.
+
+    Notes
+    -----
+    The roughness data is stored in the model grid's data dataset under the key "manning".
+
+    See Also
+    --------
+    :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`
+
+    """
 
     def __init__(
         self,
@@ -47,11 +63,13 @@ class SfincsRoughness(ModelComponent):
     # clear >TODO ?
 
     def read(self):
+        """Not implemented, roughness data is read when the grid is read."""
         # TODO discuss what we want to return/read here, pass is not so informative ..
         # The manning file is read when all grid files are read in regulargrid.py
         pass
 
     def write(self):
+        """Not implemented, roughness data is written when the grid is written."""
         # The manning file is written when all grid files are written in regulargrid.py
         pass
 

@@ -26,7 +26,7 @@ class SfincsConfig(ModelComponent):
 
     See Also
     --------
-    hydromt_sfincs.components.config.config.SfincsConfigVariables
+    :py:class:`~hydromt_sfincs.components.config.SfincsConfigVariables`
         Pydantic model class for SFINCS configuration variables.
     """
 

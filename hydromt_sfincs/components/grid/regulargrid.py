@@ -30,6 +30,25 @@ _MAPS = ["mask", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol", "
 
 
 class SfincsGrid(GridComponent):
+    """Regular grid component of the SfincsModel class.
+
+    This class implements reading and writing of SFINCS binary grid files,
+    as well as methods to create a regular grid for a region of interest.
+
+    The data for all gridded variables is stored in the `data` attribute as an
+    xarray Dataset. However, the creation of new data layers,, such as elevation or roughness,
+    is done in separate model component classes, such as `SfincsElevation` or `SfincsRoughness`.
+
+    See Also
+    --------
+    :py:class:`~hydromt_sfincs.components.grid.elevation.SfincsElevation`
+    :py:class:`~hydromt_sfincs.components.grid.mask.SfincsMask`
+    :py:class:`~hydromt_sfincs.components.grid.roughness.SfincsRoughness`
+    :py:class:`~hydromt_sfincs.components.grid.infiltration.SfincsInfiltration`
+    :py:class:`~hydromt_sfincs.components.grid.storage_volume.SfincsStorageVolume`
+    :py:class:`~hydromt_sfincs.components.grid.initial_conditions.SfincsInitialConditions`
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -39,9 +58,6 @@ class SfincsGrid(GridComponent):
             filename="sfincs.nc",
             region_filename="region.geojson",
         )
-
-        # # set spatial attributes
-        # self.update_grid_from_config()
 
     @property
     def transform(self):
@@ -140,7 +156,7 @@ class SfincsGrid(GridComponent):
         Parameters
         ----------
         data_vars : Union[List, str], optional
-            List of data variables to read, by default None (all)
+            List of data variables to read, by default None (all).
         """
         # check if in read mode and initialize grid
         self.root._assert_read_mode()
@@ -307,7 +323,7 @@ class SfincsGrid(GridComponent):
         rotation: float,
         epsg: int,
     ):
-        """Setup a regular or quadtree grid.
+        """Create a regular grid for the SfincsModel.
 
         Parameters
         ----------
@@ -360,7 +376,7 @@ class SfincsGrid(GridComponent):
         dec_origin: int = 0,
         dec_rotation: int = 3,
     ):
-        """Setup a regular or quadtree grid from a region.
+        """Create a regular grid for the SfincsModel based on a region.
 
         Parameters
         ----------
@@ -400,7 +416,7 @@ class SfincsGrid(GridComponent):
 
         See Also
         --------
-        hydromt.model.processes.create_grid_from_region
+        :py:func:~`hydromt.model.processes.create_grid_from_region`
         """
 
         ds = create_grid_from_region(

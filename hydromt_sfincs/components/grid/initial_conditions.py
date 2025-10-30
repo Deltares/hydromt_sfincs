@@ -20,8 +20,20 @@ _ATTRS = {
 
 
 class SfincsInitialConditions(ModelComponent):
+    """SFINCS Initial Conditions Component.
 
-    """SFINCS initial conditions component."""
+    This component contains methods to add initial water level data to the SFINCS model
+    on regular grids.
+
+    Notes
+    -----
+    The initial water level data is stored in the model grid's data dataset under the key "ini".
+
+    See Also
+    --------
+    :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`
+
+    """
 
     def __init__(
         self,
