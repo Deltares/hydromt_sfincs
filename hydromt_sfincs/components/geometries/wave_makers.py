@@ -1,5 +1,4 @@
 import logging
-import os
 from os.path import join
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
@@ -19,6 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 class SfincsWaveMakers(ModelComponent):
+    """SFINCS wave makers geometry component.
+
+    This component handles reading, writing, and creating wave maker geometries for
+    SFINCS models. Wave makers are represented as LineString geometries in a GeoDataFrame.
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -31,10 +36,7 @@ class SfincsWaveMakers(ModelComponent):
 
     @property
     def data(self) -> gpd.GeoDataFrame:
-        """Wavemaker lines data.
-
-        Return geopandas.GeoDataFrame
-        """
+        """Wavemaker lines data, returned as a GeoDataFrame."""
         if self._data is None:
             self._initialize()
         return self._data
@@ -61,7 +63,7 @@ class SfincsWaveMakers(ModelComponent):
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Get absolute file name and set it in config if crsfile is not None
+        # Get absolute file name and set it in config if wvmfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
             "wvmfile", value=filename
         )
@@ -70,7 +72,7 @@ class SfincsWaveMakers(ModelComponent):
         if abs_file_path is None:
             return
         elif not abs_file_path.exists():
-            raise FileNotFoundError(f"Cross-sections file not found: {abs_file_path}")
+            raise FileNotFoundError(f"Wave makers file not found: {abs_file_path}")
 
         # Read wvm file
         struct = utils.read_geoms(abs_file_path)
@@ -80,8 +82,7 @@ class SfincsWaveMakers(ModelComponent):
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS wave makers (*.wvm) file,
-        and set wvmfile in config (if it was not already set)"""
+        """Write SFINCS wave makers (*.wvm) file, and set wvmfile in config (if it was not already set)."""
 
         # Check that data is not empty
         if self.data.empty:
@@ -109,27 +110,33 @@ class SfincsWaveMakers(ModelComponent):
 
         # write also as geojson:
         if self.model.write_gis:
-            root = join(self.model.root.path, "gis")
-
-            if not os.path.isdir(root):
-                os.makedirs(root)
-
-            self.data.to_file(join(root, "wvm.geojson"), driver="GeoJSON")
+            utils.write_vector(
+                self.data,
+                name="wvm",
+                root=join(self.root.path, "gis"),
+                logger=logger,
+            )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
         """Set SFINCS wave makers.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         gpd.GeoDataFrame :
             Set geopandas object with LineString geometries.
         merge: bool
             Merge with existing wave makers. If False, overwrite existing wave makers.
-        **NOTE** - coordinates of LineString geometries in GeoDataFrame need to be in the same CRS as SFINCS model.
+
+        .. note::
+            When directly using the set method, the GeoDataFrame needs to be in the same CRS as SFINCS model.
         """
 
         if not gdf.geometry.type.isin(["LineString"]).all():
             raise ValueError("Wave makers must be of type LineString.")
+        if not gdf.crs == self.model.crs:
+            raise ValueError(
+                f"Wave makers CRS {gdf.crs} does not match model CRS {self.model.crs}."
+            )
 
         # Check if any of the wave makers fall completely outside the model domain
         # If so, give a warning and remove these lines
@@ -160,20 +167,22 @@ class SfincsWaveMakers(ModelComponent):
         merge: bool = True,
         **kwargs,
     ):
-        """Create model wave makers.
-        (old name: none existent)
+        """Create model wave makers (old name: non existent).
 
         Adds model layers:
 
         * **wvm** geom: wave makers
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         locations: str, Path, gpd.GeoDataFrame
             Path, data source name, or geopandas object for thin dam locations.
         merge: bool, optional
             If True, merge the new wave makers with the existing ones. By default True.
-        **NOTE** - check whether you have specified the points in the right directional order.
+
+        .. note::
+            The order in which you have specified the points matters for the direction
+            in which waves will be generated.
         """
         gdf = self.data_catalog.get_geodataframe(
             locations,
@@ -193,8 +202,10 @@ class SfincsWaveMakers(ModelComponent):
             gdf["geometry"] = gdf["geometry"].apply(
                 lambda geom: LineString([(x, y) for x, y, z in geom.coords])
             )
-
+        # Set the wave makers data
         self.set(gdf, merge)
+        # Set config
+        self.model.config.set("wvmfile", "sfincs.wvm")
 
     def delete(
         self,
@@ -202,15 +213,15 @@ class SfincsWaveMakers(ModelComponent):
     ):
         """Remove one or more wave makers.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         index: list, int
             Specify wave makers to be dropped from GeoDataFrame.
             If int, drop a single wave maker based on index.
             If list, drop multiple wave makers based on index.
         """
         # Turn int or str into list
-        if type(index) == int:
+        if isinstance(index, int):
             index = [index]
 
         # Check that any integer in list is not larger than the number of lines
@@ -240,7 +251,11 @@ class SfincsWaveMakers(ModelComponent):
     def snap_to_grid(self):
         """Returns GeoDataFrame with wave makers snapped to model grid."""
         # FIXME - this probably only works for quadtree grids for now
-        snap_gdf = self.model.grid.snap_to_grid(self.data)
+        if self.model.grid_type != "quadtree":
+            raise NotImplementedError(
+                "Snap to grid is only implemented for quadtree grids."
+            )
+        snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf
 
     def list_names(self):

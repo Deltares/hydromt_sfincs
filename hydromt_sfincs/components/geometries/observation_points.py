@@ -19,6 +19,13 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsObservationPoints(ModelComponent):
+    """SFINCS Observation Points Component.
+
+    This component handles reading, writing, and creating observation points, which are used for
+    extracting model results at specific locations such as water level gauging stations. The frequency
+    of output at these points can be controlled via the "dthisout" parameter in the configuration.
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -31,10 +38,7 @@ class SfincsObservationPoints(ModelComponent):
 
     @property
     def data(self) -> gpd.GeoDataFrame:
-        """Observation point data.
-
-        Return geopandas.GeoDataFrame
-        """
+        """Observation point data, returned as a GeoDataFrame."""
         if self._data is None:
             self._initialize()
         return self._data
@@ -56,7 +60,7 @@ class SfincsObservationPoints(ModelComponent):
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS observation points (*.obs) file."""
+        """Read SFINCS observation points (*.obs) file. Filename is obtained from config if not given."""
 
         # check that read mode is on
         self.root._assert_read_mode()
@@ -119,16 +123,23 @@ class SfincsObservationPoints(ModelComponent):
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
         """Set SFINCS observation points.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         gdf: geopandas.GeoDataFrame
             Set GeoDataFrame with observation points to self.data
         merge: bool
             Merge with existing observation points. If False, overwrite existing observation points.
-        **NOTE** - coordinates of points in GeoDataFrame need to be in the same CRS as SFINCS model.
+
+        .. note::
+            When directly using the set method, the GeoDataFrame needs to be in the same CRS as SFINCS model.
         """
+
         if not gdf.geometry.type.isin(["Point"]).all():
             raise ValueError("Observation points must be of type Point.")
+        if not gdf.crs == self.model.crs:
+            raise ValueError(
+                f"Observation points CRS {gdf.crs} does not match model CRS {self.model.crs}."
+            )
 
         # Clip points outside of model region:
         within = gdf.within(self.model.region.union_all())
@@ -169,8 +180,8 @@ class SfincsObservationPoints(ModelComponent):
 
         * **obs** geom: observation point locations
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         locations: str, Path, gpd.GeoDataFrame
             Path, data source name, or geopandas object for observation point locations.
         merge: bool, optional
@@ -183,7 +194,10 @@ class SfincsObservationPoints(ModelComponent):
         if not gdf.geometry.type.isin(["Point"]).all():
             raise ValueError("Observation points should be of type Point")
 
+        # Set the observation points data
         self.set(gdf, merge)
+        # Set config
+        self.model.config.set("obsfile", "sfincs.obs")
 
     def delete(
         self,
@@ -191,15 +205,15 @@ class SfincsObservationPoints(ModelComponent):
     ):
         """Remove one or more observation points.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         index: list, int
             Specify observation points to be dropped from GeoDataFrame.
             If int, drop a single observation point based on index.
             If list, drop multiple observation points based on index.
         """
         # Turn int or str into list
-        if type(index) == int:
+        if isinstance(index, int):
             index = [index]
 
         # Check that any integer in list is not larger than the number of points
@@ -229,7 +243,7 @@ class SfincsObservationPoints(ModelComponent):
     ):
         """Add single point to observation points.
 
-        Arguments
+        Parameters
         ---------
         x: float
             x-coordinate for point to be added
@@ -254,19 +268,19 @@ class SfincsObservationPoints(ModelComponent):
         """Remove point from observation points.
         This function finds the wanted index, after which the generic delete function is called.
 
-        Arguments
+        Parameters
         ---------
         name_or_index: str, int
             Specify either name (str) or index (int) of point to be dropped from GeoDataFrame of observations.
         """
-        if type(name_or_index) == str:
+        if isinstance(name_or_index, str):
             index = None
             for id, row in self.data.iterrows():
                 if row["name"] == name_or_index:
                     index = int(id)
-            if index == None:
+            if index is None:
                 raise ValueError("Point " + name_or_index + " not found!")
-        elif type(name_or_index) == int:
+        elif isinstance(name_or_index, int):
             index = int(name_or_index)
         else:
             raise ValueError("Wrong input type given for function delete_point")

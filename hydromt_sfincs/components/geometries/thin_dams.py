@@ -1,5 +1,4 @@
 import logging
-import os
 from os.path import join
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
@@ -20,6 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 class SfincsThinDams(ModelComponent):
+    """SFINCS thin dams geometry component.
+
+    This component handles reading, writing, and creating thin dam geometries for
+    SFINCS models. Thin dams are infinitely high walls represented as LineString geometries
+    in a GeoDataFrame.
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -32,10 +38,7 @@ class SfincsThinDams(ModelComponent):
 
     @property
     def data(self) -> gpd.GeoDataFrame:
-        """Thin dam data.
-
-        Return geopandas.GeoDataFrame
-        """
+        """Thin dam data, returned as a GeoDataFrame."""
         if self._data is None:
             self._initialize()
         return self._data
@@ -57,7 +60,7 @@ class SfincsThinDams(ModelComponent):
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS thin dams (*.thd) file."""
+        """Read SFINCS thin dams (*.thd) file. Filename is obtained from config if not provided."""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -81,8 +84,7 @@ class SfincsThinDams(ModelComponent):
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS thin dams (*.thd) file,
-        and set thdfile in config (if it was not already set)"""
+        """Write SFINCS thin dams (*.thd) file, and set thdfile in config (if it was not already set)"""
 
         # check that write mode is on
         self.root._assert_write_mode()
@@ -113,29 +115,35 @@ class SfincsThinDams(ModelComponent):
 
         # write also as geojson:
         if self.model.write_gis:
-            root = join(self.model.root.path, "gis")
-
-            if not os.path.isdir(root):
-                os.makedirs(root)
-
-            self.data.to_file(join(root, "thd.geojson"), driver="GeoJSON")
+            utils.write_vector(
+                self.data,
+                name="thd",
+                root=join(self.root.path, "gis"),
+                logger=logger,
+            )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
         """Set SFINCS thin dams.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         gpd.GeoDataFrame :
             Set geopandas object with LineString geometries.
         merge: bool
             Merge with existing thin dams. If False, overwrite existing thin dams.
-        **NOTE** - coordinates of LineString geometries in GeoDataFrame need to be in the same CRS as SFINCS model.
+
+        .. note::
+            When directly using the set method, the GeoDataFrame needs to be in the same CRS as SFINCS model.
         """
 
         if not gdf.geometry.type.isin(["LineString"]).all():
             raise ValueError("Thin dams must be of type LineString.")
+        if not gdf.crs == self.model.crs:
+            raise ValueError(
+                f"Thin Dams CRS {gdf.crs} does not match model CRS {self.model.crs}."
+            )
 
-        # Check if any of the cross sections fall completely outside the model domain
+        # Check if any of the thin dams fall completely outside the model domain
         # If so, give a warning and remove these lines
         outside = gdf.disjoint(self.model.region.union_all())
         if outside.any():
@@ -165,15 +173,14 @@ class SfincsThinDams(ModelComponent):
         merge: bool = True,
         **kwargs,
     ):
-        """Create model thin dams.
-        (old name: setup_structures)
+        """Create model thin dams (old name: setup_structures).
 
         Adds model layers:
 
         * **thd** geom: thin dams
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         locations: str, Path, gpd.GeoDataFrame
             Path, data source name, or geopandas object for thin dam locations.
         merge: bool, optional
@@ -198,7 +205,10 @@ class SfincsThinDams(ModelComponent):
                 lambda geom: LineString([(x, y) for x, y, z in geom.coords])
             )
 
+        # Set the thin dams data
         self.set(gdf, merge)
+        # Set config
+        self.model.config.set("thdfile", "sfincs.thd")
 
     def delete(
         self,
@@ -206,15 +216,15 @@ class SfincsThinDams(ModelComponent):
     ):
         """Remove one or more thin dams.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         index: list, int
             Specify thin dams to be dropped from GeoDataFrame.
             If int, drop a single thin dam based on index.
             If list, drop multiple thin dams based on index.
         """
         # Turn int or str into list
-        if type(index) == int:
+        if isinstance(index, int):
             index = [index]
 
         # Check that any integer in list is not larger than the number of lines
@@ -244,7 +254,11 @@ class SfincsThinDams(ModelComponent):
     def snap_to_grid(self):
         """Returns GeoDataFrame with thin dams snapped to model grid."""
         # FIXME - this probably only works for quadtree grids for now
-        snap_gdf = self.model.grid.snap_to_grid(self.data)
+        if self.model.grid_type != "quadtree":
+            raise NotImplementedError(
+                "Snap to grid is only implemented for quadtree grids."
+            )
+        snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf
 
     def list_names(self):

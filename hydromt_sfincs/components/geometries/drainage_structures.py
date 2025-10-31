@@ -19,6 +19,12 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsDrainageStructures(ModelComponent):
+    """SFINCS drainage structures component.
+
+    This component handles reading, writing, and creating drainage structures
+    such as pumps, culverts, and valves in a SFINCS model.
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -31,7 +37,7 @@ class SfincsDrainageStructures(ModelComponent):
 
     @property
     def data(self) -> gpd.GeoDataFrame:
-        """Drainage structures data. Return geopandas.GeoDataFrame"""
+        """Drainage structures data, returns geopandas.GeoDataFrame"""
         if self._data is None:
             self._initialize()
         return self._data
@@ -44,12 +50,12 @@ class SfincsDrainageStructures(ModelComponent):
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS observation points (*.obs) file."""
+        """Read SFINCS drainage structures (*.drn) file. Filename is obtained from config if not provided."""
 
         # check that read mode is on
         self.root._assert_read_mode()
 
-        # get absolute file path and set it in config if obsfile is not None
+        # get absolute file path and set it in config if drnfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
             "drnfile", value=filename
         )
@@ -63,14 +69,15 @@ class SfincsDrainageStructures(ModelComponent):
             )
 
         # Read input file:
+        # TODO we can move the utils to here, since only used here?
         gdf = utils.read_drn(abs_file_path, crs=self.model.crs)
 
         # Add to self._data
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS observation points (*.obs) file,
-        and set obsfile in config (if it was not already set)"""
+        """Write SFINCS drainage structures (*.drn) file,
+        and make sure drnfile is in config (if it was not already set)."""
 
         # check that write mode is on
         self.root._assert_write_mode()
@@ -91,6 +98,7 @@ class SfincsDrainageStructures(ModelComponent):
         else:
             fmt = "%11.1f"
 
+        # TODO we can move the utils to here, since only used here?
         utils.write_drn(abs_file_path, self.data, fmt=fmt)
 
         # write also as geojson:
@@ -103,16 +111,18 @@ class SfincsDrainageStructures(ModelComponent):
             )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
-        """Set SFINCS observation points.
+        """Set SFINCS drainage structures.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         gdf: geopandas.GeoDataFrame
             Set GeoDataFrame with drainage structures to self.data.
             Note that the gdf should have the same CRS as the model.
         merge: bool
             Merge with existing drainage structures. If False, overwrite existing drainage structures.
 
+        .. note::
+            When directly using the set method, the GeoDataFrame needs to be in the same CRS as SFINCS model.
         """
 
         if not gdf.geometry.type.isin(["LineString"]).all():
@@ -156,7 +166,7 @@ class SfincsDrainageStructures(ModelComponent):
         merge: bool = True,
         **kwargs,
     ):
-        """Setup drainage locations.
+        """Create drainage structures such as pumps, culverts, or valves (old name: setup_drainage_structures).
 
         Adds model layer:
         * **drn** geom: drainage pump or culvert
@@ -167,7 +177,7 @@ class SfincsDrainageStructures(ModelComponent):
             Path, data source name, or geopandas object to structure line geometry file.
             The line should consist of only 2 points (else first and last points are used), ordered from up to downstream.
             The "type" (1 for pump, 2 for culvert and 3 for valve), "par1" ("discharge" also accepted) variables are optional.
-            If "type" or "par1" are not provided, they are based on stype or discharge arguments.
+            If "type" or "par1" are not provided, they are based on stype or discharge Parameters.
         stype : {'pump', 'culvert', 'valve'}, optional
             Structure type, by default "pump". stype is converted to integer "type" to match with SFINCS expectations.
         discharge : float, optional
