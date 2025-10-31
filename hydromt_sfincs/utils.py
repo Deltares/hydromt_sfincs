@@ -1602,6 +1602,7 @@ def check_exists_and_lazy(ds, file_name):
         ds.close()
     return
 
+
 def make_regular_grid(
     x0,
     y0,
@@ -1652,29 +1653,40 @@ def make_regular_grid(
     n_range = np.arange(ny)
 
     # Offset in grid units
-    offset_x = 0.5*dxp + mmin*dx - (0.5*dx if uv_points else 0)
-    offset_y = 0.5*dyp + nmin*dy - (0.5*dy if uv_points else 0)
+    offset_x = 0.5 * dxp + mmin * dx - (0.5 * dx if uv_points else 0)
+    offset_y = 0.5 * dyp + nmin * dy - (0.5 * dy if uv_points else 0)
 
     # Affine transform
-    transform = Affine.translation(x0, y0) * Affine.rotation(rotation) * Affine.scale(dxp, dyp)
-    
+    transform = (
+        Affine.translation(x0, y0) * Affine.rotation(rotation) * Affine.scale(dxp, dyp)
+    )
+
     # Generate coordinates
     if transform.b == 0.0:  # No rotation → rectilinear
-        x_coords, _ = transform * (m_range + offset_x/dxp, np.zeros(nx) + offset_y/dyp)
-        _, y_coords = transform * (np.zeros(ny) + offset_x/dxp, n_range + offset_y/dyp)
+        x_coords, _ = transform * (
+            m_range + offset_x / dxp,
+            np.zeros(nx) + offset_y / dyp,
+        )
+        _, y_coords = transform * (
+            np.zeros(ny) + offset_x / dxp,
+            n_range + offset_y / dyp,
+        )
         coords = {
-            "m": ("x", m_range + mmin*refi),
-            "n": ("y", n_range + nmin*refi),
+            "m": ("x", m_range + mmin * refi),
+            "n": ("y", n_range + nmin * refi),
             "x": x_coords,
             "y": y_coords,
         }
         dims = ("y", "x")
     else:  # With rotation → 2D coordinate arrays
         m_mesh, n_mesh = np.meshgrid(m_range, n_range)
-        x_coords, y_coords = transform * (m_mesh + offset_x/dxp, n_mesh + offset_y/dyp)
+        x_coords, y_coords = transform * (
+            m_mesh + offset_x / dxp,
+            n_mesh + offset_y / dyp,
+        )
         coords = {
-            "m": ("x", m_range + mmin*refi),
-            "n": ("y", n_range + nmin*refi),
+            "m": ("x", m_range + mmin * refi),
+            "n": ("y", n_range + nmin * refi),
             "xc": (("y", "x"), x_coords),
             "yc": (("y", "x"), y_coords),
         }
@@ -1698,14 +1710,9 @@ def make_regular_grid(
 
     return da
 
+
 def make_regular_grid_transform(
-    x0, y0, 
-    dx, dy,
-    mmax, nmax,
-    mmin=0, nmin=0, 
-    rotation=0.0, 
-    refi=1, 
-    uv_points=False
+    x0, y0, dx, dy, mmax, nmax, mmin=0, nmin=0, rotation=0.0, refi=1, uv_points=False
 ):
     """
     Compute affine transform for a regular grid
@@ -1725,16 +1732,16 @@ def make_regular_grid_transform(
 
     # offset in pixel units like make_regular_grid
     if uv_points:
-        offset_x = 0.5*dxp + mmin*dx - 0.5*dx
-        offset_y = 0.5*dyp + nmin*dy - 0.5*dy
+        offset_x = 0.5 * dxp + mmin * dx - 0.5 * dx
+        offset_y = 0.5 * dyp + nmin * dy - 0.5 * dy
     else:
-        offset_x = 0.5*dxp + mmin*dx
-        offset_y = 0.5*dyp + nmin*dy
+        offset_x = 0.5 * dxp + mmin * dx
+        offset_y = 0.5 * dyp + nmin * dy
 
     if rotation == 0.0:
         # non-rotated: simple translation
-        tx = x0 + offset_x - 0.5*dxp
-        ty = y0 + offset_y - 0.5*dyp
+        tx = x0 + offset_x - 0.5 * dxp
+        ty = y0 + offset_y - 0.5 * dyp
         transform = Affine.translation(tx, ty) * Affine.scale(dxp, dyp)
     else:
         # rotated: compute cos/sin once
@@ -1743,11 +1750,19 @@ def make_regular_grid_transform(
         sinrot = np.sin(theta)
 
         # apply the half-cell shift in rotated coordinates
-        x0_shifted = x0 + (offset_x - 0.5*dxp) * cosrot - (offset_y - 0.5 * dyp) * sinrot
-        y0_shifted = y0 + (offset_x - 0.5*dxp) * sinrot + (offset_y - 0.5 * dyp) * cosrot
+        x0_shifted = (
+            x0 + (offset_x - 0.5 * dxp) * cosrot - (offset_y - 0.5 * dyp) * sinrot
+        )
+        y0_shifted = (
+            y0 + (offset_x - 0.5 * dxp) * sinrot + (offset_y - 0.5 * dyp) * cosrot
+        )
 
         # base affine for rotation and scaling
-        transform = Affine.translation(x0_shifted, y0_shifted) * Affine.rotation(rotation) * Affine.scale(dxp, dyp)
+        transform = (
+            Affine.translation(x0_shifted, y0_shifted)
+            * Affine.rotation(rotation)
+            * Affine.scale(dxp, dyp)
+        )
 
     return transform, width, height
 

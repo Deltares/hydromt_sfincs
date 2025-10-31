@@ -70,12 +70,15 @@ def test_geoms(tmp_dir, weirs):
         assert sorted(weirs2[i].items()) == sorted(weirs[i].items())
 
 
-@pytest.mark.parametrize("rotation, uv_points", [
-    (0.0, True),
-    (0.0, False),
-    (15.0, True),
-    (15.0, False),
-])
+@pytest.mark.parametrize(
+    "rotation, uv_points",
+    [
+        (0.0, True),
+        (0.0, False),
+        (15.0, True),
+        (15.0, False),
+    ],
+)
 def test_make_regular_grid(rotation, uv_points):
     # grid parameters
     x0 = 316200
