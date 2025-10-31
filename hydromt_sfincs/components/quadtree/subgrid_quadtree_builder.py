@@ -508,18 +508,18 @@ class SubgridTableQuadtree:
             if write_dep_tif or write_man_tif:
                 # determine the output dimensions and transform
                 da_transform, da_width, da_height = utils.make_regular_grid_transform(
-                                x0=grid.attrs["x0"],
-                                y0=grid.attrs["y0"],
-                                dx=dx,
-                                dy=dy,
-                                mmax=(grid.attrs["mmax"]) * 2**ilev,
-                                nmax=(grid.attrs["nmax"]) * 2**ilev,
-                                rotation=grid.attrs["rotation"],
-                                mmin=0,
-                                nmin=0,
-                                refi=refi,
-                                uv_points=True,
-                            )
+                    x0=grid.attrs["x0"],
+                    y0=grid.attrs["y0"],
+                    dx=dx,
+                    dy=dy,
+                    mmax=(grid.attrs["mmax"]) * 2**ilev,
+                    nmax=(grid.attrs["nmax"]) * 2**ilev,
+                    rotation=grid.attrs["rotation"],
+                    mmin=0,
+                    nmin=0,
+                    refi=refi,
+                    uv_points=True,
+                )
 
                 # create COGs for topobathy/manning
                 profile = dict(
@@ -554,7 +554,6 @@ class SubgridTableQuadtree:
                     )
                     with rasterio.open(fn_man_tif, "w", **profile):
                         pass
-
 
             # Loop through blocks
             ib = -1
