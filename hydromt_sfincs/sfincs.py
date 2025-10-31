@@ -391,7 +391,7 @@ class SfincsModel(Model):
             # save figure
             if fn_out is not None:
                 if not os.path.isabs(fn_out):
-                    fn_out = join(self.root, "figs", fn_out)
+                    fn_out = join(self.root.path, "figs", fn_out)
                 if not os.path.isdir(dirname(fn_out)):
                     os.makedirs(dirname(fn_out))
                 plt.savefig(fn_out, dpi=225, bbox_inches="tight")
@@ -534,7 +534,7 @@ class SfincsModel(Model):
 
         if fn_out is not None:
             if not os.path.isabs(fn_out):
-                fn_out = join(self.root, "figs", fn_out)
+                fn_out = join(self.root.path, "figs", fn_out)
             if not os.path.isdir(dirname(fn_out)):
                 os.makedirs(dirname(fn_out))
             plt.savefig(fn_out, dpi=225, bbox_inches="tight")
