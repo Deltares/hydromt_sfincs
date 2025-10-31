@@ -154,7 +154,7 @@ conversion_map = {
         "new_function": "SfincsModel.wind.create_uniform",
         "args": "same",
     },
-        "SfincsModel.setup_config": {
+    "SfincsModel.setup_config": {
         "new_function": "SfincsModel.config.update",
         "args": "same",
     },
