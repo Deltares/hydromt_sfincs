@@ -1,8 +1,7 @@
-.. _working_with_sfincs:
+.. _building_a_sfincs_model:
 
-=============================
-Working with the SFINCS model
-=============================
+Building a SFINCS Model
+=======================
 
 There are 2 main ways to use HydroMT to build your SFINCS model:
 
@@ -18,9 +17,9 @@ There are 2 main ways to use HydroMT to build your SFINCS model:
       The Python interface provides a lot of flexibility and access to the full HydroMT-SFINCS API, but requires some knowledge of Python.
 
 .. toctree::
-    :maxdepth: 2
-    :hidden:
+   :hidden:
+   :caption: Build a SFINCS model
 
-    sfincs_model_setup.rst
-    sfincs_build_update.rst
-    sfincs_run.rst
+   model_components.rst
+   model_methods.rst
+   model_build.rst

@@ -6,5 +6,5 @@
 
    getting_started/intro.rst
    user_guide/intro.rst
-   api.rst
+   api/api.rst
    dev_guide/intro.rst

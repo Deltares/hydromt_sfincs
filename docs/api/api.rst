@@ -2,9 +2,9 @@
 
 .. _api_reference:
 
-=============
-API reference
-=============
+===
+API
+===
 
 .. _api_model:
 
@@ -15,7 +15,7 @@ The ``hydromt_sfincs.SfincsModel`` class is the main entry point to read, write,
 It uses the functionalities provided by the reusable components defined in the ``hydromt_sfincs.components`` module.
 
 .. autosummary::
-   :toctree: _generated/
+   :toctree: ../_generated/
 
    SfincsModel
 
@@ -23,7 +23,7 @@ Methods
 -------
 
 .. autosummary::
-   :toctree: _generated/
+   :toctree: ../_generated/
 
    SfincsModel.read
    SfincsModel.write
@@ -35,7 +35,7 @@ Plot methods
 ------------
 
 .. autosummary::
-   :toctree: _generated/
+   :toctree: ../_generated/
 
    SfincsModel.plot_basemap
    SfincsModel.plot_forcing
@@ -44,7 +44,7 @@ Attributes
 ----------
 
 .. autosummary::
-   :toctree: _generated/
+   :toctree: ../_generated/
 
    SfincsModel.root
    SfincsModel.crs
@@ -64,7 +64,7 @@ Configuration
 -------------
 
 .. autosummary::
-   :toctree: _generated
+   :toctree: ../_generated/
 
    components.config.SfincsConfig
    components.config.SfincsConfig.data
@@ -82,7 +82,7 @@ Grid
 ----
 
 .. autosummary::
-   :toctree: _generated
+   :toctree: ../_generated/
 
    components.grid.SfincsGrid
    components.grid.SfincsGrid.data
@@ -106,6 +106,9 @@ Grid
    components.grid.SfincsInfiltration.create_cn
    components.grid.SfincsInfiltration.create_cn_with_recovery
 
+   components.grid.SfincsInitialConditions
+   components.grid.SfincsInitialConditions.create
+
    components.grid.SfincsStorageVolume
    components.grid.SfincsStorageVolume.create
 
@@ -119,7 +122,7 @@ Geometries
 -----------
 
 .. autosummary::
-   :toctree: _generated
+   :toctree: ../_generated/
 
    components.geometries.SfincsObservationPoints
    components.geometries.SfincsObservationPoints.data
@@ -155,7 +158,7 @@ Forcing
 --------
 
 .. autosummary::
-   :toctree: _generated
+   :toctree: ../_generated/
 
    components.forcing.SfincsWaterLevel
    components.forcing.SfincsWaterLevel.data
@@ -197,7 +200,7 @@ Output
 ------
 
 .. autosummary::
-   :toctree: _generated
+   :toctree: ../_generated/
 
    components.output.SfincsOutput
 
@@ -207,7 +210,7 @@ SFINCS workflows
 ================
 
 .. autosummary::
-   :toctree: _generated/
+   :toctree: ../_generated/
 
    workflows.merge_multi_dataarrays
    workflows.merge_dataarrays
@@ -229,7 +232,7 @@ Input/Output methods
 ---------------------
 
 .. autosummary::
-   :toctree: _generated/
+   :toctree: ../_generated/
 
    utils.read_binary_map
    utils.write_binary_map
@@ -254,7 +257,7 @@ Utilities
 ---------
 
 .. autosummary::
-   :toctree: _generated/
+   :toctree: ../_generated/
 
    utils.parse_datetime
    utils.gdf2linestring
@@ -269,7 +272,7 @@ Visualization
 -------------
 
 .. autosummary::
-   :toctree: _generated/
+   :toctree: ../_generated/
 
    plots.plot_basemap
    plots.plot_forcing

@@ -71,25 +71,6 @@ Note that the order in which the components are listed in the yml-file is import
 - If discharge locations are inferred from hydrography, :py:func:`~hydromt_sfincs.SfincsModel.setup_river_inflow` should be run before :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing` or :py:func:`~hydromt_sfincs.SfincsModel.setup_discharge_forcing_from_grid`.
 - If water level bounary points are inferred from the water level mask cells,  :py:func:`~hydromt_sfincs.SfincsModel.setup_waterlevel_bnd_from_mask` should be run before :py:func:`~hydromt_sfincs.SfincsModel.setup_waterlevel_forcing`.
 
-Data Catalogs
--------------
-
-Data sources are provided to HydroMT in one or more user-definfed data catalog (yaml) files
-or from pre-defined data catalogs. These data catalogs contain required information on the
-different data sources so that HydroMT can process them for the different models.
-There are three ways for the user to select which data catalog to use:
-
-- There are several `pre-defined data catalog <https://deltares.github.io/hydromt/latest/user_guide/data_existing_cat.html>`_
-  Amongst other, these include the `deltares_data` data catalog for Deltares users which requires access to the Deltares P-drive.
-  More pre-defined data catalogs will be added in the future.
-- Furthermore, the user can prepare its own yaml libary (or libraries) (see
-  `HydroMT documentation <https://deltares.github.io/hydromt/latest/index>`_ to check the guidelines).
-  These user libraries can be added either in the command line using the **-d** option and path/to/yaml or in the **yml file**
-  with the **data_libs** option in the  `global` section (see example above).
-- Finally, if no catalog is provided, HydroMT will use the data stored in the
-  `hydromt-artifacts <https://github.com/DirkEilander/hydromt-artifacts>`_
-  which contains an extract of global data for a small region around the Piave river in Northern Italy.
-
 Example
 --------
 
@@ -134,7 +115,7 @@ Typical applications where this approach can be useful are:
 Example
 --------
 
-See `Example: Build from Script <../_examples/build_from_script.ipynb>`_ for a more detailed example.
+See `Example: Build from Script <../../_examples/build_from_script.ipynb>`_ for a more detailed example.
 
 
 .. _data: https://deltares.github.io/hydromt/latest/user_guide/data_overview.html
@@ -144,7 +125,7 @@ See `Example: Build from Script <../_examples/build_from_script.ipynb>`_ for a m
 .. toctree::
     :hidden:
 
-    Example: Build from CLI <../_examples/build_from_cli.ipynb>
-    Example: Build from script <../_examples/build_from_script.ipynb>
-    Example: Setup model forcing <../_examples/example_forcing.ipynb>
-    .. Example: Working with data <../_examples/example_datasources.ipynb>
+    Example: Build from CLI <../../_examples/build_from_cli.ipynb>
+    Example: Build from script <../../_examples/build_from_script.ipynb>
+    Example: Setup model forcing <../../_examples/example_forcing.ipynb>
+    .. Example: Working with data <../../_examples/example_datasources.ipynb>
