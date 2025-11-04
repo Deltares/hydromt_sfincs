@@ -18,6 +18,12 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsOutput(ModelComponent):
+    """SFINCS model output component.
+
+    This component handles reading and storing model results from SFINCS. The results
+    are stored in a dictionary and can be accessed via the `data` property.
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
