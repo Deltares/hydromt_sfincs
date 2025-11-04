@@ -45,7 +45,7 @@ def scs_recovery_determination(
     # Curve numbers to grid: go over NLCD classes and HSG classes
     da_CN = xr.full_like(da_landuse, np.nan, dtype=np.float32)
     for i in range(df_map.index.size):
-        for j in range(df_map.columns.size):
+        for j in range(1, df_map.columns.size):
             ind = (da_landuse == df_map.index[i]) & (
                 da_HSG_to_landuse == int(df_map.columns[j])
             )
