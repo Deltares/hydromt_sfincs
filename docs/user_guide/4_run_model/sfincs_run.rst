@@ -20,4 +20,4 @@ If you want to read more about running SFINCS on different platforms, please rea
 .. toctree::
     :hidden:
 
-    Example: Running a model <../../_examples/run_sfincs_model.ipynb>
+    Example: Running a model <../../_examples/4_run_model.ipynb>

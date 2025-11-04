@@ -3,12 +3,6 @@
 Model Components
 ================
 
-When making a SFINCS model, you need to create multiple input files.
-With the HydroMT SFINCS plugin, you can easily make these SFINCS model schematizations.
-This plugin helps you preparing or updating several model components of a SFINCS model
-such as topography/bathymetry, roughness, infiltration maps and dynamic waterlevel and
-discharge forcing.
-
 The :py:class:`~hydromt_sfincs.SfincsModel` consists of several components that together
 represent the full SFINCS model setup. Each component manages a specific part of the
 model (e.g., configuration, grid definition, forcings, or output) and can be read from or
@@ -72,10 +66,10 @@ The different components are interrelated, since they all share the same spatial
    * - :py:class:`infiltration <hydromt_sfincs.components.grid.infiltration.SfincsInfiltration>`
      - Infiltration capacity.
      - ``qinffile``, ``scsfile``, ``ksfile``, ``sefffile``, ``smaxfile``
-   * - :py:class:`initial conditions <hydromt_sfincs.components.grid.initial_conditions.SfincsInitialConditions>`
+   * - :py:class:`initial_conditions <hydromt_sfincs.components.grid.initial_conditions.SfincsInitialConditions>`
      - Initial water levels.
      - ``inifile``
-   * - :py:class:`storage volume <hydromt_sfincs.components.grid.storage_volume.SfincsStorageVolume>`
+   * - :py:class:`storage_volume <hydromt_sfincs.components.grid.storage_volume.SfincsStorageVolume>`
      - Storage volume to account for green infrastructure.
      - ``volfile``
    * - :py:class:`subgrid <hydromt_sfincs.components.grid.subgrid.SfincsSubgridTable>`
@@ -107,19 +101,19 @@ observation points to monitor water levels at specific locations or weirs to rep
    * - **Component**
      - **Description**
      - **Associated Files / Relations**
-   * - :py:class:`observation points <hydromt_sfincs.components.geometries.observation_points.SfincsObservationPoints>`
+   * - :py:class:`observation_points <hydromt_sfincs.components.geometries.observation_points.SfincsObservationPoints>`
      - Observation points for validation.
      - ``obsfile``
-   * - :py:class:`cross sections <hydromt_sfincs.components.geometries.cross_sections.SfincsCrossSections>`
+   * - :py:class:`cross_sections <hydromt_sfincs.components.geometries.cross_sections.SfincsCrossSections>`
      - Cross-section definitions.
      - ``crsfile``
    * - :py:class:`weirs <hydromt_sfincs.components.geometries.weirs.SfincsWeirs>`
      - Weir locations and parameters.
      - ``weirfile``
-   * - :py:class:`thin dams <hydromt_sfincs.components.geometries.thin_dams.SfincsThinDams>`
+   * - :py:class:`thin_dams <hydromt_sfincs.components.geometries.thin_dams.SfincsThinDams>`
      - Thin dams and barriers.
      - ``thdfile``
-   * - :py:class:`drainage structures <hydromt_sfincs.components.geometries.drainage_structures.SfincsDrainageStructures>`
+   * - :py:class:`drainage_structures <hydromt_sfincs.components.geometries.drainage_structures.SfincsDrainageStructures>`
      - Drainage infrastructure.
      - ``drnfile``
 
@@ -128,6 +122,7 @@ Forcing components
 These components handle time-varying boundary and meteorological forcings applied to the model, such as
 water level boundaries, discharge sources, precipitation, wind, and atmospheric pressure.
 
+
 .. list-table::
    :widths: 25 35 40
    :header-rows: 1
@@ -135,10 +130,10 @@ water level boundaries, discharge sources, precipitation, wind, and atmospheric 
    * - **Component**
      - **Description**
      - **Associated Files / Relations**
-   * - :py:class:`water level <hydromt_sfincs.components.forcing.water_level.SfincsWaterLevel>`
+   * - :py:class:`water_level <hydromt_sfincs.components.forcing.water_level.SfincsWaterLevel>`
      - Water level boundary conditions.
      - ``bndfile``, ``bzsfile``, ``netbndbzsbzifile``
-   * - :py:class:`discharge points <hydromt_sfincs.components.forcing.discharge_points.SfincsDischargePoints>`
+   * - :py:class:`discharge_points <hydromt_sfincs.components.forcing.discharge_points.SfincsDischargePoints>`
      - Discharge source terms.
      - ``srcfile``, ``disfile``, ``netsrcdisfile``
    * - :py:class:`precipitation <hydromt_sfincs.components.forcing.meteo.SfincsPrecipitation>`
@@ -152,8 +147,10 @@ water level boundaries, discharge sources, precipitation, wind, and atmospheric 
      - ``netampfile``
    * - :py:class:`rivers <hydromt_sfincs.components.forcing.rivers.SfincsRivers>`
      - River network and flow attributes.
+     - ``No associated SFINCS files``
 
 .. note::
+
     The :py:class:`rivers <hydromt_sfincs.components.forcing.rivers.SfincsRivers>` component is not directly used by the SFINCS model,
     but it can be helpful for setting up discharge boundary conditions based on river network data.
 

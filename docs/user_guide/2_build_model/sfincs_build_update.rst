@@ -126,6 +126,4 @@ See `Example: Build from Script <../../_examples/build_from_script.ipynb>`_ for 
     :hidden:
 
     Example: Build from CLI <../../_examples/build_from_cli.ipynb>
-    Example: Build from script <../../_examples/build_from_script.ipynb>
-    Example: Setup model forcing <../../_examples/example_forcing.ipynb>
-    .. Example: Working with data <../../_examples/example_datasources.ipynb>
+    Example: Build from script <../../_examples/1_build_from_scratch.ipynb>

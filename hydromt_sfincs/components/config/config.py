@@ -40,6 +40,8 @@ class SfincsConfig(ModelComponent):
         """Return the Pydantic SfincsConfigVariables object."""
         if self._data is None:
             self._data = SfincsConfigVariables()
+            if self.root.is_reading_mode():
+                self.read()
         return self._data
 
     @property

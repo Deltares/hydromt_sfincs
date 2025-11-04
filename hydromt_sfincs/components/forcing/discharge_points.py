@@ -226,8 +226,9 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             # File name not defined
             return
 
-        ds = self.data
+        ds = self.data.load()
         ds.vector.to_xy().to_netcdf(abs_file_path)
+        ds.close()
 
     def delete(self, index: Union[int, List[int]]):
         "Delete boundary points and clear config when no points remain."
@@ -396,8 +397,6 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             )
             df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
             gdf_locs = da.vector.to_gdf()
-            # if a geodataset is used, keep the format to netcdf
-            self.model.config.set("netsrcdisfile", "sfincs_netsrcdisfile.nc")
         elif timeseries is not None:
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
@@ -430,3 +429,10 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             raise ValueError("No discharge boundary (src) points provided.")
 
         self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
+        # update config
+        if geodataset is not None:
+            # if a geodataset is used, keep the format to netcdf
+            self.model.config.set("netsrcdisfile", "sfincs_netsrcdisfile.nc")
+        else:
+            self.model.config.set("srcfile", "sfincs.src")
+            self.model.config.set("disfile", "sfincs.dis")

@@ -170,7 +170,7 @@ class SfincsMeteo(ModelComponent):
         encoding = dict(time={"units": f"minutes since {tref_str}", "dtype": "float64"})
 
         # assign self.data to ds
-        ds = self.data
+        ds = self.data.load()
 
         # combine variables and rename to output names
         rename = {v: k for k, v in rename.items() if v in ds}

@@ -65,12 +65,12 @@ class SfincsSubgridTable(ModelComponent):
                 if abs_file_path is None:
                     # File name not defined, so no subgrid in this model
                     return
-                if not abs_file_path.endswith(".nc"):
+                if abs_file_path.suffix != ".nc":
                     # if not netcdf, assume it is a binary file
-                    self.read_binary(file_name=abs_file_path)
+                    self.read_binary(filename=abs_file_path)
                 else:
                     # if netcdf, read it with xarray
-                    self.read(file_name=abs_file_path)
+                    self.read(filename=abs_file_path)
 
     # new way of reading netcdf subgrid tables
     def read(self, filename: str = None):

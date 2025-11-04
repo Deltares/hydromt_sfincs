@@ -58,6 +58,8 @@ class SfincsGrid(GridComponent):
             filename="sfincs.nc",
             region_filename="region.geojson",
         )
+        # initialize data attribute
+        self._data = None
 
     @property
     def transform(self):
