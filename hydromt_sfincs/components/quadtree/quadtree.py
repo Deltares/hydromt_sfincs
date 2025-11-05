@@ -227,6 +227,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         variables = []
         for var in data_vars:
             fn_var = self.model.config.get(f"{var}file", abs_path=True)
+            fn_var.parent.mkdir(parents=True, exist_ok=True)
             if fn_var is not None:
                 variables.append({"variable": var, "file_name": fn_var})
 
@@ -252,6 +253,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         abs_file_path = self.model.config.get_set_file_variable(
             "qtrfile", value=filename, default="sfincs.nc"
         )
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Make sure epsg is stored in the config as well
         self.model.config.set("epsg", self.model.crs.to_epsg())

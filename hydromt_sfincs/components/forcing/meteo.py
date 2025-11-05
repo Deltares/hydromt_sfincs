@@ -156,6 +156,9 @@ class SfincsMeteo(ModelComponent):
                 key=f"{fname}file", value=filename, default=self._filename
             )
 
+            # Create parent directories if they do not exist
+            abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
             if abs_file_path.suffix == ".nc":
                 self.write_gridded(filename=abs_file_path, rename=rename)
             else:

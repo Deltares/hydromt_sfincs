@@ -183,6 +183,9 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             "srcfile", value=filename, default="sfincs.src"
         )
 
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # Write src file
         # Change precision of coordinates according to crs
         if self.model.crs.is_geographic:
@@ -204,6 +207,9 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             "disfile", value=filename, default="sfincs.dis"
         )
 
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # parse data to dataframe
         da = self.data["dis"].transpose("time", ...)
         df = da.to_pandas()
@@ -221,6 +227,10 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         abs_file_path = self.model.config.get_set_file_variable(
             "netsrcdisfile", value=filename, default="sfincs_netsrcdisfile.nc"
         )
+
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # Check if abs_file_path is None
         if abs_file_path is None:
             # File name not defined

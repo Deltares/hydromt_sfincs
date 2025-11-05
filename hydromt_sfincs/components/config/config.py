@@ -127,15 +127,18 @@ class SfincsConfig(ModelComponent):
         self.root._assert_write_mode
 
         if not isabs(filename) and self.root.path:
-            self._filename = join(self.root.path, filename)
+            self._filename = self.root.path / filename
 
-            # exclude_unset: Whether to exclude fields that have not been explicitly set.
-            # exclude_defaults: Whether to exclude fields that are set to their default value.
-            # exclude_none: Whether to exclude fields that have a value of `None`.
-            # include: A set of fields to include in the output.
-            # exclude: A set of fields to exclude from the output.
+        # Create parent directories if they do not exist
+        self.filename.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(self._filename, "w") as fid:
+        # exclude_unset: Whether to exclude fields that have not been explicitly set.
+        # exclude_defaults: Whether to exclude fields that are set to their default value.
+        # exclude_none: Whether to exclude fields that have a value of `None`.
+        # include: A set of fields to include in the output.
+        # exclude: A set of fields to exclude from the output.
+
+        with open(self.filename, "w") as fid:
             for key, value in self.data.model_dump(
                 exclude_unset=False, exclude_defaults=False, exclude_none=True
             ).items():

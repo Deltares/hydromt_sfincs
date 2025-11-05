@@ -101,6 +101,9 @@ class SfincsThinDams(ModelComponent):
             default="sfincs.thd",
         )
 
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # Change precision of coordinates according to crs
         if self.model.crs.is_geographic:
             fmt = "%11.6f"

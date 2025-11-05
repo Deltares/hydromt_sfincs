@@ -368,6 +368,9 @@ class SfincsSubgridTable(ModelComponent):
             default="sfincs_subgrid.nc",
         )
 
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # check if the file is a netcdf file
         if abs_file_path.suffix == ".nc":
             # read netcdf file

@@ -263,9 +263,11 @@ class SfincsGrid(GridComponent):
             logger.debug("Write binary map indices based on mask.")
             if self.model.config.get("indexfile") is None:
                 self.model.config.set("indexfile", "sfincs.ind")
-            self.write_ind(
-                ind_fn=self.model.config.get("indexfile", abs_path=True), mask=mask
-            )
+            abs_file_path = self.model.config.get("indexfile", abs_path=True)
+            # Create parent directories if they do not exist
+            abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+            # Write index file
+            self.write_ind(ind_fn=abs_file_path, mask=mask)
 
             if data_vars is None:  # write all maps
                 data_vars = [v for v in _MAPS if v in ds_out]

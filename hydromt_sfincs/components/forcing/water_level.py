@@ -228,6 +228,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             "bndfile", value=filename, default="sfincs.bnd"
         )
 
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # Write bnd file
         # Change precision of coordinates according to crs
         if self.model.crs.is_geographic:
@@ -249,6 +252,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             "bzsfile", value=filename, default="sfincs.bzs"
         )
 
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # parse data to dataframe
         da = self.data["bzs"].transpose("time", ...)
         df = da.to_pandas()
@@ -266,6 +272,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         abs_file_path = self.model.config.get_set_file_variable(
             "bcafile", value=filename, default="sfincs.bca"
         )
+
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         amp = self.data["amplitude"].to_pandas()
         pha = self.data["phase"].to_pandas()
@@ -309,6 +318,10 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         abs_file_path = self.model.config.get_set_file_variable(
             "netbndbzsbzifile", value=filename, default="sfincs_netbndbzsbzifile.nc"
         )
+
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # Check if abs_file_path is None
         if abs_file_path is None:
             # File name not defined
