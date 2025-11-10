@@ -290,7 +290,7 @@ class SfincsInfiltration(ModelComponent):
         da_Ksat = self.data_catalog.get_rasterdataset(
             ksat, bbox=self.model.bbox, buffer=10
         )
-        df_map = self.data_catalog.get_dataframe(reclass_table, index_col=0)
+        df_map = self.data_catalog.get_dataframe(reclass_table)
 
         # Define outputs
         da_smax = xr.full_like(self.mask, -9999, dtype=np.float32)

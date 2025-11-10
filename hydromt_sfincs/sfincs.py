@@ -40,6 +40,7 @@ from hydromt_sfincs.components.grid import (
 from hydromt_sfincs.components.quadtree import (
     SfincsQuadtreeGrid,
     SfincsQuadtreeElevation,
+    SfincsQuadtreeInfiltration,
     SfincsQuadtreeMask,
     SfincsQuadtreeStorageVolume,
     SfincsQuadtreeSubgridTable,
