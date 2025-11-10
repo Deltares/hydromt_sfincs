@@ -77,7 +77,7 @@ class SfincsQuadtreeInfiltration(ModelComponent):
 
     def write(self, variables=None):
         """Write infiltration files for quadtree grid.
-        
+
         Parameters
         ----------
         variables : list, optional
@@ -87,19 +87,21 @@ class SfincsQuadtreeInfiltration(ModelComponent):
         # Get available infiltration variables
         available_vars = []
         logger.info(f"Checking for infiltration variables in quadtree grid data...")
-        logger.info(f"Available data variables: {list(self.data.data_vars.keys()) if hasattr(self.data, 'data_vars') else 'No data_vars attribute'}")
-        
+        logger.info(
+            f"Available data variables: {list(self.data.data_vars.keys()) if hasattr(self.data, 'data_vars') else 'No data_vars attribute'}"
+        )
+
         for var_name in _ATTRS.keys():
             if var_name in self.data:
                 available_vars.append(var_name)
                 logger.info(f"✓ Found {var_name}")
             else:
                 logger.info(f"✗ Missing {var_name}")
-        
+
         if not available_vars:
             logger.info("No infiltration variables to write")
             return
-            
+
         # Determine which variables to write
         if variables is None:
             vars_to_write = available_vars
@@ -110,15 +112,15 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                 if var in available_vars:
                     vars_to_write.append(var)
                 else:
-                    logger.warning(f"Variable '{var}' not available. Available: {available_vars}")
-        
+                    logger.warning(
+                        f"Variable '{var}' not available. Available: {available_vars}"
+                    )
+
         if not vars_to_write:
             logger.warning("No valid variables specified to write")
             return
-            
-        logger.info(f"Writing quadtree infiltration variables: {vars_to_write}")
-        
 
+        logger.info(f"Writing quadtree infiltration variables: {vars_to_write}")
 
     # Function to create constant spatially varying infiltration
     @hydromt_step
@@ -149,7 +151,9 @@ class SfincsQuadtreeInfiltration(ModelComponent):
         """
 
         # Add logger info
-        logger.info("Creating constant spatially varying infiltration rate for quadtree grid.")
+        logger.info(
+            "Creating constant spatially varying infiltration rate for quadtree grid."
+        )
 
         # get infiltration data
         if qinf is not None:
@@ -310,7 +314,9 @@ class SfincsQuadtreeInfiltration(ModelComponent):
         """
 
         # Add logger info
-        logger.info("Creating curve number values for SFINCS quadtree grid including recovery term.")
+        logger.info(
+            "Creating curve number values for SFINCS quadtree grid including recovery term."
+        )
 
         # Read the datafiles
         da_landuse = self.model.data_catalog.get_rasterdataset(
@@ -336,83 +342,82 @@ class SfincsQuadtreeInfiltration(ModelComponent):
         # For quadtree grids, we'll implement the curve number logic directly
         # since the workflow is designed for structured grids
         logger.info("Processing curve number determination for quadtree grid")
-        
+
         # Initialize output arrays using xu.full_like for quadtree compatibility
         da_smax = xu.full_like(self.mask, -9999, dtype=np.float32)
         da_ks = xu.full_like(self.mask, -9999, dtype=np.float32)
-        
+
         # Get face coordinates for spatial interpolation
         face_coords = self.model.quadtree_grid.face_coordinates
         x_coords = face_coords[0][:]
         y_coords = face_coords[1][:]
-        
+
         # Interpolate landuse data to quadtree grid points using point-wise interpolation
-        logger.info("Interpolating landuse data to quadtree grid using point-wise selection")
-        
+        logger.info(
+            "Interpolating landuse data to quadtree grid using point-wise selection"
+        )
+
         # Check and debug coordinate systems before interpolation
         import xarray as xr
-        
-        
+
         # Ensure all datasets are in the same CRS as the model
         logger.info("Reprojecting input datasets to match model CRS...")
-        model_crs   = self.model.crs
+        model_crs = self.model.crs
 
         # Reproject datasets if needed using hydromt's raster methods
         if da_landuse.raster.crs != model_crs:
             logger.info("Reprojecting landuse data to model CRS")
-            da_landuse = da_landuse.raster.reproject(dst_crs=model_crs, method='nearest')
-            
+            da_landuse = da_landuse.raster.reproject(
+                dst_crs=model_crs, method="nearest"
+            )
+
         if da_HSG.raster.crs != model_crs:
             logger.info("Reprojecting HSG data to model CRS")
-            da_HSG = da_HSG.raster.reproject(dst_crs=model_crs, method='nearest')
-            
+            da_HSG = da_HSG.raster.reproject(dst_crs=model_crs, method="nearest")
+
         if da_Ksat.raster.crs != model_crs:
             logger.info("Reprojecting Ksat data to model CRS")
-            da_Ksat = da_Ksat.raster.reproject(dst_crs=model_crs, method='nearest')
-        
+            da_Ksat = da_Ksat.raster.reproject(dst_crs=model_crs, method="nearest")
+
         # Create coordinate arrays (now all in same CRS)
         x_da = xr.DataArray(
-            x_coords, 
-            dims=['points'],
-            attrs={'crs': str(model_crs), 'long_name': 'x coordinate', 'units': 'm'}
+            x_coords,
+            dims=["points"],
+            attrs={"crs": str(model_crs), "long_name": "x coordinate", "units": "m"},
         )
         y_da = xr.DataArray(
-            y_coords, 
-            dims=['points'],
-            attrs={'crs': str(model_crs), 'long_name': 'y coordinate', 'units': 'm'}
+            y_coords,
+            dims=["points"],
+            attrs={"crs": str(model_crs), "long_name": "y coordinate", "units": "m"},
         )
-        
+
         # Use sel with method='nearest' for efficient point-wise nearest neighbor
-        lu_at_points = da_landuse.sel(
-            x=x_da, 
-            y=y_da, 
-            method='nearest'
-        ).values.astype(np.float32)
+        lu_at_points = da_landuse.sel(x=x_da, y=y_da, method="nearest").values.astype(
+            np.float32
+        )
 
         # Interpolate HSG data to quadtree grid points using point-wise selection
-        logger.info("Interpolating HSG data to quadtree grid using point-wise selection")
-        
+        logger.info(
+            "Interpolating HSG data to quadtree grid using point-wise selection"
+        )
+
         # Use sel with method='nearest' for HSG data (categorical)
-        hsg_at_points = da_HSG.sel(
-            x=x_da, 
-            y=y_da, 
-            method='nearest'
-        ).values.astype(np.float32)
-        
+        hsg_at_points = da_HSG.sel(x=x_da, y=y_da, method="nearest").values.astype(
+            np.float32
+        )
+
         # Interpolate Ksat data to quadtree grid points using interp method
         logger.info("Interpolating Ksat data to quadtree grid using interp method")
-        
+
         # Use interp method for Ksat data (linear interpolation for continuous data)
         # For interp, we need to pass coordinates as separate arrays
-        ksat_at_points = da_Ksat.interp(
-            x=x_da, 
-            y=y_da, 
-            method='linear'
-        ).values.astype(np.float32)
-        
+        ksat_at_points = da_Ksat.interp(x=x_da, y=y_da, method="linear").values.astype(
+            np.float32
+        )
+
         # Initialize arrays for curve numbers and soil retention
         cn_values = np.full_like(lu_at_points, np.nan, dtype=np.float32)
-        
+
         # Map landuse and HSG combinations to curve numbers
         logger.info("Mapping landuse-HSG combinations to curve numbers")
 
@@ -420,28 +425,32 @@ class SfincsQuadtreeInfiltration(ModelComponent):
         lu_valid = ~np.isnan(lu_at_points)
         hsg_valid = ~np.isnan(hsg_at_points)
         valid_points = lu_valid & hsg_valid
-        
+
         for i in range(df_map.index.size):
             for j in range(1, df_map.columns.size):  # Start from 1 as in original
                 # Find points with this landuse-HSG combination (only valid points)
-                mask_combo = (lu_at_points == df_map.index[i]) & (hsg_at_points == int(df_map.columns[j])) & valid_points
+                mask_combo = (
+                    (lu_at_points == df_map.index[i])
+                    & (hsg_at_points == int(df_map.columns[j]))
+                    & valid_points
+                )
                 # Assign curve number
                 cn_values[mask_combo] = df_map.values[i, j]
-        
+
         # Convert CN to maximum soil retention (S) - SCS equation
         logger.info("Converting curve numbers to soil retention parameters")
         cn_values = np.maximum(cn_values, 0)  # always positive
         cn_values = np.minimum(cn_values, 100)  # not higher than 100
-        
+
         # Calculate S using SCS equation: S = (1000/CN - 10) [inches]
         valid_cn = ~np.isnan(cn_values) & (cn_values > 0)
         s_values = np.zeros_like(cn_values)
         s_values[valid_cn] = np.maximum(1000 / cn_values[valid_cn] - 10, 0)
         s_values[~valid_cn] = 0.0  # NaN means no infiltration = 0
-        
+
         # Convert to meters: multiply by 0.0254 (inches to meters)
         s_values = s_values * 0.0254
-        
+
         # Process Ksat values
         logger.info("Processing Ksat values for recovery term")
         ksat_processed = np.copy(ksat_at_points)
@@ -450,28 +459,24 @@ class SfincsQuadtreeInfiltration(ModelComponent):
         ksat_processed = np.nan_to_num(ksat_processed, nan=0.0)
         ksat_processed = np.minimum(ksat_processed, 100)  # not higher than 100
         ksat_processed = ksat_processed * 3.6  # from micrometers per second to mm/hr
-        
+
         # Fill NaN values
         s_values = np.nan_to_num(s_values, nan=0.0)
         ksat_processed = np.nan_to_num(ksat_processed, nan=0.0)
-        
+
         # Create UgridDataArrays using the correct constructor
         # Use the mask as a template and assign new values
         da_smax = self.mask.copy()
         da_smax.values = s_values
         da_smax.name = "smax"
-        da_smax.attrs.update({
-            "standard_name": "maximum_soil_retention",
-            "unit": "m"
-        })
-        
+        da_smax.attrs.update({"standard_name": "maximum_soil_retention", "unit": "m"})
+
         da_ks = self.mask.copy()
         da_ks.values = ksat_processed
         da_ks.name = "ks"
-        da_ks.attrs.update({
-            "standard_name": "saturated_hydraulic_conductivity", 
-            "unit": "mm.hr-1"
-        })
+        da_ks.attrs.update(
+            {"standard_name": "saturated_hydraulic_conductivity", "unit": "mm.hr-1"}
+        )
 
         # Done with basic calculations
         logger.info("Done with determination of curve number values for quadtree grid.")
@@ -481,13 +486,14 @@ class SfincsQuadtreeInfiltration(ModelComponent):
 
         # Specify the effective soil retention (seff)
         da_seff = da_smax.copy()  # Create a proper copy to avoid modifying original
-        da_seff.values = da_seff.values * effective  # Modify values directly to avoid issues
+        da_seff.values = (
+            da_seff.values * effective
+        )  # Modify values directly to avoid issues
         da_seff.name = "seff"  # Set proper name
-        da_seff.attrs.update({
-            "standard_name": "effective_maximum_soil_retention",
-            "unit": "m"
-        })
-        
+        da_seff.attrs.update(
+            {"standard_name": "effective_maximum_soil_retention", "unit": "m"}
+        )
+
         # Set nodata value for xugrid (if method exists)
         try:
             da_seff.ugrid.set_nodata(da_smax.ugrid.nodata)
@@ -497,12 +503,18 @@ class SfincsQuadtreeInfiltration(ModelComponent):
 
         # Log the data arrays before setting
         logger.info(f"Prepared data arrays:")
-        logger.info(f"  da_smax: shape={da_smax.shape}, name='{da_smax.name}', values_range=[{da_smax.values.min():.6f}, {da_smax.values.max():.6f}]")
-        logger.info(f"  da_seff: shape={da_seff.shape}, name='{da_seff.name}', values_range=[{da_seff.values.min():.6f}, {da_seff.values.max():.6f}]")
-        logger.info(f"  da_ks: shape={da_ks.shape}, name='{da_ks.name}', values_range=[{da_ks.values.min():.3f}, {da_ks.values.max():.3f}]")
+        logger.info(
+            f"  da_smax: shape={da_smax.shape}, name='{da_smax.name}', values_range=[{da_smax.values.min():.6f}, {da_smax.values.max():.6f}]"
+        )
+        logger.info(
+            f"  da_seff: shape={da_seff.shape}, name='{da_seff.name}', values_range=[{da_seff.values.min():.6f}, {da_seff.values.max():.6f}]"
+        )
+        logger.info(
+            f"  da_ks: shape={da_ks.shape}, name='{da_ks.name}', values_range=[{da_ks.values.min():.3f}, {da_ks.values.max():.3f}]"
+        )
 
         # loop over other infiltration methods ATTRS and remove them from config when present
-        names = ["smax", "seff", "ks"] 
+        names = ["smax", "seff", "ks"]
         for name in _ATTRS.keys():
             if name not in names:
                 # get from config
@@ -512,7 +524,7 @@ class SfincsQuadtreeInfiltration(ModelComponent):
 
         # Set up infiltration data arrays with proper metadata
         data_arrays = [da_smax, da_seff, da_ks]
-        
+
         # Ensure all arrays have proper names and attributes
         for name, da in zip(names, data_arrays):
             da.name = name
@@ -528,7 +540,9 @@ class SfincsQuadtreeInfiltration(ModelComponent):
         for name, da in zip(names, data_arrays):
             valid_data = da.values[~np.isnan(da.values) & (da.values != -9999)]
             if len(valid_data) > 0:
-                logger.info(f"{name}: {valid_data.min():.3f} - {valid_data.max():.3f} ({len(valid_data)} valid cells)")
+                logger.info(
+                    f"{name}: {valid_data.min():.3f} - {valid_data.max():.3f} ({len(valid_data)} valid cells)"
+                )
             else:
                 logger.warning(f"{name}: No valid values found!")
         logger.info("=" * 40)
@@ -538,49 +552,48 @@ class SfincsQuadtreeInfiltration(ModelComponent):
             try:
                 file_key = f"{var_name}file"
                 file_name = self.model.config.get(file_key)
-                
+
                 if file_name:
                     from pathlib import Path
-                    
+
                     # Get the full file path
-                    if hasattr(self.model, 'root'):
-                        if hasattr(self.model.root, 'path'):
+                    if hasattr(self.model, "root"):
+                        if hasattr(self.model.root, "path"):
                             root_path = Path(self.model.root.path)
                         elif isinstance(self.model.root, (str, Path)):
                             root_path = Path(self.model.root)
                         else:
                             root_str = str(self.model.root)
-                            if 'path=' in root_str:
-                                path_start = root_str.find('path=') + 5
-                                path_end = root_str.find(',', path_start)
+                            if "path=" in root_str:
+                                path_start = root_str.find("path=") + 5
+                                path_end = root_str.find(",", path_start)
                                 if path_end == -1:
-                                    path_end = root_str.find(')', path_start)
+                                    path_end = root_str.find(")", path_start)
                                 root_path = Path(root_str[path_start:path_end])
                             else:
                                 root_path = Path(root_str)
                         file_path = root_path / file_name
                     else:
                         file_path = Path(file_name)
-                    
+
                     # Write as binary file (SFINCS standard format)
                     try:
                         file_path.parent.mkdir(parents=True, exist_ok=True)
                         if file_path.exists():
                             file_path.unlink()
-                        
+
                         binary_data = da.values.astype(np.float32).tobytes()
-                        with open(file_path, 'wb') as f:
+                        with open(file_path, "wb") as f:
                             f.write(binary_data)
                         logger.info(f"✓ Wrote {var_name} to {file_path}")
-                        
+
                     except Exception as write_error:
                         logger.error(f"✗ Failed to write {var_name}: {write_error}")
-                        
+
                 else:
                     logger.warning(f"No filename configured for {var_name}")
-                    
+
             except Exception as e:
                 logger.error(f"Failed to process {var_name}: {e}")
-                
-        logger.info("Finished writing infiltration files")
 
+        logger.info("Finished writing infiltration files")
