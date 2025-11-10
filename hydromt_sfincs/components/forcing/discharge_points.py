@@ -21,7 +21,11 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsDischargePoints(SfincsBoundaryBase):
-    """Discharge point component for SFINCS models."""
+    """Discharge point component for SFINCS models.
+
+    This component handles reading and writing of discharge points and their
+    associated time series data in SFINCS format, including both ASCII and netCDF files.
+    """
 
     _default_varname = "dis"
 

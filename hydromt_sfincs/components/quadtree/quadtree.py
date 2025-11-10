@@ -227,8 +227,8 @@ class SfincsQuadtreeGrid(MeshComponent):
         variables = []
         for var in data_vars:
             fn_var = self.model.config.get(f"{var}file", abs_path=True)
-            fn_var.parent.mkdir(parents=True, exist_ok=True)
             if fn_var is not None:
+                fn_var.parent.mkdir(parents=True, exist_ok=True)
                 variables.append({"variable": var, "file_name": fn_var})
 
         if len(variables) > 0:

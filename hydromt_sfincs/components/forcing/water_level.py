@@ -26,7 +26,9 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 class SfincsWaterLevel(SfincsBoundaryBase):
     """Water level boundary component for SFINCS models.
 
-    Adds astronomical constituent handling on top of the common base.
+    This component handles reading and writing of water level boundary conditions
+    in SFINCS format, including both ASCII and netCDF files. Furthermore, it
+    allows to generate time series from astronomical constituents (if available).
     """
 
     _default_varname = "bzs"

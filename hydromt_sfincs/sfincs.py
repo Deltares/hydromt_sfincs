@@ -153,7 +153,6 @@ class SfincsModel(Model):
             Path to model folder
         mode: {'w', 'r+', 'r'}
             Open model in write, append or reading mode, by default 'w'
-
         write_gis: bool
             Write model files additionally to geotiff and geojson, by default True
         data_libs: List, str
