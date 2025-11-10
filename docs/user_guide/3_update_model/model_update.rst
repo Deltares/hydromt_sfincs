@@ -68,8 +68,14 @@ see example below.
     # write the model
     sf.write()
 
+Examples
+--------
+
+For examples of how to update a SFINCS model using HydroMT-SFINCS, see:
+
 .. toctree::
-    :hidden:
+    :maxdepth: 2
+    :titlesonly:
 
     Example: Add Forcing <../../_examples/2_add_forcing.ipynb>
     Example: Add Geometries <../../_examples/3_add_geometries.ipynb>

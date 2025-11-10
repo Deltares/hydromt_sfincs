@@ -237,8 +237,11 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             return
 
         ds = self.data.load()
-        ds.vector.to_xy().to_netcdf(abs_file_path)
-        ds.close()
+
+        # Write netcdf file safely (might get locked, e..g in other notebooks)
+        final_path = utils.write_netcdf_safely(ds, abs_file_path)
+        if final_path != abs_file_path:
+            self.model.config.set("netsrcdisfile", final_path.name)
 
     def delete(self, index: Union[int, List[int]]):
         "Delete boundary points and clear config when no points remain."

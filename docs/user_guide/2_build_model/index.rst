@@ -16,7 +16,7 @@ or updated using specific methods (see :ref:`model_methods`), which is demenstra
 
 .. toctree::
    :hidden:
-   :caption: Build a SFINCS model
+   :maxdepth: 2
 
    model_components.rst
    model_methods.rst

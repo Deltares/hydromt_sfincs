@@ -125,15 +125,15 @@ Typical applications where this approach can be useful are:
 Example
 --------
 
-See `Example: Build from Script <../../_examples/build_from_script.ipynb>`_ for a more detailed example.
+See examples below for more detailed examples:
 
+.. toctree::
+   :maxdepth: 2
+    :titlesonly:
+
+    Example: Build from CLI <../../_examples/build_from_cli.ipynb>
+    Example: Build from script <../../_examples/1_build_from_scratch.ipynb>
 
 .. _data: https://deltares.github.io/hydromt/latest/user_guide/data_overview.html
 .. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html
 .. _config: https://deltares.github.io/hydromt/latest/user_guide/model_config.html
-
-.. toctree::
-    :hidden:
-
-    Example: Build from CLI <../../_examples/build_from_cli.ipynb>
-    Example: Build from script <../../_examples/1_build_from_scratch.ipynb>

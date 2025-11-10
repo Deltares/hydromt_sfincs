@@ -196,6 +196,12 @@ Forcing
    components.forcing.SfincsWind.create
    components.forcing.SfincsWind.create_uniform
 
+   components.forcing.SfincsRivers
+   components.forcing.SfincsRivers.data
+   components.forcing.SfincsRivers.read
+   components.forcing.SfincsRivers.write
+   components.forcing.SfincsRivers.create_river_inflow
+
 Output
 ------
 

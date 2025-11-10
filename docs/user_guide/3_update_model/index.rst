@@ -14,3 +14,8 @@ Similar to building a SFINCS model, there are two main ways to update an existin
 - :ref:`Python scripting <sfincs_python>` for advanced users.
 
 In the following sections, examples are provided how to update your SFINCS model with HydroMT.
+
+.. toctree::
+   :maxdepth: 2
+
+   model_update.rst

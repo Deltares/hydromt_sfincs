@@ -4,11 +4,13 @@ as well as some common data conversions.
 """
 
 import copy
+from datetime import datetime
 import io
 import logging
 import os
-from datetime import datetime
 from pathlib import Path
+import shutil
+import tempfile
 from typing import Dict, List, Optional, Tuple, Union
 
 from affine import Affine
@@ -30,6 +32,8 @@ from hydromt.io import write_xy
 from hydromt.io import open_vector
 from hydromt.data_catalog.drivers import RasterioDriver
 from hydromt.gis.gis_utils import zoom_to_overview_level
+from hydromt.gis.vector import GeoDataset
+
 
 __all__ = [
     "read_binary_map",
@@ -70,7 +74,7 @@ __all__ = [
     "partition_quadtree",
 ]
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 ## BINARY MAPS: sfincs.ind, sfincs.msk, sfincs.dep etc. ##
@@ -1853,3 +1857,67 @@ def partition_quadtree(
         return partitions_new
     else:
         return partitions
+
+
+def write_netcdf_safely(ds, abs_file_path: Path) -> Path:
+    """
+    NetCDF files have the tendency to get locked by other processes (e.g. other notebooks), or because they were
+    opened in a lazy manner. This function attempts to write the dataset to the specified path,
+    only when it actually changed, and if the file is locked, it will create a versioned file instead.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset or GeoDataset
+        Dataset to write (should already have CRS if needed).
+    abs_file_path : Path
+        Absolute target path for the NetCDF file.
+
+    Returns
+    -------
+    Path
+        The path the dataset was actually written to (may be versioned if original locked).
+    """
+    ds = ds.load()  # ensure fully in memory
+
+    # Step 1: skip if file exists and dataset is unchanged
+    if abs_file_path.exists():
+        try:
+            existing_ds = GeoDataset.from_netcdf(
+                abs_file_path, crs=ds.raster.crs, chunks="auto"
+            )
+            changed = not ds.equals(existing_ds)
+            existing_ds.close()
+        except Exception:
+            changed = True  # fail-safe
+
+        if not changed:
+            logger.info(f"No changes detected; skipping write to {abs_file_path}")
+            return abs_file_path
+
+    # Step 2: write to temporary file
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix=".nc", dir=abs_file_path.parent)
+    os.close(tmp_fd)
+    ds.vector.to_xy().to_netcdf(tmp_path)
+
+    # Step 3: move temp file to target, or create versioned file if locked
+    try:
+        shutil.move(tmp_path, abs_file_path)
+        final_path = abs_file_path
+    except PermissionError:
+        # File is locked — create versioned file
+        base, ext, parent = (
+            abs_file_path.stem,
+            abs_file_path.suffix,
+            abs_file_path.parent,
+        )
+        i = 1
+        while True:
+            versioned_path = parent / f"{base}_v{i}{ext}"
+            if not versioned_path.exists():
+                break
+            i += 1
+        shutil.move(tmp_path, versioned_path)
+        logger.warning(f"Original file locked. Saved new version as {versioned_path}")
+        final_path = versioned_path
+
+    return final_path
