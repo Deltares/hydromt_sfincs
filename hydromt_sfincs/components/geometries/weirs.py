@@ -199,7 +199,7 @@ class SfincsWeirs(ModelComponent):
             alternative resolution which is used for sampling the weir.
             **NOTE** - currently, you can only supply one datasource for dep,
                 or use the -coarser- active dep data in self.grid.data if dep not provided,
-                but not your whole elevation_sets list!
+                but not your whole elevation_list list!
             **NOTE** Tip: use fine resolution dep_subgrid.tif for merged high-res data
                 in case of using multiple elevation datasets.
         buffer : float, optional
@@ -304,7 +304,7 @@ class SfincsWeirs(ModelComponent):
             alternative resolution which is used for sampling the weir.
             **NOTE** - currently, you can only supply one datasource for dep,
                 or use the -coarser- active dep data in self.grid.data if dep not provided,
-                but not your whole elevation_sets list!
+                but not your whole elevation_list list!
             **NOTE** Tip: use fine resolution dep_subgrid.tif for merged high-res data
                 in case of using multiple elevation datasets.
         buffer : float, optional

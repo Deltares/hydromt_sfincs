@@ -54,7 +54,7 @@ class SfincsQuadtreeElevation(MeshComponent):
     @hydromt_step
     def create(
         self,
-        elevation_sets: List[dict],
+        elevation_list: List[dict],
         partition_by_level: bool = True,
         partition_in_blocks: bool = False,
         nrmax: int = 2000,  # not in list
@@ -69,7 +69,7 @@ class SfincsQuadtreeElevation(MeshComponent):
 
         Parameters
         ----------
-        elevation_sets : List[dict]
+        elevation_list : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevation) and optional merge arguments e.g.:
             [{'elevation': merit_hydro, 'zmin': 0.01}, {'elevation': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
             For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
@@ -87,12 +87,12 @@ class SfincsQuadtreeElevation(MeshComponent):
         if self.model.crs.is_geographic:
             res = res * 111111.0
         # append parsed datasets per level
-        elevation_sets_per_level = []
+        elevation_list_per_level = []
         for ilev in range(nrlevels):
             # compute resolution at level
             res_level = res / (2**ilev)
-            elevation_sets_per_level.append(
-                self.model._parse_datasets_elevation(elevation_sets, res=res_level)
+            elevation_list_per_level.append(
+                self.model._parse_datasets_elevation(elevation_list, res=res_level)
             )
 
         # check if partitions are already defined
@@ -116,7 +116,7 @@ class SfincsQuadtreeElevation(MeshComponent):
                 ilev = partition.level.max().values - 1
                 # merge multiple datasets on mesh
                 uda = merge_multi_dataarrays_on_mesh(
-                    da_list=elevation_sets_per_level[ilev],
+                    da_list=elevation_list_per_level[ilev],
                     mesh2d=partition.grid,
                 )
                 partition["z"] = uda
@@ -139,7 +139,7 @@ class SfincsQuadtreeElevation(MeshComponent):
             t0 = time.time()
             # when not partitioned, use the full grid with the highest resolution data
             uda = merge_multi_dataarrays_on_mesh(
-                da_list=elevation_sets_per_level[-1],
+                da_list=elevation_list_per_level[-1],
                 mesh2d=self.data.grid,
                 logger=logger,
             )
@@ -167,7 +167,7 @@ class SfincsQuadtreeElevation(MeshComponent):
 
     def set_bathymetry(
         self,
-        elevation_sets: List[dict],
+        elevation_list: List[dict],
         nrmax: int = 2000,
         buffer_cells: int = 0,
         interp_method: str = "linear",
@@ -183,7 +183,7 @@ class SfincsQuadtreeElevation(MeshComponent):
 
         Parameters
         ----------
-        elevation_sets : List[dict]
+        elevation_list : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevation) and optional merge arguments e.g.:
             [{'elevation': merit_hydro, 'zmin': 0.01}, {'elevation': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
             For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
@@ -224,12 +224,12 @@ class SfincsQuadtreeElevation(MeshComponent):
         if self.model.crs.is_geographic:
             res = res * 111111.0
         # append parsed datasets per level
-        elevation_sets_per_level = []
+        elevation_list_per_level = []
         for ilev in range(nlev):
             # compute resolution at level
             res_level = res / (2**ilev)
-            elevation_sets_per_level.append(
-                self.model._parse_datasets_elevation(elevation_sets, res=res_level)
+            elevation_list_per_level.append(
+                self.model._parse_datasets_elevation(elevation_list, res=res_level)
             )
 
         # get m and n indices
@@ -316,7 +316,7 @@ class SfincsQuadtreeElevation(MeshComponent):
                                     yzc,
                                     min(dxmin, dymin),
                                     self.model.crs,
-                                    elevation_sets,
+                                    elevation_list,
                                 )
                                 zgl[in_chunk] = zgc
                             else:
@@ -337,7 +337,7 @@ class SfincsQuadtreeElevation(MeshComponent):
                                 )
                                 # Interpolate/merge multiple datasets on this grid
                                 da_dep = merge_multi_dataarrays(
-                                    da_list=elevation_sets_per_level[ilev],
+                                    da_list=elevation_list_per_level[ilev],
                                     da_like=da_like,
                                     buffer_cells=buffer_cells,
                                     interp_method=interp_method,
@@ -364,7 +364,7 @@ class SfincsQuadtreeElevation(MeshComponent):
                         yz,
                         min(dxmin, dymin),
                         self.model.crs,
-                        elevation_sets,
+                        elevation_list,
                     )
                 else:
                     # Make a regular grid with the extent of the cells in this level
@@ -384,7 +384,7 @@ class SfincsQuadtreeElevation(MeshComponent):
 
                     # Interpolate/merge multiple datasets on this grid
                     da_dep = merge_multi_dataarrays(
-                        da_list=elevation_sets_per_level[ilev],
+                        da_list=elevation_list_per_level[ilev],
                         da_like=da_like,
                         buffer_cells=buffer_cells,
                         interp_method=interp_method,

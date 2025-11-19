@@ -62,7 +62,7 @@ class SfincsElevation(ModelComponent):
     @hydromt_step
     def create(
         self,
-        elevation_sets: List[dict],
+        elevation_list: List[dict],
         buffer_cells: int = 0,  # not in list
         interp_method: str = "linear",  # used for buffer cells only
     ):
@@ -74,7 +74,7 @@ class SfincsElevation(ModelComponent):
 
         Parameters
         ----------
-        elevation_sets : List[dict]
+        elevation_list : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevation) and optional merge arguments e.g.:
             [{'elevation': merit_hydro, 'zmin': 0.01}, {'elevation': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
             For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
@@ -90,10 +90,10 @@ class SfincsElevation(ModelComponent):
         else:
             res = np.abs(self.mask.raster.res[0]) * 111111.0
 
-        elevation_sets = self.model._parse_datasets_elevation(elevation_sets, res=res)
+        elevation_list = self.model._parse_datasets_elevation(elevation_list, res=res)
 
         da_dep = workflows.merge_multi_dataarrays(
-            da_list=elevation_sets,
+            da_list=elevation_list,
             da_like=self.mask,
             buffer_cells=buffer_cells,
             interp_method=interp_method,

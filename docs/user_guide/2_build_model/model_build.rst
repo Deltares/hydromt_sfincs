@@ -62,7 +62,7 @@ in its corresponding section. See the HydroMT core documentation for more info a
         crs: utm                        # model CRS (must be UTM zone)
         rotated: True                   # allow a rotated grid
     - elevation.create:
-        elevation_sets:
+        elevation_list:
         - elevation: merit_hydro        # 1st elevation dataset
           zmin: 0.001                   # only use where values > 0.001
         - elevation: gebco              # 2nd eleveation dataset (to be merged with the first)
@@ -116,7 +116,7 @@ Typical applications where this approach can be useful are:
     da = da + 1
 
     # use modifed (in-memory) elevation data to create model
-    sf.elevation.create(elevation_sets=[{"da":da}])
+    sf.elevation.create(elevation_list=[{"da":da}])
 
     sf.plot_basemap()
 

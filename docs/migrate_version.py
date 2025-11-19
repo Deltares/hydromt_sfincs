@@ -21,7 +21,7 @@ conversion_map = {
     "SfincsModel.setup_dep": {
         "new_function": "SfincsModel.elevation.create",
         "args": {
-            "datasets_dep": "elevation_sets",  # renamed argument
+            "datasets_dep": "elevation_list",  # renamed argument
             # other arguments remain the same
         },
     },
@@ -52,9 +52,9 @@ conversion_map = {
     "SfincsModel.setup_subgrid": {
         "new_function": "SfincsModel.subgrid.create",
         "args": {
-            "datasets_dep": "elevation_sets",  # renamed argument
-            "datasets_rgh": "roughness_sets",  # renamed argument
-            "datasets_riv": "river_sets",  # renamed argument
+            "datasets_dep": "elevation_list",  # renamed argument
+            "datasets_rgh": "roughness_list",  # renamed argument
+            "datasets_riv": "river_list",  # renamed argument
             "nr_levels": "nlevels",  # renamed argument
         },
     },
@@ -81,7 +81,7 @@ conversion_map = {
     "SfincsModel.setup_manning_roughness": {
         "new_function": "SfincsModel.roughness.create",
         "args": {
-            "datasets_rgh": "roughness_sets",  # renamed argument
+            "datasets_rgh": "roughness_list",  # renamed argument
             # other arguments remain the same
         },
     },

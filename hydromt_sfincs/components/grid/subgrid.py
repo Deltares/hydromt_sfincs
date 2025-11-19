@@ -517,9 +517,9 @@ class SfincsSubgridTable(ModelComponent):
     @hydromt_step
     def create(
         self,
-        elevation_sets: List[dict],
-        roughness_sets: List[dict] = [],
-        river_sets: List[dict] = [],
+        elevation_list: List[dict],
+        roughness_list: List[dict] = [],
+        river_list: List[dict] = [],
         buffer_cells: int = 0,
         nr_levels: int = 10,
         nbins: int = None,
@@ -548,7 +548,7 @@ class SfincsSubgridTable(ModelComponent):
 
         Parameters
         ----------
-        elevation_sets : List[dict]
+        elevation_list : List[dict]
             List of dictionaries with topobathy data.
             Each should minimally contain a data catalog source name, data file path,
             or xarray raster object ('elevation').
@@ -563,7 +563,7 @@ class SfincsSubgridTable(ModelComponent):
                     {'elevation': 'gebco', 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}
                 ]
 
-        roughness_sets : List[dict], optional
+        roughness_list : List[dict], optional
             List of dictionaries with Manning's n datasets. Each dictionary should at
             least contain one of the following:
 
@@ -580,7 +580,7 @@ class SfincsSubgridTable(ModelComponent):
                     {'lulc': 'esa_worlcover', 'reclass_table': 'esa_worlcover_mapping'}
                 ]
 
-        river_sets : List[dict], optional
+        river_list : List[dict], optional
             List of dictionaries with river datasets. Each dictionary should at least
             contain a river centerline data and optionally a river mask:
 
@@ -652,14 +652,14 @@ class SfincsSubgridTable(ModelComponent):
                 / nr_subgrid_pixels
             )
 
-        elevation_sets = self.model._parse_datasets_elevation(elevation_sets, res=res)
+        elevation_list = self.model._parse_datasets_elevation(elevation_list, res=res)
 
-        if len(roughness_sets) > 0:
+        if len(roughness_list) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
-            roughness_sets = self.model._parse_roughness_sets(roughness_sets)
+            roughness_list = self.model._parse_roughness_list(roughness_list)
 
-        if len(river_sets) > 0:
-            river_sets = self.model._parse_river_sets(river_sets)
+        if len(river_list) > 0:
+            river_list = self.model._parse_river_list(river_list)
 
         # folder where high-resolution topobathy and manning geotiffs are stored
         if write_dep_tif or write_man_tif:
@@ -845,7 +845,7 @@ class SfincsSubgridTable(ModelComponent):
 
                 # get subgrid bathymetry tile
                 da_dep = workflows.merge_multi_dataarrays(
-                    da_list=elevation_sets,
+                    da_list=elevation_list,
                     da_like=da_mask_sbg,
                     interp_method="linear",
                     buffer_cells=buffer_cells,
@@ -867,9 +867,9 @@ class SfincsSubgridTable(ModelComponent):
                 )
 
                 # get subgrid manning roughness tile
-                if len(roughness_sets) > 0:
+                if len(roughness_list) > 0:
                     da_man = workflows.merge_multi_dataarrays(
-                        da_list=roughness_sets,
+                        da_list=roughness_list,
                         da_like=da_mask_sbg,
                         interp_method="linear",
                         buffer_cells=buffer_cells,
@@ -890,9 +890,9 @@ class SfincsSubgridTable(ModelComponent):
                     da_man.raster.set_nodata(np.nan)
 
                 # burn rivers in bathymetry and manning
-                if len(river_sets) > 0:
+                if len(river_list) > 0:
                     logger.debug("Burn rivers in bathymetry and manning data")
-                    for riv_kwargs in river_sets:
+                    for riv_kwargs in river_list:
                         da_dep, da_man = workflows.bathymetry.burn_river_rect(
                             da_elv=da_dep, da_man=da_man, logger=logger, **riv_kwargs
                         )

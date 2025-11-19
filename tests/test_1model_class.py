@@ -231,17 +231,17 @@ def test_subgrid_rivers(model):
     sbg_org = model.subgrid.data.copy()
 
     model.subgrid.create(
-        elevation_sets=[
+        elevation_list=[
             {"elevation": "merit_hydro", "zmin": 0.001},
             {"elevation": "gebco"},
         ],
-        roughness_sets=[
+        roughness_list=[
             {
                 "lulc": "vito_2015",
                 "reclass_table": join(TESTDATADIR, "local_data", "vito_mapping.csv"),
             }
         ],
-        river_sets=[
+        river_list=[
             {
                 "centerlines": gdf_riv,
                 "rivdph": 1,
