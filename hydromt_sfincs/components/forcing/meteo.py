@@ -156,6 +156,9 @@ class SfincsMeteo(ModelComponent):
                 key=f"{fname}file", value=filename, default=self._filename
             )
 
+            # Create parent directories if they do not exist
+            abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
             if abs_file_path.suffix == ".nc":
                 self.write_gridded(filename=abs_file_path, rename=rename)
             else:
@@ -170,7 +173,7 @@ class SfincsMeteo(ModelComponent):
         encoding = dict(time={"units": f"minutes since {tref_str}", "dtype": "float64"})
 
         # assign self.data to ds
-        ds = self.data
+        ds = self.data.load()
 
         # combine variables and rename to output names
         rename = {v: k for k, v in rename.items() if v in ds}

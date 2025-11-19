@@ -17,7 +17,18 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsConfig(ModelComponent):
-    """Class to read and write SFINCS input files."""
+    """ " Class to read and write SFINCS configuration files (sfincs.inp).
+
+    This class provides methods for reading and writing SFINCS configuration files,
+    updating configuration variables, and managing file paths for model input files.
+    It uses a Pydantic model ([`SfincsConfigVariables`](hydromt_sfincs.components.config.config.SfincsConfigVariables))
+    for validation and serialization of configuration variables.
+
+    See Also
+    --------
+    :py:class:`~hydromt_sfincs.components.config.SfincsConfigVariables`
+        Pydantic model class for SFINCS configuration variables.
+    """
 
     def __init__(self, model: "SfincsModel"):
         self._filename = "sfincs.inp"
@@ -26,9 +37,11 @@ class SfincsConfig(ModelComponent):
 
     @property
     def data(self):
-        """Return the SfincsConfig object."""
+        """Return the Pydantic SfincsConfigVariables object."""
         if self._data is None:
             self._data = SfincsConfigVariables()
+            if self.root.is_reading_mode():
+                self.read()
         return self._data
 
     @property
@@ -41,8 +54,9 @@ class SfincsConfig(ModelComponent):
         return self._filename
 
     def read(self) -> None:
-        """Read a text file and populate SfincsConfig. This function also
-        determines the grid type and updates the grid properties."""
+        """Read a text file with the sfincs configuration from the root folder and populate
+        the SfincsConfigVariables. This function also determines the grid type and updates
+        the grid properties of the SfincsModel (e.g. crs and extent)."""
 
         self.root._assert_read_mode
 
@@ -100,9 +114,8 @@ class SfincsConfig(ModelComponent):
     def write(
         self, filename: str = "sfincs.inp", write_description: bool = False
     ) -> None:
-        """Write the instance's attributes to a file.
+        """Write the SfincsConfigVariables to a text file in the root folder of the model.
 
-        If write_description is True, include variable descriptions in the output.
         Parameters:
         -----------
         filename (str):
@@ -110,17 +123,22 @@ class SfincsConfig(ModelComponent):
         write_description (bool):
             If True, include variable descriptions in the output file.  Default is False.
         """
+
         self.root._assert_write_mode
+
         if not isabs(filename) and self.root.path:
-            self._filename = join(self.root.path, filename)
+            self._filename = self.root.path / filename
 
-            # exclude_unset: Whether to exclude fields that have not been explicitly set.
-            # exclude_defaults: Whether to exclude fields that are set to their default value.
-            # exclude_none: Whether to exclude fields that have a value of `None`.
-            # include: A set of fields to include in the output.
-            # exclude: A set of fields to exclude from the output.
+        # Create parent directories if they do not exist
+        self.filename.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(self._filename, "w") as fid:
+        # exclude_unset: Whether to exclude fields that have not been explicitly set.
+        # exclude_defaults: Whether to exclude fields that are set to their default value.
+        # exclude_none: Whether to exclude fields that have a value of `None`.
+        # include: A set of fields to include in the output.
+        # exclude: A set of fields to exclude from the output.
+
+        with open(self.filename, "w") as fid:
             for key, value in self.data.model_dump(
                 exclude_unset=False, exclude_defaults=False, exclude_none=True
             ).items():
@@ -149,7 +167,17 @@ class SfincsConfig(ModelComponent):
                 fid.write(string + "\n")
 
     def get(self, key: str, fallback: Any = None, abs_path: bool = False) -> Any:
-        """Get a value with validation check."""
+        """Get the value for a specific key with validation check.
+
+        Parameters:
+        -----------
+        key (str):
+            The key to retrieve the value for.
+        fallback (Any):
+            The fallback value to return if the key is not found. Default is None.
+        abs_path (bool):
+            If True and the value is a string or Path, return the absolute path.
+        """
 
         value = self.data.model_dump().get(key, fallback)
 
@@ -163,7 +191,18 @@ class SfincsConfig(ModelComponent):
         return value
 
     def set(self, key: str, value: Any, skip_validation: bool = False) -> None:
-        """Set a value with validation using Pydantic's model_validate."""
+        """Set a value for a specific key with validation using Pydantic's model_validate.
+
+        Parameters:
+        -----------
+        key (str):
+            The key to set the value for.
+        value (Any):
+            The value to set.
+        skip_validation (bool):
+            If True, skips validation of the new value. Default is False, meaning pydantic validation will be performed.
+            This checks amongst others for correct data types and valid ranges.
+        """
 
         if not hasattr(self.data, key):
             raise KeyError(f"'{key}' is not a valid attribute of SfincsConfig.")
@@ -195,6 +234,7 @@ class SfincsConfig(ModelComponent):
         skip_validation (bool, optional):
             If True, skips validation of the new values.
             Default is False, meaning pydantic validation will be performed.
+            This checks amongst others for correct data types and valid ranges.
         kwargs:
             Key-value pairs passed as keyword arguments.
             Example: update(mmax=100, nmax=50)
@@ -213,7 +253,15 @@ class SfincsConfig(ModelComponent):
                 self._data = self.data.__class__.model_validate(new_data)
 
     def update_grid_from_config(self) -> None:
-        """Update the grid properties from the configuration."""
+        """Update the grid properties from the configuration. This method determines the grid type
+        based on the presence of the 'qtrfile' variable in the configuration. If 'qtrfile' is set,
+        the grid type is set to 'quadtree'; otherwise, it is set to 'regular'.
+
+        Depending on the grid type, it updates the grid properties of the SfincsModel and removes
+        the irrelevant grid component.
+        """
+
+        # FIXME if we want to drop components, it should drop all related components (mask, subgrid, etc.)
 
         # Determine grid type based on configuration
         self.model.grid_type = "quadtree" if self.get("qtrfile") else "regular"

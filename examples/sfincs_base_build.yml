@@ -14,7 +14,7 @@ steps:
       crs: utm                     # model CRS (must be UTM zone)
       rotated: True                # allow a rotated grid
   - elevation.create:
-      elevation_sets:
+      elevation_list:
       - elevation: merit_hydro     # 1st elevation dataset
         zmin: 0.001                # only use where values > 0.001
       - elevation: gebco           # 2nd eleveation dataset (to be merged with the first)

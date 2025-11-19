@@ -39,7 +39,20 @@ _ATTRS = {
 
 
 class SfincsInfiltration(ModelComponent):
-    """SFINCS infiltration component."""
+    """SFINCS Infiltration Component.
+
+    This component contains methods to add infiltration data to the SFINCS model
+    on regular grids. Various infiltration parameterizations can be used, including
+    spatially varying constant infiltration rates and curve number based methods.
+
+    .. note::
+        The infiltration data is stored in the model grid's data dataset under the keys "qinf", "scs", "smax", "seff" and "ks".
+
+    See Also
+    --------
+    :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`
+
+    """
 
     def __init__(
         self,
@@ -71,11 +84,13 @@ class SfincsInfiltration(ModelComponent):
     # clear >TODO?
 
     def read(self):
+        """Not implemented, infiltration data is read when the grid is read."""
         # TODO discuss what we want to return/read here, pass is not so informative ..
         # The infiltration file(s) are read when all grid files are read in regulargrid.py
         pass
 
     def write(self):
+        """Not implemented, infiltration data is written when the grid is written."""
         # The infiltration file(s) are written when all grid files are written in regulargrid.py
         pass
 
@@ -88,7 +103,7 @@ class SfincsInfiltration(ModelComponent):
         reclass_table=None,
         reproj_method="average",
     ):
-        """Setup spatially varying constant infiltration rate (qinffile).
+        """Create spatially varying constant infiltration rate (qinffile).
 
         Adds model layers to SfincsModel.grid.data:
 
@@ -172,7 +187,7 @@ class SfincsInfiltration(ModelComponent):
     # Function to create curve number for SFINCS
     @hydromt_step
     def create_cn(self, cn, antecedent_moisture="avg", reproj_method="med"):
-        """Setup model potential maximum soil moisture retention map (scsfile)
+        """Create model potential maximum soil moisture retention map (scsfile)
         from gridded curve number map.
 
         Adds model layers:
@@ -241,7 +256,7 @@ class SfincsInfiltration(ModelComponent):
     def create_cn_with_recovery(
         self, lulc, hsg, ksat, reclass_table, effective, factor_ksat=1, block_size=2000
     ):
-        """Setup model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
+        """Create model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS
         including recovery term based on the soil saturation
 
         Parameters

@@ -4,15 +4,29 @@
 Installation Guide
 ==================
 
-Prerequisites
-=============
-For more information about the prerequisites for an installation of the HydroMT package and related dependencies, please visit the
-documentation of `HydroMT core <https://deltares.github.io/hydromt/latest/getting_started/installation.html#installation-guide>`_
+HydroMT-SFINCS is available on PyPI and conda-forge. If you want to use HydroMT-SFINCS to build your own model,
+you can install it using the following steps.
+
+
+.. _installation_prerequisites:
+
+Prerequisite: python installation
+=================================
+
+You'll need **Python 3.11 or greater** and a package manager such as conda, mamba or
+others in order to use HydroMT-SFINCS. These package managers help you to install (Python)
+packages and
+`manage environments <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
+such that different installations do not conflict.
+
+If you do not yet have such a package manager, we recommend using either:
+
+- `Miniforge <https://github.com/conda-forge/miniforge#mambaforge>`_: uses the `mamba package manager <https://github.com/mamba-org/mamba>`_
+- `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_: uses the `conda package manager <https://docs.conda.io/en/latest/>`_
 
 .. Note::
 
-    We recommend using the `mamba` package manager. However, in the commands below you can exchange `mamba` for `conda`, see
-    `here <https://deltares.github.io/hydromt/latest/getting_started/installation.html#installation-guide>`_ for the difference between both.
+    We recommend using the `mamba` package manager. However, in the commands below you can exchange `mamba` for `conda`.
 
 If you already have a python & conda installation but do not yet have mamba installed,
 you can install it into your *base* environment using:
