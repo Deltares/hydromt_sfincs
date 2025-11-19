@@ -66,12 +66,10 @@ __all__ = [
     "rotated_grid",
     "build_overviews",
     "find_uv_indices",
-    "partition_quadtree",
-    "xu_open_dataset",
-    "check_exists_and_lazy",
     "make_regular_grid",
     "make_regular_grid_transform",
     "partition_quadtree",
+    "write_netcdf_safely",
 ]
 
 logger = logging.getLogger(f"hydromt.{__name__}")
@@ -1569,42 +1567,6 @@ def binary_search(vals, val):
         if vals[indx] == val:
             return indx
     return None
-
-
-def xu_open_dataset(*args, **kwargs):
-    """This function is a replacement of xu.open_dataset.
-
-    It exists because xu.open_dataset does not close the file after opening, which can lead to Permission Errors.
-    """
-    with xr.open_dataset(*args, **kwargs) as ds:
-        return xu.UgridDataset(ds)
-
-
-def check_exists_and_lazy(ds, file_name):
-    """If a netcdf file is read lazily, the file can not be overwritten.
-    This function checks whether the file already exists, if so, it checks
-    if the data is lazily loaded. If so, data should be loaded before writing.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset, xu.UgridDataset
-        The dataset to be written to a netcdf file.
-    file_name : str
-        The path to the netcdf file.
-    """
-    if not os.path.exists(file_name):
-        return
-
-    # Check for lazy loading
-    lazy_vars = [not data_array._in_memory for data_array in ds.data_vars.values()]
-
-    # if all(lazy_vars):
-    #     return  # All variables are lazy-loaded, skip writing?
-
-    if any(lazy_vars):
-        ds.load()  # Some variables are lazy-loaded, load them into memory
-        ds.close()
-    return
 
 
 def make_regular_grid(
