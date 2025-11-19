@@ -16,7 +16,7 @@ The user guide is structured in the following way:
         :link: 1_getting_started_hydromt/index
         :link-type: doc
 
-        :octicon:`rocket;10em`
+        :octicon:`rocket;5em;sd-text-icon blue-icon`
         +++
         Getting started with HydroMT
 
@@ -25,7 +25,7 @@ The user guide is structured in the following way:
         :link: 2_build_model/index
         :link-type: doc
 
-        :octicon:`container;10em`
+        :octicon:`container;5em;sd-text-icon blue-icon`
         +++
         Building a SFINCS model
 
@@ -34,34 +34,34 @@ The user guide is structured in the following way:
         :link: 3_update_model/index
         :link-type: doc
 
-        :octicon:`pencil;10em`
+        :octicon:`pencil;5em;sd-text-icon blue-icon`
         +++
         Updating a SFINCS model
 
     .. grid-item-card::
         :text-align: center
-        :link: 4_run_model/index
+        :link: 4_run_model/sfincs_run
         :link-type: doc
 
-        :octicon:`gear;10em`
+        :octicon:`gear;5em;sd-text-icon blue-icon`
         +++
         Running a SFINCS model
 
     .. grid-item-card::
         :text-align: center
-        :link: 5_postprocess_model/index
+        :link: 5_postprocess_model/sfincs_analyse
         :link-type: doc
 
-        :octicon:`graph;10em`
+        :octicon:`graph;5em;sd-text-icon blue-icon`
         +++
         Processing and Visualization
 
     .. grid-item-card::
         :text-align: center
-        :link: 6_migration_guide/index
+        :link: 6_migration_guide/migration_hydromt
         :link-type: doc
 
-        :octicon:`arrow-switch;10em`
+        :octicon:`arrow-switch;5em;sd-text-icon blue-icon`
         +++
         Migration Guide
 

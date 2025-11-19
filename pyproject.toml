@@ -48,12 +48,13 @@ test = [
     "pre-commit",
 ]
 doc = [
-    "nbsphinx",
-	"pydata-sphinx-theme",
-	"sphinx",
-    "sphinx_design",
-    "autodoc_pydantic",
-    "sphinx_autodoc_typehints",
+	"hydromt_sfincs[examples]",      # examples are included in the docs
+	"nbsphinx",                     # build notebooks in docs
+	"pydata-sphinx-theme>=0.15.2",  # theme
+	"sphinx_autosummary_accessors", # doc layout
+	"sphinx",                       # build docks
+	"sphinx_design",                # doc layout
+	"autodoc_pydantic",             # pydantic autodoc
 ]
 
 examples = [
@@ -66,6 +67,7 @@ examples = [
 ]
 quadtree = [
     "datashader",
+    "mapbox_earcut"
 ]
 
 full = ["hydromt_sfincs[test, doc, examples]"]

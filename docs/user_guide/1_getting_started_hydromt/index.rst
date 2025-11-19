@@ -15,7 +15,7 @@ For the users of the HydroMT-SFINCS plugin, the data catalog and model region co
         :link: data_catalog
         :link-type: ref
 
-        :octicon:`database;10em`
+        :octicon:`database;5em;sd-text-icon blue-icon`
         +++
         Data Catalog
         Understand how HydroMT manages data sources and integrates external datasets.
@@ -25,7 +25,7 @@ For the users of the HydroMT-SFINCS plugin, the data catalog and model region co
         :link: https://deltares.github.io/hydromt/stable/guides/user_guide/model_region.html
         :link-type: url
 
-        :octicon:`globe;10em`
+        :octicon:`globe;5em;sd-text-icon blue-icon`
         +++
         Model Region
         Learn how to define, configure, and manage model regions within HydroMT.

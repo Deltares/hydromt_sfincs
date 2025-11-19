@@ -5,11 +5,14 @@ These pages provide guidelines on how to contribute to HydroMT SFINCS.
 Furthermore it informs you on planned developments and new features.
 
 .. toctree::
+   :caption: Table of Contents
    :maxdepth: 2
-   :hidden:
+   :titlesonly:
 
    ../changelog.rst
-   roadmap.rst
-   Developer's guide <https://deltares.github.io/hydromt/latest/dev/contributing>
+   Developer's guide <https://deltares.github.io/hydromt/latest/dev/intro.html>
    dev_install.rst
+   release_workflow.rst
    contributors.rst
+   .. software_design.rst
+   .. roadmap.rst

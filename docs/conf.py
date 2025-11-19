@@ -17,14 +17,29 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import re
 import sys
 import shutil
+
+import numpy as np
+import sphinx_autosummary_accessors
+
 import hydromt
 import hydromt_sfincs
-from distutils.dir_util import copy_tree
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, os.path.abspath(os.path.join(here, "..")))
+
+os.environ["PYDEVD_DISABLE_FILE_VALIDATION"] = "1"
+
+DOCS_TITLE = "HydroMT-SFINCS Documentation"
+
+
+def cli2rst(output, fn):
+    with open(fn, "w") as f:
+        f.write(".. code-block:: console\n\n")
+        for line in output.split("\n"):
+            f.write(f"    {line}\n")
 
 
 def remove_dir_content(path: str) -> None:
@@ -37,6 +52,57 @@ def remove_dir_content(path: str) -> None:
         shutil.rmtree(path)
 
 
+def write_panel(f, name, content="", level=0, item="dropdown"):
+    pad = "".ljust(level * 3)
+    f.write(f"{pad}.. {item}:: {name}\n")
+    f.write("\n")
+    if content:
+        pad = "".ljust((level + 1) * 3)
+        for line in content.split("\n"):
+            line_clean = line.replace("*", "\\*")
+            f.write(f"{pad}{line_clean}\n")
+        f.write("\n")
+
+
+def write_nested_dropdown(name, data_cat: hydromt.DataCatalog, note="", categories=[]):
+    df = data_cat._to_dataframe().sort_index().drop_duplicates("uri")
+    with open(f"_generated/{name}.rst", mode="w") as f:
+        write_panel(f, name, note, level=0)
+        write_panel(f, "", level=1, item="tab-set")
+        for category in categories:
+            if category == "other":
+                sources = df.index[~np.isin(df["category"], categories)]
+            else:
+                sources = df.index[df["category"] == category]
+            if len(sources) > 0:
+                write_panel(f, category, level=2, item="tab-item")
+            for source in sources:
+                items = data_cat.get_source(source).summary().items()
+                summary = "\n".join(
+                    [f":{k}: {clean_str(v)}" for k, v in items if k != "category"]
+                )
+                write_panel(f, source, summary, level=3)
+
+        write_panel(f, "all", level=2, item="tab-item")
+        for source in df.index.values:
+            items = data_cat.get_source(source).summary()
+            items = {k: clean_str(v) for (k, v) in items.items()}.items()
+            summary = "\n".join([f":{k}: {v}" for k, v in items])
+            write_panel(f, source, summary, level=3)
+
+
+def clean_str(s):
+    if not isinstance(s, str):
+        return s
+    clean = s.replace("*", "\\*")
+    clean = clean.replace("_", "\\_")
+    idx = clean.find("p:/")
+    if idx > -1:
+        clean = clean[idx:]
+
+    return clean
+
+
 # -- Project information -----------------------------------------------------
 
 project = "HydroMT SFINCS"
@@ -45,8 +111,6 @@ author = "Dirk Eilander"
 
 # The short version which is displayed
 version = hydromt_sfincs.__version__
-bare_version = hydromt_sfincs.__version__
-doc_version = bare_version[: bare_version.find("dev") - 1]
 
 # -- Copy notebooks to include in docs -------
 SKIP_DOC_EXAMPLES = bool(os.environ.get("SKIP_DOC_EXAMPLES", False))
@@ -54,7 +118,27 @@ if os.path.isdir("_examples") and SKIP_DOC_EXAMPLES:
     remove_dir_content("_examples")
 elif not os.path.isdir("_examples") and not SKIP_DOC_EXAMPLES:
     os.makedirs("_examples")
-    copy_tree("../examples", "_examples")
+    shutil.copytree("../examples", "_examples", dirs_exist_ok=True)
+
+# replace all links of https://deltares.github.io/hydromt/.*/.*.rst.* with ../*.html.*
+for root, _, files in os.walk("_examples"):
+    for file in files:
+        if file.endswith(".ipynb"):
+            file_path = os.path.join(root, file)
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            content = re.sub(
+                # This regex checks for anything https://deltares.github.io/hydromt/.../*.html.* and replaces it with ../*.html.*
+                # It makes the assumption that links in markdown always end with a closing parenthesis ) or a whitespace \s character
+                r"https://deltares\.github\.io/hydromt/[^\s/]+/([^\s]+)\.html([^\s\)]*)",
+                r"../\1.rst\2",
+                content,
+            )
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+if not os.path.isdir("_generated"):
+    os.makedirs("_generated")
 
 # -- General configuration ------------------------------------------------
 
@@ -68,26 +152,27 @@ elif not os.path.isdir("_examples") and not SKIP_DOC_EXAMPLES:
 extensions = [
     "sphinx_design",
     "sphinx.ext.autodoc",
-    "sphinx_autodoc_typehints",  # Better type hint formatting
+    "sphinx.ext.doctest",
     "sphinx.ext.viewcode",
     "sphinx.ext.todo",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
+    "sphinx_autosummary_accessors",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
     "nbsphinx",
     "sphinxcontrib.autodoc_pydantic",
 ]
 
+suppress_warnings = [
+    "autosummary.import_cycle",
+]
+
 autosummary_generate = True
-autodoc_default_options = {
-    "members": True,
-    "inherited-members": False,
-}
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+templates_path = ["_templates", sphinx_autosummary_accessors.templates_path]
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
@@ -106,7 +191,7 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "_examples/README.rst"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
@@ -143,6 +228,7 @@ autodoc_pydantic_model_member_order = "bysource"
 # a list of builtin themes.
 #
 html_theme = "pydata_sphinx_theme"
+
 html_logo = "_static/hydromt-icon.svg"
 html_favicon = "_static/hydromt-icon.svg"
 autodoc_member_order = "bysource"  # overwrite default alphabetical sort
@@ -155,12 +241,14 @@ autoclass_content = "both"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
+bare_version = hydromt_sfincs.__version__
+doc_version = bare_version[: bare_version.find("dev") - 1]
 html_static_path = ["_static"]
 html_css_files = ["theme-deltares.css"]
 html_theme_options = {
     "show_nav_level": 1,
-    "navbar_align": "left",
-    "use_edit_page_button": True,
+    "navbar_align": "content",
+    "use_edit_page_button": False,
     "icon_links": [
         {
             "name": "GitHub",
@@ -190,12 +278,15 @@ html_theme_options = {
     "logo": {
         "text": "HydroMT SFINCS",
     },
-    "navbar_center": ["version-switcher", "navbar-nav"],
     "navbar_end": ["navbar-icon-links"],
     "switcher": {
         "json_url": "https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json",
         "version_match": doc_version,
     },
+    "secondary_sidebar_items": [
+        "version-switcher",
+        "page-toc",
+    ],
 }
 
 
@@ -254,7 +345,7 @@ latex_documents = [
     (
         master_doc,
         "hydromt_sfincs.tex",
-        "HydroMT sfincs plugin Documentation",
+        DOCS_TITLE,
         [author],
         "manual",
     ),
@@ -265,9 +356,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, "hydromt_sfincs", "HydroMT SFINCS plugin Documentation", [author], 1)
-]
+man_pages = [(master_doc, "hydromt_sfincs", DOCS_TITLE, [author], 1)]
 
 
 # -- Options for Texinfo output -------------------------------------------
@@ -279,9 +368,10 @@ texinfo_documents = [
     (
         master_doc,
         "hydromt_sfincs",
-        "HydroMT sfincs plugin Documentation",
+        DOCS_TITLE,
         author,
         "HydroMT sfincs plugin",
+        "Automated and reproducible model building and analysis",
         "Miscellaneous",
     ),
 ]

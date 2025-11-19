@@ -194,6 +194,55 @@ def export_markdown(conversion_map, filename="conversion_table.md"):
                 f.write(f"| `{old}()` | `{new}()` | {args_str} |\n")
 
 
+def export_sphinx_table(conversion_map, filename="conversion_table.rst"):
+    """
+    Creates a Sphinx-compatible RST table using the grid table format.
+    """
+    # Collect rows first
+    rows = [("Old API", "New API", "Argument Mapping")]
+
+    for old_func, info in conversion_map.items():
+        entries = []
+
+        if "new_function" in info:
+            new_func = info["new_function"] or "TODO"
+            args = info.get("args", "same")
+            args_str = format_args(args)
+            entries.append((f"``{old_func}()``", f"``{new_func}()``", args_str))
+
+        elif "new_functions" in info:
+            for nf in info["new_functions"]:
+                new_func = nf.get("name") or "TODO"
+                args = nf.get("args", "same")
+                args_str = format_args(args)
+                entries.append((f"``{old_func}()``", f"``{new_func}()``", args_str))
+
+        rows.extend(entries)
+
+    # Determine column widths
+    col_widths = [max(len(row[i]) for row in rows) for i in range(3)]
+
+    def sep():
+        return "+" + "+".join("-" * (w + 2) for w in col_widths) + "+"
+
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(sep() + "\n")
+        # Header
+        hdr = rows[0]
+        f.write(
+            "| " + " | ".join(hdr[i].ljust(col_widths[i]) for i in range(3)) + " |\n"
+        )
+        f.write(sep() + "\n")
+        # Data rows
+        for row in rows[1:]:
+            f.write(
+                "| "
+                + " | ".join(row[i].ljust(col_widths[i]) for i in range(3))
+                + " |\n"
+            )
+            f.write(sep() + "\n")
+
+
 def format_args(args):
     if args == "same":
         return "unchanged"
@@ -207,4 +256,5 @@ def format_args(args):
 
 
 # Call the function, markdown table can be previewed by pressing Ctrl+Shift+V in VSCode
-export_markdown(conversion_map, "conversion_table.md")
+# export_markdown(conversion_map, "conversion_table.md")
+export_sphinx_table(conversion_map, "conversion_table.rst")

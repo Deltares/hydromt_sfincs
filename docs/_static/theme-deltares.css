@@ -29,3 +29,7 @@ html[data-theme="light"] {
 img.icon-link-image {
     height: 2.5em !important;
 }
+
+.sd-text-icon.blue-icon {
+    color: #080c80;
+}

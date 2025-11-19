@@ -129,10 +129,10 @@ See examples below for more detailed examples:
 
 .. toctree::
    :maxdepth: 2
-    :titlesonly:
+   :titlesonly:
 
     Example: Build from CLI <../../_examples/build_from_cli.ipynb>
-    Example: Build from script <../../_examples/1_build_from_scratch.ipynb>
+    Example: Build from script <../../_examples/1_build_from_script.ipynb>
 
 .. _data: https://deltares.github.io/hydromt/latest/user_guide/data_overview.html
 .. _region: https://deltares.github.io/hydromt/latest/user_guide/model_region.html

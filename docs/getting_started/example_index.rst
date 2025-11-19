@@ -17,12 +17,12 @@ For a static (non-interactive) view of the examples follow one of the links belo
 
 **Build a model (advanced) using Python scripts**
 
-*  `Build from Script <../_examples/1_build_from_scratch.ipynb>`_
+*  `Build from Script <../_examples/1_build_from_script.ipynb>`_
 
 **Update a model (advanced) using Python scripts**
 
-*  `Add Forcing <../_examples/2_add_forcing.ipynb>`_
-*  `Add Geometries <../_examples/3_add_geometries.ipynb>`_
+*  `Update Forcing <../_examples/2_update_forcing.ipynb>`_
+*  `Update Geometries <../_examples/3_update_geometries.ipynb>`_
 
 **Run a SFINCS model:**
 

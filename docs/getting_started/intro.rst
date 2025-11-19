@@ -9,7 +9,7 @@ Getting started
         :link: installation_guide
         :link-type: ref
 
-        :octicon:`gear;10em`
+        :octicon:`gear;5em;sd-text-icon blue-icon`
         +++
         Installation guide
 
@@ -18,7 +18,7 @@ Getting started
         :link: intro_user_guide
         :link-type: ref
 
-        :octicon:`book;10em`
+        :octicon:`book;5em;sd-text-icon blue-icon`
         +++
         User guide
 
@@ -27,7 +27,7 @@ Getting started
         :link: api_reference
         :link-type: ref
 
-        :octicon:`list-unordered;10em`
+        :octicon:`list-unordered;5em;sd-text-icon blue-icon`
         +++
         API Reference
 
@@ -36,7 +36,7 @@ Getting started
         :link: examples
         :link-type: ref
 
-        :octicon:`graph;10em`
+        :octicon:`graph;5em;sd-text-icon blue-icon`
         +++
         Examples
 
@@ -48,5 +48,5 @@ Getting started
 
    installation.rst
    example_index.rst
-   User's stories <https://deltares.github.io/hydromt/latest/overview/use_case_examples>
+   User's stories <https://deltares.github.io/hydromt/latest/about/use_case_examples>
    faq.rst
