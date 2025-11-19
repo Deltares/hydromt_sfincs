@@ -22,11 +22,7 @@ from hydromt import hydromt_step
 from hydromt.model.components import MeshComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
-from hydromt_sfincs.utils import make_regular_grid, partition_quadtree
-from hydromt_sfincs.workflows.merge import (
-    merge_multi_dataarrays,
-    merge_multi_dataarrays_on_mesh,
-)
+from hydromt_sfincs.utils import make_regular_grid
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
 # optional dependency
@@ -263,6 +259,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         ds.to_netcdf(abs_file_path)
         ds.close()
 
+    @hydromt_step
     def create(
         self,
         x0: float,
@@ -290,9 +287,9 @@ class SfincsQuadtreeGrid(MeshComponent):
         mmax : int
             Maximum number of cells in y-direction.
         dx : float
-            Cell size in x-direction.
+            Cell size in x-direction, needs to be positive.
         dy : float
-            Cell size in y-direction.
+            Cell size in y-direction, needs to be positive.
         rotation : float
             Rotation angle of the grid in degrees.
         epsg : int
@@ -352,7 +349,10 @@ class SfincsQuadtreeGrid(MeshComponent):
 
         # Make sure epsg is stored in the config as well
         self.model.config.set("epsg", self.model.crs.to_epsg())
+        # Set 'crsgeo' flag in the config based on whether the CRS is geographic
+        self.model.config.set("crsgeo", int(self.model.crs.is_geographic))
 
+    @hydromt_step
     def create_from_region(
         self,
         region: dict,

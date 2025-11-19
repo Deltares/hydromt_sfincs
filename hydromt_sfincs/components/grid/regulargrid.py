@@ -367,6 +367,9 @@ class SfincsGrid(GridComponent):
         # set the grid in the model data
         self.set(ds)
 
+        # Set 'crsgeo' flag in the config based on whether the CRS is geographic
+        self.model.config.set("crsgeo", int(self.model.crs.is_geographic))
+
     @hydromt_step
     def create_from_region(
         self,
@@ -548,6 +551,12 @@ class SfincsGrid(GridComponent):
         self.rotation = self.data.raster.rotation
         self.epsg = self.data.raster.crs.to_epsg()
 
+        # update config for geographic coordinates
+        if self.data.raster.crs.is_geographic:
+            crsgeo = 1
+        else:
+            crsgeo = 0
+
         # update the grid properties in the config
         self.model.config.update(
             {
@@ -559,6 +568,7 @@ class SfincsGrid(GridComponent):
                 "mmax": self.mmax,
                 "rotation": self.rotation,
                 "epsg": self.epsg,
+                "crsgeo": crsgeo,
             }
         )
 
