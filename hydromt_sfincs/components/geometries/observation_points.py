@@ -60,7 +60,7 @@ class SfincsObservationPoints(ModelComponent):
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS observation points (*.obs) file. Filename is obtained from config if not given."""
+        """Read SFINCS observation points (.obs) file. Filename is obtained from config if not given."""
 
         # check that read mode is on
         self.root._assert_read_mode()
@@ -87,7 +87,7 @@ class SfincsObservationPoints(ModelComponent):
         self.set(gdf, merge=False)
 
     def write(self, filename=None):
-        """Write SFINCS observation points (*.obs) file,
+        """Write SFINCS observation points (.obs) file,
         and set obsfile in config (if it was not already set)"""
 
         # check that write mode is on

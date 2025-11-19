@@ -118,7 +118,10 @@ Probably the most significant change is the way we "create" or "update" componen
 such as ``model.setup_grid()`` or ``model.setup_<component>()``. In HydroMT-SFINCS v2, this is now done via the ``create()`` method on each component.
 For a complete conversion table of method changes, see below:
 
-.. include:: conversion_table.rst
+.. csv-table:: Conversion Table
+   :header: "v1.x","v2.x","Argument Mapping"
+   :widths: 20,20,40
+   :file: conversion_table.csv
 
 Example: Accessing Component Data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

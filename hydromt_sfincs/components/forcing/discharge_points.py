@@ -33,7 +33,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         super().__init__(model)
 
     def read(self, format: str = None):
-        """Read SFINCS discharge points (*.dis, *.src files) or netcdf file.
+        """Read SFINCS discharge points (.dis, .src files) or netcdf file.
 
         The format of the discharge conditions files can be specified,
         otherwise it is determined from the model configuration.
@@ -62,7 +62,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             self.set(geodataset=da, merge=False, drop_duplicates=False)
 
     def read_discharge_points(self, filename: str | Path = None):
-        """Read SFINCS discharge points (*.src) file"""
+        """Read SFINCS discharge points (.src) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -87,7 +87,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         return gdf
 
     def read_discharge_timeseries(self, filename: str | Path = None):
-        """Read SFINCS discharge condition timeseries (*.bzs) file"""
+        """Read SFINCS discharge condition timeseries (.dis) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -141,7 +141,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         return ds
 
     def write(self, format: str = None):
-        """Write SFINCS discharges (*.src, *.dis files) or netcdf file.
+        """Write SFINCS discharges (.src, .dis files) or netcdf file.
 
         The format of the discharge files can be specified,
         otherwise it is determined from the model configuration.
@@ -177,7 +177,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             )
 
     def write_discharge_points(self, filename: str | Path = None):
-        """Write SFINCS discharge points (*.src) file"""
+        """Write SFINCS discharge points (.src) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -201,7 +201,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         utils.write_xyn(abs_file_path, self.gdf, fmt=fmt)
 
     def write_discharge_timeseries(self, filename: str | Path = None):
-        """Write SFINCS discharge timeseries (*.dis) file"""
+        """Write SFINCS discharge timeseries (.dis) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()

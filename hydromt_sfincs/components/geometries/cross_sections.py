@@ -26,7 +26,7 @@ class SfincsCrossSections(ModelComponent):
     which are used to "measure" discharges in the SFINCS model.
 
     The data is stored as a GeoDataFrame containing LineString geometries, and written
-    to an ascii SFINCS cross-sections (*.crs) file.
+    to an ascii SFINCS cross-sections (.crs) file.
     """
 
     def __init__(
@@ -63,7 +63,7 @@ class SfincsCrossSections(ModelComponent):
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read ascii SFINCS cross-sections (*.crs) file.
+        """Read ascii SFINCS cross-sections (.crs) file.
         Filename is obtained from config if not provided."""
 
         # Check that read mode is on
@@ -88,7 +88,7 @@ class SfincsCrossSections(ModelComponent):
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
-        """Write ascii SFINCS cross-sections (*.crs) file,
+        """Write ascii SFINCS cross-sections (.crs) file,
         and set crsfile in config (if it was not already set)."""
 
         # Check that data is not empty

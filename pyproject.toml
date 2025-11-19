@@ -14,7 +14,7 @@ dependencies = [
     "affine",
     "cht_tide",
     "geopandas>1.0",
-    "hydromt>=1.3.0rc1",
+    "hydromt>=1.3.0, <1.4.0",
     "numba",
     "numpy",
     "pandas",

@@ -58,7 +58,7 @@ class SfincsWaveMakers(ModelComponent):
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS wave makers (*.wvm) file"""
+        """Read SFINCS wave makers (.wvm) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -82,7 +82,7 @@ class SfincsWaveMakers(ModelComponent):
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS wave makers (*.wvm) file, and set wvmfile in config (if it was not already set)."""
+        """Write SFINCS wave makers (.wvm) file, and set wvmfile in config (if it was not already set)."""
 
         # Check that data is not empty
         if self.data.empty:

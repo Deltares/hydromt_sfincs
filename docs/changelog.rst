@@ -1,5 +1,7 @@
+==========
 What's new
 ==========
+
 All notable changes to this project will be documented in this page.
 Distinction is made between new methods (Added), changes to existing methods (Changed), bugfixes (Fixed), deprecated methods (Deprecated) and removed methods (Removed).
 
@@ -7,7 +9,7 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
 v2.0.0.rc1 (Not yet released)
-============================
+=============================
 **This release contains breaking changes in the SfincsModel API. However, models that were built with v1.x.x can still be read/write/updates.**
 
 For users familiar with previous versions of the HydroMT-SFINCS package, we recommend to read the :ref:`migration guide <migration_hydromt_v1>`.

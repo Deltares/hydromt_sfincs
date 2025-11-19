@@ -37,7 +37,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         super().__init__(model)
 
     def read(self, format: str = None):
-        """Read SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
+        """Read SFINCS boundary conditions (.bnd, .bzs, .bca files) or netcdf file.
 
         The format of the boundary conditions files can be specified,
         otherwise it is determined from the model configuration.
@@ -69,7 +69,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             self.set(geodataset=ds, merge=False, drop_duplicates=False)
 
     def read_boundary_points(self, filename: str | Path = None):
-        """Read SFINCS boundary condition points (*.bnd) file"""
+        """Read SFINCS boundary condition points (.bnd) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -94,7 +94,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         return gdf
 
     def read_boundary_conditions_timeseries(self, filename: str | Path = None):
-        """Read SFINCS boundary condition timeseries (*.bzs) file"""
+        """Read SFINCS boundary condition timeseries (.bzs) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -122,7 +122,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         return df
 
     def read_boundary_conditions_astro(self, filename: str | Path = None):
-        """Read SFINCS boundary condition astro (*.bca) file"""
+        """Read SFINCS boundary condition astro (.bca) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -182,7 +182,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         return ds
 
     def write(self, format: str = None):
-        """Write SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
+        """Write SFINCS boundary conditions (.bnd, .bzs, .bca files) or netcdf file.
 
         The format of the boundary conditions files can be specified,
         otherwise it is determined from the model configuration.
@@ -220,7 +220,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             )
 
     def write_boundary_points(self, filename: str | Path = None):
-        """Write SFINCS boundary condition points (*.bnd) file"""
+        """Write SFINCS boundary condition points (.bnd) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -244,7 +244,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         utils.write_xyn(abs_file_path, self.gdf, fmt=fmt)
 
     def write_boundary_conditions_timeseries(self, filename: str | Path = None):
-        """Write SFINCS boundary condition timeseries (*.bzs) file"""
+        """Write SFINCS boundary condition timeseries (.bzs) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -265,7 +265,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
 
     def write_boundary_conditions_astro(self, filename: str | Path = None):
-        """Write SFINCS boundary condition astro (*.bca) file"""
+        """Write SFINCS boundary condition astro (.bca) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -311,7 +311,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                 fid.write("\n")
 
     def write_boundary_conditions_netcdf(self, filename: str | Path = None):
-        """Write SFINCS boundary condition netcdf (*.nc) file"""
+        """Write SFINCS boundary condition netcdf (.nc) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()

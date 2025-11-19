@@ -60,7 +60,7 @@ class SfincsThinDams(ModelComponent):
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS thin dams (*.thd) file. Filename is obtained from config if not provided."""
+        """Read SFINCS thin dams (.thd) file. Filename is obtained from config if not provided."""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -84,7 +84,7 @@ class SfincsThinDams(ModelComponent):
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS thin dams (*.thd) file, and set thdfile in config (if it was not already set)"""
+        """Write SFINCS thin dams (.thd) file, and set thdfile in config (if it was not already set)"""
 
         # check that write mode is on
         self.root._assert_write_mode()

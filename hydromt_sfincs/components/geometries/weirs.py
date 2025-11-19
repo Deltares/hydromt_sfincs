@@ -61,7 +61,7 @@ class SfincsWeirs(ModelComponent):
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS weir (*.weir) file. Filename is obtained from config if not provided."""
+        """Read SFINCS weir (.weir) file. Filename is obtained from config if not provided."""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -85,7 +85,7 @@ class SfincsWeirs(ModelComponent):
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS weir (*.weir) file, and set weirfile in config (if it was not already set)."""
+        """Write SFINCS weir (.weir) file, and set weirfile in config (if it was not already set)."""
 
         # check that write mode is on
         self.root._assert_write_mode()
@@ -197,10 +197,14 @@ class SfincsWeirs(ModelComponent):
         dep : str, Path, xr.DataArray, optional
             Data source name, Path, or xarray raster object ('elevation') describing the depth in an
             alternative resolution which is used for sampling the weir.
-            **NOTE** - currently, you can only supply one datasource for dep,
+
+            .. note::
+                Currently, you can only supply one datasource for dep,
                 or use the -coarser- active dep data in self.grid.data if dep not provided,
                 but not your whole elevation_list list!
-            **NOTE** Tip: use fine resolution dep_subgrid.tif for merged high-res data
+
+            .. note::
+                Tip: use fine resolution dep_subgrid.tif for merged high-res data
                 in case of using multiple elevation datasets.
         buffer : float, optional
             If provided, describes the distance from the centerline to the foot of the structure.

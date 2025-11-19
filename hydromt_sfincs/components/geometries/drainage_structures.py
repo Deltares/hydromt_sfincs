@@ -50,7 +50,7 @@ class SfincsDrainageStructures(ModelComponent):
                 self.read()
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS drainage structures (*.drn) file. Filename is obtained from config if not provided."""
+        """Read SFINCS drainage structures (.drn) file. Filename is obtained from config if not provided."""
 
         # check that read mode is on
         self.root._assert_read_mode()
@@ -76,7 +76,7 @@ class SfincsDrainageStructures(ModelComponent):
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS drainage structures (*.drn) file,
+        """Write SFINCS drainage structures (.drn) file,
         and make sure drnfile is in config (if it was not already set)."""
 
         # check that write mode is on

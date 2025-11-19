@@ -6,7 +6,7 @@ Furthermore it informs you on planned developments and new features.
 
 .. toctree::
    :caption: Table of Contents
-   :maxdepth: 2
+   :maxdepth: 1
    :titlesonly:
 
    ../changelog.rst
@@ -14,5 +14,3 @@ Furthermore it informs you on planned developments and new features.
    dev_install.rst
    release_workflow.rst
    contributors.rst
-   .. software_design.rst
-   .. roadmap.rst
