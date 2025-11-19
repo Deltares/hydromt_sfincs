@@ -14,7 +14,7 @@ dependencies = [
     "affine",
     "cht_tide",
     "geopandas>1.0",
-    "hydromt>=1.3.0rc1",
+    "hydromt>=1.3.0, <1.4.0",
     "numba",
     "numpy",
     "pandas",
@@ -48,11 +48,15 @@ test = [
     "pre-commit",
 ]
 doc = [
-    "nbsphinx",
-	"pydata-sphinx-theme",
-	"sphinx",
-    "sphinx_design",
+	"hydromt_sfincs[examples]",      # examples are included in the docs
+	"nbsphinx",                     # build notebooks in docs
+	"pydata-sphinx-theme>=0.15.2",  # theme
+	"sphinx_autosummary_accessors", # doc layout
+	"sphinx",                       # build docks
+	"sphinx_design",                # doc layout
+	"autodoc_pydantic",             # pydantic autodoc
 ]
+
 examples = [
     "cartopy",
     "descartes",
@@ -63,6 +67,7 @@ examples = [
 ]
 quadtree = [
     "datashader",
+    "mapbox_earcut"
 ]
 
 full = ["hydromt_sfincs[test, doc, examples]"]

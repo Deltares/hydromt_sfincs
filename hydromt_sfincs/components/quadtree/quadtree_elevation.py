@@ -11,10 +11,9 @@ import xugrid as xu
 from hydromt import hydromt_step
 from hydromt.model.components import MeshComponent
 
-from hydromt_sfincs.utils import make_regular_grid, partition_quadtree
+from hydromt_sfincs.utils import make_regular_grid
 from hydromt_sfincs.workflows.merge import (
     merge_multi_dataarrays,
-    merge_multi_dataarrays_on_mesh,
 )
 
 if TYPE_CHECKING:
@@ -54,7 +53,7 @@ class SfincsQuadtreeElevation(MeshComponent):
     @hydromt_step
     def create(
         self,
-        elevation_sets: List[dict],
+        elevation_list: List[dict],
         nrmax: int = 2000,
         buffer_cells: int = 0,
         interp_method: str = "linear",
@@ -70,7 +69,7 @@ class SfincsQuadtreeElevation(MeshComponent):
 
         Parameters
         ----------
-        elevation_sets : List[dict]
+        elevation_list : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevation) and optional merge arguments e.g.:
             [{'elevation': merit_hydro, 'zmin': 0.01}, {'elevation': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
             For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
@@ -98,8 +97,8 @@ class SfincsQuadtreeElevation(MeshComponent):
         level_indices = [np.where(level == ilev)[0] for ilev in range(nlev)]
 
         # Precompute elevation sets per level
-        elevation_sets_per_level = [
-            self.model._parse_datasets_elevation(elevation_sets, res=res / (2**ilev))
+        elevation_list_per_level = [
+            self.model._parse_datasets_elevation(elevation_list, res=res / (2**ilev))
             for ilev in range(nlev)
         ]
 
@@ -143,7 +142,7 @@ class SfincsQuadtreeElevation(MeshComponent):
                         yz[in_chunk],
                         min(dxmin, dymin),
                         self.model.crs,
-                        elevation_sets,
+                        elevation_list,
                     )
                 else:
                     da_like = make_regular_grid(
@@ -160,7 +159,7 @@ class SfincsQuadtreeElevation(MeshComponent):
                         make_ugrid=False,
                     )
                     da_dep = merge_multi_dataarrays(
-                        da_list=elevation_sets_per_level[ilev],
+                        da_list=elevation_list_per_level[ilev],
                         da_like=da_like,
                         buffer_cells=buffer_cells,
                         interp_method=interp_method,

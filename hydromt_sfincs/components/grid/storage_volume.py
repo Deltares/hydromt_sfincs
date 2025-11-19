@@ -20,7 +20,20 @@ _ATTRS = {"vol": {"standard_name": "storage volume", "unit": "m3"}}
 
 
 class SfincsStorageVolume(ModelComponent):
-    """SFINCS storage volume component."""
+    """SFINCS Storage Volume Component.
+
+    This component contains methods to add storage volume data to the SFINCS model
+    on regular grids. Storage volume can be used to represent the effect of green-
+    infrastructure in urban environments, such as retention basins or rain barrels.
+
+    .. note::
+        The storage volume data is stored in the model grid's data dataset under the key "vol".
+
+    See Also
+    --------
+    :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`
+
+    """
 
     def __init__(
         self,
@@ -42,11 +55,13 @@ class SfincsStorageVolume(ModelComponent):
         return self.model.grid.mask
 
     def read(self):
+        """Not implemented, storage volume data is read when the grid is read."""
         # TODO discuss what we want to return/read here, pass is not so informative ..
         # The mask values are read when the quadtree grid is read
         pass
 
     def write(self):
+        """Not implemented, storage volume data is written when the grid is written."""
         # The mask values are written when the quadtree grid is written
         pass
 
@@ -58,7 +73,7 @@ class SfincsStorageVolume(ModelComponent):
         height: Union[float, List[float]] = None,
         merge: bool = True,
     ):
-        """Setup storage volume.
+        """Create storage volume.
 
         Adds model layer:
         * **vol** map: storage volume for green infrastructure

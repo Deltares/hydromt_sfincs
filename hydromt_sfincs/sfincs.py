@@ -40,6 +40,7 @@ from hydromt_sfincs.components.grid import (
 from hydromt_sfincs.components.quadtree import (
     SfincsQuadtreeGrid,
     SfincsQuadtreeElevation,
+    SfincsQuadtreeInfiltration,
     SfincsQuadtreeMask,
     SfincsQuadtreeStorageVolume,
     SfincsQuadtreeSubgridTable,
@@ -79,8 +80,60 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 class SfincsModel(Model):
     """SFINCS model class."""
 
-    # _FOLDERS = []
     name: str = "sfincs"
+
+    # Grouped component definitions
+    _CONFIG_COMPONENTS = {"config": SfincsConfig}
+    _GRID_COMPONENTS = {
+        "grid": SfincsGrid,
+        "elevation": SfincsElevation,
+        "mask": SfincsMask,
+        "infiltration": SfincsInfiltration,
+        "roughness": SfincsRoughness,
+        "storage_volume": SfincsStorageVolume,
+        "subgrid": SfincsSubgridTable,
+        "initial_conditions": SfincsInitialConditions,
+    }
+    _QUADTREE_COMPONENTS = {
+        "quadtree_grid": SfincsQuadtreeGrid,
+        "quadtree_elevation": SfincsQuadtreeElevation,
+        "quadtree_mask": SfincsQuadtreeMask,
+        "quadtree_storage_volume": SfincsQuadtreeStorageVolume,
+        "quadtree_subgrid": SfincsQuadtreeSubgridTable,
+        "quadtree_snapwave_mask": SnapWaveQuadtreeMask,
+    }
+    _GEOMETRY_COMPONENTS = {
+        "observation_points": SfincsObservationPoints,
+        "cross_sections": SfincsCrossSections,
+        "thin_dams": SfincsThinDams,
+        "weirs": SfincsWeirs,
+        "wave_makers": SfincsWaveMakers,
+        "drainage_structures": SfincsDrainageStructures,
+    }
+    _FORCING_COMPONENTS = {
+        "rivers": SfincsRivers,
+        "water_level": SfincsWaterLevel,
+        "discharge_points": SfincsDischargePoints,
+        "snapwave_boundary_conditions": SnapWaveBoundaryConditions,
+        "precipitation": SfincsPrecipitation,
+        "pressure": SfincsPressure,
+        "wind": SfincsWind,
+    }
+    _OUTPUT_COMPONENTS = {"output": SfincsOutput}
+
+    # Combine all component dictionaries
+    _ALL_COMPONENTS = {
+        **_CONFIG_COMPONENTS,
+        **_GRID_COMPONENTS,
+        **_QUADTREE_COMPONENTS,
+        **_GEOMETRY_COMPONENTS,
+        **_FORCING_COMPONENTS,
+        **_OUTPUT_COMPONENTS,
+    }
+
+    # Precompute sets of component names for checking later ...
+    _REGULAR_GRID_NAMES = set(_GRID_COMPONENTS.keys())
+    _QUADTREE_GRID_NAMES = set(_QUADTREE_COMPONENTS.keys())
 
     def __init__(
         self,
@@ -100,7 +153,6 @@ class SfincsModel(Model):
             Path to model folder
         mode: {'w', 'r+', 'r'}
             Open model in write, append or reading mode, by default 'w'
-
         write_gis: bool
             Write model files additionally to geotiff and geojson, by default True
         data_libs: List, str
@@ -119,49 +171,11 @@ class SfincsModel(Model):
             data_libs=data_libs,
             **catalog_keys,
         )
-        # Initialize model components:
-        self.add_component("config", SfincsConfig(self))
 
-        # Grid
-        self.add_component("grid", SfincsGrid(self))
-        self.add_component("elevation", SfincsElevation(self))
-        self.add_component("mask", SfincsMask(self))
-        self.add_component("infiltration", SfincsInfiltration(self))
-        self.add_component("roughness", SfincsRoughness(self))
-        self.add_component("storage_volume", SfincsStorageVolume(self))
-        self.add_component("subgrid", SfincsSubgridTable(self))
-        self.add_component("initial_conditions", SfincsInitialConditions(self))
-
-        # Quadtree
-        self.add_component("quadtree_grid", SfincsQuadtreeGrid(self))
-        self.add_component("quadtree_elevation", SfincsQuadtreeElevation(self))
-        self.add_component("quadtree_mask", SfincsQuadtreeMask(self))
-        self.add_component("quadtree_storage_volume", SfincsQuadtreeStorageVolume(self))
-        self.add_component("quadtree_subgrid", SfincsQuadtreeSubgridTable(self))
-        self.add_component("quadtree_snapwave_mask", SnapWaveQuadtreeMask(self))
-
-        # Geoms types
-        self.add_component("observation_points", SfincsObservationPoints(self))
-        self.add_component("cross_sections", SfincsCrossSections(self))
-        self.add_component("thin_dams", SfincsThinDams(self))
-        self.add_component("weirs", SfincsWeirs(self))
-        self.add_component("wave_makers", SfincsWaveMakers(self))
-        self.add_component("drainage_structures", SfincsDrainageStructures(self))
-        self.add_component("rivers", SfincsRivers(self))
-
-        # Forcing types
-        self.add_component("water_level", SfincsWaterLevel(self))
-        self.add_component("discharge_points", SfincsDischargePoints(self))
-        self.add_component(
-            "snapwave_boundary_conditions", SnapWaveBoundaryConditions(self)
-        )
-        self.add_component("precipitation", SfincsPrecipitation(self))
-        self.add_component("pressure", SfincsPressure(self))
-        self.add_component("wind", SfincsWind(self))
-
-        # output / visualization types:
-        self.add_component("output", SfincsOutput(self))
-        # self.add_component("plots", SfincsPlots(self))
+        # Register all components and create properties dynamically
+        for name, cls in self._ALL_COMPONENTS.items():
+            instance = cls(self)
+            self.add_component(name, instance)
 
     def __del__(self):
         """Close the model and remove the logger file handler."""
@@ -172,147 +186,6 @@ class SfincsModel(Model):
             ):
                 handler.close()
                 logger.removeHandler(handler)
-
-    ## Properties of the model components to ensure python recognizes them ##
-    @property
-    def config(self) -> SfincsConfig:
-        """Returns the config object."""
-        return self.components["config"]
-
-    @property
-    def grid(self) -> SfincsGrid:
-        """Returns the grid object."""
-        return self.components["grid"]
-
-    @property
-    def elevation(self) -> SfincsElevation:
-        """Returns the elevation object."""
-        return self.components["elevation"]
-
-    @property
-    def mask(self) -> SfincsMask:
-        """Returns the mask object."""
-        return self.components["mask"]
-
-    @property
-    def roughness(self) -> SfincsRoughness:
-        """Returns the roughness object."""
-        return self.components["roughness"]
-
-    @property
-    def infiltration(self) -> SfincsInfiltration:
-        """Returns the infiltration object."""
-        return self.components["infiltration"]
-
-    @property
-    def storage_volume(self) -> SfincsStorageVolume:
-        """Returns the storage volume object."""
-        return self.components["storage_volume"]
-
-    @property
-    def subgrid(self) -> SfincsSubgridTable:
-        """Returns the subgrid object."""
-        return self.components["subgrid"]
-
-    @property
-    def quadtree_grid(self) -> SfincsQuadtreeGrid:
-        """Returns the quadtree object."""
-        return self.components["quadtree_grid"]
-
-    @property
-    def quadtree_elevation(self) -> SfincsQuadtreeElevation:
-        """Returns the quadtree elevation object."""
-        return self.components["quadtree_elevation"]
-
-    @property
-    def quadtree_mask(self) -> SfincsQuadtreeMask:
-        """Returns the quadtree mask object."""
-        return self.components["quadtree_mask"]
-
-    @property
-    def quadtree_storage_volume(self) -> SfincsQuadtreeStorageVolume:
-        """Returns the quadtree storage volume object."""
-        return self.components["quadtree_storage_volume"]
-
-    @property
-    def quadtree_snapwave_mask(self) -> SnapWaveQuadtreeMask:
-        """Returns the quadtree snapwave mask object."""
-        return self.components["quadtree_snapwave_mask"]
-
-    @property
-    def quadtree_subgrid(self) -> SfincsQuadtreeSubgridTable:
-        """Returns the quadtree subgrid object."""
-        return self.components["quadtree_subgrid"]
-
-    @property
-    def observation_points(self) -> SfincsObservationPoints:
-        """Returns the observation points object."""
-        return self.components["observation_points"]
-
-    @property
-    def cross_sections(self) -> SfincsCrossSections:
-        """Returns the cross sections object."""
-        return self.components["cross_sections"]
-
-    @property
-    def thin_dams(self) -> SfincsThinDams:
-        """Returns the thin dams object."""
-        return self.components["thin_dams"]
-
-    @property
-    def weirs(self) -> SfincsWeirs:
-        """Returns the weirs object."""
-        return self.components["weirs"]
-
-    @property
-    def drainage_structures(self) -> SfincsDrainageStructures:
-        """Returns the drainage structures object."""
-        return self.components["drainage_structures"]
-
-    @property
-    def wave_makers(self) -> SfincsWaveMakers:
-        """Returns the wave makers object."""
-        return self.components["wave_makers"]
-
-    @property
-    def rivers(self) -> SfincsRivers:
-        """Returns the rivers object."""
-        return self.components["rivers"]
-
-    @property
-    def discharge_points(self) -> SfincsDischargePoints:
-        """Returns the discharge points object."""
-        return self.components["discharge_points"]
-
-    @property
-    def water_level(self) -> SfincsWaterLevel:
-        """Returns the water level object."""
-        return self.components["water_level"]
-
-    @property
-    def precipitation(self) -> SfincsPrecipitation:
-        """Returns the precipitation object."""
-        return self.components["precipitation"]
-
-    @property
-    def pressure(self) -> SfincsPressure:
-        """Returns the pressure object."""
-        return self.components["pressure"]
-
-    @property
-    def wind(self) -> SfincsWind:
-        """Returns the wind object."""
-        return self.components["wind"]
-
-    @property
-    def snapwave_boundary_conditions(self) -> SnapWaveBoundaryConditions:
-        """Returns the snapwave boundary conditions object."""
-        return self.components["snapwave_boundary_conditions"]
-
-    @property
-    def output(self) -> SfincsOutput:
-        """Returns the output object."""
-        return self.components["output"]
 
     ## Real properties of the model ##
     @property
@@ -352,40 +225,57 @@ class SfincsModel(Model):
             return self.quadtree_grid.empty_mask.ugrid.to_crs(4326).ugrid.total_bounds
 
     ## I/O
+
     def read(self) -> None:
-        """Read model components from config file and initialize model grid."""
+        """Read SfincsModel from disk.
+
+        This methods determines the grid type from the configuration file (sfincs.inp),
+        and reads all relevant components that are described in the config accordingly.
+
+        For more information, see specific component read methods.
+        """
 
         # always read config first
         self.config.read()
 
-        # loop over all components (except config) and read
-        # TODO add check if files are present in each component otherwise skip-read
-        # Note: this is now done in the read method of each component
         for name, comp in self.components.items():
             if name == "config":
                 continue  # skip config
-            elif "quadtree" in name and self.grid_type == "regular":
+            elif self.grid_type == "regular" and name in self._QUADTREE_GRID_NAMES:
                 # skip reading quadtree components if grid_type is regular
+                continue
+            elif self.grid_type == "quadtree" and name in self._REGULAR_GRID_NAMES:
+                # skip reading regular grid components if grid_type is quadtree
                 continue
             try:
                 comp.read()
             except Exception as e:
-                print(str(e))
+                logger.warning(f"Could not read component {name}: {e}")
                 continue
 
     def write(self):
-        # loop over all components and write
+        """Write SfincsModel to disk.
+
+        This methods writes all components that actually contain data to the specified
+        model root folder. Finally, the configuration file (sfincs.inp) is written.
+
+        For more information, see specific component write methods.
+        """
+
         # TODO make sure that all components are in the config (in their individual write functions?)
         for name, comp in self.components.items():
             if name == "config":
                 continue
-            elif "quadtree" in name and self.grid_type == "regular":
+            elif self.grid_type == "regular" and name in self._QUADTREE_GRID_NAMES:
                 continue
-            # TODO skip regular components for quadtree models?
+            elif self.grid_type == "quadtree" and name in self._REGULAR_GRID_NAMES:
+                continue
             comp.write()
-        # write config last
+
+        # Write config last, since individual write methods might update config settings
         self.config.write()
 
+        # Write region geometry
         if self.write_gis:
             utils.write_vector(
                 self.region,
@@ -501,7 +391,7 @@ class SfincsModel(Model):
             # save figure
             if fn_out is not None:
                 if not os.path.isabs(fn_out):
-                    fn_out = join(self.root, "figs", fn_out)
+                    fn_out = join(self.root.path, "figs", fn_out)
                 if not os.path.isdir(dirname(fn_out)):
                     os.makedirs(dirname(fn_out))
                 plt.savefig(fn_out, dpi=225, bbox_inches="tight")
@@ -644,7 +534,7 @@ class SfincsModel(Model):
 
         if fn_out is not None:
             if not os.path.isabs(fn_out):
-                fn_out = join(self.root, "figs", fn_out)
+                fn_out = join(self.root.path, "figs", fn_out)
             if not os.path.isdir(dirname(fn_out)):
                 os.makedirs(dirname(fn_out))
             plt.savefig(fn_out, dpi=225, bbox_inches="tight")
@@ -657,9 +547,12 @@ class SfincsModel(Model):
         tstop = utils.parse_datetime(self.config.get("tstop"))
         return tstart, tstop
 
-    ## helper method
-    def _parse_datasets_elevation(self, elevation_sets, res):
-        """Parse filenames or paths of Datasets in list of dictionaries elevation_sets
+    # ---------------
+    # Helper Methods
+    # ---------------
+
+    def _parse_datasets_elevation(self, elevation_list, res):
+        """Parse filenames or paths of Datasets in list of dictionaries elevation_list
         into xr.DataArray and gdf.GeoDataFrames:
 
         * "elevation" is parsed into da (xr.DataArray)
@@ -668,7 +561,7 @@ class SfincsModel(Model):
 
         Parameters
         ----------
-        elevation_sets : List[dict]
+        elevation_list : List[dict]
             List of dictionaries with topography and bathymetry data, each containing a dataset name or
             Path (dep) and optional merge arguments.
         res : float
@@ -679,7 +572,7 @@ class SfincsModel(Model):
         copy_keys = ["zmin", "zmax", "reproj_method", "merge_method", "offset"]
 
         datasets_out = []
-        for dataset in elevation_sets:
+        for dataset in elevation_list:
             dd = {}
             # read in depth datasets; replace dep (source name; filename or xr.DataArray)
             if "elevation" in dataset or "da" in dataset:
@@ -701,7 +594,7 @@ class SfincsModel(Model):
                 dd.update({"da": da_elv})
             else:
                 raise ValueError(
-                    "No 'elevation' (topobathy) dataset provided in elevation_sets."
+                    "No 'elevation' (topobathy) dataset provided in elevation_list."
                 )
 
             # read offset filenames
@@ -727,13 +620,13 @@ class SfincsModel(Model):
                 if key in copy_keys and key not in dd:
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
-                    logger.warning(f"Unknown key {key} in elevation_sets. Ignoring.")
+                    logger.warning(f"Unknown key {key} in elevation_list. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out
 
-    def _parse_roughness_sets(self, roughness_sets):
-        """Parse filenames or paths of Datasets in list of dictionaries roughness_sets
+    def _parse_roughness_list(self, roughness_list):
+        """Parse filenames or paths of Datasets in list of dictionaries roughness_list
         into xr.DataArrays and gdf.GeoDataFrames:
 
         * "manning" is parsed into da (xr.DataArray)
@@ -742,7 +635,7 @@ class SfincsModel(Model):
 
         Parameters
         ----------
-        roughness_sets : List[dict], optional
+        roughness_list : List[dict], optional
             List of dictionaries with Manning's n datasets. Each dictionary should at
             least contain one of the following:
             * (1) manning: filename (or Path) of gridded data with manning values
@@ -754,7 +647,7 @@ class SfincsModel(Model):
         copy_keys = ["reproj_method", "merge_method"]
 
         datasets_out = []
-        for dataset in roughness_sets:
+        for dataset in roughness_list:
             dd = {}
 
             if "manning" in dataset or "da" in dataset:
@@ -788,7 +681,7 @@ class SfincsModel(Model):
                 da_man = da_lulc.raster.reclassify(df_map[["N"]])["N"]
                 dd.update({"da": da_man})
             else:
-                raise ValueError("No 'manning' dataset provided in roughness_sets.")
+                raise ValueError("No 'manning' dataset provided in roughness_list.")
 
             # read geodataframes describing valid areas
             if "mask" in dataset:
@@ -808,9 +701,9 @@ class SfincsModel(Model):
 
         return datasets_out
 
-    def _parse_river_sets(self, river_sets):
+    def _parse_river_list(self, river_list):
         """Parse filenames or paths of Datasets in list of dictionaries
-        river_sets into xr.DataArrays and gdf.GeoDataFrames:
+        river_list into xr.DataArrays and gdf.GeoDataFrames:
 
         see SfincsModel.setup_subgrid for details
         """
@@ -832,7 +725,7 @@ class SfincsModel(Model):
         attrs = ["rivwth", "rivdph", "rivbed", "manning"]
 
         datasets_out = []
-        for dataset in river_sets:
+        for dataset in river_list:
             dd = {}
 
             # parse rivers
@@ -890,7 +783,173 @@ class SfincsModel(Model):
                 if key in copy_keys and key not in dd:
                     dd.update({key: value})
                 elif key not in copy_keys + parse_keys:
-                    logger.warning(f"Unknown key {key} in river_sets. Ignoring.")
+                    logger.warning(f"Unknown key {key} in river_list. Ignoring.")
             datasets_out.append(dd)
 
         return datasets_out
+
+    # ---------------------------------------
+    # Component properties (for IDE & Sphinx)
+    # ---------------------------------------
+    # To generate the properties below automatically, run the code commented out
+    # here in a separate script or notebook.
+    #
+    # from hydromt_sfincs import SfincsModel
+    #
+    # for name, cls in SfincsModel._ALL_COMPONENTS.items():
+    #     # Simplify module path for Sphinx
+    #     mod_parts = cls.__module__.split('.')
+    #     # remove hydromt_sfincs.components and script itself from name
+    #     mod_parts_stripped = mod_parts[2]
+    #     mod_path = '.'.join(mod_parts)
+
+    #     print(f"""@property
+    # def {name}(self) -> {cls.__name__}:
+    #     \"\"\"Instance of :py:class:`~{'.'.join(mod_parts)}.{cls.__name__}`.\"\"\"
+    #     return self.components['{name}']
+    # """)
+
+    @property
+    def config(self) -> SfincsConfig:
+        """Instance of :py:class:`~hydromt_sfincs.components.config.config.SfincsConfig`."""
+        return self.components["config"]
+
+    @property
+    def grid(self) -> SfincsGrid:
+        """Instance of :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`."""
+        return self.components["grid"]
+
+    @property
+    def elevation(self) -> SfincsElevation:
+        """Instance of :py:class:`~hydromt_sfincs.components.grid.elevation.SfincsElevation`."""
+        return self.components["elevation"]
+
+    @property
+    def mask(self) -> SfincsMask:
+        """Instance of :py:class:`~hydromt_sfincs.components.grid.mask.SfincsMask`."""
+        return self.components["mask"]
+
+    @property
+    def infiltration(self) -> SfincsInfiltration:
+        """Instance of :py:class:`~hydromt_sfincs.components.grid.infiltration.SfincsInfiltration`."""
+        return self.components["infiltration"]
+
+    @property
+    def roughness(self) -> SfincsRoughness:
+        """Instance of :py:class:`~hydromt_sfincs.components.grid.roughness.SfincsRoughness`."""
+        return self.components["roughness"]
+
+    @property
+    def storage_volume(self) -> SfincsStorageVolume:
+        """Instance of :py:class:`~hydromt_sfincs.components.grid.storage_volume.SfincsStorageVolume`."""
+        return self.components["storage_volume"]
+
+    @property
+    def subgrid(self) -> SfincsSubgridTable:
+        """Instance of :py:class:`~hydromt_sfincs.components.grid.subgrid.SfincsSubgridTable`."""
+        return self.components["subgrid"]
+
+    @property
+    def initial_conditions(self) -> SfincsInitialConditions:
+        """Instance of :py:class:`~hydromt_sfincs.components.grid.initial_conditions.SfincsInitialConditions`."""
+        return self.components["initial_conditions"]
+
+    @property
+    def quadtree_grid(self) -> SfincsQuadtreeGrid:
+        """Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree.SfincsQuadtreeGrid`."""
+        return self.components["quadtree_grid"]
+
+    @property
+    def quadtree_elevation(self) -> SfincsQuadtreeElevation:
+        """Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_elevation.SfincsQuadtreeElevation`."""
+        return self.components["quadtree_elevation"]
+
+    @property
+    def quadtree_mask(self) -> SfincsQuadtreeMask:
+        """Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_mask.SfincsQuadtreeMask`."""
+        return self.components["quadtree_mask"]
+
+    @property
+    def quadtree_storage_volume(self) -> SfincsQuadtreeStorageVolume:
+        """Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_storage_volume.SfincsQuadtreeStorageVolume`."""
+        return self.components["quadtree_storage_volume"]
+
+    @property
+    def quadtree_subgrid(self) -> SfincsQuadtreeSubgridTable:
+        """Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_subgrid.SfincsQuadtreeSubgridTable`."""
+        return self.components["quadtree_subgrid"]
+
+    @property
+    def quadtree_snapwave_mask(self) -> SnapWaveQuadtreeMask:
+        """Instance of :py:class:`~hydromt_sfincs.components.quadtree.snapwave_quadtree_mask.SnapWaveQuadtreeMask`."""
+        return self.components["quadtree_snapwave_mask"]
+
+    @property
+    def observation_points(self) -> SfincsObservationPoints:
+        """Instance of :py:class:`~hydromt_sfincs.components.geometries.observation_points.SfincsObservationPoints`."""
+        return self.components["observation_points"]
+
+    @property
+    def cross_sections(self) -> SfincsCrossSections:
+        """Instance of :py:class:`~hydromt_sfincs.components.geometries.cross_sections.SfincsCrossSections`."""
+        return self.components["cross_sections"]
+
+    @property
+    def thin_dams(self) -> SfincsThinDams:
+        """Instance of :py:class:`~hydromt_sfincs.components.geometries.thin_dams.SfincsThinDams`."""
+        return self.components["thin_dams"]
+
+    @property
+    def weirs(self) -> SfincsWeirs:
+        """Instance of :py:class:`~hydromt_sfincs.components.geometries.weirs.SfincsWeirs`."""
+        return self.components["weirs"]
+
+    @property
+    def wave_makers(self) -> SfincsWaveMakers:
+        """Instance of :py:class:`~hydromt_sfincs.components.geometries.wave_makers.SfincsWaveMakers`."""
+        return self.components["wave_makers"]
+
+    @property
+    def drainage_structures(self) -> SfincsDrainageStructures:
+        """Instance of :py:class:`~hydromt_sfincs.components.geometries.drainage_structures.SfincsDrainageStructures`."""
+        return self.components["drainage_structures"]
+
+    @property
+    def rivers(self) -> SfincsRivers:
+        """Instance of :py:class:`~hydromt_sfincs.components.forcing.rivers.SfincsRivers`."""
+        return self.components["rivers"]
+
+    @property
+    def water_level(self) -> SfincsWaterLevel:
+        """Instance of :py:class:`~hydromt_sfincs.components.forcing.water_level.SfincsWaterLevel`."""
+        return self.components["water_level"]
+
+    @property
+    def discharge_points(self) -> SfincsDischargePoints:
+        """Instance of :py:class:`~hydromt_sfincs.components.forcing.discharge_points.SfincsDischargePoints`."""
+        return self.components["discharge_points"]
+
+    @property
+    def snapwave_boundary_conditions(self) -> SnapWaveBoundaryConditions:
+        """Instance of :py:class:`~hydromt_sfincs.components.forcing.snapwave_boundary_conditions.SnapWaveBoundaryConditions`."""
+        return self.components["snapwave_boundary_conditions"]
+
+    @property
+    def precipitation(self) -> SfincsPrecipitation:
+        """Instance of :py:class:`~hydromt_sfincs.components.forcing.meteo.SfincsPrecipitation`."""
+        return self.components["precipitation"]
+
+    @property
+    def pressure(self) -> SfincsPressure:
+        """Instance of :py:class:`~hydromt_sfincs.components.forcing.meteo.SfincsPressure`."""
+        return self.components["pressure"]
+
+    @property
+    def wind(self) -> SfincsWind:
+        """Instance of :py:class:`~hydromt_sfincs.components.forcing.meteo.SfincsWind`."""
+        return self.components["wind"]
+
+    @property
+    def output(self) -> SfincsOutput:
+        """Instance of :py:class:`~hydromt_sfincs.components.output.SfincsOutput`."""
+        return self.components["output"]

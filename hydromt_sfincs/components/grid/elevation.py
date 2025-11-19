@@ -17,7 +17,20 @@ _ATTRS = {"dep": {"standard_name": "elevation", "unit": "m+ref"}}
 
 
 class SfincsElevation(ModelComponent):
-    """SFINCS elevation component."""
+    """SFINCS Elevation Component.
+
+    This component contains methods to add elevation (bed level) data to the SFINCS model
+    on regular grids. Multiple elevation datasets can be merged together to create a complete
+    bed level representation interpolated onto the model grid.
+
+    .. note::
+        The elevation data is stored in the model grid's data dataset under the key "z".
+
+    See Also
+    --------
+    :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`
+
+    """
 
     def __init__(
         self,
@@ -39,18 +52,17 @@ class SfincsElevation(ModelComponent):
         return self.model.grid.mask
 
     def read(self):
-        # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The mask values are read when the quadtree grid is read
+        """Not implemented, elevation data is read when the grid is read."""
         pass
 
     def write(self):
-        # The mask values are written when the quadtree grid is written
+        """Not implemented, elevation data is written when the grid is written."""
         pass
 
     @hydromt_step
     def create(
         self,
-        elevation_sets: List[dict],
+        elevation_list: List[dict],
         buffer_cells: int = 0,  # not in list
         interp_method: str = "linear",  # used for buffer cells only
     ):
@@ -62,7 +74,7 @@ class SfincsElevation(ModelComponent):
 
         Parameters
         ----------
-        elevation_sets : List[dict]
+        elevation_list : List[dict]
             List of dictionaries with topobathy data, each containing a dataset name or Path (elevation) and optional merge arguments e.g.:
             [{'elevation': merit_hydro, 'zmin': 0.01}, {'elevation': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]
             For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`
@@ -78,10 +90,10 @@ class SfincsElevation(ModelComponent):
         else:
             res = np.abs(self.mask.raster.res[0]) * 111111.0
 
-        elevation_sets = self.model._parse_datasets_elevation(elevation_sets, res=res)
+        elevation_list = self.model._parse_datasets_elevation(elevation_list, res=res)
 
         da_dep = workflows.merge_multi_dataarrays(
-            da_list=elevation_sets,
+            da_list=elevation_list,
             da_like=self.mask,
             buffer_cells=buffer_cells,
             interp_method=interp_method,

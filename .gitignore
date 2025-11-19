@@ -126,3 +126,9 @@ pyrightconfig.json
 
 pixi.lock
 .pixi
+
+# Examples
+
+examples/test_quadtree
+examples/test_regular
+examples/tmp_sfincs_compound

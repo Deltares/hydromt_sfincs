@@ -29,8 +29,8 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 def build_subgrid_table_quadtree(
     grid: xr.Dataset,
     bathymetry_sets: list[dict],
-    roughness_sets: list[dict] = [],
-    river_sets: list[dict] = [],
+    roughness_list: list[dict] = [],
+    river_list: list[dict] = [],
     manning_land: float = 0.06,
     manning_water: float = 0.020,
     manning_level: float = 1.0,
@@ -58,8 +58,8 @@ def build_subgrid_table_quadtree(
     subgrid_table.build(
         grid=grid,
         bathymetry_sets=bathymetry_sets,
-        roughness_sets=roughness_sets,
-        river_sets=river_sets,
+        roughness_list=roughness_list,
+        river_list=river_list,
         manning_land=manning_land,
         manning_water=manning_water,
         manning_level=manning_level,
@@ -94,8 +94,8 @@ class SubgridTableQuadtree:
         self,
         grid: xr.Dataset,
         bathymetry_sets: list[dict],
-        roughness_sets: list[dict] = [],
-        river_sets: list[dict] = [],
+        roughness_list: list[dict] = [],
+        river_list: list[dict] = [],
         manning_land: float = 0.04,
         manning_water: float = 0.02,
         manning_level: float = 1.0,
@@ -440,9 +440,9 @@ class SubgridTableQuadtree:
                         )
 
                         # burn rivers in bathymetry and manning
-                        if len(river_sets) > 0:
+                        if len(river_list) > 0:
                             logger.debug("Burn rivers in bathymetry and manning data")
-                            for riv_kwargs in river_sets:
+                            for riv_kwargs in river_list:
                                 da_dep, _ = burn_river_rect(
                                     da_elv=da_dep,
                                     logger=logger,
@@ -739,10 +739,10 @@ class SubgridTableQuadtree:
                     if bathymetry_database:
                         # Loop through roughness sets, check if one has polygon file
                         manning_grid = bathymetry_database.get_bathymetry_on_grid(
-                            xg, yg, crs, roughness_sets
+                            xg, yg, crs, roughness_list
                         )
 
-                        for roughness_set in roughness_sets:
+                        for roughness_set in roughness_list:
                             if (
                                 "polygon_file" in roughness_set
                                 and "value" in roughness_set
@@ -773,9 +773,9 @@ class SubgridTableQuadtree:
                         ] = manning_land
 
                     else:
-                        if len(roughness_sets) > 0:
+                        if len(roughness_list) > 0:
                             da_man = merge_multi_dataarrays(
-                                da_list=roughness_sets,
+                                da_list=roughness_list,
                                 da_like=da_sbg_uv,
                                 interp_method="linear",
                                 buffer_cells=buffer_cells,
@@ -800,9 +800,9 @@ class SubgridTableQuadtree:
                         manning_grid = da_man.values
 
                     # burn rivers in bathymetry and manning
-                    if len(river_sets) > 0:
+                    if len(river_list) > 0:
                         logger.debug("Burn rivers in bathymetry and manning data")
-                        for riv_kwargs in river_sets:
+                        for riv_kwargs in river_list:
                             da_dep, da_man = burn_river_rect(
                                 da_elv=da_dep,
                                 da_man=da_man,

@@ -26,6 +26,16 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsSubgridTable(ModelComponent):
+    """SFINCS Subgrid Table Component.
+
+    This component contains methods to create, read and write subgrid tables for the SFINCS model
+    on regular grids. Subgrid tables are used to represent subgrid-scale variations in bed level
+    and roughness within each grid cell, allowing for more accurate simulations of flow dynamics.
+
+    .. note::
+        The subgrid table data is stored in the component's data attribute as an xarray.Dataset.
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -55,16 +65,18 @@ class SfincsSubgridTable(ModelComponent):
                 if abs_file_path is None:
                     # File name not defined, so no subgrid in this model
                     return
-                if not abs_file_path.endswith(".nc"):
+                if abs_file_path.suffix != ".nc":
                     # if not netcdf, assume it is a binary file
-                    self.read_binary(file_name=abs_file_path)
+                    self.read_binary(filename=abs_file_path)
                 else:
                     # if netcdf, read it with xarray
-                    self.read(file_name=abs_file_path)
+                    self.read(filename=abs_file_path)
 
     # new way of reading netcdf subgrid tables
     def read(self, filename: str = None):
-        """Load subgrid table from netcdf file."""
+        """Load subgrid table from file for a regular grid with given mask.
+        If filename is not specified, sthe filename is taken from the model configuration.
+        """
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -89,6 +101,7 @@ class SfincsSubgridTable(ModelComponent):
             self.read_binary(filename=abs_file_path)
 
     def read_netcdf(self, filename: str = None):
+        """Load subgrid table from netcdf file for a regular grid with given mask."""
         # netcdf, so set version to 1
         self.version = 1
 
@@ -221,7 +234,7 @@ class SfincsSubgridTable(ModelComponent):
 
     # Following remains for backward compatibility, but should soon not be used anymore
     def read_binary(self, filename: str = None):
-        """Load subgrid table from file for a regular grid with given mask."""
+        """Load subgrid table from binary file for a regular grid with given mask."""
 
         # set version to old binary format
         self.version = 0
@@ -336,8 +349,9 @@ class SfincsSubgridTable(ModelComponent):
 
     # new way of writing netcdf subgrid tables
     def write(self, filename: str = None):
-        """Write subgrid table to netcdf file for a regular grid with given mask.
-        Values are only written for active cells (mask > 0)."""
+        """Write subgrid table to file for a regular grid with given mask. Values are only written
+        for active cells (mask > 0). If filename is not specified, the filename is taken from the model
+        configuration."""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -354,6 +368,9 @@ class SfincsSubgridTable(ModelComponent):
             default="sfincs_subgrid.nc",
         )
 
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # check if the file is a netcdf file
         if abs_file_path.suffix == ".nc":
             # read netcdf file
@@ -363,6 +380,8 @@ class SfincsSubgridTable(ModelComponent):
             self.write_binary(filename=abs_file_path)
 
     def write_netcdf(self, filename: str = None):
+        """Save the subgrid data to a netcdf file for a regular grid with given mask. Values are only written
+        for active cells (mask > 0)."""
         # get the mask from the model and convert to xarray
         mask = self.model.grid.mask
         ds = self.to_xarray(dims=mask.raster.dims, coords=mask.raster.coords)
@@ -431,7 +450,7 @@ class SfincsSubgridTable(ModelComponent):
 
     # Following remains for backward compatibility, but should soon not be used anymore
     def write_binary(self, filename: str = None):
-        """Save the subgrid data to a binary file."""
+        """Save the subgrid data to a binary file. Values are only written for active cells (mask > 0)."""
 
         # get the mask from the model
         mask = self.model.grid.mask
@@ -498,9 +517,9 @@ class SfincsSubgridTable(ModelComponent):
     @hydromt_step
     def create(
         self,
-        elevation_sets: List[dict],
-        roughness_sets: List[dict] = [],
-        river_sets: List[dict] = [],
+        elevation_list: List[dict],
+        roughness_list: List[dict] = [],
+        river_list: List[dict] = [],
         buffer_cells: int = 0,
         nr_levels: int = 10,
         nbins: int = None,
@@ -517,7 +536,7 @@ class SfincsSubgridTable(ModelComponent):
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
     ):
-        """Setup method for subgrid tables based on a list of
+        """Create method for subgrid tables based on a list of
         elevation and Manning's roughness datasets.
 
         These datasets are used to derive relations between the water level
@@ -529,7 +548,7 @@ class SfincsSubgridTable(ModelComponent):
 
         Parameters
         ----------
-        elevation_sets : List[dict]
+        elevation_list : List[dict]
             List of dictionaries with topobathy data.
             Each should minimally contain a data catalog source name, data file path,
             or xarray raster object ('elevation').
@@ -544,7 +563,7 @@ class SfincsSubgridTable(ModelComponent):
                     {'elevation': 'gebco', 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}
                 ]
 
-        roughness_sets : List[dict], optional
+        roughness_list : List[dict], optional
             List of dictionaries with Manning's n datasets. Each dictionary should at
             least contain one of the following:
 
@@ -561,7 +580,7 @@ class SfincsSubgridTable(ModelComponent):
                     {'lulc': 'esa_worlcover', 'reclass_table': 'esa_worlcover_mapping'}
                 ]
 
-        river_sets : List[dict], optional
+        river_list : List[dict], optional
             List of dictionaries with river datasets. Each dictionary should at least
             contain a river centerline data and optionally a river mask:
 
@@ -633,14 +652,14 @@ class SfincsSubgridTable(ModelComponent):
                 / nr_subgrid_pixels
             )
 
-        elevation_sets = self.model._parse_datasets_elevation(elevation_sets, res=res)
+        elevation_list = self.model._parse_datasets_elevation(elevation_list, res=res)
 
-        if len(roughness_sets) > 0:
+        if len(roughness_list) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
-            roughness_sets = self.model._parse_roughness_sets(roughness_sets)
+            roughness_list = self.model._parse_roughness_list(roughness_list)
 
-        if len(river_sets) > 0:
-            river_sets = self.model._parse_river_sets(river_sets)
+        if len(river_list) > 0:
+            river_list = self.model._parse_river_list(river_list)
 
         # folder where high-resolution topobathy and manning geotiffs are stored
         if write_dep_tif or write_man_tif:
@@ -826,7 +845,7 @@ class SfincsSubgridTable(ModelComponent):
 
                 # get subgrid bathymetry tile
                 da_dep = workflows.merge_multi_dataarrays(
-                    da_list=elevation_sets,
+                    da_list=elevation_list,
                     da_like=da_mask_sbg,
                     interp_method="linear",
                     buffer_cells=buffer_cells,
@@ -848,9 +867,9 @@ class SfincsSubgridTable(ModelComponent):
                 )
 
                 # get subgrid manning roughness tile
-                if len(roughness_sets) > 0:
+                if len(roughness_list) > 0:
                     da_man = workflows.merge_multi_dataarrays(
-                        da_list=roughness_sets,
+                        da_list=roughness_list,
                         da_like=da_mask_sbg,
                         interp_method="linear",
                         buffer_cells=buffer_cells,
@@ -871,9 +890,9 @@ class SfincsSubgridTable(ModelComponent):
                     da_man.raster.set_nodata(np.nan)
 
                 # burn rivers in bathymetry and manning
-                if len(river_sets) > 0:
+                if len(river_list) > 0:
                     logger.debug("Burn rivers in bathymetry and manning data")
-                    for riv_kwargs in river_sets:
+                    for riv_kwargs in river_list:
                         da_dep, da_man = workflows.bathymetry.burn_river_rect(
                             da_elv=da_dep, da_man=da_man, logger=logger, **riv_kwargs
                         )
@@ -1032,41 +1051,6 @@ class SfincsSubgridTable(ModelComponent):
         """Convert xarray dataset to subgrid class."""
         for name in ds_sbg.data_vars:
             setattr(self, name, ds_sbg[name].values)
-
-
-# class SubgridTableQuadtree:
-#     # This code is still slow as it does not use numba
-
-#     def __init__(self, version=0):
-#         # A quadtree subgrid table contains data for EACH cell, u and v point in the quadtree mesh,
-#         # regardless of the mask value!
-#         self.version = version
-#         self.data = None
-
-#     def read(self, file_name):
-#         """Read XArray dataset from netcdf file"""
-
-#         if not os.path.isfile(file_name):
-#             logger.info("File " + file_name + " does not exist!")
-#             return
-
-#         # Read from netcdf file with xarray
-#         with xr.open_dataset(file_name) as ds:
-#             # Transpose to ensure bins is first dimension (convert from FORTRAN convention in SFINCS to Python)
-#             ds = ds.transpose("levels", "npuv", "np")
-#             self.data = ds
-
-#     def write(self, file_name):
-#         """Write XArray dataset to netcdf file"""
-#         # ensure levels is last dimension to match the FORTRAN convention in SFINCS
-#         ds = self.data.transpose("npuv", "np", "levels")
-
-#         # fix names to match SFINCS convention
-#         # ds = ds.rename_vars({"uv_navg": "uv_navg_w", "uv_ffit": "uv_fnfit"})
-
-#         # before writing, check if the file already exists while data is still lazily loaded
-#         utils.check_exists_and_lazy(ds, file_name)
-#         ds.to_netcdf(file_name)
 
 
 @njit

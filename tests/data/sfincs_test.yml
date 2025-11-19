@@ -19,7 +19,7 @@ steps:
       rotated: True                  # allow a rotated grid
 
   - elevation.create:
-      elevation_sets:
+      elevation_list:
         - elevation: merit_hydro
           zmin: 0.001
         - elevation: gebco
@@ -32,11 +32,11 @@ steps:
       zmax: -1
 
   - subgrid.create:
-      elevation_sets:
+      elevation_list:
         - elevation: merit_hydro
           zmin: 0.001
         - elevation: gebco
-      roughness_sets:
+      roughness_list:
         - lulc: vito_2015
           reclass_table: vito_mapping
       write_dep_tif: True
