@@ -84,4 +84,4 @@ This plugin assists the SFINCS modeller in:
    3_update_model/index.rst
    4_run_model/sfincs_run.rst
    5_postprocess_model/sfincs_analyse.rst
-   6_migration_guide/index.rst
+   6_migration_guide/migration_hydromt.rst

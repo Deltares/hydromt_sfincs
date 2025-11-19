@@ -48,6 +48,7 @@ see example below.
 .. code-block:: python
 
     from hydromt_sfincs import SfincsModel
+    from datetime import datetime
 
     # open existing model in read-only mode
     sf = SfincsModel(data_libs=["artifact_data"], root="sfincs_compound", mode="r")
@@ -59,7 +60,9 @@ see example below.
 
     # update the configuration
     sf.config.update(
-        {"tref": "20100201 000000", "tstart": "20100201 000000", "tstop": "20100202 000000"}
+        {"tref": datetime(2010, 2, 1, 0, 0, 0),
+        "tstart": datetime(2010, 2, 1, 0, 0, 0),
+        "tstop": datetime(2010, 2, 2, 0, 0, 0)}
     )
 
     # update the precipitation component
@@ -77,5 +80,5 @@ For examples of how to update a SFINCS model using HydroMT-SFINCS, see:
     :maxdepth: 2
     :titlesonly:
 
-    Example: Add Forcing <../../_examples/2_add_forcing.ipynb>
-    Example: Add Geometries <../../_examples/3_add_geometries.ipynb>
+    Example: Update Forcing <../../_examples/2_update_forcing.ipynb>
+    Example: Update Geometries <../../_examples/3_update_geometries.ipynb>
