@@ -28,8 +28,8 @@ from rasterio.windows import Window
 from shapely.geometry import LineString, Polygon
 
 import hydromt
-from hydromt.io import write_xy
-from hydromt.io import open_vector
+from hydromt.writers import write_xy
+from hydromt.readers import open_vector
 from hydromt.data_catalog.drivers import RasterioDriver
 from hydromt.gis.gis_utils import zoom_to_overview_level
 from hydromt.gis.vector import GeoDataset

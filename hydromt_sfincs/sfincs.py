@@ -675,7 +675,9 @@ class SfincsModel(Model):
                 )
                 df_map = self.data_catalog.get_dataframe(
                     reclass_table,
-                    driver={"name": "pandas", "options": {"index_col": 0}},
+                    source_kwargs={
+                        "driver": {"name": "pandas", "options": {"index_col": 0}}
+                    },
                 )
                 # reclassify
                 da_man = da_lulc.raster.reclassify(df_map[["N"]])["N"]

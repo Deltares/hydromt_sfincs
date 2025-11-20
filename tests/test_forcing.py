@@ -46,7 +46,7 @@ def test_create_meteo_latlon(tmp_dir):
     region = join(TESTDATADIR, "region.geojson")
 
     # create a model instance with geographical coordinates
-    mod = SfincsModel(root=tmp_dir, mode="w+")
+    mod = SfincsModel(root=tmp_dir, mode="w+", data_libs=["artifact_data"])
     mod.grid.create_from_region(
         region={"geom": region},
         crs=4326,

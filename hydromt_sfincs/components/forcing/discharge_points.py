@@ -410,7 +410,6 @@ class SfincsDischargePoints(SfincsBoundaryBase):
                 geom=region,
                 variables=["discharge"],
                 time_range=(tstart, tstop),
-                crs=self.model.crs,
             )
             df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
             gdf_locs = da.vector.to_gdf()
@@ -418,9 +417,11 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
                 time_range=(tstart, tstop),
-                driver={
-                    "name": "pandas",
-                    "options": {"index_col": 0, "parse_dates": True},
+                source_kwargs={
+                    "driver": {
+                        "name": "pandas",
+                        "options": {"index_col": 0, "parse_dates": True},
+                    }
                 },
             )
             df_ts.columns = df_ts.columns.map(int)  # parse column names to integers

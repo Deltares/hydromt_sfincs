@@ -147,8 +147,10 @@ class SfincsInfiltration(ModelComponent):
             df_map = self.data_catalog.get_dataframe(
                 reclass_table,
                 variables=["qinf"],
+                source_kwargs={
+                    "driver": {"name": "pandas", "options": {"index_col": 0}}
+                },
             )
-            # TODO set index col to 0
             # reclassify
             da_inf = da_lulc.raster.reclassify(df_map)["qinf"]
         else:

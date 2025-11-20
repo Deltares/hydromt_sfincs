@@ -177,6 +177,9 @@ class SfincsQuadtreeInfiltration(ModelComponent):
             df_map = self.model.data_catalog.get_dataframe(
                 reclass_table,
                 variables=["qinf"],
+                source_kwargs={
+                    "driver": {"name": "pandas", "options": {"index_col": 0}}
+                },
             )
             # TODO set index col to 0
             # reclassify

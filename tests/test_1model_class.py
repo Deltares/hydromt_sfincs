@@ -9,7 +9,7 @@ import pytest
 from shapely.geometry import Polygon, Point
 import xarray as xr
 from geopandas.testing import assert_geodataframe_equal
-from hydromt.io import read_workflow_yaml
+from hydromt.readers import read_workflow_yaml
 
 # from hydromt.log import setuplog
 

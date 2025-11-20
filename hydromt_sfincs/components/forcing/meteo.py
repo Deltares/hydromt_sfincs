@@ -449,9 +449,11 @@ class SfincsPrecipitation(SfincsMeteo):
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
                 time_range=(tstart, tstop),
-                driver={
-                    "name": "pandas",
-                    "options": {"parse_dates": True, "index_col": 0},
+                source_kwargs={
+                    "driver": {
+                        "name": "pandas",
+                        "options": {"index_col": 0, "parse_dates": True},
+                    }
                 },
             )
         elif magnitude is not None:
@@ -720,9 +722,11 @@ class SfincsWind(SfincsMeteo):
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
                 time_range=(tstart, tstop),
-                driver={
-                    "name": "pandas",
-                    "options": {"parse_dates": True, "index_col": 0},
+                source_kwargs={
+                    "driver": {
+                        "name": "pandas",
+                        "options": {"index_col": 0, "parse_dates": True},
+                    }
                 },
             )
         elif magnitude is not None and direction is not None:

@@ -272,7 +272,12 @@ def test_create(model_config):
     points_gdf = gdf.set_geometry(gdf.geometry.centroid)
     df = model_config.data_catalog.get_dataframe(
         csv_file,
-        driver={"name": "pandas", "options": {"index_col": 0, "parse_dates": True}},
+        source_kwargs={
+            "driver": {
+                "name": "pandas",
+                "options": {"index_col": 0, "parse_dates": True},
+            }
+        },
     )
     # alter it a bit to have different values, first with existing index,
     df = df.mul(2)
