@@ -17,7 +17,7 @@ from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import utils, workflows
-from hydromt_sfincs.workflows.subgrid import *
+from hydromt_sfincs.workflows.subgrid import subgrid_v_table, subgrid_q_table
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel

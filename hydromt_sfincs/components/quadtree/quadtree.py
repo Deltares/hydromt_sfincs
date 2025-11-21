@@ -674,7 +674,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         """Make a COG file with topobathy. Now only works for projected coordinates. This always make the topobathy COG in the same projection as the model."""
 
         # Get the bounds of the grid
-        bounds = self.bounds()
+        bounds = self.bounds
 
         x0 = bounds[0]
         y0 = bounds[1]

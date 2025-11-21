@@ -527,6 +527,7 @@ class SfincsMask(ModelComponent):
         gdf: geopandas.GeoDataFrame
             GeoDataFrame of Points.
         """
+        da_mask = self.data["mask"]
         if option == "all":
             da_mask = da_mask != da_mask.raster.nodata
         elif option == "active":
