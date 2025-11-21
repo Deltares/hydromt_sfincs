@@ -233,8 +233,8 @@ class SfincsQuadtreeElevation(MeshComponent):
             )
 
         # get m and n indices
-        n = self.data["n"]
-        m = self.data["m"]
+        n = self.data["n"] - 1  # 0-based
+        m = self.data["m"] - 1  # 0-based
 
         # Loop through all levels
         for ilev in range(nlev):
