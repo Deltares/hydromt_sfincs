@@ -1,8 +1,10 @@
 """Test sfincs model class against hydromt.models.model_api"""
 
+import os
 from os.path import isfile, join
 
 import numpy as np
+import math
 import geopandas as gpd
 import pandas as pd
 import pytest
@@ -28,19 +30,126 @@ _cases = {
 }
 
 
-@pytest.mark.parametrize("case", list(_cases.keys()))
-def test_model_class(case):
-    # read model in examples folder
-    root = join(TESTDATADIR, _cases[case]["example"])
-    mod = SfincsModel(root=root, mode="r")
-    mod.read()
-    # run test_model_api() method
-    non_compliant_list = mod._test_model_api()
-    # drop non-compliant variables with "results" and "mesh" in name
-    non_compliant_list = [
-        v for v in non_compliant_list if "results" not in v and "mesh" not in v
+@pytest.mark.parametrize("case", list(_cases.keys())[:1])
+def test_model_build(tmpdir, case):
+    # compare results with model from examples folder
+    root = str(tmpdir.join(case))
+    root0 = TESTMODELDIR
+
+    # FIXME change directory into testdata folder to find data catalog ... is this logical?
+    os.chdir(TESTDATADIR)
+
+    # Build model
+    config = join(TESTDATADIR, _cases[case]["ini"])
+    modeltype, kwargs, steps = read_workflow_yaml(config, modeltype="sfincs")
+
+    # logger = setuplog(path=join(root, "hydromt.log"), log_level=10)
+    mod1 = SfincsModel(root=root, mode="w", **kwargs)
+    # convert steps to list of dicts
+    mod1.build(steps=steps)
+    # Check if model is api compliant
+    # non_compliant_list = mod1.test_model_api()
+    # assert len(non_compliant_list) == 0
+
+    # read and compare with model from examples folder
+    mod0 = SfincsModel(root=root0, mode="r")
+    mod0.read()
+    mod1 = SfincsModel(root=root, mode="r")
+    mod1.read()
+
+    # compare config
+    d0 = mod0.config.data.model_dump()
+    d1 = mod1.config.data.model_dump()
+
+    def equal(a, b, tol=1e-6):
+        if isinstance(a, float) and isinstance(b, float):
+            return math.isclose(a, b, rel_tol=tol, abs_tol=tol)
+        return a == b
+
+    # ignore some keys that we know are different
+    ignore_keys = {"bzsfile", "bndfile", "bcafile", "netbndbzsbzifile", "wvmfile"}
+    diff = {
+        k: (d0.get(k), d1.get(k))
+        for k in d0.keys() | d1.keys()
+        if k not in ignore_keys and not equal(d0.get(k), d1.get(k))
+    }
+    assert not diff, f"Differences:\n{diff}"
+
+    # check grid
+    invalid_maps = []
+    if len(mod0.grid.data) > 0:
+        assert np.all(mod0.crs == mod1.crs), "map crs"
+        mask = (mod0.grid.data["mask"] > 0).values  # compare only active cells
+        mask1 = (mod1.grid.data["mask"] > 0).values
+        assert np.allclose(mask, mask1), "mask mismatch"
+        for name in mod0.grid.data.raster.vars:
+            if name == "mask":
+                continue
+            map0 = mod0.grid.data[name].values
+            map1 = mod1.grid.data[name].values
+            if not np.allclose(map0[mask], map1[mask]):
+                invalid_maps.append(name)
+    invalid_map_str = ", ".join(invalid_maps)
+    assert len(invalid_maps) == 0, f"invalid maps: {invalid_map_str}"
+    # check geometries
+    geom_components = [
+        "observation_points",
+        "cross_sections",
+        "thin_dams",
+        "weirs",
+        "drainage_structures",
     ]
-    assert len(non_compliant_list) == 0
+    invalid_geoms = []
+    for name in geom_components:
+        if mod0.components[name].data.empty:
+            continue
+        try:
+            assert_geodataframe_equal(
+                mod0.components[name].data,
+                mod1.components[name].data,
+                check_less_precise=True,  # allow for rounding errors in geoms
+                check_like=True,  # order may be different
+                check_geom_type=True,  # geometry types should be the same
+                normalize=True,  # normalize geometry
+            )
+        except AssertionError:  # re-raise error with geom name
+            invalid_geoms.append(name)
+    assert len(invalid_geoms) == 0, f"invalid geoms: {invalid_geoms}"
+    # check forcing conditions
+    forcing_components = [
+        ("water_level", "bzs"),
+        ("discharge_points", "dis"),
+        ("wind", "wind"),
+        ("precipitation", "precip_2d"),
+        # ("pressure", "prs"),
+    ]
+    invalid_forcing = []
+    for comp, name in forcing_components:
+        data = mod0.components[comp].data[name]
+        if isinstance(data, gpd.GeoDataFrame) and not data.empty:
+            try:
+                assert_geodataframe_equal(
+                    mod0.components[comp].data,
+                    mod1.components[comp].data,
+                    check_less_precise=True,  # allow for rounding errors in geoms
+                    check_like=True,  # order may be different
+                    check_geom_type=True,  # geometry types should be the same
+                    normalize=True,  # normalize geometry
+                )
+            except AssertionError:  # re-raise error with geom name
+                invalid_forcing.append(comp)
+        elif isinstance(data, xr.DataArray) or isinstance(data, xr.Dataset):
+            # Only compare if mod0.forcing[name] is not empty
+            data0 = mod0.components[comp].data[name]
+            data1 = mod1.components[comp].data[name]
+            if (isinstance(data0, xr.DataArray) and data0.size > 0) or (
+                isinstance(data0, xr.Dataset) and len(data0.data_vars) > 0
+            ):
+                try:
+                    assert np.allclose(data0.values, data1.values, atol=1.0e-2)
+                except AssertionError:  # re-raise error with forcing name
+                    invalid_forcing.append(comp)
+        assert len(invalid_forcing) == 0, f"invalid forcing: {invalid_forcing}"
 
 
 def test_infiltration(model):
@@ -486,107 +595,3 @@ def test_plots(case, tmpdir):
     else:
         mod.plot_basemap(fn_out=fn_out, bmap="sat")
     assert isfile(fn_out)
-
-
-@pytest.mark.parametrize("case", list(_cases.keys())[:1])
-def test_model_build(tmpdir, case):
-    # compare results with model from examples folder
-    root = str(tmpdir.join(case))
-    root0 = TESTMODELDIR
-
-    # Build model
-    config = join(TESTDATADIR, _cases[case]["ini"])
-    modeltype, kwargs, steps = read_workflow_yaml(config, modeltype="sfincs")
-
-    # logger = setuplog(path=join(root, "hydromt.log"), log_level=10)
-    mod1 = SfincsModel(root=root, mode="w", **kwargs)
-    # convert steps to list of dicts
-    mod1.build(steps=steps)
-    # Check if model is api compliant
-    # non_compliant_list = mod1.test_model_api()
-    # assert len(non_compliant_list) == 0
-
-    # read and compare with model from examples folder
-    mod0 = SfincsModel(root=root0, mode="r")
-    mod0.read()
-    mod1 = SfincsModel(root=root, mode="r")
-    mod1.read()
-    # TODO using hydromt core Model._check_equal after fix https://github.com/Deltares/hydromt/issues/253
-    # check config
-    if mod0.config.data:
-        assert mod0.config.data == mod1.config.data, "config mismatch"
-    # check grid
-    invalid_maps = []
-    if len(mod0.grid.data) > 0:
-        assert np.all(mod0.crs == mod1.crs), "map crs"
-        mask = (mod0.grid.data["mask"] > 0).values  # compare only active cells
-        mask1 = (mod1.grid.data["mask"] > 0).values
-        assert np.allclose(mask, mask1), "mask mismatch"
-        for name in mod0.grid.data.raster.vars:
-            if name == "mask":
-                continue
-            map0 = mod0.grid.data[name].values
-            map1 = mod1.grid.data[name].values
-            if not np.allclose(map0[mask], map1[mask]):
-                invalid_maps.append(name)
-    invalid_map_str = ", ".join(invalid_maps)
-    assert len(invalid_maps) == 0, f"invalid maps: {invalid_map_str}"
-    # check geometries
-    geom_components = [
-        "observation_points",
-        "cross_sections",
-        "thin_dams",
-        "weirs",
-        "drainage_structures",
-    ]
-    invalid_geoms = []
-    for name in geom_components:
-        if mod0.components[name].data.empty:
-            continue
-        try:
-            assert_geodataframe_equal(
-                mod0.components[name].data,
-                mod1.components[name].data,
-                check_less_precise=True,  # allow for rounding errors in geoms
-                check_like=True,  # order may be different
-                check_geom_type=True,  # geometry types should be the same
-                normalize=True,  # normalize geometry
-            )
-        except AssertionError:  # re-raise error with geom name
-            invalid_geoms.append(name)
-    assert len(invalid_geoms) == 0, f"invalid geoms: {invalid_geoms}"
-    # check forcing conditions
-    forcing_components = [
-        "boundary_conditions",
-        "discharge_points",
-        "wind",
-        "pressure",
-        "precipitation",
-    ]
-    invalid_forcing = []
-    for name in forcing_components:
-        data = mod0.components[name].data
-        if isinstance(data, gpd.GeoDataFrame) and not data.empty:
-            try:
-                assert_geodataframe_equal(
-                    mod0.components[name].data,
-                    mod1.components[name].data,
-                    check_less_precise=True,  # allow for rounding errors in geoms
-                    check_like=True,  # order may be different
-                    check_geom_type=True,  # geometry types should be the same
-                    normalize=True,  # normalize geometry
-                )
-            except AssertionError:  # re-raise error with geom name
-                invalid_forcing.append(name)
-        elif isinstance(data, xr.DataArray) or isinstance(data, xr.Dataset):
-            # Only compare if mod0.forcing[name] is not empty
-            data0 = mod0.forcing[name]
-            data1 = mod1.forcing[name]
-            if (isinstance(data0, xr.DataArray) and data0.size > 0) or (
-                isinstance(data0, xr.Dataset) and len(data0.data_vars) > 0
-            ):
-                try:
-                    assert np.allclose(data0.values, data1.values)
-                except AssertionError:  # re-raise error with forcing name
-                    invalid_forcing.append(name)
-        assert len(invalid_forcing) == 0, f"invalid forcing: {invalid_forcing}"

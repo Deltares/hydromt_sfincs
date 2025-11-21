@@ -261,8 +261,6 @@ class SfincsConfig(ModelComponent):
         the irrelevant grid component.
         """
 
-        # FIXME if we want to drop components, it should drop all related components (mask, subgrid, etc.)
-
         # Determine grid type based on configuration
         self.model.grid_type = "quadtree" if self.get("qtrfile") else "regular"
 
@@ -270,11 +268,12 @@ class SfincsConfig(ModelComponent):
             # update the regular grid properties from the configuration
             self.model.grid.update_grid_from_config()
             # drop quadtree component
-            self.model.components.pop("quadtree", None)
-            # TODO also drop mask and subgrid components?
+            for comp in self.model._QUADTREE_GRID_NAMES:
+                self.model.components.pop(comp, None)
         elif self.model.grid_type == "quadtree":
             # drop regular component
-            self.model.components.pop("grid", None)
+            for comp in self.model._REGULAR_GRID_NAMES:
+                self.model.components.pop(comp, None)
 
     def get_set_file_variable(
         self, key: str, value: str | Path = None, default: str = None

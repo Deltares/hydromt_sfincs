@@ -551,10 +551,16 @@ class SfincsGrid(GridComponent):
         self.rotation = self.data.raster.rotation
         self.epsg = self.data.raster.crs.to_epsg()
 
-        # update config for geographic coordinates
+        # round raster resolution and rotation based on CRS type
         if self.data.raster.crs.is_geographic:
+            self.dx = round(self.dx, 6)
+            self.dy = round(self.dy, 6)
+            self.rotation = round(self.rotation, 6)
             crsgeo = 1
         else:
+            self.dx = round(self.dx, 3)
+            self.dy = round(self.dy, 3)
+            self.rotation = round(self.rotation, 3)
             crsgeo = 0
 
         # update the grid properties in the config
