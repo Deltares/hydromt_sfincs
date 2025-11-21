@@ -18,5 +18,8 @@ def cn_to_s(da_cn, da_mask=None, nodata=-9999):
     da_s = np.maximum(1000 / da_cn - 10, 0).round(3)
     if da_mask is not None:
         da_s = da_s.where(da_mask, nodata)
-    da_s.raster.set_nodata(nodata)
+    try:
+        da_s.raster.set_nodata(nodata)
+    except Exception:
+        pass
     return da_s

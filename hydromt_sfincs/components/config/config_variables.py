@@ -77,7 +77,7 @@ class SfincsConfigVariables(BaseSettings):
 
     dtmaxout: float = Field(
         86400.0, ge=0.0, description="Maximum map output interval (seconds)"
-    )  # FIXME - TL: why was 'int' before?
+    )
 
     dtrstout: float | None = Field(
         None, examples=0.0, ge=0.0, description="Restart file output interval (seconds)"
@@ -293,10 +293,13 @@ class SfincsConfigVariables(BaseSettings):
         le=1,
         description="Ability to use rainfall from spiderweb  (1: on, 0: off)",
     )
-    # global: int = Field(
-    #     None,
-    #     description="Ability to make a global spherical SFINCS model that wraps 'over the edge' (1: on, 0: off)",
-    # ) #FIXME > clash with 'global' keyword, leave out for now
+    global_: int | None = Field(
+        None,
+        ge=0,
+        le=1,
+        alias="global",
+        description="Ability to make a global spherical SFINCS model that wraps 'over the edge' (1: on, 0: off)",
+    )
     nuvisc: float | None = Field(
         None,
         examples=0.01,

@@ -424,8 +424,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                 geom=region,
                 buffer=buffer,
                 variables=["waterlevel"],
-                time_tuple=(tstart, tstop),
-                crs=self.model.crs,
+                time_range=(tstart, tstop),
             )
             df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
             gdf_locs = da.vector.to_gdf()
@@ -433,9 +432,11 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
                 time_range=(tstart, tstop),
-                driver={
-                    "name": "pandas",
-                    "options": {"parse_dates": True, "index_col": 0},
+                source_kwargs={
+                    "driver": {
+                        "name": "pandas",
+                        "options": {"index_col": 0, "parse_dates": True},
+                    }
                 },
             )
             df_ts.columns = df_ts.columns.map(int)  # parse column names to integers

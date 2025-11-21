@@ -102,8 +102,9 @@ class SfincsQuadtreeElevation(MeshComponent):
             for ilev in range(nlev)
         ]
 
-        n = self.data["n"]
-        m = self.data["m"]
+        # get m and n indices
+        n = self.data["n"] - 1  # 0-based
+        m = self.data["m"] - 1  # 0-based
 
         def process_level(ilev):
             idx = level_indices[ilev]

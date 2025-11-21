@@ -43,6 +43,15 @@ class SfincsObservationPoints(ModelComponent):
             self._initialize()
         return self._data
 
+    @property
+    def nr_points(self) -> int:
+        """
+        Return the number of point locations currently stored.
+        """
+        if hasattr(self.data, "index"):
+            return len(self.data.index)
+        return 0
+
     # %% core HydroMT-SFINCS functions:
     # _initialize
     # read
@@ -220,9 +229,8 @@ class SfincsObservationPoints(ModelComponent):
             index = [index]
 
         # Check that any integer in list is not larger than the number of points
-        if max(index) > (len(self.data) - 1) or min(index) < 0:
+        if max(index) > self.nr_points - 1 or min(index) < 0:
             raise ValueError("One of the indices exceeds length of index range!")
-        # FIXME len(self.data.index) or len(self.data.index)
 
         self._data = self.data.drop(index).reset_index(drop=True)
         logger.info("Dropping point(s) from observations")
@@ -231,7 +239,7 @@ class SfincsObservationPoints(ModelComponent):
         """Clean GeoDataFrame with observation points."""
         self._data = gpd.GeoDataFrame()
         # Set obsfile to None in config
-        self.model.config.set("obsfile", None)  # FIXME - TL: do we want that?
+        self.model.config.set("obsfile", None)
 
     # %% DDB GUI focused additional functions:
     # add_point

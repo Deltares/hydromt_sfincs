@@ -98,6 +98,7 @@ class SfincsModel(Model):
         "quadtree_grid": SfincsQuadtreeGrid,
         "quadtree_elevation": SfincsQuadtreeElevation,
         "quadtree_mask": SfincsQuadtreeMask,
+        "quadtree_infiltration": SfincsQuadtreeInfiltration,
         "quadtree_storage_volume": SfincsQuadtreeStorageVolume,
         "quadtree_subgrid": SfincsQuadtreeSubgridTable,
         "quadtree_snapwave_mask": SnapWaveQuadtreeMask,
@@ -675,7 +676,9 @@ class SfincsModel(Model):
                 )
                 df_map = self.data_catalog.get_dataframe(
                     reclass_table,
-                    driver={"name": "pandas", "options": {"index_col": 0}},
+                    source_kwargs={
+                        "driver": {"name": "pandas", "options": {"index_col": 0}}
+                    },
                 )
                 # reclassify
                 da_man = da_lulc.raster.reclassify(df_map[["N"]])["N"]
@@ -868,6 +871,11 @@ class SfincsModel(Model):
     def quadtree_mask(self) -> SfincsQuadtreeMask:
         """Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_mask.SfincsQuadtreeMask`."""
         return self.components["quadtree_mask"]
+
+    @property
+    def quadtree_infiltration(self) -> SfincsQuadtreeInfiltration:
+        """Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_infiltration.SfincsQuadtreeInfiltration`."""
+        return self.components["quadtree_infiltration"]
 
     @property
     def quadtree_storage_volume(self) -> SfincsQuadtreeStorageVolume:

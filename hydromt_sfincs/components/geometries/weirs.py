@@ -233,8 +233,14 @@ class SfincsWeirs(ModelComponent):
         # keep relevant columns
         gdf = gdf[[c for c in cols["weir"] if c in gdf.columns]]
 
+        # check whether z values are part of the gdf, or need to be calculated
+        gdf_has_z = (
+            gdf.geometry.apply(lambda geom: geom.has_z).all() or "z" in gdf.columns
+        )
+
         # check if z values are provided or can be calculated
-        if "z" not in gdf.columns and (dep is None and dz is None):
+        if not gdf_has_z and (dep is None and dz is None):
+            # check if z values are part of the linestrings, so called linestringZ
             raise ValueError(
                 "Weir structure requires z values, or 'dep' or 'dz' input to determine these on the fly."
             )
@@ -285,12 +291,12 @@ class SfincsWeirs(ModelComponent):
         """Clean GeoDataFrame with weirs."""
         self._data = gpd.GeoDataFrame()
         # Set weirfile to None in config
-        self.model.config.set("weirfile", None)  # FIXME - TL: do we want that?
+        self.model.config.set("weirfile", None)
 
     # %% HydroMT-SFINCS focused additional functions:
     # determine_weir_elevation
 
-    def determine_weir_elevation(  # FIXME - TL: should this be in utils.py or not?
+    def determine_weir_elevation(
         self,
         gdf: gpd.GeoDataFrame,
         dep: Union[str, Path, xr.DataArray] = None,

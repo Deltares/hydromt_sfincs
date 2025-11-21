@@ -70,7 +70,17 @@ def test_config_io(tmp_path):
     # now read the configuration again
     model1 = SfincsModel(root=tmp_path, mode="r")
     model1.config.read()
-    assert model0.config.data == model1.config.data
+
+    d0 = model0.config.data.model_dump()
+    d1 = model1.config.data.model_dump()
+
+    diff = {
+        k: (d0.get(k), d1.get(k))
+        for k in d0.keys() | d1.keys()
+        if d0.get(k) != d1.get(k)
+    }
+
+    assert not diff, f"Differences:\n{diff}"
 
     # write config including descriptions
     model1.config.write(filename="sfincs_with_description.inp", write_description=True)

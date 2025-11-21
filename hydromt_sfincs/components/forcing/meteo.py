@@ -348,7 +348,7 @@ class SfincsPrecipitation(SfincsMeteo):
             precip,
             bbox=self.model.bbox,
             buffer=buffer,
-            time_tuple=self.model.get_model_time(),
+            time_range=self.model.get_model_time(),
             variables=["precip"],
         )
 
@@ -449,9 +449,11 @@ class SfincsPrecipitation(SfincsMeteo):
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
                 time_range=(tstart, tstop),
-                driver={
-                    "name": "pandas",
-                    "options": {"parse_dates": True, "index_col": 0},
+                source_kwargs={
+                    "driver": {
+                        "name": "pandas",
+                        "options": {"index_col": 0, "parse_dates": True},
+                    }
                 },
             )
         elif magnitude is not None:
@@ -537,7 +539,7 @@ class SfincsPressure(SfincsMeteo):
             press,
             bbox=self.model.bbox,
             buffer=buffer,
-            time_tuple=self.model.get_model_time(),
+            time_range=self.model.get_model_time(),
             variables=["press_msl"],
         )
 
@@ -639,7 +641,7 @@ class SfincsWind(SfincsMeteo):
             wind,
             bbox=self.model.bbox,
             buffer=buffer,
-            time_tuple=self.model.get_model_time(),
+            time_range=self.model.get_model_time(),
             variables=["wind10_u", "wind10_v"],
         )
 
@@ -720,9 +722,11 @@ class SfincsWind(SfincsMeteo):
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
                 time_range=(tstart, tstop),
-                driver={
-                    "name": "pandas",
-                    "options": {"parse_dates": True, "index_col": 0},
+                source_kwargs={
+                    "driver": {
+                        "name": "pandas",
+                        "options": {"index_col": 0, "parse_dates": True},
+                    }
                 },
             )
         elif magnitude is not None and direction is not None:
@@ -736,7 +740,7 @@ class SfincsWind(SfincsMeteo):
                 "Either timeseries or magnitude and direction must be provided"
             )
 
-        df_ts.name = "wnd"
+        df_ts.name = "wind"
         df_ts.index.name = "time"
         df_ts.columns.name = "index"
         da = xr.DataArray(
@@ -744,7 +748,7 @@ class SfincsWind(SfincsMeteo):
             dims=("time", "index"),
             coords={"time": df_ts.index, "index": ["mag", "dir"]},
         )
-        self.set(da, name="wnd")
+        self.set(da, name="wind")
 
         # update the model config
         self.model.config.set("wndfile", "sfincs.wnd")
