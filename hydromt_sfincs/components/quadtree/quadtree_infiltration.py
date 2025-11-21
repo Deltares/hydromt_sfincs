@@ -2,10 +2,12 @@ import logging
 from typing import TYPE_CHECKING
 
 import numpy as np
+import xarray as xr
 import xugrid as xu
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
+from hydromt.model.processes.mesh import mesh2d_from_rasterdataset
 
 from hydromt_sfincs import workflows
 
@@ -59,7 +61,7 @@ class SfincsQuadtreeInfiltration(ModelComponent):
     @property
     def mask(self):
         """Get an empty mask with the same shape as the model quadtree grid."""
-        return self.model.quadtree_grid.mask
+        return self.model.quadtree_grid.data["mask"]
 
     # %% core HydroMT-SFINCS functions:
     # read
@@ -129,7 +131,7 @@ class SfincsQuadtreeInfiltration(ModelComponent):
         qinf=None,
         lulc=None,
         reclass_table=None,
-        reproj_method="average",
+        reproj_method="mean",
     ):
         """Setup spatially varying constant infiltration rate (qinffile) for quadtree grid.
 
@@ -146,8 +148,13 @@ class SfincsQuadtreeInfiltration(ModelComponent):
         reclass_table: str, Path, or pd.DataFrame
             Reclassification table to convert landuse/landcover to infiltration rates [mm/hr]
         reproj_method : str, optional
-            Resampling method for reprojecting the infiltration data to the model grid.
-            By default 'average'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
+            Method to sample from raster data to mesh. By default mean. Options include
+            {"centroid", "barycentric", "mean", "harmonic_mean", "geometric_mean", "sum",
+            "minimum", "maximum", "mode", "median", "max_overlap"}.
+
+        See Also:
+        ---------
+        :py:meth:`~hydromt.model.processes.mesh.mesh2d_from_rasterdataset`
         """
 
         # Add logger info
@@ -161,6 +168,7 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                 qinf,
                 bbox=self.model.bbox,
                 buffer=10,
+                variables=["qinf"],
             )
         elif lulc is not None:
             # landuse/landcover should always be combined with mapping
@@ -181,7 +189,6 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                     "driver": {"name": "pandas", "options": {"index_col": 0}}
                 },
             )
-            # TODO set index col to 0
             # reclassify
             da_inf = da_lulc.raster.reclassify(df_map)["qinf"]
         else:
@@ -191,21 +198,26 @@ class SfincsQuadtreeInfiltration(ModelComponent):
 
         # reproject infiltration data to model quadtree grid
         da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
-        da_inf = da_inf.raster.reproject_like(self.mask, method=reproj_method)
+
+        # reproject single-dataset to mesh
+        mesh2d = self.model.quadtree_grid.data.grid
+        uda_inf = mesh2d_from_rasterdataset(
+            ds=da_inf,
+            mesh2d=mesh2d,
+            resampling_method=reproj_method,
+        )
 
         # check on nan values
-        if np.logical_and(np.isnan(da_inf), self.mask >= 1).any():
+        if np.logical_and(np.isnan(uda_inf), self.mask >= 1).any():
             logger.warning("NaN values found in infiltration data; filled with 0")
-            da_inf = da_inf.fillna(0)
-        da_inf.raster.set_nodata(-9999.0)
-
-        # Convert to xugrid UgridDataArray for quadtree grid
-        da_inf_ugrid = xu.UgridDataArray.from_structured(da_inf)
+            uda_inf = uda_inf.fillna(0)
 
         # set grid
         mname = "qinf"
-        da_inf_ugrid.attrs.update(**_ATTRS.get(mname, {}))
-        self.model.quadtree_grid.set(da_inf_ugrid, name=mname, overwrite_grid=True)
+        uda_inf.attrs.update(**_ATTRS.get(mname, {}))
+        self.model.quadtree_grid.data["qinf"] = uda_inf["qinf"]
+        # FIXME: ideally we would use the set method, but that's not working here properly
+        # self.model.quadtree_grid.set(uda_inf, name=mname, overwrite_grid=True)
 
         # update config: remove default inf and set qinf map
         self.model.config.set(f"{mname}file", f"sfincs.{mname}")
@@ -222,7 +234,7 @@ class SfincsQuadtreeInfiltration(ModelComponent):
 
     # Function to create curve number for SFINCS quadtree
     @hydromt_step
-    def create_cn(self, cn, antecedent_moisture="avg", reproj_method="med"):
+    def create_cn(self, cn, antecedent_moisture="avg", reproj_method="median"):
         """Setup model potential maximum soil moisture retention map (scsfile)
         from gridded curve number map for quadtree grid.
 
@@ -242,8 +254,9 @@ class SfincsQuadtreeInfiltration(ModelComponent):
             None if data has no antecedent runoff conditions.
             By default `avg`
         reproj_method : str, optional
-            Resampling method for reprojecting the curve number data to the model grid.
-            By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
+            Method to sample from raster data to mesh. By default median. Options include
+            {"centroid", "barycentric", "mean", "harmonic_mean", "geometric_mean", "sum",
+            "minimum", "maximum", "mode", "median", "max_overlap"}.
         """
 
         # Add logger info
@@ -259,24 +272,30 @@ class SfincsQuadtreeInfiltration(ModelComponent):
         v = "cn"
         if antecedent_moisture:
             v = f"cn_{antecedent_moisture}"
-        if isinstance(da_org, xu.Dataset) and v in da_org.data_vars:
+        if isinstance(da_org, xr.Dataset) and v in da_org.data_vars:
             da_org = da_org[v]
-        elif not isinstance(da_org, xu.UgridDataArray):
+        elif not isinstance(da_org, xr.DataArray):
             raise ValueError(f"Could not find variable {v} in {cn}")
 
         # reproject using median
-        da_cn = da_org.raster.reproject_like(self.mask, method=reproj_method)
+        # reproject single-dataset to mesh
+        mesh2d = self.model.quadtree_grid.data.grid
+        uda_cn = mesh2d_from_rasterdataset(
+            ds=da_org,
+            mesh2d=mesh2d,
+            resampling_method=reproj_method,
+        )
 
         # convert to potential maximum soil moisture retention S (1000/CN - 10) [inch]
-        da_scs = workflows.cn_to_s(da_cn, self.mask > 0).round(3)
-
-        # Convert to xugrid UgridDataArray for quadtree grid
-        da_scs_ugrid = xu.UgridDataArray.from_structured(da_scs)
+        uda_scs = workflows.cn_to_s(uda_cn, self.mask > 0).round(3)
 
         # set grid
         mname = "scs"
-        da_scs_ugrid.attrs.update(**_ATTRS.get(mname, {}))
-        self.model.quadtree_grid.set(da_scs_ugrid, name=mname, overwrite_grid=True)
+        uda_scs.attrs.update(**_ATTRS.get(mname, {}))
+        self.model.quadtree_grid.data["scs"] = uda_scs[v]
+        # FIXME: ideally we would use the set method, but that's not working here properly
+        # self.model.quadtree_grid.set(da_scs_ugrid, name=mname, overwrite_grid=True)
+
         # update config:
         self.model.config.set(f"{mname}file", f"sfincs.{mname}")
         # set spatially uniform qinf to None in config
