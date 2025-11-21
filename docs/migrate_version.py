@@ -1,3 +1,6 @@
+import csv
+import re
+
 # Mapping of old function names and argument changes to new function names and arguments
 # For each function, we follow this structure:
 # "old_function_name": {
@@ -21,7 +24,7 @@ conversion_map = {
     "SfincsModel.setup_dep": {
         "new_function": "SfincsModel.elevation.create",
         "args": {
-            "datasets_dep": "elevation_sets",  # renamed argument
+            "datasets_dep": "elevation_list",  # renamed argument
             # other arguments remain the same
         },
     },
@@ -52,9 +55,9 @@ conversion_map = {
     "SfincsModel.setup_subgrid": {
         "new_function": "SfincsModel.subgrid.create",
         "args": {
-            "datasets_dep": "elevation_sets",  # renamed argument
-            "datasets_rgh": "roughness_sets",  # renamed argument
-            "datasets_riv": "river_sets",  # renamed argument
+            "datasets_dep": "elevation_list",  # renamed argument
+            "datasets_rgh": "roughness_list",  # renamed argument
+            "datasets_riv": "river_list",  # renamed argument
             "nr_levels": "nlevels",  # renamed argument
         },
     },
@@ -81,7 +84,7 @@ conversion_map = {
     "SfincsModel.setup_manning_roughness": {
         "new_function": "SfincsModel.roughness.create",
         "args": {
-            "datasets_rgh": "roughness_sets",  # renamed argument
+            "datasets_rgh": "roughness_list",  # renamed argument
             # other arguments remain the same
         },
     },
@@ -154,6 +157,10 @@ conversion_map = {
         "new_function": "SfincsModel.wind.create_uniform",
         "args": "same",
     },
+    "SfincsModel.setup_config": {
+        "new_function": "SfincsModel.config.update",
+        "args": "same",
+    },
     "SfincsModel.plot_basemap": {
         "new_function": "SfincsModel.plot_basemap",
         "args": "same",
@@ -190,6 +197,122 @@ def export_markdown(conversion_map, filename="conversion_table.md"):
                 f.write(f"| `{old}()` | `{new}()` | {args_str} |\n")
 
 
+def export_sphinx_table(conversion_map, filename="conversion_table.rst"):
+    """
+    Creates a Sphinx-compatible RST table using the grid table format.
+    """
+    # Collect rows first
+    rows = [("Old API", "New API", "Argument Mapping")]
+
+    for old_func, info in conversion_map.items():
+        entries = []
+
+        if "new_function" in info:
+            new_func = info["new_function"] or "TODO"
+            args = info.get("args", "same")
+            args_str = format_args(args)
+            entries.append((f"``{old_func}()``", f"``{new_func}()``", args_str))
+
+        elif "new_functions" in info:
+            for nf in info["new_functions"]:
+                new_func = nf.get("name") or "TODO"
+                args = nf.get("args", "same")
+                args_str = format_args(args)
+                entries.append((f"``{old_func}()``", f"``{new_func}()``", args_str))
+
+        rows.extend(entries)
+
+    # Determine column widths
+    col_widths = [max(len(row[i]) for row in rows) for i in range(3)]
+
+    def sep():
+        return "+" + "+".join("-" * (w + 2) for w in col_widths) + "+"
+
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(sep() + "\n")
+        # Header
+        hdr = rows[0]
+        f.write(
+            "| " + " | ".join(hdr[i].ljust(col_widths[i]) for i in range(3)) + " |\n"
+        )
+        f.write(sep() + "\n")
+        # Data rows
+        for row in rows[1:]:
+            f.write(
+                "| "
+                + " | ".join(row[i].ljust(col_widths[i]) for i in range(3))
+                + " |\n"
+            )
+            f.write(sep() + "\n")
+
+
+def smart_wrap_identifier(name, max_len=25):
+    """
+    Wrap a long identifier at dots or underscores with \n only if it exceeds max_len.
+    Keeps short identifiers on one line.
+    """
+    if len(name) <= max_len:
+        return name
+    parts = re.split(r"([._])", name)  # split but keep separators
+    lines = []
+    current = ""
+    for part in parts:
+        if len(current) + len(part) <= max_len:
+            current += part
+        else:
+            lines.append(current)
+            current = part
+    if current:
+        lines.append(current)
+    return "\n".join(lines)
+
+
+def format_args_with_breaks(args):
+    """
+    Convert the args dictionary/string to a string, inserting hard breaks at commas.
+    """
+    base = format_args(args)
+    return base.replace(", ", ",\n")
+
+
+def export_csv_table(conversion_map, csv_filename="conversion_table.csv"):
+    """
+    Export the conversion map to a CSV file for Sphinx `.. csv-table::`.
+    - Soft wraps first two columns (code identifiers) at dots/underscores.
+    - Hard wraps third column at commas.
+    - Keeps code formatting with backticks.
+    """
+    with open(csv_filename, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        for old_func, info in conversion_map.items():
+            entries = []
+
+            if "new_function" in info:
+                new_func = info["new_function"] or "TODO"
+                args = info.get("args", "same")
+                args_str = format_args_with_breaks(args)
+                entries.append((old_func, new_func, args_str))
+
+            elif "new_functions" in info:
+                for nf in info["new_functions"]:
+                    new_func = nf.get("name") or "TODO"
+                    args = nf.get("args", "same")
+                    args_str = format_args_with_breaks(args)
+                    entries.append((old_func, new_func, args_str))
+
+            for old, new, args_str in entries:
+                writer.writerow(
+                    [
+                        f"``{smart_wrap_identifier(old)}()``",
+                        f"``{smart_wrap_identifier(new)}()``",
+                        args_str,
+                    ]
+                )
+
+    print(f"CSV table exported to {csv_filename}")
+
+
+# Use the same format_args function from your original script
 def format_args(args):
     if args == "same":
         return "unchanged"
@@ -203,4 +326,6 @@ def format_args(args):
 
 
 # Call the function, markdown table can be previewed by pressing Ctrl+Shift+V in VSCode
-export_markdown(conversion_map, "conversion_table.md")
+# export_markdown(conversion_map, "conversion_table.md")
+# export_sphinx_table(conversion_map, "conversion_table.rst")
+export_csv_table(conversion_map, "conversion_table.csv")

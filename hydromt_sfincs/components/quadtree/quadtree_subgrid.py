@@ -106,7 +106,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
     def create(
         self,
         bathymetry_sets,
-        roughness_sets: list = [],
+        roughness_list: list = [],
         manning_land=0.04,
         manning_water=0.020,
         manning_level=1.0,
@@ -133,7 +133,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
 
         Args:
             bathymetry_sets (list): List of bathymetry data sets
-            roughness_sets (list): List of roughness data sets
+            roughness_list (list): List of roughness data sets
             manning_land (float, optional): Manning's n value for land. Defaults to 0.04.
             manning_water (float, optional): Manning's n value for water. Defaults to 0.020.
             manning_level (float, optional): Manning's n value for level. Defaults to 1.0.
@@ -160,26 +160,26 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             if self.model.crs.is_geographic:
                 res = res * 111111.0
             # append parsed datasets per level
-            elevation_sets_per_level = []
+            elevation_list_per_level = []
             for ilev in range(nrlevels):
                 # compute resolution per level
                 res_level = res / (2**ilev)
                 # convert to subgrid resolution for this level
                 res_subgrid = res_level / nr_subgrid_pixels
                 # parse datasets closest to subgrid resolution
-                elevation_sets_per_level.append(
+                elevation_list_per_level.append(
                     self.model._parse_datasets_elevation(
                         bathymetry_sets, res=res_subgrid
                     )
                 )
-            bathymetry_sets = elevation_sets_per_level
+            bathymetry_sets = elevation_list_per_level
 
-            if len(roughness_sets) > 0:
+            if len(roughness_list) > 0:
                 # NOTE conversion from landuse/landcover to manning happens here
-                roughness_sets = self.model._parse_roughness_sets(roughness_sets)
+                roughness_list = self.model._parse_roughness_list(roughness_list)
 
             # if len(river+sets) > 0:
-            #     rivers_sets = self.model._parse_river_sets(river_sets)
+            #     rivers_sets = self.model._parse_river_list(river_list)
             # folder where high-resolution topobathy and manning geotiffs are stored
 
             if write_dep_tif or write_man_tif:
@@ -193,7 +193,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         self._data = build_subgrid_table_quadtree(
             grid=self.model.quadtree_grid.data,
             bathymetry_sets=bathymetry_sets,
-            roughness_sets=roughness_sets,
+            roughness_list=roughness_list,
             manning_land=manning_land,
             manning_water=manning_water,
             manning_level=manning_level,

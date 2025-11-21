@@ -18,7 +18,22 @@ _ATTRS = {"manning": {"standard_name": "manning roughness", "unit": "s.m-1/3"}}
 
 
 class SfincsRoughness(ModelComponent):
-    """SFINCS roughness component."""
+    """SFINCS Roughness Component.
+
+    This component contains methods to add roughness data to the SFINCS model
+    on regular grids. Roughness data can be derived from various sources,
+    including land use/land cover maps, or gridded datasets of Manning's n values.
+    Multiple roughness datasets can be merged together to create a complete
+    roughness representation interpolated onto the model grid.
+
+    .. note::
+        The roughness data is stored in the model grid's data dataset under the key "manning".
+
+    See Also
+    --------
+    :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`
+
+    """
 
     def __init__(
         self,
@@ -47,11 +62,13 @@ class SfincsRoughness(ModelComponent):
     # clear >TODO ?
 
     def read(self):
+        """Not implemented, roughness data is read when the grid is read."""
         # TODO discuss what we want to return/read here, pass is not so informative ..
         # The manning file is read when all grid files are read in regulargrid.py
         pass
 
     def write(self):
+        """Not implemented, roughness data is written when the grid is written."""
         # The manning file is written when all grid files are written in regulargrid.py
         pass
 
@@ -59,7 +76,7 @@ class SfincsRoughness(ModelComponent):
     @hydromt_step
     def create(
         self,
-        roughness_sets: List[dict] = [],
+        roughness_list: List[dict] = [],
         manning_land=0.04,
         manning_sea=0.02,
         rgh_lev_land=0,
@@ -73,7 +90,7 @@ class SfincsRoughness(ModelComponent):
 
         Parameters
         ---------
-        roughness_sets : List[dict], optional
+        roughness_list : List[dict], optional
             List of dictionaries with Manning's n datasets. Each dictionary should at least contain one of the following:
             * (1) manning: filename (or Path) of gridded data with manning values
             * (2) lulc (and reclass_table) :a combination of a filename of gridded landuse/landcover and a mapping table.
@@ -85,16 +102,16 @@ class SfincsRoughness(ModelComponent):
             Elevation level to distinguish land and sea roughness (when using manning_land and manning_sea), by default 0.0
         """
 
-        if len(roughness_sets) > 0:
-            roughness_sets = self.model._parse_roughness_sets(roughness_sets)
+        if len(roughness_list) > 0:
+            roughness_list = self.model._parse_roughness_list(roughness_list)
         else:
-            roughness_sets = []
+            roughness_list = []
 
         # fromdep keeps track of whether any manning values should be based on the depth or not
-        fromdep = len(roughness_sets) == 0
-        if len(roughness_sets) > 0:
+        fromdep = len(roughness_list) == 0
+        if len(roughness_list) > 0:
             da_man = workflows.merge_multi_dataarrays(
-                da_list=roughness_sets,
+                da_list=roughness_list,
                 da_like=self.mask,
                 interp_method="linear",
                 logger=logger,
@@ -107,7 +124,7 @@ class SfincsRoughness(ModelComponent):
         elif fromdep:
             da_man0 = xr.full_like(self.mask, manning_land, dtype=np.float32)
 
-        if len(roughness_sets) > 0 and fromdep:
+        if len(roughness_list) > 0 and fromdep:
             logger.warning("nan values in manning roughness array")
             da_man = da_man.where(~np.isnan(da_man), da_man0)
         elif fromdep:

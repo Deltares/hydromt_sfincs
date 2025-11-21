@@ -25,7 +25,7 @@ def build_quadtree_xugrid(
     rotation,
     crs,
     refinement_polygons=None,
-    elevation_sets=None,
+    elevation_list=None,
     bathymetry_database=None,
 ):
     """
@@ -43,7 +43,7 @@ def build_quadtree_xugrid(
         Rotation of the grid in degrees.
     refinement_polygons : geopandas.GeoDataFrame
         GeoDataFrame with polygons that define the refinement levels.
-    elevation_sets : dict
+    elevation_list : dict
         Dictionary with datasets dependencies.
     bathymetry_database : object
         Bathymetry database object.
@@ -65,7 +65,7 @@ def build_quadtree_xugrid(
         rotation,
         crs,
         refinement_polygons,
-        elevation_sets=elevation_sets,
+        elevation_list=elevation_list,
         bathymetry_database=bathymetry_database,
     )
 
@@ -104,7 +104,7 @@ class QuadtreeGrid:
         rotation,
         crs,
         refinement_polygons,
-        elevation_sets,
+        elevation_list,
         bathymetry_database,
     ):
         self.x0 = x0
@@ -123,7 +123,7 @@ class QuadtreeGrid:
         self.version = 0
 
         self.refinement_polygons = refinement_polygons
-        self.elevation_sets = elevation_sets if elevation_sets is not None else []
+        self.elevation_list = elevation_list if elevation_list is not None else []
         self.bathymetry_database = bathymetry_database
 
         # Make regular grid
@@ -285,7 +285,7 @@ class QuadtreeGrid:
             ind_ref += self.ifirst[ilev]
 
             # But only where elevation is between zmin and zmax
-            if len(self.elevation_sets) > 0 and (
+            if len(self.elevation_list) > 0 and (
                 polygon["zmin"] > -20000.0 or polygon["zmax"] < 20000.0
             ):
                 # self.to_xugrid()
@@ -294,14 +294,14 @@ class QuadtreeGrid:
                     zmin, zmax = self.get_bathymetry_min_max(
                         ind_ref=ind_ref,
                         ilev=ilev,
-                        elevation_sets=self.elevation_sets,
+                        elevation_list=self.elevation_list,
                         bathymetry_database=self.bathymetry_database,
                     )
                 else:
                     zmin, zmax = self.get_bathymetry_min_max(
                         ind_ref=ind_ref,
                         ilev=ilev,
-                        elevation_sets=self.elevation_sets[ilev],
+                        elevation_list=self.elevation_list[ilev],
                     )
                 # z = self.data["z"][ind_ref]
                 ind_ref = ind_ref[
@@ -967,7 +967,7 @@ class QuadtreeGrid:
         )
 
     def get_bathymetry_min_max(
-        self, ind_ref, ilev, elevation_sets, bathymetry_database=None, quiet=True
+        self, ind_ref, ilev, elevation_list, bathymetry_database=None, quiet=True
     ):
         """ "Used to determine min and max bathymetry of a cell (used for refinement)"""
 
@@ -1007,7 +1007,7 @@ class QuadtreeGrid:
             # Now loop through the 4 corners and get the minimum and maximum bathymetry
             for i in range(4):
                 zgl = bathymetry_database.get_bathymetry_on_points(
-                    xcor[i, :], ycor[i, :], dx, self.crs, elevation_sets
+                    xcor[i, :], ycor[i, :], dx, self.crs, elevation_list
                 )
                 if i == 0:
                     zmin = zgl
@@ -1049,7 +1049,7 @@ class QuadtreeGrid:
 
             # Fill da_corners with topobathy data
             da_dep = workflows.merge_multi_dataarrays(
-                da_list=elevation_sets,
+                da_list=elevation_list,
                 da_like=da_corners,
                 interp_method="linear",
                 buffer_cells=0,

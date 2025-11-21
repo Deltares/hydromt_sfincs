@@ -21,7 +21,11 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsDischargePoints(SfincsBoundaryBase):
-    """Discharge point component for SFINCS models."""
+    """Discharge point component for SFINCS models.
+
+    This component handles reading and writing of discharge points and their
+    associated time series data in SFINCS format, including both ASCII and netCDF files.
+    """
 
     _default_varname = "dis"
 
@@ -29,7 +33,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         super().__init__(model)
 
     def read(self, format: str = None):
-        """Read SFINCS discharge points (*.dis, *.src files) or netcdf file.
+        """Read SFINCS discharge points (.dis, .src files) or netcdf file.
 
         The format of the discharge conditions files can be specified,
         otherwise it is determined from the model configuration.
@@ -58,7 +62,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             self.set(geodataset=da, merge=False, drop_duplicates=False)
 
     def read_discharge_points(self, filename: str | Path = None):
-        """Read SFINCS discharge points (*.src) file"""
+        """Read SFINCS discharge points (.src) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -83,7 +87,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         return gdf
 
     def read_discharge_timeseries(self, filename: str | Path = None):
-        """Read SFINCS discharge condition timeseries (*.bzs) file"""
+        """Read SFINCS discharge condition timeseries (.dis) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -137,7 +141,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         return ds
 
     def write(self, format: str = None):
-        """Write SFINCS discharges (*.src, *.dis files) or netcdf file.
+        """Write SFINCS discharges (.src, .dis files) or netcdf file.
 
         The format of the discharge files can be specified,
         otherwise it is determined from the model configuration.
@@ -173,7 +177,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             )
 
     def write_discharge_points(self, filename: str | Path = None):
-        """Write SFINCS discharge points (*.src) file"""
+        """Write SFINCS discharge points (.src) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -182,6 +186,9 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         abs_file_path = self.model.config.get_set_file_variable(
             "srcfile", value=filename, default="sfincs.src"
         )
+
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Write src file
         # Change precision of coordinates according to crs
@@ -194,7 +201,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         utils.write_xyn(abs_file_path, self.gdf, fmt=fmt)
 
     def write_discharge_timeseries(self, filename: str | Path = None):
-        """Write SFINCS discharge timeseries (*.dis) file"""
+        """Write SFINCS discharge timeseries (.dis) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -203,6 +210,9 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         abs_file_path = self.model.config.get_set_file_variable(
             "disfile", value=filename, default="sfincs.dis"
         )
+
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         # parse data to dataframe
         da = self.data["dis"].transpose("time", ...)
@@ -221,13 +231,21 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         abs_file_path = self.model.config.get_set_file_variable(
             "netsrcdisfile", value=filename, default="sfincs_netsrcdisfile.nc"
         )
+
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # Check if abs_file_path is None
         if abs_file_path is None:
             # File name not defined
             return
 
-        ds = self.data
-        ds.vector.to_xy().to_netcdf(abs_file_path)
+        ds = self.data.load()
+
+        # Write netcdf file safely (might get locked, e..g in other notebooks)
+        final_path = utils.write_netcdf_safely(ds, abs_file_path)
+        if final_path != abs_file_path:
+            self.model.config.set("netsrcdisfile", final_path.name)
 
     def delete(self, index: Union[int, List[int]]):
         "Delete boundary points and clear config when no points remain."
@@ -392,19 +410,18 @@ class SfincsDischargePoints(SfincsBoundaryBase):
                 geom=region,
                 variables=["discharge"],
                 time_range=(tstart, tstop),
-                crs=self.model.crs,
             )
             df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
             gdf_locs = da.vector.to_gdf()
-            # if a geodataset is used, keep the format to netcdf
-            self.model.config.set("netsrcdisfile", "sfincs_netsrcdisfile.nc")
         elif timeseries is not None:
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
                 time_range=(tstart, tstop),
-                driver={
-                    "name": "pandas",
-                    "options": {"index_col": 0, "parse_dates": True},
+                source_kwargs={
+                    "driver": {
+                        "name": "pandas",
+                        "options": {"index_col": 0, "parse_dates": True},
+                    }
                 },
             )
             df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
@@ -430,3 +447,10 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             raise ValueError("No discharge boundary (src) points provided.")
 
         self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
+        # update config
+        if geodataset is not None:
+            # if a geodataset is used, keep the format to netcdf
+            self.model.config.set("netsrcdisfile", "sfincs_netsrcdisfile.nc")
+        else:
+            self.model.config.set("srcfile", "sfincs.src")
+            self.model.config.set("disfile", "sfincs.dis")

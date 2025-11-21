@@ -12,6 +12,7 @@ import numpy as np
 import xarray as xr
 from affine import Affine
 from pyproj import CRS, Transformer
+import pandas as pd
 from shapely.geometry import LineString
 
 from hydromt import hydromt_step
@@ -30,6 +31,25 @@ _MAPS = ["mask", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol", "
 
 
 class SfincsGrid(GridComponent):
+    """Regular grid component of the SfincsModel class.
+
+    This class implements reading and writing of SFINCS binary grid files,
+    as well as methods to create a regular grid for a region of interest.
+
+    The data for all gridded variables is stored in the `data` attribute as an
+    xarray Dataset. However, the creation of new data layers,, such as elevation or roughness,
+    is done in separate model component classes, such as `SfincsElevation` or `SfincsRoughness`.
+
+    See Also
+    --------
+    :py:class:`~hydromt_sfincs.components.grid.elevation.SfincsElevation`
+    :py:class:`~hydromt_sfincs.components.grid.mask.SfincsMask`
+    :py:class:`~hydromt_sfincs.components.grid.roughness.SfincsRoughness`
+    :py:class:`~hydromt_sfincs.components.grid.infiltration.SfincsInfiltration`
+    :py:class:`~hydromt_sfincs.components.grid.storage_volume.SfincsStorageVolume`
+    :py:class:`~hydromt_sfincs.components.grid.initial_conditions.SfincsInitialConditions`
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -39,9 +59,9 @@ class SfincsGrid(GridComponent):
             filename="sfincs.nc",
             region_filename="region.geojson",
         )
-
-        # # set spatial attributes
-        # self.update_grid_from_config()
+        # initialize data attribute
+        self._data = None
+        self.datashader_dataframe = pd.DataFrame()
 
     @property
     def transform(self):
@@ -140,7 +160,7 @@ class SfincsGrid(GridComponent):
         Parameters
         ----------
         data_vars : Union[List, str], optional
-            List of data variables to read, by default None (all)
+            List of data variables to read, by default None (all).
         """
         # check if in read mode and initialize grid
         self.root._assert_read_mode()
@@ -153,9 +173,9 @@ class SfincsGrid(GridComponent):
         da_lst = []
         if data_vars is None:
             data_vars = _MAPS
-            provide_warnings = (
-                False  # all possible variables are read, no warnings needed
-            )
+            provide_warnings = False  # all variables are asked, so no warnings
+        elif isinstance(data_vars, list):
+            provide_warnings = True  # specific variables are asked, so provide warnings
         elif isinstance(data_vars, str):
             data_vars = list(data_vars)
             provide_warnings = True  # specific variables are asked, so provide warnings
@@ -245,9 +265,11 @@ class SfincsGrid(GridComponent):
             logger.debug("Write binary map indices based on mask.")
             if self.model.config.get("indexfile") is None:
                 self.model.config.set("indexfile", "sfincs.ind")
-            self.write_ind(
-                ind_fn=self.model.config.get("indexfile", abs_path=True), mask=mask
-            )
+            abs_file_path = self.model.config.get("indexfile", abs_path=True)
+            # Create parent directories if they do not exist
+            abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+            # Write index file
+            self.write_ind(ind_fn=abs_file_path, mask=mask)
 
             if data_vars is None:  # write all maps
                 data_vars = [v for v in _MAPS if v in ds_out]
@@ -307,7 +329,7 @@ class SfincsGrid(GridComponent):
         rotation: float,
         epsg: int,
     ):
-        """Setup a regular or quadtree grid.
+        """Create a regular grid for the SfincsModel.
 
         Parameters
         ----------
@@ -336,6 +358,7 @@ class SfincsGrid(GridComponent):
                 "epsg": epsg,
             }
         )
+        # create grid based on config
         self.update_grid_from_config()
 
         # initialize a grid without variables
@@ -360,7 +383,7 @@ class SfincsGrid(GridComponent):
         dec_origin: int = 0,
         dec_rotation: int = 3,
     ):
-        """Setup a regular or quadtree grid from a region.
+        """Create a regular grid for the SfincsModel based on a region.
 
         Parameters
         ----------
@@ -400,7 +423,7 @@ class SfincsGrid(GridComponent):
 
         See Also
         --------
-        hydromt.model.processes.create_grid_from_region
+        :py:func:`~hydromt.model.processes.create_grid_from_region`
         """
 
         ds = create_grid_from_region(
@@ -518,6 +541,11 @@ class SfincsGrid(GridComponent):
         self.rotation = self.model.config.get("rotation", 0)
         self.epsg = self.model.config.get("epsg", None)
 
+        # Set 'crsgeo' flag in the config based on whether the CRS is geographic
+        if self.epsg is not None:
+            crs = CRS.from_epsg(self.epsg)
+            self.model.config.set("crsgeo", int(crs.is_geographic))
+
     def update_config_from_grid(self):
         """Update `config` (sfincs.inp) attributes based on grid properties"""
 
@@ -527,6 +555,18 @@ class SfincsGrid(GridComponent):
         self.x0, self.y0 = self.data.raster.origin
         self.rotation = self.data.raster.rotation
         self.epsg = self.data.raster.crs.to_epsg()
+
+        # round raster resolution and rotation based on CRS type
+        if self.data.raster.crs.is_geographic:
+            self.dx = round(self.dx, 6)
+            self.dy = round(self.dy, 6)
+            self.rotation = round(self.rotation, 6)
+            crsgeo = 1
+        else:
+            self.dx = round(self.dx, 3)
+            self.dy = round(self.dy, 3)
+            self.rotation = round(self.rotation, 3)
+            crsgeo = 0
 
         # update the grid properties in the config
         self.model.config.update(
@@ -539,30 +579,68 @@ class SfincsGrid(GridComponent):
                 "mmax": self.mmax,
                 "rotation": self.rotation,
                 "epsg": self.epsg,
+                "crsgeo": crsgeo,
             }
         )
 
-    def to_gdf(self):
-        """Return a geopandas GeoDataFrame with a geometry for each grid line."""
-
+    def _get_grid_lines(self):
+        """Return lists of start and end coordinates for all grid lines."""
         x, y = self.edges
 
-        # create vertical lines
-        vertical_lines = []
+        x1_list, y1_list, x2_list, y2_list = [], [], [], []
+
+        # Vertical lines
         for i in range(self.nmax + 1):
-            line = LineString([(x[i, 0], y[i, 0]), (x[i, -1], y[i, -1])])
-            vertical_lines.append(line)
+            x1_list.append(x[i, 0])
+            y1_list.append(y[i, 0])
+            x2_list.append(x[i, -1])
+            y2_list.append(y[i, -1])
 
-        # create horizontal lines
-        horizontal_lines = []
+        # Horizontal lines
         for j in range(self.mmax + 1):
-            line = LineString([(x[0, j], y[0, j]), (x[-1, j], y[-1, j])])
-            horizontal_lines.append(line)
+            x1_list.append(x[0, j])
+            y1_list.append(y[0, j])
+            x2_list.append(x[-1, j])
+            y2_list.append(y[-1, j])
 
-        # combine lines into a single list
-        grid_lines = vertical_lines + horizontal_lines
+        return (
+            np.array(x1_list),
+            np.array(y1_list),
+            np.array(x2_list),
+            np.array(y2_list),
+        )
 
-        return gpd.GeoDataFrame(geometry=grid_lines, crs=self.model.crs)
+    def to_gdf(self):
+        """Return a GeoDataFrame with a geometry for each grid line."""
+        x1, y1, x2, y2 = self._get_grid_lines()
+        lines = [LineString([(x1[i], y1[i]), (x2[i], y2[i])]) for i in range(len(x1))]
+        return gpd.GeoDataFrame(geometry=lines, crs=self.model.crs)
+
+    def get_datashader_dataframe(self):
+        """Create a datashader-friendly DataFrame for the regular grid."""
+        x1, y1, x2, y2 = self._get_grid_lines()
+
+        # Check if the grid crosses the dateline
+        cross_dateline = False
+        if self.model.crs.is_geographic:
+            if np.max(x1) > 180.0 or np.max(x2) > 180.0:
+                cross_dateline = True
+
+        # Transform to Web Mercator for Datashader
+        transformer = Transformer.from_crs(self.model.crs, 3857, always_xy=True)
+        x1, y1 = transformer.transform(x1, y1)
+        x2, y2 = transformer.transform(x2, y2)
+
+        # Handle dateline wrapping
+        if cross_dateline:
+            x1[x1 < 0] += 40075016.68557849
+            x2[x2 < 0] += 40075016.68557849
+
+        self.datashader_dataframe = pd.DataFrame(dict(x1=x1, y1=y1, x2=x2, y2=y2))
+
+    def clear_datashader_dataframe(self):
+        """Clears the datashader dataframe"""
+        self.datashader_dataframe = pd.DataFrame()
 
     # %% DDB GUI focused additional functions:
     # create_index_tiles > FIXME - TL: still needed?

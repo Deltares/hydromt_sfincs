@@ -26,7 +26,9 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 class SfincsWaterLevel(SfincsBoundaryBase):
     """Water level boundary component for SFINCS models.
 
-    Adds astronomical constituent handling on top of the common base.
+    This component handles reading and writing of water level boundary conditions
+    in SFINCS format, including both ASCII and netCDF files. Furthermore, it
+    allows to generate time series from astronomical constituents (if available).
     """
 
     _default_varname = "bzs"
@@ -35,7 +37,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         super().__init__(model)
 
     def read(self, format: str = None):
-        """Read SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
+        """Read SFINCS boundary conditions (.bnd, .bzs, .bca files) or netcdf file.
 
         The format of the boundary conditions files can be specified,
         otherwise it is determined from the model configuration.
@@ -67,7 +69,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             self.set(geodataset=ds, merge=False, drop_duplicates=False)
 
     def read_boundary_points(self, filename: str | Path = None):
-        """Read SFINCS boundary condition points (*.bnd) file"""
+        """Read SFINCS boundary condition points (.bnd) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -80,7 +82,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         # Check if abs_file_path is None
         if abs_file_path is None:
             # File name not defined
-            return
+            return gpd.GeoDataFrame()
 
         # Check if bnd file exists
         if not abs_file_path.exists():
@@ -92,7 +94,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         return gdf
 
     def read_boundary_conditions_timeseries(self, filename: str | Path = None):
-        """Read SFINCS boundary condition timeseries (*.bzs) file"""
+        """Read SFINCS boundary condition timeseries (.bzs) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -120,7 +122,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         return df
 
     def read_boundary_conditions_astro(self, filename: str | Path = None):
-        """Read SFINCS boundary condition astro (*.bca) file"""
+        """Read SFINCS boundary condition astro (.bca) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -180,7 +182,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         return ds
 
     def write(self, format: str = None):
-        """Write SFINCS boundary conditions (*.bnd, *.bzs, *.bca files) or netcdf file.
+        """Write SFINCS boundary conditions (.bnd, .bzs, .bca files) or netcdf file.
 
         The format of the boundary conditions files can be specified,
         otherwise it is determined from the model configuration.
@@ -218,7 +220,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             )
 
     def write_boundary_points(self, filename: str | Path = None):
-        """Write SFINCS boundary condition points (*.bnd) file"""
+        """Write SFINCS boundary condition points (.bnd) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -227,6 +229,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         abs_file_path = self.model.config.get_set_file_variable(
             "bndfile", value=filename, default="sfincs.bnd"
         )
+
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Write bnd file
         # Change precision of coordinates according to crs
@@ -239,7 +244,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         utils.write_xyn(abs_file_path, self.gdf, fmt=fmt)
 
     def write_boundary_conditions_timeseries(self, filename: str | Path = None):
-        """Write SFINCS boundary condition timeseries (*.bzs) file"""
+        """Write SFINCS boundary condition timeseries (.bzs) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -249,6 +254,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             "bzsfile", value=filename, default="sfincs.bzs"
         )
 
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # parse data to dataframe
         da = self.data["bzs"].transpose("time", ...)
         df = da.to_pandas()
@@ -257,7 +265,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
 
     def write_boundary_conditions_astro(self, filename: str | Path = None):
-        """Write SFINCS boundary condition astro (*.bca) file"""
+        """Write SFINCS boundary condition astro (.bca) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -266,6 +274,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         abs_file_path = self.model.config.get_set_file_variable(
             "bcafile", value=filename, default="sfincs.bca"
         )
+
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         amp = self.data["amplitude"].to_pandas()
         pha = self.data["phase"].to_pandas()
@@ -300,7 +311,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                 fid.write("\n")
 
     def write_boundary_conditions_netcdf(self, filename: str | Path = None):
-        """Write SFINCS boundary condition netcdf (*.nc) file"""
+        """Write SFINCS boundary condition netcdf (.nc) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
@@ -309,13 +320,21 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         abs_file_path = self.model.config.get_set_file_variable(
             "netbndbzsbzifile", value=filename, default="sfincs_netbndbzsbzifile.nc"
         )
+
+        # Create parent directories if they do not exist
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         # Check if abs_file_path is None
         if abs_file_path is None:
             # File name not defined
             return
 
-        ds = self.data
-        ds.vector.to_xy().to_netcdf(abs_file_path)
+        ds = self.data.load()
+
+        # Write netcdf file safely (might get locked)
+        final_path = utils.write_netcdf_safely(ds, abs_file_path)
+        if final_path != abs_file_path:
+            self.model.config.set("netbndbzsbzifile", final_path.name)
 
     def delete(self, index: Union[int, List[int]]):
         "Delete boundary points and clear config when no points remain."
@@ -405,20 +424,19 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                 geom=region,
                 buffer=buffer,
                 variables=["waterlevel"],
-                time_tuple=(tstart, tstop),
-                crs=self.model.crs,
+                time_range=(tstart, tstop),
             )
             df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
             gdf_locs = da.vector.to_gdf()
-            # when reading from geodataset, keep the format to netcdf
-            self.model.config.set("netbndbzsbzifile", "sfincs_netbndbzsbzifile.nc")
         elif timeseries is not None:
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
                 time_range=(tstart, tstop),
-                driver={
-                    "name": "pandas",
-                    "options": {"parse_dates": True, "index_col": 0},
+                source_kwargs={
+                    "driver": {
+                        "name": "pandas",
+                        "options": {"index_col": 0, "parse_dates": True},
+                    }
                 },
             )
             df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
@@ -472,6 +490,13 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         if used_existing:
             gdf_locs = None  # only update timeseries for existing points
         self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
+        # update config
+        if geodataset is not None:
+            # when reading from geodataset, keep the format to netcdf
+            self.model.config.set("netbndbzsbzifile", "sfincs_netbndbzsbzifile.nc")
+        else:
+            self.model.config.set("bndfile", "sfincs.bnd")
+            self.model.config.set("bzsfile", "sfincs.bzs")
 
     @hydromt_step
     def create_timeseries(

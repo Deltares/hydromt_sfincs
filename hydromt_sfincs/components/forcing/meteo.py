@@ -156,10 +156,13 @@ class SfincsMeteo(ModelComponent):
                 key=f"{fname}file", value=filename, default=self._filename
             )
 
+            # Create parent directories if they do not exist
+            abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
             if abs_file_path.suffix == ".nc":
                 self.write_gridded(filename=abs_file_path, rename=rename)
             else:
-                self.write_uniform(filename=abs_file_path, fmt=fmt)
+                self.write_uniform(variable=name, filename=abs_file_path, fmt=fmt)
 
     def write_gridded(self, filename: str | Path = None, rename: Optional[dict] = None):
         """Write spatially varying meteo file as netcdf."""
@@ -170,7 +173,7 @@ class SfincsMeteo(ModelComponent):
         encoding = dict(time={"units": f"minutes since {tref_str}", "dtype": "float64"})
 
         # assign self.data to ds
-        ds = self.data
+        ds = self.data.load()
 
         # combine variables and rename to output names
         rename = {v: k for k, v in rename.items() if v in ds}
@@ -180,14 +183,16 @@ class SfincsMeteo(ModelComponent):
         # write 2D gridded timeseries
         ds.to_netcdf(filename, encoding=encoding)
 
-    def write_uniform(self, filename: str | Path = None, fmt: str = "%7.2f"):
+    def write_uniform(
+        self, variable: str, filename: str | Path = None, fmt: str = "%7.2f"
+    ):
         """Write uniform meteo file."""
 
         tref = self.model.config.get("tref")
 
         # parse data to dataframe
         da = self.data.transpose("time", ...)
-        df = da.to_pandas()
+        df = da[variable].to_pandas()
 
         # write timeseries
         utils.write_timeseries(filename, df, tref, fmt=fmt)
@@ -343,7 +348,7 @@ class SfincsPrecipitation(SfincsMeteo):
             precip,
             bbox=self.model.bbox,
             buffer=buffer,
-            time_tuple=self.model.get_model_time(),
+            time_range=self.model.get_model_time(),
             variables=["precip"],
         )
 
@@ -444,9 +449,11 @@ class SfincsPrecipitation(SfincsMeteo):
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
                 time_range=(tstart, tstop),
-                driver={
-                    "name": "pandas",
-                    "options": {"parse_dates": True, "index_col": 0},
+                source_kwargs={
+                    "driver": {
+                        "name": "pandas",
+                        "options": {"index_col": 0, "parse_dates": True},
+                    }
                 },
             )
         elif magnitude is not None:
@@ -532,7 +539,7 @@ class SfincsPressure(SfincsMeteo):
             press,
             bbox=self.model.bbox,
             buffer=buffer,
-            time_tuple=self.model.get_model_time(),
+            time_range=self.model.get_model_time(),
             variables=["press_msl"],
         )
 
@@ -634,7 +641,7 @@ class SfincsWind(SfincsMeteo):
             wind,
             bbox=self.model.bbox,
             buffer=buffer,
-            time_tuple=self.model.get_model_time(),
+            time_range=self.model.get_model_time(),
             variables=["wind10_u", "wind10_v"],
         )
 
@@ -715,9 +722,11 @@ class SfincsWind(SfincsMeteo):
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
                 time_range=(tstart, tstop),
-                driver={
-                    "name": "pandas",
-                    "options": {"parse_dates": True, "index_col": 0},
+                source_kwargs={
+                    "driver": {
+                        "name": "pandas",
+                        "options": {"index_col": 0, "parse_dates": True},
+                    }
                 },
             )
         elif magnitude is not None and direction is not None:
@@ -731,7 +740,7 @@ class SfincsWind(SfincsMeteo):
                 "Either timeseries or magnitude and direction must be provided"
             )
 
-        df_ts.name = "wnd"
+        df_ts.name = "wind"
         df_ts.index.name = "time"
         df_ts.columns.name = "index"
         da = xr.DataArray(
@@ -739,7 +748,7 @@ class SfincsWind(SfincsMeteo):
             dims=("time", "index"),
             coords={"time": df_ts.index, "index": ["mag", "dir"]},
         )
-        self.set(da, name="wnd")
+        self.set(da, name="wind")
 
         # update the model config
         self.model.config.set("wndfile", "sfincs.wnd")

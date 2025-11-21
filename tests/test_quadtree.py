@@ -85,31 +85,3 @@ def test_xu_open_dataset_overwrite(tmp_dir):
     # NOTE this will raise a PermissionError because the file is lazily loaded
     with pytest.raises(PermissionError):
         ds.to_netcdf(fn_copy)
-
-    # # Now perform the check and lazy loading check
-    # utils.check_exists_and_lazy(ds, fn_copy)
-
-    # # Try to overwrite the file
-    # ds.to_netcdf(fn_copy)
-
-    # # Remove the copied file
-    # os.remove(fn_copy)
-
-
-# def test_lazy_xu_open_dataset(tmp_dir):
-#     # copy the test data to the tmp_path
-#     fn = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
-#     fn_copy = tmp_dir.joinpath("sfincs.nc")
-
-#     shutil.copy(fn, fn_copy)
-
-#     # lazy load
-#     ds = xu.open_dataset(fn_copy)
-#     ds.close()
-
-#     # further down the code, you would like to obtain the data
-#     ds.load().close()
-
-#     # now it can't be removed
-#     with pytest.raises(PermissionError):
-#         os.remove(fn_copy)

@@ -4,11 +4,13 @@ as well as some common data conversions.
 """
 
 import copy
+from datetime import datetime
 import io
 import logging
 import os
-from datetime import datetime
 from pathlib import Path
+import shutil
+import tempfile
 from typing import Dict, List, Optional, Tuple, Union
 
 from affine import Affine
@@ -26,10 +28,12 @@ from rasterio.windows import Window
 from shapely.geometry import LineString, Polygon
 
 import hydromt
-from hydromt.io import write_xy
-from hydromt.io import open_vector
+from hydromt.writers import write_xy
+from hydromt.readers import open_vector
 from hydromt.data_catalog.drivers import RasterioDriver
 from hydromt.gis.gis_utils import zoom_to_overview_level
+from hydromt.gis.vector import GeoDataset
+
 
 __all__ = [
     "read_binary_map",
@@ -62,14 +66,13 @@ __all__ = [
     "rotated_grid",
     "build_overviews",
     "find_uv_indices",
+    "make_regular_grid",
+    "make_regular_grid_transform",
     "partition_quadtree",
-    "xu_open_dataset",
-    "check_exists_and_lazy",
-    "make_regular_ugrid",
-    "partition_quadtree",
+    "write_netcdf_safely",
 ]
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 ## BINARY MAPS: sfincs.ind, sfincs.msk, sfincs.dep etc. ##
@@ -1108,7 +1111,7 @@ def downscale_floodmap(
         if zoom_level is not None:
             zls_dict, crs = RasterioDriver._get_zoom_levels_and_crs(dep)
             overview_level = zoom_to_overview_level(
-                zoom=zoom_level, zls_dict=zls_dict, crs=crs
+                zoom=zoom_level, zls_dict=zls_dict, source_crs=crs
             )
             if overview_level:
                 # NOTE: overview levels start at zoom_level 1, see _get_zoom_levels_and_crs
@@ -1566,42 +1569,6 @@ def binary_search(vals, val):
     return None
 
 
-def xu_open_dataset(*args, **kwargs):
-    """This function is a replacement of xu.open_dataset.
-
-    It exists because xu.open_dataset does not close the file after opening, which can lead to Permission Errors.
-    """
-    with xr.open_dataset(*args, **kwargs) as ds:
-        return xu.UgridDataset(ds)
-
-
-def check_exists_and_lazy(ds, file_name):
-    """If a netcdf file is read lazily, the file can not be overwritten.
-    This function checks whether the file already exists, if so, it checks
-    if the data is lazily loaded. If so, data should be loaded before writing.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset, xu.UgridDataset
-        The dataset to be written to a netcdf file.
-    file_name : str
-        The path to the netcdf file.
-    """
-    if not os.path.exists(file_name):
-        return
-
-    # Check for lazy loading
-    lazy_vars = [not data_array._in_memory for data_array in ds.data_vars.values()]
-
-    # if all(lazy_vars):
-    #     return  # All variables are lazy-loaded, skip writing?
-
-    if any(lazy_vars):
-        ds.load()  # Some variables are lazy-loaded, load them into memory
-        ds.close()
-    return
-
-
 def make_regular_grid(
     x0,
     y0,
@@ -1613,66 +1580,157 @@ def make_regular_grid(
     crs=None,
     mmin=0,
     nmin=0,
+    refi=1,
     name="var",
     dtype=float,
     fill_value=np.nan,
+    uv_points=False,
     make_ugrid=False,
 ):
     """
     Create an xarray.DataArray with spatial coordinates based on grid definition.
+
+    Parameters
+    ----------
+    x0, y0 : float
+        Origin (lower-left corner) in physical coordinates.
+    dx, dy : float
+        Grid spacing in x and y directions (coarse resolution).
+    mmin, mmax, nmin, nmax : int
+        Grid index bounds.
+    refi : int
+        Refinement factor (number of subcells per coarse cell).
+    rotation : float
+        Rotation angle in degrees.
+    uv_points : bool, optional
+        If True, place points at cell corners (UV points);
+        if False, place points at cell centers (default).
     """
+
+    # Refined spacing
+    dxp, dyp = dx / refi, dy / refi
+
+    # Number of points; 1 coarse cell extra for uv_points
+    nx = (mmax - mmin + int(uv_points)) * refi
+    ny = (nmax - nmin + int(uv_points)) * refi
+
+    # Index ranges
+    m_range = np.arange(nx)
+    n_range = np.arange(ny)
+
+    # Offset in grid units
+    offset_x = 0.5 * dxp + mmin * dx - (0.5 * dx if uv_points else 0)
+    offset_y = 0.5 * dyp + nmin * dy - (0.5 * dy if uv_points else 0)
+
+    # Affine transform
     transform = (
-        Affine.translation(x0, y0) * Affine.rotation(rotation) * Affine.scale(dx, dy)
+        Affine.translation(x0, y0) * Affine.rotation(rotation) * Affine.scale(dxp, dyp)
     )
 
-    nx = mmax - mmin
-    ny = nmax - nmin
-
-    if transform.b == 0:  # no rotation, rectilinear
+    # Generate coordinates
+    if transform.b == 0.0:  # No rotation → rectilinear
         x_coords, _ = transform * (
-            np.arange(mmin, mmax) + 0.5,
-            np.zeros(nx) + 0.5,
+            m_range + offset_x / dxp,
+            np.zeros(nx) + offset_y / dyp,
         )
         _, y_coords = transform * (
-            np.zeros(ny) + 0.5,
-            np.arange(nmin, nmax) + 0.5,
+            np.zeros(ny) + offset_x / dxp,
+            n_range + offset_y / dyp,
         )
         coords = {
-            "m": ("x", np.arange(mmin, mmax)),
-            "n": ("y", np.arange(nmin, nmax)),
+            "m": ("x", m_range + mmin * refi),
+            "n": ("y", n_range + nmin * refi),
             "x": x_coords,
             "y": y_coords,
         }
         dims = ("y", "x")
-    else:  # rotated, need 2D coordinates
-        x_coords, y_coords = (
-            transform
-            * Affine.translation(0.5, 0.5)
-            * np.meshgrid(np.arange(mmin, mmax), np.arange(nmin, nmax))
+    else:  # With rotation → 2D coordinate arrays
+        m_mesh, n_mesh = np.meshgrid(m_range, n_range)
+        x_coords, y_coords = transform * (
+            m_mesh + offset_x / dxp,
+            n_mesh + offset_y / dyp,
         )
         coords = {
-            "m": ("x", np.arange(mmin, mmax)),
-            "n": ("y", np.arange(nmin, nmax)),
+            "m": ("x", m_range + mmin * refi),
+            "n": ("y", n_range + nmin * refi),
             "xc": (("y", "x"), x_coords),
             "yc": (("y", "x"), y_coords),
         }
         dims = ("y", "x")
 
+    # DataArray with fill value
     data = np.full((ny, nx), fill_value, dtype=dtype)
     da = xr.DataArray(data, dims=dims, coords=coords, name=name)
 
+    # CRS/Ugrid handling
     if make_ugrid:
         if rotation != 0.0:
             da = UgridDataArray.from_structured(da, "xc", "yc")
         else:
             da = UgridDataArray.from_structured(da)
-
-        # Attach CRS if you want to use rioxarray
         if crs is not None:
             da.grid.set_crs(crs)
     else:
-        da.raster.set_crs(crs)
+        if crs is not None:
+            da.raster.set_crs(crs)
+
     return da
+
+
+def make_regular_grid_transform(
+    x0, y0, dx, dy, mmax, nmax, mmin=0, nmin=0, rotation=0.0, refi=1, uv_points=False
+):
+    """
+    Compute affine transform for a regular grid
+    (possibly rotated) without allocating arrays. The affine corresponds
+    to the **bottom-left corner** of the first pixel (raster convention),
+    while preserving original UV offset logic.
+    """
+    dxp = dx / refi
+    dyp = dy / refi
+
+    if uv_points:
+        width = (mmax - mmin + 1) * refi
+        height = (nmax - nmin + 1) * refi
+    else:
+        width = (mmax - mmin) * refi
+        height = (nmax - nmin) * refi
+
+    # offset in pixel units like make_regular_grid
+    if uv_points:
+        offset_x = 0.5 * dxp + mmin * dx - 0.5 * dx
+        offset_y = 0.5 * dyp + nmin * dy - 0.5 * dy
+    else:
+        offset_x = 0.5 * dxp + mmin * dx
+        offset_y = 0.5 * dyp + nmin * dy
+
+    if rotation == 0.0:
+        # non-rotated: simple translation
+        tx = x0 + offset_x - 0.5 * dxp
+        ty = y0 + offset_y - 0.5 * dyp
+        transform = Affine.translation(tx, ty) * Affine.scale(dxp, dyp)
+    else:
+        # rotated: compute cos/sin once
+        theta = np.deg2rad(rotation)
+        cosrot = np.cos(theta)
+        sinrot = np.sin(theta)
+
+        # apply the half-cell shift in rotated coordinates
+        x0_shifted = (
+            x0 + (offset_x - 0.5 * dxp) * cosrot - (offset_y - 0.5 * dyp) * sinrot
+        )
+        y0_shifted = (
+            y0 + (offset_x - 0.5 * dxp) * sinrot + (offset_y - 0.5 * dyp) * cosrot
+        )
+
+        # base affine for rotation and scaling
+        transform = (
+            Affine.translation(x0_shifted, y0_shifted)
+            * Affine.rotation(rotation)
+            * Affine.scale(dxp, dyp)
+        )
+
+    return transform, width, height
 
 
 def partition_quadtree(
@@ -1761,3 +1819,67 @@ def partition_quadtree(
         return partitions_new
     else:
         return partitions
+
+
+def write_netcdf_safely(ds, abs_file_path: Path) -> Path:
+    """
+    NetCDF files have the tendency to get locked by other processes (e.g. other notebooks), or because they were
+    opened in a lazy manner. This function attempts to write the dataset to the specified path,
+    only when it actually changed, and if the file is locked, it will create a versioned file instead.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset or GeoDataset
+        Dataset to write (should already have CRS if needed).
+    abs_file_path : Path
+        Absolute target path for the NetCDF file.
+
+    Returns
+    -------
+    Path
+        The path the dataset was actually written to (may be versioned if original locked).
+    """
+    ds = ds.load()  # ensure fully in memory
+
+    # Step 1: skip if file exists and dataset is unchanged
+    if abs_file_path.exists():
+        try:
+            existing_ds = GeoDataset.from_netcdf(
+                abs_file_path, crs=ds.raster.crs, chunks="auto"
+            )
+            changed = not ds.equals(existing_ds)
+            existing_ds.close()
+        except Exception:
+            changed = True  # fail-safe
+
+        if not changed:
+            logger.info(f"No changes detected; skipping write to {abs_file_path}")
+            return abs_file_path
+
+    # Step 2: write to temporary file
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix=".nc", dir=abs_file_path.parent)
+    os.close(tmp_fd)
+    ds.vector.to_xy().to_netcdf(tmp_path)
+
+    # Step 3: move temp file to target, or create versioned file if locked
+    try:
+        shutil.move(tmp_path, abs_file_path)
+        final_path = abs_file_path
+    except PermissionError:
+        # File is locked — create versioned file
+        base, ext, parent = (
+            abs_file_path.stem,
+            abs_file_path.suffix,
+            abs_file_path.parent,
+        )
+        i = 1
+        while True:
+            versioned_path = parent / f"{base}_v{i}{ext}"
+            if not versioned_path.exists():
+                break
+            i += 1
+        shutil.move(tmp_path, versioned_path)
+        logger.warning(f"Original file locked. Saved new version as {versioned_path}")
+        final_path = versioned_path
+
+    return final_path
