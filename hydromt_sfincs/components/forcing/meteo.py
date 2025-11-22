@@ -348,7 +348,7 @@ class SfincsPrecipitation(SfincsMeteo):
             precip,
             bbox=self.model.bbox,
             buffer=buffer,
-            time_tuple=self.model.get_model_time(),
+            time_range=self.model.get_model_time(),
             variables=["precip"],
         )
 

@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "dis",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32633" } },
+"features": [
+{ "type": "Feature", "properties": { "index": 0, "name": "Piave_inflow" }, "geometry": { "type": "Point", "coordinates": [ 321483.200000000011642, 5047503.0 ] } }
+]
+}
