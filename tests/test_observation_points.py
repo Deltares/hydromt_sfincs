@@ -102,7 +102,7 @@ def test_observation_points_create(model_config):
     print("Exists?", gdf_fn.exists())
 
     # call create
-    model_config.observation_points.create(locations=gdf_fn, merge=False)
+    model_config.observation_points.create(locations="obs_geojson", merge=False)
 
     # check if sizes are the same
     obs1 = model_config.observation_points.data

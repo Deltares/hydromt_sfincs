@@ -50,3 +50,8 @@ vito_mapping:
     name: pandas
     options:
       index_col: 0
+
+obs_geojson:
+  uri: sfincs_test/gis/obs.geojson
+  data_type: GeoDataFrame
+  driver: pyogrio
