@@ -54,6 +54,7 @@ def test_config_io(tmp_path):
         "y0": 5034000.0,
         "rotation": 27.0,
         "epsg": 32633,
+        "crsgeo": 0,
     }
     model0.config.update(inpdict)
 

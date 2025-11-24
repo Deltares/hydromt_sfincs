@@ -42,8 +42,9 @@ def model_init(tmp_path):
 @pytest.fixture
 def model_config():
     root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data"])
+    mod = SfincsModel(root=root, mode="r")
     mod.config.read()
+    mod.grid.read()
     return mod
 
 
@@ -51,7 +52,7 @@ def model_config():
 @pytest.fixture
 def model(tmp_dir):
     root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data"])
+    mod = SfincsModel(root=root, mode="r")
     mod.read()
     mod.root.set(tmp_dir, mode="r+")
     return mod
