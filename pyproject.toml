@@ -25,9 +25,9 @@ dependencies = [
     "scipy",
     "shapely",
     "xarray",
-    "xugrid>=0.14, <1.0",
+    "xugrid[all]>=0.14, <1.0",
 ]
-requires-python = ">=3.9" # fix tests to support older versions
+requires-python = ">=3.11" # fix tests to support older versions
 readme = "README.rst"
 classifiers = [
     # https://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -48,7 +48,7 @@ test = [
     "pre-commit",
 ]
 doc = [
-	"hydromt_sfincs[examples]",      # examples are included in the docs
+	"hydromt_sfincs[examples]",     # examples are included in the docs
 	"nbsphinx",                     # build notebooks in docs
 	"pydata-sphinx-theme>=0.15.2",  # theme
 	"sphinx_autosummary_accessors", # doc layout
@@ -90,10 +90,13 @@ exclude = ["docs", "examples", "envs", "tests", "binder", ".github", "sandbox"]
 [tool.make_env]
 channels = ["conda-forge"]
 deps_not_in_conda = [
-  "sphinx_design",
+  "autodoc_pydantic",
   "black[jupyter]",
-  "hydromt",  # temporary until hydromt v0.10.1 is released
+  "cht_tide",
+  "hydromt",  # temporary until hydromt v1.3.0 is released
   "pyflwdir", # temporary until pyflwdir v0.5.10 is released on conda-forge
+  "sphinx_autosummary_accessors",
+  "sphinx_design",
 ]
 
 [tool.pytest.ini_options]
