@@ -97,7 +97,9 @@ def test_observation_points_create(model_config):
     obs0 = model_config.observation_points.data
 
     # read in related geojson
-    gdf_fn = join(TESTMODELDIR, "gis", "obs.geojson")
+    gdf_fn = Path(TESTMODELDIR) / "gis" / "obs.geojson"
+    print("Resolved path:", gdf_fn.resolve())
+    print("Exists?", gdf_fn.exists())
 
     # call create
     model_config.observation_points.create(locations=gdf_fn, merge=False)

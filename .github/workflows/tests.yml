@@ -59,7 +59,7 @@ jobs:
       - name: Test
         run: |
           export NUMBA_DISABLE_JIT=1
-          python -m pytest --verbose --cov=hydromt_sfincs --cov-report xml
+          python -m pytest -vv -s --cov=hydromt_sfincs --cov-report xml
 
       # upload coverage
       - uses: codecov/codecov-action@v3
