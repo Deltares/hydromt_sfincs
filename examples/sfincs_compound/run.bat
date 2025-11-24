@@ -1,1 +1,1 @@
-call "c:\change_path_of_folder\sfincs.exe">sfincs_log.txt
+call "c:\put\your\own\path\sfincs.exe">sfincs_log.txt
