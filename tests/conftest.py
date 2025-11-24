@@ -44,7 +44,6 @@ def model_config():
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r")
     mod.config.read()
-    mod.grid.read()
     return mod
 
 
