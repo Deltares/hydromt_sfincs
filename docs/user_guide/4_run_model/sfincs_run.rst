@@ -5,7 +5,7 @@ Running a model
 ===============
 
 **SFINCS** can be run on multiple different platforms, both local, HPC and cloud based.
-The simplest way is to run SFINCS on Windows using a batch-file, which is shown in `this example <../../_examples/run_sfincs_model.ipynb>`_.
+The simplest way is to run SFINCS on Windows using a batch-file, which is shown in `this example <../../_examples/4_run_model.ipynb>`_.
 The example consists of a simple compound flood model that has been created with **HydroMT-SFINCS**.
 The model is situated in **Northern Italy** and is forced with waterlevel and discharge boundaries.
 

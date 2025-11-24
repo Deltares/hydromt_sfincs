@@ -1,8 +1,9 @@
 {
 "type": "FeatureCollection",
+"name": "bnd",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32633" } },
 "features": [
-{ "type": "Feature", "properties": { "index": 2792 }, "geometry": { "type": "Point", "coordinates": [ 318671.885665736277588, 5043342.735482707619667 ] } },
-{ "type": "Feature", "properties": { "index": 2791 }, "geometry": { "type": "Point", "coordinates": [ 325626.54517467902042, 5046403.05179179366678 ] } }
+{ "type": "Feature", "properties": { "index": 0, "name": 0 }, "geometry": { "type": "Point", "coordinates": [ 318671.89000000001397, 5043342.740000000223517 ] } },
+{ "type": "Feature", "properties": { "index": 1, "name": 1 }, "geometry": { "type": "Point", "coordinates": [ 325626.549999999988358, 5046403.049999999813735 ] } }
 ]
 }
