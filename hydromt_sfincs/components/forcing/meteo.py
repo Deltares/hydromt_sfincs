@@ -148,7 +148,11 @@ class SfincsMeteo(ModelComponent):
         for name in filtered_dict:
             fname, rename = _METEO[name]
             # check if data present:
-            if name not in self.data:
+            if name == "wind_2d":
+                if "wind10_u" and "wind10_v" not in self.data:
+                    continue
+
+            elif name not in self.data:
                 continue
 
             # Set file name and get absolute path
