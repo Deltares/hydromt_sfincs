@@ -123,7 +123,7 @@ def test_thin_dams_create(model_config):
         assert np.isclose(obs0coords, obs1coords, rtol=0.001).all()
 
     # add again with merge = True and should have 2 gdfs now
-    model_config.thin_dams.create(locations=gdf, merge=True)
+    model_config.thin_dams.create(locations=gdf_fn, merge=True)
     obs2 = model_config.thin_dams.data
 
     assert obs2.shape[0] == 2
