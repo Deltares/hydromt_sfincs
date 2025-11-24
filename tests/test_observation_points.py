@@ -97,12 +97,10 @@ def test_observation_points_create(model_config):
     obs0 = model_config.observation_points.data
 
     # read in related geojson
-    gdf = model_config.data_catalog.get_geodataframe(
-        join(TESTMODELDIR, "gis", "obs.geojson")
-    )
+    gdf_fn = join(TESTMODELDIR, "gis", "obs.geojson")
 
     # call create
-    model_config.observation_points.create(locations=gdf, merge=False)
+    model_config.observation_points.create(locations=gdf_fn, merge=False)
 
     # check if sizes are the same
     obs1 = model_config.observation_points.data
@@ -113,7 +111,7 @@ def test_observation_points_create(model_config):
     assert np.isclose(obs1.geometry.y.values, obs0.geometry.y.values, rtol=0.001).all()
 
     # add again with merge = True and should have 6 points now
-    model_config.observation_points.create(locations=gdf, merge=True)
+    model_config.observation_points.create(locations=gdf_fn, merge=True)
     obs2 = model_config.observation_points.data
     assert obs2.size == 12  # (6,2) > now 6 points
 

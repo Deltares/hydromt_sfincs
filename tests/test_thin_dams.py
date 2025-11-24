@@ -97,12 +97,10 @@ def test_thin_dams_create(model_config):
     obs0 = model_config.thin_dams.data
 
     # read in related geojson
-    gdf = model_config.data_catalog.get_geodataframe(
-        join(TESTMODELDIR, "gis", "thd_clean.geojson")
-    )
+    gdf_fn = join(TESTMODELDIR, "gis", "thd_clean.geojson")
 
     # call create
-    model_config.thin_dams.create(locations=gdf, merge=False)
+    model_config.thin_dams.create(locations=gdf_fn, merge=False)
 
     # check if sizes are the same
     obs1 = model_config.thin_dams.data

@@ -227,7 +227,6 @@ SFINCS workflows
    workflows.landuse
    workflows.cn_to_s
    workflows.create_topobathy_tiles
-   workflows.downscale_floodmap_webmercator
 
 .. _methods:
 
