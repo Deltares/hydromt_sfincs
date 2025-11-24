@@ -4,17 +4,17 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/workflows/tests.yml
-      - tests/*
-      - hydromt_sfincs/*
+      - hydromt_sfincs/**/*
+      - tests/**/*
       - pyproject.toml
+      - .github/workflows/tests.yml
   pull_request:
     branches: [main]
     paths:
-      - .github/workflows/tests.yml
-      - tests/*
-      - hydromt_sfincs/*
+      - hydromt_sfincs/**/*
+      - tests/**/*
       - pyproject.toml
+      - .github/workflows/tests.yml
 
 jobs:
   build:
