@@ -6,7 +6,8 @@ region:
 observations:
   uri: local_data/observations.csv
   data_type: GeoDataFrame
-  driver: geodataframe_table
+  driver:
+    name: geodataframe_table
   metadata:
     crs: 4326
 
@@ -50,8 +51,3 @@ vito_mapping:
     name: pandas
     options:
       index_col: 0
-
-obs_geojson:
-  uri: sfincs_test/gis/obs.geojson
-  data_type: GeoDataFrame
-  driver: pyogrio

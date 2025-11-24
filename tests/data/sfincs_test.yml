@@ -43,7 +43,7 @@ steps:
           reclass_table: vito_mapping
       write_dep_tif: True
       nr_subgrid_pixels: 6
-      nbins: 8
+      nr_levels: 8
 
   - observation_points.create:
       locations: observations

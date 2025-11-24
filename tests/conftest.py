@@ -41,7 +41,6 @@ def model_config():
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
     mod.config.read()
-    mod.grid.read()
     return mod
 
 
@@ -49,7 +48,7 @@ def model_config():
 @pytest.fixture
 def model(tmp_dir):
     root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r")
+    mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
     mod.read()
     mod.root.set(tmp_dir, mode="r+")
     return mod

@@ -100,9 +100,14 @@ def test_observation_points_create(model_config):
     gdf_fn = Path(TESTMODELDIR) / "gis" / "obs.geojson"
     print("Resolved path:", gdf_fn.resolve())
     print("Exists?", gdf_fn.exists())
+    gdf = model_config.data_catalog.get_geodataframe(gdf_fn)
+    print("GDF:", gdf)
+    print("GDF CRS:", gdf.crs)
+    print("Model region: ", model_config.region)
+    print("Model CRS:", model_config.crs)
 
     # call create
-    model_config.observation_points.create(locations="obs_geojson", merge=False)
+    model_config.observation_points.create(locations=gdf_fn, merge=False)
 
     # check if sizes are the same
     obs1 = model_config.observation_points.data
