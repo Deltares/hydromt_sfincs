@@ -184,6 +184,7 @@ class SfincsMask(ModelComponent):
         drop_area: float = 0.0,
         connectivity: int = 8,
         all_touched: bool = True,
+        reset_mask: bool = True,
     ):
         """Create an integer mask with inactive (mask=0) and active (mask=1) cells, optionally bounded
         by several criteria.
@@ -245,6 +246,11 @@ class SfincsMask(ModelComponent):
         da_mask = self.data["mask"] if "mask" in self.data else None
         da_dep = self.data["dep"] if "dep" in self.data else None
 
+        da_mask0 = None
+        if not reset_mask and da_mask is not None:
+            # use current active mask
+            da_mask0 = da_mask > 0
+
         # always intiliaze an inactive mask
         da_mask = self.empty_mask > 0
 
@@ -262,7 +268,16 @@ class SfincsMask(ModelComponent):
                 _msk = np.logical_and(_msk, da_dep >= zmin)
             if zmax is not None:
                 _msk = np.logical_and(_msk, da_dep <= zmax)
-            da_mask = _msk
+            if da_mask0 is not None:
+                # if mask was provided; keep active mask only within valid elevations
+                da_mask = np.logical_and(da_mask0, _msk)
+            else:
+                # no mask provided; set mask to valid elevations
+                da_mask = _msk
+        elif zmin is None and zmax is None and da_mask0 is not None:
+            # in case a mask/region was provided, but you didn't want to update the mask based on elevation
+            # just continue with the provided mask
+            da_mask = da_mask0
 
         # TODO check when to apply fill_area and drop_area
         s = None if connectivity == 4 else np.ones((3, 3), int)
