@@ -244,8 +244,9 @@ def read_xyn(fn: str, crs: int = None):
         df["name"] = df.index
 
     points = gpd.points_from_xy(df["x"], df["y"])
-    gdf = gpd.GeoDataFrame(df.drop(columns=["x", "y"]), geometry=points, crs=crs)
-
+    gdf = gpd.GeoDataFrame(df.drop(columns=["x", "y"]), geometry=points)
+    if crs is not None:
+        gdf.set_crs(crs, inplace=True)
     return gdf
 
 
