@@ -104,18 +104,15 @@ def test_observation_points_create(model_config):
     print("GDF:", gdf)
     print("GDF CRS:", gdf.crs)
     print("Model region: ", model_config.region)
-    print("Model CRS:", model_config.crs)
+    print("Model region bounds:", model_config.region.bounds)
+    print("Model region CRS:", model_config.region.crs)
     gdf = model_config.data_catalog.get_geodataframe(
         gdf_fn,
-        bbox=model_config.region.total_bounds,
-        # geom=model_config.region,
+        geom=model_config.region,
     )
-    print("Clipped GDF:", gdf)
-    print("Clipped GDF CRS:", gdf.crs)
-    gdf.to_crs(model_config.crs, inplace=True)
 
     # call create
-    model_config.observation_points.create(locations=gdf, merge=False)
+    model_config.observation_points.create(locations=gdf_fn, merge=False)
 
     # check if sizes are the same
     obs1 = model_config.observation_points.data
