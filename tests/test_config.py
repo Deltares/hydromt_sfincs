@@ -119,30 +119,28 @@ def test_config_datetime(model_init):
 
 
 def test_get_set_file_variable(model_config, tmp_dir):
-    # test 3 situations of how function get_set_file_variable could be used
+    """Test get_set_file_variable with cross-platform paths."""
 
     config = model_config.config
     varname = "obsfile"
 
-    # 2) variable 'key' already in config
+    # --- 1) Variable already in config ---
     obs0 = config.get(varname)  # e.g., "sfincs.obs"
     file_path = config.get_set_file_variable(
         key=varname, value=None, default="sfincs.obs"
     )
 
-    # check if 'key' in config is unchanged
     obs1 = config.get(varname)
     assert obs0 == obs1
 
-    # check if root added to returned file_path (cross-platform)
-    expected_path = Path(abspath(join(config.root.path, obs1)))
+    # Path should include model root
+    expected_path = Path(config.root.path) / obs1
     assert Path(file_path).resolve().as_posix() == expected_path.resolve().as_posix()
 
-    # add obsfile as a random absolute path using tmp_dir
+    # --- 2) Add obsfile as random absolute path ---
     random_location = str(tmp_dir / "sfincs.obs")
-    config.set(varname, random_location)
+    config.set(varname, random_location)  # store string for Pydantic
 
-    # see whether it is returned
     file_path = config.get_set_file_variable(
         key=varname, value=None, default="sfincs.obs"
     )
@@ -150,24 +148,20 @@ def test_get_set_file_variable(model_config, tmp_dir):
         Path(file_path).resolve().as_posix()
         == Path(random_location).resolve().as_posix()
     )
+    assert config.get(varname) == random_location
 
-    # check whether it has been updated in the config
-    obs2 = config.get(varname)
-    assert random_location == obs2
-
-    # 3) use default name and root if not yet in config
+    # --- 3) Use default name if not yet in config ---
     config.set(varname, None)
-
     file_path = config.get_set_file_variable(
         key=varname, value=None, default="sfincs.obs"
     )
     obs3 = config.get(varname)
     assert obs3 == "sfincs.obs"
 
-    expected_path = Path(abspath(join(config.root.path, "sfincs.obs")))
+    expected_path = Path(config.root.path) / "sfincs.obs"
     assert Path(file_path).resolve().as_posix() == expected_path.resolve().as_posix()
 
-    # 1) input file variable 'key' is given as input
+    # --- 4) Input variable given as file name ---
     tmpvalue = "sfincs_test.obs"
     file_path = config.get_set_file_variable(
         key=varname, value=tmpvalue, default="sfincs.obs"
@@ -175,26 +169,25 @@ def test_get_set_file_variable(model_config, tmp_dir):
     obs4 = config.get(varname)
     assert obs4 == tmpvalue
 
-    expected_path = Path(abspath(join(config.root.path, tmpvalue)))
+    expected_path = Path(config.root.path) / tmpvalue
     assert Path(file_path).resolve().as_posix() == expected_path.resolve().as_posix()
 
-    # give a full path inside model root
-    tmppath = join(config.root.path, "sfincs_test.obs")
+    # --- 5) Input variable given as full path inside root ---
+    tmppath = Path(config.root.path) / "sfincs_test.obs"
     file_path = config.get_set_file_variable(
-        key=varname, value=tmppath, default="sfincs.obs"
+        key=varname, value=str(tmppath), default="sfincs.obs"
     )
     obs5 = config.get(varname)
-    assert obs5 == tmpvalue
+    assert obs5 == tmpvalue  # config stores just the file name
+    assert Path(file_path).resolve().as_posix() == tmppath.resolve().as_posix()
 
-    expected_path = Path(abspath(tmppath))
-    assert Path(file_path).resolve().as_posix() == expected_path.resolve().as_posix()
-
-    # finally, use random absolute path (tmp_dir)
+    # --- 6) Input variable given as random path outside root ---
     file_path = config.get_set_file_variable(
         key=varname, value=random_location, default="sfincs.obs"
     )
     obs6 = config.get(varname)
-    assert random_location == obs6
-
-    expected_path = Path(random_location)
-    assert Path(file_path).resolve().as_posix() == expected_path.resolve().as_posix()
+    assert obs6 == random_location
+    assert (
+        Path(file_path).resolve().as_posix()
+        == Path(random_location).resolve().as_posix()
+    )
