@@ -98,18 +98,6 @@ def test_observation_points_create(model_config):
 
     # read in related geojson
     gdf_fn = Path(TESTMODELDIR) / "gis" / "obs.geojson"
-    print("Resolved path:", gdf_fn.resolve())
-    print("Exists?", gdf_fn.exists())
-    gdf = model_config.data_catalog.get_geodataframe(gdf_fn)
-    print("GDF:", gdf)
-    print("GDF CRS:", gdf.crs)
-    print("Model region: ", model_config.region)
-    print("Model region bounds:", model_config.region.bounds)
-    print("Model region CRS:", model_config.region.crs)
-    gdf = model_config.data_catalog.get_geodataframe(
-        gdf_fn,
-        geom=model_config.region,
-    )
 
     # call create
     model_config.observation_points.create(locations=gdf_fn, merge=False)

@@ -118,7 +118,7 @@ def test_config_datetime(model_init):
     assert config.get("tref").year == 2010
 
 
-def test_get_set_file_variable(model_config):
+def test_get_set_file_variable(model_config, tmp_dir):
     # test 3 situations of how function get_set_file_variable could be used
 
     # read existing obsfile in model.root
@@ -141,7 +141,8 @@ def test_get_set_file_variable(model_config):
     # assert file_path == join(config.root.path, obs1)
 
     # add obsfile as random full path
-    random_location = "c:/random/file/location/sfincs.obs"
+    random_location = tmp_dir / "sfincs.obs"
+
     config.set(varname, random_location)  # because of c:/ it is a 'plausible' one
 
     # see whether it is returned, in case it's already set in the config
