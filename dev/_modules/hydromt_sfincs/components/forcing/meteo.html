@@ -1,0 +1,1341 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>hydromt_sfincs.components.forcing.meteo &#8212; HydroMT SFINCS  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/theme-deltares.css?v=a3fd7a5a" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/components/forcing/meteo';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <link rel="icon" href="../../../../_static/hydromt-icon.svg"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2.0.0.dev" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../../../../_static/hydromt-icon.svg" class="logo__image only-light" alt=""/>
+    <img src="../../../../_static/hydromt-icon.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">HydroMT SFINCS</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user_guide/intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api/api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user_guide/intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api/api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">hydromt_sfincs.components.forcing.meteo</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for hydromt_sfincs.components.forcing.meteo</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="kn">import</span> <span class="n">isfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">hydromt_step</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelComponent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.processes.meteo</span><span class="w"> </span><span class="kn">import</span> <span class="n">da_to_timedelta</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># dictionary of meteo variables and their corresponding SFINCS file names and renaming conventions</span>
+<span class="n">_METEO</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;precip&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;precip&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="s2">&quot;precip_2d&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;netampr&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;Precipitation&quot;</span><span class="p">:</span> <span class="s2">&quot;precip_2d&quot;</span><span class="p">}),</span>
+    <span class="s2">&quot;press_2d&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;netamp&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;barometric_pressure&quot;</span><span class="p">:</span> <span class="s2">&quot;press_2d&quot;</span><span class="p">}),</span>
+    <span class="s2">&quot;wind&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;wnd&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="s2">&quot;wind_2d&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;netamuamv&quot;</span><span class="p">,</span>
+        <span class="p">{</span><span class="s2">&quot;eastward_wind&quot;</span><span class="p">:</span> <span class="s2">&quot;wind10_u&quot;</span><span class="p">,</span> <span class="s2">&quot;northward_wind&quot;</span><span class="p">:</span> <span class="s2">&quot;wind10_v&quot;</span><span class="p">},</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SfincsMeteo</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># set in subclasses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Meteo data. Returns a xr.DataArray or xarray Dataset.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">skip_read</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize geoms.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">is_reading_mode</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">skip_read</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">variable</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read meteo data from file. Possible variables are &#39;precip&#39;, &#39;wind&#39;, &#39;press&#39;.&quot;&quot;&quot;</span>
+        <span class="c1"># check that read mode is on</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
+
+        <span class="k">assert</span> <span class="n">variable</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">&quot;precip&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;wind&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;press&quot;</span><span class="p">,</span>
+        <span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Variable </span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s2"> not supported. Supported variables are &#39;precip&#39;, &#39;wind&#39;, &#39;press&#39;.&quot;</span>
+
+        <span class="n">filtered_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_METEO</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">key</span><span class="p">}</span>
+
+        <span class="c1"># Check which type of meteo for this variable is present in the model</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filtered_dict</span><span class="p">:</span>
+            <span class="n">fname</span><span class="p">,</span> <span class="n">rename</span> <span class="o">=</span> <span class="n">_METEO</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="c1"># get absolute file path and set it in config if obsfile is not None</span>
+            <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
+            <span class="p">)</span>
+            <span class="c1"># check if abs_file_path is None or does not exist</span>
+            <span class="k">if</span> <span class="n">abs_file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># skip if no file is set</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># check whether we are reading gridded (always netcdf) or uniform data</span>
+            <span class="k">if</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.nc&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">read_gridded</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">rename</span><span class="o">=</span><span class="n">rename</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">read_uniform</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="c1"># also update the default filename (potentially used for writing)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_gridded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">rename</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read in gridded meteo data.&quot;&quot;&quot;</span>
+        <span class="c1"># open the netcdf file</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+
+        <span class="c1"># check if variables need to be renamed</span>
+        <span class="n">rename</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rename</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">}</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rename</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">rename</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="nb">list</span><span class="p">(</span><span class="n">rename</span><span class="o">.</span><span class="n">values</span><span class="p">())]</span>
+
+        <span class="c1"># set the data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_uniform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read in spatially uniform precipitation data.&quot;&quot;&quot;</span>
+        <span class="n">tref</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tref&quot;</span><span class="p">))</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">read_timeseries</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">tref</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
+
+        <span class="c1"># spatially uniform forcing</span>
+        <span class="k">if</span> <span class="n">variable</span> <span class="o">==</span> <span class="s2">&quot;wind&quot;</span><span class="p">:</span>
+            <span class="c1"># wind speed and direction</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+                <span class="n">df</span><span class="p">,</span>
+                <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">),</span>
+                <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;magnitude&quot;</span><span class="p">,</span> <span class="s2">&quot;direction&quot;</span><span class="p">]},</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">variable</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">variable</span><span class="p">)</span>
+
+        <span class="c1"># Add to self._data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%7.2f</span><span class="s2">&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write meteo data to file. Possible variables are &#39;precip&#39;, &#39;wind&#39;, &#39;press&#39;.&quot;&quot;&quot;</span>
+
+        <span class="c1"># check that write mode is on</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_write_mode</span><span class="p">()</span>
+
+        <span class="k">assert</span> <span class="n">variable</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">&quot;precip&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;wind&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;press&quot;</span><span class="p">,</span>
+        <span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Variable </span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s2"> not supported. Supported variables are &#39;precip&#39;, &#39;wind&#39;, &#39;press&#39;.&quot;</span>
+        <span class="n">filtered_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_METEO</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">key</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filtered_dict</span><span class="p">:</span>
+            <span class="n">fname</span><span class="p">,</span> <span class="n">rename</span> <span class="o">=</span> <span class="n">_METEO</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="c1"># check if data present:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;wind_2d&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;wind10_u&quot;</span> <span class="ow">and</span> <span class="s2">&quot;wind10_v&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+            <span class="k">elif</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Set file name and get absolute path</span>
+            <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
+                <span class="n">key</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Create parent directories if they do not exist</span>
+            <span class="n">abs_file_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.nc&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">write_gridded</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">rename</span><span class="o">=</span><span class="n">rename</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">write_uniform</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_gridded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">rename</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write spatially varying meteo file as netcdf.&quot;&quot;&quot;</span>
+
+        <span class="n">tref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tref&quot;</span><span class="p">)</span>
+        <span class="n">tref_str</span> <span class="o">=</span> <span class="n">tref</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
+
+        <span class="n">encoding</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;minutes since </span><span class="si">{</span><span class="n">tref_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;float64&quot;</span><span class="p">})</span>
+
+        <span class="c1"># assign self.data to ds</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+
+        <span class="c1"># combine variables and rename to output names</span>
+        <span class="n">rename</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rename</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">}</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rename</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">([</span><span class="n">ds</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rename</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">rename</span><span class="p">)</span>
+
+        <span class="c1"># write 2D gridded timeseries</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_uniform</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%7.2f</span><span class="s2">&quot;</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write uniform meteo file.&quot;&quot;&quot;</span>
+
+        <span class="n">tref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tref&quot;</span><span class="p">)</span>
+
+        <span class="c1"># parse data to dataframe</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">da</span><span class="p">[</span><span class="n">variable</span><span class="p">]</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+
+        <span class="c1"># write timeseries</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">write_timeseries</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">tref</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add data to grid.</span>
+
+<span class="sd">        All layers of grid must have identical spatial coordinates.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data: xarray.DataArray or xarray.Dataset</span>
+<span class="sd">            new map layer to add to grid</span>
+<span class="sd">        name: str, optional</span>
+<span class="sd">            Name of new map layer, this is used to overwrite the name of a DataArray</span>
+<span class="sd">            and ignored if data is a Dataset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+        <span class="n">name_required</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name_required</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to set </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> data without a name&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to_dataset</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cannot set data of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># TODO: don&#39;t we always want to reset the data when setting new data?</span>
+        <span class="c1"># that would mean that you can never have 1D and 2D data at the same time</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># empty grid</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">dvar</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">dvar</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">is_reading_mode</span><span class="p">():</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Replacing grid map: </span><span class="si">{</span><span class="n">dvar</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">dvar</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">dvar</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the data attribute.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="SfincsPrecipitation">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsPrecipitation.html#hydromt_sfincs.components.forcing.SfincsPrecipitation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SfincsPrecipitation</span><span class="p">(</span><span class="n">SfincsMeteo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    SFINCS precipitation forcing. This component handles the creation and management of precipitation data for the SFINCS model.</span>
+<span class="sd">    It supports both spatially distributed precipitation data (as a NetCDF file) and uniform precipitation data (as a time series).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SfincsPrecipitation.__init__">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsPrecipitation.html#hydromt_sfincs.components.forcing.SfincsPrecipitation.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs_netampr.nc&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsPrecipitation.read">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsPrecipitation.read.html#hydromt_sfincs.components.forcing.SfincsPrecipitation.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read precipitation data from file.&quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">(</span>
+            <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;precip&quot;</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsPrecipitation.write">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsPrecipitation.write.html#hydromt_sfincs.components.forcing.SfincsPrecipitation.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%7.2f</span><span class="s2">&quot;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;precip&quot;</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+            <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsPrecipitation.create">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsPrecipitation.create.html#hydromt_sfincs.components.forcing.SfincsPrecipitation.create">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">precip</span><span class="p">,</span>
+        <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e3</span><span class="p">,</span>
+        <span class="n">dst_res</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cumulative_input</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">time_label</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span>
+        <span class="n">aggregate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup precipitation forcing from a gridded spatially varying data source.</span>
+
+<span class="sd">        SFINCS requires the mean precipitation rate in mm/hr over the upcoming interval.</span>
+<span class="sd">        It will use the rate at the start of this interval and keep it constant throughout.</span>
+<span class="sd">        This method can use rainfall rates in [mm/hr] directly, or transform accumulated precip [mm] over any constant time interval to precipitation rates.</span>
+
+<span class="sd">        Input precipitation can be specified as:</span>
+
+<span class="sd">        * **Cumulative precipitation (mm)** over any constant time interval (e.g., 15/60/180 minutes).</span>
+<span class="sd">          This will be converted to a rate (mm/hr) if ``cumulative_input=True`` (default).</span>
+
+<span class="sd">        * **Precipitation rate (mm/hr)** at any time interval. Used as-is if</span>
+<span class="sd">          ``cumulative_input=False``.</span>
+
+<span class="sd">        If ``aggregate=True``, a spatially uniform precipitation forcing is applied based on</span>
+<span class="sd">        the domain-wide mean. If ``aggregate=False``, distributed precipitation is applied</span>
+<span class="sd">        using a NetCDF file. In that case, data is reprojected to the model CRS (and to</span>
+<span class="sd">        ``dst_res`` if provided).</span>
+
+<span class="sd">        One of the following model layers will be added:</span>
+
+<span class="sd">        * **netamprfile**: for distributed precipitation rate [mm/hr].</span>
+<span class="sd">        * **precipfile**: for uniform precipitation rate [mm/hr].</span>
+
+<span class="sd">        .. note::</span>
+
+<span class="sd">            SFINCS updates the meteo forcing every 1800 seconds (``dtwnd=1800`` by default).</span>
+<span class="sd">            If your dataset has smaller intervals, ``dtwnd`` in ``sfincs.inp`` is adjusted automatically.</span>
+
+<span class="sd">        .. note::</span>
+
+<span class="sd">            To allow precipitation rates to vary linearly over the time interval</span>
+<span class="sd">            (instead of being constant), set ``ampr_block = 0`` in ``sfincs.inp``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        precip: str or Path</span>
+<span class="sd">            Path to precipitation rasterdataset netcdf file.</span>
+
+<span class="sd">            * Required variables: [&#39;precip&#39; (mm) or &#39;precip&#39; (mm/hr)]</span>
+<span class="sd">            * Required coordinates: [&#39;time&#39;, &#39;y&#39;, &#39;x&#39;]</span>
+<span class="sd">        buffer: float, optional</span>
+<span class="sd">            Buffer (m) around the model domain to read the precipitation data.</span>
+<span class="sd">            This is useful to avoid edge effects when the precipitation data is clipped at the model domain.</span>
+<span class="sd">        dst_res: float, optional</span>
+<span class="sd">            Output resolution (m), by default None and computed from source data.</span>
+<span class="sd">            Only used in combination with aggregate=False</span>
+<span class="sd">        cumulative_input: bool, optional</span>
+<span class="sd">            Option to indicate whether the input precipitation is cumulative in mm</span>
+<span class="sd">            (True, default) or a precipitation rate in mm/hr (False). When cumulative,</span>
+<span class="sd">            the data is converted to mm/hr by dividing by the time interval of the input dataset.</span>
+<span class="sd">        time_label: literal, optional</span>
+<span class="sd">            Label to prescribe whether the accumulation period of the precipitation</span>
+<span class="sd">            is starting (left) or ending (right) at the validity date and time.</span>
+<span class="sd">            This is only relevant if cumulative_input=True.</span>
+<span class="sd">        aggregate: bool, {&#39;mean&#39;, &#39;median&#39;}, optional</span>
+<span class="sd">            Method to aggregate distributed input precipitation data. If True, mean</span>
+<span class="sd">            aggregation is used, if False (default) the data is not aggregated and</span>
+<span class="sd">            spatially distributed precipitation is returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get data for model domain and config time range</span>
+        <span class="n">precip</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">precip</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+            <span class="n">buffer</span><span class="o">=</span><span class="n">buffer</span><span class="p">,</span>
+            <span class="n">time_range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>
+            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;precip&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span> <span class="o">=</span> <span class="n">precip</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span>
+        <span class="c1"># check if x, y coordinates are 2D</span>
+        <span class="k">if</span> <span class="n">precip</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">x_dim</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">precip</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">y_dim</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Precipitation does not have 2D coordinates after spatial clipping.&quot;</span>
+                <span class="s2">&quot;Check the input data and the model region or consider increasing the buffer.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># check time coordinates</span>
+        <span class="k">if</span> <span class="n">precip</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Precipitation does not overlap with the model time range&quot;</span>
+                <span class="s2">&quot;Check the input data and the model configuration.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># get the time interval of the input data in seconds</span>
+        <span class="n">time_interval</span> <span class="o">=</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">precip</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+
+        <span class="c1"># check if time interval is set in the model config, else use default from SFINCS</span>
+        <span class="n">dtwnd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="mi">1800</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dtwnd</span> <span class="o">&gt;</span> <span class="n">time_interval</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="n">time_interval</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;dtwnd (</span><span class="si">{</span><span class="n">dtwnd</span><span class="si">}</span><span class="s2">) was larger than the time interval of the precip data (</span><span class="si">{</span><span class="n">time_interval</span><span class="si">}</span><span class="s2">) and therefore lowered.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># check if precip is cumulative or not to convert to mm/hr</span>
+        <span class="k">if</span> <span class="n">cumulative_input</span><span class="p">:</span>
+            <span class="c1"># convert to mm/hr by dividing by the time interval in seconds</span>
+            <span class="n">precip</span> <span class="o">=</span> <span class="n">precip</span> <span class="o">/</span> <span class="p">(</span><span class="n">time_interval</span> <span class="o">/</span> <span class="mi">3600</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">time_label</span> <span class="o">==</span> <span class="s2">&quot;right&quot;</span><span class="p">:</span>
+                <span class="c1"># typically cumulative precipation is accumulated over time interval ending at the validity time,</span>
+                <span class="c1"># to match SFINCS conventions, we shift the time index to the left</span>
+                <span class="n">precip</span> <span class="o">=</span> <span class="n">precip</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="n">time</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># aggregate or reproject in space</span>
+        <span class="k">if</span> <span class="n">aggregate</span><span class="p">:</span>
+            <span class="n">stat</span> <span class="o">=</span> <span class="n">aggregate</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">aggregate</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;mean&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Aggregate precip using </span><span class="si">{</span><span class="n">stat</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="n">zone</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="o">.</span><span class="n">dissolve</span><span class="p">()</span>
+            <span class="p">)</span>  <span class="c1"># make sure we have a single (multi)polygon</span>
+            <span class="n">precip_out</span> <span class="o">=</span> <span class="n">precip</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">zonal_stats</span><span class="p">(</span><span class="n">zone</span><span class="p">,</span> <span class="n">stats</span><span class="o">=</span><span class="n">stat</span><span class="p">)[</span><span class="sa">f</span><span class="s2">&quot;precip_</span><span class="si">{</span><span class="n">stat</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+            <span class="n">df_ts</span> <span class="o">=</span> <span class="n">precip_out</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">precip_out</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_uniform</span><span class="p">(</span><span class="n">timeseries</span><span class="o">=</span><span class="n">df_ts</span><span class="o">.</span><span class="n">to_frame</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># reproject to model utm crs</span>
+            <span class="c1"># downscaling to model grid is not recommended</span>
+            <span class="n">kwargs0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="n">dst_res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest_index&quot;</span><span class="p">)</span>
+            <span class="n">kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">meth</span> <span class="o">=</span> <span class="n">kwargs0</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Resample precip using </span><span class="si">{</span><span class="n">meth</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="n">precip_out</span> <span class="o">=</span> <span class="n">precip</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
+                <span class="n">dst_crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="n">dst_res</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="n">precip_out</span> <span class="o">=</span> <span class="n">precip_out</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;precip_2d&quot;</span><span class="p">)</span>
+
+            <span class="c1"># rename dimensions to match SFINCS conventions (always x and y)</span>
+            <span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span> <span class="o">=</span> <span class="n">precip_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span>
+            <span class="n">precip_out</span> <span class="o">=</span> <span class="n">precip_out</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="n">y_dim</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">x_dim</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">})</span>
+
+            <span class="c1"># add to data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">precip_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;precip_2d&quot;</span><span class="p">)</span>
+            <span class="c1"># update the model config</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;netamprfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs_netampr.nc&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;precipfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;precipfile was previously set, but is now replaced by netamprfile.&quot;</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;precipfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="c1"># update the default filename</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="s2">&quot;sfincs.netampr.nc&quot;</span></div>
+
+
+<div class="viewcode-block" id="SfincsPrecipitation.create_uniform">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsPrecipitation.create_uniform.html#hydromt_sfincs.components.forcing.SfincsPrecipitation.create_uniform">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_uniform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeseries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">magnitude</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup spatially uniform precipitation forcing (precip).</span>
+
+<span class="sd">        Adds model layers:</span>
+
+<span class="sd">        * **precipfile** forcing: uniform precipitation [mm/hr]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        timeseries: str, Path</span>
+<span class="sd">            Path to tabulated timeseries csv file with time index in first column</span>
+<span class="sd">            and location IDs in the first row,</span>
+<span class="sd">            see :py:meth:`hydromt.open_timeseries_from_table`, for details.</span>
+<span class="sd">            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.</span>
+<span class="sd">        magnitude: float</span>
+<span class="sd">            Precipitation magnitude [mm/hr] to use if no timeseries is provided.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">timeseries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_ts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
+                <span class="n">timeseries</span><span class="p">,</span>
+                <span class="n">time_range</span><span class="o">=</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">),</span>
+                <span class="n">source_kwargs</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;driver&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;pandas&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;index_col&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;parse_dates&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+                    <span class="p">}</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">magnitude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">times</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;10T&quot;</span><span class="p">)</span>
+            <span class="n">df_ts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="n">magnitude</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either timeseries or magnitude must be provided&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">df_ts</span> <span class="o">=</span> <span class="n">df_ts</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;df_ts must be a pandas.Series&quot;</span><span class="p">)</span>
+        <span class="n">df_ts</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;precip&quot;</span>
+        <span class="n">df_ts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">df_ts</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;precip&quot;</span><span class="p">)</span>
+        <span class="c1"># update the model config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;precipfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.precip&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;netamprfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;netamprfile was previously set, but is now replaced by precipfile.&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;netamprfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># update the default filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="s2">&quot;sfincs.precip&quot;</span></div>
+</div>
+
+
+
+<span class="c1"># %% Pressure</span>
+<div class="viewcode-block" id="SfincsPressure">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsPressure.html#hydromt_sfincs.components.forcing.SfincsPressure">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SfincsPressure</span><span class="p">(</span><span class="n">SfincsMeteo</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsPressure.__init__">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsPressure.html#hydromt_sfincs.components.forcing.SfincsPressure.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs_netamp.nc&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsPressure.read">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsPressure.read.html#hydromt_sfincs.components.forcing.SfincsPressure.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">(</span>
+            <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;press&quot;</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsPressure.write">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsPressure.write.html#hydromt_sfincs.components.forcing.SfincsPressure.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%7.2f</span><span class="s2">&quot;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;press&quot;</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+            <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsPressure.create">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsPressure.create.html#hydromt_sfincs.components.forcing.SfincsPressure.create">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">press</span><span class="p">,</span> <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e3</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">101325</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup pressure forcing from a gridded spatially varying data source.</span>
+
+<span class="sd">        Adds one model layer:</span>
+
+<span class="sd">        * **netampfile** forcing: distributed barometric pressure [Pa]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        press, str, Path, xr.Dataset, xr.DataArray</span>
+<span class="sd">            Path to pressure rasterdataset netcdf file or xarray dataset.</span>
+
+<span class="sd">            * Required variables: [&#39;press_msl&#39; (Pa)]</span>
+<span class="sd">            * Required coordinates: [&#39;time&#39;, &#39;y&#39;, &#39;x&#39;]</span>
+<span class="sd">        buffer: float, optional</span>
+<span class="sd">            Buffer (m) around the model domain to read the pressure data.</span>
+<span class="sd">            This is useful to avoid edge effects when the pressure data is clipped at the model domain.</span>
+<span class="sd">        dst_res: float</span>
+<span class="sd">            output resolution (m), by default None and computed from source data.</span>
+
+<span class="sd">        fill_value: float</span>
+<span class="sd">            value to use when no data is available.</span>
+<span class="sd">            Standard atmospheric pressure (101325 Pa) is used if no value is given.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get data for model domain and config time range</span>
+        <span class="n">press</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">press</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+            <span class="n">buffer</span><span class="o">=</span><span class="n">buffer</span><span class="p">,</span>
+            <span class="n">time_range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>
+            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;press_msl&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span> <span class="o">=</span> <span class="n">press</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span>
+        <span class="c1"># check if x, y coordinates are 2D</span>
+        <span class="k">if</span> <span class="n">press</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">x_dim</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">press</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">y_dim</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Pressure does not have 2D coordinates after spatial clipping.&quot;</span>
+                <span class="s2">&quot;Check the input data and the model region or consider increasing the buffer.&quot;</span>
+            <span class="p">)</span>
+        <span class="c1"># check time coordinates</span>
+        <span class="k">if</span> <span class="n">press</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Pressure does not overlap with the model time range&quot;</span>
+                <span class="s2">&quot;Check the input data and the model configuration.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># get the time interval of the input data in seconds</span>
+        <span class="n">time_interval</span> <span class="o">=</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">press</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+
+        <span class="c1"># check if time interval is set in the model config, else use default from SFINCS</span>
+        <span class="n">dtwnd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="mi">1800</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dtwnd</span> <span class="o">&gt;</span> <span class="n">time_interval</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="n">time_interval</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;dtwnd (</span><span class="si">{</span><span class="n">dtwnd</span><span class="si">}</span><span class="s2">) was larger than the time interval of the pressure data (</span><span class="si">{</span><span class="n">time_interval</span><span class="si">}</span><span class="s2">) and therefore lowered.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># reproject to model utm crs</span>
+        <span class="c1"># downscaling to model grid is not recommended</span>
+        <span class="n">kwargs0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="n">dst_res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest_index&quot;</span><span class="p">)</span>
+        <span class="n">kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">meth</span> <span class="o">=</span> <span class="n">kwargs0</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Resample pressure using </span><span class="si">{</span><span class="n">meth</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">press_out</span> <span class="o">=</span> <span class="n">press</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
+            <span class="n">dst_crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="n">dst_res</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">fill_value</span><span class="p">)</span>
+
+        <span class="n">press_out</span> <span class="o">=</span> <span class="n">press_out</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;press_2d&quot;</span><span class="p">)</span>
+
+        <span class="c1"># rename dimensions to match SFINCS conventions (always x and y)</span>
+        <span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span> <span class="o">=</span> <span class="n">press_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span>
+        <span class="n">press_out</span> <span class="o">=</span> <span class="n">press_out</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="n">y_dim</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">x_dim</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">})</span>
+
+        <span class="c1"># add to forcing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">press_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;press_2d&quot;</span><span class="p">)</span>
+        <span class="c1"># update the model config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;netampfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs_netamp.nc&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># %% Wind</span>
+<div class="viewcode-block" id="SfincsWind">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsWind.html#hydromt_sfincs.components.forcing.SfincsWind">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SfincsWind</span><span class="p">(</span><span class="n">SfincsMeteo</span><span class="p">):</span>
+<div class="viewcode-block" id="SfincsWind.__init__">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsWind.html#hydromt_sfincs.components.forcing.SfincsWind.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs_netamuv.nc&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsWind.read">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsWind.read.html#hydromt_sfincs.components.forcing.SfincsWind.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">(</span>
+            <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;wind&quot;</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsWind.write">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsWind.write.html#hydromt_sfincs.components.forcing.SfincsWind.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%7.2f</span><span class="s2">&quot;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;wind&quot;</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+            <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsWind.create">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsWind.create.html#hydromt_sfincs.components.forcing.SfincsWind.create">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wind</span><span class="p">,</span> <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e3</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup wind forcing from a gridded spatially varying data source.</span>
+
+<span class="sd">        Adds one model layer:</span>
+
+<span class="sd">        * **netamuamv** forcing: distributed wind [m/s]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        wind, str, Path, xr.Dataset</span>
+<span class="sd">            Path to wind rasterdataset (including eastward and northward components) netcdf file or xarray dataset.</span>
+
+<span class="sd">            * Required variables: [&#39;wind10_u&#39; (m/s), &#39;wind10_v&#39; (m/s)]</span>
+<span class="sd">            * Required coordinates: [&#39;time&#39;, &#39;y&#39;, &#39;x&#39;]</span>
+<span class="sd">        buffer: float, optional</span>
+<span class="sd">            Buffer (m) around the model domain to read the wind data.</span>
+<span class="sd">            This is useful to avoid edge effects when the wind data is clipped at the model domain.</span>
+<span class="sd">        dst_res: float</span>
+<span class="sd">            output resolution (m), by default None and computed from source data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get data for model domain and config time range</span>
+        <span class="n">wind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">wind</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+            <span class="n">buffer</span><span class="o">=</span><span class="n">buffer</span><span class="p">,</span>
+            <span class="n">time_range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>
+            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;wind10_u&quot;</span><span class="p">,</span> <span class="s2">&quot;wind10_v&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span> <span class="o">=</span> <span class="n">wind</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span>
+        <span class="c1"># check if x, y coordinates are 2D</span>
+        <span class="k">if</span> <span class="n">wind</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">x_dim</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">wind</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">y_dim</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Wind does not have 2D coordinates after spatial clipping.&quot;</span>
+                <span class="s2">&quot;Check the input data and the model region or consider increasing the buffer.&quot;</span>
+            <span class="p">)</span>
+        <span class="c1"># check time coordinates</span>
+        <span class="k">if</span> <span class="n">wind</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Wind does not overlap with the model time range&quot;</span>
+                <span class="s2">&quot;Check the input data and the model configuration.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># get the time interval of the input data in seconds</span>
+        <span class="n">time_interval</span> <span class="o">=</span> <span class="n">da_to_timedelta</span><span class="p">(</span><span class="n">wind</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+
+        <span class="c1"># check if time interval is set in the model config, else use default from SFINCS</span>
+        <span class="n">dtwnd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="mi">1800</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dtwnd</span> <span class="o">&gt;</span> <span class="n">time_interval</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;dtwnd&quot;</span><span class="p">,</span> <span class="n">time_interval</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;dtwnd (</span><span class="si">{</span><span class="n">dtwnd</span><span class="si">}</span><span class="s2">) was larger than the time interval of the wind data (</span><span class="si">{</span><span class="n">time_interval</span><span class="si">}</span><span class="s2">) and therefore lowered.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># reproject to model utm crs</span>
+        <span class="c1"># downscaling to model grid is not recommended</span>
+        <span class="n">kwargs0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="n">dst_res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest_index&quot;</span><span class="p">)</span>
+        <span class="n">kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">meth</span> <span class="o">=</span> <span class="n">kwargs0</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Resample wind using </span><span class="si">{</span><span class="n">meth</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="n">wind_out</span> <span class="o">=</span> <span class="n">wind</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
+            <span class="n">dst_crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dst_res</span><span class="o">=</span><span class="n">dst_res</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># rename dimensions to match SFINCS conventions (always x and y)</span>
+        <span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span> <span class="o">=</span> <span class="n">wind_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span>
+        <span class="n">wind_out</span> <span class="o">=</span> <span class="n">wind_out</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="n">y_dim</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">x_dim</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">})</span>
+
+        <span class="c1"># add to forcing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">wind_out</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;wind_2d&quot;</span><span class="p">)</span>
+        <span class="c1"># update the model config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;netamuamvfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs_netamuv.nc&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;wndfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;wndfile was previously set, but is now replaced by netamuamvfile.&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;wndfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># update the default filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="s2">&quot;sfincs_netamuv.nc&quot;</span></div>
+
+
+<div class="viewcode-block" id="SfincsWind.create_uniform">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsWind.create_uniform.html#hydromt_sfincs.components.forcing.SfincsWind.create_uniform">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_uniform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeseries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">magnitude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup spatially uniform wind forcing (wind).</span>
+
+<span class="sd">        Adds model layers:</span>
+
+<span class="sd">        * **windfile** forcing: uniform wind magnitude [m/s] and direction [deg]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        timeseries, str, Path</span>
+<span class="sd">            Path to tabulated timeseries csv file with time index in first column,</span>
+<span class="sd">            magnitude in second column and direction in third column</span>
+<span class="sd">            see :py:meth:`hydromt.open_timeseries_from_table`, for details.</span>
+<span class="sd">            Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.</span>
+<span class="sd">        magnitude: float</span>
+<span class="sd">            Magnitude of the wind [m/s]</span>
+<span class="sd">        direction: float</span>
+<span class="sd">            Direction where the wind is coming from [deg], e.g. 0 is north, 90 is east, etc.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">timeseries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_ts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
+                <span class="n">timeseries</span><span class="p">,</span>
+                <span class="n">time_range</span><span class="o">=</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">),</span>
+                <span class="n">source_kwargs</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;driver&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;pandas&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;index_col&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;parse_dates&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+                    <span class="p">}</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">magnitude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_ts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span> <span class="n">periods</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">magnitude</span><span class="p">,</span> <span class="n">direction</span><span class="p">],</span> <span class="p">[</span><span class="n">magnitude</span><span class="p">,</span> <span class="n">direction</span><span class="p">]]),</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Either timeseries or magnitude and direction must be provided&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">df_ts</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;wind&quot;</span>
+        <span class="n">df_ts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
+        <span class="n">df_ts</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;index&quot;</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+            <span class="n">df_ts</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">),</span>
+            <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">df_ts</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">]},</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;wind&quot;</span><span class="p">)</span>
+
+        <span class="c1"># update the model config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;wndfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.wnd&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;netamuamvfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;netamuamvfile was previously set, but is now replaced by wndfile.&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;netamuamvfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># update the default filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="s2">&quot;sfincs.wnd&quot;</span></div>
+</div>
+
+
+
+<span class="c1"># %% DDB GUI focused additional functions:</span>
+<span class="c1"># - yet unsupported in DDB-</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright Deltares.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

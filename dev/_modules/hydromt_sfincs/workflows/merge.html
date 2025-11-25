@@ -15,37 +15,50 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
   </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
-<link href="../../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-  
-  <link href="../../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
-
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/theme-deltares.css?v=17060807" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/theme-deltares.css?v=a3fd7a5a" />
   
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
-  <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/workflows/merge';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <link rel="icon" href="../../../_static/hydromt-icon.svg"/>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2.0.0.dev" />
   </head>
   
   
@@ -61,19 +74,8 @@
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
-  <input type="checkbox"
-          class="sidebar-toggle"
-          id="pst-primary-sidebar-checkbox"/>
-  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
-  
-  <input type="checkbox"
-          class="sidebar-toggle"
-          id="pst-secondary-sidebar-checkbox"/>
-  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
-  
-  <div class="search-button__wrapper">
-    <div class="search-button__overlay"></div>
-    <div class="search-button__search-container">
+  <dialog id="pst-search-dialog">
+    
 <form class="bd-search d-flex align-items-center"
       action="../../../search.html"
       method="get">
@@ -81,7 +83,6 @@
   <input type="search"
          class="form-control"
          name="q"
-         id="search-input"
          placeholder="Search the docs ..."
          aria-label="Search the docs ..."
          autocomplete="off"
@@ -89,8 +90,8 @@
          autocapitalize="off"
          spellcheck="false"/>
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
-</form></div>
-  </div>
+</form>
+  </dialog>
 
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
@@ -122,7 +123,7 @@
     
     
     <img src="../../../_static/hydromt-icon.svg" class="logo__image only-light" alt=""/>
-    <script>document.write(`<img src="../../../_static/hydromt-icon.svg" class="logo__image only-dark" alt=""/>`);</script>
+    <img src="../../../_static/hydromt-icon.svg" class="logo__image only-dark pst-js-only" alt=""/>
   
   
     <p class="title logo__title">HydroMT SFINCS</p>
@@ -154,8 +155,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../api.html">
-    API reference
+  <a class="nav-link nav-internal" href="../../../api/api.html">
+    API
   </a>
 </li>
 
@@ -184,15 +185,11 @@
         <div class="navbar-item navbar-persistent--container">
           
 
- <script>
- document.write(`
-   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <span class="search-button__default-text">Search</span>
-    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-   </button>
- `);
- </script>
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
         </div>
       
       
@@ -240,18 +237,18 @@
   
     <div class="navbar-persistent--mobile">
 
- <script>
- document.write(`
-   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <span class="search-button__default-text">Search</span>
-    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-   </button>
- `);
- </script>
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
     </div>
   
 
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
   
 </div>
 
@@ -265,7 +262,8 @@
       
         
       
-      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
         
 
   
@@ -295,8 +293,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../api.html">
-    API reference
+  <a class="nav-link nav-internal" href="../../../api/api.html">
+    API
   </a>
 </li>
 
@@ -367,9 +365,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -387,8 +390,6 @@
       
         <div class="header-article-item">
 
-
-
 <nav aria-label="Breadcrumb" class="d-print-none">
   <ul class="bd-breadcrumbs">
     
@@ -400,7 +401,7 @@
     
     <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">hydromt_sfin...</li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">hydromt_sfincs.workflows.merge</span></li>
   </ul>
 </nav>
 </div>
@@ -419,24 +420,33 @@
                   
   <h1>Source code for hydromt_sfincs.workflows.merge</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Workflow to merge multiple datasets into a single dataset used for elevation and manning data.&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">.bathymetry</span> <span class="kn">import</span> <span class="n">burn_river_rect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xugrid</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xu</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndimage</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.processes.mesh</span><span class="w"> </span><span class="kn">import</span> <span class="n">mesh2d_from_rasterdataset</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.bathymetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">burn_river_rect</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;merge_multi_dataarrays&quot;</span><span class="p">,</span> <span class="s2">&quot;merge_dataarrays&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;merge_multi_dataarrays&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;merge_dataarrays&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;merge_multi_dataarrays_on_mesh&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <div class="viewcode-block" id="merge_multi_dataarrays">
 <a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.merge_multi_dataarrays.html#hydromt_sfincs.workflows.merge_multi_dataarrays">[docs]</a>
-<span class="k">def</span> <span class="nf">merge_multi_dataarrays</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_multi_dataarrays</span><span class="p">(</span>
     <span class="n">da_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
     <span class="n">gdf_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
     <span class="n">da_like</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -520,9 +530,11 @@
             <span class="c1"># no data in da1 so use an empty array like da_like</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No data da1, start with empty array&quot;</span><span class="p">)</span>
             <span class="n">da1</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">da_like</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
+            <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># TODO: this applies to the whole dataset, not only the clipped part</span>
-            <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">load</span><span class="p">()</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">da_like</span><span class="p">)</span>
+            <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">load</span><span class="p">()</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">da_like</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">reproj_kwargs</span><span class="p">:</span>
         <span class="c1"># TODO</span>
         <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="o">**</span><span class="n">reproj_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
@@ -600,7 +612,7 @@
 
 <div class="viewcode-block" id="merge_dataarrays">
 <a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.merge_dataarrays.html#hydromt_sfincs.workflows.merge_dataarrays">[docs]</a>
-<span class="k">def</span> <span class="nf">merge_dataarrays</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_dataarrays</span><span class="p">(</span>
     <span class="n">da1</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">da2</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">offset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -713,8 +725,142 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_multi_dataarrays_on_mesh</span><span class="p">(</span>
+    <span class="n">da_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
+    <span class="n">mesh2d</span><span class="p">:</span> <span class="n">xu</span><span class="o">.</span><span class="n">Ugrid2d</span><span class="p">,</span>
+    <span class="n">resampling_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;barycentric&quot;</span><span class="p">,</span>
+    <span class="c1"># buffer_cells: int = 0,  # not in list</span>
+    <span class="c1"># interp_method: str = &quot;linear&quot;,  # not in list</span>
+    <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge a list of data arrays by reprojecting these to a common destination grid</span>
+<span class="sd">    and combine valid values.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    da_list : List[dict]</span>
+<span class="sd">        list of dicts with xr.DataArrays and optional merge arguments.</span>
+<span class="sd">        Possible merge arguments are:</span>
+
+<span class="sd">        * reproj_method: str, optional</span>
+<span class="sd">            Reprojection method, if not provided, method is based on resolution (average when resolution of destination grid is coarser then data reosltuion, else bilinear).</span>
+<span class="sd">        * offset: xr.DataArray, float, optional</span>
+<span class="sd">            Dataset with spatially varying offset or float with uniform offset</span>
+<span class="sd">        * zmin, zmax : float, optional</span>
+<span class="sd">            Range of valid elevations for da2 -  only valid cells are not merged.</span>
+<span class="sd">            Note: applied after offset!</span>
+<span class="sd">        * gdf_valid: gpd.GeoDataFrame, optional</span>
+<span class="sd">            Geometry of the valid region for da2</span>
+<span class="sd">    mesh2d: xu.Ugrid2d</span>
+<span class="sd">        Destination grid to which the data is projected.</span>
+<span class="sd">    buffer_cells : int, optional</span>
+<span class="sd">        Number of cells between datasets to ensure smooth transition of bed levels, by default 0</span>
+<span class="sd">    interp_method : str, optional</span>
+<span class="sd">        Interpolation method used to fill the buffer cells , by default &quot;linear&quot;</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    xu.UgridDataArray</span>
+<span class="sd">        merged data array</span>
+
+<span class="sd">    See Also:</span>
+<span class="sd">    ---------</span>
+<span class="sd">    :py:func:`~hydromt.workflows.mesh.mesh2d_from_rasterdataset`</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># make an empty data array</span>
+    <span class="n">da0</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">mesh2d</span><span class="o">.</span><span class="n">face_coordinates</span><span class="p">),</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+        <span class="n">dims</span><span class="o">=</span><span class="n">mesh2d</span><span class="o">.</span><span class="n">face_dimension</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">uda_out</span> <span class="o">=</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">(</span><span class="n">da0</span><span class="p">,</span> <span class="n">mesh2d</span><span class="p">)</span>
+
+    <span class="c1"># combine with next dataset</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">da_list</span><span class="p">)):</span>
+        <span class="n">merge_method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;merge_method&quot;</span><span class="p">,</span> <span class="s2">&quot;first&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing dataset </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> with merge_method=</span><span class="si">{</span><span class="n">merge_method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;first&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">uda_out</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping dataset due to &#39;first&#39; merge method and no NaNs.&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># get reprojection method</span>
+        <span class="c1"># TODO base this on resolution of datasets</span>
+        <span class="c1"># NOTE for now the default is barycentric</span>
+        <span class="n">reproj_method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reproj_method&quot;</span><span class="p">,</span> <span class="n">resampling_method</span><span class="p">)</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;da&quot;</span><span class="p">)</span>
+
+        <span class="c1"># get extent of mesh</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="n">uda_out</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">total_bounds</span>
+
+        <span class="c1"># clip before reproject</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_bbox</span><span class="p">(</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data in dataset within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">], skip&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># get part of dataset in memory</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+
+        <span class="c1"># set nodata to np.nan, Note this might change the dtype to float</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
+
+        <span class="c1"># get valid cells of dataset</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">_add_offset_mask_invalid</span><span class="p">(</span>
+            <span class="n">da</span><span class="p">,</span>
+            <span class="n">offset</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;offset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">min_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;zmin&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">max_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;zmax&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">gdf_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_valid&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">reproj_method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># reproject single-dataset to mesh</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">mesh2d_from_rasterdataset</span><span class="p">(</span>
+            <span class="n">ds</span><span class="o">=</span><span class="n">da</span><span class="p">,</span>
+            <span class="n">mesh2d</span><span class="o">=</span><span class="n">mesh2d</span><span class="p">,</span>
+            <span class="n">resampling_method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># merge based merge_method</span>
+        <span class="n">da1</span> <span class="o">=</span> <span class="n">uda_out</span>
+        <span class="n">da2</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">[</span><span class="s2">&quot;elevation&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;first&quot;</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;last&quot;</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da2</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da1</span><span class="p">)</span>
+            <span class="n">da2</span> <span class="o">=</span> <span class="p">(</span><span class="n">da1</span> <span class="o">+</span> <span class="n">da2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">da1</span> <span class="o">&gt;=</span> <span class="n">da2</span>
+        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">da1</span> <span class="o">&lt;=</span> <span class="n">da2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown merge_method: </span><span class="si">{</span><span class="n">merge_method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">uda_out</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">da2</span><span class="p">)</span>
+
+        <span class="c1"># TODO add buffer cells and interpolation</span>
+        <span class="c1"># if buffer_cells &gt; 0 and interp_method:</span>
+        <span class="c1">#     mask_dilated = da1.ugrid.binary_dilation(</span>
+        <span class="c1">#         mask, iterations=buffer_cells</span>
+        <span class="c1">#     )</span>
+        <span class="c1">#     mask_buf = np.logical_xor(mask, mask_dilated)</span>
+        <span class="c1">#     da_out = da_out.where(~mask_buf, np.nan)</span>
+        <span class="c1">#     da_out_interp = da_out.raster.interpolate_na(method=interp_method)</span>
+        <span class="c1">#     da_out = da_out.where(~mask_buf, da_out_interp)</span>
+
+        <span class="c1"># da_out = da_out.fillna(nodata).astype(dtype)</span>
+
+        <span class="c1"># close the dataset and collect garbage</span>
+        <span class="n">da</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">uda_out</span>
+
+
 <span class="c1">## Helper functions</span>
-<span class="k">def</span> <span class="nf">_add_offset_mask_invalid</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_offset_mask_invalid</span><span class="p">(</span>
     <span class="n">da</span><span class="p">,</span>
     <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">min_valid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -757,6 +903,32 @@
             
             
               
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+
+</div></div>
+              
             
           </div>
           <footer class="bd-footer-content">
@@ -768,8 +940,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
-<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -789,7 +961,7 @@
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
     <br/>
   </p>
 </div>
@@ -802,7 +974,8 @@
       
         <div class="footer-item">
 <p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.4.
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
 </p></div>
       
     </div>
