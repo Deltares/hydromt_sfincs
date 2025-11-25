@@ -25,7 +25,7 @@ class SfincsQuadtreeStorageVolume(ModelComponent):
         self,
         model: "SfincsModel",
     ):
-        # The data for the mask is stored in the model.grid.data["mask"]
+        # The data for the mask is stored in the model.quadtree_grid.data["mask"]
         super().__init__(
             model=model,
         )

@@ -40,6 +40,7 @@ from hydromt_sfincs.components.grid import (
 from hydromt_sfincs.components.quadtree import (
     SfincsQuadtreeGrid,
     SfincsQuadtreeElevation,
+    SfincsQuadtreeInitialConditions,
     SfincsQuadtreeInfiltration,
     SfincsQuadtreeMask,
     SfincsQuadtreeStorageVolume,
@@ -100,6 +101,7 @@ class SfincsModel(Model):
         "quadtree_mask": SfincsQuadtreeMask,
         "quadtree_infiltration": SfincsQuadtreeInfiltration,
         "quadtree_storage_volume": SfincsQuadtreeStorageVolume,
+        "quadtree_initial_conditions": SfincsQuadtreeInitialConditions,
         "quadtree_subgrid": SfincsQuadtreeSubgridTable,
         "quadtree_snapwave_mask": SnapWaveQuadtreeMask,
     }
@@ -881,6 +883,11 @@ class SfincsModel(Model):
     def quadtree_storage_volume(self) -> SfincsQuadtreeStorageVolume:
         """Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_storage_volume.SfincsQuadtreeStorageVolume`."""
         return self.components["quadtree_storage_volume"]
+
+    @property
+    def quadtree_initial_conditions(self) -> SfincsQuadtreeInitialConditions:
+        """Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_initial_conditions.SfincsQuadtreeInitialConditions`."""
+        return self.components["quadtree_initial_conditions"]
 
     @property
     def quadtree_subgrid(self) -> SfincsQuadtreeSubgridTable:
