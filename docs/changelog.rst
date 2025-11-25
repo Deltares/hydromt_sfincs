@@ -8,7 +8,7 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
-v2.0.0.rc1 (Not yet released)
+v2.0.0-rc1 (25-11-2025)
 =============================
 **This release contains breaking changes in the SfincsModel API. However, models that were built with v1.x.x can still be read/write/updates.**
 
