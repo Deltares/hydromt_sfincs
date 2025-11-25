@@ -107,7 +107,8 @@ def test_observation_points_create(model_config):
     print("Model CRS:", model_config.crs)
     gdf = model_config.data_catalog.get_geodataframe(
         gdf_fn,
-        geom=model_config.region,
+        bbox=model_config.region.total_bounds,
+        # geom=model_config.region,
     )
     print("Clipped GDF:", gdf)
     print("Clipped GDF CRS:", gdf.crs)
