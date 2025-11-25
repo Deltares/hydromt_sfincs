@@ -370,7 +370,7 @@ class SfincsMask(ModelComponent):
         """Set boundary cells in the model mask.
 
         The SFINCS model mask defines inactive (mask=0), active (mask=1), and waterlevel boundary (mask=2)
-        and outflow boundary (mask=3) cells. Active cells set using the `setup_mask` method,
+        and outflow boundary (mask=3) cells. Active cells set using the `create_active` method,
         while this method sets both types of boundary cells, see `btype` argument.
 
         Boundary cells at the edge of the active model domain,

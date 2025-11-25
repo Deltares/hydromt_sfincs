@@ -510,7 +510,7 @@ def test_storage_volume(tmp_dir, case):
 
     # now redo the tests with a rotated grid for the regular grid only
     if case == "test1":
-        config = mod.config.data.copy()
+        config = mod.config.data.model_copy()
         mod = SfincsModel(root=tmp_root, mode="w+")
 
         # get the config from the first model and add a rotation

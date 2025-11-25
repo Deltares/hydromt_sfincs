@@ -66,7 +66,7 @@ def test_add_point(model_config):
 
     # determine point in the middle of the grid
     gdf = model_config.region
-    point = gdf.geometry.unary_union.centroid
+    point = gdf.geometry.union_all().centroid
 
     model_config.water_level.add_point(
         x=point.x, y=point.y, value=-10.0, name="test_point"
@@ -89,7 +89,7 @@ def test_drop_duplicates(model_config, tmp_dir):
 
     # determine point in the middle of the grid
     gdf = model_config.region
-    point = gdf.geometry.unary_union.centroid
+    point = gdf.geometry.union_all().centroid
 
     model_config.water_level.add_point(
         x=point.x, y=point.y, value=-10.0, name="test_point"

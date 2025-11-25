@@ -124,7 +124,7 @@ def test_get_set_file_variable(model_config, tmp_dir):
     config = model_config.config
     varname = "obsfile"
 
-    # --- 1) Variable already in config ---
+    # 1. Variable already in config ---
     obs0 = config.get(varname)  # e.g., "sfincs.obs"
     file_path = config.get_set_file_variable(
         key=varname, value=None, default="sfincs.obs"
@@ -137,7 +137,7 @@ def test_get_set_file_variable(model_config, tmp_dir):
     expected_path = Path(config.root.path) / obs1
     assert Path(file_path).resolve().as_posix() == expected_path.resolve().as_posix()
 
-    # --- 2) Add obsfile as random absolute path ---
+    # 2. Add obsfile as random absolute path ---
     random_location = str(tmp_dir / "sfincs.obs")
     config.set(varname, random_location)  # store string for Pydantic
 
@@ -150,7 +150,7 @@ def test_get_set_file_variable(model_config, tmp_dir):
     )
     assert config.get(varname) == random_location
 
-    # --- 3) Use default name if not yet in config ---
+    # 3. Use default name if not yet in config ---
     config.set(varname, None)
     file_path = config.get_set_file_variable(
         key=varname, value=None, default="sfincs.obs"
@@ -161,7 +161,7 @@ def test_get_set_file_variable(model_config, tmp_dir):
     expected_path = Path(config.root.path) / "sfincs.obs"
     assert Path(file_path).resolve().as_posix() == expected_path.resolve().as_posix()
 
-    # --- 4) Input variable given as file name ---
+    # 4. Input variable given as file name ---
     tmpvalue = "sfincs_test.obs"
     file_path = config.get_set_file_variable(
         key=varname, value=tmpvalue, default="sfincs.obs"
@@ -172,7 +172,7 @@ def test_get_set_file_variable(model_config, tmp_dir):
     expected_path = Path(config.root.path) / tmpvalue
     assert Path(file_path).resolve().as_posix() == expected_path.resolve().as_posix()
 
-    # --- 5) Input variable given as full path inside root ---
+    # 5. Input variable given as full path inside root ---
     tmppath = Path(config.root.path) / "sfincs_test.obs"
     file_path = config.get_set_file_variable(
         key=varname, value=str(tmppath), default="sfincs.obs"
@@ -181,13 +181,14 @@ def test_get_set_file_variable(model_config, tmp_dir):
     assert obs5 == tmpvalue  # config stores just the file name
     assert Path(file_path).resolve().as_posix() == tmppath.resolve().as_posix()
 
-    # --- 6) Input variable given as random path outside root ---
+    # 6. Input variable given as random path outside root ---
     file_path = config.get_set_file_variable(
         key=varname, value=random_location, default="sfincs.obs"
     )
     obs6 = config.get(varname)
-    assert obs6 == random_location
-    assert (
-        Path(file_path).resolve().as_posix()
-        == Path(random_location).resolve().as_posix()
-    )
+
+    obs6_path = Path(obs6).resolve().as_posix()
+    random_location_path = Path(random_location).resolve().as_posix()
+
+    assert obs6_path == random_location_path
+    assert Path(file_path).resolve().as_posix() == random_location_path

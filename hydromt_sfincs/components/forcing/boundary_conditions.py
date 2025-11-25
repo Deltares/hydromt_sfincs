@@ -290,7 +290,7 @@ class SfincsBoundaryBase(ModelComponent):
 
         if not isinstance(gdf, gpd.GeoDataFrame):
             raise ValueError("gdf must be a GeoDataFrame")
-        if not gdf.index.is_integer() and gdf.index.is_unique:
+        if not pd.api.types.is_integer_dtype(gdf.index) and gdf.index.is_unique:
             raise ValueError("gdf index must be unique integers")
         if not gdf.geometry.type.isin(["Point"]).all():
             raise ValueError("gdf geometry must be Point")
@@ -308,7 +308,7 @@ class SfincsBoundaryBase(ModelComponent):
             return
         if not isinstance(df, pd.DataFrame):
             raise ValueError("df must be a DataFrame")
-        if not df.columns.is_integer() and df.columns.is_unique:
+        if not pd.api.types.is_integer_dtype(df.columns) and df.columns.is_unique:
             raise ValueError("df column names must be unique integers")
 
         if df.index.inferred_type in ["integer", "floating"]:
