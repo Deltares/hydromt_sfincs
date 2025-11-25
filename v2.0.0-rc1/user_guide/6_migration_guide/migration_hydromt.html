@@ -1,0 +1,1010 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Migration Guide &#8212; HydroMT SFINCS  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/theme-deltares.css?v=a3fd7a5a" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/6_migration_guide/migration_hydromt';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-r';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <link rel="icon" href="../../_static/hydromt-icon.svg"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="API" href="../../api/api.html" />
+    <link rel="prev" title="Sfincs results: animation" href="../../_examples/6_make_results_animation.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2.0.0-rc1" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../../_static/hydromt-icon.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/hydromt-icon.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">HydroMT SFINCS</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../1_getting_started_hydromt/index.html">Getting started with HydroMT</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../1_getting_started_hydromt/data_catalog.html">Data Catalog</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference external" href="https://deltares.github.io/hydromt/stable/guides/advanced_user/data_prepare_cat.html">Prepare your data catalog</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://deltares.github.io/hydromt/stable/guides/advanced_user/data_types.html">Supported data types</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://deltares.github.io/hydromt/stable/guides/user_guide/data_existing_cat.html">Predefined catalogs</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference external" href="https://deltares.github.io/hydromt/stable/guides/user_guide/model_region.html">Model Region</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../2_build_model/index.html">Building a SFINCS Model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../2_build_model/model_components.html">Model Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../2_build_model/model_methods.html">Model Methods</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../2_build_model/model_build.html">Building a SFINCS model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_examples/0_build_from_cli.html"> Example: Build from CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_examples/1_build_from_script.html"> Example: Build from script</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../3_update_model/index.html">Updating a SFINCS Model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../3_update_model/model_update.html">Updating a SFINCS model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_examples/2_update_forcing.html">Example: Update Forcing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_examples/3_update_geometries.html">Example: Update Geometries</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../4_run_model/sfincs_run.html">Running a model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../_examples/4_run_model.html">Example: Running a model</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../5_postprocess_model/sfincs_analyse.html">Postprocessing and visualization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../_examples/5_plot_results_hmax.html">Example: Determine maximum waterdepth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../_examples/6_make_results_animation.html">Example: Create animation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Migration Guide</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../intro.html" class="nav-link">User guide</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Migration Guide</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="migration-guide">
+<span id="migration-hydromt-v1"></span><h1>Migration Guide<a class="headerlink" href="#migration-guide" title="Link to this heading">#</a></h1>
+<p>HydroMT v1 introduces a component-based architecture to replace the previous inheritance model.
+Instead of all model functionality being defined in a single <code class="docutils literal notranslate"><span class="pre">Model</span></code> class, a model is now composed of modular <code class="docutils literal notranslate"><span class="pre">ModelComponent</span></code>
+classes such as <code class="docutils literal notranslate"><span class="pre">GridComponent</span></code> or <code class="docutils literal notranslate"><span class="pre">ConfigComponent</span></code>.
+This structure makes models more flexible, extensible, and easier to maintain.
+For detailed guidance, refer to the official <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/migration_guide/index.html">HydroMT migration guide</a>.</p>
+<p>The component-based architecture of HydroMT v1 allows for better separation of functionality. Where previously all functionality was described as part of the
+<cite>SfincsModel</cite> class (in sfincs.py), the new architecture allows to break this down into dedicated components that each handle a specific part of the model.
+For example, the configuration is now handled by a <cite>SfincsConfigComponent</cite> described in components/config.py. This resulted in a mayor code restructure of HydroMT-SFINCS,
+but the overall functionality and API remains very similar earlier versions. In these migration guidelines,
+we highlight the main changes and provide guidance on how to upgrade existing HydroMT-SFINCS workflows to be compatible with HydroMT v1.</p>
+<section id="data-catalog-format-changes">
+<h2>Data Catalog Format Changes<a class="headerlink" href="#data-catalog-format-changes" title="Link to this heading">#</a></h2>
+<section id="information">
+<h3>Information<a class="headerlink" href="#information" title="Link to this heading">#</a></h3>
+<p>The data catalog structure has been refactored to introduce a more modular design and clearer separation of responsibilities across several new classes (<cite>DataSource</cite>, <cite>Driver</cite>, <cite>URIResolver</cite>, and <cite>DataAdapter</cite>).</p>
+<p>Key format changes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">path</span></code> renamed to <code class="docutils literal notranslate"><span class="pre">uri</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">filesystem</span></code> or <code class="docutils literal notranslate"><span class="pre">driver_kwargs</span></code> moved under <code class="docutils literal notranslate"><span class="pre">driver</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">unit_add</span></code>, <code class="docutils literal notranslate"><span class="pre">unit_mult</span></code>, <code class="docutils literal notranslate"><span class="pre">rename</span></code>, etc. moved under <code class="docutils literal notranslate"><span class="pre">data_adapter</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">crs</span></code> and <code class="docutils literal notranslate"><span class="pre">nodata</span></code> moved under <code class="docutils literal notranslate"><span class="pre">metadata</span></code> (renamed from <code class="docutils literal notranslate"><span class="pre">meta</span></code>)</p></li>
+<li><p>A single catalog entry can now reference multiple data variants or versions</p></li>
+</ul>
+<p>For detailed information about the format changes, see this section in the HydroMT migration guide: <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/migration_guide/data_catalog.html">Changes to the data catalog yaml file format</a></p>
+</section>
+<section id="how-to-upgrade">
+<h3>How to upgrade<a class="headerlink" href="#how-to-upgrade" title="Link to this heading">#</a></h3>
+<p>All existing pre-defined catalogs have been updated to the new format. For your own catalogs, you can upgrade
+easily with the HydroMT <code class="docutils literal notranslate"><span class="pre">check</span></code> command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>hydromt<span class="w"> </span>check<span class="w"> </span>-d<span class="w"> </span>/path/to/data_catalog.yml<span class="w"> </span>--format<span class="w"> </span>v0<span class="w"> </span>--upgrade<span class="w"> </span>-v
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When an exclamation mark (!) is put before a command line code, the command is to be executed in a Jupyter notebook cell.</p>
+</div>
+</section>
+</section>
+<section id="main-changes-for-users">
+<h2>Main Changes for Users<a class="headerlink" href="#main-changes-for-users" title="Link to this heading">#</a></h2>
+<p>In HydroMT-SFINCS v2, the internal data structure and API were redesigned to improve consistency and maintainability.
+Most changes affect how model components (such as <code class="docutils literal notranslate"><span class="pre">grid</span></code> and <code class="docutils literal notranslate"><span class="pre">forcing</span></code>) are accessed and how model data is read and written.</p>
+<section id="component-changes">
+<h3>Component Changes<a class="headerlink" href="#component-changes" title="Link to this heading">#</a></h3>
+<p>In earlier versions of HydroMT-SFINCS, all model functionality was encapsulated within the <cite>SfincsModel</cite> class. The data to describe the model
+was stored in raw data structures such as <cite>xarray.Dataset</cite>, <cite>dict</cite>, or <cite>geopandas.GeoDataFrame</cite>, and could be accessed directly via attributes of the <cite>SfincsModel</cite> instance.
+These attributes were grouped into <cite>config</cite>, <cite>grid</cite>, <cite>geoms</cite>, <cite>forcing</cite>, and <cite>results</cite>. The new component-based architecture allows to further separate these model parts
+into dedicated classes that each handle a specific part of the model. The table below summarizes the mapping from old attributes to new component names and classes.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Old Attribute</p></th>
+<th class="head"><p>New Component Name</p></th>
+<th class="head"><p>New Class</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>config</p></td>
+<td><p>config</p></td>
+<td><p>SfincsConfig</p></td>
+</tr>
+<tr class="row-odd"><td><p>grid</p></td>
+<td><p>grid
+elevation
+mask
+infiltration
+roughness
+storage_volume
+initial_conditions
+subgrid</p></td>
+<td><p>SfincsGrid
+SfincsElevation
+SfincsMask
+SfincsInfiltration
+SfincsRoughness
+SfincsStorageVolume
+SfincsInitialConditions
+SfincsSubgridTable</p></td>
+</tr>
+<tr class="row-even"><td><p>geoms</p></td>
+<td><p>observation_points
+cross_sections
+thin_dams
+weirs
+wave_makers
+drainage_structures</p></td>
+<td><p>SfincsObservationPoints
+SfincsCrossSections
+SfincsThinDams
+SfincsWeirs
+SfincsWaveMakers
+SfincsDrainageStructures</p></td>
+</tr>
+<tr class="row-odd"><td><p>forcing</p></td>
+<td><p>water_level
+discharge_points
+precipitation
+pressure
+wind
+rivers</p></td>
+<td><p>SfincsWaterLevel
+SfincsDischargePoints
+SfincsPrecipitation
+SfincsPressure
+SfincsWind
+SfincsRivers</p></td>
+</tr>
+<tr class="row-even"><td><p>results</p></td>
+<td><p>output</p></td>
+<td><p>SfincsOutput</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="method-changes">
+<h3>Method Changes<a class="headerlink" href="#method-changes" title="Link to this heading">#</a></h3>
+<p>The model components are now <strong>dedicated classes</strong> rather than raw data objects (e.g., <code class="docutils literal notranslate"><span class="pre">xarray</span></code>, <code class="docutils literal notranslate"><span class="pre">dict</span></code>, or <code class="docutils literal notranslate"><span class="pre">geopandas</span></code>).
+This means that the way to access and manipulate model data has changed. Each component can be accessed via the <code class="docutils literal notranslate"><span class="pre">model</span></code> instance
+and exposes its underlying methods (e.g., <code class="docutils literal notranslate"><span class="pre">read()</span></code>, <code class="docutils literal notranslate"><span class="pre">write()</span></code>, <code class="docutils literal notranslate"><span class="pre">create()</span></code> and <code class="docutils literal notranslate"><span class="pre">set()</span></code>).
+The actual data is now accessed via the <code class="docutils literal notranslate"><span class="pre">.data</span></code> property of each component.
+The table below summarizes the main method changes from HydroMT-SFINCS v1.x to v2.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>v1.x</p></th>
+<th class="head"><p>v2</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">model.&lt;component&gt;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">model.&lt;component&gt;.data</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">model.write_&lt;component&gt;()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">model.&lt;component&gt;.write()</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">model.read_&lt;component&gt;()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">model.&lt;component&gt;.read()</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">model.set_&lt;component&gt;()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">model.&lt;component&gt;.set()</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Probably the most significant change is the way we “create” or “update” components. In HydroMT-SFINCS v1.x, this was done via “setuo” methods on the main model class,
+such as <code class="docutils literal notranslate"><span class="pre">model.setup_grid()</span></code> or <code class="docutils literal notranslate"><span class="pre">model.setup_&lt;component&gt;()</span></code>. In HydroMT-SFINCS v2, this is now done via the <code class="docutils literal notranslate"><span class="pre">create()</span></code> method on each component.
+For a complete conversion table of method changes, see below:</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id1">
+<caption><span class="caption-text">Conversion Table</span><a class="headerlink" href="#id1" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>v1.x</p></th>
+<th class="head"><p>v2.x</p></th>
+<th class="head"><p>Argument Mapping</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_grid()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.grid.create()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_grid_</span>
+<span class="pre">from_region()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.grid.create_</span>
+<span class="pre">from_region()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_dep()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.elevation.</span>
+<span class="pre">create()</span></code></p></td>
+<td><p>datasets_dep → elevation_list</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_mask_</span>
+<span class="pre">active()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.mask.create_</span>
+<span class="pre">active()</span></code></p></td>
+<td><p>mask → removed,
+mask_buffer → removed,
+include_mask → include_polygon,
+extra_option1 → include_zmin,
+extra_option2 → include_zmax,
+exclude_mask → exclude_polygon,
+extra_option3 → exclude_zmin,
+extra_option4 → exclude_zmax</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_mask_</span>
+<span class="pre">bounds()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.mask.create_</span>
+<span class="pre">boundary()</span></code></p></td>
+<td><p>include_mask → include_polygon,
+extra_option1 → include_zmin,
+extra_option2 → include_zmax,
+exclude_mask → exclude_polygon,
+extra_option3 → exclude_zmin,
+extra_option4 → exclude_zmax</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_subgrid()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.subgrid.</span>
+<span class="pre">create()</span></code></p></td>
+<td><p>datasets_dep → elevation_list,
+datasets_rgh → roughness_list,
+datasets_riv → river_list,
+nr_levels → nlevels</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_river_</span>
+<span class="pre">inflow()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.river.create_</span>
+<span class="pre">inflow()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_river_</span>
+<span class="pre">outflow()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TODO()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_</span>
+<span class="pre">constant_infiltration()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.infiltration.</span>
+<span class="pre">create_constant()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_cn_</span>
+<span class="pre">infiltration()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.infiltration.</span>
+<span class="pre">create_cn()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_cn_</span>
+<span class="pre">infiltration_with_ks()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.infiltration.</span>
+<span class="pre">create_cn_with_recovery()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_manning</span>
+<span class="pre">_roughness()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.roughness.</span>
+<span class="pre">create()</span></code></p></td>
+<td><p>datasets_rgh → roughness_list</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_</span>
+<span class="pre">observation_points()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.observation_</span>
+<span class="pre">points.create()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_</span>
+<span class="pre">observation_lines()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.cross_</span>
+<span class="pre">sections.create()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_</span>
+<span class="pre">structures()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.weirs.create()</span></code></p></td>
+<td><p>structures → locations,
+stype → removed</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_</span>
+<span class="pre">structures()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.thin_dams.</span>
+<span class="pre">create()</span></code></p></td>
+<td><p>structures → locations,
+stype → removed</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_</span>
+<span class="pre">drainage_structures()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.drainage_</span>
+<span class="pre">structures.create()</span></code></p></td>
+<td><p>structures → locations</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_storage</span>
+<span class="pre">_volume()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.storage_</span>
+<span class="pre">volume.create()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_</span>
+<span class="pre">waterlevel_forcing()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.water_level.</span>
+<span class="pre">create()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_</span>
+<span class="pre">waterlevel_bnd_from_mask()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.water_level.</span>
+<span class="pre">create_boundary_points_</span>
+<span class="pre">from_mask()</span></code></p></td>
+<td><p>distance → bnd_dist,
+new_option → min_dist</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SficnsModel.setup_</span>
+<span class="pre">discharge_forcing()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.discharge_</span>
+<span class="pre">points.create()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_</span>
+<span class="pre">discharge_forcing_from_</span>
+<span class="pre">grid()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TODO()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_precip_</span>
+<span class="pre">forcing_from_grid()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.precipitation</span>
+<span class="pre">.create()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_precip_</span>
+<span class="pre">forcing()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.precipitation</span>
+<span class="pre">.create_uniform()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SficsModel.setup_pressure</span>
+<span class="pre">_forcing_from_grid()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.pressure.</span>
+<span class="pre">create()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_wind_</span>
+<span class="pre">forcing_from_grid()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.wind.create()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_wind_</span>
+<span class="pre">forcing()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.wind.create_</span>
+<span class="pre">uniform()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.setup_config()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.config.update()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.plot_basemap()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.plot_basemap()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.plot_forcing()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SfincsModel.plot_forcing()</span></code></p></td>
+<td><p>unchanged</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="example-accessing-component-data">
+<h3>Example: Accessing Component Data<a class="headerlink" href="#example-accessing-component-data" title="Link to this heading">#</a></h3>
+<p>Each component provides structured access to its data via the <code class="docutils literal notranslate"><span class="pre">.data</span></code> property.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s2">&quot;path/to/model&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>
+
+<span class="c1"># Access xarray.Dataset of the grid component</span>
+<span class="n">grid</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
+
+<span class="c1"># Access geometries (GeoDataFrames), such as the observation points</span>
+<span class="n">observation_points</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">observation_points</span><span class="o">.</span><span class="n">data</span>
+
+<span class="c1"># Access forcing data (xarray.Dataset), such as water level time series</span>
+<span class="n">water_level</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">water_level</span><span class="o">.</span><span class="n">data</span>
+</pre></div>
+</div>
+</section>
+<section id="example-writing-components">
+<h3>Example: Writing Components<a class="headerlink" href="#example-writing-components" title="Link to this heading">#</a></h3>
+<p>Read and write operations are now handled at the <strong>component level</strong>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Write configuration file</span>
+<span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
+
+<span class="c1"># Write updated grid to disk</span>
+<span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>These changes provide a clearer and more modular interface, making it easier to manipulate model components independently.</p>
+</section>
+</section>
+<section id="yaml-configuration-changes">
+<h2>YAML Configuration Changes<a class="headerlink" href="#yaml-configuration-changes" title="Link to this heading">#</a></h2>
+<p>The HydroMT model configuration format has been overhauled and the ini format is not supported anymore.
+The root YAML file now includes three main keys: <code class="docutils literal notranslate"><span class="pre">modeltype</span></code>, <code class="docutils literal notranslate"><span class="pre">global</span></code>, and <code class="docutils literal notranslate"><span class="pre">steps</span></code>.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">modeltype</span></code> (optional): Defines which model plugin is being used (e.g. <code class="docutils literal notranslate"><span class="pre">sfincs</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">global</span></code>: Defines model-wide configuration, including data catalog(s), name of the model configuration toml file etc.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">steps</span></code>: Replaces the old numbered dictionary format with a sequential list of function calls.</p></li>
+</ul>
+<p>Some of the functions (component specific read and write) are now explicitly mapped to model or component methods using the <cite>&lt;component&gt;.&lt;method&gt;</cite> syntax.</p>
+<p>For a complete example of the new configuration format, see the SFINCS v1 YAML template: <a class="reference download internal" download="" href="../../_downloads/5a919dca5b4372da4e02952dec0be61d/sfincs_base_build.yml"><code class="xref download docutils literal notranslate"><span class="pre">sfincs_build.yml</span></code></a>.</p>
+<p>For more information on the format changes, see this section in the HydroMT migration guide: <a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/migration_guide/model_workflow.html">Changes to the yaml HydroMT configuration file format</a>.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../../_examples/6_make_results_animation.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Sfincs results: animation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../../api/api.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">API</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-catalog-format-changes">Data Catalog Format Changes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#information">Information</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-upgrade">How to upgrade</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#main-changes-for-users">Main Changes for Users</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#component-changes">Component Changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#method-changes">Method Changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-accessing-component-data">Example: Accessing Component Data</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-writing-components">Example: Writing Components</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#yaml-configuration-changes">YAML Configuration Changes</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright Deltares.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
