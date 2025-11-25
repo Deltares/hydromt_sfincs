@@ -141,7 +141,7 @@ def test_get_set_file_variable(model_config, tmp_dir):
     # assert file_path == join(config.root.path, obs1)
 
     # add obsfile as random full path
-    random_location = tmp_dir / "sfincs.obs"
+    random_location = str(tmp_dir / "sfincs.obs")
 
     config.set(varname, random_location)  # because of c:/ it is a 'plausible' one
 
