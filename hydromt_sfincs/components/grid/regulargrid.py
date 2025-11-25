@@ -149,9 +149,14 @@ class SfincsGrid(GridComponent):
         if "mask" in self.data and np.any(self.data["mask"] > 0):
             da = xr.where(self.data["mask"] > 0, 1, 0).astype(np.int16)
             da.raster.set_nodata(0)
-            return da.raster.vectorize().dissolve()
+            gdf = da.raster.vectorize().dissolve()
         elif self.data is not None:
-            return self.empty_mask.raster.box
+            gdf = self.empty_mask.raster.box
+        else:
+            raise ValueError("No grid data available to derive region.")
+        if not gdf.crs:
+            gdf.set_crs(self.model.crs, inplace=True)
+        return gdf
 
     def read(self, data_vars: Union[List, str] = None) -> None:
         """Read SFINCS binary grid files and save to `data` attribute.

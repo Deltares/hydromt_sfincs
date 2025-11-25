@@ -71,270 +71,6 @@ class SfincsQuadtreeMask(ModelComponent):
         # The mask values are written when the quadtree grid is written
         pass
 
-    def build(
-        self,
-        zmin=99999.0,
-        zmax=-99999.0,
-        include_polygon=None,
-        exclude_polygon=None,
-        open_boundary_polygon=None,
-        outflow_boundary_polygon=None,
-        neumann_boundary_polygon=None,
-        downstream_boundary_polygon=None,
-        include_zmin=-99999.0,
-        include_zmax=99999.0,
-        exclude_zmin=-99999.0,
-        exclude_zmax=99999.0,
-        open_boundary_zmin=-99999.0,
-        open_boundary_zmax=99999.0,
-        outflow_boundary_zmin=-99999.0,
-        outflow_boundary_zmax=99999.0,
-        neumann_boundary_zmin=-99999.0,
-        neumann_boundary_zmax=99999.0,
-        downstream_boundary_zmin=-99999.0,
-        downstream_boundary_zmax=99999.0,
-        update_datashader_dataframe=False,
-        quiet=True,
-    ):
-        if not quiet:
-            print("Building mask ...")
-
-        nr_cells = self.model.quadtree_grid.data.sizes["mesh2d_nFaces"]
-
-        mask = np.zeros(nr_cells, dtype=np.int8)
-        x, y = self.face_coordinates
-        z = self.data["z"].values[:]
-
-        if zmin >= zmax:
-            # Do not include any points initially
-            if include_polygon is None:
-                print(
-                    "WARNING: Entire mask set to zeros! Please ensure zmax is greater than zmin, or provide include polygon(s) !"
-                )
-                return
-        else:
-            if z is not None:
-                # Set initial mask based on zmin and zmax
-                iok = np.where((z >= zmin) & (z <= zmax))
-                mask[iok] = 1
-            else:
-                print(
-                    "WARNING: Entire mask set to zeros! No depth values found on grid."
-                )
-
-        # Include polygons
-        if include_polygon is not None:
-            for ip, polygon in include_polygon.iterrows():
-                inpol = inpolygon(x, y, polygon["geometry"])
-                iok = np.where((inpol) & (z >= include_zmin) & (z <= include_zmax))
-                mask[iok] = 1
-
-        # Exclude polygons
-        if exclude_polygon is not None:
-            for ip, polygon in exclude_polygon.iterrows():
-                inpol = inpolygon(x, y, polygon["geometry"])
-                iok = np.where((inpol) & (z >= exclude_zmin) & (z <= exclude_zmax))
-                mask[iok] = 0
-
-        # Open boundary polygons
-        if open_boundary_polygon is not None:
-            self.set_boundary_mask(
-                mask, open_boundary_polygon, open_boundary_zmin, open_boundary_zmax, 2
-            )
-
-        # Outflow boundary polygons
-        if outflow_boundary_polygon is not None:
-            self.set_boundary_mask(
-                mask,
-                outflow_boundary_polygon,
-                outflow_boundary_zmin,
-                outflow_boundary_zmax,
-                3,
-            )
-
-        # Downstream river boundary polygons
-        if downstream_boundary_polygon is not None:
-            self.set_boundary_mask(
-                mask,
-                downstream_boundary_polygon,
-                downstream_boundary_zmin,
-                downstream_boundary_zmax,
-                5,
-            )
-
-        # Neumann boundary polygons
-        if neumann_boundary_polygon is not None:
-            self.set_boundary_mask(
-                mask,
-                neumann_boundary_polygon,
-                neumann_boundary_zmin,
-                neumann_boundary_zmax,
-                6,
-            )
-
-        if update_datashader_dataframe:
-            # For use in DelftDashboard
-            self.get_datashader_dataframe()
-
-        # Now add the data arrays
-        ugrid2d = self.data.grid
-        self.data["mask"] = xu.UgridDataArray(
-            xr.DataArray(data=mask, dims=[ugrid2d.face_dimension]), ugrid2d
-        )
-
-    def set_boundary_mask(self, mask, boundary_polygon, zmin, zmax, mask_value):
-        """Set the mask value for a given polygon"""
-        x, y = self.face_coordinates
-        z = self.data["z"].values[:]
-
-        # Indices are 1-based in SFINCS so subtract 1 for python 0-based indexing
-        mu = self.data["mu"].values[:]
-        mu1 = self.data["mu1"].values[:] - 1
-        mu2 = self.data["mu2"].values[:] - 1
-        nu = self.data["nu"].values[:]
-        nu1 = self.data["nu1"].values[:] - 1
-        nu2 = self.data["nu2"].values[:] - 1
-        md = self.data["md"].values[:]
-        md1 = self.data["md1"].values[:] - 1
-        md2 = self.data["md2"].values[:] - 1
-        nd = self.data["nd"].values[:]
-        nd1 = self.data["nd1"].values[:] - 1
-        nd2 = self.data["nd2"].values[:] - 1
-
-        for ip, polygon in boundary_polygon.iterrows():
-            inpol = inpolygon(x, y, polygon["geometry"])
-            # Only consider points that are:
-            # 1) Inside the polygon
-            # 2) Have a mask > 0
-            # 3) z>=zmin
-            # 4) z<=zmax
-            iok = np.where((inpol) & (mask > 0) & (z >= zmin) & (z <= zmax))
-            for ic in iok[0]:
-                okay = False
-                # Check neighbors, cell must have at least one inactive neighbor
-                # Left
-                if md[ic] <= 0:
-                    # Coarser or equal to the left
-                    if md1[ic] >= 0:
-                        # Cell has neighbor to the left
-                        if mask[md1[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-                else:
-                    # Finer to the left
-                    if md1[ic] >= 0:
-                        # Cell has neighbor to the left
-                        if mask[md1[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-                    if md2[ic] >= 0:
-                        # Cell has neighbor to the left
-                        if mask[md2[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-
-                # Below
-                if nd[ic] <= 0:
-                    # Coarser or equal below
-                    if nd1[ic] >= 0:
-                        # Cell has neighbor below
-                        if mask[nd1[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-                else:
-                    # Finer below
-                    if nd1[ic] >= 0:
-                        # Cell has neighbor below
-                        if mask[nd1[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-                    if nd2[ic] >= 0:
-                        # Cell has neighbor below
-                        if mask[nd2[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-
-                # Right
-                if mu[ic] <= 0:
-                    # Coarser or equal to the right
-                    if mu1[ic] >= 0:
-                        # Cell has neighbor to the right
-                        if mask[mu1[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-                else:
-                    # Finer to the left
-                    if mu1[ic] >= 0:
-                        # Cell has neighbor to the right
-                        if mask[mu1[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-                    if mu2[ic] >= 0:
-                        # Cell has neighbor to the right
-                        if mask[mu2[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-
-                # Above
-                if nu[ic] <= 0:
-                    # Coarser or equal above
-                    if nu1[ic] >= 0:
-                        # Cell has neighbor above
-                        if mask[nu1[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-                else:
-                    # Finer below
-                    if nu1[ic] >= 0:
-                        # Cell has neighbor above
-                        if mask[nu1[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-                    if nu2[ic] >= 0:
-                        # Cell has neighbor above
-                        if mask[nu2[ic]] == 0:
-                            # And it's inactive
-                            okay = True
-                    else:
-                        # No neighbor, so set mask = 2
-                        okay = True
-
-                if okay:
-                    mask[ic] = mask_value
-
     @hydromt_step
     def create(
         self,
@@ -461,6 +197,7 @@ class SfincsQuadtreeMask(ModelComponent):
         exclude_zmin: float = None,
         exclude_zmax: float = None,
         all_touched: bool = False,
+        reset_mask: bool = True,
         copy_sfincsmask: bool = False,
     ):
         """Setup active model cells.
@@ -492,6 +229,8 @@ class SfincsQuadtreeMask(ModelComponent):
             if True (default) include (or exclude) a cell in the mask if it touches any of the
             include (or exclude) geometries. If False, include a cell only if its center is
             within one of the shapes, or if it is selected by Bresenham's line algorithm.
+        reset_mask: bool, optional
+            If True, reset existing mask before creating new active model cells.
         copy_sfincsmask: bool, optional
             If True and model is 'snapwave', copy the SFINCS mask to the SnapWave mask.
         """
@@ -545,6 +284,14 @@ class SfincsQuadtreeMask(ModelComponent):
                     exclude_polygon, bbox=bbox
                 )
 
+        # get mask and dep data
+        uda_mask = self.data["mask"] if "mask" in self.data else None
+
+        uda_mask0 = None
+        if not reset_mask and uda_mask is not None:
+            # use current active mask
+            uda_mask0 = uda_mask > 0
+
         # always initialize an inactive mask, note this resets any existing mask
         uda_mask = self.empty_mask > 0
 
@@ -558,7 +305,16 @@ class SfincsQuadtreeMask(ModelComponent):
                     _msk = np.logical_and(_msk, uda_dep >= zmin)
                 if zmax is not None:
                     _msk = np.logical_and(_msk, uda_dep <= zmax)
-            uda_mask = _msk
+            if uda_mask0 is not None:
+                # if mask was provided; keep active mask only within valid elevations
+                uda_mask = np.logical_and(uda_mask0, _msk)
+            else:
+                # no mask provided; set mask to valid elevations
+                uda_mask = _msk
+        elif zmin is None and zmax is None and uda_mask0 is not None:
+            # in case a mask/region was provided, but you didn't want to update the mask based on elevation
+            # just continue with the provided mask
+            uda_mask = uda_mask0
 
         # TODO add fill and drop area?
 

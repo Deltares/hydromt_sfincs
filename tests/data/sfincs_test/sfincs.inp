@@ -6,6 +6,7 @@ x0                   = 318650.0
 y0                   = 5040000.0
 rotation             = 27.0
 epsg                 = 32633
+crsgeo               = 0
 latitude             = 0.0
 tref                 = 20100201 000000
 tstart               = 20100205 000000

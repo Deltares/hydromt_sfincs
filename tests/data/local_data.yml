@@ -6,7 +6,8 @@ region:
 observations:
   uri: local_data/observations.csv
   data_type: GeoDataFrame
-  driver: geodataframe_table
+  driver:
+    name: geodataframe_table
   metadata:
     crs: 4326
 

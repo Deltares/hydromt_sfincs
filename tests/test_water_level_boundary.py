@@ -66,7 +66,7 @@ def test_add_point(model_config):
 
     # determine point in the middle of the grid
     gdf = model_config.region
-    point = gdf.geometry.unary_union.centroid
+    point = gdf.geometry.union_all().centroid
 
     model_config.water_level.add_point(
         x=point.x, y=point.y, value=-10.0, name="test_point"
@@ -89,7 +89,7 @@ def test_drop_duplicates(model_config, tmp_dir):
 
     # determine point in the middle of the grid
     gdf = model_config.region
-    point = gdf.geometry.unary_union.centroid
+    point = gdf.geometry.union_all().centroid
 
     model_config.water_level.add_point(
         x=point.x, y=point.y, value=-10.0, name="test_point"
@@ -226,6 +226,9 @@ def test_create_timeseries_from_astro(model_config):
 def test_create(model_config):
     """Test creating discharge points from a GeoDataFrame and csv file."""
     src_file = Path(TESTMODELDIR) / "gis" / "bnd.geojson"
+
+    print(src_file.resolve())
+    print(src_file.exists())
 
     # Create discharge points from GeoDataFrame
     model_config.water_level.create(locations=src_file, merge=False)

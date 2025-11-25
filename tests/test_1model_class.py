@@ -174,8 +174,11 @@ def test_infiltration(model):
 
     # set cn infiltration with recovery
     lulc = xr.where(model.grid.data["dep"] < -0.5, 70, 30)
+    lulc.raster.set_crs(model.crs)
     hsg = xr.where(model.grid.data["dep"] < 2, 1, 3)
+    hsg.raster.set_crs(model.crs)
     ksat = xr.where(model.grid.data["dep"] < 1, 0.01, 0.2)
+    ksat.raster.set_crs(model.crs)
     # create pandas reclass table for lulc and hsg to cn
     reclass_table = pd.DataFrame([[0, 35], [0, 56]], index=[70, 30], columns=[1, 3])
     effective = 0.5
@@ -507,7 +510,7 @@ def test_storage_volume(tmp_dir, case):
 
     # now redo the tests with a rotated grid for the regular grid only
     if case == "test1":
-        config = mod.config.data.copy()
+        config = mod.config.data.model_copy()
         mod = SfincsModel(root=tmp_root, mode="w+")
 
         # get the config from the first model and add a rotation

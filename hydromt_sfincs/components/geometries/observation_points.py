@@ -88,9 +88,7 @@ class SfincsObservationPoints(ModelComponent):
             )
 
         # Read input file:
-        gdf = utils.read_xyn(
-            abs_file_path, crs=self.model.region.crs
-        )  # =utils.py function
+        gdf = utils.read_xyn(abs_file_path, crs=self.model.crs)  # =utils.py function
 
         # Add to self._data
         self.set(gdf, merge=False)
@@ -268,7 +266,7 @@ class SfincsObservationPoints(ModelComponent):
         d = {"name": name, "long_name": None, "geometry": point}
 
         # Create a new GeoDataFrame for the Point
-        gdf = gpd.GeoDataFrame([d], crs=self.model.region.crs)
+        gdf = gpd.GeoDataFrame([d], crs=self.model.crs)
 
         self.set(gdf, merge=True)
 

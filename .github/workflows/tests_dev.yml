@@ -33,9 +33,9 @@ jobs:
       cancel-in-progress: true
     steps:
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         id: pip
         with:
           # caching, see https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
@@ -52,7 +52,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install .[test,examples,quadtree]
-          pip install git+https://github.com/Deltares/hydromt.git@v0.10.1
+          pip install git+https://github.com/Deltares/hydromt.git@main
           pip list
 
       # run test

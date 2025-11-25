@@ -6,7 +6,7 @@ channels:
 dependencies:
 - affine
 - geopandas>1.0
-- hydromt>=0.10, <0.11
+- hydromt>=1.3.0-rc5
 - numba
 - numpy
 - pandas
@@ -18,3 +18,6 @@ dependencies:
 - scipy
 - shapely
 - xarray
+- xugrid
+- pip:
+  - cht_tide

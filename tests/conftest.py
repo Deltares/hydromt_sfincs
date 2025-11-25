@@ -14,15 +14,12 @@ from hydromt_sfincs.sfincs import SfincsModel
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
 TESTMODELDIR = join(TESTDATADIR, "sfincs_test")
 
+local_data_yaml = join(TESTDATADIR, "local_data.yml")
+
 
 @pytest.fixture()
-def tmp_dir():
-    """Create and return a temporary directory.
-
-    Upon exiting the context, the directory and everything contained in it are removed.
-    """
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        yield Path(tmp_dir)
+def tmp_dir(tmp_path_factory):
+    return tmp_path_factory.mktemp("data")
 
 
 @pytest.fixture
@@ -41,7 +38,7 @@ def model_init(tmp_path):
 @pytest.fixture
 def model_config():
     root = TESTMODELDIR
-    mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data"])
+    mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
     mod.config.read()
     return mod
 
@@ -50,7 +47,7 @@ def model_config():
 @pytest.fixture
 def model(tmp_dir):
     root = join(TESTDATADIR, "sfincs_test")
-    mod = SfincsModel(root=root, mode="r")
+    mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
     mod.read()
     mod.root.set(tmp_dir, mode="r+")
     return mod

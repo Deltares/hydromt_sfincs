@@ -2,7 +2,7 @@
 |---------|---------|----------------|
 | `SfincsModel.setup_grid()` | `SfincsModel.grid.create()` | unchanged |
 | `SfincsModel.setup_grid_from_region()` | `SfincsModel.grid.create_from_region()` | unchanged |
-| `SfincsModel.setup_dep()` | `SfincsModel.elevation.create()` | datasets_dep → elevation_list |
+| `SfincsModel.setup_dep()` | `SfincsModel.elevation.create()` | datasets_dep → elevation_list, elevtn → elevation |
 | `SfincsModel.setup_mask_active()` | `SfincsModel.mask.create_active()` | mask → removed, mask_buffer → removed, include_mask → include_polygon, extra_option1 → include_zmin, extra_option2 → include_zmax, exclude_mask → exclude_polygon, extra_option3 → exclude_zmin, extra_option4 → exclude_zmax |
 | `SfincsModel.setup_mask_bounds()` | `SfincsModel.mask.create_boundary()` | include_mask → include_polygon, extra_option1 → include_zmin, extra_option2 → include_zmax, exclude_mask → exclude_polygon, extra_option3 → exclude_zmin, extra_option4 → exclude_zmax |
 | `SfincsModel.setup_subgrid()` | `SfincsModel.subgrid.create()` | datasets_dep → elevation_list, datasets_rgh → roughness_list, datasets_riv → river_list, nr_levels → nlevels |
@@ -30,3 +30,4 @@
 | `SfincsModel.setup_config()` | `SfincsModel.config.update()` | unchanged |
 | `SfincsModel.plot_basemap()` | `SfincsModel.plot_basemap()` | unchanged |
 | `SfincsModel.plot_forcing()` | `SfincsModel.plot_forcing()` | unchanged |
+| `SfincsModel.read_results()` | `SfincsModel.output.read()` | unchanged |
