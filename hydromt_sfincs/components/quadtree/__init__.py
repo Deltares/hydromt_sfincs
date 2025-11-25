@@ -6,3 +6,4 @@ from .quadtree_mask import *
 from .quadtree_storage_volume import *
 from .quadtree_subgrid import *
 from .snapwave_quadtree_mask import *
+from .quadtree_initial_conditions import *

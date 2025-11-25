@@ -9,7 +9,6 @@ import pytest
 import numpy as np
 
 from hydromt import DataCatalog
-from hydromt.model import Model
 from hydromt_sfincs.sfincs import SfincsModel
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
@@ -47,8 +46,17 @@ def model_config():
 # read full model instance and set to write mode in a temporary directory
 @pytest.fixture
 def model(tmp_dir):
-    root = TESTMODELDIR
+    root = join(TESTDATADIR, "sfincs_test")
     mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
+    mod.read()
+    mod.root.set(tmp_dir, mode="r+")
+    return mod
+
+
+@pytest.fixture
+def quadtree_model(tmp_dir):
+    root = join(TESTDATADIR, "sfincs_test_quadtree")
+    mod = SfincsModel(root=root, mode="r")
     mod.read()
     mod.root.set(tmp_dir, mode="r+")
     return mod
