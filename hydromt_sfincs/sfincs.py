@@ -1594,7 +1594,7 @@ class SfincsModel(GridModel):
             If provided, for weir structures the z value is calculated from
             the model elevation (dep) plus dz.
         """
-        
+
         # read, clip and reproject
         gdf_structures = self.data_catalog.get_geodataframe(
             structures, geom=self.region, **kwargs
