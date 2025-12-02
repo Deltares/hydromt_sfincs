@@ -9,7 +9,7 @@ import logging
 import os
 from os.path import abspath, basename, dirname, isabs, isfile, join
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union, Literal
+from typing import Any, Dict, List, Literal, Tuple, Union
 
 import geopandas as gpd
 import hydromt
@@ -183,6 +183,9 @@ class SfincsModel(GridModel):
                 region = self.reggrid.empty_mask.raster.box
         elif self.grid_type == "quadtree":
             region = self.quadtree.exterior
+        if region.crs is None:
+            if self.crs is not None:
+                region = region.set_crs(self.crs)
         return region
 
     @property

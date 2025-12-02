@@ -80,8 +80,11 @@ def test_infiltration(mod):
 
     # set cn infiltration with recovery
     lulc = xr.where(mod.grid["dep"] < -0.5, 70, 30)
+    lulc.raster.set_crs(mod.crs)
     hsg = xr.where(mod.grid["dep"] < 2, 1, 3)
+    hsg.raster.set_crs(mod.crs)
     ksat = xr.where(mod.grid["dep"] < 1, 0.01, 0.2)
+    ksat.raster.set_crs(mod.crs)
     # create pandas reclass table for lulc and hsg to cn
     reclass_table = pd.DataFrame([[0, 35], [0, 56]], index=[70, 30], columns=[1, 3])
     effective = 0.5
