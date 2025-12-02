@@ -266,6 +266,10 @@ class SfincsModel(GridModel):
             rotation=rotation,
             epsg=epsg,
         )
+
+        if CRS.from_epsg(epsg).is_geographic:
+            self.set_config("crsgeo", 1)
+
         self.update_grid_from_config()
 
     def setup_grid_from_region(
@@ -3817,10 +3821,6 @@ class SfincsModel(GridModel):
             )
         elif self.grid_type == "quadtree":
             self.quadtree = QuadtreeGrid(logger=self.logger)
-
-        # update config for geographic coordinates
-        if self.crs.is_geographic:
-            self.set_config("crsgeo", 1)
 
     def get_model_time(self):
         """Return (tstart, tstop) tuple with parsed model start and end time"""
