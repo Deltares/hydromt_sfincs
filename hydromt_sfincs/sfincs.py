@@ -235,7 +235,7 @@ class SfincsModel(GridModel):
         x0, y0 : float
             x,y coordinates of the origin of the grid
         dx, dy : float
-            grid cell size in x and y direction
+            grid cell size in x and y direction, note dx and dy are positive values
         mmax, nmax : int
             number of grid cells in x and y direction
         rotation : float, optional
@@ -244,6 +244,10 @@ class SfincsModel(GridModel):
             epsg-code of the coordinate reference system, by default None
         """
         # TODO gdf_refinement for quadtree
+
+        # check for resolution
+        if dx <= 0 or dy <= 0:
+            raise ValueError("Grid resolution dx and dy should be positive values.")
 
         # clean old grid
         self._grid = None
@@ -327,10 +331,6 @@ class SfincsModel(GridModel):
         )
         if self.geoms["region"].crs != pyproj_crs:
             self.geoms["region"] = self.geoms["region"].to_crs(pyproj_crs)
-
-        # update config for geographic coordinates
-        if pyproj_crs.is_geographic:
-            self.set_config("crsgeo", 1)
 
         # create grid from region
         # NOTE keyword rotated is added to still have the possibility to create unrotated grids if needed (e.g. for FEWS?)
@@ -3814,6 +3814,10 @@ class SfincsModel(GridModel):
             )
         elif self.grid_type == "quadtree":
             self.quadtree = QuadtreeGrid(logger=self.logger)
+
+        # update config for geographic coordinates
+        if self.crs.is_geographic:
+            self.set_config("crsgeo", 1)
 
     def get_model_time(self):
         """Return (tstart, tstop) tuple with parsed model start and end time"""
