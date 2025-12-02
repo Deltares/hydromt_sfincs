@@ -6,6 +6,20 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+v1.2.2 (2-12-2025)
+==================
+**This release contains some minor bugfixes**
+
+Changed
+-------
+- assert dx, dy > 0 in setup_grid (#305)
+
+Fixed
+-----
+- make sure the region always has a valid CRS (#304)
+- make sure crsgeo is set correctly for models with geographical coordinates (#305)
+
+
 v1.2.1 (31-7-2025)
 ==================
 **This release contains some minor bugfixes and updates, which are mostly relevant for users of FloodAdapt in combination with Quadtree models.**
