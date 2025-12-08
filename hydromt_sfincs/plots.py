@@ -30,7 +30,7 @@ geom_style = {
 }
 
 
-def plot_forcing(forcing: Dict, **kwargs):
+def plot_forcing(forcing: Dict, bzs_max_pts: int = 10, **kwargs):
     """Plot model timeseries forcing.
 
     For distributed forcing a spatial avarage is plotted.
@@ -39,6 +39,8 @@ def plot_forcing(forcing: Dict, **kwargs):
     ----------
     forcing : Dict of xr.DataArray
         Model forcing
+    bzs_max_pts : int, optional
+        Maximum number of boundary water level timeseries points to plot
 
     Returns
     -------
@@ -63,8 +65,10 @@ def plot_forcing(forcing: Dict, **kwargs):
                 da = da.min(dim=[da.raster.x_dim, da.raster.y_dim])
                 prefix = "min "
             elif name.startswith("wind"):
-                da = da.max(dim=[da.raster.x_dim, da.raster.y_dim])
-                prefix = "max "
+                da1 = da.max(dim=[da.raster.x_dim, da.raster.y_dim])
+                da2 = da.min(dim=[da.raster.x_dim, da.raster.y_dim])
+                da = xr.where(da1 >= abs(da2), da1, da2)
+                prefix = "signed max "
             else:
                 da = da.mean(dim=[da.raster.x_dim, da.raster.y_dim])
                 prefix = "mean "
@@ -76,11 +80,7 @@ def plot_forcing(forcing: Dict, **kwargs):
         df.index = mdates.date2num(df.index)
         if name.startswith("precip"):
             df.plot(drawstyle="steps", ax=axes[i])
-        elif (
-            name.startswith("press")
-            or name.startswith("wind10_u")
-            or name.startswith("wind10_v")
-        ):
+        elif name.startswith("press") or name.startswith("wind"):
             df.plot.line(ax=axes[i])
         elif name.startswith("wnd"):
             df.plot(ax=axes[i], kind="line", secondary_y="dir", legend=False)
@@ -91,6 +91,8 @@ def plot_forcing(forcing: Dict, **kwargs):
             axes[i].right_ax.tick_params(axis="y", labelcolor="C1")
 
         else:
+            step = df.columns.size // bzs_max_pts + 1
+            df = df.iloc[:, ::step]
             df.plot.line(ax=axes[i]).legend(
                 title="index",
                 bbox_to_anchor=(1.05, 1),
