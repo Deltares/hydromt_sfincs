@@ -31,7 +31,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
     allows to generate time series from astronomical constituents (if available).
     """
 
-    _default_varname = "bzs"
+    _default_varname = "zs"
 
     def __init__(self, model: "SfincsModel"):
         super().__init__(model)
@@ -86,7 +86,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         # Check if bnd file exists
         if not abs_file_path.exists():
-            raise FileNotFoundError(f"Discharge points file not found: {abs_file_path}")
+            raise FileNotFoundError(
+                f"Water level boundary points file not found: {abs_file_path}"
+            )
 
         # Read bnd file
         # TODO check if we want read_xyn? Before we used read_xy, so without name column
@@ -258,7 +260,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         abs_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         # parse data to dataframe
-        da = self.data["bzs"].transpose("time", ...)
+        da = self.data["zs"].transpose("time", ...)
         df = da.to_pandas()
 
         # Write to file
@@ -330,6 +332,11 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             return
 
         ds = self.data.load()
+
+        # rename variables to match sfincs naming
+        ds = ds.rename({"index": "stations"}) if "index" in ds.dims else ds
+        ds = ds.rename({"bzs": "zs"}) if "bzs" in ds.data_vars else ds
+        ds = ds.rename({"bzi": "zi"}) if "bzi" in ds.data_vars else ds
 
         # Write netcdf file safely (might get locked)
         final_path = utils.write_netcdf_safely(ds, abs_file_path)
@@ -455,11 +462,11 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             # this allows to use a subset of the locations in the timeseries
             if df_ts is not None and np.isin(gdf_locs.index, df_ts.columns).all():
                 df_ts = df_ts.reindex(gdf_locs.index, axis=1, fill_value=0)
-        elif gdf_locs is None and "bzs" in self.data:
+        elif gdf_locs is None and "zs" in self.data:
             # no locations provided, using existing waterlevel boundary points from data
             used_existing = True
             gdf_locs = self.data[
-                "bzs"
+                "zs"
             ].vector.to_gdf()  # NOTE this is now done in set_timeseries ...
         elif gdf_locs is None:
             raise ValueError("No waterlevel boundary (bnd) points provided.")
@@ -818,7 +825,7 @@ def add_constituents(ds, section_data):
 
     # Ensure we have a Dataset
     if isinstance(ds, xr.DataArray):
-        ds = ds.to_dataset(name="bzs")
+        ds = ds.to_dataset(name="zs")
 
     # Collect all constituent names across all points
     all_constituents = sorted(set().union(*[df.index for df in section_data]))

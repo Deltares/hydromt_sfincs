@@ -22,11 +22,11 @@ class SfincsBoundaryBase(ModelComponent):
     components (e.g., water level boundaries and discharge points).
 
     Subclasses must set the class attribute `_default_varname` to the variable
-    name used inside the dataset (for example "bzs" for water level, or "dis"
+    name used inside the dataset (for example "zs" for water level, or "dis"
     for discharge).
     """
 
-    _default_varname: str = None  # must be set in subclass ("dis" or "bzs")
+    _default_varname: str = None  # must be set in subclass ("dis" or "zs")
 
     def __init__(self, model: "SfincsModel"):
         """

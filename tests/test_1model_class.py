@@ -117,7 +117,7 @@ def test_model_build(tmpdir, case):
     assert len(invalid_geoms) == 0, f"invalid geoms: {invalid_geoms}"
     # check forcing conditions
     forcing_components = [
-        ("water_level", "bzs"),
+        ("water_level", "zs"),
         ("discharge_points", "dis"),
         ("wind", "wind"),
         ("precipitation", "precip_2d"),
