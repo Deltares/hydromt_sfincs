@@ -105,7 +105,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
 
     def create(
         self,
-        bathymetry_sets,
+        elevation_list,
         roughness_list: list = [],
         manning_land=0.04,
         manning_water=0.020,
@@ -132,7 +132,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         to work with data catalogs
 
         Args:
-            bathymetry_sets (list): List of bathymetry data sets
+            elevation_list (list): List of bathymetry data sets
             roughness_list (list): List of roughness data sets
             manning_land (float, optional): Manning's n value for land. Defaults to 0.04.
             manning_water (float, optional): Manning's n value for water. Defaults to 0.020.
@@ -169,10 +169,10 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
                 # parse datasets closest to subgrid resolution
                 elevation_list_per_level.append(
                     self.model._parse_datasets_elevation(
-                        bathymetry_sets, res=res_subgrid
+                        elevation_list, res=res_subgrid
                     )
                 )
-            bathymetry_sets = elevation_list_per_level
+            elevation_list = elevation_list_per_level
 
             if len(roughness_list) > 0:
                 # NOTE conversion from landuse/landcover to manning happens here
@@ -192,7 +192,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
 
         self._data = build_subgrid_table_quadtree(
             grid=self.model.quadtree_grid.data,
-            bathymetry_sets=bathymetry_sets,
+            elevation_list=elevation_list,
             roughness_list=roughness_list,
             manning_land=manning_land,
             manning_water=manning_water,
