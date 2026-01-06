@@ -285,12 +285,11 @@ def plot_basemap(
             kwargs0.update(norm=norm, cmap=cmap)
         elif variable == "mask" and "mask" in ds:
             cmap = colors.LinearSegmentedColormap.from_list(
-                "Set1", ["grey", "r", "m"], N=3
+                "Set1", ["grey", "r", "m", "g", "b"], N=5
             )
-            norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5], 3)
+            norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5, 4.5, 5.5], 5)
             kwargs0.update(norm=norm, cmap=cmap)
-            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3])
-
+            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3, 4, 5])
     if variable in ds:
         da = ds[variable]
         if "mask" in ds and np.any(ds["mask"] > 0):
