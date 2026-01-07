@@ -47,6 +47,8 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_examples/1_build_from_script';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
@@ -544,10 +546,10 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 13:23:00,614 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2025-11-25 13:23:00,615 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2025-11-25 13:23:01,258 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc1).
-2025-11-25 13:23:01,259 - hydromt.model.model - model - WARNING - No region component found in components.
+2026-01-07 14:19:26,144 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-01-07 14:19:26,144 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-01-07 14:19:26,814 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc1).
+2026-01-07 14:19:26,815 - hydromt.model.model - model - WARNING - No region component found in components.
 </pre></div></div>
 </div>
 </section>
@@ -573,8 +575,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 13:23:01,266 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2025-11-25 13:23:01,279 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
+2026-01-07 14:19:26,822 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2026-01-07 14:19:26,835 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
 </pre></div></div>
 </div>
 <p>The grid that we just created is described in the SFINCS configuration with x0, y0, dx, dy, mmax, nmax, rotation and epsg. In case you would have known these parameters before, you can also create a grid using <code class="docutils literal notranslate"><span class="pre">SfincsModel.grid.create()</span></code>.</p>
@@ -600,9 +602,9 @@
  &#39;x0&#39;: 318650.0,
  &#39;y0&#39;: 5040000.0,
  &#39;rotation&#39;: 27.0,
- &#39;tref&#39;: datetime.datetime(2025, 11, 25, 0, 0),
- &#39;tstart&#39;: datetime.datetime(2025, 11, 25, 0, 0),
- &#39;tstop&#39;: datetime.datetime(2025, 11, 26, 0, 0),
+ &#39;tref&#39;: datetime.datetime(2026, 1, 7, 0, 0),
+ &#39;tstart&#39;: datetime.datetime(2026, 1, 7, 0, 0),
+ &#39;tstop&#39;: datetime.datetime(2026, 1, 8, 0, 0),
  &#39;tspinup&#39;: None,
  &#39;t0out&#39;: None,
  &#39;t1out&#39;: None,
@@ -793,8 +795,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 13:23:02,782 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2025-11-25 13:23:02,812 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-01-07 14:19:28,411 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-01-07 14:19:28,443 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -829,8 +831,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 13:23:04,230 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 1 gaps outside valid elevation range &lt; 10.0 km2.
-2025-11-25 13:23:04,234 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
+2026-01-07 14:19:30,160 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 1 gaps outside valid elevation range &lt; 10.0 km2.
+2026-01-07 14:19:30,164 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -867,7 +869,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 13:23:05,412 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
+2026-01-07 14:19:31,413 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -891,8 +893,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 13:23:05,417 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_outflow_boundary_polygon.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_outflow_boundary_polygon.geojson
-2025-11-25 13:23:05,443 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
+2026-01-07 14:19:31,418 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_outflow_boundary_polygon.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_outflow_boundary_polygon.geojson
+2026-01-07 14:19:31,446 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -960,10 +962,10 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 13:23:06,596 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2025-11-25 13:23:06,609 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2025-11-25 13:23:06,612 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2025-11-25 13:23:06,675 - hydromt.hydromt_sfincs.components.grid.roughness - roughness - INFO - Set other manning options to None in config that are unused in SFINCS in case of specifying manningfile (manning, manning_land, manning_sea, rgh_lev_land).
+2026-01-07 14:19:32,667 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-01-07 14:19:32,680 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-01-07 14:19:32,684 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-01-07 14:19:32,751 - hydromt.hydromt_sfincs.components.grid.roughness - roughness - INFO - Set other manning options to None in config that are unused in SFINCS in case of specifying manningfile (manning, manning_land, manning_sea, rgh_lev_land).
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1009,21 +1011,21 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 13:23:07,860 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2025-11-25 13:23:07,877 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
-2025-11-25 13:23:07,892 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2025-11-25 13:23:07,903 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
-2025-11-25 13:23:07,903 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2025-11-25 13:23:07,907 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2025-11-25 13:23:07,918 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of regular cells in a block : 333
-2025-11-25 13:23:07,919 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in n direction    : 1
-2025-11-25 13:23:07,919 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in m direction    : 1
-2025-11-25 13:23:07,920 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of flux grid            : dx=50.000000000000654, dy=50.00000000000095
-2025-11-25 13:23:07,920 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of subgrid pixels       : dx=8.333333333333442, dy=8.333333333333492
-2025-11-25 13:23:07,921 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - block 1/1 -- col 0:250 | row 0:107
-2025-11-25 13:23:19,375 - hydromt.hydromt_sfincs.components.grid.subgrid - utils - INFO - Building 2 overviews with average
-2025-11-25 13:23:19,406 - hydromt.hydromt_sfincs.components.grid.subgrid - utils - INFO - Building 2 overviews with average
-2025-11-25 13:23:19,461 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Set other manning options to None in config that are unused  in SFINCS in case of subgrid (manning, manning_land, manning_sea, rgh_lev_land, manningfile).
+2026-01-07 14:19:33,980 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-01-07 14:19:33,997 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-01-07 14:19:34,014 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-01-07 14:19:34,026 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
+2026-01-07 14:19:34,026 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-01-07 14:19:34,030 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-01-07 14:19:34,042 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of regular cells in a block : 333
+2026-01-07 14:19:34,043 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in n direction    : 1
+2026-01-07 14:19:34,043 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in m direction    : 1
+2026-01-07 14:19:34,043 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of flux grid            : dx=50.000000000000654, dy=50.00000000000095
+2026-01-07 14:19:34,044 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of subgrid pixels       : dx=8.333333333333442, dy=8.333333333333492
+2026-01-07 14:19:34,044 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - block 1/1 -- col 0:250 | row 0:107
+2026-01-07 14:19:46,332 - hydromt.hydromt_sfincs.components.grid.subgrid - utils - INFO - Building 2 overviews with average
+2026-01-07 14:19:46,363 - hydromt.hydromt_sfincs.components.grid.subgrid - utils - INFO - Building 2 overviews with average
+2026-01-07 14:19:46,421 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Set other manning options to None in config that are unused  in SFINCS in case of subgrid (manning, manning_land, manning_sea, rgh_lev_land, manningfile).
 </pre></div></div>
 </div>
 <div style="border-left: 4px solid #4CAF50; padding: 0.5em; background-color: #f0fff0;"><p>⚠️ Note: If you have a very large domain with more than a millions cells, and very high-resolution datasets (e.g. 1 m), this step might take minutes to hours!!!</p>
@@ -1083,8 +1085,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 13:23:20,656 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
-2025-11-25 13:23:20,684 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
+2026-01-07 14:19:47,751 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
+2026-01-07 14:19:47,781 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
 </pre></div></div>
 </div>
 </section>
