@@ -31,7 +31,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
     allows to generate time series from astronomical constituents (if available).
     """
 
-    _default_varname = "zs"
+    _default_varname = "bzs"
 
     def __init__(self, model: "SfincsModel"):
         super().__init__(model)
@@ -473,11 +473,11 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             # this allows to use a subset of the locations in the timeseries
             if df_ts is not None and np.isin(gdf_locs.index, df_ts.columns).all():
                 df_ts = df_ts.reindex(gdf_locs.index, axis=1, fill_value=0)
-        elif gdf_locs is None and "zs" in self.data:
+        elif gdf_locs is None and "bzs" in self.data:
             # no locations provided, using existing waterlevel boundary points from data
             used_existing = True
             gdf_locs = self.data[
-                "zs"
+                "bzs"
             ].vector.to_gdf()  # NOTE this is now done in set_timeseries ...
         elif gdf_locs is None:
             raise ValueError("No waterlevel boundary (bnd) points provided.")
