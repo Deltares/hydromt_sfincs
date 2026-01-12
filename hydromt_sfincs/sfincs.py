@@ -327,8 +327,8 @@ class SfincsModel(Model):
 
         _FORCING = {
             "water_level": {
-                "zs": {"standard_name": "waterlevel", "unit": "m+ref"},
-                "zi": {"standard_name": "wave height", "unit": "m"},
+                "bzs": {"standard_name": "waterlevel", "unit": "m+ref"},
+                "bzi": {"standard_name": "wave height", "unit": "m"},
             },
             "discharge_points": {
                 "dis": {"standard_name": "discharge", "unit": "m3.s-1"},
