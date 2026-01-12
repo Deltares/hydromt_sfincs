@@ -1822,7 +1822,7 @@ def partition_quadtree(
         return partitions
 
 
-def write_netcdf_safely(ds, abs_file_path: Path) -> Path:
+def write_netcdf_safely(ds, abs_file_path: Path, encoding=None) -> Path:
     """
     NetCDF files have the tendency to get locked by other processes (e.g. other notebooks), or because they were
     opened in a lazy manner. This function attempts to write the dataset to the specified path,
@@ -1860,7 +1860,7 @@ def write_netcdf_safely(ds, abs_file_path: Path) -> Path:
     # Step 2: write to temporary file
     tmp_fd, tmp_path = tempfile.mkstemp(suffix=".nc", dir=abs_file_path.parent)
     os.close(tmp_fd)
-    ds.vector.to_xy().to_netcdf(tmp_path)
+    ds.vector.to_xy().to_netcdf(tmp_path, encoding=encoding)
 
     # Step 3: move temp file to target, or create versioned file if locked
     try:

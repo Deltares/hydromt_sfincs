@@ -140,6 +140,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         ds = GeoDataset.from_netcdf(abs_file_path, crs=self.model.crs, chunks="auto")
 
         # rename variables to match hydromt-sfincs naming
+        ds = ds.rename({"stations": "index"}) if "stations" in ds.dims else ds
         ds = ds.rename({"discharge": "ds"}) if "ds" in ds.data_vars else ds
 
         return ds
@@ -246,11 +247,17 @@ class SfincsDischargePoints(SfincsBoundaryBase):
 
         ds = self.data.load()
 
+        tref = self.model.config.get("tref")
+        tref_str = tref.strftime("%Y-%m-%d %H:%M:%S")
+
+        encoding = dict(time={"units": f"minutes since {tref_str}", "dtype": "float64"})
+
         # rename variables to match sfincs naming
+        ds = ds.rename({"index": "stations"}) if "index" in ds.dims else ds
         ds = ds.rename({"dis": "discharge"}) if "ds" in ds.data_vars else ds
 
         # Write netcdf file safely (might get locked, e..g in other notebooks)
-        final_path = utils.write_netcdf_safely(ds, abs_file_path)
+        final_path = utils.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
         if final_path != abs_file_path:
             self.model.config.set("netsrcdisfile", final_path.name)
 
