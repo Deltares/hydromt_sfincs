@@ -141,7 +141,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
 
         # rename variables to match hydromt-sfincs naming
         ds = ds.rename({"stations": "index"}) if "stations" in ds.dims else ds
-        ds = ds.rename({"discharge": "ds"}) if "ds" in ds.data_vars else ds
+        ds = ds.rename({"discharge": "dis"}) if "discharge" in ds.data_vars else ds
 
         return ds
 
@@ -254,7 +254,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
 
         # rename variables to match sfincs naming
         ds = ds.rename({"index": "stations"}) if "index" in ds.dims else ds
-        ds = ds.rename({"dis": "discharge"}) if "ds" in ds.data_vars else ds
+        ds = ds.rename({"dis": "discharge"}) if "dis" in ds.data_vars else ds
 
         # Write netcdf file safely (might get locked, e..g in other notebooks)
         final_path = utils.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
