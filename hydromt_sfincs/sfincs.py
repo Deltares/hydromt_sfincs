@@ -415,6 +415,7 @@ class SfincsModel(Model):
         figsize: Tuple[int] = None,
         geom_names: List[str] = None,
         geom_kwargs: Dict = {},
+        grid_kwargs: Dict = {},
         legend_kwargs: Dict = {},
         **kwargs,
     ):
@@ -451,6 +452,9 @@ class SfincsModel(Model):
         geom_kwargs : Dict of Dict, optional
             Model geometry styling per geometry, passed to geopandas.GeoDataFrame.plot method.
             For instance: {'src': {'markersize': 30}}.
+        grid_kwargs : Dict, optional
+            Styling options for grid plotting (e.g. color, linewidth) passed to matplotlib plot / ugrid.plot.line.
+            Defaults: {"color": "black", "linewidth": 0.7}
         legend_kwargs : Dict, optional
             Legend kwargs, passed to ax.legend method.
 
@@ -530,6 +534,7 @@ class SfincsModel(Model):
             figsize=figsize,
             geom_names=geom_names,
             geom_kwargs=geom_kwargs,
+            grid_kwargs=grid_kwargs,
             legend_kwargs=legend_kwargs,
             logger=logger,
             **kwargs,

@@ -132,6 +132,7 @@ def plot_basemap(
     figsize: Tuple[int] = None,
     geom_names: List[str] = None,
     geom_kwargs: Dict = {},
+    grid_kwargs: Dict = {},
     legend_kwargs: Dict = {},
     bmap_kwargs: Dict = {},
     logger=logger,
@@ -168,6 +169,9 @@ def plot_basemap(
     geom_kwargs : Dict of Dict, optional
         Model geometry styling per geometry, passed to geopandas.GeoDataFrame.plot method.
         For instance: {'src': {'markersize': 30}}.
+    grid_kwargs : Dict, optional
+        Styling options for grid plotting (e.g. color, linewidth) passed to matplotlib plot / ugrid.plot.line.
+        Defaults: {"color": "black", "linewidth": 0.7}
     legend_kwargs : Dict, optional
         Legend kwargs, passed to ax.legend method.
 
@@ -321,6 +325,30 @@ def plot_basemap(
                 rgb.plot.imshow(transform=crs, ax=ax, zorder=1)
         elif isinstance(da, xu.UgridDataArray):
             da.ugrid.plot(transform=crs, ax=ax, zorder=1, **kwargs0)
+    elif variable == "grid":
+        if isinstance(ds, xr.Dataset):
+            grid_kwargs0 = {"color": "black", "linewidth": 0.7}
+            grid_kwargs0.update(**grid_kwargs)
+            if ds.raster.rotation != 0 and "xc" in ds.coords and "yc" in ds.coords:
+                ax.plot(
+                    ds["xc"].values,
+                    ds["yc"].values,
+                    zorder=1,
+                    transform=crs,
+                    **grid_kwargs0,
+                )
+            else:
+                ax.plot(
+                    ds["x"].values,
+                    ds["y"].values,
+                    zorder=1,
+                    transform=crs,
+                    **grid_kwargs0,
+                )
+        elif isinstance(ds, xu.UgridDataset):
+            grid_kwargs0 = {"color": "black", "linewidth": 0.3}
+            grid_kwargs0.update(**grid_kwargs)
+            ds["level"].ugrid.plot.line(ax=ax, zorder=1, transform=crs, **grid_kwargs0)
 
     # geometry plotting and annotate kwargs
     for k, d in geom_kwargs.items():
