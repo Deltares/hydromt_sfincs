@@ -266,7 +266,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         abs_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         # parse data to dataframe
-        da = self.data["zs"].transpose("time", ...)
+        da = self.data["bzs"].transpose("time", ...)
         df = da.to_pandas()
 
         # Write to file

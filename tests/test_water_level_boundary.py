@@ -74,7 +74,7 @@ def test_add_point(model_config):
 
     # Check that the number of points has increased and value is set correctly
     assert model_config.water_level.nr_points == nr_points + 1
-    assert np.mean(model_config.water_level.data["zs"].isel(index=-1).values) == -10.0
+    assert np.mean(model_config.water_level.data["bzs"].isel(index=-1).values) == -10.0
 
     # assert the astronomic constituents are dropped after adding point
     assert "constituent" not in model_config.water_level.data.dims
@@ -143,7 +143,7 @@ def test_create_timeseries(model_config):
 
     # Check that the timeseries is created correctly
     for idx in range(model_config.water_level.nr_points):
-        point_data = model_config.water_level.data["zs"].isel(index=idx)
+        point_data = model_config.water_level.data["bzs"].isel(index=idx)
         assert point_data.values.min() == 10
         assert point_data.values.max() == 10
         assert len(point_data.time) == 2
@@ -160,14 +160,14 @@ def test_create_timeseries(model_config):
     )
 
     # Check that the timeseries is created correctly
-    point_data = model_config.water_level.data["zs"].isel(index=0)
+    point_data = model_config.water_level.data["bzs"].isel(index=0)
     assert np.isclose(point_data.values.min(), 0.1, atol=1e-2)
     assert np.isclose(point_data.values.max(), 5, atol=1e-2)
     assert len(point_data.time) == 49  # 49 hours with 1 hour timestep
 
     # also check that the min, max of the other points are still the same
     for idx in range(1, model_config.water_level.nr_points):
-        point_data = model_config.water_level.data["zs"].isel(index=idx)
+        point_data = model_config.water_level.data["bzs"].isel(index=idx)
         assert point_data.values.min() == 10
         assert point_data.values.max() == 10
         # but length has changed accordingly
@@ -184,7 +184,7 @@ def test_create_timeseries(model_config):
     )
     # Check that the timeseries is created correctly
     for idx in range(1, model_config.water_level.nr_points):
-        point_data = model_config.water_level.data["zs"].isel(index=idx)
+        point_data = model_config.water_level.data["bzs"].isel(index=idx)
         assert point_data.values.min() == -1
         assert point_data.values.max() == 1
         # but length has changed accordingly
@@ -199,10 +199,10 @@ def test_create_timeseries_from_astro(model_config):
     assert "constituent" in model_config.water_level.data.dims
 
     # make sure all values are set to 0
-    model_config.water_level.data["zs"].values[:] = 0
+    model_config.water_level.data["bzs"].values[:] = 0
 
     for idx in range(model_config.water_level.nr_points):
-        point_data = model_config.water_level.data["zs"].isel(index=idx)
+        point_data = model_config.water_level.data["bzs"].isel(index=idx)
         assert point_data.values.min() == 0
         assert point_data.values.max() == 0
         # but length remained the same
@@ -216,7 +216,7 @@ def test_create_timeseries_from_astro(model_config):
 
     # check that values changed back from 0s to real tidal values
     for idx in range(model_config.water_level.nr_points):
-        point_data = model_config.water_level.data["zs"].isel(index=idx)
+        point_data = model_config.water_level.data["bzs"].isel(index=idx)
         assert point_data.values.min() < 0
         assert point_data.values.max() > 0
         # length has changed accordingly
@@ -237,7 +237,7 @@ def test_create(model_config):
     assert model_config.water_level.nr_points == 2
     # show that dummy data is set
     for idx in range(0, model_config.water_level.nr_points):
-        point_data = model_config.water_level.data["zs"].sel(index=idx)
+        point_data = model_config.water_level.data["bzs"].sel(index=idx)
         assert point_data.values.min() == 0.0
         assert point_data.values.max() == 0.0
         assert len(point_data.time) == 2
@@ -246,7 +246,7 @@ def test_create(model_config):
     csv_file = Path(TESTDATADIR) / "local_data" / "discharge.csv"
     model_config.water_level.create(timeseries=csv_file)
     # show that index 1 is changed into timeseries
-    point_data = model_config.water_level.data["zs"].sel(index=1)
+    point_data = model_config.water_level.data["bzs"].sel(index=1)
     assert point_data.values.min() == 2.0
     assert point_data.values.max() == 5.0
     assert len(point_data.time) == 3
@@ -261,7 +261,7 @@ def test_create(model_config):
     assert model_config.water_level.nr_points == 2
     # show that dummy data is set for point 0, 2 and timeseries for point 1
     for idx in range(model_config.water_level.nr_points):
-        point_data = model_config.water_level.data["zs"].sel(index=idx)
+        point_data = model_config.water_level.data["bzs"].sel(index=idx)
         if idx == 1:
             assert point_data.values.min() == 2.0
             assert point_data.values.max() == 5.0
@@ -289,7 +289,7 @@ def test_create(model_config):
     model_config.water_level.create(locations=points_gdf, timeseries=df, merge=True)
     # Check that the number of points is correct and values are set in the last point
     assert model_config.water_level.nr_points == 3
-    assert model_config.water_level.data["zs"].isel(index=-1).values.max() == 10.0
+    assert model_config.water_level.data["bzs"].isel(index=-1).values.max() == 10.0
 
     # now with indices that do not exist yet; should be reset to 0
     df = df.mul(0.3)
@@ -298,7 +298,7 @@ def test_create(model_config):
     model_config.water_level.create(locations=points_gdf, timeseries=df, merge=False)
 
     assert model_config.water_level.nr_points == 1
-    assert model_config.water_level.data["zs"].index[-1] == 0
+    assert model_config.water_level.data["bzs"].index[-1] == 0
 
 
 def test_delete_clear(model_config):
