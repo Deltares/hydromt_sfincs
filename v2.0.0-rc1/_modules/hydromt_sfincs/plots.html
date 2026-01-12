@@ -558,6 +558,7 @@
     <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">geom_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">geom_kwargs</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="n">grid_kwargs</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
     <span class="n">legend_kwargs</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
     <span class="n">bmap_kwargs</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
@@ -594,6 +595,9 @@
 <span class="sd">    geom_kwargs : Dict of Dict, optional</span>
 <span class="sd">        Model geometry styling per geometry, passed to geopandas.GeoDataFrame.plot method.</span>
 <span class="sd">        For instance: {&#39;src&#39;: {&#39;markersize&#39;: 30}}.</span>
+<span class="sd">    grid_kwargs : Dict, optional</span>
+<span class="sd">        Styling options for grid plotting (e.g. color, linewidth) passed to matplotlib plot / ugrid.plot.line.</span>
+<span class="sd">        Defaults: {&quot;color&quot;: &quot;black&quot;, &quot;linewidth&quot;: 0.7}</span>
 <span class="sd">    legend_kwargs : Dict, optional</span>
 <span class="sd">        Legend kwargs, passed to ax.legend method.</span>
 
@@ -747,6 +751,30 @@
                 <span class="n">rgb</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">transform</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">):</span>
             <span class="n">da</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">transform</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs0</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">variable</span> <span class="o">==</span> <span class="s2">&quot;grid&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+            <span class="n">grid_kwargs0</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="s2">&quot;linewidth&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">}</span>
+            <span class="n">grid_kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">grid_kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">rotation</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="s2">&quot;xc&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">coords</span> <span class="ow">and</span> <span class="s2">&quot;yc&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                    <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;xc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                    <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;yc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                    <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">transform</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">grid_kwargs0</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                    <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                    <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                    <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">transform</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">grid_kwargs0</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataset</span><span class="p">):</span>
+            <span class="n">grid_kwargs0</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="s2">&quot;linewidth&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">}</span>
+            <span class="n">grid_kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">grid_kwargs</span><span class="p">)</span>
+            <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;level&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="o">**</span><span class="n">grid_kwargs0</span><span class="p">)</span>
 
     <span class="c1"># geometry plotting and annotate kwargs</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">geom_kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
