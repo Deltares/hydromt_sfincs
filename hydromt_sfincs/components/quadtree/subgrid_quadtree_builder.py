@@ -28,7 +28,7 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 def build_subgrid_table_quadtree(
     grid: xr.Dataset,
-    bathymetry_sets: list[dict],
+    elevation_list: list[dict],
     roughness_list: list[dict] = [],
     river_list: list[dict] = [],
     manning_land: float = 0.06,
@@ -57,7 +57,7 @@ def build_subgrid_table_quadtree(
 
     subgrid_table.build(
         grid=grid,
-        bathymetry_sets=bathymetry_sets,
+        elevation_list=elevation_list,
         roughness_list=roughness_list,
         river_list=river_list,
         manning_land=manning_land,
@@ -93,7 +93,7 @@ class SubgridTableQuadtree:
     def build(
         self,
         grid: xr.Dataset,
-        bathymetry_sets: list[dict],
+        elevation_list: list[dict],
         roughness_list: list[dict] = [],
         river_list: list[dict] = [],
         manning_land: float = 0.04,
@@ -423,7 +423,7 @@ class SubgridTableQuadtree:
                         yg = da_sbg["yc"].values
 
                         zg = bathymetry_database.get_bathymetry_on_grid(
-                            xg, yg, crs, bathymetry_sets, method="linear"
+                            xg, yg, crs, elevation_list, method="linear"
                         )
 
                         # replace NaNs with 0.0
@@ -433,7 +433,7 @@ class SubgridTableQuadtree:
                     else:
                         # HydroMT
                         da_dep = merge_multi_dataarrays(
-                            da_list=bathymetry_sets[ilev],
+                            da_list=elevation_list[ilev],
                             da_like=da_sbg,
                             buffer_cells=0,
                             interp_method="linear",
@@ -688,7 +688,7 @@ class SubgridTableQuadtree:
                         yg = da_sbg_uv["yc"].values
 
                         zg = bathymetry_database.get_bathymetry_on_grid(
-                            xg, yg, crs, bathymetry_sets
+                            xg, yg, crs, elevation_list
                         )
 
                         # Multiply zg with depth factor (had to use 0.9746 to get arrival
@@ -707,7 +707,7 @@ class SubgridTableQuadtree:
                     else:
                         # HydroMT
                         da_dep = merge_multi_dataarrays(
-                            da_list=bathymetry_sets[ilev],
+                            da_list=elevation_list[ilev],
                             da_like=da_sbg_uv,
                             buffer_cells=0,
                             interp_method="linear",
