@@ -1168,9 +1168,9 @@ def binary_search(val_array, vals):
     indx = np.searchsorted(val_array, vals)  # ind is size of vals
     not_ok = np.where(indx == len(val_array))[0]
     # size of vals, points that are out of bounds
-    indx[
-        np.where(indx == len(val_array))[0]
-    ] = 0  # Set to zero to avoid out of bounds error
+    indx[np.where(indx == len(val_array))[0]] = (
+        0  # Set to zero to avoid out of bounds error
+    )
     is_ok = np.where(val_array[indx] == vals)[0]  # size of vals
     indices = np.zeros(len(vals), dtype=int) - 1
     indices[is_ok] = indx[is_ok]
