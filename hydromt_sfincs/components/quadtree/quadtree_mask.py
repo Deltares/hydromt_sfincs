@@ -269,9 +269,16 @@ class SfincsQuadtreeMask(ModelComponent):
                     feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
-                gdf_include = self.data_catalog.get_geodataframe(
-                    include_polygon, bbox=bbox
+                gdf_include = (
+                    self.data_catalog.get_geodataframe(include_polygon, bbox=bbox)
+                    .explode(index_parts=False)
+                    .reset_index(drop=True)
                 )
+                # check if input is polygon or multipolygon
+                if not gdf_include.geometry.geom_type.isin(["Polygon"]).all():
+                    raise ValueError(
+                        "Include polygon should contain only Polygon geometries."
+                    )
         if exclude_polygon is not None:
             if not isinstance(exclude_polygon, gpd.GeoDataFrame) and str(
                 exclude_polygon
@@ -280,9 +287,16 @@ class SfincsQuadtreeMask(ModelComponent):
                     feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
-                gdf_exclude = self.data_catalog.get_geodataframe(
-                    exclude_polygon, bbox=bbox
+                gdf_exclude = (
+                    self.data_catalog.get_geodataframe(exclude_polygon, bbox=bbox)
+                    .explode(index_parts=False)
+                    .reset_index(drop=True)
                 )
+                # check if input is polygon or multipolygon
+                if not gdf_exclude.geometry.geom_type.isin(["Polygon"]).all():
+                    raise ValueError(
+                        "Exclude polygon should contain only Polygon geometries."
+                    )
 
         # get mask and dep data
         uda_mask = self.data["mask"] if "mask" in self.data else None
@@ -320,13 +334,14 @@ class SfincsQuadtreeMask(ModelComponent):
 
         # apply include / exclude masks, first include (within zmin/zmax), then exclude (within zmin/zmax)
         if gdf_include is not None:
-            try:
-                _msk = (
-                    xu.burn_vector_geometry(
-                        gdf_include, self.data, fill=0, all_touched=all_touched
-                    )
-                    > 0
+            _msk = (
+                xu.burn_vector_geometry(
+                    gdf_include, self.data, fill=0, all_touched=all_touched
                 )
+                > 0
+            )
+            # check if any cells are included
+            if _msk.any():
                 if include_zmin is not None or include_zmax is not None:
                     if "z" not in self.data:
                         raise ValueError(
@@ -338,16 +353,16 @@ class SfincsQuadtreeMask(ModelComponent):
                     if include_zmax is not None:
                         _msk = np.logical_and(_msk, uda_dep <= include_zmax)
                 uda_mask = np.logical_or(uda_mask, _msk)  # NOTE logical OR statement
-            except:
-                logger.debug("No mask cells found within include polygon!")
+            else:
+                logger.warning("No mask cells found within include polygon!")
         if gdf_exclude is not None:
-            try:
-                _msk = (
-                    xu.burn_vector_geometry(
-                        gdf_exclude, self.data, fill=0, all_touched=all_touched
-                    )
-                    > 0
+            _msk = (
+                xu.burn_vector_geometry(
+                    gdf_exclude, self.data, fill=0, all_touched=all_touched
                 )
+                > 0
+            )
+            if _msk.any():
                 if exclude_zmin is not None or exclude_zmax is not None:
                     if "z" not in self.data:
                         raise ValueError(
@@ -359,9 +374,8 @@ class SfincsQuadtreeMask(ModelComponent):
                     if exclude_zmax is not None:
                         _msk = np.logical_and(_msk, uda_dep <= exclude_zmax)
                 uda_mask = np.logical_and(uda_mask, ~_msk)
-            except:
-                logger.debug("No mask cells found within exclude polygon!")
-
+            else:
+                logger.warning("No mask cells found within exclude polygon!")
         # add mask to grid
         self.data[varname] = xu.UgridDataArray(
             xr.DataArray(data=uda_mask, dims=[self.data.grid.face_dimension]),
@@ -482,14 +496,21 @@ class SfincsQuadtreeMask(ModelComponent):
                     feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
-                gdf_include = self.data_catalog.get_geodataframe(
-                    include_polygon, bbox=bbox
+                gdf_include = (
+                    self.data_catalog.get_geodataframe(include_polygon, bbox=bbox)
+                    .explode(index_parts=False)
+                    .reset_index(drop=True)
                 )
             if include_polygon_buffer > 0:
                 if self.model.crs.is_geographic:
                     include_polygon_buffer = include_polygon_buffer / 111111.0
                 gdf_include["geometry"] = gdf_include.to_crs(self.model.crs).buffer(
                     include_polygon_buffer
+                )
+            # check if include_polygon is of type Polygon
+            if not gdf_include.geometry.geom_type.isin(["Polygon"]).all():
+                raise ValueError(
+                    "Include polygon should contain only Polygon geometries."
                 )
         if exclude_polygon is not None:
             if not isinstance(exclude_polygon, gpd.GeoDataFrame) and str(
@@ -499,9 +520,15 @@ class SfincsQuadtreeMask(ModelComponent):
                     feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
-                gdf_exclude = self.data_catalog.get_geodataframe(
-                    exclude_polygon, bbox=bbox
+                gdf_exclude = (
+                    self.data_catalog.get_geodataframe(exclude_polygon, bbox=bbox)
+                    .explode(index_parts=False)
+                    .reset_index(drop=True)
                 )
+                if not gdf_exclude.geometry.geom_type.isin(["Polygon"]).all():
+                    raise ValueError(
+                        "Exclude polygon should contain only Polygon geometries."
+                    )
 
         bvalue = bvalues[btype]
 
@@ -538,17 +565,24 @@ class SfincsQuadtreeMask(ModelComponent):
                 )
                 > 0
             )
-            if include_zmin is not None or include_zmax is not None:
-                if "z" not in self.data:
-                    raise ValueError(
-                        "z required in combination with include_zmin / include_zmax"
-                    )
-                uda_dep = self.data["z"]
-                if include_zmin is not None:
-                    uda_include = np.logical_and(uda_include, uda_dep >= include_zmin)
-                if include_zmax is not None:
-                    uda_include = np.logical_and(uda_include, uda_dep <= include_zmax)
-            bounds = np.logical_and(bounds, uda_include)
+            if uda_include.any():
+                if include_zmin is not None or include_zmax is not None:
+                    if "z" not in self.data:
+                        raise ValueError(
+                            "z required in combination with include_zmin / include_zmax"
+                        )
+                    uda_dep = self.data["z"]
+                    if include_zmin is not None:
+                        uda_include = np.logical_and(
+                            uda_include, uda_dep >= include_zmin
+                        )
+                    if include_zmax is not None:
+                        uda_include = np.logical_and(
+                            uda_include, uda_dep <= include_zmax
+                        )
+                bounds = np.logical_and(bounds, uda_include)
+            else:
+                logger.warning("No mask boundary cells found within include polygon!")
         if gdf_exclude is not None:
             uda_exclude = (
                 xu.burn_vector_geometry(
@@ -556,17 +590,24 @@ class SfincsQuadtreeMask(ModelComponent):
                 )
                 > 0
             )
-            if exclude_zmin is not None or exclude_zmax is not None:
-                if "z" not in self.data:
-                    raise ValueError(
-                        "z required in combination with exclude_zmin / exclude_zmax"
-                    )
-                uda_dep = self.data["z"]
-                if exclude_zmin is not None:
-                    uda_exclude = np.logical_and(uda_exclude, uda_dep >= exclude_zmin)
-                if exclude_zmax is not None:
-                    uda_exclude = np.logical_and(uda_exclude, uda_dep <= exclude_zmax)
-            bounds = np.logical_and(bounds, ~uda_exclude)
+            if uda_exclude.any():
+                if exclude_zmin is not None or exclude_zmax is not None:
+                    if "z" not in self.data:
+                        raise ValueError(
+                            "z required in combination with exclude_zmin / exclude_zmax"
+                        )
+                    uda_dep = self.data["z"]
+                    if exclude_zmin is not None:
+                        uda_exclude = np.logical_and(
+                            uda_exclude, uda_dep >= exclude_zmin
+                        )
+                    if exclude_zmax is not None:
+                        uda_exclude = np.logical_and(
+                            uda_exclude, uda_dep <= exclude_zmax
+                        )
+                bounds = np.logical_and(bounds, ~uda_exclude)
+            else:
+                logger.warning("No mask boundary cells found within exclude polygon!")
 
         # set new boundary cells, keep same mask value for existing boundary cells
         ncells = np.count_nonzero(bounds.values)
