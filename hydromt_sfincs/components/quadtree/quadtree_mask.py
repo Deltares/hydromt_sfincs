@@ -565,24 +565,25 @@ class SfincsQuadtreeMask(ModelComponent):
                 )
                 > 0
             )
-            if uda_include.any():
-                if include_zmin is not None or include_zmax is not None:
-                    if "z" not in self.data:
-                        raise ValueError(
-                            "z required in combination with include_zmin / include_zmax"
-                        )
-                    uda_dep = self.data["z"]
-                    if include_zmin is not None:
-                        uda_include = np.logical_and(
-                            uda_include, uda_dep >= include_zmin
-                        )
-                    if include_zmax is not None:
-                        uda_include = np.logical_and(
-                            uda_include, uda_dep <= include_zmax
-                        )
-                bounds = np.logical_and(bounds, uda_include)
-            else:
-                logger.warning("No mask boundary cells found within include polygon!")
+            
+            if include_zmin is not None or include_zmax is not None:
+                if "z" not in self.data:
+                    raise ValueError(
+                        "z required in combination with include_zmin / include_zmax"
+                    )
+                uda_dep = self.data["z"]
+                if include_zmin is not None:
+                    uda_include = np.logical_and(
+                        uda_include, uda_dep >= include_zmin
+                    )
+                if include_zmax is not None:
+                    uda_include = np.logical_and(
+                        uda_include, uda_dep <= include_zmax
+                    )
+            bounds = np.logical_and(bounds, uda_include)
+            if not bounds.any(): 
+                raise ValueError("No mask boundary cells found within include polygon!")
+
         if gdf_exclude is not None:
             uda_exclude = (
                 xu.burn_vector_geometry(
@@ -590,23 +591,23 @@ class SfincsQuadtreeMask(ModelComponent):
                 )
                 > 0
             )
-            if uda_exclude.any():
-                if exclude_zmin is not None or exclude_zmax is not None:
-                    if "z" not in self.data:
-                        raise ValueError(
-                            "z required in combination with exclude_zmin / exclude_zmax"
-                        )
-                    uda_dep = self.data["z"]
-                    if exclude_zmin is not None:
-                        uda_exclude = np.logical_and(
-                            uda_exclude, uda_dep >= exclude_zmin
-                        )
-                    if exclude_zmax is not None:
-                        uda_exclude = np.logical_and(
-                            uda_exclude, uda_dep <= exclude_zmax
-                        )
-                bounds = np.logical_and(bounds, ~uda_exclude)
-            else:
+            
+            if exclude_zmin is not None or exclude_zmax is not None:
+                if "z" not in self.data:
+                    raise ValueError(
+                        "z required in combination with exclude_zmin / exclude_zmax"
+                    )
+                uda_dep = self.data["z"]
+                if exclude_zmin is not None:
+                    uda_exclude = np.logical_and(
+                        uda_exclude, uda_dep >= exclude_zmin
+                    )
+                if exclude_zmax is not None:
+                    uda_exclude = np.logical_and(
+                        uda_exclude, uda_dep <= exclude_zmax
+                    )
+            bounds = np.logical_and(bounds, ~uda_exclude)
+            if not bounds.any():
                 logger.warning("No mask boundary cells found within exclude polygon!")
 
         # set new boundary cells, keep same mask value for existing boundary cells
