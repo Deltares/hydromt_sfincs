@@ -86,7 +86,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         # Check if bnd file exists
         if not abs_file_path.exists():
-            raise FileNotFoundError(f"Discharge points file not found: {abs_file_path}")
+            raise FileNotFoundError(
+                f"Water level boundary points file not found: {abs_file_path}"
+            )
 
         # Read bnd file
         # TODO check if we want read_xyn? Before we used read_xy, so without name column
@@ -179,6 +181,12 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         # Read netcdf file
         ds = GeoDataset.from_netcdf(abs_file_path, crs=self.model.crs, chunks="auto")
+
+        # Rename variables to match internal naming
+        ds = ds.rename({"stations": "index"}) if "stations" in ds.dims else ds
+        ds = ds.rename({"zs": "bzs"}) if "zs" in ds.data_vars else ds
+        ds = ds.rename({"zi": "bzi"}) if "zi" in ds.data_vars else ds
+
         return ds
 
     def write(self, format: str = None):
@@ -331,8 +339,18 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         ds = self.data.load()
 
+        tref = self.model.config.get("tref")
+        tref_str = tref.strftime("%Y-%m-%d %H:%M:%S")
+
+        encoding = dict(time={"units": f"minutes since {tref_str}", "dtype": "float64"})
+
+        # rename variables to match sfincs naming
+        ds = ds.rename({"index": "stations"}) if "index" in ds.dims else ds
+        ds = ds.rename({"bzs": "zs"}) if "bzs" in ds.data_vars else ds
+        ds = ds.rename({"bzi": "zi"}) if "bzi" in ds.data_vars else ds
+
         # Write netcdf file safely (might get locked)
-        final_path = utils.write_netcdf_safely(ds, abs_file_path)
+        final_path = utils.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
         if final_path != abs_file_path:
             self.model.config.set("netbndbzsbzifile", final_path.name)
 
@@ -818,7 +836,7 @@ def add_constituents(ds, section_data):
 
     # Ensure we have a Dataset
     if isinstance(ds, xr.DataArray):
-        ds = ds.to_dataset(name="bzs")
+        ds = ds.to_dataset(name="zs")
 
     # Collect all constituent names across all points
     all_constituents = sorted(set().union(*[df.index for df in section_data]))
