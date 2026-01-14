@@ -412,19 +412,11 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         tstart, tstop = self.model.get_model_time()  # model time
         # buffer around msk==2 values
         if not self.model.grid_type == "quadtree":
-            if np.any(self.model.grid.mask == 2):
-                # get region around waterlevel boundary cells
-                region = self.model.grid.mask.where(
-                    self.model.grid.mask == 2, 0
-                ).raster.vectorize()
-            else:
-                raise ValueError(
-                    "No SnapWave wave boundary cells (mask==2) in model grid."
-                )
+            raise ValueError("SnapWave is not supported for regular grid models!")
         else:
             region = self.model.region
 
-        # read waterlevel data from geodataset or geodataframe
+        # read wave data from geodataset or geodataframe
         if geodataset is not None:
             # read and clip data in time & space
             da = self.data_catalog.get_geodataset(
@@ -437,12 +429,12 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             self.set(geodataset=da, merge=False, drop_duplicates=False)
             self.model.config.set("netsnapwavefile", "snapwave.nc")
 
-            # df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
-            # gdf_locs = da.vector.to_gdf()
+        # read wave data from separate timeseries and locations input
         elif timeseries is not None:
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
                 time_range=(tstart, tstop),
+                variables=["hs", "tp", "wd", "ds"],
                 source_kwargs={
                     "driver": {
                         "name": "pandas",
@@ -450,13 +442,17 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
                     }
                 },
             )
-        #     df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
-        #     # FIXME - needed to check whether all 4 variables are present?
-        #     required_vars = {"hs", "tp", "wd", "ds"}
-        #     if not required_vars.issubset(set(df_ts.index)):
-        #         raise ValueError(
-        #             f"Timeseries data must contain all required variables: {required_vars}"
-        #         )
+            df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
+            # FIXME - needed to check whether all 4 variables are present?
+            # required_vars = {"hs", "tp", "wd", "ds"}
+            # if not required_vars.issubset(set(df_ts.index)):
+            #     raise ValueError(
+            #         f"Timeseries data must contain all required variables: {required_vars}"
+            #     )
+
+            vars = ["hs", "tp", "wd", "ds"]
+            for i, varname in enumerate(vars):
+                self.set_timeseries(self, df=df, varname=varname)
 
         # used_existing = False
         # # read location data (if not already read from geodataset)
@@ -596,93 +592,93 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    def set_timeseries(
-        self,
-        index: Union[int, List[int]] = None,
-        shape: str = "constant",
-        timestep: float = 600.0,
-        hs: float = 1.0,
-        tp: float = 10.0,
-        wd: float = 270.0,
-        ds: float = 20.0,
-        tpeak: float = 86400.0,
-        duration: float = 43200.0,
-    ):
-        """Applies time series boundary conditions for each point
-        Create numpy datetime64 array for time series with python datetime.datetime objects
+    # def set_timeseries(
+    #     self,
+    #     index: Union[int, List[int]] = None,
+    #     shape: str = "constant",
+    #     timestep: float = 600.0,
+    #     hs: float = 1.0,
+    #     tp: float = 10.0,
+    #     wd: float = 270.0,
+    #     ds: float = 20.0,
+    #     tpeak: float = 86400.0,
+    #     duration: float = 43200.0,
+    # ):
+    #     """Applies time series boundary conditions for each point
+    #     Create numpy datetime64 array for time series with python datetime.datetime objects
 
-        Parameters
-        ----------
-        shape : str
-            Shape of the time series. Options are "constant" or "gaussian".
-        timestep : float
-            Time step [s]
-        hs : float
-            Wave height [m]
-        tp : float
-            Peak period [s]
-        wd : float
-            Wave direction [degrees]
-        ds : float
-            Directional spread [degrees]
-        tpeak : float
-            Time of the peak of the Gaussian wave [s]
-        duration : float
-            Duration of the Gaussian wave [s]
-        """
+    #     Parameters
+    #     ----------
+    #     shape : str
+    #         Shape of the time series. Options are "constant" or "gaussian".
+    #     timestep : float
+    #         Time step [s]
+    #     hs : float
+    #         Wave height [m]
+    #     tp : float
+    #         Peak period [s]
+    #     wd : float
+    #         Wave direction [degrees]
+    #     ds : float
+    #         Directional spread [degrees]
+    #     tpeak : float
+    #         Time of the peak of the Gaussian wave [s]
+    #     duration : float
+    #         Duration of the Gaussian wave [s]
+    #     """
 
-        if self.data.empty:
-            return
+    #     if self.data.empty:
+    #         return
 
-        t0 = np.datetime64(self.model.config.get("tstart"))
-        t1 = np.datetime64(self.model.config.get("tstop"))
-        if shape == "constant":
-            dt = np.timedelta64(int((t1 - t0).astype(float) / 1e6), "s")
-        else:
-            dt = np.timedelta64(int(timestep), "s")
-        time = np.arange(t0, t1 + dt, dt)
-        dtsec = dt.astype(float)
-        # Convert time to seconds since tref
-        tsec = (
-            (time - np.datetime64(self.model.config.get("tref")))
-            .astype("timedelta64[s]")
-            .astype(float)
-        )
-        nt = len(tsec)
-        if shape == "constant":
-            hs = [hs] * nt
-            tp = [tp] * nt
-            wd = [wd] * nt
-            ds = [ds] * nt
-        elif shape == "gaussian":
-            hs = hs * np.exp(-(((tsec - tpeak) / (0.25 * duration)) ** 2))
-            tp = [tp] * nt
-            wd = [wd] * nt
-            ds = [ds] * nt
-        else:
-            # Not implemented
-            raise ValueError(
-                f"Shape {shape} not implemented for SnapWave boundary conditions!"
-            )
+    #     t0 = np.datetime64(self.model.config.get("tstart"))
+    #     t1 = np.datetime64(self.model.config.get("tstop"))
+    #     if shape == "constant":
+    #         dt = np.timedelta64(int((t1 - t0).astype(float) / 1e6), "s")
+    #     else:
+    #         dt = np.timedelta64(int(timestep), "s")
+    #     time = np.arange(t0, t1 + dt, dt)
+    #     dtsec = dt.astype(float)
+    #     # Convert time to seconds since tref
+    #     tsec = (
+    #         (time - np.datetime64(self.model.config.get("tref")))
+    #         .astype("timedelta64[s]")
+    #         .astype(float)
+    #     )
+    #     nt = len(tsec)
+    #     if shape == "constant":
+    #         hs = [hs] * nt
+    #         tp = [tp] * nt
+    #         wd = [wd] * nt
+    #         ds = [ds] * nt
+    #     elif shape == "gaussian":
+    #         hs = hs * np.exp(-(((tsec - tpeak) / (0.25 * duration)) ** 2))
+    #         tp = [tp] * nt
+    #         wd = [wd] * nt
+    #         ds = [ds] * nt
+    #     else:
+    #         # Not implemented
+    #         raise ValueError(
+    #             f"Shape {shape} not implemented for SnapWave boundary conditions!"
+    #         )
 
-        times = pd.date_range(
-            start=t0, end=t1, freq=pd.tseries.offsets.DateOffset(seconds=dtsec)
-        )
+    #     times = pd.date_range(
+    #         start=t0, end=t1, freq=pd.tseries.offsets.DateOffset(seconds=dtsec)
+    #     )
 
-        if index is None:
-            index = list(self.data.index)
-        elif not isinstance(index, list):
-            index = [index]
+    #     if index is None:
+    #         index = list(self.data.index)
+    #     elif not isinstance(index, list):
+    #         index = [index]
 
-        for i in index:
-            df = pd.DataFrame()
-            df["time"] = times
-            df["hs"] = hs
-            df["tp"] = tp
-            df["wd"] = wd
-            df["ds"] = ds
-            df = df.set_index("time")
-            self.data.at[i, "timeseries"] = df
+    #     for i in index:
+    #         df = pd.DataFrame()
+    #         df["time"] = times
+    #         df["hs"] = hs
+    #         df["tp"] = tp
+    #         df["wd"] = wd
+    #         df["ds"] = ds
+    #         df = df.set_index("time")
+    #         self.data.at[i, "timeseries"] = df
 
     def get_boundary_points_from_mask(self, min_dist=None, bnd_dist=5000.0):
         # Should move this to mask? Yes.

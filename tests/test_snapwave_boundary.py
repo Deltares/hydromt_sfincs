@@ -181,6 +181,9 @@ def test_create(model_config):
     # compare da to model_config.snapwave_boundary_conditions.data
     assert model_config.snapwave_boundary_conditions.data.equals(da)
 
+    # FIXME - should have a check that if not all variables are provided into the
+    # geodataset or timeseries, an error is raised
+
     # src_file = Path(TESTMODELDIR) / "gis" / "bnd.geojson"
 
     # # Create discharge points from GeoDataFrame
