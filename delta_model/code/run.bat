@@ -1,0 +1,1 @@
+call "..\..\..\00_software\SFINCS_v2.0.2_Blockhaus_release_exe\sfincs.exe">sfincs_log.txt 

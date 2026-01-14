@@ -1,0 +1,305 @@
+meta:
+  version: '1'
+  name: data_catalog_v1
+
+40_delta_polygons:
+  data_type: GeoDataFrame
+  driver:
+    name: pyogrio
+  metadata:
+    crs: 4326
+  uri: C:/PhD/SFINCS/SFINCS_cloned/input/delta_polygons/40_delta_polygons.geojson
+
+hydrobasins_global:
+  data_type: GeoDataFrame
+  driver:
+    name: pyogrio
+  metadata:
+    category: hydrography
+    crs: 4326
+    notes: Global HydroBASINS level 12 polygons
+    paper_doi: 10.5194/hess-17-2029-2013
+    paper_ref: Lehner et al. (2013)
+    source_license: CC BY 4.0
+    source_url: https://www.hydrosheds.org/pages/hydrobasins
+    source_version: '1.0'
+  uri: C:/PhD/SFINCS/SFINCS_cloned/input/hydrobasins_global.gpkg
+
+merit:
+  data_type: RasterDataset
+  driver:
+    name: raster_xarray
+  metadata:
+    crs: 4326
+    paper_doi: 10.1002/2017GL072874
+    paper_ref: Yamazaki et al. (2018)
+    source_license: CC-BY-NC 4.0 or ODbL 1.0
+    source_url: p://hydro.iis.u-tokyo.ac.jp/~yamadai/MERIT_DEM/
+    source_version: 1.0.3
+  uri: P:/wflow_global/hydromt/topography/merit/merit.nc
+
+gebco:
+  data_type: RasterDataset
+  driver:
+    name: rasterio
+  metadata:
+    crs: 4326
+    paper_doi: 10.5285/a29c5465-b138-234d-e053-6c86abc040b9
+    paper_ref: Weatherall et al (2020)
+    source_license: https://www.gebco.net/data_and_products/gridded_bathymetry_data/#a1
+    source_url: https://www.bodc.ac.uk/data/open_download/gebco/gebco_2020/geotiff/
+    source_version: '2020'
+    unit: m+MSL
+  uri: P:/wflow_global/hydromt/bathymetry/gebco/gebco.vrt
+
+esa_worldcover:
+  data_type: RasterDataset
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 2048
+        y: 2048
+  metadata:
+    crs: 4326
+    source_license: CC BY 4.0
+    source_url: https://doi.org/10.5281/zenodo.5571936
+    source_version: v100
+  uri: P:/wflow_global/hydromt/landuse/esa_worldcover/esa-worldcover.vrt
+
+esa_worldcover_mapping:
+  data_type: DataFrame
+  driver:
+    name: pandas
+  metadata:
+    category: landuse
+    notes: Manning Roughness values for each ESA World Cover class
+  uri: C:/PhD/SFINCS/SFINCS_cloned/input/esa_worldcover_mapping.csv
+
+gcn250:
+  data_type: RasterDataset
+  driver:
+    name: rasterio
+  metadata:
+    category: soil
+    paper_doi: 10.1038/s41597-019-0155-x
+    paper_ref: Jaafar et al. (2019)
+    source_license: CC BY 4.0
+    source_url: https://doi.org/10.6084/m9.figshare.7756202.v1
+    source_version: v1
+  uri: P:/wflow_global/hydromt/landuse/gcn250/GCN250_ARCII.tif
+
+combined_dataset_deltas:
+  data_type: DataFrame
+  driver:
+    name: pandas
+  uri: C:/PhD/SFINCS/SFINCS_cloned/input/Combined_dataset_global_deltas.csv
+
+deltadtm:
+  data_type: RasterDataset
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    source_url: https://data.4tu.nl/datasets/1da2e70f-6c4d-4b03-86bd-b53e789cc629
+    source_version: 1.1.1
+  uri: C:/PhD/SFINCS/SFINCS_cloned/input/DeltaDTM/deltadtm_v1_1.vrt
+
+osm_water:
+  data_type: GeoDataFrame
+  driver:
+    name: pyogrio
+  metadata:
+    category: geography
+    crs: 4326
+  uri: P:/wflow_global/hydromt/geography/osm/osm_coastlines-db.gpkg # water along the coast (not a polyline)
+
+# From Roel 
+gtsm_codec_reanalysis_waterlevel_hourly:
+  data_adapter:
+    rename:
+      station_x_coordinate: lon
+      station_y_coordinate: lat
+      stations: index
+  data_type: GeoDataset
+  driver:
+    name: geodataset_xarray
+    options:
+      chunks: {stations: 100, time: 1500}
+      combine: by_coords
+      decode_times: true
+      parallel: true
+  metadata:
+    category: ocean
+    crs: 4326
+    paper_doi: 10.3389/fmars.2020.00263
+    paper_ref: Muis at al (2020)
+    source_license: https://cds.climate.copernicus.eu/api/v2/terms/static/licence-to-use-copernicus-products.pdf
+    source_url: https://doi.org/10.24381/cds.8c59054f
+    source_version: v1
+  uri: p:/archivedprojects/11205028-c3s_435/01_data/01_Timeseries/timeseries2/waterlevel/reanalysis_waterlevel_hourly_{year}_{month:02d}_v1.nc
+
+# GTSM datasets
+gtsm_reanalysis_2018_hourly_v1:
+  data_type: GeoDataset
+  driver: 
+    name: geodataset_xarray # 'netcdf' doesnt work 
+    options:
+      chunks:
+        stations: 10
+        time: -1
+  metadata:
+    crs: 4326
+    category: ocean
+    paper_doi: 10.3389/fmars.2020.00263
+    paper_ref: Muis at al (2020)
+    source_license: https://cds.climate.copernicus.eu/api/v2/terms/static/licence-to-use-copernicus-products.pdf
+    source_url: https://doi.org/10.24381/cds.8c59054f
+    source_version: v1 
+  uri: C:/PhD/SFINCS/SFINCS_cloned/input/reanalysis_waterlevel_hourly_2018_12_v1.nc # works 
+  data_adapter:
+    rename:
+      station_x_coordinate: lon
+      station_y_coordinate: lat
+  # uri: P:/archivedprojects/11205028-c3s_435/01_data/01_Timeseries/timeseries2/waterlevel/reanalysis_waterlevel_hourly_2018_12_v1.nc # error reading variables 
+
+  # uri: P:/archivedprojects/11205028-c3s_435/01_data/01_Timeseries/timeseries2/{variable}/reanalysis_{variable}_{freq}_{year}_{month:02d}_v1.nc
+  # placeholders:
+  #   freq: [10min, hourly, dailymax]
+
+gtsm_reanalysis_2018_hourly_v3:
+  data_type: GeoDataset
+  driver: 
+    name: geodataset_xarray 
+    options:
+      chunks:
+        stations: 10
+        time: -1
+  metadata:
+    crs: 4326
+    category: ocean
+    paper_doi: 10.3389/fmars.2020.00263
+    paper_ref: Muis at al (2020)
+    source_license: https://cds.climate.copernicus.eu/api/v2/terms/static/licence-to-use-copernicus-products.pdf
+    source_url: https://doi.org/10.24381/cds.8c59054f
+    source_version: v1 
+  uri: C:/PhD/SFINCS/SFINCS_cloned/input/reanalysis_waterlevel_hourly_2018_12_v3.nc # 
+  data_adapter:
+    rename:
+      station_x_coordinate: lon
+      station_y_coordinate: lat
+
+merit_hydro:
+  data_type: RasterDataset
+  driver: 
+    name: rasterio
+    options:
+      chunks:
+        x: 6000
+        y: 6000
+  metadata:
+    crs: 4326
+    category: topography
+    paper_doi: 10.1029/2019WR024873
+    paper_ref: Yamazaki et al. (2019)
+    source_license: CC-BY-NC 4.0 or ODbL 1.0
+    source_url: http://hydro.iis.u-tokyo.ac.jp/~yamadai/MERIT_Hydro
+    source_version: 1.0
+  uri: P:/wflow_global/hydromt/topography/merit_hydro/*.vrt
+  data_adapter:
+    rename:
+      bas: basins
+      dir: flwdir
+      elv: elevtn
+      slp: lndslp
+      sto: strord
+      upa: uparea
+      upg: upgrid
+      wth: rivwth
+
+# copdem30:
+#   data_type: RasterDataset
+#   driver:
+#     name: rasterio
+#   metadata:
+#     category: topography
+#     nodata: -9999
+#     source_license: https://spacedata.copernicus.eu/documents/20126/0/CSCDA_ESA_Mission-specific+Annex+%281%29.pdf/83b44c0a-244a-7ba3-b00c-b578a34e88a7?t=1604070311399
+#     source_url: https://spacedata.copernicus.eu/web/cscda/dataset-details?articleId=394198#D4
+#     source_version: '2021_1'
+#   uri: copdem30.tif
+
+# era5_hourly:
+#   data_adapter:
+#     rename:
+#       msl: press
+#       tp: precip
+#       u10: wind_u
+#       v10: wind_v
+#     unit_add:
+#       temp: -273.15
+#     unit_mult:
+#       kin: 0.000277778
+#       kout: 0.000277778
+#       precip: 1000
+#       press_msl: 0.01
+#   data_type: RasterDataset
+#   driver:
+#     name: raster_xarray
+#     options:
+#       combine: by_coords
+#       decode_times: true
+#       parallel: true
+#   metadata:
+#     category: meteo
+#     crs: 4326
+#     notes: Extracted from Copernicus Climate Data Store
+#     paper_doi: 10.1002/qj.3803
+#     paper_ref: Hersbach et al. (2019)
+#     source_license: https://cds.climate.copernicus.eu/cdsapp/#!/terms/licence-to-use-copernicus-products
+#     source_url: https://doi.org/10.24381/cds.bd0915c6
+#   uri: era5_hourly_charleston_2016.nc
+
+# meta:
+#   category: null
+#   hydromt_version: null
+#   name: null
+#   roots: null
+#   validate_hydromt_version: true
+#   version: '1'
+
+# osm_landareas:
+#   data_type: GeoDataFrame
+#   driver:
+#     name: pyogrio
+#   metadata:
+#     category: geography
+#     crs: 4326
+#     notes: OpenStreetMap coastlines land polygons, last updated 2020-01-09T05:29
+#     source_author: OpenStreetMap
+#     source_license: ODbL
+#     source_url: https://osmdata.openstreetmap.de/data/coastlines.html
+#     source_version: '1.0'
+#   uri: osm_landareas.gpkg
+
+# rivers_lin2019_v1:
+#   data_adapter:
+#     rename:
+#       area: uparea
+#   data_type: GeoDataFrame
+#   driver:
+#     name: pyogrio
+#   metadata:
+#     category: hydrography
+#     paper_doi: 10.5281/zenodo.3552776
+#     paper_ref: Lin et al. (2019)
+#     source_license: CC-BY-NC 4.0
+#     source_url: https://zenodo.org/record/3552776#.YVbOrppByUk
+#     source_version: '1'
+#   uri: rivers_lin2019_v1.gpkg
+
+

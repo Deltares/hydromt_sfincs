@@ -1,0 +1,61 @@
+global:
+  data_libs: ["./data_catalog.yml"]
+
+setup_config:
+  tref: 20161001 000000
+  tstart: 20161007 000000
+  tstop: 20161009 000000
+  dtout: 3600
+  dthisout: 600
+
+setup_grid_from_region:
+  res: 200                   
+  crs: utm
+  rotated: false
+  
+setup_dep:
+  datasets_dep:
+    - elevtn: topography_charleston  # update to your file
+    - elevtn: gebco
+
+setup_mask_active:
+  mask: geojsons/region_bbox.geojson   # update to your file
+  zmin: -5
+  fill_area: 10
+  include_mask: geojsons/include_mask.geojson  # update to your file
+  exclude_mask: geojsons/exclude_mask.geojson  # update to your file
+
+setup_mask_bounds:
+  btype: waterlevel
+  zmax: -2
+  exclude_mask: geojsons/exclude_mask.geojson  # update to your file
+  
+setup_manning_roughness:
+  rgh_lev_land: 0
+  manning_land: 0.06
+  manning_sea : 0.02
+
+setup_cn_infiltration:
+  cn: gcn250
+  antecedent_moisture: avg
+
+setup_waterlevel_forcing:
+  geodataset: gtsm_codec_reanalysis_hourly_v1  
+  buffer: 10000
+
+setup_precip_forcing_from_grid:
+  precip: era5_hourly
+  aggregate: false
+
+setup_wind_forcing_from_grid:
+  wind: era5_hourly
+
+setup_pressure_forcing_from_grid:
+  press: era5_hourly
+
+setup_observation_points:
+  locations: geojsons/obs_points_charleston.geojson  # update to your file
+  
+plot_basemap:
+  fn_out: basemap.png
+
