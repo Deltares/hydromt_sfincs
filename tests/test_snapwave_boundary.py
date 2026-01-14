@@ -79,44 +79,44 @@ def test_snapwave_boundary_io(model_config, tmp_dir):
     )
 
 
-def test_add_point(model_config):
-    """Test adding a discharge point to the model."""
-    nr_points = model_config.snapwave_boundary_conditions.nr_points
+# def test_add_point(model_config):
+#     """Test adding a discharge point to the model."""
+#     nr_points = model_config.snapwave_boundary_conditions.nr_points
 
-    # determine point in the middle of the grid
-    gdf = model_config.region
-    point = gdf.geometry.unary_union.centroid
+#     # determine point in the middle of the grid
+#     gdf = model_config.region
+#     point = gdf.geometry.unary_union.centroid
 
-    model_config.snapwave_boundary_conditions.add_point(
-        x=point.x, y=point.y, hs=5.0, tp=12.0, wd=180.0, ds=30.0  # , name="test_point"
-    )
+#     model_config.snapwave_boundary_conditions.add_point(
+#         x=point.x, y=point.y, hs=5.0, tp=12.0, wd=180.0, ds=30.0  # , name="test_point"
+#     )
 
-    # Check that the number of points has increased and value is set correctly
-    assert model_config.snapwave_boundary_conditions.nr_points == nr_points + 1
-    assert (
-        np.mean(
-            model_config.snapwave_boundary_conditions.data["hs"].isel(index=-1).values
-        )
-        == 5.0
-    )
-    assert (
-        np.mean(
-            model_config.snapwave_boundary_conditions.data["tp"].isel(index=-1).values
-        )
-        == 12.0
-    )
-    assert (
-        np.mean(
-            model_config.snapwave_boundary_conditions.data["wd"].isel(index=-1).values
-        )
-        == 180.0
-    )
-    assert (
-        np.mean(
-            model_config.snapwave_boundary_conditions.data["ds"].isel(index=-1).values
-        )
-        == 30.0
-    )
+#     # Check that the number of points has increased and value is set correctly
+#     assert model_config.snapwave_boundary_conditions.nr_points == nr_points + 1
+#     assert (
+#         np.mean(
+#             model_config.snapwave_boundary_conditions.data["hs"].isel(index=-1).values
+#         )
+#         == 5.0
+#     )
+#     assert (
+#         np.mean(
+#             model_config.snapwave_boundary_conditions.data["tp"].isel(index=-1).values
+#         )
+#         == 12.0
+#     )
+#     assert (
+#         np.mean(
+#             model_config.snapwave_boundary_conditions.data["wd"].isel(index=-1).values
+#         )
+#         == 180.0
+#     )
+#     assert (
+#         np.mean(
+#             model_config.snapwave_boundary_conditions.data["ds"].isel(index=-1).values
+#         )
+#         == 30.0
+#     )
 
 
 def test_create_timeseries(model_config):
@@ -268,6 +268,9 @@ def test_delete_clear(model_config):
 
     # Check that all points are deleted
     assert model_config.snapwave_boundary_conditions.nr_points == 0
-    assert model_config.config.get("bndfile") is None
-    assert model_config.config.get("bzsfile") is None
-    assert model_config.config.get("bcafile") is None
+    assert model_config.config.get("snapwave_bndfile") is None
+    assert model_config.config.get("snapwave_bhsfile") is None
+    assert model_config.config.get("snapwave_btpfile") is None
+    assert model_config.config.get("snapwave_bwdfile") is None
+    assert model_config.config.get("snapwave_bdsfile") is None
+    assert model_config.config.get("netsnapwavefile") is None

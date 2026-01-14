@@ -341,140 +341,117 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         if final_path != abs_file_path:
             self.model.config.set("netsnapwavefile", final_path.name)
 
-    # def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
-    #     """Set SnapWave boundary conditions data.
+    def delete(self, index: Union[int, List[int]]):
+        "Delete boundary points and clear config when no points remain."
+        super().delete(index)
+        if self.nr_points == 0:
+            self.model.config.set("snapwave_bndfile", None)
+            self.model.config.set("snapwave_bhsfile", None)
+            self.model.config.set("snapwave_btpfile", None)
+            self.model.config.set("snapwave_bwdfile", None)
+            self.model.config.set("snapwave_bdsfile", None)
+            self.model.config.set("netsnapwavefile", None)
+
+    def clear(self):
+        "Clear boundary points and unset associated config keys."
+        super().clear()
+        self.model.config.set("snapwave_bndfile", None)
+        self.model.config.set("snapwave_bhsfile", None)
+        self.model.config.set("snapwave_btpfile", None)
+        self.model.config.set("snapwave_bwdfile", None)
+        self.model.config.set("snapwave_bdsfile", None)
+        self.model.config.set("netsnapwavefile", None)
+
+    # def add_point(
+    #     self,
+    #     gdf: gpd.GeoDataFrame = None,
+    #     x: float = None,
+    #     y: float = None,
+    #     hs: float = 1.0,
+    #     tp: float = 10.0,
+    #     wd: float = 270.0,
+    #     ds: float = 20.0,
+    # ):
+    #     """Add a single point to the boundary conditions data. Either gdf,
+    #     or x, y must be provided.
 
     #     Parameters
     #     ----------
     #     gdf : gpd.GeoDataFrame
-    #         GeoDataFrame with boundary points.
-    #     merge : bool, optional
-    #         Merge data with existing data, by default True.
+    #         GeoDataFrame with a single point
+    #     x : float
+    #         x-coordinate of the point
+    #     y : float
+    #         y-coordinate of the point
+    #     hs : float
+    #         Wave height of the point
+    #     tp : float
+    #         Peak period of the point
+    #     wd : float
+    #         Wave direction of the point
+    #     ds : float
+    #         Directional spread of the point
     #     """
-
-    #     if merge:
-    #         self.data = pd.concat([self.data, gdf], ignore_index=True)
+    #     if gdf is not None:
+    #         if len(gdf) != 1:
+    #             raise ValueError(
+    #                 "Only GeoDataFrame with a single point in a can be added."
+    #             )
+    #         gdf = gdf.to_crs(self.model.crs)
+    #         if "timeseries" not in gdf:
+    #             gdf["timeseries"] = pd.DataFrame()
     #     else:
-    #         self.data = gdf
+    #         # Create a GeoDataFrame with a single point
+    #         if x is None or y is None:
+    #             raise ValueError("Either gdf or x, y, and name must be provided.")
+    #         point = shapely.geometry.Point(x, y)
+    #         gdf = gpd.GeoDataFrame(
+    #             [
+    #                 {
+    #                     "timeseries": pd.DataFrame(),
+    #                     "geometry": point,
+    #                 }
+    #             ],
+    #             crs=self.model.crs,
+    #         )
 
-    def add_point(
-        self,
-        gdf: gpd.GeoDataFrame = None,
-        x: float = None,
-        y: float = None,
-        hs: float = 1.0,
-        tp: float = 10.0,
-        wd: float = 270.0,
-        ds: float = 20.0,
-    ):
-        """Add a single point to the boundary conditions data. Either gdf,
-        or x, y must be provided.
+    #     # Check if there is data in the timeseries
+    #     if gdf["timeseries"][0].empty:
+    #         # Now add the water level
+    #         # if not self.data.empty:
+    #         if len(self.data.data_vars) == 0:
 
-        Parameters
-        ----------
-        gdf : gpd.GeoDataFrame
-            GeoDataFrame with a single point
-        x : float
-            x-coordinate of the point
-        y : float
-            y-coordinate of the point
-        hs : float
-            Wave height of the point
-        tp : float
-            Peak period of the point
-        wd : float
-            Wave direction of the point
-        ds : float
-            Directional spread of the point
-        """
-        if gdf is not None:
-            if len(gdf) != 1:
-                raise ValueError(
-                    "Only GeoDataFrame with a single point in a can be added."
-                )
-            gdf = gdf.to_crs(self.model.crs)
-            if "timeseries" not in gdf:
-                gdf["timeseries"] = pd.DataFrame()
-        else:
-            # Create a GeoDataFrame with a single point
-            if x is None or y is None:
-                raise ValueError("Either gdf or x, y, and name must be provided.")
-            point = shapely.geometry.Point(x, y)
-            gdf = gpd.GeoDataFrame(
-                [
-                    {
-                        "timeseries": pd.DataFrame(),
-                        "geometry": point,
-                    }
-                ],
-                crs=self.model.crs,
-            )
+    #             # Set water level at same times as first existing point by copying
+    #             gdf.at[0, "timeseries"] = self.data.iloc[0]["timeseries"].copy()
+    #             gdf.at[0, "timeseries"]["hs"] = hs
+    #             gdf.at[0, "timeseries"]["tp"] = tp
+    #             gdf.at[0, "timeseries"]["wd"] = wd
+    #             gdf.at[0, "timeseries"]["ds"] = ds
+    #         else:
+    #             # First point, so need to generate df with constant water level
+    #             time = [self.model.config.get("tstart"), self.model.config.get("tstop")]
+    #             hs = [hs] * 2
+    #             tp = [tp] * 2
+    #             wd = [wd] * 2
+    #             ds = [ds] * 2
+    #             # Create DataFrame with columns time and wl
+    #             df = pd.DataFrame()
+    #             df["time"] = time
+    #             df["hs"] = hs
+    #             df["tp"] = tp
+    #             df["wd"] = wd
+    #             df["ds"] = ds
+    #             df = df.set_index("time")
+    #             gdf.at[0, "timeseries"] = df
+    #     else:
+    #         # Check if the timeseries is the same length as the first point
+    #         if len(gdf["timeseries"][0]) != len(self.data.iloc[0]["timeseries"]):
+    #             raise ValueError(
+    #                 "Timeseries in gdf must be the same length as the first point in the boundary conditions data."
+    #             )
 
-        # Check if there is data in the timeseries
-        if gdf["timeseries"][0].empty:
-            # Now add the water level
-            if not self.data.empty:
-                # Set water level at same times as first existing point by copying
-                gdf.at[0, "timeseries"] = self.data.iloc[0]["timeseries"].copy()
-                gdf.at[0, "timeseries"]["hs"] = hs
-                gdf.at[0, "timeseries"]["tp"] = tp
-                gdf.at[0, "timeseries"]["wd"] = wd
-                gdf.at[0, "timeseries"]["ds"] = ds
-            else:
-                # First point, so need to generate df with constant water level
-                time = [self.model.config.get("tstart"), self.model.config.get("tstop")]
-                hs = [hs] * 2
-                tp = [tp] * 2
-                wd = [wd] * 2
-                ds = [ds] * 2
-                # Create DataFrame with columns time and wl
-                df = pd.DataFrame()
-                df["time"] = time
-                df["hs"] = hs
-                df["tp"] = tp
-                df["wd"] = wd
-                df["ds"] = ds
-                df = df.set_index("time")
-                gdf.at[0, "timeseries"] = df
-        else:
-            # Check if the timeseries is the same length as the first point
-            if len(gdf["timeseries"][0]) != len(self.data.iloc[0]["timeseries"]):
-                raise ValueError(
-                    "Timeseries in gdf must be the same length as the first point in the boundary conditions data."
-                )
-
-        # Add to self.data
-        self.data = pd.concat([self.data, gdf], ignore_index=True)
-
-    def delete(self, index: Union[int, List[int]]):
-        """Delete a single point from the SnapWave boundary conditions data.
-
-        Parameters
-        ----------
-        index : int or list of int
-            Index or list of indices of points to be deleted.
-        """
-
-        if self.data.empty:
-            return
-
-        if not isinstance(index, list):
-            index = [index]
-        # Check if indices are within range
-        if any(x > (len(self.data.index) - 1) for x in index):
-            raise ValueError("One of the indices exceeds length of index range!")
-        self.data = self.data.drop(index).reset_index(drop=True)
-
-        if self.data.empty:
-            self.model.config.set("snapwave_bndfile", None)
-            self.model.config.set("snapwave_btpfile", None)
-            self.model.config.set("snapwave_bwdfile", None)
-            self.model.config.set("snapwave_bdsfile", None)
-            # self.model.config.set("netbndsnapwavefile", None)
-
-    def clear(self):
-        """Clean GeoDataFrame with boundary points."""
-        self.data = gpd.GeoDataFrame()
+    #     # Add to self.data
+    #     self.data = pd.concat([self.data, gdf], ignore_index=True)
 
     def set_timeseries(
         self,
