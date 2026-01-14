@@ -345,12 +345,14 @@ def write_timeseries(
 ## MASK
 
 
-def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
+def get_bounds_vector(
+    da_msk: Union[xr.DataArray, xu.UgridDataArray]
+) -> gpd.GeoDataFrame:
     """Get bounds of vectorized mask as GeoDataFrame.
 
     Parameters
     ----------
-    da_msk: xr.DataArray
+    da_msk: Union[xr.DataArray, xu.UgridDataArray]
         Mask as DataArray with values 0 (inactive), 1 (active),
         and boundary cells 2 (waterlevels) and 3 (outflow).
 
@@ -359,20 +361,24 @@ def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
     gdf_msk: gpd.GeoDataFrame
         GeoDataFrame with line geometries of mask boundaries.
     """
-    gdf_msk = da_msk.raster.vectorize()
-    # small buffer for rounding errors
-    if da_msk.raster.crs.is_geographic:
-        gdf_msk["geometry"] = gdf_msk.buffer(1e-6)
-    else:
-        gdf_msk["geometry"] = gdf_msk.buffer(1)
-    region = (da_msk >= 1).astype("int16").raster.vectorize()
-    region = region[region["value"] == 1].drop(columns="value")
-    region["geometry"] = region.boundary
-    gdf_msk = gdf_msk[gdf_msk["value"] != 1]
-    gdf_msk = gpd.overlay(
-        region, gdf_msk, "intersection", keep_geom_type=False
-    ).explode(index_parts=True)
-    gdf_msk = gdf_msk[gdf_msk.length > 0]
+    if isinstance(da_msk, xr.DataArray):
+        gdf_msk = da_msk.raster.vectorize()
+        # small buffer for rounding errors
+        if da_msk.raster.crs.is_geographic:
+            gdf_msk["geometry"] = gdf_msk.buffer(1e-6)
+        else:
+            gdf_msk["geometry"] = gdf_msk.buffer(1)
+        region = (da_msk >= 1).astype("int16").raster.vectorize()
+        region = region[region["value"] == 1].drop(columns="value")
+        region["geometry"] = region.boundary
+        gdf_msk = gdf_msk[gdf_msk["value"] != 1]
+        gdf_msk = gpd.overlay(
+            region, gdf_msk, "intersection", keep_geom_type=False
+        ).explode(index_parts=True)
+        gdf_msk = gdf_msk[gdf_msk.length > 0]
+    elif isinstance(da_msk, xu.UgridDataArray):
+        mask = da_msk.where(da_msk > 1, drop=True)
+        gdf_msk = mask.ugrid.to_geodataframe(name="value")
     return gdf_msk
 
 
