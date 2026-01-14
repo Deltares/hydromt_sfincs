@@ -1834,6 +1834,9 @@ def write_netcdf_safely(ds, abs_file_path: Path, encoding=None) -> Path:
         Dataset to write (should already have CRS if needed).
     abs_file_path : Path
         Absolute target path for the NetCDF file.
+    encoding: dict, optional
+        Encoding dictionary passed to xarray.to_netcdf, here for instance used for time variable;
+        e.g. encoding = dict(time={"units": f"minutes since {tref_str}", "dtype": "float64"}))
 
     Returns
     -------
