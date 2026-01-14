@@ -537,7 +537,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Discharge timeseries file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
-        <span class="c1"># Read bzs file (this creates one DataFrame with all timeseries)</span>
+        <span class="c1"># Read dis file (this creates one DataFrame with all timeseries)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">read_timeseries</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">tref</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tref&quot;</span><span class="p">))</span>
         <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
         <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;index&quot;</span>
@@ -559,7 +559,7 @@
             <span class="c1"># File name not defined</span>
             <span class="k">return</span>
 
-        <span class="c1"># Check if netbndbzsbzifile exists</span>
+        <span class="c1"># Check if netsrcdisfile exists</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;discharge condition netcdf file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -567,6 +567,11 @@
 
         <span class="c1"># Read netcdf file</span>
         <span class="n">ds</span> <span class="o">=</span> <span class="n">GeoDataset</span><span class="o">.</span><span class="n">from_netcdf</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+
+        <span class="c1"># rename variables to match hydromt-sfincs naming</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;stations&quot;</span><span class="p">:</span> <span class="s2">&quot;index&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;stations&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span> <span class="k">else</span> <span class="n">ds</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;discharge&quot;</span><span class="p">:</span> <span class="s2">&quot;dis&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;discharge&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">else</span> <span class="n">ds</span>
+
         <span class="k">return</span> <span class="n">ds</span>
 
 <div class="viewcode-block" id="SfincsDischargePoints.write">
@@ -638,7 +643,7 @@
         <span class="c1"># Check that write mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_write_mode</span><span class="p">()</span>
 
-        <span class="c1"># Get absolute file name and set it in config if bzsfile is not None</span>
+        <span class="c1"># Get absolute file name and set it in config if disfile is not None</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
             <span class="s2">&quot;disfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sfincs.dis&quot;</span>
         <span class="p">)</span>
@@ -674,8 +679,17 @@
 
         <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
 
+        <span class="n">tref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tref&quot;</span><span class="p">)</span>
+        <span class="n">tref_str</span> <span class="o">=</span> <span class="n">tref</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
+
+        <span class="n">encoding</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;minutes since </span><span class="si">{</span><span class="n">tref_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;float64&quot;</span><span class="p">})</span>
+
+        <span class="c1"># rename variables to match sfincs naming</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="s2">&quot;stations&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;index&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span> <span class="k">else</span> <span class="n">ds</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;dis&quot;</span><span class="p">:</span> <span class="s2">&quot;discharge&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;dis&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">else</span> <span class="n">ds</span>
+
         <span class="c1"># Write netcdf file safely (might get locked, e..g in other notebooks)</span>
-        <span class="n">final_path</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">write_netcdf_safely</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">abs_file_path</span><span class="p">)</span>
+        <span class="n">final_path</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">write_netcdf_safely</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">abs_file_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">final_path</span> <span class="o">!=</span> <span class="n">abs_file_path</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;netsrcdisfile&quot;</span><span class="p">,</span> <span class="n">final_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 

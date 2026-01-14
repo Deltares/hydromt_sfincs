@@ -2321,7 +2321,7 @@
         <span class="k">return</span> <span class="n">partitions</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">write_netcdf_safely</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">abs_file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_netcdf_safely</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">abs_file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    NetCDF files have the tendency to get locked by other processes (e.g. other notebooks), or because they were</span>
 <span class="sd">    opened in a lazy manner. This function attempts to write the dataset to the specified path,</span>
@@ -2333,6 +2333,9 @@
 <span class="sd">        Dataset to write (should already have CRS if needed).</span>
 <span class="sd">    abs_file_path : Path</span>
 <span class="sd">        Absolute target path for the NetCDF file.</span>
+<span class="sd">    encoding: dict, optional</span>
+<span class="sd">        Encoding dictionary passed to xarray.to_netcdf, here for instance used for time variable;</span>
+<span class="sd">        e.g. encoding = dict(time={&quot;units&quot;: f&quot;minutes since {tref_str}&quot;, &quot;dtype&quot;: &quot;float64&quot;}))</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -2359,7 +2362,7 @@
     <span class="c1"># Step 2: write to temporary file</span>
     <span class="n">tmp_fd</span><span class="p">,</span> <span class="n">tmp_path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.nc&quot;</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="n">abs_file_path</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">tmp_fd</span><span class="p">)</span>
-    <span class="n">ds</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_xy</span><span class="p">()</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">)</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_xy</span><span class="p">()</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span>
 
     <span class="c1"># Step 3: move temp file to target, or create versioned file if locked</span>
     <span class="k">try</span><span class="p">:</span>
