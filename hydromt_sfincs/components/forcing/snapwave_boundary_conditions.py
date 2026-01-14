@@ -362,7 +362,148 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         self.model.config.set("snapwave_bdsfile", None)
         self.model.config.set("netsnapwavefile", None)
 
-    # def add_point(
+    @hydromt_step
+    def create(
+        self,
+        geodataset: Union[str, Path, xr.Dataset] = None,
+        timeseries: Union[str, Path, pd.DataFrame] = None,
+        locations: Union[str, Path, gpd.GeoDataFrame] = None,
+        buffer: float = 5e3,
+        merge: bool = True,
+        drop_duplicates: bool = True,
+    ):
+        """Create snapwave forcing.
+
+        Snapwave boundary conditions are read from a `geodataset` (geospatial point timeseries)
+        or a tabular `timeseries` dataframe. At least one of these must be provided.
+
+        The tabular timeseries data is combined with `locations` if provided,
+        or with existing 'bnd' locations if previously set.
+
+        Adds model forcing layers:
+
+        * **hs** forcing: significant wave height time series [m]
+        * **tp** forcing: peak wave period time series [s]
+        * **wd** forcing: wave direction time series [°]
+        * **ds** forcing: wave directional spreading time series [°]
+
+        Parameters
+        ----------
+        geodataset: str, Path, xr.Dataset, optional
+            Path, data source name, or xarray data object for geospatial point timeseries.
+        timeseries: str, Path, pd.DataFrame, optional
+            Path, data source name, or pandas data object for tabular timeseries.
+        locations: str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for snapwave_bnd point locations.
+            It should contain a 'index' column matching the column names in `timeseries`.
+        buffer: float, optional
+            Buffer [m] around model water level boundary cells to select wave data gauges,
+            by default 5 km.
+        merge : bool, optional
+            If True, merge with existing forcing data, by default True.
+        drop_duplicates : bool, optional
+            If True, drop duplicate points in gdf based on 'name' column or geometry.
+
+        See Also
+        --------
+        set
+        """
+        gdf_locs, df_ts = None, None
+        tstart, tstop = self.model.get_model_time()  # model time
+        # buffer around msk==2 values
+        if not self.model.grid_type == "quadtree":
+            if np.any(self.model.grid.mask == 2):
+                # get region around waterlevel boundary cells
+                region = self.model.grid.mask.where(
+                    self.model.grid.mask == 2, 0
+                ).raster.vectorize()
+            else:
+                raise ValueError(
+                    "No SnapWave wave boundary cells (mask==2) in model grid."
+                )
+        else:
+            region = self.model.region
+
+        # read waterlevel data from geodataset or geodataframe
+        if geodataset is not None:
+            # read and clip data in time & space
+            da = self.data_catalog.get_geodataset(
+                geodataset,
+                geom=region,
+                buffer=buffer,
+                variables=["hs", "tp", "wd", "ds"],
+                time_range=(tstart, tstop),
+            )
+            self.set(geodataset=da, merge=False, drop_duplicates=False)
+            self.model.config.set("netsnapwavefile", "snapwave.nc")
+
+            # df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
+            # gdf_locs = da.vector.to_gdf()
+        elif timeseries is not None:
+            df_ts = self.data_catalog.get_dataframe(
+                timeseries,
+                time_range=(tstart, tstop),
+                source_kwargs={
+                    "driver": {
+                        "name": "pandas",
+                        "options": {"index_col": 0, "parse_dates": True},
+                    }
+                },
+            )
+        #     df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
+        #     # FIXME - needed to check whether all 4 variables are present?
+        #     required_vars = {"hs", "tp", "wd", "ds"}
+        #     if not required_vars.issubset(set(df_ts.index)):
+        #         raise ValueError(
+        #             f"Timeseries data must contain all required variables: {required_vars}"
+        #         )
+
+        # used_existing = False
+        # # read location data (if not already read from geodataset)
+        # if gdf_locs is None and locations is not None:
+        #     gdf_locs = self.data_catalog.get_geodataframe(
+        #         locations,
+        #         geom=region,
+        #         buffer=buffer,
+        #     ).to_crs(self.model.crs)
+        #     if "index" in gdf_locs.columns:
+        #         gdf_locs = gdf_locs.set_index("index")
+        #     # filter df_ts timeseries based on gdf_locs index
+        #     # this allows to use a subset of the locations in the timeseries
+        #     if df_ts is not None and np.isin(gdf_locs.index, df_ts.columns).all():
+        #         df_ts = df_ts.reindex(gdf_locs.index, axis=1, fill_value=0)
+        # elif gdf_locs is None and "hs" in self.data:
+        #     # no locations provided, using existing wave boundary points from data
+        #     used_existing = True
+        #     gdf_locs = self.data[
+        #         "hs"
+        #     ].vector.to_gdf()  # NOTE this is now done in set_timeseries ...
+        # elif gdf_locs is None:
+        #     raise ValueError("No wave boundary (bnd) points provided.")
+        # # It is still possible that all points are outside the region+buffer, this error should provide clear feedback
+        # if gdf_locs.is_empty.all():
+        #     raise ValueError(
+        #         "All wave boundary points provided are outside the active model domain plus specified buffer. "
+        #         "Check the provided locations or increase the value of the buffer argument."
+        #     )
+
+        # # set/ update forcing
+        # if used_existing:
+        #     gdf_locs = None  # only update timeseries for existing points
+        # self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
+        # # update config
+        # if geodataset is not None:
+        #     # when reading from geodataset, keep the format to netcdf
+        #     self.model.config.set("netsnapwavefile", "snapwave.nc")
+        # else:
+        #     self.model.config.set("snapwave_bndfile", "snapwave.bnd")
+        #     self.model.config.set("snapwave_bhsfile", "snapwave.bhs")
+        #     self.model.config.set("snapwave_btpfile", "snapwave.btp")
+        #     self.model.config.set("snapwave_bdsfile", "snapwave.bds")
+        #     self.model.config.set("snapwave_bwdfile", "snapwave.bwd")
+
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # def add_point( #FIXME - do we want to make a copy of add_point in boundary_conditions.py that support multiple vars?
     #     self,
     #     gdf: gpd.GeoDataFrame = None,
     #     x: float = None,
@@ -372,7 +513,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
     #     wd: float = 270.0,
     #     ds: float = 20.0,
     # ):
-    #     """Add a single point to the boundary conditions data. Either gdf,
+    # Add a single point to the boundary conditions data. Either gdf,
     #     or x, y must be provided.
 
     #     Parameters
@@ -452,6 +593,8 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
     #     # Add to self.data
     #     self.data = pd.concat([self.data, gdf], ignore_index=True)
+
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     def set_timeseries(
         self,

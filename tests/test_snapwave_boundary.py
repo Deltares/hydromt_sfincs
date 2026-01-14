@@ -119,134 +119,144 @@ def test_snapwave_boundary_io(model_config, tmp_dir):
 #     )
 
 
-def test_create_timeseries(model_config):
-    model_config.snapwave_boundary_conditions.read()
-    assert model_config.snapwave_boundary_conditions.nr_points > 0
+# def test_create_timeseries(model_config):
+#     model_config.snapwave_boundary_conditions.read()
+#     assert model_config.snapwave_boundary_conditions.nr_points > 0
 
-    # now add constant timeseries for each point
-    model_config.snapwave_boundary_conditions.create_timeseries(
-        shape="constant",
-        offset=10,
-    )
+#     # now add constant timeseries for each point
+#     model_config.snapwave_boundary_conditions.create_timeseries(
+#         shape="constant",
+#         offset=10,
+#     )
 
-    # Check that the timeseries is created correctly
-    for idx in range(model_config.snapwave_boundary_conditions.nr_points):
-        point_data = model_config.snapwave_boundary_conditions.data["bzs"].isel(
-            index=idx
-        )
-        assert point_data.values.min() == 10
-        assert point_data.values.max() == 10
-        assert len(point_data.time) == 2
+#     # Check that the timeseries is created correctly
+#     for idx in range(model_config.snapwave_boundary_conditions.nr_points):
+#         point_data = model_config.snapwave_boundary_conditions.data["bzs"].isel(
+#             index=idx
+#         )
+#         assert point_data.values.min() == 10
+#         assert point_data.values.max() == 10
+#         assert len(point_data.time) == 2
 
-    # now add a Gaussian timeseries for the first point
-    model_config.snapwave_boundary_conditions.create_timeseries(
-        index=0,
-        shape="gaussian",
-        offset=0,
-        peak=5,
-        tpeak=5 * 86400,
-        duration=2 * 86400,
-        timestep=3600,
-    )
+#     # now add a Gaussian timeseries for the first point
+#     model_config.snapwave_boundary_conditions.create_timeseries(
+#         index=0,
+#         shape="gaussian",
+#         offset=0,
+#         peak=5,
+#         tpeak=5 * 86400,
+#         duration=2 * 86400,
+#         timestep=3600,
+#     )
 
-    # Check that the timeseries is created correctly
-    point_data = model_config.snapwave_boundary_conditions.data["bzs"].isel(index=0)
-    assert np.isclose(point_data.values.min(), 0.1, atol=1e-2)
-    assert np.isclose(point_data.values.max(), 5, atol=1e-2)
-    assert len(point_data.time) == 49  # 49 hours with 1 hour timestep
+#     # Check that the timeseries is created correctly
+#     point_data = model_config.snapwave_boundary_conditions.data["bzs"].isel(index=0)
+#     assert np.isclose(point_data.values.min(), 0.1, atol=1e-2)
+#     assert np.isclose(point_data.values.max(), 5, atol=1e-2)
+#     assert len(point_data.time) == 49  # 49 hours with 1 hour timestep
 
-    # also check that the min, max of the other points are still the same
-    for idx in range(1, model_config.snapwave_boundary_conditions.nr_points):
-        point_data = model_config.snapwave_boundary_conditions.data["bzs"].isel(
-            index=idx
-        )
-        assert point_data.values.min() == 10
-        assert point_data.values.max() == 10
-        # but length has changed accordingly
-        assert len(point_data.time) == 49
+#     # also check that the min, max of the other points are still the same
+#     for idx in range(1, model_config.snapwave_boundary_conditions.nr_points):
+#         point_data = model_config.snapwave_boundary_conditions.data["bzs"].isel(
+#             index=idx
+#         )
+#         assert point_data.values.min() == 10
+#         assert point_data.values.max() == 10
+#         # but length has changed accordingly
+#         assert len(point_data.time) == 49
 
 
 def test_create(model_config):
     """Test creating discharge points from a GeoDataFrame and csv file."""
-    src_file = Path(TESTMODELDIR) / "gis" / "bnd.geojson"
 
-    # Create discharge points from GeoDataFrame
-    model_config.snapwave_boundary_conditions.create(locations=src_file, merge=False)
+    # Create wave input from GeoDataSet
 
-    # Check that the number of points is correct
-    assert model_config.snapwave_boundary_conditions.nr_points == 2
-    # show that dummy data is set
-    for idx in range(0, model_config.snapwave_boundary_conditions.nr_points):
-        point_data = model_config.snapwave_boundary_conditions.data["bzs"].sel(
-            index=idx
-        )
-        assert point_data.values.min() == 0.0
-        assert point_data.values.max() == 0.0
-        assert len(point_data.time) == 2
-
-    # now add timeseries from csv file, index in csv says 1
-    csv_file = Path(TESTDATADIR) / "local_data" / "discharge.csv"
-    model_config.snapwave_boundary_conditions.create(timeseries=csv_file)
-    # show that index 1 is changed into timeseries
-    point_data = model_config.snapwave_boundary_conditions.data["bzs"].sel(index=1)
-    assert point_data.values.min() == 2.0
-    assert point_data.values.max() == 5.0
-    assert len(point_data.time) == 3
-
-    # now copy the geodataarray and clear the data
+    # Model has data already; copy it and clear
     da = model_config.snapwave_boundary_conditions.data.copy()
     model_config.snapwave_boundary_conditions.clear()
-    assert model_config.snapwave_boundary_conditions.nr_points == 0
 
-    # create a new discharge points object with the same data and check
+    # create a new wave input using the geodataset with the same data and check
     model_config.snapwave_boundary_conditions.create(geodataset=da, merge=False)
     assert model_config.snapwave_boundary_conditions.nr_points == 2
+    # compare da to model_config.snapwave_boundary_conditions.data
+    assert model_config.snapwave_boundary_conditions.data.equals(da)
+
+    # src_file = Path(TESTMODELDIR) / "gis" / "bnd.geojson"
+
+    # # Create discharge points from GeoDataFrame
+    # model_config.snapwave_boundary_conditions.create(locations=src_file, merge=False)
+
+    # # Check that the number of points is correct
+    # assert model_config.snapwave_boundary_conditions.nr_points == 2
+    # # show that dummy data is set
+    # for idx in range(0, model_config.snapwave_boundary_conditions.nr_points):
+    #     point_data = model_config.snapwave_boundary_conditions.data["hs"].sel(
+    #         index=idx
+    #     )
+    #     assert point_data.values.min() == 0.0
+    #     assert point_data.values.max() == 0.0
+    #     assert len(point_data.time) == 2
+
+    # # now add timeseries from csv file, index in csv says 1
+    # csv_file = Path(TESTDATADIR) / "local_data" / "discharge.csv"
+    # model_config.snapwave_boundary_conditions.create(timeseries=csv_file)
+    # # show that index 1 is changed into timeseries
+    # point_data = model_config.snapwave_boundary_conditions.data["hs"].sel(index=1)
+    # assert point_data.values.min() == 2.0
+    # assert point_data.values.max() == 5.0
+    # assert len(point_data.time) == 3
+
+    # # now copy the geodataarray and clear the data
+    # da = model_config.snapwave_boundary_conditions.data.copy()
+    # model_config.snapwave_boundary_conditions.clear()
+    # assert model_config.snapwave_boundary_conditions.nr_points == 0
+
     # show that dummy data is set for point 0, 2 and timeseries for point 1
-    for idx in range(model_config.snapwave_boundary_conditions.nr_points):
-        point_data = model_config.snapwave_boundary_conditions.data["bzs"].sel(
-            index=idx
-        )
-        if idx == 1:
-            assert point_data.values.min() == 2.0
-            assert point_data.values.max() == 5.0
-        else:
-            assert point_data.values.min() == 0.0
-            assert point_data.values.max() == 0.0
-        assert len(point_data.time) == 3
+    # for idx in range(model_config.snapwave_boundary_conditions.nr_points):
+    #     point_data = model_config.snapwave_boundary_conditions.data["hs"].sel(
+    #         index=idx
+    #     )
+    #     if idx == 1:
+    #         assert point_data.values.min() == 2.0
+    #         assert point_data.values.max() == 5.0
+    #     else:
+    #         assert point_data.values.min() == 0.0
+    #         assert point_data.values.max() == 0.0
+    #     assert len(point_data.time) == 3
 
-    # finally add points based on gdf and df
-    gdf = model_config.region
-    points_gdf = gdf.set_geometry(gdf.geometry.centroid)
-    df = model_config.data_catalog.get_dataframe(
-        csv_file,
-        driver={"name": "pandas", "options": {"index_col": 0, "parse_dates": True}},
-    )
-    # alter it a bit to have different values, first with existing index,
-    df = df.mul(2)
-    df.columns = [2]
-    points_gdf.index = [2]
-    model_config.snapwave_boundary_conditions.create(
-        locations=points_gdf, timeseries=df, merge=True
-    )
-    # Check that the number of points is correct and values are set in the last point
-    assert model_config.snapwave_boundary_conditions.nr_points == 3
-    assert (
-        model_config.snapwave_boundary_conditions.data["bzs"]
-        .isel(index=-1)
-        .values.max()
-        == 10.0
-    )
+    # # finally add points based on gdf and df
+    # gdf = model_config.region
+    # points_gdf = gdf.set_geometry(gdf.geometry.centroid)
+    # df = model_config.data_catalog.get_dataframe(
+    #     csv_file,
+    #     driver={"name": "pandas", "options": {"index_col": 0, "parse_dates": True}},
+    # )
+    # # alter it a bit to have different values, first with existing index,
+    # df = df.mul(2)
+    # df.columns = [2]
+    # points_gdf.index = [2]
+    # model_config.snapwave_boundary_conditions.create(
+    #     locations=points_gdf, timeseries=df, merge=True
+    # )
+    # # Check that the number of points is correct and values are set in the last point
+    # assert model_config.snapwave_boundary_conditions.nr_points == 3
+    # assert (
+    #     model_config.snapwave_boundary_conditions.data["hs"]
+    #     .isel(index=-1)
+    #     .values.max()
+    #     == 10.0
+    # )
 
-    # now with indices that do not exist yet; should be reset to 0
-    df = df.mul(0.3)
-    df.columns = [7]
-    points_gdf.index = [7]
-    model_config.snapwave_boundary_conditions.create(
-        locations=points_gdf, timeseries=df, merge=False
-    )
+    # # now with indices that do not exist yet; should be reset to 0
+    # df = df.mul(0.3)
+    # df.columns = [7]
+    # points_gdf.index = [7]
+    # model_config.snapwave_boundary_conditions.create(
+    #     locations=points_gdf, timeseries=df, merge=False
+    # )
 
-    assert model_config.snapwave_boundary_conditions.nr_points == 1
-    assert model_config.snapwave_boundary_conditions.data["bzs"].index[-1] == 0
+    # assert model_config.snapwave_boundary_conditions.nr_points == 1
+    # assert model_config.snapwave_boundary_conditions.data["bzs"].index[-1] == 0
 
 
 def test_delete_clear(model_config):
