@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 __all__ = ["plot_forcing", "plot_basemap"]
 
 geom_style = {
-    "rivers": dict(linestyle="-", linewidth=1.0, color="darkblue"),
+    "river_centerlines": dict(linestyle="-", linewidth=1.0, color="darkblue"),
     "rivers_inflow": dict(linestyle=":", linewidth=1.0, color="darkblue"),
     "rivers_outflow": dict(linestyle=":", linewidth=1.0, color="darkgreen"),
     "mask2": dict(linestyle="-", linewidth=1.5, color="r"),
@@ -23,6 +23,7 @@ geom_style = {
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=False),
     "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=False),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
+    "bdr": dict(marker="^", markersize=75, c="w", edgecolor="g", annotate=True),
     "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
     "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
     "crs": dict(linestyle="-", linewidth=1.5, color="deeppink", annotate=False),
@@ -289,12 +290,11 @@ def plot_basemap(
             kwargs0.update(norm=norm, cmap=cmap)
         elif variable == "mask" and "mask" in ds:
             cmap = colors.LinearSegmentedColormap.from_list(
-                "Set1", ["grey", "r", "m"], N=3
+                "Set1", ["grey", "r", "m", "g", "b"], N=5
             )
-            norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5], 3)
+            norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5, 4.5, 5.5], 5)
             kwargs0.update(norm=norm, cmap=cmap)
-            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3])
-
+            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3, 4, 5])
     if variable in ds:
         da = ds[variable]
         if "mask" in ds and np.any(ds["mask"] > 0):
