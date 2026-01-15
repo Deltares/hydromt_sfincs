@@ -273,7 +273,8 @@ class SfincsQuadtreeMask(ModelComponent):
                     self.data_catalog.get_geodataframe(include_polygon, bbox=bbox)
                     .explode(index_parts=False)
                     .reset_index(drop=True)
-                ).to_crs(self.model.crs)
+                    .to_crs(self.model.crs)
+                )
                 # check if input is polygon or multipolygon
                 if not gdf_include.geometry.geom_type.isin(["Polygon"]).all():
                     raise ValueError(
@@ -291,7 +292,8 @@ class SfincsQuadtreeMask(ModelComponent):
                     self.data_catalog.get_geodataframe(exclude_polygon, bbox=bbox)
                     .explode(index_parts=False)
                     .reset_index(drop=True)
-                ).to_crs(self.model.crs)
+                    .to_crs(self.model.crs)
+                )
                 # check if input is polygon or multipolygon
                 if not gdf_exclude.geometry.geom_type.isin(["Polygon"]).all():
                     raise ValueError(
@@ -499,7 +501,8 @@ class SfincsQuadtreeMask(ModelComponent):
                 gdf_include = (
                     self.data_catalog.get_geodataframe(include_polygon, bbox=bbox)
                     .explode(index_parts=False)
-                    .reset_index(drop=True).to_crs(self.model.crs)
+                    .reset_index(drop=True)
+                    .to_crs(self.model.crs)
                 )
             if include_polygon_buffer > 0:
                 if self.model.crs.is_geographic:
@@ -523,7 +526,8 @@ class SfincsQuadtreeMask(ModelComponent):
                 gdf_exclude = (
                     self.data_catalog.get_geodataframe(exclude_polygon, bbox=bbox)
                     .explode(index_parts=False)
-                    .reset_index(drop=True).to_crs(self.model.crs)
+                    .reset_index(drop=True)
+                    .to_crs(self.model.crs)
                 )
                 if not gdf_exclude.geometry.geom_type.isin(["Polygon"]).all():
                     raise ValueError(
