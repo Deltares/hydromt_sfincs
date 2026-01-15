@@ -189,6 +189,8 @@ class RegularGrid:
         da_mask0 = None
         if not reset_mask and da_mask is not None:
             # use current active mask
+            da_mask2 = da_mask == 2  # for keeping these values
+            da_mask3 = da_mask == 3  # for keeping these values
             da_mask0 = da_mask > 0
         elif gdf_mask is not None:
             # start with active mask within provided region
@@ -265,6 +267,10 @@ class RegularGrid:
         da_mask = da_mask.where(da_mask, 0).astype(np.uint8).rename("mask")
         da_mask.raster.set_nodata(0)
         da_mask.raster.set_crs(self.crs)
+
+        # keep 2 and 3 values if there
+        da_mask.values[np.logical_and(da_mask, da_mask2)] = 2
+        da_mask.values[np.logical_and(da_mask, da_mask3)] = 3
 
         return da_mask
 
