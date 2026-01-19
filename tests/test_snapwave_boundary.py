@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import pandas as pd
 from pathlib import Path
 from os.path import isfile, join
 
@@ -178,6 +179,7 @@ def test_create(model_config):
     # Model has data already; copy it and clear
     da = model_config.snapwave_boundary_conditions.data.copy()
     model_config.snapwave_boundary_conditions.clear()
+    assert model_config.snapwave_boundary_conditions.nr_points == 0
 
     # create a new wave input using the geodataset with the same data and check
     model_config.snapwave_boundary_conditions.create(geodataset=da, merge=False)
@@ -224,25 +226,34 @@ def test_create(model_config):
     assert point_data.values.max() == 2.42
     assert len(point_data.time) == 3
 
-    # # now copy the geodataarray and clear the data
-    da = model_config.snapwave_boundary_conditions.data.copy()
-    model_config.snapwave_boundary_conditions.clear()
-    assert model_config.snapwave_boundary_conditions.nr_points == 0
+    # finally add points based on gdf and df
+    gdf = model_config.region
+    points_gdf = gdf.set_geometry(gdf.geometry.centroid)
+    points_gdf.index = [2]
 
-    # # finally add points based on gdf and df
-    # gdf = model_config.region
-    # points_gdf = gdf.set_geometry(gdf.geometry.centroid)
-    # df = model_config.data_catalog.get_dataframe(
-    #     csv_file,
-    #     driver={"name": "pandas", "options": {"index_col": 0, "parse_dates": True}},
-    # )
-    # # alter it a bit to have different values, first with existing index,
-    # df = df.mul(2)
-    # df.columns = [2]
-    # points_gdf.index = [2]
-    # model_config.snapwave_boundary_conditions.create(
-    #     locations=points_gdf, timeseries=df, merge=True
-    # )
+    # make up a new df with timeseries data
+    # make datetime with 2010-02-05-00:00 to 2010-02-07-00:00 with 1-hour interval
+    times = np.arange(
+        np.datetime64("2010-02-05T00:00"),
+        np.datetime64("2010-02-07T01:00"),
+        np.timedelta64(1, "D"),
+    )
+
+    df_hs = np.array([1.0, 5.0, 10.0])
+    df_hs = pd.DataFrame(data=df_hs, index=times, columns=[2])
+
+    df_tp = np.array([10.0, 15.0, 11.0])
+    df_tp = pd.DataFrame(data=df_tp, index=times, columns=[2])
+
+    df_wd = np.array([180.0, 190.0, 200.0])
+    df_wd = pd.DataFrame(data=df_wd, index=times, columns=[2])
+
+    df_ds = np.array([30.0, 35.0, 25.0])
+    df_ds = pd.DataFrame(data=df_ds, index=times, columns=[2])
+
+    model_config.snapwave_boundary_conditions.create(
+        locations=points_gdf, timeseries=[df_hs, df_tp, df_wd, df_ds], merge=True
+    )
     # # Check that the number of points is correct and values are set in the last point
     # assert model_config.snapwave_boundary_conditions.nr_points == 3
     # assert (
