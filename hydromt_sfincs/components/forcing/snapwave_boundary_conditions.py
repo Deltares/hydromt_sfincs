@@ -483,7 +483,6 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
                         df_ts = self.data_catalog.get_dataframe(
                             timeseries[i],
                             time_range=(tstart, tstop),
-                            # variables=[varname],
                             source_kwargs={
                                 "driver": {
                                     "name": "pandas",
@@ -504,40 +503,6 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
                             df=df_ts,
                             varname=vars[i],
                         )
-
-                # df_ts = self.data_catalog.get_dataframe(
-                #     timeseries,
-                #     time_range=(tstart, tstop),
-                #     variables=vars,
-                #     source_kwargs={
-                #         "driver": {
-                #             "name": "pandas",
-                #             "options": {"index_col": 0, "parse_dates": True},
-                #         }
-                #     },
-                # )
-                # df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
-                # FIXME - TL: this does not work if column names are strings of hs,wd,tp,ds
-                # (get_dataframe even reorders columns compared to csv, and raises warning if names do not match)
-                # FIXME - TL: curous how works then with multiple locations?
-
-                # FIXME - needed to check whether all 4 variables are present? / 4 columns?
-                # required_vars = {"hs", "tp", "wd", "ds"}
-                # if not required_vars.issubset(set(df_ts.index)):
-                #     raise ValueError(
-                #         f"Timeseries data must contain all required variables: {required_vars}"
-                #     )
-                # set per variable
-                # for i, varname in enumerate(vars):
-                # self.set_timeseries(df=df_ts[varname], varname=varname)
-                # self.set_timeseries(df=df_ts, varname=varname) > ValueError: df column names must be unique integers > _validate_and_prepare_df
-
-                # get data from first column of dataframe
-
-                # self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
-
-                # get only first location from gdf_locs
-                # gdf_locs = gdf_locs.iloc[0].geometry
 
             # update config
             self.model.config.set("snapwave_bndfile", "snapwave.bnd")

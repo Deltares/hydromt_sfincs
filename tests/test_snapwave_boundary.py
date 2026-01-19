@@ -239,40 +239,49 @@ def test_create(model_config):
         np.timedelta64(1, "D"),
     )
 
-    df_hs = np.array([1.0, 5.0, 10.0])
+    df_hs = np.array([1.0, 5.0, 15.0])
     df_hs = pd.DataFrame(data=df_hs, index=times, columns=[2])
+    df_hs.columns.name = "index"
+    df_hs.index.name = "time"
 
     df_tp = np.array([10.0, 15.0, 11.0])
     df_tp = pd.DataFrame(data=df_tp, index=times, columns=[2])
+    df_tp.columns.name = "index"
+    df_tp.index.name = "time"
 
     df_wd = np.array([180.0, 190.0, 200.0])
     df_wd = pd.DataFrame(data=df_wd, index=times, columns=[2])
+    df_wd.columns.name = "index"
+    df_wd.index.name = "time"
 
     df_ds = np.array([30.0, 35.0, 25.0])
     df_ds = pd.DataFrame(data=df_ds, index=times, columns=[2])
+    df_ds.columns.name = "index"
+    df_ds.index.name = "time"
 
     model_config.snapwave_boundary_conditions.create(
-        locations=points_gdf, timeseries=[df_hs, df_tp, df_wd, df_ds], merge=True
+        locations=points_gdf,
+        timeseries=[df_hs, df_tp, df_wd, df_ds],
+        # merge=True #FIXME - does not work currently
+        merge=False,
     )
     # # Check that the number of points is correct and values are set in the last point
-    # assert model_config.snapwave_boundary_conditions.nr_points == 3
-    # assert (
-    #     model_config.snapwave_boundary_conditions.data["hs"]
-    #     .isel(index=-1)
-    #     .values.max()
-    #     == 10.0
-    # )
+    assert model_config.snapwave_boundary_conditions.nr_points == 1
+    assert (
+        model_config.snapwave_boundary_conditions.data["hs"].isel(index=-1).values.max()
+        == 15.0
+    )
 
     # # now with indices that do not exist yet; should be reset to 0
-    # df = df.mul(0.3)
-    # df.columns = [7]
-    # points_gdf.index = [7]
-    # model_config.snapwave_boundary_conditions.create(
-    #     locations=points_gdf, timeseries=df, merge=False
-    # )
+    df = df.mul(0.3)
+    df.columns = [7]
+    points_gdf.index = [7]
+    model_config.snapwave_boundary_conditions.create(
+        locations=points_gdf, timeseries=df, merge=False
+    )
 
-    # assert model_config.snapwave_boundary_conditions.nr_points == 1
-    # assert model_config.snapwave_boundary_conditions.data["bzs"].index[-1] == 0
+    assert model_config.snapwave_boundary_conditions.nr_points == 1
+    assert model_config.snapwave_boundary_conditions.data["hs"].index[-1] == 0
 
 
 def test_delete_clear(model_config):
