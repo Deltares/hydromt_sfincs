@@ -46,7 +46,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
     # delete
     # clear
 
-    _default_varname = "bhs"  # FIXME - TL: needed?
+    _default_varname = ["hs", "tp", "wd", "ds"]  # used in set_locations among others
 
     def __init__(self, model: "SfincsModel"):
         super().__init__(model)
@@ -150,13 +150,13 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             # File name not defined
             return
 
-        # Check if bzs file exists
+        # Check if timeseries file exists
         if not abs_file_path.exists():
             raise FileNotFoundError(
                 f"Boundary condition timeseries file not found: {abs_file_path}"
             )
 
-        # Read bzs file (this creates one DataFrame with all timeseries)
+        # Read timeseries file (this creates one DataFrame with all timeseries)
         df = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
         df.index.name = "time"
         df.columns.name = "index"
@@ -233,7 +233,6 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         if format == "asc":
             self.write_boundary_points()
-            # self.write_boundary_conditions_timeseries()
             # Write timeseries per file
             filenames = [
                 "snapwave_bhsfile",
@@ -282,7 +281,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         # Check that write mode is on
         self.root._assert_write_mode()
 
-        # Get absolute file name and set it in config if bzsfile is not None
+        # Get absolute file name and set it in config if timeseries file is not None
         abs_file_path = self.model.config.get_set_file_variable(
             varname, value=filename, default="snapwave.b" + var
         )
@@ -333,8 +332,6 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         # rename variables to match sfincs naming
         ds = ds.rename({"index": "stations"}) if "index" in ds.dims else ds
-        # ds = ds.rename({"bzs": "zs"}) if "bzs" in ds.data_vars else ds
-        # ds = ds.rename({"bzi": "zi"}) if "bzi" in ds.data_vars else ds
 
         # Write netcdf file safely (might get locked)
         final_path = utils.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
@@ -430,73 +427,84 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             self.model.config.set("netsnapwavefile", "snapwave.nc")
 
         # read wave data from separate timeseries and locations input
-        elif timeseries is not None:
-            df_ts = self.data_catalog.get_dataframe(
-                timeseries,
-                time_range=(tstart, tstop),
-                variables=["hs", "tp", "wd", "ds"],
-                source_kwargs={
-                    "driver": {
-                        "name": "pandas",
-                        "options": {"index_col": 0, "parse_dates": True},
-                    }
-                },
-            )
-            df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
-            # FIXME - needed to check whether all 4 variables are present?
-            # required_vars = {"hs", "tp", "wd", "ds"}
-            # if not required_vars.issubset(set(df_ts.index)):
-            #     raise ValueError(
-            #         f"Timeseries data must contain all required variables: {required_vars}"
-            #     )
+        else:
+            # first, read locations data
+            used_existing = False
 
-            vars = ["hs", "tp", "wd", "ds"]
-            for i, varname in enumerate(vars):
-                self.set_timeseries(self, df=df, varname=varname)
+            # read location data from locations input:
+            if gdf_locs is None and locations is not None:
+                gdf_locs = self.data_catalog.get_geodataframe(
+                    locations,
+                    geom=region,
+                    buffer=buffer,
+                ).to_crs(self.model.crs)
+                if "index" in gdf_locs.columns:
+                    gdf_locs = gdf_locs.set_index("index")
+                # filter df_ts timeseries based on gdf_locs index
+                # this allows to use a subset of the locations in the timeseries
+                # FIXME - TL: do we still want this?
+                if df_ts is not None and np.isin(gdf_locs.index, df_ts.columns).all():
+                    df_ts = df_ts.reindex(gdf_locs.index, axis=1, fill_value=0)
 
-        # used_existing = False
-        # # read location data (if not already read from geodataset)
-        # if gdf_locs is None and locations is not None:
-        #     gdf_locs = self.data_catalog.get_geodataframe(
-        #         locations,
-        #         geom=region,
-        #         buffer=buffer,
-        #     ).to_crs(self.model.crs)
-        #     if "index" in gdf_locs.columns:
-        #         gdf_locs = gdf_locs.set_index("index")
-        #     # filter df_ts timeseries based on gdf_locs index
-        #     # this allows to use a subset of the locations in the timeseries
-        #     if df_ts is not None and np.isin(gdf_locs.index, df_ts.columns).all():
-        #         df_ts = df_ts.reindex(gdf_locs.index, axis=1, fill_value=0)
-        # elif gdf_locs is None and "hs" in self.data:
-        #     # no locations provided, using existing wave boundary points from data
-        #     used_existing = True
-        #     gdf_locs = self.data[
-        #         "hs"
-        #     ].vector.to_gdf()  # NOTE this is now done in set_timeseries ...
-        # elif gdf_locs is None:
-        #     raise ValueError("No wave boundary (bnd) points provided.")
-        # # It is still possible that all points are outside the region+buffer, this error should provide clear feedback
-        # if gdf_locs.is_empty.all():
-        #     raise ValueError(
-        #         "All wave boundary points provided are outside the active model domain plus specified buffer. "
-        #         "Check the provided locations or increase the value of the buffer argument."
-        #     )
+            # no locations provided, using existing wave boundary points from data:
+            # (e.g. added using get_boundary_points_from_mask)
+            elif gdf_locs is None and "hs" in self.data:
+                used_existing = True
+                gdf_locs = self.data["hs"].vector.to_gdf()
 
-        # # set/ update forcing
-        # if used_existing:
-        #     gdf_locs = None  # only update timeseries for existing points
-        # self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
-        # # update config
-        # if geodataset is not None:
-        #     # when reading from geodataset, keep the format to netcdf
-        #     self.model.config.set("netsnapwavefile", "snapwave.nc")
-        # else:
-        #     self.model.config.set("snapwave_bndfile", "snapwave.bnd")
-        #     self.model.config.set("snapwave_bhsfile", "snapwave.bhs")
-        #     self.model.config.set("snapwave_btpfile", "snapwave.btp")
-        #     self.model.config.set("snapwave_bdsfile", "snapwave.bds")
-        #     self.model.config.set("snapwave_bwdfile", "snapwave.bwd")
+            elif gdf_locs is None:
+                raise ValueError("No wave boundary (bnd) points provided.")
+
+            # It is still possible that all points are outside the region+buffer, this error should provide clear feedback
+            if gdf_locs.is_empty.all():
+                raise ValueError(
+                    "All wave boundary points provided are outside the active model domain plus specified buffer. "
+                    "Check the provided locations or increase the value of the buffer argument."
+                )
+
+            # set/ update forcing
+            if used_existing is False:
+                # set the new locations
+                self.set_locations(
+                    gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates
+                )
+                # old: self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
+
+            # secondly, read time-series data
+            if timeseries is not None:
+                vars = ["hs", "tp", "wd", "ds"]
+
+                df_ts = self.data_catalog.get_dataframe(
+                    timeseries,
+                    time_range=(tstart, tstop),
+                    variables=vars,
+                    source_kwargs={
+                        "driver": {
+                            "name": "pandas",
+                            "options": {"index_col": 0, "parse_dates": True},
+                        }
+                    },
+                )
+                df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
+
+                # FIXME - needed to check whether all 4 variables are present? / 4 columns?
+                # required_vars = {"hs", "tp", "wd", "ds"}
+                # if not required_vars.issubset(set(df_ts.index)):
+                #     raise ValueError(
+                #         f"Timeseries data must contain all required variables: {required_vars}"
+                #     )
+                # set per variable
+                for i, varname in enumerate(vars):
+                    self.set_timeseries(self, df=df_ts[i], varname=varname)
+
+            # self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
+
+            # update config
+            self.model.config.set("snapwave_bndfile", "snapwave.bnd")
+            self.model.config.set("snapwave_bhsfile", "snapwave.bhs")
+            self.model.config.set("snapwave_btpfile", "snapwave.btp")
+            self.model.config.set("snapwave_bdsfile", "snapwave.bds")
+            self.model.config.set("snapwave_bwdfile", "snapwave.bwd")
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # def add_point( #FIXME - do we want to make a copy of add_point in boundary_conditions.py that support multiple vars?

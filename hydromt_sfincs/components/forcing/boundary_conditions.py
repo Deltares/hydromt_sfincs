@@ -26,7 +26,9 @@ class SfincsBoundaryBase(ModelComponent):
     for discharge).
     """
 
-    _default_varname: str = None  # must be set in subclass ("dis" or "bzs")
+    _default_varname: Union[
+        str, List[str]
+    ] = None  # must be set in subclass ("dis" or "bzs" or ["hs","tp","wd","ds"])
 
     def __init__(self, model: "SfincsModel"):
         """
@@ -357,7 +359,10 @@ class SfincsBoundaryBase(ModelComponent):
         return gdf
 
     def _finalize_set(
-        self, df: pd.DataFrame, gdf: gpd.GeoDataFrame, varname: str = None
+        self,
+        df: pd.DataFrame,
+        gdf: gpd.GeoDataFrame,
+        varname: Union[str, List[int]] = None,
     ):
         """
         Finalize updating internal dataset from (df, gdf) by creating a GeoDataArray
@@ -370,8 +375,21 @@ class SfincsBoundaryBase(ModelComponent):
         df.columns.name = "index"
         df.index.name = "time"
 
-        da = GeoDataArray.from_gdf(gdf.to_crs(self.model.crs), data=df, name=varname)
-        ds = da.to_dataset()
+        # check is varname is a list
+        if isinstance(varname, list):
+            da_list = []
+            for i, vname in enumerate(varname):
+                da = GeoDataArray.from_gdf(
+                    gdf.to_crs(self.model.crs), data=df, name=vname
+                )
+                da_list.append(da)
+            ds = xr.merge(da_list[:])
+        else:
+            da = GeoDataArray.from_gdf(
+                gdf.to_crs(self.model.crs), data=df, name=varname
+            )
+            ds = da.to_dataset()
+
         self._data = ds.transpose("time", "index")
 
     def add_point(

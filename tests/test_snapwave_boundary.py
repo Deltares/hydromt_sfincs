@@ -9,16 +9,18 @@ from .conftest import TESTDATADIR, TESTMODELDIR
 
 
 def test_snapwave_boundary_io(model_config, tmp_dir):
+    model_config = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
+
     # read snapwave boundary from files
-    model_config.grid.read()
+    model_config.quadtree_grid.read()
     model_config.snapwave_boundary_conditions.read()
     assert model_config.snapwave_boundary_conditions.data is not None
     assert len(model_config.snapwave_boundary_conditions.data.index) == 2
 
     # write snapwave to file
     model_config.root.set(tmp_dir, mode="w+")
-    model_config.snapwave_boundary_conditions.write()
-    model_config.config.write()
+    model_config.write()
+
     assert isfile(tmp_dir / "snapwave.bnd")
     assert isfile(tmp_dir / "snapwave.bhs")
     assert isfile(tmp_dir / "snapwave.btp")
@@ -169,6 +171,8 @@ def test_snapwave_boundary_io(model_config, tmp_dir):
 def test_create(model_config):
     """Test creating discharge points from a GeoDataFrame and csv file."""
 
+    model_config = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
+    model_config.read()
     # Create wave input from GeoDataSet
 
     # Model has data already; copy it and clear
@@ -184,21 +188,26 @@ def test_create(model_config):
     # FIXME - should have a check that if not all variables are provided into the
     # geodataset or timeseries, an error is raised
 
-    # src_file = Path(TESTMODELDIR) / "gis" / "bnd.geojson"
+    # Model has data already; copy it and clear
+    model_config.snapwave_boundary_conditions.clear()
+    src_file = Path(TESTMODELDIR) / "gis" / "bnd.geojson"
 
-    # # Create discharge points from GeoDataFrame
-    # model_config.snapwave_boundary_conditions.create(locations=src_file, merge=False)
+    # Add wave points from geojson file
+    model_config.snapwave_boundary_conditions.create(locations=src_file, merge=False)
 
-    # # Check that the number of points is correct
-    # assert model_config.snapwave_boundary_conditions.nr_points == 2
-    # # show that dummy data is set
-    # for idx in range(0, model_config.snapwave_boundary_conditions.nr_points):
-    #     point_data = model_config.snapwave_boundary_conditions.data["hs"].sel(
-    #         index=idx
-    #     )
-    #     assert point_data.values.min() == 0.0
-    #     assert point_data.values.max() == 0.0
-    #     assert len(point_data.time) == 2
+    # Check that the number of points is correct
+    assert model_config.snapwave_boundary_conditions.nr_points == 2
+
+    # show that dummy data is set to 0
+    for idx in range(0, model_config.snapwave_boundary_conditions.nr_points):
+        # also for other variables in a loop
+        for var in ["hs", "tp", "wd", "ds"]:
+            point_data = model_config.snapwave_boundary_conditions.data[var].sel(
+                index=idx
+            )
+            assert point_data.values.min() == 0.0
+            assert point_data.values.max() == 0.0
+            assert len(point_data.time) == 2
 
     # # now add timeseries from csv file, index in csv says 1
     # csv_file = Path(TESTDATADIR) / "local_data" / "discharge.csv"
@@ -263,7 +272,10 @@ def test_create(model_config):
 
 
 def test_delete_clear(model_config):
-    """Test deleting a discharge point from the model."""
+    """Test deleting a wave point from the model."""
+    model_config = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
+    model_config.read()
+
     nr_points = model_config.snapwave_boundary_conditions.nr_points
 
     # Delete the 2nd point
