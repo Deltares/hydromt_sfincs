@@ -363,7 +363,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
     def create(
         self,
         geodataset: Union[str, Path, xr.Dataset] = None,
-        timeseries: Union[str, Path, pd.DataFrame] = None,
+        timeseries: List[Union[str, Path, pd.DataFrame]] = None,
         locations: Union[str, Path, gpd.GeoDataFrame] = None,
         buffer: float = 5e3,
         merge: bool = True,
@@ -375,21 +375,21 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         or a tabular `timeseries` dataframe. At least one of these must be provided.
 
         The tabular timeseries data is combined with `locations` if provided,
-        or with existing 'bnd' locations if previously set.
+        or with existing 'snapwave_bnd' locations if previously set.
 
         Adds model forcing layers:
 
         * **hs** forcing: significant wave height time series [m]
         * **tp** forcing: peak wave period time series [s]
-        * **wd** forcing: wave direction time series [°]
+        * **wd** forcing: wave direction time series [° wrt North, in clockwise direction]
         * **ds** forcing: wave directional spreading time series [°]
 
         Parameters
         ----------
         geodataset: str, Path, xr.Dataset, optional
             Path, data source name, or xarray data object for geospatial point timeseries.
-        timeseries: str, Path, pd.DataFrame, optional
-            Path, data source name, or pandas data object for tabular timeseries.
+        timeseries: List of str, Path, pd.DataFrame, optional
+            Path, data source name, or pandas data object for tabular timeseries for all 4 variables.
         locations: str, Path, gpd.GeoDataFrame, optional
             Path, data source name, or geopandas object for snapwave_bnd point locations.
             It should contain a 'index' column matching the column names in `timeseries`.
@@ -407,6 +407,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         """
         gdf_locs, df_ts = None, None
         tstart, tstop = self.model.get_model_time()  # model time
+        vars = ["hs", "tp", "wd", "ds"]
         # buffer around msk==2 values
         if not self.model.grid_type == "quadtree":
             raise ValueError("SnapWave is not supported for regular grid models!")
@@ -420,7 +421,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
                 geodataset,
                 geom=region,
                 buffer=buffer,
-                variables=["hs", "tp", "wd", "ds"],
+                variables=vars,
                 time_range=(tstart, tstop),
             )
             self.set(geodataset=da, merge=False, drop_duplicates=False)
@@ -472,20 +473,53 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
             # secondly, read time-series data
             if timeseries is not None:
-                vars = ["hs", "tp", "wd", "ds"]
+                # loop over list of timeseries inputs for each variable
+                if len(timeseries) != 4:
+                    raise ValueError(
+                        "Timeseries input must be a list of 4 items, for hs, tp, wd, and ds."
+                    )
+                else:
+                    for i, varname in enumerate(timeseries):
+                        df_ts = self.data_catalog.get_dataframe(
+                            timeseries[i],
+                            time_range=(tstart, tstop),
+                            # variables=[varname],
+                            source_kwargs={
+                                "driver": {
+                                    "name": "pandas",
+                                    "options": {
+                                        "index_col": 0,
+                                        "parse_dates": True,
+                                    },
+                                }
+                            },
+                        )
+                        # df_ts.columns.name = "index"
+                        df_ts.columns = df_ts.columns.map(
+                            int
+                        )  # parse column names to integers
 
-                df_ts = self.data_catalog.get_dataframe(
-                    timeseries,
-                    time_range=(tstart, tstop),
-                    variables=vars,
-                    source_kwargs={
-                        "driver": {
-                            "name": "pandas",
-                            "options": {"index_col": 0, "parse_dates": True},
-                        }
-                    },
-                )
-                df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
+                        # set per variable
+                        self.set_timeseries(
+                            df=df_ts,
+                            varname=vars[i],
+                        )
+
+                # df_ts = self.data_catalog.get_dataframe(
+                #     timeseries,
+                #     time_range=(tstart, tstop),
+                #     variables=vars,
+                #     source_kwargs={
+                #         "driver": {
+                #             "name": "pandas",
+                #             "options": {"index_col": 0, "parse_dates": True},
+                #         }
+                #     },
+                # )
+                # df_ts.columns = df_ts.columns.map(int)  # parse column names to integers
+                # FIXME - TL: this does not work if column names are strings of hs,wd,tp,ds
+                # (get_dataframe even reorders columns compared to csv, and raises warning if names do not match)
+                # FIXME - TL: curous how works then with multiple locations?
 
                 # FIXME - needed to check whether all 4 variables are present? / 4 columns?
                 # required_vars = {"hs", "tp", "wd", "ds"}
@@ -494,10 +528,16 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
                 #         f"Timeseries data must contain all required variables: {required_vars}"
                 #     )
                 # set per variable
-                for i, varname in enumerate(vars):
-                    self.set_timeseries(self, df=df_ts[i], varname=varname)
+                # for i, varname in enumerate(vars):
+                # self.set_timeseries(df=df_ts[varname], varname=varname)
+                # self.set_timeseries(df=df_ts, varname=varname) > ValueError: df column names must be unique integers > _validate_and_prepare_df
 
-            # self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
+                # get data from first column of dataframe
+
+                # self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
+
+                # get only first location from gdf_locs
+                # gdf_locs = gdf_locs.iloc[0].geometry
 
             # update config
             self.model.config.set("snapwave_bndfile", "snapwave.bnd")
@@ -506,6 +546,10 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             self.model.config.set("snapwave_bdsfile", "snapwave.bds")
             self.model.config.set("snapwave_bwdfile", "snapwave.bwd")
 
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # def add_point_with_timeseries()
+    #     """Add a single point with timeseries to the boundary conditions data.
+    #
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # def add_point( #FIXME - do we want to make a copy of add_point in boundary_conditions.py that support multiple vars?
     #     self,
