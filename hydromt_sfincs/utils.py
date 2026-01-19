@@ -696,9 +696,10 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") 
     # reorder columns based on col_names
     gdf = gdf[col_names]
 
-    # change the format of the coordinates according to fmt
+    # change the format/precision of the coordinates according to fmt
     for col in ["xsnk", "ysnk", "xsrc", "ysrc"]:
-        gdf[col] = gdf[col].apply(lambda x: fmt % x)
+        precision = fmt.split(".")[-1].replace("%", "").replace("f", "")
+        gdf[col] = gdf[col].round(int(precision))
 
     # write to file
     gdf.to_csv(fn, sep=" ", index=False, header=False)
