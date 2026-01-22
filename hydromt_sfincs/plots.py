@@ -279,6 +279,7 @@ def plot_basemap(
         if variable in depth_vars and variable in ds:
             vmin, vmax = ds[variable].raster.mask_nodata().quantile([0.0, 0.98]).values
             vmin, vmax = int(kwargs.pop("vmin", vmin)), int(kwargs.pop("vmax", vmax))
+            vmax = max(vmax, 1)
             c_dem = plt.cm.terrain(np.linspace(0.25, 1, vmax))
             if vmin < 0:
                 c_bat = plt.cm.terrain(np.linspace(0, 0.17, max(1, abs(vmin))))
