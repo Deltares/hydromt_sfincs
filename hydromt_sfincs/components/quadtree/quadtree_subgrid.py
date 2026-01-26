@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import xarray as xr
 
@@ -107,6 +107,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         self,
         elevation_list,
         roughness_list: list = [],
+        river_list: List[dict] = [],
         manning_land=0.04,
         manning_water=0.020,
         manning_level=1.0,
@@ -134,6 +135,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         Args:
             elevation_list (list): List of bathymetry data sets
             roughness_list (list): List of roughness data sets
+            river_list (list): List of river data sets
             manning_land (float, optional): Manning's n value for land. Defaults to 0.04.
             manning_water (float, optional): Manning's n value for water. Defaults to 0.020.
             manning_level (float, optional): Manning's n value for level. Defaults to 1.0.
@@ -178,9 +180,8 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
                 # NOTE conversion from landuse/landcover to manning happens here
                 roughness_list = self.model._parse_roughness_list(roughness_list)
 
-            # if len(river+sets) > 0:
-            #     rivers_sets = self.model._parse_river_list(river_list)
-            # folder where high-resolution topobathy and manning geotiffs are stored
+            if len(river_list) > 0:
+                river_list = self.model._parse_river_list(river_list)
 
             if write_dep_tif or write_man_tif:
                 highres_dir = self.model.root.path / "subgrid"
@@ -194,6 +195,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             grid=self.model.quadtree_grid.data,
             elevation_list=elevation_list,
             roughness_list=roughness_list,
+            river_list=river_list,
             manning_land=manning_land,
             manning_water=manning_water,
             manning_level=manning_level,
