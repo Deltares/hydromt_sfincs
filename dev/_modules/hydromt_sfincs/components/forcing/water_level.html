@@ -58,7 +58,7 @@
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.0.0.dev" />
+  <meta name="docsearch:version" content="2.0.0-dev" />
   </head>
   
   
@@ -515,7 +515,9 @@
 
         <span class="c1"># Check if bnd file exists</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Discharge points file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Water level boundary points file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># Read bnd file</span>
         <span class="c1"># TODO check if we want read_xyn? Before we used read_xy, so without name column</span>
@@ -608,6 +610,12 @@
 
         <span class="c1"># Read netcdf file</span>
         <span class="n">ds</span> <span class="o">=</span> <span class="n">GeoDataset</span><span class="o">.</span><span class="n">from_netcdf</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Rename variables to match internal naming</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;stations&quot;</span><span class="p">:</span> <span class="s2">&quot;index&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;stations&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span> <span class="k">else</span> <span class="n">ds</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;zs&quot;</span><span class="p">:</span> <span class="s2">&quot;bzs&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;zs&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">else</span> <span class="n">ds</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;zi&quot;</span><span class="p">:</span> <span class="s2">&quot;bzi&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;zi&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">else</span> <span class="n">ds</span>
+
         <span class="k">return</span> <span class="n">ds</span>
 
 <div class="viewcode-block" id="SfincsWaterLevel.write">
@@ -763,8 +771,18 @@
 
         <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
 
+        <span class="n">tref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tref&quot;</span><span class="p">)</span>
+        <span class="n">tref_str</span> <span class="o">=</span> <span class="n">tref</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
+
+        <span class="n">encoding</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;minutes since </span><span class="si">{</span><span class="n">tref_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;float64&quot;</span><span class="p">})</span>
+
+        <span class="c1"># rename variables to match sfincs naming</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="s2">&quot;stations&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;index&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span> <span class="k">else</span> <span class="n">ds</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;bzs&quot;</span><span class="p">:</span> <span class="s2">&quot;zs&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;bzs&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">else</span> <span class="n">ds</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;bzi&quot;</span><span class="p">:</span> <span class="s2">&quot;zi&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;bzi&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">else</span> <span class="n">ds</span>
+
         <span class="c1"># Write netcdf file safely (might get locked)</span>
-        <span class="n">final_path</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">write_netcdf_safely</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">abs_file_path</span><span class="p">)</span>
+        <span class="n">final_path</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">write_netcdf_safely</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">abs_file_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">final_path</span> <span class="o">!=</span> <span class="n">abs_file_path</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;netbndbzsbzifile&quot;</span><span class="p">,</span> <span class="n">final_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
@@ -1263,7 +1281,7 @@
 
     <span class="c1"># Ensure we have a Dataset</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
-        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">to_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;bzs&quot;</span><span class="p">)</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">to_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;zs&quot;</span><span class="p">)</span>
 
     <span class="c1"># Collect all constituent names across all points</span>
     <span class="n">all_constituents</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">section_data</span><span class="p">]))</span>

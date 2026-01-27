@@ -47,6 +47,8 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_examples/2_update_forcing';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
@@ -62,7 +64,7 @@
     <link rel="prev" title="Updating a SFINCS model" href="../user_guide/3_update_model/model_update.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.0.0.dev" />
+  <meta name="docsearch:version" content="2.0.0-dev" />
   </head>
   
   
@@ -490,14 +492,10 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
-
-<span class="c1"># Initialize logging, the lower the log level number, the more verbose (more info) the output</span>
-<span class="c1"># NOTSET=0-9, DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50</span>
-
-<span class="n">log</span><span class="o">.</span><span class="n">initialize_logging</span><span class="p">()</span>
-<span class="n">log</span><span class="o">.</span><span class="n">set_log_level</span><span class="p">(</span><span class="n">log_level</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -516,10 +514,21 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize SfincsModel Python class with the artifact data catalog which contains publically available data for North Italy</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_root</span> <span class="o">=</span> <span class="s2">&quot;tmp_sfincs_compound&quot;</span>
+
+<span class="c1"># Initialize logging, the lower the log level number, the more verbose (more info) the output</span>
+<span class="c1"># NOTSET=0-9, DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50</span>
+<span class="n">log</span><span class="o">.</span><span class="n">initialize_logging</span><span class="p">()</span>
+<span class="n">log</span><span class="o">.</span><span class="n">set_log_level</span><span class="p">(</span><span class="n">log_level</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+<span class="c1"># Add file handler to log to a file</span>
+<span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;hydromt_sfincs.log&quot;</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">_add_filehandler</span><span class="p">(</span><span class="n">log_file</span><span class="p">)</span>
+
+<span class="c1"># Initialize SfincsModel Python class with the artifact data catalog which contains publically available data for North Italy</span>
 <span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span>
     <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;artifact_data&quot;</span><span class="p">],</span>  <span class="c1"># specify which data libraries to use</span>
-    <span class="n">root</span><span class="o">=</span><span class="s2">&quot;tmp_sfincs_compound&quot;</span><span class="p">,</span>  <span class="c1"># specify the root directory for the model</span>
+    <span class="n">root</span><span class="o">=</span><span class="n">model_root</span><span class="p">,</span>  <span class="c1"># specify the root directory for the model</span>
     <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r+&quot;</span><span class="p">,</span>  <span class="c1"># specify the mode for opening the model (r=read only, r+=append, w=write, w+=overwrite</span>
     <span class="n">write_gis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># specify whether to write GIS data</span>
 <span class="p">)</span>
@@ -531,10 +540,10 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 10:18:17,322 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2025-11-25 10:18:17,323 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2025-11-25 10:18:17,996 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0.dev0).
-2025-11-25 10:18:17,996 - hydromt.model.model - model - WARNING - No region component found in components.
+2026-01-27 08:29:34,632 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-01-27 08:29:34,633 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-01-27 08:29:35,306 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0.dev0).
+2026-01-27 08:29:35,306 - hydromt.model.model - model - WARNING - No region component found in components.
 </pre></div></div>
 </div>
 </section>
@@ -613,7 +622,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 10:18:20,293 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading era5_hourly RasterDataset data from /home/runner/.hydromt/artifact_data/latest/era5_hourly.nc
+2026-01-27 08:29:37,687 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading era5_hourly RasterDataset data from /home/runner/.hydromt/artifact_data/latest/era5_hourly.nc
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -658,8 +667,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 10:18:21,046 - hydromt.hydromt_sfincs.components.grid.infiltration - infiltration - INFO - Creating curve number values for SFINCS with antecedent moisture condition: avg.
-2025-11-25 10:18:21,051 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gcn250 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gcn250/{variable}.tif
+2026-01-27 08:29:38,537 - hydromt.hydromt_sfincs.components.grid.infiltration - infiltration - INFO - Creating curve number values for SFINCS with antecedent moisture condition: avg.
+2026-01-27 08:29:38,543 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gcn250 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gcn250/{variable}.tif
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -685,7 +694,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2025-11-25 10:18:23,001 - hydromt.hydromt_sfincs.utils - utils - INFO - No changes detected; skipping write to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_compound/sfincs_netbndbzsbzifile.nc
+2026-01-27 08:29:40,659 - hydromt.hydromt_sfincs.utils - utils - INFO - No changes detected; skipping write to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_compound/sfincs_netbndbzsbzifile.nc
 </pre></div></div>
 </div>
 <p>Now your model has new boundary conditions, you can progress (or run again) to the notebook: <a class="reference internal" href="4_run_model.html"><span class="doc">Run SFINCS model</span></a>. In case you want to add some geometries and structures to your model first, continue with notebook <a class="reference internal" href="3_update_geometries.html"><span class="doc">Update Geometries</span></a></p>
