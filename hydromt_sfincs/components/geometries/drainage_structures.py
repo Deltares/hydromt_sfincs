@@ -235,3 +235,40 @@ class SfincsDrainageStructures(ModelComponent):
         self.set(gdf_structures, merge=merge)
         # set config
         self.model.config.set("drnfile", "sfincs.drn")
+
+    def delete(
+        self,
+        index: Union[list, int],
+    ):
+        """Remove one or more drainage structures.
+
+        Parameters
+        ----------
+        index: list, int
+            Specify drainage structures to be dropped from GeoDataFrame.
+            If int, drop a single drainage structure based on index.
+            If list, drop multiple drainage structures based on index.
+        """
+        # Turn int or str into list
+        if isinstance(index, int):
+            index = [index]
+
+        # Check that any integer in list is not larger than the number of lines
+        if max(index) > (len(self.data) - 1) or min(index) < 0:
+            raise ValueError("One of the indices exceeds length of index range!")
+
+        # Drop lines from GeoDataFrame
+        self._data = self.data.drop(index).reset_index(drop=True)
+        logger.info("Dropping line(s) from drainage structures")
+
+        # Check if any cross sections are left
+        if self.data.empty:
+            logger.warning("All drainage structures have been removed!")
+            # Set crsfile to None
+            self.model.config.set("drnfile", None)
+
+    def clear(self):
+        """Clean GeoDataFrame with drainage structures."""
+        self._data = gpd.GeoDataFrame()
+        # Set drnfile to None in config
+        self.model.config.set("drnfile", None)

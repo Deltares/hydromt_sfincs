@@ -910,6 +910,7 @@ class QuadtreeGrid:
         self.data["level"] = xu.UgridDataArray(
             xr.DataArray(data=self.level + 1, dims=[ugrid2d.face_dimension]), ugrid2d
         )
+        # FIXME initializing z here as zeros sounds dangerous
         self.data["z"] = xu.UgridDataArray(
             xr.DataArray(data=self.z, dims=[ugrid2d.face_dimension]), ugrid2d
         )
