@@ -408,8 +408,6 @@ class SfincsGrid(GridComponent):
             coordinate reference system of the grid
             if "utm" (default) the best UTM zone is selected
             else a pyproj crs string or epsg code (int) can be provided
-        grid_type : str, optional
-            grid type, "regular" (default) or "quadtree"
         rotated : bool, optional
             if True, a minimum rotated rectangular grid is fitted around the region, by default False
         hydrography_fn : str
