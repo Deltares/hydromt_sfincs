@@ -335,21 +335,17 @@ def plot_basemap(
             grid_kwargs0 = {"color": "black", "linewidth": 0.7}
             grid_kwargs0.update(**grid_kwargs)
             if ds.raster.rotation != 0 and "xc" in ds.coords and "yc" in ds.coords:
-                ax.plot(
-                    ds["xc"].values,
-                    ds["yc"].values,
-                    zorder=1,
-                    transform=crs,
-                    **grid_kwargs0,
-                )
+                x, y = ds["xc"].values, ds["yc"].values
             else:
-                ax.plot(
-                    ds["x"].values,
-                    ds["y"].values,
-                    zorder=1,
-                    transform=crs,
-                    **grid_kwargs0,
-                )
+                x, y = np.meshgrid(ds["x"].values, ds["y"].values)
+
+            ax.plot(
+                x,
+                y,
+                zorder=1,
+                transform=crs,
+                **grid_kwargs0,
+            )
         elif isinstance(ds, xu.UgridDataset):
             grid_kwargs0 = {"color": "black", "linewidth": 0.3}
             grid_kwargs0.update(**grid_kwargs)

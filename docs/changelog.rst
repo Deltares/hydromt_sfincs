@@ -8,6 +8,21 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+v2.0.0-rc2 (unreleased)
+=============================
+**This release contains minor bugfixes and improvements to the v2.0.0-rc1 release.**
+
+Added
+-----
+- Added script to easily run SFINCS models from Python using local executable or docker (#312)
+- Added the option to visualize the grid in the plot_basemap method (#312)
+
+Fixed
+-----
+- Made variables in netcdf forcing files compliant with conventions of SFINCS kernel (#316)
+- Fixed connectivity of quadtree mask necessary for "staircase" boundaries of SnapWave (#312)
+
+
 v2.0.0-rc1 (25-11-2025)
 =============================
 **This release contains breaking changes in the SfincsModel API. However, models that were built with v1.x.x can still be read/write/updates.**
