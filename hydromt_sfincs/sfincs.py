@@ -741,10 +741,8 @@ class SfincsModel(Model):
             # parse rivers
             if "centerlines" in dataset:
                 rivers = dataset.get("centerlines")
-                # FIXME: how to use model.rivers.data?
-                # if isinstance(rivers, str) and rivers in self.geoms:
-                #     gdf_riv = self.geoms[rivers].copy()
-                # else:
+                # NOTE if you want to use model.rivers.data as centerlines,
+                # you need to provide this in the river_list
                 gdf_riv = self.data_catalog.get_geodataframe(
                     rivers,
                     bbox=self.bbox,
