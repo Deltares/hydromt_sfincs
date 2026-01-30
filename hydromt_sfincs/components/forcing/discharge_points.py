@@ -108,7 +108,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
                 f"Discharge timeseries file not found: {abs_file_path}"
             )
 
-        # Read bzs file (this creates one DataFrame with all timeseries)
+        # Read dis file (this creates one DataFrame with all timeseries)
         df = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
         df.index.name = "time"
         df.columns.name = "index"
@@ -130,7 +130,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             # File name not defined
             return
 
-        # Check if netbndbzsbzifile exists
+        # Check if netsrcdisfile exists
         if not abs_file_path.exists():
             raise FileNotFoundError(
                 f"discharge condition netcdf file not found: {abs_file_path}"
@@ -138,6 +138,11 @@ class SfincsDischargePoints(SfincsBoundaryBase):
 
         # Read netcdf file
         ds = GeoDataset.from_netcdf(abs_file_path, crs=self.model.crs, chunks="auto")
+
+        # rename variables to match hydromt-sfincs naming
+        ds = ds.rename({"stations": "index"}) if "stations" in ds.dims else ds
+        ds = ds.rename({"discharge": "dis"}) if "discharge" in ds.data_vars else ds
+
         return ds
 
     def write(self, format: str = None):
@@ -206,7 +211,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         # Check that write mode is on
         self.root._assert_write_mode()
 
-        # Get absolute file name and set it in config if bzsfile is not None
+        # Get absolute file name and set it in config if disfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
             "disfile", value=filename, default="sfincs.dis"
         )
@@ -242,8 +247,17 @@ class SfincsDischargePoints(SfincsBoundaryBase):
 
         ds = self.data.load()
 
+        tref = self.model.config.get("tref")
+        tref_str = tref.strftime("%Y-%m-%d %H:%M:%S")
+
+        encoding = dict(time={"units": f"minutes since {tref_str}", "dtype": "float64"})
+
+        # rename variables to match sfincs naming
+        ds = ds.rename({"index": "stations"}) if "index" in ds.dims else ds
+        ds = ds.rename({"dis": "discharge"}) if "dis" in ds.data_vars else ds
+
         # Write netcdf file safely (might get locked, e..g in other notebooks)
-        final_path = utils.write_netcdf_safely(ds, abs_file_path)
+        final_path = utils.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
         if final_path != abs_file_path:
             self.model.config.set("netsrcdisfile", final_path.name)
 
