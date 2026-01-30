@@ -51,6 +51,7 @@ from hydromt_sfincs.components.quadtree import (
 # Boundary conditions / forcing components
 from hydromt_sfincs.components.forcing import (
     SfincsDischargePoints,
+    SfincsRiverBoundaryPoints,
     SfincsPrecipitation,
     SfincsPressure,
     SfincsRivers,
@@ -115,6 +116,7 @@ class SfincsModel(Model):
     }
     _FORCING_COMPONENTS = {
         "rivers": SfincsRivers,
+        "river_boundary_points": SfincsRiverBoundaryPoints,
         "water_level": SfincsWaterLevel,
         "discharge_points": SfincsDischargePoints,
         "snapwave_boundary_conditions": SnapWaveBoundaryConditions,
@@ -471,7 +473,8 @@ class SfincsModel(Model):
             "weirs": "weir",
             "thin_dams": "thd",
             "drainage_structures": "drn",
-            "rivers": "bdr",
+            "rivers": "rivers",
+            "river_boundary_points": "bdr",
             "discharge_points": "src",
             "water_level": "bnd",
         }  # parsed to dict of geopandas.GeoDataFrame

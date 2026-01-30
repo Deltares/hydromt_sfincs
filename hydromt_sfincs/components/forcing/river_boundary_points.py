@@ -225,7 +225,7 @@ class SfincsRiverBoundaryPoints(ModelComponent):
         internal_dist: float = 1000.0,
         slope: float = None,
         reverse_river_geom: bool = False,
-        merge: bool = True,
+        merge: bool = False,
     ) -> gpd.GeoDataFrame:
         """Create a GeoDataFrame for SFINCS .bdr output.
 
@@ -320,7 +320,10 @@ class SfincsRiverBoundaryPoints(ModelComponent):
             )
 
         gdf_boundary_lines = gpd.GeoDataFrame(rows, crs=gdf_out_pts.crs)
+    
         self.set(gdf_boundary_lines, merge=merge)
 
         # set config
         self.model.config.set("bdrfile", "sfincs.bdr")
+
+        return gdf_boundary_lines

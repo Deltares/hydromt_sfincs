@@ -409,15 +409,16 @@ class SfincsRivers(ModelComponent):
         #     self.mask.create_boundary(btype=btype, reset_bounds=reset_bounds)
 
         # Class here: build bdr points
-        self.model.river_boundary_points.create(
+        gdf_riv_points =self.model.river_boundary_points.create(
             gdf_out_pts=gdf_out_pts,
             gdf_riv=gdf_riv,
             internal_dist=internal_dist,
             slope=slope,
             reverse_river_geom=reverse_river_geom,
+            merge = False
         )
 
-        self._data = gdf_bdr
+        self._data = gdf_riv_points
         # keep river centerlines
         if keep_rivers_geom and len(gdf_riv) > 0:
             self._data = gdf_riv

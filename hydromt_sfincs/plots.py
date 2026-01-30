@@ -15,15 +15,13 @@ logger = logging.getLogger(__name__)
 __all__ = ["plot_forcing", "plot_basemap"]
 
 geom_style = {
-    "river_centerlines": dict(linestyle="-", linewidth=1.0, color="darkblue"),
-    "rivers_inflow": dict(linestyle=":", linewidth=1.0, color="darkblue"),
-    "rivers_outflow": dict(linestyle=":", linewidth=1.0, color="darkgreen"),
+    "rivers": dict(linestyle="-", linewidth=1.0, color="darkblue"),
     "mask2": dict(linestyle="-", linewidth=1.5, color="r"),
     "mask3": dict(linestyle="-", linewidth=1.5, color="m"),
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=False),
     "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=False),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
-    "bdr": dict(marker="^", markersize=75, c="w", edgecolor="g", annotate=True),
+    "bdr": dict(color="g", linewidth=2, annotate=True, arrow=True), 
     "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
     "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
     "crs": dict(linestyle="-", linewidth=1.5, color="deeppink", annotate=False),
@@ -394,7 +392,26 @@ def plot_basemap(
             # copy is important to keep annotate working if repeated
             kwargs = geom_style.get(name, {}).copy()
             annotate = kwargs.pop("annotate", False)
-            gdf.plot(ax=ax, zorder=3, label=name, **kwargs)
+            arrow = kwargs.pop("arrow", False)
+            if arrow and np.all(gdf.geometry.type == "LineString"):
+                for _, row in gdf.iterrows():
+                    coords = list(row.geometry.coords)
+                    if len(coords) >= 2:
+                        # arrow from 2nd point to 1st point
+                        ax.annotate(
+                            "",
+                            xy=coords[0],       # arrow head
+                            xytext=coords[1],   # arrow tail
+                            arrowprops=dict(
+                                arrowstyle="->",
+                                color=kwargs.get("color", "k"),
+                                linewidth=kwargs.get("linewidth", 1.5),
+                            ),
+                            zorder=4,
+                            transform=crs,
+                        )
+            else:
+                gdf.plot(ax=ax, zorder=3, label=name, **kwargs)
             if annotate and np.all(gdf.geometry.type == "Point"):
                 for label, row in gdf.iterrows():
                     x, y = row.geometry.x, row.geometry.y
