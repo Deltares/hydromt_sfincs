@@ -601,95 +601,113 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             drop_duplicates=False,  # FIXME - not sure it works
         )
 
-    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    @hydromt_step
+    def create_timeseries(
+        self,
+        index: Union[int, List[int]] = None,
+        shape: str = "constant",
+        timestep: float = 600.0,
+        offset: float = 0.0,
+        hs: float = 1.0,
+        tp: float = 10.0,
+        wd: float = 270.0,
+        ds: float = 20.0,
+        tpeak: float = 43200.0,
+        duration: float = 86400.0,
+    ):
+        """Applies time series boundary conditions for each point
+        Create numpy datetime64 array for time series with python datetime.datetime objects
 
-    # def set_timeseries(
-    #     self,
-    #     index: Union[int, List[int]] = None,
-    #     shape: str = "constant",
-    #     timestep: float = 600.0,
-    #     hs: float = 1.0,
-    #     tp: float = 10.0,
-    #     wd: float = 270.0,
-    #     ds: float = 20.0,
-    #     tpeak: float = 86400.0,
-    #     duration: float = 43200.0,
-    # ):
-    #     """Applies time series boundary conditions for each point
-    #     Create numpy datetime64 array for time series with python datetime.datetime objects
+        Parameters
+        ----------
+        shape : str
+            Shape of the time series. Options are "constant" or "gaussian".
+            Gaussian shape is only applied to hs time-series,
+            with hs[0]=offset and hs[peak]=hs.
+        timestep : float
+            Time step [s]
+        offset : float
+            Vertical offset of the gaussian time series [m]
+        hs : float
+            Wave height [m]
+        tp : float
+            Peak period [s]
+        wd : float
+            Wave direction [degrees]
+        ds : float
+            Directional spread [degrees]
+        tpeak : float
+            Time of the peak of the Gaussian wave [s]
+        duration : float
+            Duration of the Gaussian wave [s]
+        """
 
-    #     Parameters
-    #     ----------
-    #     shape : str
-    #         Shape of the time series. Options are "constant" or "gaussian".
-    #     timestep : float
-    #         Time step [s]
-    #     hs : float
-    #         Wave height [m]
-    #     tp : float
-    #         Peak period [s]
-    #     wd : float
-    #         Wave direction [degrees]
-    #     ds : float
-    #         Directional spread [degrees]
-    #     tpeak : float
-    #         Time of the peak of the Gaussian wave [s]
-    #     duration : float
-    #         Duration of the Gaussian wave [s]
-    #     """
+        if self.nr_points == 0:
+            raise ValueError(
+                "Cannot create timeseries without existing waterlevel boundary points"
+            )
 
-    #     if self.data.empty:
-    #         return
+        t0 = np.datetime64(self.model.config.get("tstart"))
+        t1 = np.datetime64(self.model.config.get("tstop"))
+        if shape == "constant":
+            dt = np.timedelta64(int((t1 - t0).astype(float) / 1e6), "s")
+        else:
+            dt = np.timedelta64(int(timestep), "s")
+        time = np.arange(t0, t1 + dt, dt)
+        dtsec = dt.astype(float)
+        # Convert time to seconds since tstart
+        tsec = (time - t0).astype("timedelta64[s]").astype(float)
+        # # Convert time to seconds since tref
+        # tsec = (
+        #     (time - np.datetime64(self.model.config.get("tref")))
+        #     .astype("timedelta64[s]")
+        #     .astype(float)
+        # )
+        nt = len(tsec)
+        if shape == "constant":
+            hs = [hs] * nt
+            tp = [tp] * nt
+            wd = [wd] * nt
+            ds = [ds] * nt
+        elif shape == "gaussian":
+            hs = offset + (hs - offset) * np.exp(
+                -(((tsec - tpeak) / (0.25 * duration)) ** 2)
+            )
+            tp = [tp] * nt
+            wd = [wd] * nt
+            ds = [ds] * nt
+        else:
+            raise NotImplementedError(
+                f"Shape '{shape}' is not implemented. Use 'constant' or 'gaussian'."
+            )
+        times = pd.date_range(
+            start=t0, end=t1, freq=pd.tseries.offsets.DateOffset(seconds=dtsec)
+        )
 
-    #     t0 = np.datetime64(self.model.config.get("tstart"))
-    #     t1 = np.datetime64(self.model.config.get("tstop"))
-    #     if shape == "constant":
-    #         dt = np.timedelta64(int((t1 - t0).astype(float) / 1e6), "s")
-    #     else:
-    #         dt = np.timedelta64(int(timestep), "s")
-    #     time = np.arange(t0, t1 + dt, dt)
-    #     dtsec = dt.astype(float)
-    #     # Convert time to seconds since tref
-    #     tsec = (
-    #         (time - np.datetime64(self.model.config.get("tref")))
-    #         .astype("timedelta64[s]")
-    #         .astype(float)
-    #     )
-    #     nt = len(tsec)
-    #     if shape == "constant":
-    #         hs = [hs] * nt
-    #         tp = [tp] * nt
-    #         wd = [wd] * nt
-    #         ds = [ds] * nt
-    #     elif shape == "gaussian":
-    #         hs = hs * np.exp(-(((tsec - tpeak) / (0.25 * duration)) ** 2))
-    #         tp = [tp] * nt
-    #         wd = [wd] * nt
-    #         ds = [ds] * nt
-    #     else:
-    #         # Not implemented
-    #         raise ValueError(
-    #             f"Shape {shape} not implemented for SnapWave boundary conditions!"
-    #         )
+        if index is None:
+            index = list(self.data.index.values)
+        elif not isinstance(index, list):
+            index = [index]
 
-    #     times = pd.date_range(
-    #         start=t0, end=t1, freq=pd.tseries.offsets.DateOffset(seconds=dtsec)
-    #     )
+        # Create DataFrame: rows = time, columns = locations (index), values = hs (same for all)
+        df_hs = pd.DataFrame(
+            data=np.tile(hs, (len(index), 1)).T, index=times, columns=index
+        )
+        df_tp = pd.DataFrame(
+            data=np.tile(tp, (len(index), 1)).T, index=times, columns=index
+        )
+        df_wd = pd.DataFrame(
+            data=np.tile(wd, (len(index), 1)).T, index=times, columns=index
+        )
+        df_ds = pd.DataFrame(
+            data=np.tile(ds, (len(index), 1)).T, index=times, columns=index
+        )
 
-    #     if index is None:
-    #         index = list(self.data.index)
-    #     elif not isinstance(index, list):
-    #         index = [index]
-
-    #     for i in index:
-    #         df = pd.DataFrame()
-    #         df["time"] = times
-    #         df["hs"] = hs
-    #         df["tp"] = tp
-    #         df["wd"] = wd
-    #         df["ds"] = ds
-    #         df = df.set_index("time")
-    #         self.data.at[i, "timeseries"] = df
+        # Call set_timeseries to update your object's data
+        self.set_timeseries(df_hs, varname="hs")
+        self.set_timeseries(df_tp, varname="tp")
+        self.set_timeseries(df_wd, varname="wd")
+        self.set_timeseries(df_ds, varname="ds")
 
     def create_boundary_points_from_mask(self, min_dist=None, bnd_dist=5000.0):
         """Get boundary points from mask in quadtree grid.

@@ -128,51 +128,72 @@ def test_add_point(model_config):
     )
 
 
-# def test_create_timeseries(model_config):
-#     model_config.snapwave_boundary_conditions.read()
-#     assert model_config.snapwave_boundary_conditions.nr_points > 0
+def test_create_timeseries(model_config):
+    model_config = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
 
-#     # now add constant timeseries for each point
-#     model_config.snapwave_boundary_conditions.create_timeseries(
-#         shape="constant",
-#         offset=10,
-#     )
+    model_config.snapwave_boundary_conditions.read()
+    assert model_config.snapwave_boundary_conditions.nr_points > 0
 
-#     # Check that the timeseries is created correctly
-#     for idx in range(model_config.snapwave_boundary_conditions.nr_points):
-#         point_data = model_config.snapwave_boundary_conditions.data["bzs"].isel(
-#             index=idx
-#         )
-#         assert point_data.values.min() == 10
-#         assert point_data.values.max() == 10
-#         assert len(point_data.time) == 2
+    # now add constant timeseries for each point
+    model_config.snapwave_boundary_conditions.create_timeseries(
+        shape="constant",
+        hs=3,
+        tp=12,
+        wd=180,
+        ds=30,
+    )
 
-#     # now add a Gaussian timeseries for the first point
-#     model_config.snapwave_boundary_conditions.create_timeseries(
-#         index=0,
-#         shape="gaussian",
-#         offset=0,
-#         peak=5,
-#         tpeak=5 * 86400,
-#         duration=2 * 86400,
-#         timestep=3600,
-#     )
+    # Check that the timeseries is created correctly
+    for idx in range(model_config.snapwave_boundary_conditions.nr_points):
+        point_data = model_config.snapwave_boundary_conditions.data["hs"].isel(
+            index=idx
+        )
+        assert point_data.values.min() == 3
+        assert point_data.values.max() == 3
+        assert len(point_data.time) == 2
+    for idx in range(model_config.snapwave_boundary_conditions.nr_points):
+        point_data = model_config.snapwave_boundary_conditions.data["tp"].isel(
+            index=idx
+        )
+        assert point_data.values.min() == 12
+        assert point_data.values.max() == 12
 
-#     # Check that the timeseries is created correctly
-#     point_data = model_config.snapwave_boundary_conditions.data["bzs"].isel(index=0)
-#     assert np.isclose(point_data.values.min(), 0.1, atol=1e-2)
-#     assert np.isclose(point_data.values.max(), 5, atol=1e-2)
-#     assert len(point_data.time) == 49  # 49 hours with 1 hour timestep
+    # now add a Gaussian timeseries for the second point
+    model_config.snapwave_boundary_conditions.create_timeseries(
+        index=1,  # only for second point
+        shape="gaussian",
+        timestep=3600,
+        offset=2,
+        hs=5,
+        tp=14,
+        wd=245,
+        ds=25,
+        tpeak=1.0 * 86400,
+        duration=2.0 * 86400,
+    )
 
-#     # also check that the min, max of the other points are still the same
-#     for idx in range(1, model_config.snapwave_boundary_conditions.nr_points):
-#         point_data = model_config.snapwave_boundary_conditions.data["bzs"].isel(
-#             index=idx
-#         )
-#         assert point_data.values.min() == 10
-#         assert point_data.values.max() == 10
-#         # but length has changed accordingly
-#         assert len(point_data.time) == 49
+    # Check that the timeseries is created correctly
+    point_data = model_config.snapwave_boundary_conditions.data["hs"].isel(index=1)
+    assert np.isclose(point_data.values.min(), 2.0, atol=0.06)
+    assert point_data.values.max() == 5
+    point_data = model_config.snapwave_boundary_conditions.data["tp"].isel(index=1)
+    assert point_data.values.min() == 14
+    assert point_data.values.max() == 14
+    point_data = model_config.snapwave_boundary_conditions.data["wd"].isel(index=1)
+    assert point_data.values.min() == 245
+    assert point_data.values.max() == 245
+    point_data = model_config.snapwave_boundary_conditions.data["ds"].isel(index=1)
+    assert point_data.values.min() == 25
+    assert point_data.values.max() == 25
+
+    assert len(point_data.time) == 49  # 49 hours with 1 hour timestep
+
+    # also check that the min, max of the other points are still the same
+    point_data = model_config.snapwave_boundary_conditions.data["hs"].isel(index=0)
+    assert point_data.values.min() == 3
+    assert point_data.values.max() == 3
+    # but length has changed accordingly
+    assert len(point_data.time) == 49
 
 
 def test_create(model_config):
