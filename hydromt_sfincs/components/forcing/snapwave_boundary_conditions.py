@@ -511,6 +511,10 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             self.model.config.set("snapwave_bdsfile", "snapwave.bds")
             self.model.config.set("snapwave_bwdfile", "snapwave.bwd")
 
+    # @hydromt_step
+    # def create_from_grid(
+    # self,
+
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # def add_point_with_timeseries()
     #     """Add a single point with timeseries to the boundary conditions data.
