@@ -163,12 +163,22 @@ class SfincsBoundaryBase(ModelComponent):
         gdf = self._validate_and_prepare_gdf(gdf)
 
         if self.nr_points > 0 and merge:
+            # check length of self._default_varname
+
             # parse existing to dataframe
-            df0 = (
-                self.data[self._default_varname]
-                .transpose(..., self.data.vector.index_dim)
-                .to_pandas()
-            )
+            if len(self._default_varname) > 1:
+                df0 = (
+                    self.data[self._default_varname]
+                    .transpose(..., self.data.vector.index_dim)
+                    .to_dataframe()
+                )
+            else:
+                df0 = (
+                    self.data[self._default_varname]
+                    .transpose(..., self.data.vector.index_dim)
+                    .to_pandas()
+                )
+
             gdf0 = self.data.vector.to_gdf()
 
             # TODO discuss whether we want to filter; or make it users responsibility
