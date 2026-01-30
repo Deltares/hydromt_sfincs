@@ -676,7 +676,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
                 # Set minimum distance between to grid boundary points on polyline to 2 * dx
                 min_dist = self.model.quadtree_grid.data.attrs["dx"] * 2
 
-            mask = self.model.quadtree_grid.data["mask"]
+            mask = self.model.quadtree_grid.data["snapwave_mask"]
             ibnd = np.where(mask == 2)
             xz, yz = self.model.quadtree_grid.face_coordinates
             xp = xz[ibnd]
@@ -779,8 +779,6 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
                     name = str(ip + 1).zfill(4)
                     d = {
                         "name": name,
-                        "timeseries": pd.DataFrame(),
-                        "astro": pd.DataFrame(),
                         "geometry": point,
                     }
                     gdf_list.append(d)
