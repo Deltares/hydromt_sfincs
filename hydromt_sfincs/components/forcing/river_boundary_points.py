@@ -133,7 +133,7 @@ class SfincsRiverBoundaryPoints(ModelComponent):
         gdf.to_csv(fn, sep=" ", index=False, header=False)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS drainage structures (.drn) file,
+        """Write SFINCS river boundary (.bdr) file,
         and make sure bdrfile is in config (if it was not already set)."""
 
         # check that write mode is on
@@ -141,7 +141,7 @@ class SfincsRiverBoundaryPoints(ModelComponent):
 
         # check if data present:
         if self.data.empty:
-            logger.debug("No drainage structures data available to write.")
+            logger.debug("No river boundary points data available to write.")
             return
 
         # Set file name and get absolute path
