@@ -31,7 +31,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
     allows to generate time series from astronomical constituents (if available).
     """
 
-    _default_varname = "bzs"
+    _default_varname = ["bzs"]
 
     def __init__(self, model: "SfincsModel"):
         super().__init__(model)

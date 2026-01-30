@@ -174,7 +174,7 @@ class SfincsBoundaryBase(ModelComponent):
                 )
             else:
                 df0 = (
-                    self.data[self._default_varname]
+                    self.data[self._default_varname[0]]
                     .transpose(..., self.data.vector.index_dim)
                     .to_pandas()
                 )
@@ -260,7 +260,7 @@ class SfincsBoundaryBase(ModelComponent):
             raise ValueError("Cannot set timeseries without existing locations")
 
         if varname is None:
-            varname = self._default_varname
+            varname = self._default_varname[0]
 
         new_da = xr.DataArray(
             df,
