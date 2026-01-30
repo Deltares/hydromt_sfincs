@@ -32,20 +32,6 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
     This component builds on the SfincsBoundaryBase class of boundary_conditions.py.
     """
 
-    # %% core HydroMT-SFINCS functions:
-    # __init__
-    # read
-    # read_boundary_points
-    # read_boundary_conditions_timeseries_perfile
-    # read_boundary_conditions_netcdf
-    # write
-    # write_boundary_points
-    # write_boundary_conditions_timeseries
-    # write_boundary_conditions_netcdf
-    # set > inherited from SfincsBoundaryBase
-    # delete
-    # clear
-
     _default_varname = ["hs", "tp", "wd", "ds"]  # used in set_locations among others
 
     def __init__(self, model: "SfincsModel"):
@@ -511,14 +497,11 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             self.model.config.set("snapwave_bdsfile", "snapwave.bds")
             self.model.config.set("snapwave_bwdfile", "snapwave.bwd")
 
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # @hydromt_step
     # def create_from_grid(
     # self,
 
-    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # def add_point_with_timeseries()
-    #     """Add a single point with timeseries to the boundary conditions data.
-    #
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def add_point(  # FIXME - do we want to make a copy of add_point in boundary_conditions.py that support multiple vars?
         self,
@@ -799,12 +782,3 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             gdf = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
 
         self.set_locations(gdf, merge=False)
-
-
-# def to_fwf(df, fname, floatfmt=".3f"):
-#     indx = df.index.tolist()
-#     vals = df.values.tolist()
-#     for it, t in enumerate(vals):
-#         t.insert(0, indx[it])
-#     content = tabulate(vals, [], tablefmt="plain", floatfmt=floatfmt)
-#     open(fname, "w").write(content)
