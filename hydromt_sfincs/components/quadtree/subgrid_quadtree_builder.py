@@ -763,14 +763,14 @@ class SubgridTableQuadtree:
                         # Fill in remaining NaNs with default values
                         isn = np.where(np.isnan(manning_grid))
                         try:
-                            manning_grid[
-                                (isn and np.where(zg <= manning_level))
-                            ] = manning_water
+                            manning_grid[(isn and np.where(zg <= manning_level))] = (
+                                manning_water
+                            )
                         except:
                             pass
-                        manning_grid[
-                            (isn and np.where(zg > manning_level))
-                        ] = manning_land
+                        manning_grid[(isn and np.where(zg > manning_level))] = (
+                            manning_land
+                        )
 
                     else:
                         if len(roughness_list) > 0:

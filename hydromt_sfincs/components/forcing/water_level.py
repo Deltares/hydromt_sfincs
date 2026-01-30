@@ -86,7 +86,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         # Check if bnd file exists
         if not abs_file_path.exists():
-            raise FileNotFoundError(f"Water level points file not found: {abs_file_path}")
+            raise FileNotFoundError(
+                f"Water level points file not found: {abs_file_path}"
+            )
 
         # Read bnd file
         # TODO check if we want read_xyn? Before we used read_xy, so without name column

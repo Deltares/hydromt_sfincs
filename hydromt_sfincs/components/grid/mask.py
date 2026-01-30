@@ -458,7 +458,9 @@ class SfincsMask(ModelComponent):
         btype = btype.lower()
         bvalues = {"waterlevel": 2, "outflow": 3, "downstream": 5}
         if btype not in bvalues:
-            raise ValueError('btype must be one of "waterlevel", "outflow", "downstream"')
+            raise ValueError(
+                'btype must be one of "waterlevel", "outflow", "downstream"'
+            )
         bvalue = bvalues[btype]
 
         if reset_bounds:  # reset existing boundary cells

@@ -471,7 +471,7 @@ class SfincsModel(Model):
             "weirs": "weir",
             "thin_dams": "thd",
             "drainage_structures": "drn",
-            "rivers" : "bdr",
+            "rivers": "bdr",
             "discharge_points": "src",
             "water_level": "bnd",
         }  # parsed to dict of geopandas.GeoDataFrame
@@ -974,5 +974,5 @@ class SfincsModel(Model):
         """Instance of :py:class:`~hydromt_sfincs.components.output.SfincsOutput`."""
         return self.components["output"]
 
+
 # %%
- 

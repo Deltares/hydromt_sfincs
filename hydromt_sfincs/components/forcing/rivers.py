@@ -49,10 +49,8 @@ class SfincsRivers(ModelComponent):
         # get the data from the model
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            self._centerlines = gpd.GeoDataFrame()
             # self._data["downstream_boundary_points"] = gpd.GeoDataFrame()
 
-            
     # Original HydroMT-SFINCS setup_ functions:
     # setup_river_inflow
     # setup_river_outflow
@@ -64,7 +62,7 @@ class SfincsRivers(ModelComponent):
 
     def write(self):
         """Write the river inflow data to a gis-file. Note: this is not used by SFINCS, but useful for model visualization."""
-    
+
         # bdrpts = self.data["downstream_boundary_points"]
 
         if self.data.empty:
@@ -75,70 +73,10 @@ class SfincsRivers(ModelComponent):
 
             utils.write_vector(
                 self.data,
-                name="river_boundary_point",
+                name="river_centerlines",
                 root=join(self.model.root.path, "gis"),
                 logger=logger,
             )
-
-            utils.write_vector(
-                self._centerlines,
-                name="centerlines",
-                root=join(self.model.root.path, "gis"),
-                logger=logger,
-            )
-
-
-
-    def write_bdr_points(self, fn: Union[str, Path], gdf_bdr: gpd.GeoDataFrame, fmt="%.1f") -> None:
-        """Write SFINCS downstream river boundary points file (.bdr).
-
-        Each row:
-        xbdr ybdr xbdr_in ybdr_in slope distance
-        """
-        gdf = gdf_bdr.copy()
-        if gdf.empty:
-            Path(fn).parent.mkdir(parents=True, exist_ok=True)
-            Path(fn).write_text("")  # empty file
-            return
-
-        if not all(gdf.geom_type == "Point"):
-            raise ValueError("gdf_bdr geometry must be Points (boundary points).")
-
-        # derive xbdr/ybdr from geometry
-        gdf["xbdr"] = gdf.geometry.x
-        gdf["ybdr"] = gdf.geometry.y
-
-        # required columns
-        required = ["x_bdr_in", "y_bdr_in", "slope", "distance"]
-        missing = [c for c in required if c not in gdf.columns]
-        if missing:
-            raise ValueError(f"Missing required columns in gdf_bdr: {missing}")
-
-        # order columns as SFINCS expects
-        gdf = gdf[["xbdr", "ybdr", "x_bdr_in", "y_bdr_in", "slope", "distance"]]
-
-        # format coords
-        for col in ["xbdr", "ybdr", "x_bdr_in", "y_bdr_in"]:
-            gdf[col] = gdf[col].apply(lambda x: fmt % x)
-
-        # slope/distance formatting (tweak if you want)
-        gdf["slope"] = gdf["slope"].apply(lambda x: f"{float(x):.6f}")
-        gdf["distance"] = gdf["distance"].apply(lambda x: f"{float(x):.3f}")
-
-        Path(fn).parent.mkdir(parents=True, exist_ok=True)
-        gdf.to_csv(fn, sep=" ", index=False, header=False)
-
-    def write_bdrfile(self, gdf_bdr: gpd.GeoDataFrame, filename="sfincs.bdr"):
-        """Write SFINCS downstream river boundary points (.bdr) file."""
-        self.root._assert_write_mode()
-
-        abs_file_path = self.model.config.get_set_file_variable(
-            "bdrfile", value=filename, default="sfincs.bdr"
-        )
-        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
-
-        fmt = "%.6f" if self.model.crs.is_geographic else "%.1f"
-        self.write_bdr_points(abs_file_path, gdf_bdr, fmt=fmt)
 
     @hydromt_step
     def create_river_inflow(
@@ -280,7 +218,7 @@ class SfincsRivers(ModelComponent):
 
         # set river
         if keep_rivers_geom:
-            self._centerlines= gdf_riv
+            self._centerlines = gdf_riv
 
         # update mask if river_width > 0
         if "rivwth" in gdf_src.columns:
@@ -391,8 +329,8 @@ class SfincsRivers(ModelComponent):
             )
             da_uparea = ds["uparea"]  # reused in river_source_points
         # get river centerlines
-        if self.centerlines is not None and rivers is None and hydrography is None:
-            gdf_riv = self.centerlines
+        if not self.data.empty and rivers is None and hydrography is None:
+            gdf_riv = self.data
             logger.info("Reusing existing river centerlines.")
         elif rivers is not None:
             gdf_riv = self.data_catalog.get_geodataframe(
@@ -407,7 +345,9 @@ class SfincsRivers(ModelComponent):
                 gdf_mask=self.model.region,
             )
         elif hydrography is None:
-            raise ValueError("No centerlines present in component.Either hydrography or rivers must be provided.")
+            raise ValueError(
+                "No centerlines present in component.Either hydrography or rivers must be provided."
+            )
 
         # get river inflow / headwater source points
         gdf_out = workflows.river_source_points(
@@ -431,7 +371,7 @@ class SfincsRivers(ModelComponent):
         if gdf_out.empty:
             self.logger.info("No river outflow points found.")
             return
-        
+
         gdf_out_pts = gdf_out.copy()
 
         if len(gdf_out) > 0:
@@ -455,120 +395,32 @@ class SfincsRivers(ModelComponent):
         if n > 0:
             if self.model.grid_type == "regular":
                 self.model.mask.create_boundary(
-                    btype="downstream", include_polygon=gdf_out, reset_bounds=reset_bounds
+                    btype="downstream",
+                    include_polygon=gdf_out,
+                    reset_bounds=reset_bounds,
                 )
             elif self.model.grid_type == "quadtree":
                 self.model.quadtree_mask.create_boundary(
-                    btype="downstream", include_polygon=gdf_out, reset_bounds=reset_bounds
+                    btype="downstream",
+                    include_polygon=gdf_out,
+                    reset_bounds=reset_bounds,
                 )
         # elif reset_bounds:
         #     self.mask.create_boundary(btype=btype, reset_bounds=reset_bounds)
 
-        gdf_bdr = self.build_bdr_points(
-                    gdf_out_pts=gdf_out_pts,
-                    gdf_riv=gdf_riv,
-                    internal_dist=internal_dist,
-                    slope=slope,
-                    reverse_river_geom=reverse_river_geom,
-                    )
-
-        self.write_bdrfile(gdf_bdr)
+        # Class here: build bdr points
+        self.model.river_boundary_points.create(
+            gdf_out_pts=gdf_out_pts,
+            gdf_riv=gdf_riv,
+            internal_dist=internal_dist,
+            slope=slope,
+            reverse_river_geom=reverse_river_geom,
+        )
 
         self._data = gdf_bdr
         # keep river centerlines
         if keep_rivers_geom and len(gdf_riv) > 0:
-            self._centerlines = gdf_riv
-
-    def build_bdr_points(
-        self,
-        gdf_out_pts: gpd.GeoDataFrame,
-        gdf_riv: gpd.GeoDataFrame,
-        internal_dist: float = 1000.0,
-        slope: float = None,
-        reverse_river_geom: bool = False,
-    ) -> gpd.GeoDataFrame:
-        """Create a GeoDataFrame for SFINCS .bdr output.
-
-        Creates downstream boundary points with internal control points,
-        slope, and distance.
-
-        Parameters
-        ----------
-        gdf_out_pts : gpd.GeoDataFrame
-            Outflow points (Point geometries).
-        gdf_riv : gpd.GeoDataFrame
-            River centerlines (LineString geometries).
-        internal_dist : float, optional
-            Distance [m] from boundary point to internal control point, by default 1000.0
-        slope : float, optional
-            Slope value to use for all outflow points. If None, slope is computed
-            from the model elevation data, by default None.
-
-        Output columns:
-        geometry (Point) = downstream boundary point (xbdr,ybdr)
-        x_bdr_in, y_bdr_in = internal control point coords
-        slope, distance
-
-        """
-        if gdf_out_pts.empty:
-            return gdf_out_pts.copy()
-
-        if not all(gdf_out_pts.geom_type == "Point"):
-            raise ValueError("gdf_out_pts must contain Point geometries (not polygons).")
-
-        gdf_lines = gdf_riv[["geometry"]].copy().reset_index(drop=True)
-
-        rows = []
-        for _, prow in gdf_out_pts.iterrows():
-            p = prow.geometry
-
-            # find nearest river line (simple; replace with sjoin_nearest for speed if desired)
-            dmin = np.inf
-            line_best = None
-            for _, lrow in gdf_lines.iterrows():
-                d = lrow.geometry.distance(p)
-                if d < dmin:
-                    dmin = d
-                    line_best = lrow.geometry
-
-            if line_best is None:
-                continue
-
-            # snap outflow point to river line (nice-to-have)
-            s0 = line_best.project(p)
-            p_on = line_best.interpolate(s0)
-
-            # pick internal point upstream/downstream depending on line direction
-            if reverse_river_geom:
-                s_in = min(s0 + internal_dist, line_best.length)
-            else:
-                s_in = max(s0 - internal_dist, 0.0)
-            p_in = line_best.interpolate(s_in)
-
-            if slope is None:
-                z_in = self.model.quadtree_grid.data.z.ugrid.sel_points(x = p_in.x, y = p_in.y).item()
-                z_on = self.model.quadtree_grid.data.z.ugrid.sel_points(x = p_on.x, y = p_on.y).item()
-
-                slope = (z_in - z_on) / internal_dist
-
-                logger.info(f"Computed slope={slope:.4f} for outflow point at {p_on.x:.1f}, {p_on.y:.1f}")
-            else:
-                slope = float(slope)
-
-            rows.append(
-                {
-                    "geometry": p_on,          # boundary point
-                    "x_bdr_in": p_in.x,        # internal point coords
-                    "y_bdr_in": p_in.y,
-                    "slope": float(prow.get("slope", slope)) if hasattr(prow, "get") else slope,
-                    "distance": float(prow.get("distance", internal_dist)) if hasattr(prow, "get") else internal_dist,
-                }
-            )
-
-        return gpd.GeoDataFrame(rows, crs=gdf_out_pts.crs)
-    
-
-
+            self._data = gdf_riv
 
 
 # %% core HydroMT-SFINCS functions:
