@@ -522,9 +522,9 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def add_point(  # FIXME - do we want to make a copy of add_point in boundary_conditions.py that support multiple vars?
         self,
-        gdf: gpd.GeoDataFrame = None,
         x: float = None,
         y: float = None,
+        name: str = None,
         hs: float = 1.0,
         tp: float = 10.0,
         wd: float = 270.0,
@@ -535,8 +535,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         Parameters
         ----------
-        gdf : gpd.GeoDataFrame
-            GeoDataFrame with a single point
+
         x : float
             x-coordinate of the point
         y : float
@@ -550,56 +549,22 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         ds : float
             Directional spread of the point
         """
-        if gdf is not None:
-            if len(gdf) != 1:
-                raise ValueError(
-                    "Only GeoDataFrame with a single point in a can be added."
-                )
-            gdf = gdf.to_crs(self.model.crs)
-        else:
-            # Create a GeoDataFrame with a single point
-            if x is None or y is None:
-                raise ValueError("Either gdf or x, y, and name must be provided.")
-            point = shapely.geometry.Point(x, y)
-            gdf = gpd.GeoDataFrame(
-                [
-                    {
-                        "geometry": point,
-                    }
-                ],
-                crs=self.model.crs,
-            )
+        new_index = self.nr_points + 1
+        if name is None:
+            name = f"point_{new_index}"
 
-        # make up a new df with timeseries data
-        times = pd.date_range(*self.model.get_model_time(), periods=2)
-
-        df_hs = np.array([hs, hs])
-        df_hs = pd.DataFrame(data=df_hs, index=times, columns=[0])  # 2])
-        df_hs.columns.name = "index"
-        df_hs.index.name = "time"
-
-        df_tp = np.array([tp, tp])
-        df_tp = pd.DataFrame(data=df_tp, index=times, columns=[0])
-        df_tp.columns.name = "index"
-        df_tp.index.name = "time"
-
-        df_wd = np.array([wd, wd])
-        df_wd = pd.DataFrame(data=df_wd, index=times, columns=[0])
-        df_wd.columns.name = "index"
-        df_wd.index.name = "time"
-
-        df_ds = np.array([ds, ds])
-        df_ds = pd.DataFrame(data=df_ds, index=times, columns=[0])
-        df_ds.columns.name = "index"
-        df_ds.index.name = "time"
-
-        # Add data
-        self.create(
-            locations=gdf,
-            timeseries=[df_hs, df_tp, df_wd, df_ds],
-            merge=False,  # FIXME - does not work currently
-            drop_duplicates=False,  # FIXME - not sure it works
+        gdf = gpd.GeoDataFrame(
+            geometry=gpd.points_from_xy([x], [y]), crs=self.model.crs
         )
+        gdf["name"] = name
+
+        self.set_locations(gdf=gdf, merge=False, drop_duplicates=False)
+
+        # piecewise set all values of self.data['hs'] to value of hs
+        self.data["hs"].values[:] = hs
+        self.data["tp"].values[:] = tp
+        self.data["wd"].values[:] = wd
+        self.data["ds"].values[:] = ds
 
     @hydromt_step
     def create_timeseries(
