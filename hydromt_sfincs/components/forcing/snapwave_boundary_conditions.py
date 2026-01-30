@@ -520,96 +520,86 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
     #     """Add a single point with timeseries to the boundary conditions data.
     #
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # def add_point( #FIXME - do we want to make a copy of add_point in boundary_conditions.py that support multiple vars?
-    #     self,
-    #     gdf: gpd.GeoDataFrame = None,
-    #     x: float = None,
-    #     y: float = None,
-    #     hs: float = 1.0,
-    #     tp: float = 10.0,
-    #     wd: float = 270.0,
-    #     ds: float = 20.0,
-    # ):
-    # Add a single point to the boundary conditions data. Either gdf,
-    #     or x, y must be provided.
+    def add_point(  # FIXME - do we want to make a copy of add_point in boundary_conditions.py that support multiple vars?
+        self,
+        gdf: gpd.GeoDataFrame = None,
+        x: float = None,
+        y: float = None,
+        hs: float = 1.0,
+        tp: float = 10.0,
+        wd: float = 270.0,
+        ds: float = 20.0,
+    ):
+        """Add a single point to the boundary conditions data. Either gdf,
+        or x, y must be provided.
 
-    #     Parameters
-    #     ----------
-    #     gdf : gpd.GeoDataFrame
-    #         GeoDataFrame with a single point
-    #     x : float
-    #         x-coordinate of the point
-    #     y : float
-    #         y-coordinate of the point
-    #     hs : float
-    #         Wave height of the point
-    #     tp : float
-    #         Peak period of the point
-    #     wd : float
-    #         Wave direction of the point
-    #     ds : float
-    #         Directional spread of the point
-    #     """
-    #     if gdf is not None:
-    #         if len(gdf) != 1:
-    #             raise ValueError(
-    #                 "Only GeoDataFrame with a single point in a can be added."
-    #             )
-    #         gdf = gdf.to_crs(self.model.crs)
-    #         if "timeseries" not in gdf:
-    #             gdf["timeseries"] = pd.DataFrame()
-    #     else:
-    #         # Create a GeoDataFrame with a single point
-    #         if x is None or y is None:
-    #             raise ValueError("Either gdf or x, y, and name must be provided.")
-    #         point = shapely.geometry.Point(x, y)
-    #         gdf = gpd.GeoDataFrame(
-    #             [
-    #                 {
-    #                     "timeseries": pd.DataFrame(),
-    #                     "geometry": point,
-    #                 }
-    #             ],
-    #             crs=self.model.crs,
-    #         )
+        Parameters
+        ----------
+        gdf : gpd.GeoDataFrame
+            GeoDataFrame with a single point
+        x : float
+            x-coordinate of the point
+        y : float
+            y-coordinate of the point
+        hs : float
+            Wave height of the point
+        tp : float
+            Peak period of the point
+        wd : float
+            Wave direction of the point
+        ds : float
+            Directional spread of the point
+        """
+        if gdf is not None:
+            if len(gdf) != 1:
+                raise ValueError(
+                    "Only GeoDataFrame with a single point in a can be added."
+                )
+            gdf = gdf.to_crs(self.model.crs)
+        else:
+            # Create a GeoDataFrame with a single point
+            if x is None or y is None:
+                raise ValueError("Either gdf or x, y, and name must be provided.")
+            point = shapely.geometry.Point(x, y)
+            gdf = gpd.GeoDataFrame(
+                [
+                    {
+                        "geometry": point,
+                    }
+                ],
+                crs=self.model.crs,
+            )
 
-    #     # Check if there is data in the timeseries
-    #     if gdf["timeseries"][0].empty:
-    #         # Now add the water level
-    #         # if not self.data.empty:
-    #         if len(self.data.data_vars) == 0:
+        # make up a new df with timeseries data
+        times = pd.date_range(*self.model.get_model_time(), periods=2)
 
-    #             # Set water level at same times as first existing point by copying
-    #             gdf.at[0, "timeseries"] = self.data.iloc[0]["timeseries"].copy()
-    #             gdf.at[0, "timeseries"]["hs"] = hs
-    #             gdf.at[0, "timeseries"]["tp"] = tp
-    #             gdf.at[0, "timeseries"]["wd"] = wd
-    #             gdf.at[0, "timeseries"]["ds"] = ds
-    #         else:
-    #             # First point, so need to generate df with constant water level
-    #             time = [self.model.config.get("tstart"), self.model.config.get("tstop")]
-    #             hs = [hs] * 2
-    #             tp = [tp] * 2
-    #             wd = [wd] * 2
-    #             ds = [ds] * 2
-    #             # Create DataFrame with columns time and wl
-    #             df = pd.DataFrame()
-    #             df["time"] = time
-    #             df["hs"] = hs
-    #             df["tp"] = tp
-    #             df["wd"] = wd
-    #             df["ds"] = ds
-    #             df = df.set_index("time")
-    #             gdf.at[0, "timeseries"] = df
-    #     else:
-    #         # Check if the timeseries is the same length as the first point
-    #         if len(gdf["timeseries"][0]) != len(self.data.iloc[0]["timeseries"]):
-    #             raise ValueError(
-    #                 "Timeseries in gdf must be the same length as the first point in the boundary conditions data."
-    #             )
+        df_hs = np.array([hs, hs])
+        df_hs = pd.DataFrame(data=df_hs, index=times, columns=[0])  # 2])
+        df_hs.columns.name = "index"
+        df_hs.index.name = "time"
 
-    #     # Add to self.data
-    #     self.data = pd.concat([self.data, gdf], ignore_index=True)
+        df_tp = np.array([tp, tp])
+        df_tp = pd.DataFrame(data=df_tp, index=times, columns=[0])
+        df_tp.columns.name = "index"
+        df_tp.index.name = "time"
+
+        df_wd = np.array([wd, wd])
+        df_wd = pd.DataFrame(data=df_wd, index=times, columns=[0])
+        df_wd.columns.name = "index"
+        df_wd.index.name = "time"
+
+        df_ds = np.array([ds, ds])
+        df_ds = pd.DataFrame(data=df_ds, index=times, columns=[0])
+        df_ds.columns.name = "index"
+        df_ds.index.name = "time"
+
+        # Add data
+        self.create(
+            locations=gdf,
+            timeseries=[df_hs, df_tp, df_wd, df_ds],
+            merge=False,  # FIXME - does not work currently
+            drop_duplicates=False,  # FIXME - not sure it works
+        )
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

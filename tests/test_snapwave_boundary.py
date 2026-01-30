@@ -82,44 +82,50 @@ def test_snapwave_boundary_io(model_config, tmp_dir):
     )
 
 
-# def test_add_point(model_config):
-#     """Test adding a discharge point to the model."""
-#     nr_points = model_config.snapwave_boundary_conditions.nr_points
+def test_add_point(model_config):
+    """Test adding a wave point to the model."""
+    model_config = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
 
-#     # determine point in the middle of the grid
-#     gdf = model_config.region
-#     point = gdf.geometry.unary_union.centroid
+    # read snapwave boundary from files
+    model_config.quadtree_grid.read()
 
-#     model_config.snapwave_boundary_conditions.add_point(
-#         x=point.x, y=point.y, hs=5.0, tp=12.0, wd=180.0, ds=30.0  # , name="test_point"
-#     )
+    model_config.snapwave_boundary_conditions.clear()
+    nr_points = model_config.snapwave_boundary_conditions.nr_points
 
-#     # Check that the number of points has increased and value is set correctly
-#     assert model_config.snapwave_boundary_conditions.nr_points == nr_points + 1
-#     assert (
-#         np.mean(
-#             model_config.snapwave_boundary_conditions.data["hs"].isel(index=-1).values
-#         )
-#         == 5.0
-#     )
-#     assert (
-#         np.mean(
-#             model_config.snapwave_boundary_conditions.data["tp"].isel(index=-1).values
-#         )
-#         == 12.0
-#     )
-#     assert (
-#         np.mean(
-#             model_config.snapwave_boundary_conditions.data["wd"].isel(index=-1).values
-#         )
-#         == 180.0
-#     )
-#     assert (
-#         np.mean(
-#             model_config.snapwave_boundary_conditions.data["ds"].isel(index=-1).values
-#         )
-#         == 30.0
-#     )
+    # determine point in the middle of the grid
+    gdf = model_config.region
+    point = gdf.geometry.unary_union.centroid
+
+    model_config.snapwave_boundary_conditions.add_point(
+        x=point.x, y=point.y, hs=5.0, tp=12.0, wd=180.0, ds=30.0  # , name="test_point"
+    )
+
+    # Check that the number of points has increased and value is set correctly
+    assert model_config.snapwave_boundary_conditions.nr_points == nr_points + 1
+    assert (
+        np.mean(
+            model_config.snapwave_boundary_conditions.data["hs"].isel(index=-1).values
+        )
+        == 5.0
+    )
+    assert (
+        np.mean(
+            model_config.snapwave_boundary_conditions.data["tp"].isel(index=-1).values
+        )
+        == 12.0
+    )
+    assert (
+        np.mean(
+            model_config.snapwave_boundary_conditions.data["wd"].isel(index=-1).values
+        )
+        == 180.0
+    )
+    assert (
+        np.mean(
+            model_config.snapwave_boundary_conditions.data["ds"].isel(index=-1).values
+        )
+        == 30.0
+    )
 
 
 # def test_create_timeseries(model_config):
@@ -278,6 +284,14 @@ def test_create(model_config):
         == 15.0
     )
 
+    # FIXME now try merging again > does not work yet
+    # model_config.snapwave_boundary_conditions.create(
+    #     locations=points_gdf,
+    #     timeseries=[df_hs, df_tp, df_wd, df_ds],
+    #     merge=True, #FIXME - does not work currently
+    #     drop_duplicates = False,
+    #     # merge=False,
+    # )
     # # # now with indices that do not exist yet; should be reset to 0
     # df = df.mul(0.3)
     # df.columns = [7]
