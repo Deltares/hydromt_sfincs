@@ -234,8 +234,15 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             ]  # FIXME - should be 'hs' or 'bhs'? in kernel is 'hs', but it's 'bhsfile'...
             for i, varname in enumerate(filenames):
                 self.write_boundary_conditions_timeseries(var=vars[i], varname=varname)
+
+            self.model.config.set("netsnapwavefile", None)
         else:
             self.write_boundary_conditions_netcdf()
+            self.model.config.set("snapwave_bndfile", None)
+            self.model.config.set("snapwave_bhsfile", None)
+            self.model.config.set("snapwave_btpfile", None)
+            self.model.config.set("snapwave_bwdfile", None)
+            self.model.config.set("snapwave_bdsfile", None)
 
     def write_boundary_points(self, filename: str | Path = None):
         """Write SnapWave boundary condition points (*.bnd) file"""
