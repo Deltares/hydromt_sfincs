@@ -21,7 +21,7 @@ geom_style = {
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=False),
     "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=False),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
-    "bdr": dict(color="g", linewidth=2, annotate=True, arrow=True), 
+    "bdr": dict(color="g", linewidth=2, annotate=True, arrow=True),
     "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
     "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
     "crs": dict(linestyle="-", linewidth=1.5, color="deeppink", annotate=False),
@@ -400,8 +400,8 @@ def plot_basemap(
                         # arrow from 2nd point to 1st point
                         ax.annotate(
                             "",
-                            xy=coords[0],       # arrow head
-                            xytext=coords[1],   # arrow tail
+                            xy=coords[0],  # arrow head
+                            xytext=coords[1],  # arrow tail
                             arrowprops=dict(
                                 arrowstyle="->",
                                 color=kwargs.get("color", "k"),

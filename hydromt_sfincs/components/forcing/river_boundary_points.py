@@ -320,7 +320,7 @@ class SfincsRiverBoundaryPoints(ModelComponent):
             )
 
         gdf_boundary_lines = gpd.GeoDataFrame(rows, crs=gdf_out_pts.crs)
-    
+
         self.set(gdf_boundary_lines, merge=merge)
 
         # set config
