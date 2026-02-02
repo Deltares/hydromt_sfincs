@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from os.path import isfile, join
+import xarray as xr
 
 from hydromt_sfincs import SfincsModel
 
@@ -323,6 +324,39 @@ def test_create(model_config):
 
     # assert model_config.snapwave_boundary_conditions.nr_points == 1
     # assert model_config.snapwave_boundary_conditions.data["hs"].index[-1] == 0
+
+
+def test_create_from_grid(model_config):
+    """Test creating wave input from 2D gridded dataset like ERA5"""
+
+    model_config = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
+    model_config.read()
+
+    # Create wave input from GeoDataSet
+    filename = join(model_config.root.path, "ERA5_dummy_input_withcrs.nc")
+
+    # Model has data already; copy it and clear
+    da_org = model_config.snapwave_boundary_conditions.data.copy()
+    model_config.snapwave_boundary_conditions.clear()
+    assert model_config.snapwave_boundary_conditions.nr_points == 0
+
+    # create a new wave input using the geodataset - manually renaming
+
+    da = xr.open_dataset(filename)
+
+    # Rename variables to match snapwave names
+    da = da.rename({"swh": "hs"})
+    da = da.rename({"pp1d": "tp"})
+    da = da.rename({"mwd": "wd"})
+    da = da.rename({"wdw": "ds"})
+    # da.raster.set_crs(4326)
+    da.vector.set_crs(4326)
+
+    model_config.snapwave_boundary_conditions.create(geodataset=da, merge=False)
+    # model_config.snapwave_boundary_conditions.create(geodataset=data, merge=False)
+
+    # create a new wave input using the geodataset - directly from file
+    # model_config.snapwave_boundary_conditions.create(geodataset=filename, merge=False)
 
 
 def test_delete_clear(model_config):

@@ -505,9 +505,92 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             self.model.config.set("snapwave_bwdfile", "snapwave.bwd")
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # @hydromt_step
-    # def create_from_grid(
-    # self,
+    @hydromt_step
+    def create(
+        self,
+        geodataset: Union[str, Path, xr.Dataset] = None,
+        buffer: float = 50e3,
+        merge: bool = True,
+        drop_duplicates: bool = True,
+    ):
+        """Create snapwave forcing from 2D gridded dataset (e.g. ERA5 results).
+
+        Snapwave boundary conditions are read from a `geodataset` (geospatial point timeseries).
+        Data points are selected within a `buffer` around the model region.
+
+        Adds model forcing layers:
+
+        * **hs** forcing: significant wave height time series [m]
+        * **tp** forcing: peak wave period time series [s]
+        * **wd** forcing: wave direction time series [° wrt North, in clockwise direction]
+        * **ds** forcing: wave directional spreading time series [°]
+
+        Parameters
+        ----------
+        geodataset: str, Path, xr.Dataset, optional
+            Path, data source name, or xarray data object for geospatial point timeseries.
+        buffer: float, optional
+            Buffer [m] around model region to select wave data gauges,
+            by default 50 km.
+        merge : bool, optional
+            If True, merge with existing forcing data, by default True.
+        drop_duplicates : bool, optional
+            If True, drop duplicate points in gdf based on 'name' column or geometry.
+
+        See Also
+        --------
+        set
+        """
+
+        tstart, tstop = self.model.get_model_time()  # model time
+        vars = ["hs", "tp", "wd", "ds"]
+
+        if not self.model.grid_type == "quadtree":
+            raise ValueError("SnapWave is not supported for regular grid models!")
+        else:
+            region = self.model.region
+
+        # read wave data from geodataset or geodataframe
+        if geodataset is not None:
+            # read and clip data in time & space
+            da = self.data_catalog.get_geodataset(
+                geodataset,
+                geom=region,
+                buffer=buffer,
+                variables=vars,
+                time_range=(tstart, tstop),
+            )
+
+        # Process found data to get locations within buffer of model region > FIXME - should be already done in get_geodataset?
+        # gdf_locs = da.vector.to_gdf()
+        # gdf_locs = gdf_locs.to_crs(self.model.crs)
+        # # Clip to domain + buffer
+        # include = self.model.quadtree_grid.get_boundary_polygon(buffer=buffer)
+        # include = include.to_crs(self.model.crs)
+        # gdf_locs["inside_polygon"] = gdf_locs.within(include.unary_union)
+        # gdf_locs = gdf_locs[gdf_locs["inside_polygon"] == True]
+        # da = da.sel(index=gdf_locs.index)
+
+        # It is still possible that all points are outside the region+buffer, this error should provide clear feedback
+        if da.vector.is_empty.all():
+            raise ValueError(
+                "All wave boundary points provided are outside the active model domain plus specified buffer. "
+                "Check the provided locations or increase the value of the buffer argument."
+            )
+
+        # Stack 2D grid into 1D 'stations'
+        da_stacked = da.stack(stations=("lon", "lat"))
+
+        # Remove filtered out stations and reset index
+        da_stacked = da_stacked.dropna(
+            dim="stations", how="all"
+        )  # FIXME - do we want this?
+
+        da_stacked = da_stacked.reset_index("stations")
+
+        self.set(geodataset=da_stacked, merge=merge, drop_duplicates=drop_duplicates)
+        # self.set(geodataset=da_stacked, merge=False, drop_duplicates=False) # FIXME - merge does not work yet
+        self.model.config.set("netsnapwavefile", "snapwave.nc")
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def add_point(  # FIXME - do we want to make a copy of add_point in boundary_conditions.py that support multiple vars?
