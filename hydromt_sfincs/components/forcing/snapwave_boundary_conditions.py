@@ -506,7 +506,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     @hydromt_step
-    def create(
+    def create_from_grid(
         self,
         geodataset: Union[str, Path, xr.Dataset] = None,
         buffer: float = 50e3,

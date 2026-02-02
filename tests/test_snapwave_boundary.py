@@ -333,7 +333,7 @@ def test_create_from_grid(model_config):
     model_config.read()
 
     # Create wave input from GeoDataSet
-    filename = join(model_config.root.path, "ERA5_dummy_input_withcrs.nc")
+    filename = join(model_config.root.path, "ERA5_dummy_input.nc")
 
     # Model has data already; copy it and clear
     da_org = model_config.snapwave_boundary_conditions.data.copy()
@@ -352,7 +352,9 @@ def test_create_from_grid(model_config):
     # da.raster.set_crs(4326)
     da.vector.set_crs(4326)
 
-    model_config.snapwave_boundary_conditions.create(geodataset=da, merge=False)
+    model_config.snapwave_boundary_conditions.create_from_grid(
+        geodataset=da, merge=False
+    )
     # model_config.snapwave_boundary_conditions.create(geodataset=data, merge=False)
 
     # create a new wave input using the geodataset - directly from file
