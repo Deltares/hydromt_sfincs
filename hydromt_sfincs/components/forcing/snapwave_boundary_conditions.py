@@ -579,7 +579,15 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             )
 
         # Stack 2D grid into 1D 'stations'
-        da_stacked = da.stack(stations=("lon", "lat"))
+        try:
+            da_stacked = da.stack(stations=("lon", "lat"))
+        except:
+            try:
+                da_stacked = da.stack(stations=("x", "y"))
+            except:
+                raise ValueError(
+                    "Expected coordinates in input geodataset are ('lon','lat') or ('x','y')."
+                )
 
         # Remove filtered out stations and reset index
         da_stacked = da_stacked.dropna(
