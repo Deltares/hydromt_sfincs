@@ -4,7 +4,6 @@ import logging
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
-from matplotlib.lines import Line2D
 import pandas as pd
 import xarray as xr
 import xugrid as xu
@@ -275,9 +274,6 @@ def plot_basemap(
     kwargs0 = {"cbar_kwargs": {"shrink": 0.5, "anchor": (0, 0)}}
     kwargs0.update(kwargs)
 
-    legend_handles = []
-    legend_labels = []
-
     # make nice cmap
     if "cmap" not in kwargs or "norm" not in kwargs:
         depth_vars = ["dep", "z"]
@@ -374,23 +370,11 @@ def plot_basemap(
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
         gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
         if gdf_msk2.index.size > 0:
-            if isinstance(ds["mask"], xu.UgridDataArray):
-                gdf_msk2.plot(ax=ax, zorder=3, color=geom_style["mask2"]["color"])
-                legend_handles.append(Line2D([0], [0], **geom_style["mask2"]))
-                legend_labels.append("waterlevel bnd")
-            else:
-                gdf_msk2.plot(
-                    ax=ax, zorder=3, label="waterlevel bnd", **geom_style["mask2"]
-                )
+            gdf_msk2.plot(
+                ax=ax, zorder=3, label="waterlevel bnd", **geom_style["mask2"]
+            )
         if gdf_msk3.index.size > 0:
-            if isinstance(ds["mask"], xu.UgridDataArray):
-                gdf_msk3.plot(ax=ax, zorder=3, color=geom_style["mask3"]["color"])
-                legend_handles.append(Line2D([0], [0], **geom_style["mask3"]))
-                legend_labels.append("outflow bnd")
-            else:
-                gdf_msk3.plot(
-                    ax=ax, zorder=3, label="outflow bnd", **geom_style["mask3"]
-                )
+            gdf_msk3.plot(ax=ax, zorder=3, label="outflow bnd", **geom_style["mask3"])
 
     # plot static geoms
     if plot_geoms:
@@ -431,10 +415,7 @@ def plot_basemap(
             prop=dict(size=8),
         )
         legend_kwargs0.update(**legend_kwargs)
-        handles, labels = ax.get_legend_handles_labels()
-        handles += legend_handles
-        labels += legend_labels
-        ax.legend(handles, labels, **legend_kwargs0)
+        ax.legend(**legend_kwargs0)
 
     return fig, ax
 

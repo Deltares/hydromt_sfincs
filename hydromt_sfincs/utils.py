@@ -343,10 +343,8 @@ def write_timeseries(
 
 
 ## MASK
-
-
 def get_bounds_vector(
-    da_msk: Union[xr.DataArray, xu.UgridDataArray]
+    da_msk: Union[xr.DataArray, xu.UgridDataArray],
 ) -> gpd.GeoDataFrame:
     """Get bounds of vectorized mask as GeoDataFrame.
 
@@ -377,8 +375,99 @@ def get_bounds_vector(
         ).explode(index_parts=True)
         gdf_msk = gdf_msk[gdf_msk.length > 0]
     elif isinstance(da_msk, xu.UgridDataArray):
-        mask = da_msk.where(da_msk > 1, drop=True)
-        gdf_msk = mask.ugrid.to_geodataframe(name="value")
+        lines = []
+
+        xz = da_msk.grid.face_coordinates[:, 0]
+        yz = da_msk.grid.face_coordinates[:, 1]
+        min_dist = da_msk.grid.edge_length.max() * 2
+
+        mask_vals = np.unique(da_msk.values)
+        mask_vals = mask_vals[mask_vals > 1]
+
+        for mval in mask_vals:
+            # Indices for this mask value
+            ibnd = np.where(da_msk.values == mval)
+
+            xp = xz[ibnd]
+            yp = yz[ibnd]
+
+            if xp.size == 0:
+                continue
+
+            used = np.full(xp.shape, False, dtype=bool)
+            polylines = []
+
+            while True:
+                if np.all(used):
+                    break
+
+                i1 = np.where(~used)[0][0]
+                used[i1] = True
+                polyline = [i1]
+
+                # Forward direction
+                while True:
+                    xpunused = xp[~used]
+                    ypunused = yp[~used]
+                    unused_indices = np.where(~used)[0]
+
+                    if unused_indices.size == 0:
+                        break
+
+                    dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
+                    inear = np.nanargmin(dst)
+                    inearall = unused_indices[inear]
+
+                    if dst[inear] < min_dist:
+                        polyline.append(inearall)
+                        used[inearall] = True
+                        i1 = inearall
+                    else:
+                        break
+
+                # Backward direction
+                i1 = polyline[0]
+                while True:
+                    xpunused = xp[~used]
+                    ypunused = yp[~used]
+                    unused_indices = np.where(~used)[0]
+
+                    if unused_indices.size == 0:
+                        break
+
+                    dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
+                    inear = np.nanargmin(dst)
+                    inearall = unused_indices[inear]
+
+                    if dst[inear] < min_dist:
+                        polyline.insert(0, inearall)
+                        used[inearall] = True
+                        i1 = inearall
+                    else:
+                        break
+
+                if len(polyline) > 1:
+                    polylines.append(polyline)
+
+            # Convert polylines to LineStrings
+            for polyline in polylines:
+                x = xp[polyline]
+                y = yp[polyline]
+                coords = list(zip(x.ravel(), y.ravel()))
+
+                line = LineString(coords)
+
+                if line.length == 0:
+                    continue
+
+                lines.append(
+                    {
+                        "value": int(mval),
+                        "geometry": line,
+                    }
+                )
+
+        gdf_msk = gpd.GeoDataFrame(lines, crs=da_msk.grid.crs)
     return gdf_msk
 
 
