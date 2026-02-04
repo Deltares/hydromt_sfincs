@@ -517,6 +517,8 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         Snapwave boundary conditions are read from a `geodataset` (geospatial point timeseries).
         Data points are selected within a `buffer` around the model region.
+        Expected coordinates in input geodataset are ('lon','lat')
+        or ('longitude','latitude') or ('x','y')
 
         Adds model forcing layers:
 
@@ -579,15 +581,25 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             )
 
         # Stack 2D grid into 1D 'stations'
-        try:
-            da_stacked = da.stack(stations=("lon", "lat"))
-        except:
-            try:
+        # check if either lon/lat or x/y are present
+        if (
+            "lon" in da.dims
+            and "lat" in da.dims
+            or "longitude" in da.dims
+            and "latitude" in da.dims
+            or "x" in da.dims
+            and "y" in da.dims
+        ):
+            if "lon" in da.dims:
+                da_stacked = da.stack(stations=("lon", "lat"))
+            if "longitude" in da.dims:
+                da_stacked = da.stack(stations=("longitude", "latitude"))
+            if "x" in da.dims:
                 da_stacked = da.stack(stations=("x", "y"))
-            except:
-                raise ValueError(
-                    "Expected coordinates in input geodataset are ('lon','lat') or ('x','y')."
-                )
+        else:
+            raise ValueError(
+                "Expected coordinates in input geodataset are ('lon','lat') or ('longitude','latitude') or ('x','y')."
+            )
 
         # Remove filtered out stations and reset index
         da_stacked = da_stacked.dropna(
