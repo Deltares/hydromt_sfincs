@@ -3,7 +3,6 @@ from os.path import join
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Union
 
-from cht_tide import predict
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -14,7 +13,6 @@ import xarray as xr
 from hydromt import hydromt_step
 from hydromt.gis.vector import GeoDataset
 from hydromt_sfincs import utils
-from .deltares_ini import IniStruct
 from .boundary_conditions import SfincsBoundaryBase
 
 if TYPE_CHECKING:
@@ -651,7 +649,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         )
         gdf["name"] = name
 
-        self.set_locations(gdf=gdf, merge=False, drop_duplicates=False)
+        self.set_locations(gdf=gdf, merge=True, drop_duplicates=True)
 
         # piecewise set all values of self.data['hs'] to value of hs
         self.data["hs"].values[:] = hs

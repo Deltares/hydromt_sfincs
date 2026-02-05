@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from hydromt.gis.vector import GeoDataArray
+from hydromt.gis.vector import GeoDataArray, GeoDataset
 from hydromt.model.components import ModelComponent
 
 if TYPE_CHECKING:
@@ -153,7 +153,7 @@ class SfincsBoundaryBase(ModelComponent):
         ----------
         gdf : gpd.GeoDataFrame
             GeoDataFrame with Point geometries for new locations.
-        value : float, optional
+        value : Union[float, list], optional
             Default value used for dummy timeseries.
         merge : bool, optional
             If True and existing points exist, merge new locations with existing.
@@ -163,24 +163,8 @@ class SfincsBoundaryBase(ModelComponent):
         gdf = self._validate_and_prepare_gdf(gdf)
 
         if self.nr_points > 0 and merge:
-            # check length of self._default_varname
-
-            # parse existing to dataframe
-            if len(self._default_varname) > 1:
-                df0 = (
-                    self.data[self._default_varname]
-                    .transpose(..., self.data.vector.index_dim)
-                    .to_dataframe()
-                )
-            else:
-                df0 = (
-                    self.data[self._default_varname[0]]
-                    .transpose(..., self.data.vector.index_dim)
-                    .to_pandas()
-                )
-
             gdf0 = self.data.vector.to_gdf()
-
+            ds0 = self.data.copy()
             # TODO discuss whether we want to filter; or make it users responsibility
             if drop_duplicates:
                 if "name" in gdf0.columns and "name" in gdf.columns:
@@ -208,7 +192,7 @@ class SfincsBoundaryBase(ModelComponent):
                     gdf0 = gdf0.drop(columns="__coords__")
                     gdf = gdf.drop(columns="__coords__")
 
-                df0 = df0.reindex(gdf0.index, axis=1, fill_value=0)
+                ds0 = ds0.reindex(index=gdf0.index, fill_value=0)
                 nr_points_removed = self.nr_points - len(gdf0)
                 if nr_points_removed > 0:
                     logger.info(
@@ -216,32 +200,68 @@ class SfincsBoundaryBase(ModelComponent):
                             nr_points_removed
                         )
                     )
-
-            # create matching dataframe for new points
-            df_new = pd.DataFrame(index=df0.index, columns=gdf.index, data=value)
-            gdf = self._align_gdf_and_df(gdf, df_new)
-
-            gdf_combined = pd.concat([gdf0, gdf], ignore_index=True)
-            df_combined = pd.concat([df0, df_new], axis=1)
-            df_combined.columns = gdf_combined.index
-
-            new_indices = gdf_combined.index.difference(range(len(gdf0)))
-            self._finalize_set(df_combined, gdf_combined)
-        else:
-            # overwrite existing data with new minimal timeseries
-            gdf = gdf.reset_index(drop=True)
-            df_new = pd.DataFrame(
-                index=pd.date_range(*self.model.get_model_time(), periods=2),
-                columns=gdf.index,
-                data=value,
+            # create matching dataset to ds0 for new points but with length of gdf.index
+            da_list = []
+            varnames = (
+                [self._default_varname]
+                if isinstance(self._default_varname, str)
+                else self._default_varname
             )
-            gdf = self._align_gdf_and_df(gdf, df_new)
-            new_indices = gdf.index
-            self._finalize_set(df_new, gdf)
+            for var in varnames:
+                da_list.append(
+                    xr.DataArray(
+                        np.ones((len(ds0.time), len(gdf.index))) * value,
+                        dims=("time", "index"),
+                        coords={
+                            "time": ds0.time,
+                            "index": gdf.index,
+                        },
+                        name=var,
+                    )
+                )
+            ds_new = xr.merge(da_list[:])
+            gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=False)
+            gds_combined = xr.concat([ds0[varnames], gds_new], dim="index")
+            gds_combined = gds_combined.assign_coords(
+                index=np.arange(gds_combined.sizes["index"])
+            )
+            gdf_combined = gds_combined.vector.to_gdf()
+            new_indices = gdf_combined.index.difference(range(len(gdf0)))
+            self.set(geodataset=gds_combined)
+        else:
+            # simple replacement
+            da_list = []
+            varnames = (
+                [self._default_varname]
+                if isinstance(self._default_varname, str)
+                else self._default_varname
+            )
+            for var in varnames:
+                da_list.append(
+                    xr.DataArray(
+                        np.ones((2, len(gdf.index))) * value,
+                        dims=("time", "index"),
+                        coords={
+                            "time": pd.date_range(
+                                *self.model.get_model_time(), periods=2
+                            ),
+                            "index": gdf.index,
+                        },
+                        name=var,
+                    )
+                )
+            ds_new = xr.merge(da_list[:])
+            gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=False)
+            gds_new = gds_new.assign_coords(index=np.arange(gds_new.sizes["index"]))
+            gdf_new = gds_new.vector.to_gdf()
+            new_indices = gdf_new.index
+            self.set(geodataset=gds_new)
 
         return new_indices
 
-    def set_timeseries(self, df: pd.DataFrame, varname: str = None):
+    def set_timeseries(
+        self, data: Union[pd.DataFrame, xr.Dataset], varname: str = None
+    ):
         """
         Add or update timeseries for existing locations. If the dataframe
         contains all indices it will fully replace the variable, otherwise
@@ -249,43 +269,42 @@ class SfincsBoundaryBase(ModelComponent):
 
         Parameters
         ----------
-        df : pd.DataFrame
-            Timeseries table, indexed by time. Columns correspond to point indices.
+        data : Union[pd.DataFrame, xr.Dataset]
+            Timeseries dataset, with dimensions "time" and "index". Either pandas with single
+            variable or xarray Dataset with multiple variables.
         varname : str, optional
             Variable name to write in the dataset (defaults to subclass _default_varname).
         """
-        df = self._validate_and_prepare_df(df)
 
         if self.nr_points == 0:
             raise ValueError("Cannot set timeseries without existing locations")
 
         if varname is None:
-            varname = self._default_varname[0]
+            varname = self._default_varname
 
-        new_da = xr.DataArray(
-            df,
-            dims=("time", "index"),
-            coords={"time": df.index, "index": df.columns},
-            name=varname,
-        )
+        if isinstance(data, pd.DataFrame):
+            da = self._validate_and_prepare_df(data)
+            ds = da.to_dataset(name=varname)
+        else:
+            ds = data
 
-        if len(new_da.indexes["index"]) == self.nr_points:
+        if len(ds.indexes["index"]) == self.nr_points:
             # full replacement
-            combined = new_da
+            combined = ds[varname]
         else:
             # partial update: align time dims and merge
-            all_times = self.data[varname].indexes["time"].union(new_da.indexes["time"])
+            all_times = self.data[varname].indexes["time"].union(ds.indexes["time"])
             existing = self.data[varname].reindex(time=all_times)
-            new_da = new_da.reindex(time=all_times)
+            ds = ds.reindex(time=all_times)
 
             combined = existing.copy()
-            combined.loc[dict(index=new_da.indexes["index"])] = new_da
+            combined.loc[dict(index=ds.indexes["index"])] = ds[varname]
 
             # Fill missing values along time dimension
             combined = combined.interpolate_na(dim="time").bfill("time").fillna(0)
 
         # Replace variable in dataset and ensure time coordinate ordering
-        self._data = self._data.reindex(time=combined.time)
+        self._data = self.data.reindex(time=combined.time)
         self._data[varname] = combined
 
     def _validate_and_prepare_gdf(self, gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -341,7 +360,12 @@ class SfincsBoundaryBase(ModelComponent):
                 "The provided timeseries must have at least two data points."
             )
 
-        return df
+        da = xr.DataArray(
+            df,
+            dims=("time", "index"),
+            coords={"time": df.index, "index": df.columns},
+        )
+        return da
 
     def _align_gdf_and_df(
         self, gdf: gpd.GeoDataFrame, df: pd.DataFrame
