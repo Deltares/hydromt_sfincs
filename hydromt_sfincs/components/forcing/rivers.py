@@ -29,7 +29,6 @@ class SfincsRivers(ModelComponent):
         model: "SfincsModel",
     ):
         self._data: gpd.GeoDataFrame = None
-        self._centerlines: gpd.GeoDataFrame = None
         super().__init__(
             model=model,
         )
@@ -218,7 +217,7 @@ class SfincsRivers(ModelComponent):
 
         # set river
         if keep_rivers_geom:
-            self._centerlines = gdf_riv
+            self._data = gdf_riv
 
         # update mask if river_width > 0
         if "rivwth" in gdf_src.columns:
@@ -408,17 +407,16 @@ class SfincsRivers(ModelComponent):
         # elif reset_bounds:
         #     self.mask.create_boundary(btype=btype, reset_bounds=reset_bounds)
 
-        # Class here: build bdr points
-        gdf_riv_points = self.model.river_boundary_points.create(
-            gdf_out_pts=gdf_out_pts,
-            gdf_riv=gdf_riv,
+        self.model.river_boundary_points.create(
+            locations=gdf_out_pts,
+            centerlines=gdf_riv,
             internal_dist=internal_dist,
             slope=slope,
             reverse_river_geom=reverse_river_geom,
             merge=False,
         )
 
-        self._data = gdf_riv_points
+        self._data = self.model.river_boundary_points.data
         # keep river centerlines
         if keep_rivers_geom and len(gdf_riv) > 0:
             self._data = gdf_riv
