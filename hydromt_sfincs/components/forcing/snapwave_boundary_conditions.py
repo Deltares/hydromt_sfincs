@@ -486,10 +486,9 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
     @hydromt_step
     def create_from_grid(
         self,
-        geodataset: Union[str, Path, xr.Dataset] = None,
-        buffer: float = 50e3,
-        merge: bool = True,
-        drop_duplicates: bool = True,
+        data: Union[str, Path, xr.Dataset],
+        locations: Union[str, Path, gpd.GeoDataFrame] = None,
+        sample_method: str = "nearest",
     ):
         """Create snapwave forcing from 2D gridded dataset (e.g. ERA5 results).
 
@@ -507,87 +506,62 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         Parameters
         ----------
-        geodataset: str, Path, xr.Dataset, optional
-            Path, data source name, or xarray data object for geospatial point timeseries.
-        buffer: float, optional
-            Buffer [m] around model region to select wave data gauges,
-            by default 50 km.
-        merge : bool, optional
-            If True, merge with existing forcing data, by default True.
-        drop_duplicates : bool, optional
-            If True, drop duplicate points in gdf based on 'name' column or geometry.
+        data: str, Path, xr.Dataset, optional
+            Path, data source name, or xarray data object for raster dataset with variables
+            hs, tp, wd and ds.
+        locations: str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas object for snapwave_bnd point locations.
+        sample_method: str, optional
+            Method for sampling raster data to point locations. Options are "nearest" (default) or "bilinear".
 
         See Also
         --------
         set
         """
 
-        tstart, tstop = self.model.get_model_time()  # model time
-        vars = ["hs", "tp", "wd", "ds"]
-
+        # SnapWave is only supported for quadtree grid models
         if not self.model.grid_type == "quadtree":
             raise ValueError("SnapWave is not supported for regular grid models!")
+
+        # TODO do we want to buffer around snapwave_mask==2?
+        region = self.model.region
+
+        if locations is not None:
+            gdf = self.data_catalog.get_geodataframe(
+                locations, geom=region, assert_gtype="Point"
+            ).to_crs(self.model.crs)
+        elif self.nr_points > 0:
+            gdf = self.gdf
         else:
-            region = self.model.region
+            raise ValueError("No snapwave boundary points provided.")
 
-        # read wave data from geodataset or geodataframe
-        if geodataset is not None:
-            # read and clip data in time & space
-            da = self.data_catalog.get_geodataset(
-                geodataset,
-                geom=region,
-                buffer=buffer,
-                variables=vars,
-                time_range=(tstart, tstop),
-            )
+        # get data for model domain and config time range
+        ds = self.data_catalog.get_rasterdataset(
+            data,
+            bbox=self.model.bbox,
+            buffer=5,
+            time_range=self.model.get_model_time(),
+            variables=self._default_varname,
+        )
 
-        # Process found data to get locations within buffer of model region > FIXME - should be already done in get_geodataset?
-        # gdf_locs = da.vector.to_gdf()
-        # gdf_locs = gdf_locs.to_crs(self.model.crs)
-        # # Clip to domain + buffer
-        # include = self.model.quadtree_grid.get_boundary_polygon(buffer=buffer)
-        # include = include.to_crs(self.model.crs)
-        # gdf_locs["inside_polygon"] = gdf_locs.within(include.unary_union)
-        # gdf_locs = gdf_locs[gdf_locs["inside_polygon"] == True]
-        # da = da.sel(index=gdf_locs.index)
+        # Sample data to locations
+        # TODO - determine how we actualyl want to sample/interpolate here
+        ds_sampled = ds.raster.sample(gdf, wdw=0)
+        # x = gdf.to_crs(ds.raster.crs).geometry.x.values
+        # y = gdf.to_crs(ds.raster.crs).geometry.y.values
+        # x_dim, y_dim = ds.raster.dims
+        # if sample_method == "nearest":
+        #     # Nearest-neighbor interpolation
+        #     ds_sampled = ds.interp({x_dim: x, y_dim:y}, method="nearest")
+        # elif sample_method == "linear":
+        #     # Linear (bilinear) interpolation
+        #     ds_sampled = ds.interp({x_dim: x, y_dim:y}, method="linear")
+        # else:
+        #     raise ValueError(f"Unknown sample_method '{sample_method}'.")
 
-        # It is still possible that all points are outside the region+buffer, this error should provide clear feedback
-        if da.vector.is_empty.all():
-            raise ValueError(
-                "All wave boundary points provided are outside the active model domain plus specified buffer. "
-                "Check the provided locations or increase the value of the buffer argument."
-            )
-
-        # Stack 2D grid into 1D 'stations'
-        # check if either lon/lat or x/y are present
-        if (
-            "lon" in da.dims
-            and "lat" in da.dims
-            or "longitude" in da.dims
-            and "latitude" in da.dims
-            or "x" in da.dims
-            and "y" in da.dims
-        ):
-            if "lon" in da.dims:
-                da_stacked = da.stack(stations=("lon", "lat"))
-            if "longitude" in da.dims:
-                da_stacked = da.stack(stations=("longitude", "latitude"))
-            if "x" in da.dims:
-                da_stacked = da.stack(stations=("x", "y"))
-        else:
-            raise ValueError(
-                "Expected coordinates in input geodataset are ('lon','lat') or ('longitude','latitude') or ('x','y')."
-            )
-
-        # Remove filtered out stations and reset index
-        da_stacked = da_stacked.dropna(
-            dim="stations", how="all"
-        )  # FIXME - do we want this?
-
-        da_stacked = da_stacked.reset_index("stations")
-
-        self.set(geodataset=da_stacked, merge=merge, drop_duplicates=drop_duplicates)
-        # self.set(geodataset=da_stacked, merge=False, drop_duplicates=False) # FIXME - merge does not work yet
+        # Set sampled data to model
+        gds_sampled = GeoDataset.from_gdf(gdf=gdf, data_vars=ds_sampled)
+        self.set(geodataset=gds_sampled, merge=False, drop_duplicates=False)
         self.model.config.set("netsnapwavefile", "snapwave.nc")
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
