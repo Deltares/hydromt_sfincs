@@ -31,6 +31,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
     """
 
     _default_varname = ["hs", "tp", "wd", "ds"]  # used in set_locations among others
+    _default_values = [1.0, 10.0, 270.0, 20.0]
 
     def __init__(self, model: "SfincsModel"):
         super().__init__(model)
@@ -396,111 +397,90 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         --------
         set
         """
-        gdf_locs, df_ts = None, None
-        tstart, tstop = self.model.get_model_time()  # model time
-        vars = ["hs", "tp", "wd", "ds"]
-        # buffer around msk==2 values
+
+        # SnapWave is only supported for quadtree grid models
         if not self.model.grid_type == "quadtree":
             raise ValueError("SnapWave is not supported for regular grid models!")
-        else:
-            region = self.model.region
 
-        # read wave data from geodataset or geodataframe
+        gdf_locs, df_ts = None, None
+        tstart, tstop = self.model.get_model_time()  # model time
+        # TODO buffer around msk==2 values
+        region = self.model.region
+
+        # Read wave data from geodataset, timeseries and locations
         if geodataset is not None:
             # read and clip data in time & space
             da = self.data_catalog.get_geodataset(
                 geodataset,
                 geom=region,
                 buffer=buffer,
-                variables=vars,
+                variables=self._default_varname,
                 time_range=(tstart, tstop),
             )
             self.set(geodataset=da, merge=False, drop_duplicates=False)
             self.model.config.set("netsnapwavefile", "snapwave.nc")
+            return
 
-        # read wave data from separate timeseries and locations input
-        else:
-            # first, read locations data
+        # Read wave data from separate timeseries and locations input
+        # First read locations
+        if locations is not None:
+            gdf_locs = self.data_catalog.get_geodataframe(
+                locations, geom=region, buffer=buffer
+            ).to_crs(self.model.crs)
+            if "index" in gdf_locs.columns:
+                gdf_locs = gdf_locs.set_index("index")
             used_existing = False
+        # No locations provided, using existing wave boundary points from data:
+        elif self.nr_points > 0:
+            gdf_locs = self.gdf
+            used_existing = True
+        else:
+            raise ValueError("No wave boundary (bnd) points provided.")
 
-            # read location data from locations input:
-            if gdf_locs is None and locations is not None:
-                gdf_locs = self.data_catalog.get_geodataframe(
-                    locations,
-                    geom=region,
-                    buffer=buffer,
-                ).to_crs(self.model.crs)
-                if "index" in gdf_locs.columns:
-                    gdf_locs = gdf_locs.set_index("index")
-                # filter df_ts timeseries based on gdf_locs index
-                # this allows to use a subset of the locations in the timeseries
-                # FIXME - TL: do we still want this?
-                if df_ts is not None and np.isin(gdf_locs.index, df_ts.columns).all():
-                    df_ts = df_ts.reindex(gdf_locs.index, axis=1, fill_value=0)
+        # It is still possible that all points are outside the region+buffer, this error should provide clear feedback
+        if gdf_locs.is_empty.all():
+            raise ValueError(
+                "All wave boundary points provided are outside the active model domain plus specified buffer. "
+                "Check the provided locations or increase the value of the buffer argument."
+            )
 
-            # no locations provided, using existing wave boundary points from data:
-            # (e.g. added using get_boundary_points_from_mask)
-            elif gdf_locs is None and "hs" in self.data:
-                used_existing = True
-                gdf_locs = self.data["hs"].vector.to_gdf()
+        # Set/ update forcing
+        if not used_existing:
+            self.set_locations(
+                gdf=gdf_locs,
+                value=self._default_values,
+                merge=merge,
+                drop_duplicates=drop_duplicates,
+            )
 
-            elif gdf_locs is None:
-                raise ValueError("No wave boundary (bnd) points provided.")
-
-            # It is still possible that all points are outside the region+buffer, this error should provide clear feedback
-            if gdf_locs.is_empty.all():
+        # Secondly, read time-series data
+        if timeseries is not None:
+            # loop over list of timeseries inputs for each variable
+            if len(timeseries) != len(self._default_varname):
                 raise ValueError(
-                    "All wave boundary points provided are outside the active model domain plus specified buffer. "
-                    "Check the provided locations or increase the value of the buffer argument."
+                    f"Timeseries does not provide data for all variables {self._default_varname}!, "
+                    f"make sure to provide a list of {len(self._default_varname)} timeseries inputs."
                 )
-
-            # set/ update forcing
-            if used_existing is False:
-                # set the new locations
-                self.set_locations(
-                    gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates
+            for ts, varname in zip(timeseries, self._default_varname):
+                df_ts = self.data_catalog.get_dataframe(
+                    ts,
+                    time_range=(tstart, tstop),
+                    source_kwargs={
+                        "driver": {
+                            "name": "pandas",
+                            "options": {"index_col": 0, "parse_dates": True},
+                        }
+                    },
                 )
-                # old: self.set(df=df_ts, gdf=gdf_locs, merge=merge, drop_duplicates=drop_duplicates)
+                # ensure column labels match integer location indices
+                df_ts.columns = df_ts.columns.map(int)
+                # set timeseries to data per variable
+                self.set_timeseries(df_ts, varname=varname)
 
-            # secondly, read time-series data
-            if timeseries is not None:
-                # loop over list of timeseries inputs for each variable
-                if len(timeseries) != 4:
-                    raise ValueError(
-                        "Timeseries input must be a list of 4 items, for hs, tp, wd, and ds."
-                    )
-                else:
-                    for i, varname in enumerate(timeseries):
-                        df_ts = self.data_catalog.get_dataframe(
-                            timeseries[i],
-                            time_range=(tstart, tstop),
-                            source_kwargs={
-                                "driver": {
-                                    "name": "pandas",
-                                    "options": {
-                                        "index_col": 0,
-                                        "parse_dates": True,
-                                    },
-                                }
-                            },
-                        )
-                        # df_ts.columns.name = "index"
-                        df_ts.columns = df_ts.columns.map(
-                            int
-                        )  # parse column names to integers
-
-                        # set per variable
-                        self.set_timeseries(
-                            df=df_ts,
-                            varname=vars[i],
-                        )
-
-            # update config
-            self.model.config.set("snapwave_bndfile", "snapwave.bnd")
-            self.model.config.set("snapwave_bhsfile", "snapwave.bhs")
-            self.model.config.set("snapwave_btpfile", "snapwave.btp")
-            self.model.config.set("snapwave_bdsfile", "snapwave.bds")
-            self.model.config.set("snapwave_bwdfile", "snapwave.bwd")
+        # Lastly, always update config
+        self.model.config.set("snapwave_bndfile", "snapwave.bnd")
+        for var in self._default_varname:
+            self.model.config.set(f"snapwave_b{var}file", f"snapwave.b{var}")
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     @hydromt_step
@@ -611,18 +591,19 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         self.model.config.set("netsnapwavefile", "snapwave.nc")
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    def add_point(  # FIXME - do we want to make a copy of add_point in boundary_conditions.py that support multiple vars?
+    def add_point(
         self,
-        x: float = None,
-        y: float = None,
+        x: float,
+        y: float,
         name: str = None,
         hs: float = 1.0,
         tp: float = 10.0,
         wd: float = 270.0,
         ds: float = 20.0,
+        drop_duplicates: bool = True,
     ):
-        """Add a single point to the boundary conditions data. Either gdf,
-        or x, y must be provided.
+        """Add a single point to the boundary conditions data.
+        x, y must be provided.
 
         Parameters
         ----------
@@ -632,30 +613,22 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         y : float
             y-coordinate of the point
         hs : float
-            Wave height of the point
+            Wave height in meters of the point
         tp : float
-            Peak period of the point
+            Peak period in seconds of the point
         wd : float
-            Wave direction of the point
+            Wave direction in nautical degrees of the point
         ds : float
-            Directional spread of the point
+            Directional spread in degrees of the point
         """
-        new_index = self.nr_points + 1
-        if name is None:
-            name = f"point_{new_index}"
 
-        gdf = gpd.GeoDataFrame(
-            geometry=gpd.points_from_xy([x], [y]), crs=self.model.crs
+        super().add_point(
+            x=x,
+            y=y,
+            name=name,
+            value=[hs, tp, wd, ds],
+            drop_duplicates=drop_duplicates,
         )
-        gdf["name"] = name
-
-        self.set_locations(gdf=gdf, merge=True, drop_duplicates=True)
-
-        # piecewise set all values of self.data['hs'] to value of hs
-        self.data["hs"].values[:] = hs
-        self.data["tp"].values[:] = tp
-        self.data["wd"].values[:] = wd
-        self.data["ds"].values[:] = ds
 
     @hydromt_step
     def create_timeseries(

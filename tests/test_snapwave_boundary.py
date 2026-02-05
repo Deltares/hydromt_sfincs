@@ -95,7 +95,7 @@ def test_add_point(model_config):
 
     # determine point in the middle of the grid
     gdf = model_config.region
-    point = gdf.geometry.unary_union.centroid
+    point = gdf.geometry.union_all().centroid
 
     model_config.snapwave_boundary_conditions.add_point(
         x=point.x, y=point.y, hs=5.0, tp=12.0, wd=180.0, ds=30.0  # , name="test_point"
@@ -229,14 +229,15 @@ def test_create(model_config):
     assert model_config.snapwave_boundary_conditions.nr_points == 2
 
     # show that dummy data is set to 0
+    default_values = [1.0, 10.0, 270.0, 20.0]
     for idx in range(0, model_config.snapwave_boundary_conditions.nr_points):
         # also for other variables in a loop
-        for var in ["hs", "tp", "wd", "ds"]:
+        for i, var in enumerate(["hs", "tp", "wd", "ds"]):
             point_data = model_config.snapwave_boundary_conditions.data[var].sel(
                 index=idx
             )
-            assert point_data.values.min() == 0.0
-            assert point_data.values.max() == 0.0
+            assert point_data.values.min() == default_values[i]
+            assert point_data.values.max() == default_values[i]
             assert len(point_data.time) == 2
 
     # now add timeseries from csv file, index in csv says 1
