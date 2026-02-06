@@ -487,8 +487,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
     def create_from_grid(
         self,
         data: Union[str, Path, xr.Dataset],
-        locations: Union[str, Path, gpd.GeoDataFrame] = None,
-        sample_method: str = "nearest",
+        buffer: float = 25e3,
     ):
         """Create snapwave forcing from 2D gridded dataset (e.g. ERA5 results).
 
@@ -509,10 +508,9 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         data: str, Path, xr.Dataset, optional
             Path, data source name, or xarray data object for raster dataset with variables
             hs, tp, wd and ds.
-        locations: str, Path, gpd.GeoDataFrame, optional
-            Path, data source name, or geopandas object for snapwave_bnd point locations.
-        sample_method: str, optional
-            Method for sampling raster data to point locations. Options are "nearest" (default) or "bilinear".
+        buffer: float, optional
+            Buffer distance around the model region to select snapwave boundary points.
+            Default is 25 kilometers.
 
         See Also
         --------
@@ -523,17 +521,16 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         if not self.model.grid_type == "quadtree":
             raise ValueError("SnapWave is not supported for regular grid models!")
 
-        # TODO do we want to buffer around snapwave_mask==2?
-        region = self.model.region
-
-        if locations is not None:
-            gdf = self.data_catalog.get_geodataframe(
-                locations, geom=region, assert_gtype="Point"
-            ).to_crs(self.model.crs)
-        elif self.nr_points > 0:
-            gdf = self.gdf
-        else:
-            raise ValueError("No snapwave boundary points provided.")
+        # Check if snapwave_mask is available in model grid, as this is needed to select points around snapwave boundary
+        if "snapwave_mask" not in self.model.quadtree_grid.data:
+            raise ValueError(
+                "SnapWave mask not found in model grid! Make sure to create the snapwave_mask in the quadtree grid before running this step."
+            )
+        # if present, check whether is has values of 2, which indicate the snapwave boundary cells
+        if not np.any(self.model.quadtree_grid.data["snapwave_mask"] == 2):
+            raise ValueError(
+                "No snapwave boundary cells found in snapwave_mask! Make sure to create the snapwave_mask in the quadtree grid before running this step."
+            )
 
         # get data for model domain and config time range
         ds = self.data_catalog.get_rasterdataset(
@@ -544,25 +541,35 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             variables=self._default_varname,
         )
 
-        # Sample data to locations
-        # TODO - determine how we actualyl want to sample/interpolate here
-        ds_sampled = ds.raster.sample(gdf, wdw=0)
-        # x = gdf.to_crs(ds.raster.crs).geometry.x.values
-        # y = gdf.to_crs(ds.raster.crs).geometry.y.values
-        # x_dim, y_dim = ds.raster.dims
-        # if sample_method == "nearest":
-        #     # Nearest-neighbor interpolation
-        #     ds_sampled = ds.interp({x_dim: x, y_dim:y}, method="nearest")
-        # elif sample_method == "linear":
-        #     # Linear (bilinear) interpolation
-        #     ds_sampled = ds.interp({x_dim: x, y_dim:y}, method="linear")
-        # else:
-        #     raise ValueError(f"Unknown sample_method '{sample_method}'.")
+        # Create a buffer around the snapwave boundary cells (msk==2)
+        gdf_msk = utils.get_bounds_vector(
+            da_msk=self.model.quadtree_grid.data["snapwave_mask"],
+        )
+        gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
+        gdf_msk2["geometry"] = gdf_msk2.buffer(buffer)
+        # Select cells within buffer around snapwave boundary cells (msk==2)
+        msk = ds.raster.geometry_mask(gdf_msk2, all_touched=True)
 
-        # Set sampled data to model
-        gds_sampled = GeoDataset.from_gdf(gdf=gdf, data_vars=ds_sampled)
-        self.set(geodataset=gds_sampled, merge=False, drop_duplicates=False)
+        # Check if any points are selected, otherwise raise error
+        if msk.sum() == 0:
+            raise ValueError(
+                "No data points found within buffer around snapwave boundary cells! "
+                "Try increasing the buffer distance or check the input data and model grid."
+            )
+
+        # Convert selected cells to point dataset
+        spatial_dims = ds.raster.dims
+        ds = ds.stack(index=spatial_dims)
+        msk = msk.stack(index=spatial_dims)
+        ds = ds.sel(index=msk)
+        gds = GeoDataset.from_netcdf(ds)
+
+        # Set data to model
+        self.set(geodataset=gds, merge=False, drop_duplicates=False)
         self.model.config.set("netsnapwavefile", "snapwave.nc")
+
+        # Log some information about the created snapwave boundary conditions
+        logger.info(f"Added {ds.index.size} snapwave boundary points to the model.")
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def add_point(

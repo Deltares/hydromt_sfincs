@@ -307,6 +307,15 @@ def test_create_from_grid(quadtree_model_config):
     # Model has data already; copy it
     da_org = mod.snapwave_boundary_conditions.data.copy()
 
+    # The model does not have a snapwave_mask, this should raise an error
+    with pytest.raises(ValueError):
+        mod.snapwave_boundary_conditions.create_from_grid(
+            data="era5_dummy",
+        )
+
+    # Now add a snapwave_mask to the model and try again
+    mod.quadtree_mask.create_active(model="snapwave", copy_sfincsmask=True)
+
     # Now we overwrite the timeseries with data from a 2D gridded dataset
     mod.snapwave_boundary_conditions.create_from_grid(
         data="era5_dummy",
@@ -314,11 +323,6 @@ def test_create_from_grid(quadtree_model_config):
 
     # Make sure that data is updated
     assert not mod.snapwave_boundary_conditions.data.equals(da_org)
-
-    # mod.snapwave_boundary_conditions.create(geodataset=data, merge=False)
-
-    # create a new wave input using the geodataset - directly from file
-    # mod.snapwave_boundary_conditions.create(geodataset=filename, merge=False)
 
 
 def test_delete_clear(quadtree_model_config):
