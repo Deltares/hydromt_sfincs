@@ -27,7 +27,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
     associated time series data in SFINCS format, including both ASCII and netCDF files.
     """
 
-    _default_varname = ["dis"]
+    _default_varname = "dis"
 
     def __init__(self, model: "SfincsModel"):
         super().__init__(model)
