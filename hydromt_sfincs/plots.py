@@ -273,6 +273,7 @@ def plot_basemap(
     # by default colorbar on lower right & legend upper right
     kwargs0 = {"cbar_kwargs": {"shrink": 0.5, "anchor": (0, 0)}}
     kwargs0.update(kwargs)
+
     # make nice cmap
     if "cmap" not in kwargs or "norm" not in kwargs:
         depth_vars = ["dep", "z"]
@@ -363,11 +364,6 @@ def plot_basemap(
         raise ValueError(
             "No 'mask' (sfincs.mask) found in ds required to plot the model bounds "
             "Set plot_bounds=False or add 'mask' to ds"
-        )
-    elif plot_bounds and isinstance(ds, xu.UgridDataset):
-        raise NotImplementedError(
-            "Plotting of the boundaries for quadtree grids is not yet implemented. "
-            "Set plot_bounds=False to proceed."
         )
     elif plot_bounds and (ds["mask"] >= 1).any():
         gdf_msk = get_bounds_vector(ds["mask"])
