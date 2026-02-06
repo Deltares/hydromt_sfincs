@@ -121,6 +121,10 @@ class SfincsBoundaryBase(ModelComponent):
             if geodataset.vector.crs != self.model.crs:
                 geodataset = geodataset.vector.to_crs(self.model.crs)
             # keep dataset dims ordering consistent
+            index_dim = geodataset.vector.index_dim
+            if index_dim != "index":
+                # rename the index dimension to "index" if needed
+                geodataset = geodataset.rename({index_dim: "index"})
             self._data = geodataset.transpose("time", "index", ...)
             return
 
@@ -406,7 +410,7 @@ class SfincsBoundaryBase(ModelComponent):
                     dims=("time", "index"),
                     coords={
                         "time": time,
-                        "index": gdf.index,
+                        "index": gdf.index.values,
                     },
                     name=var,
                 )
