@@ -2,6 +2,7 @@
 
 import os
 from os.path import isfile, join
+from pathlib import Path
 
 import numpy as np
 import math
@@ -424,6 +425,19 @@ def test_drainage_structures(model_config, tmp_dir):
     assert (
         len(model_config.drainage_structures.data.index) == nr_drainage_structures * 2
     )
+    # check whether we can clear
+    model_config.drainage_structures.clear()
+    assert model_config.drainage_structures.data.empty
+
+    # # check if dataframes are the same after write/read
+    drnfile_1 = Path(TESTMODELDIR) / "sfincs.drn"
+    drnfile_2 = model_config.root.path / "sfincs.drn"
+
+    # check whether the files are the same
+    with open(drnfile_1, "r") as f1, open(drnfile_2, "r") as f2:
+        content1 = f1.read()
+        content2 = f2.read()
+        assert content1 == content2
 
 
 @pytest.mark.parametrize("case", list(_cases.keys()))
