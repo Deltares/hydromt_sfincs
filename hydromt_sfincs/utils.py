@@ -343,14 +343,14 @@ def write_timeseries(
 
 
 ## MASK
-
-
-def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
+def get_bounds_vector(
+    da_msk: Union[xr.DataArray, xu.UgridDataArray],
+) -> gpd.GeoDataFrame:
     """Get bounds of vectorized mask as GeoDataFrame.
 
     Parameters
     ----------
-    da_msk: xr.DataArray
+    da_msk: Union[xr.DataArray, xu.UgridDataArray]
         Mask as DataArray with values 0 (inactive), 1 (active),
         and boundary cells 2 (waterlevels) and 3 (outflow).
 
@@ -359,20 +359,115 @@ def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
     gdf_msk: gpd.GeoDataFrame
         GeoDataFrame with line geometries of mask boundaries.
     """
-    gdf_msk = da_msk.raster.vectorize()
-    # small buffer for rounding errors
-    if da_msk.raster.crs.is_geographic:
-        gdf_msk["geometry"] = gdf_msk.buffer(1e-6)
-    else:
-        gdf_msk["geometry"] = gdf_msk.buffer(1)
-    region = (da_msk >= 1).astype("int16").raster.vectorize()
-    region = region[region["value"] == 1].drop(columns="value")
-    region["geometry"] = region.boundary
-    gdf_msk = gdf_msk[gdf_msk["value"] != 1]
-    gdf_msk = gpd.overlay(
-        region, gdf_msk, "intersection", keep_geom_type=False
-    ).explode(index_parts=True)
-    gdf_msk = gdf_msk[gdf_msk.length > 0]
+    if isinstance(da_msk, xr.DataArray):
+        gdf_msk = da_msk.raster.vectorize()
+        # small buffer for rounding errors
+        if da_msk.raster.crs.is_geographic:
+            gdf_msk["geometry"] = gdf_msk.buffer(1e-6)
+        else:
+            gdf_msk["geometry"] = gdf_msk.buffer(1)
+        region = (da_msk >= 1).astype("int16").raster.vectorize()
+        region = region[region["value"] == 1].drop(columns="value")
+        region["geometry"] = region.boundary
+        gdf_msk = gdf_msk[gdf_msk["value"] != 1]
+        gdf_msk = gpd.overlay(
+            region, gdf_msk, "intersection", keep_geom_type=False
+        ).explode(index_parts=True)
+        gdf_msk = gdf_msk[gdf_msk.length > 0]
+    elif isinstance(da_msk, xu.UgridDataArray):
+        lines = []
+
+        xz = da_msk.grid.face_coordinates[:, 0]
+        yz = da_msk.grid.face_coordinates[:, 1]
+        min_dist = da_msk.grid.edge_length.max() * 2
+
+        mask_vals = np.unique(da_msk.values)
+        mask_vals = mask_vals[mask_vals > 1]
+
+        for mval in mask_vals:
+            # Indices for this mask value
+            ibnd = np.where(da_msk.values == mval)
+
+            xp = xz[ibnd]
+            yp = yz[ibnd]
+
+            if xp.size == 0:
+                continue
+
+            used = np.full(xp.shape, False, dtype=bool)
+            polylines = []
+
+            while True:
+                if np.all(used):
+                    break
+
+                i1 = np.where(~used)[0][0]
+                used[i1] = True
+                polyline = [i1]
+
+                # Forward direction
+                while True:
+                    xpunused = xp[~used]
+                    ypunused = yp[~used]
+                    unused_indices = np.where(~used)[0]
+
+                    if unused_indices.size == 0:
+                        break
+
+                    dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
+                    inear = np.nanargmin(dst)
+                    inearall = unused_indices[inear]
+
+                    if dst[inear] < min_dist:
+                        polyline.append(inearall)
+                        used[inearall] = True
+                        i1 = inearall
+                    else:
+                        break
+
+                # Backward direction
+                i1 = polyline[0]
+                while True:
+                    xpunused = xp[~used]
+                    ypunused = yp[~used]
+                    unused_indices = np.where(~used)[0]
+
+                    if unused_indices.size == 0:
+                        break
+
+                    dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
+                    inear = np.nanargmin(dst)
+                    inearall = unused_indices[inear]
+
+                    if dst[inear] < min_dist:
+                        polyline.insert(0, inearall)
+                        used[inearall] = True
+                        i1 = inearall
+                    else:
+                        break
+
+                if len(polyline) > 1:
+                    polylines.append(polyline)
+
+            # Convert polylines to LineStrings
+            for polyline in polylines:
+                x = xp[polyline]
+                y = yp[polyline]
+                coords = list(zip(x.ravel(), y.ravel()))
+
+                line = LineString(coords)
+
+                if line.length == 0:
+                    continue
+
+                lines.append(
+                    {
+                        "value": int(mval),
+                        "geometry": line,
+                    }
+                )
+
+        gdf_msk = gpd.GeoDataFrame(lines, crs=da_msk.grid.crs)
     return gdf_msk
 
 
@@ -696,9 +791,10 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") 
     # reorder columns based on col_names
     gdf = gdf[col_names]
 
-    # change the format of the coordinates according to fmt
+    # change the format/precision of the coordinates according to fmt
     for col in ["xsnk", "ysnk", "xsrc", "ysrc"]:
-        gdf[col] = gdf[col].apply(lambda x: fmt % x)
+        precision = fmt.split(".")[-1].replace("%", "").replace("f", "")
+        gdf[col] = gdf[col].round(int(precision))
 
     # write to file
     gdf.to_csv(fn, sep=" ", index=False, header=False)
