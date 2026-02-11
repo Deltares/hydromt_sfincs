@@ -254,7 +254,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         gdf = self.data.vector.to_gdf()
 
-        utils.write_xy(abs_file_path, gdf, fmt=fmt)
+        utils.write_xyn(abs_file_path, gdf, fmt=fmt)
 
     def write_boundary_conditions_timeseries(
         self, var: str, varname: str, filename: str | Path = None
@@ -348,7 +348,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         geodataset: Union[str, Path, xr.Dataset] = None,
         timeseries: List[Union[str, Path, pd.DataFrame]] = None,
         locations: Union[str, Path, gpd.GeoDataFrame] = None,
-        buffer: float = 5e3,
+        buffer: float = 25e3,
         merge: bool = True,
         drop_duplicates: bool = True,
     ):
@@ -377,8 +377,8 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             Path, data source name, or geopandas object for snapwave_bnd point locations.
             It should contain a 'index' column matching the column names in `timeseries`.
         buffer: float, optional
-            Buffer [m] around model water level boundary cells to select wave data gauges,
-            by default 5 km.
+            Buffer [m] around model wave boundary cells to select wave data gauges,
+            by default 25 km.
         merge : bool, optional
             If True, merge with existing forcing data, by default True.
         drop_duplicates : bool, optional
@@ -393,22 +393,39 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         if not self.model.grid_type == "quadtree":
             raise ValueError("SnapWave is not supported for regular grid models!")
 
+        # Check if snapwave_mask is available in model grid, as this is needed to select points around snapwave boundary
+        if "snapwave_mask" not in self.model.quadtree_grid.data:
+            raise ValueError(
+                "SnapWave mask not found in model grid! Make sure to create the snapwave_mask in the quadtree grid before running this step."
+            )
+        # if present, check whether is has values of 2, which indicate the snapwave boundary cells
+        if not np.any(self.model.quadtree_grid.data["snapwave_mask"] == 2):
+            raise ValueError(
+                "No snapwave boundary cells found in snapwave_mask! Make sure to create the snapwave_mask in the quadtree grid before running this step."
+            )
+
         gdf_locs, df_ts = None, None
         tstart, tstop = self.model.get_model_time()  # model time
-        # TODO buffer around msk==2 values
-        region = self.model.region
+
+        # Create a buffer around the snapwave boundary cells (msk==2)
+        gdf_msk = utils.get_bounds_vector(
+            da_msk=self.model.quadtree_grid.data["snapwave_mask"],
+        )
+        gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
+        gdf_msk2["geometry"] = gdf_msk2.buffer(buffer)
+        # gdf_msk2 is now used to clip geodataset to get wanted locations
 
         # Read wave data from geodataset, timeseries and locations
         if geodataset is not None:
             # read and clip data in time & space
-            da = self.data_catalog.get_geodataset(
+            ds = self.data_catalog.get_geodataset(
                 geodataset,
-                geom=region,
+                geom=gdf_msk2,
                 buffer=buffer,
                 variables=self._default_varname,
                 time_range=(tstart, tstop),
             )
-            self.set(geodataset=da, merge=False, drop_duplicates=False)
+            self.set(geodataset=ds, merge=False, drop_duplicates=False)
             self.model.config.set("netsnapwavefile", "snapwave.nc")
             return
 
@@ -500,8 +517,8 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             Path, data source name, or xarray data object for raster dataset with variables
             hs, tp, wd and ds.
         buffer: float, optional
-            Buffer distance around the model region to select snapwave boundary points.
-            Default is 25 kilometers.
+            Buffer [m] around model wave boundary cells to select wave data gauges,
+            by default 25 km.
 
         See Also
         --------
@@ -538,6 +555,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         )
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
         gdf_msk2["geometry"] = gdf_msk2.buffer(buffer)
+
         # Select cells within buffer around snapwave boundary cells (msk==2)
         msk = ds.raster.geometry_mask(gdf_msk2, all_touched=True)
 
