@@ -196,6 +196,9 @@ def test_create(quadtree_model_config):
     mod.snapwave_boundary_conditions.clear()
     assert mod.snapwave_boundary_conditions.nr_points == 0
 
+    # add a snapwave_msk
+    mod.quadtree_mask.create_active(model="snapwave", copy_sfincsmask=True)
+
     # create a new wave input using the geodataset with the same data and check
     mod.snapwave_boundary_conditions.create(geodataset=da, merge=False)
     assert mod.snapwave_boundary_conditions.nr_points == 2
@@ -313,7 +316,8 @@ def test_create_from_grid(quadtree_model_config):
             data="era5_dummy",
         )
 
-    # Now add a snapwave_mask to the model and try again
+    # Now add a snapwave_mask to the model as copy of the sfincs_mask
+    # (including msk==2 values)
     mod.quadtree_mask.create_active(model="snapwave", copy_sfincsmask=True)
 
     # Now we overwrite the timeseries with data from a 2D gridded dataset
