@@ -1956,12 +1956,16 @@ def write_netcdf_safely(ds, abs_file_path: Path, encoding=None) -> Path:
             logger.info(f"No changes detected; skipping write to {abs_file_path}")
             return abs_file_path
 
-    # Step 2: write to temporary file
+    # Step 2: remove cryptic encoding per variable
+    for var in ds.data_vars:
+        ds[var].encoding.clear()  # remove all encoding hints
+
+    # Step 3: write to temporary file
     tmp_fd, tmp_path = tempfile.mkstemp(suffix=".nc", dir=abs_file_path.parent)
     os.close(tmp_fd)
     ds.vector.to_xy().to_netcdf(tmp_path, encoding=encoding)
 
-    # Step 3: move temp file to target, or create versioned file if locked
+    # Step 4: move temp file to target, or create versioned file if locked
     try:
         shutil.move(tmp_path, abs_file_path)
         final_path = abs_file_path
