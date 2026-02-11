@@ -179,7 +179,6 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         # Read netcdf file
         ds = GeoDataset.from_netcdf(abs_file_path, crs=self.model.crs, chunks="auto")
 
-        # FIXME - should we check if the dataset has the right variables?
         for var in ["hs", "tp", "wd", "ds"]:
             if var not in ds:
                 raise ValueError(
