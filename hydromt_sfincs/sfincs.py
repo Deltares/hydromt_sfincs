@@ -40,6 +40,7 @@ from hydromt_sfincs.components.grid import (
 from hydromt_sfincs.components.quadtree import (
     SfincsQuadtreeGrid,
     SfincsQuadtreeElevation,
+    SfincsQuadtreeRoughness,
     SfincsQuadtreeInitialConditions,
     SfincsQuadtreeInfiltration,
     SfincsQuadtreeMask,
@@ -99,6 +100,7 @@ class SfincsModel(Model):
         "quadtree_grid": SfincsQuadtreeGrid,
         "quadtree_elevation": SfincsQuadtreeElevation,
         "quadtree_mask": SfincsQuadtreeMask,
+        "quadtree_roughness": SfincsQuadtreeRoughness,
         "quadtree_infiltration": SfincsQuadtreeInfiltration,
         "quadtree_storage_volume": SfincsQuadtreeStorageVolume,
         "quadtree_initial_conditions": SfincsQuadtreeInitialConditions,
