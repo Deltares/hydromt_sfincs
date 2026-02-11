@@ -210,8 +210,8 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         format : str, optional
             Format of the boundary conditions files, "asc" (default), or "netcdf".
         """
-        if len(self.data.data_vars) == 0:
-            # There are no boundary points in Dataset
+        if self.nr_points == 0:
+            # There are no boundary points
             return
 
         if format is None:
