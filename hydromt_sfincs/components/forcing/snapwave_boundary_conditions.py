@@ -113,9 +113,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             )
 
         # Read bnd file
-        # TODO check if we want read_xyn? Before we used read_xy, so without name column
         gdf = utils.read_xyn(abs_file_path, crs=self.model.crs)
-        gdf = gdf.set_crs(self.model.crs)
 
         return gdf
 
