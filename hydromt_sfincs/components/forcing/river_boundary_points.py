@@ -78,7 +78,6 @@ class SfincsRiverBoundaryPoints(ModelComponent):
         # Add to self._data
         self.set(gdf, merge=False)
 
-    
     def write(self, filename: str | Path = None):
         """Write SFINCS river boundary (.bdr) file,
         and make sure bdrfile is in config (if it was not already set)."""
@@ -144,7 +143,7 @@ class SfincsRiverBoundaryPoints(ModelComponent):
         def endpoints_inside(ls):
             x0, y0 = ls.coords[0]
             x1, y1 = ls.coords[-1]
-            return (Point(x0, y0).covered_by(region) and Point(x1, y1).covered_by(region))
+            return Point(x0, y0).covered_by(region) and Point(x1, y1).covered_by(region)
 
         within = gdf.geometry.apply(endpoints_inside)
 
@@ -171,16 +170,15 @@ class SfincsRiverBoundaryPoints(ModelComponent):
         self._data = gdf  # set gdf in self.data
 
     @hydromt_step
-    def create( 
+    def create(
         self,
         locations,
         centerlines,
         internal_dist: float = 1000.0,
         slope: float = None,
-        reverse_river_geom: bool = False,  # kept, not used here
         merge: bool = False,
         debug: bool = False,
-        **kwargs
+        **kwargs,
     ) -> gpd.GeoDataFrame:
 
         gdf_out_pts = self.data_catalog.get_geodataframe(
@@ -229,7 +227,9 @@ class SfincsRiverBoundaryPoints(ModelComponent):
 
                 nxt = other_node(segs[si], node)
                 new_cap = None if cap_len is None else cap_len - L
-                sub_len, sub_path = longest_path_from(nxt, si, segs, node2segs, visited, new_cap)
+                sub_len, sub_path = longest_path_from(
+                    nxt, si, segs, node2segs, visited, new_cap
+                )
 
                 tot = L + sub_len
                 if tot > best_len:
@@ -250,7 +250,11 @@ class SfincsRiverBoundaryPoints(ModelComponent):
             for si in path:
                 geom, k0, k1, L = segs[si]
                 if remaining <= L:
-                    return geom.interpolate(remaining) if node == k0 else geom.interpolate(L - remaining)
+                    return (
+                        geom.interpolate(remaining)
+                        if node == k0
+                        else geom.interpolate(L - remaining)
+                    )
                 remaining -= L
                 node = k1 if node == k0 else k0
             return Point(node[0], node[1])
@@ -278,7 +282,9 @@ class SfincsRiverBoundaryPoints(ModelComponent):
             p_on = line_best.interpolate(s0)
 
             # local subnetwork
-            local_gdf = gdf_lines[gdf_lines.intersects(p_on.buffer(internal_dist * 2.0))].copy()
+            local_gdf = gdf_lines[
+                gdf_lines.intersects(p_on.buffer(internal_dist * 2.0))
+            ].copy()
             if local_gdf.empty:
                 # fallback: stay on best line only
                 s_in = max(s0 - internal_dist, 0.0)
@@ -328,16 +334,25 @@ class SfincsRiverBoundaryPoints(ModelComponent):
                     visited = {seg0}
                     cap = remaining + internal_dist * 0.25
                     _, best_path = longest_path_from(
-                        upstream_node, prev_seg=seg0,
-                        segs=segs, node2segs=node2segs,
-                        visited=visited, cap_len=cap
+                        upstream_node,
+                        prev_seg=seg0,
+                        segs=segs,
+                        node2segs=node2segs,
+                        visited=visited,
+                        cap_len=cap,
                     )
-                    p_in = interpolate_along_path(upstream_node, segs, best_path, remaining)
+                    p_in = interpolate_along_path(
+                        upstream_node, segs, best_path, remaining
+                    )
 
             # slope
             if slope is None:
-                z_in = self.model.quadtree_grid.data.z.ugrid.sel_points(x=p_in.x, y=p_in.y).item()
-                z_on = self.model.quadtree_grid.data.z.ugrid.sel_points(x=p_on.x, y=p_on.y).item()
+                z_in = self.model.quadtree_grid.data.z.ugrid.sel_points(
+                    x=p_in.x, y=p_in.y
+                ).item()
+                z_on = self.model.quadtree_grid.data.z.ugrid.sel_points(
+                    x=p_on.x, y=p_on.y
+                ).item()
                 slope_i = (z_in - z_on) / internal_dist
             else:
                 slope_i = float(slope)
@@ -345,8 +360,16 @@ class SfincsRiverBoundaryPoints(ModelComponent):
             rows.append(
                 {
                     "geometry": LineString([(p_on.x, p_on.y), (p_in.x, p_in.y)]),
-                    "slope": float(prow.get("slope", slope_i)) if hasattr(prow, "get") else float(slope_i),
-                    "distance": float(prow.get("distance", internal_dist)) if hasattr(prow, "get") else float(internal_dist),
+                    "slope": (
+                        float(prow.get("slope", slope_i))
+                        if hasattr(prow, "get")
+                        else float(slope_i)
+                    ),
+                    "distance": (
+                        float(prow.get("distance", internal_dist))
+                        if hasattr(prow, "get")
+                        else float(internal_dist)
+                    ),
                 }
             )
 
@@ -354,6 +377,7 @@ class SfincsRiverBoundaryPoints(ModelComponent):
 
         if debug:
             import matplotlib.pyplot as plt
+
             fig, ax = plt.subplots(1, 1)
             self.model.region.plot(ax=ax, color="red", alpha=0.3)
             gdf_lines.plot(ax=ax, color="gray", linewidth=1)
@@ -363,4 +387,3 @@ class SfincsRiverBoundaryPoints(ModelComponent):
         self.set(gdf_boundary_lines, merge=merge)
         self.model.config.set("bdrfile", "sfincs.bdr")
         return gdf_boundary_lines
-
