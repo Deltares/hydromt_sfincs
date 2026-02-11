@@ -150,12 +150,6 @@ class SfincsQuadtreeRoughness(MeshComponent):
                     make_ugrid=False,
                 )
 
-                # Get the indices of the "active" unstructured grid points in the regular grid
-                idx_y = np.searchsorted(da_like.n.values, n_level[in_chunk].values)
-                idx_x = np.searchsorted(da_like.m.values, m_level[in_chunk].values)
-
-                # fromdep keeps track of whether any manning values should be based on the depth or not
-                fromdep = len(roughness_list) == 0
                 if len(roughness_list) > 0:
                     da_man = merge_multi_dataarrays(
                         da_list=roughness_list,
@@ -163,25 +157,12 @@ class SfincsQuadtreeRoughness(MeshComponent):
                         interp_method="linear",
                         logger=logger,
                     )
+                else:
+                    da_man = xr.full_like(da_like, np.nan, dtype=np.float32)
 
-                    # If nans, try to fill the rest with depth-based manning
-                    fromdep = np.isnan(da_man.values[idx_y, idx_x]).any()
-
-                if z_level is not None and fromdep:
-                    da_man0 = xr.where(
-                        z_level[in_chunk] >= rgh_lev_land, manning_land, manning_sea
-                    )
-                elif fromdep:
-                    da_man0 = xr.full_like(
-                        mask_level[in_chunk], manning_land, dtype=np.float32
-                    )
-
-                if len(roughness_list) > 0 and fromdep:
-                    logger.warning("nan values in manning roughness array")
-                    da_man = da_man.where(~np.isnan(da_man), da_man0)
-                elif fromdep:
-                    da_man = da_man0
-
+                # Get the indices of the "active" unstructured grid points in the regular grid
+                idx_y = np.searchsorted(da_like.n.values, n_level[in_chunk].values)
+                idx_x = np.searchsorted(da_like.m.values, m_level[in_chunk].values)
                 mgl[in_chunk] = da_man.values[idx_y, idx_x]
 
             # Parallel or sequential chunk processing
@@ -202,6 +183,23 @@ class SfincsQuadtreeRoughness(MeshComponent):
         for ilev in range(nlev):
             idx, mgl_level = process_level(ilev)
             manning[idx] = mgl_level
+
+        # Now fill any remaining nans with depth-based manning
+        nr_nan = np.isnan(manning).sum()
+        if "z" in self.data:
+            logger.info(
+                f"Filled {nr_nan} remaining cells in manning with depth-based roughness."
+            )
+            manning0 = xr.where(
+                self.data["z"] >= rgh_lev_land, manning_land, manning_sea
+            )
+            manning = np.where(np.isnan(manning), manning0, manning)
+        else:
+            logger.info(
+                f"Filled {nr_nan} remaining cells in manning with manning sea roughness, "
+                f"since no elevation information is available."
+            )
+            manning = np.where(np.isnan(manning), manning_sea, manning)
 
         # Set manning values in self.data
         self.data["manning"] = xu.UgridDataArray(
