@@ -61,27 +61,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
             # Check if there are any points
             if not gdf.empty:
-                filenames = [
-                    "snapwave_bhsfile",
-                    "snapwave_btpfile",
-                    "snapwave_bwdfile",
-                    "snapwave_bdsfile",
-                ]
-                vars = ["hs", "tp", "wd", "ds"]
-                da_lst = []
-                for i, varname in enumerate(filenames):
-                    df = self.read_boundary_conditions_timeseries_perfile(
-                        var=vars[i], varname=varname
-                    )
-
-                    da = xr.DataArray(df, dims=("time", "index"), name=vars[i])
-                    da_lst.append(da)
-
-                # assumed is that all timestamps and number of points are the same in all files
-                # (as they should be for SFINCS-SnapWave kernel)
-                ds = xr.merge(da_lst[:])
-
-                gds = GeoDataset.from_gdf(gdf=gdf, data_vars=ds)
+                gds = self.read_boundary_conditions_timeseries(gdf=gdf)
 
                 self.set(geodataset=gds, merge=False, drop_duplicates=False)
 
@@ -117,8 +97,36 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         return gdf
 
+    def read_boundary_conditions_timeseries(self, gdf: gpd.GeoDataFrame = None):
+        """Read SFINCS boundary condition timeseries (*.bhs, *.btp, *.bwd or *.bds) files.
+        This function is used to read the timeseries files for each variable separately
+        and return as combined geodataset with all variables."""
+
+        filenames = [
+            "snapwave_bhsfile",
+            "snapwave_btpfile",
+            "snapwave_bwdfile",
+            "snapwave_bdsfile",
+        ]
+        vars = ["hs", "tp", "wd", "ds"]
+        da_lst = []
+
+        for i, varname in enumerate(filenames):
+            df = self.read_boundary_conditions_timeseries_perfile(varname=varname)
+
+            da = xr.DataArray(df, dims=("time", "index"), name=vars[i])
+            da_lst.append(da)
+
+        # assumed is that all timestamps and number of points are the same in all files
+        # (as they should be for SFINCS-SnapWave kernel)
+        ds = xr.merge(da_lst[:])
+
+        gds = GeoDataset.from_gdf(gdf=gdf, data_vars=ds)
+
+        return gds
+
     def read_boundary_conditions_timeseries_perfile(
-        self, var: str, varname: str, filename: str | Path = None
+        self, varname: str, filename: str | Path = None
     ):
         """Read SFINCS boundary condition timeseries (*.bhs, *.btp, *.bwd or *.bds) files"""
 
@@ -143,7 +151,6 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         df = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
         df.index.name = "time"
         df.columns.name = "index"
-        # FIXME - or df.columns.name = str(var) # hs, tp, wd or ds ?
 
         return df
 
