@@ -61,7 +61,9 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
             # Check if there are any points
             if not gdf.empty:
-                gds = self.read_boundary_conditions_timeseries(gdf=gdf)
+                ds = self.read_boundary_conditions_timeseries()
+
+                gds = GeoDataset.from_gdf(gdf=gdf, data_vars=ds)
 
                 self.set(geodataset=gds, merge=False, drop_duplicates=False)
 
@@ -97,7 +99,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         return gdf
 
-    def read_boundary_conditions_timeseries(self, gdf: gpd.GeoDataFrame = None):
+    def read_boundary_conditions_timeseries(self):
         """Read SFINCS boundary condition timeseries (*.bhs, *.btp, *.bwd or *.bds) files.
         This function is used to read the timeseries files for each variable separately
         and return as combined geodataset with all variables."""
@@ -121,9 +123,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         # (as they should be for SFINCS-SnapWave kernel)
         ds = xr.merge(da_lst[:])
 
-        gds = GeoDataset.from_gdf(gdf=gdf, data_vars=ds)
-
-        return gds
+        return ds
 
     def read_boundary_conditions_timeseries_perfile(
         self, varname: str, filename: str | Path = None
