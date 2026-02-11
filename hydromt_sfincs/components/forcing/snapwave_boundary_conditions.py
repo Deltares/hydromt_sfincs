@@ -221,20 +221,9 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         if format == "asc":
             self.write_boundary_points()
             # Write timeseries per file
-            filenames = [
-                "snapwave_bhsfile",
-                "snapwave_btpfile",
-                "snapwave_bwdfile",
-                "snapwave_bdsfile",
-            ]
-            vars = [
-                "hs",
-                "tp",
-                "wd",
-                "ds",
-            ]  # FIXME - should be 'hs' or 'bhs'? in kernel is 'hs', but it's 'bhsfile'...
-            for i, varname in enumerate(filenames):
-                self.write_boundary_conditions_timeseries(var=vars[i], varname=varname)
+            for var in ["hs", "tp", "wd", "ds"]:
+                varname = f"snapwave_b{var}file"
+                self.write_boundary_conditions_timeseries(var=var, varname=varname)
 
             self.model.config.set("netsnapwavefile", None)
         else:
