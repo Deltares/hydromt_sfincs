@@ -414,13 +414,14 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
         gdf_msk2["geometry"] = gdf_msk2.buffer(buffer)
         # gdf_msk2 is now used to clip geodataset to get wanted locations
+        region = gdf_msk2
 
         # Read wave data from geodataset, timeseries and locations
         if geodataset is not None:
             # read and clip data in time & space
             ds = self.data_catalog.get_geodataset(
                 geodataset,
-                geom=gdf_msk2,
+                geom=region,
                 buffer=buffer,
                 variables=self._default_varname,
                 time_range=(tstart, tstop),
