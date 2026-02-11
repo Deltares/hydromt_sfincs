@@ -185,8 +185,6 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
                     f"Variable {var} not found in SnapWave boundary conditions netcdf file!"
                 )
 
-        # Rename variables to match internal naming
-        ds = ds.rename({"stations": "index"}) if "stations" in ds.dims else ds
         return ds
 
         # # Loop through boundary points
