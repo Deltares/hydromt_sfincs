@@ -346,10 +346,10 @@ class SfincsModel(Model):
                 "wind10_v": {"standard_name": "northward wind", "unit": "m/s"},
             },
             "snapwave_boundary_conditions": {
-                "hs": {},
-                "tp": {},
-                "dir": {},
-                "ds": {},
+                "hs": {"standard_name": "significant wave height", "unit": "m"},
+                "tp": {"standard_name": "peak wave period", "unit": "s"},
+                "wd": {"standard_name": "wave direction", "unit": "nautical degrees"},
+                "ds": {"standard_name": "wave direction spread", "unit": "degrees"},
             },
         }
 
