@@ -1,0 +1,40 @@
+global:
+  data_libs:
+    - data_catalog_v1
+
+scenarios:
+  river_flood:
+    steps:
+      - config.update:
+          rsrtfile: "C:/PhD/SFINCS/output/sfincs_{delta_basin_id}/sfincs.20181209.000000.rst"
+      - discharge_points.create_timeseries: 
+          index: [0] 
+          shape: "gaussian"
+          offset: "{discharge_offset}"
+          peak: "{discharge_peak}"
+          tpeak: 1296000
+          duration: 604800
+          timestep: 600
+      
+      # OR something like this 
+      # - discharge_points.create:
+      #     timeseries: data//compound_dis_timeseries.csv
+          
+  coastal_flood: 
+    steps:
+      - config.update:
+          rsrtfile: "C:/PhD/SFINCS/output/sfincs_{delta_basin_id}/sfincs.20181209.000000.rst"
+      - water_level.create_timeseries: 
+          shape: "gaussian"
+          offset: 0.5
+          peak: 3
+          tpeak: 1296000
+          duration: 172800
+          timestep: 600
+
+  # or something like this
+  #     - water_level.create: 
+  #         geodataset: path_to_folder/GTSM_100_yr_RP 
+  #         buffer: 25e3
+
+

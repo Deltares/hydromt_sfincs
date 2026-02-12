@@ -28,17 +28,23 @@ aus_obs_points:
     crs: 4326
   uri: aus_obs_points.geojson
 
-global_rivers_SWORD: 
-  data_type: GeoDataFrame
-  driver:
-    name: pyogrio
-  metadata:
-    category: hydrography
-    crs: 4326
-    notes: SWORD data 
-  uri: Global_rivers.gpkg
+# global_rivers: # only has width which isnt enough to say anything about depth 
+#   data_adapter:
+#     rename:
+#       width: rivwth
+#   data_type: GeoDataFrame
+#   driver:
+#     name: pyogrio
+#   metadata:
+#     category: hydrography
+#     crs: 4326
+#     notes: SWORD data 
+#   uri: Global_rivers.gpkg
 
-global_rivers_lin: 
+global_rivers_lin: # this includes bankfull discharge too? 
+  data_adapter:
+    rename:
+     width_m: rivwth
   data_type: GeoDataFrame
   driver:
    name: pyogrio
@@ -47,8 +53,8 @@ global_rivers_lin:
     crs: 4326
     notes: https://zenodo.org/records/3552776
   uri: rivers_lin.gpkg
- 
-merit: # not on p-drive 
+
+merit:
   data_type: RasterDataset
   driver:
     name: raster_xarray
@@ -59,10 +65,9 @@ merit: # not on p-drive
     source_license: CC-BY-NC 4.0 or ODbL 1.0
     source_url: p://hydro.iis.u-tokyo.ac.jp/~yamadai/MERIT_DEM/
     source_version: 1.0.3
-  uri: merit.nc
-  # uri: P:/wflow_global/hydromt/topography/merit/merit.nc
+  uri: P:/wflow_global/hydromt/topography/merit/merit.nc
 
-gebco: # dont have enough space for this folder on my loca computer 
+gebco:
   data_type: RasterDataset
   driver:
     name: rasterio
@@ -76,7 +81,7 @@ gebco: # dont have enough space for this folder on my loca computer
     unit: m+MSL
   uri: P:/wflow_global/hydromt/bathymetry/gebco/gebco.vrt
 
-esa_worldcover: # dont have enough space for this folder on my local computer
+esa_worldcover:
   data_type: RasterDataset
   driver:
     name: rasterio
@@ -111,8 +116,7 @@ gcn250:
     source_license: CC BY 4.0
     source_url: https://doi.org/10.6084/m9.figshare.7756202.v1
     source_version: v1
-  uri: gcn250/GCN250_ARCII.tif
-
+  uri: P:/wflow_global/hydromt/landuse/gcn250/GCN250_ARCII.tif
 
 combined_dataset_deltas:
   data_type: DataFrame
@@ -134,16 +138,16 @@ deltadtm:
     source_version: 1.1.1
   uri: DeltaDTM/deltadtm_v1_1.vrt
 
-osm_water: # dont have enough space for this folder on my local computer
+osm_water:
   data_type: GeoDataFrame
   driver:
     name: pyogrio
   metadata:
     category: geography
     crs: 4326
-  uri: P:/wflow_global/hydromt/geography/osm/osm_coastlines-db.gpkg 
+  uri: P:/wflow_global/hydromt/geography/osm/osm_coastlines-db.gpkg # water along the coast (not a polyline)
 
-gtsm_codec_reanalysis: # from sanne - works  
+gtsm_codec_reanalysis: # doesn't work 
   data_adapter:
     rename:
       station_x_coordinate: lon
@@ -166,6 +170,30 @@ gtsm_codec_reanalysis: # from sanne - works
     source_url: https://doi.org/10.24381/cds.8c59054f
     source_version: v1
   uri: P:/archivedprojects_tmp/11210221-gtsm-reanalysis/GTSM-ERA5-E_dataset/waterlevel/reanalysis_waterlevel_hourly_{year}_{month:02d}_v3.nc
+
+# gtsm_codec_reanalysis_waterlevel_hourly: # works
+#   data_adapter:
+#     rename:
+#       station_x_coordinate: lon
+#       station_y_coordinate: lat
+#       stations: index
+#   data_type: GeoDataset
+#   driver:
+#     name: geodataset_xarray
+#     options:
+#       chunks: {stations: 100, time: 1500}
+#       combine: by_coords
+#       decode_times: true
+#       parallel: true
+#   metadata:
+#     category: ocean
+#     crs: 4326
+#     paper_doi: 10.3389/fmars.2020.00263
+#     paper_ref: Muis et al. (2020)
+#     source_license: https://cds.climate.copernicus.eu/api/v2/terms/static/licence-to-use-copernicus-products.pdf
+#     source_url: https://doi.org/10.24381/cds.8c59054f
+#     source_version: v1
+#   uri: P:/archivedprojects/11205028-c3s_435/01_data/01_Timeseries/timeseries2/waterlevel/reanalysis_waterlevel_hourly_{year}_{month:02d}_v1.nc 
 
 merit_hydro:
   data_type: RasterDataset
@@ -196,43 +224,6 @@ merit_hydro:
       wth: rivwth
 
 
-# gtsm_codec_reanalysis_waterlevel_hourly: # works
-#   data_adapter:
-#     rename:
-#       station_x_coordinate: lon
-#       station_y_coordinate: lat
-#       stations: index
-#   data_type: GeoDataset
-#   driver:
-#     name: geodataset_xarray
-#     options:
-#       chunks: {stations: 100, time: 1500}
-#       combine: by_coords
-#       decode_times: true
-#       parallel: true
-#   metadata:
-#     category: ocean
-#     crs: 4326
-#     paper_doi: 10.3389/fmars.2020.00263
-#     paper_ref: Muis et al. (2020)
-#     source_license: https://cds.climate.copernicus.eu/api/v2/terms/static/licence-to-use-copernicus-products.pdf
-#     source_url: https://doi.org/10.24381/cds.8c59054f
-#     source_version: v1
-#   uri: P:/archivedprojects/11205028-c3s_435/01_data/01_Timeseries/timeseries2/waterlevel/reanalysis_waterlevel_hourly_{year}_{month:02d}_v1.nc 
-
-# gcn250:
-#   data_type: RasterDataset
-#   driver:
-#     name: rasterio
-#   metadata:
-#     category: soil
-#     paper_doi: 10.1038/s41597-019-0155-x
-#     paper_ref: Jaafar et al. (2019)
-#     source_license: CC BY 4.0
-#     source_url: https://doi.org/10.6084/m9.figshare.7756202.v1
-#     source_version: v1
-#   uri: P:/wflow_global/hydromt/landuse/gcn250/GCN250_ARCII.tif
-
 # hydrobasins_global:
 #   data_type: GeoDataFrame
 #   driver:
@@ -247,3 +238,7 @@ merit_hydro:
 #     source_url: https://www.hydrosheds.org/pages/hydrobasins
 #     source_version: '1.0'
 #   uri: hydrobasins_global.gpkg
+
+
+
+
