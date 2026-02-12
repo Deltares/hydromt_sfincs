@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Union
 
 import geopandas as gpd
 import numpy as np
+from shapely import Point
 import xarray as xr
 
 from hydromt import hydromt_step
@@ -358,6 +359,7 @@ class SfincsRivers(ModelComponent):
             river_len=river_len,
             da_uparea=da_uparea,
             reverse_river_geom=reverse_river_geom,
+            internal_distance=internal_dist,
             logger=logger,
         )
         if gdf_out.empty:
@@ -371,7 +373,11 @@ class SfincsRivers(ModelComponent):
             self.logger.info("No river outflow points found.")
             return
 
-        gdf_out_pts = gdf_out.copy()
+        gdf_out_lines = gdf_out.copy()
+
+        gdf_out["geometry"] = gdf_out.geometry.apply(
+                lambda geom: Point(geom.coords[0]) if geom.geom_type == "LineString" else geom
+                )
 
         if len(gdf_out) > 0:
             if "rivwth" in gdf_out.columns:
@@ -408,11 +414,9 @@ class SfincsRivers(ModelComponent):
         #     self.mask.create_boundary(btype=btype, reset_bounds=reset_bounds)
 
         self.model.river_boundary_points.create(
-            locations=gdf_out_pts,
-            centerlines=gdf_riv,
+            locations=gdf_out_lines,
             internal_dist=internal_dist,
             slope=slope,
-            reverse_river_geom=reverse_river_geom,
             merge=False,
         )
 

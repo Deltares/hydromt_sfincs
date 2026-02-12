@@ -4,10 +4,15 @@ import logging
 from typing import Tuple
 
 import geopandas as gpd
+import pandas as pd
 import hydromt
 import numpy as np
 import pyflwdir
 import xarray as xr
+from shapely.geometry import LineString
+
+from shapely.ops import linemerge
+from collections import defaultdict, deque
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +94,7 @@ def river_source_points(
     buffer: float = 200,
     river_upa: float = 10,
     river_len: float = 1e3,
+    internal_distance: float = 10000,
     da_uparea: xr.DataArray = None,
     reverse_river_geom: bool = False,
     logger: logging.Logger = logger,
@@ -184,16 +190,150 @@ def river_source_points(
         pnts_up = gdf_up.buffer(5).union_all()
         gdf_pnt = gdf_ds[~gdf_ds.intersects(pnts_up)].reset_index(drop=True)
 
-    # get buffer around gdf_mask, in- and outflow points should be within this buffer
-    if src_type in ["inflow", "outflow"]:
-        gdf_pnt = gdf_pnt[gdf_pnt.intersects(bnd)].reset_index(drop=True)
-
-    # log numer of source points
-    logger.info(f"Found {gdf_pnt.index.size} {src_type} points.")
-
-    # add uparea attribute if da_uparea is provided
+        # add uparea attribute if da_uparea is provided
     if da_uparea is not None:
         gdf_pnt["uparea"] = da_uparea.raster.sample(gdf_pnt).values
         gdf_pnt = gdf_pnt.sort_values("uparea", ascending=False).reset_index(drop=True)
 
+        # get buffer around gdf_mask, in- and outflow points should be within this buffer
+    if src_type in ["inflow", "outflow"]:
+        gdf_pnt = gdf_pnt[gdf_pnt.intersects(bnd)].reset_index(drop=True)
+
+    # for outflow points, find the all other points that are within the buffer of the outflow point and chose an internal point
+    # to do so, do somethin similar as for the inflow points, but now with a buffer around the outflow points and check which points are within this buffer. 
+    if src_type == "outflow":
+        gdf_pnt_buffer = gdf_pnt.buffer(internal_distance * 1.2).union_all()
+        gdf_riv_in = gdf_riv[gdf_riv.intersects(gdf_pnt_buffer)]
+        gdf_riv_in = gdf_riv_in[~gdf_riv_in.within(gdf_pnt_buffer)]
+
+        # gdf_up_in = gdf_riv_in.interpolate(dx).to_frame("geometry")
+        # gdf_ds_in = gdf_riv_in.interpolate(-dx).to_frame("geometry")
+
+        # pnts_ds_in = gdf_ds_in.buffer(5).union_all()
+
+        # # get points that do not intersect with upstream 
+        # pnts_internal_out = gdf_up_in[~gdf_up_in.intersects(pnts_ds_in)].reset_index(drop=True)
+        
+        if gdf_riv_in.empty:
+            logger.warning(
+                f"No river segments found within {internal_distance} m of outflow points."
+            )
+            return 
+        
+        if gdf_riv_in.index.size == 1:
+            logger.info(
+                f"One river segment found within {internal_distance} m of outflow points. Taking this segment."
+            )
+            gdf_riv_in = gdf_riv_in.reset_index(drop=True)
+        
+        elif "uparea" in gdf_riv_in.columns:
+            # take river segment with largest upstream area
+            logger.info(
+                f"Multiple river segments found within {internal_distance} m of outflow points. Taking the segment with the largest upstream area."
+            )
+            gdf_riv_in = gdf_riv_in.sort_values("uparea", ascending=False).reset_index(drop=True)
+            gdf_riv_in = gdf_riv_in.head(1)
+
+        else:
+            logger.warning(
+                f"Multiple river segments found within {internal_distance} m of outflow points. Redefine your river centerlines")
+            return
+    
+        # Now we are going to "walk" upstream from the outflow point to the target segment (with largest upstream area) and extract the river segments along this path.
+        p = gdf_pnt.geometry.iloc[0]
+
+        # find start segment near the outflow point
+        buf = p.buffer(10)
+        cand = gdf_riv[gdf_riv.intersects(buf)]
+        if len(cand) == 0:
+            start_row = gdf_riv.loc[gdf_riv.distance(p).idxmin()]
+        else:
+            start_row = cand.loc[cand.distance(p).idxmin()]
+
+        start_idx = int(start_row["idx"])
+
+        # choose target segment (largest upstream area outside buffer)
+        target_idx = int(
+            gdf_riv_in.loc[gdf_riv_in["uparea"].idxmax(), "idx"]
+        )
+
+        # -------------------------------
+        # build upstream adjacency inline
+        # -------------------------------
+        if target_idx == start_idx:
+            logger.info(
+                f"Start segment is the same as target segment. No need to walk upstream."
+            )
+            path_gdf = gdf_riv[gdf_riv["idx"] == start_idx].copy()
+            full_line = path_gdf.geometry.values[0]
+
+        else:
+            up_adj = defaultdict(list)
+            for idx, idx_ds in gdf_riv[["idx", "idx_ds"]].dropna().itertuples(index=False):
+                up_adj[int(idx_ds)].append(int(idx))
+
+            # -------------------------------
+            # BFS upstream from start to target
+            # -------------------------------
+            queue = deque([start_idx])
+            parent = {start_idx: None}
+            found = False
+            max_steps = 2000
+            steps = 0
+
+            while queue and steps < max_steps:
+                cur = queue.popleft()
+
+                for nxt in up_adj.get(cur, []):  # nxt is upstream of cur
+                    if nxt in parent:
+                        continue
+                    parent[nxt] = cur
+
+                    if nxt == target_idx:
+                        found = True
+                        break
+
+                    queue.append(nxt)
+
+                if found:
+                    break
+                steps += 1
+
+            if not found:
+                raise RuntimeError("No upstream path found from outflow to target segment.")
+
+            # -------------------------------
+            # reconstruct idx path
+            # -------------------------------
+            idx_path = [target_idx]
+            while parent[idx_path[-1]] is not None:
+                idx_path.append(parent[idx_path[-1]])
+            idx_path = idx_path[::-1]  # start → target
+
+            # -------------------------------
+            # extract segments and merge
+            # -------------------------------
+            path_gdf = gdf_riv[gdf_riv["idx"].isin(idx_path)].copy()
+
+            # keep correct order
+            order = {v: i for i, v in enumerate(idx_path)}
+            path_gdf["__ord"] = path_gdf["idx"].map(order)
+            path_gdf = path_gdf.sort_values("__ord").drop(columns="__ord")
+            full_line = linemerge(list(path_gdf.geometry.values))
+
+            # Now project internal distance along line from the outflow point  
+
+        s0 = full_line.project(p)
+        p_in = full_line.interpolate(s0 - internal_distance)
+
+        line = LineString([p, p_in])
+        gdf_pnt = gpd.GeoDataFrame(geometry=[line], crs=gdf_mask.crs)
+            
+    # log numer of source points
+    logger.info(f"Found {gdf_pnt.index.size} {src_type} points.")
+
+
     return gdf_pnt
+
+
+# KUNNEN WE HIER VINDEN VAN UPSTREAM PUNT AAN TOEVOEGEN?
