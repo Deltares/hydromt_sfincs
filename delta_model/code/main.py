@@ -86,7 +86,7 @@ for scenario in scenarios_yaml["scenarios"].keys():
             step["discharge_points.create_timeseries"]["peak"] = discharge_peak
 
     # Read the baseline model
-    mod = SfincsModel(root=model_root, mode="r")
+    mod = SfincsModel(root=root_folder, mode="r")
     mod.read()
 
     # Set the new root for this scenario folder
