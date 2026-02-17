@@ -11,24 +11,23 @@ meta:
 #     crs: 4326
 #   uri: 40_delta_polygons.geojson
 
-4_delta_polygons: # edited domains 
+# 4_delta_polygons: # edited domains 
+#   data_type: GeoDataFrame
+#   driver:
+#     name: pyogrio
+#   metadata:
+#     crs: 4326
+#   uri: 4_delta_polygons.geojson
+
+4_small_deltas: # edited domains 
   data_type: GeoDataFrame
   driver:
     name: pyogrio
   metadata:
     crs: 4326
-  uri: 4_delta_polygons.geojson
+  uri: 4_small_deltas.geojson
 
-# observation points (manual for now)
-aus_obs_points:
-  data_type: GeoDataFrame
-  driver:
-    name: pyogrio
-  metadata:
-    crs: 4326
-  uri: aus_obs_points.geojson
-
-global_rivers_SWORD: 
+global_SWORD_old: # works 
   data_type: GeoDataFrame
   driver:
     name: pyogrio
@@ -37,6 +36,16 @@ global_rivers_SWORD:
     crs: 4326
     notes: SWORD data 
   uri: Global_rivers.gpkg
+
+global_SWORD_network: # gives error 
+  data_type: GeoDataFrame
+  driver:
+    name: pyogrio
+  metadata:
+    category: hydrography
+    crs: 4326
+    notes: SWORD data 
+  uri: SWORD_global_unpublished.gpkg
 
 global_rivers_lin: 
   data_type: GeoDataFrame
@@ -112,7 +121,6 @@ gcn250:
     source_url: https://doi.org/10.6084/m9.figshare.7756202.v1
     source_version: v1
   uri: gcn250/GCN250_ARCII.tif
-
 
 combined_dataset_deltas:
   data_type: DataFrame

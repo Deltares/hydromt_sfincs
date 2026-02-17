@@ -19,7 +19,6 @@ import pandas as pd
 import numpy as np
 from pyproj import Transformer
 import logging
-from river_processing import river_depth_estimation
 
 
 def build_sfincs_model(delta_basin_id: int, root_folder: Path, data_libs: list = ['data_catalog_v1.yml']):
@@ -41,12 +40,11 @@ def build_sfincs_model(delta_basin_id: int, root_folder: Path, data_libs: list =
     catalog = hydromt.DataCatalog(data_libs = data_libs) 
 
     # 1b: Configure model - define model domain -----------------------------------------------------------------------
-    deltas = catalog.get_geodataframe('4_small_deltas')
+    deltas = catalog.get_geodataframe('4_delta_polygons')
     delta_domain = deltas[deltas['BasinID2'] == delta_basin_id]
 
     # 1c: Initialise model -----------------------------------------------------------------------------------------------
     figs_dir = root_folder / "build"
-    
     figs_dir.mkdir(parents=True, exist_ok=True)
     def save_fig(fig, name):
         path = figs_dir / f"{name}.png"
@@ -140,25 +138,60 @@ def build_sfincs_model(delta_basin_id: int, root_folder: Path, data_libs: list =
 
 
     # 7: Add rivers data --------------------------------------------------------------------------------------------
-    rivers_lin = catalog.get_geodataframe("global_rivers_lin", geom=delta_domain)
-    rivers_sword_network = catalog.get_geodataframe("global_SWORD_network", geom=delta_domain)
-    rivers_sword_old = catalog.get_geodataframe("global_SWORD_old", geom=delta_domain)
+    rivers_lin = catalog.get_geodataframe("global_rivers_lin", geom=delta_domain)       # Variables: Q2, width_m
+    # rivers_sword = catalog.get_geodataframe("global_rivers_SWORD", geom=delta_domain)   # Variables: width, slope
+    rivers_sword = catalog.get_geodataframe("global_rivers_SWORD_old", geom=delta_domain)   # Variables: width, slope
 
-    rivers_clipped = river_depth_estimation(delta_domain, rivers_sword_network, rivers_lin, rivers_sword_old) # sword with calc. of rivdph
+    import geopandas as gpd
+    # Join 'lin' attributes to the 'sword' geometry
+    rivers_clipped = gpd.sjoin_nearest(
+        rivers_sword, 
+        rivers_lin, 
+        max_distance = 1000,  # maybe specify if there is nothing witin 100m then make Q2 0 and use a different way to calculate?       
+        how='left'
+    )
+
+    # calculate river width using power-law relationship 
+    a = 7.2
+    b = 0.50
+    rivers_clipped["rivwth"] = (a * (rivers_clipped["Q2"].astype(float) ** b)).astype(float)
+
+    # Keep the better width data from SWORD (variable = 'width') if available, otherwise keep calculated value from power-law relationship 
+    rivers_clipped.loc[rivers_clipped["width"].notna(), "rivwth"] = (rivers_clipped["width"])
+
+    # # Check if there are any NaN values in the rivwth column
+    # missing_rivwth = rivers_clipped["rivwth"].isna().sum()
+    # print(f"Number of missing rivwth values after filling: {missing_rivwth}")
+
+    import numpy as np
     
+    min_riv_slope = 1e-6
+    # If the slope is NaN OR if it's too small, set it to min_riv_slope
+    rivers_clipped["slope"] = np.where(
+        (rivers_clipped["slope"].isna()) | (rivers_clipped["slope"] < min_riv_slope),
+        min_riv_slope,
+        rivers_clipped["slope"]
+    )
+
+    # Depth calculation - choose which method to prioritise to calculate river depth (rivdph) --> Mannings or power law 
+    depth_calculation = "power_law" 
+
+    if depth_calculation == "manning":
+        rivers_clipped["rivdph"] = (
+            (0.030 * rivers_clipped["Q2"])
+            / (np.sqrt(rivers_clipped["slope"]) * rivers_clipped["rivwth"])
+        ) ** (3 / 5)
+
+    elif depth_calculation == "power_law": # Andreadis et al. (2013)
+        c = 0.27
+        f = 0.30  
+        rivers_clipped["rivdph"] = c * (rivers_clipped["Q2"].astype(float) ** f)
+
     # Replace 'rivdph' values with the minimum value where they are less than the minimum
     min_rivdph = 0 # Note: Making this value higher or lower can affect results
     rivers_clipped["rivdph"] = (np.where(
         rivers_clipped["rivdph"] < min_rivdph, min_rivdph, rivers_clipped["rivdph"]
     )).astype(float)
-
-    # Calculate river width using power-law relationship 
-    a = 7.2
-    b = 0.50
-    rivers_clipped["rivwth"] = (a * (rivers_clipped["final_Q2"].astype(float) ** b)).astype(float)
-
-    # Keep the better width data from SWORD (variable = 'width') if available, otherwise keep calculated value from power-law relationship 
-    rivers_clipped.loc[rivers_clipped["width"].notna(), "rivwth"] = (rivers_clipped["width"])
 
     # Create rivers list 
     river_list = [
@@ -172,7 +205,7 @@ def build_sfincs_model(delta_basin_id: int, root_folder: Path, data_libs: list =
         elevation_list= elevation_list,
         roughness_list = roughness_list,
         river_list = river_list,
-        nr_subgrid_pixels = 4,   # changed from 10 to 4 for initial testing          # 10 for 10m resolution,             
+        nr_subgrid_pixels = 10,                         # 10 for 10m resolution,             
         write_dep_tif=True,                             # save a cloud-optimized geotiff of the subgrid topography
         write_man_tif=True,
         nrmax=5000,                                     # set tile size a bit larger speed up processing (default 2000)
@@ -184,9 +217,7 @@ def build_sfincs_model(delta_basin_id: int, root_folder: Path, data_libs: list =
             "tref": datetime(2018, 12, 1), 
             "tstart": datetime(2018, 12, 1), 
             "tstop": datetime(2018, 12, 31), 
-            "dtrstout": 259200, # tells sfincs to save the simulation after each 3 days = 86400* 3 (can also be trstout, but that'll only be one save)
-            "dtmapout": 259200, # output every 3 days 
-            "dtmaxout": 259200 # output every 3 days
+            "dtrstout": 86400 # tells sfincs to save the simulation after each day (can also be trstout, but that'll only be one save)
         }
     )
 
@@ -199,34 +230,16 @@ def build_sfincs_model(delta_basin_id: int, root_folder: Path, data_libs: list =
         rivers=rivers_clipped,                         
         reverse_river_geom = True,                    
         keep_rivers_geom=True,
-        src_type = 'inflow'
     )
 
-    # Use final_Q2 as constant river discharge for each inflow point
-    gdf_src = sf.discharge_points.gdf
-
-    if not gdf_src.empty:
-        # Map Q2 values from the rivers to the points using a spatial join
-        gdf_src_mapped = gpd.sjoin_nearest(
-            gdf_src, 
-            rivers_clipped[["geometry", "final_Q2"]].to_crs(sf.crs), 
-            how="left", 
-            distance_col="dist"
-        )
-        # Ensure one-to-one mapping by keeping the first match if multiple are found
-        gdf_src_mapped = gdf_src_mapped[~gdf_src_mapped.index.duplicated(keep='first')]
-        
-        # Create a constant timeseries for each point
-        times = [sf.config.get("tstart"), sf.config.get("tstop")]
-        dis_df = pd.DataFrame(index=times, columns=gdf_src.index)
-        for idx in gdf_src.index:
-            q_val = gdf_src_mapped.loc[idx, "final_Q2"]
-            dis_df[idx] = float(q_val)
-            
-        # Set the forcing using the create method
-        sf.discharge_points.create(
-            timeseries=dis_df
-        )
+    combined_dataset_deltas = catalog.get_dataframe('combined_dataset_deltas') 
+    # Create timeseries based on excel. NOTE the index 0 only adds discharge to the first river inflow point, the rest gets zero
+    sf.discharge_points.create_timeseries(
+        index = [0],
+        shape = "constant",
+        offset = combined_dataset_deltas.loc[combined_dataset_deltas['BasinID2'] == delta_basin_id, 'Discharge_dist'].values[0],
+        timestep = 600,
+    )
 
     # Plot forcing 
     fig, ax = sf.plot_forcing()

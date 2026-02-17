@@ -6,11 +6,14 @@ scenarios:
   river_flood:
     steps:
       - config.update:
-          rsrtfile: "C:/PhD/SFINCS/output/sfincs_{delta_basin_id}/sfincs.20181209.000000.rst"
+          rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_620947/sfincs.20181210.000000.rst"
+          # rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}/sfincs.20181210.000000.rst" # goal 
+          dtmapout: 259200 # output every 3 days 
+          dtmaxout: 259200 # output every 3 days
       - discharge_points.create_timeseries: 
           index: [0] 
           shape: "gaussian"
-          offset: "{discharge_offset}"
+          offset: "{discharge_offset}" 
           peak: "{discharge_peak}"
           tpeak: 1296000
           duration: 604800
@@ -19,11 +22,14 @@ scenarios:
       # OR something like this 
       # - discharge_points.create:
       #     timeseries: data//compound_dis_timeseries.csv
-          
+        
   coastal_flood: 
     steps:
       - config.update:
-          rsrtfile: "C:/PhD/SFINCS/output/sfincs_{delta_basin_id}/sfincs.20181209.000000.rst"
+          rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_620947/sfincs.20181210.000000.rst"
+          # rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}/sfincs.20181210.000000.rst" # goal
+          dtmapout: 259200 # output every 3 days 
+          dtmaxout: 259200 # output every 3 days
       - water_level.create_timeseries: 
           shape: "gaussian"
           offset: 0.5

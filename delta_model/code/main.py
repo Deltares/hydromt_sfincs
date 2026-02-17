@@ -2,6 +2,7 @@
 from modulefinder import test
 from pathlib import Path
 import time
+import json
 from hydromt import DataCatalog
 import yaml
 from hydromt_sfincs import SfincsModel, utils
@@ -11,22 +12,44 @@ from delta_model.code.step2_run import run_sfincs_model
 
 
 #%%
+# # Build one modelL -------------------------------------------------------------------------------------------                 
+# # delta_basin_id = 1416812 
 # delta_basin_id = 620947
-delta_basin_id = 1416812 
-root_folder = f"C:\\PhD\\SFINCS\\SFINCS_cloned\\output\\sfincs_{delta_basin_id}"
-catalog = "data_catalog_v1.yml"
+# root_folder = f"C:\\PhD\\SFINCS\\SFINCS_cloned\\output\\sfincs_{delta_basin_id}"
+# catalog = "data_catalog_v1.yml"
+# sfincs_executable = r"C:\PhD\SFINCS\SFINCS_cloned\hydromt_sfincs\delta_model\software\SFINCS_v2.3.0_mt_Faber_release_exe\sfincs.exe"
+
+# print(f"Building SFINCS model for Basin: {delta_basin_id}...")
+
+# build_sfincs_model(
+#     delta_basin_id = delta_basin_id,
+#     root_folder = Path(root_folder),
+#     data_libs = [catalog]
+# )
+
+# print(f"Build complete and saved to: {root_folder}")
+
+#%%
+# Loop to build multiple models -----------------------------------------------------------------------------
+catalog_file = "data_catalog_v1.yml"
+
+catalog = DataCatalog(data_libs=[catalog_file])
+delta_polygons = catalog.get_geodataframe('4_small_deltas')
+basin_ids = delta_polygons['BasinID2'].unique().tolist()
+
 sfincs_executable = r"C:\PhD\SFINCS\SFINCS_cloned\hydromt_sfincs\delta_model\software\SFINCS_v2.3.0_mt_Faber_release_exe\sfincs.exe"
 
-# 1. Build model -------------------------------------------------------------------------------------------
-print(f"Building SFINCS model for Basin: {delta_basin_id}...")
+for delta_basin_id in basin_ids:
+    root_folder = Path(rf"C:\PhD\SFINCS\SFINCS_cloned\output\sfincs_{delta_basin_id}")
+    print(f"Building SFINCS model for Basin: {delta_basin_id}...")
 
-build_sfincs_model(
-    delta_basin_id = delta_basin_id,
-    root_folder = Path(root_folder),
-    data_libs = [catalog]
-)
+    build_sfincs_model(
+        delta_basin_id = delta_basin_id,
+        root_folder = root_folder,
+        data_libs = [catalog_file]
+    )
 
-print(f"Build complete and saved to: {root_folder}")
+    print(f"Build complete and saved to: {root_folder}")
 
 
 #%%
@@ -42,15 +65,16 @@ run_sfincs_model(
 #%%
 # 3. Visualise time series from obs points to find restarts file ------------------------------------------
 mod = SfincsModel(root = Path(root_folder), 
-                  data_libs = [catalog], 
+                  data_libs = [catalog_file], 
                   mode = "r")
 mod.output.read()
 
 # See available output data variables
-list(mod.output.data.keys())
+# list(mod.output.data.keys())
 
-id = [1,2,3,4,5,6] # river observation points 
-mod.output.data['point_zs'][:,id].plot.line(x='time')
+# Your existing code
+id = [1, 2, 3, 4, 5, 6] 
+mod.output.data['point_zs'][:, id].plot.line(x='time')
 
 # Determine restart file from time series 
 # Day 9? 
@@ -59,27 +83,27 @@ mod.output.data['point_zs'][:,id].plot.line(x='time')
 
 # 4: Run other senarios by overwriting model config -------------------------------------------------------
 from hydromt.readers import read_yaml
+from hydromt import DataCatalog
 
 scenarios_yaml = read_yaml(r"C:\PhD\SFINCS\SFINCS_cloned\hydromt_sfincs\delta_model\code\scenarios.yml")
 # print(list(scenarios_yaml["scenarios"].keys()))
 # print(scenarios_yaml["scenarios"]["river_flood"])
 # print(scenarios_yaml["scenarios"]["coastal_flood"])
 
-from hydromt import DataCatalog
 catalog = DataCatalog(data_libs=["data_catalog_v1.yml"])
 combined_dataset_deltas = catalog.get_dataframe('combined_dataset_deltas') 
 
 # Loop through all scenarios defined in the YAML file
 for scenario in scenarios_yaml["scenarios"].keys():
-    
-    print(f"\n--- Processing Scenario: {scenario} ---")
+
+    print(f"\n--- Processing Scenarios ---")
     steps = scenarios_yaml["scenarios"][scenario]["steps"]
 
-    # Dynamically set offset and peak values
-    discharge_offset = combined_dataset_deltas.loc[combined_dataset_deltas['BasinID2'] == delta_basin_id, 'Discharge_dist'].values[0],  
+    # Set offset and peak values
+    discharge_offset = combined_dataset_deltas.loc[combined_dataset_deltas['BasinID2'] == delta_basin_id, 'Discharge_dist'].values[0]
     discharge_peak = combined_dataset_deltas.loc[combined_dataset_deltas['BasinID2'] == delta_basin_id, 'Discharge99'].values[0]
 
-    # Update the steps with dynamic values
+    # Update the steps with above values
     for step in steps:
         if "discharge_points.create_timeseries" in step:
             step["discharge_points.create_timeseries"]["offset"] = discharge_offset
@@ -99,30 +123,29 @@ for scenario in scenarios_yaml["scenarios"].keys():
     # Write the updated model files to the new folder
     mod.write()
 
-    mod.plot_forcing()
+    # mod.plot_forcing()
 
-    # # Run the SFINCS model per scenario
-    # run_sfincs_model(
-    #     model_root = new_root,
-    #     sfincs_exe = sfincs_executable
-    # )
+    # Run the SFINCS model per scenario
+    run_sfincs_model(
+        model_root = new_root,
+        sfincs_exe = sfincs_executable
+    )
     
-    # print(f"Scenario {scenario} finished and results saved to: {new_root}")
+    print(f"Scenario {scenario} finished and results saved to: {new_root}")
 
 
 
 #%%    
 # Analyse model --------------------------------------------------------
-# doesnt print flood map correctly-- check if its running coreectly in model scenarios
-# one at a time for scenarios 
-# delta_basin_id = 620947
-scenario =  "coastal_flood" # "river_flood" 
-
 import numpy as np
 import rasterio.features
 import geopandas as gpd
 from shapely.geometry import shape
 
+scenario =  "coastal_flood" # "river_flood" 
+
+
+# sfincs_root = f"C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}" # path to sfincs root
 sfincs_root = f"C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}_{scenario}" # path to sfincs root
 
 mod = SfincsModel(root = sfincs_root, 
@@ -203,8 +226,7 @@ fig, ax = mod.plot_basemap(
 ax.set_title(f"SFINCS maximum water depth")
 
 #%%
-# plot time series from model 
-sf.plot_forcing()
+mod.plot_forcing()
 
 # %%
 from matplotlib import animation
