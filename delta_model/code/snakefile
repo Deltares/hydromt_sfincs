@@ -1,0 +1,3 @@
+# rules for: build_baseline, run_baseline, prepare_scenario, run_scenario, and all.
+# one basin wildcard-free MVP
+#  Make each rule depend on explicit completion marker files in each model folder.

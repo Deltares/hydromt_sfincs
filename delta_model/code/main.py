@@ -29,6 +29,14 @@ from delta_model.code.step2_run import run_sfincs_model
 
 # print(f"Build complete and saved to: {root_folder}")
 
+# # 2. Run SFINCS (for baseline) ----------------------------------------------------------------------------
+# print(f"Running SFINCS baseline model...")
+
+# run_sfincs_model(
+#     model_root = Path(root_folder),
+#     sfincs_exe = sfincs_executable
+# )
+
 #%%
 # Loop to build multiple models -----------------------------------------------------------------------------
 catalog_file = "data_catalog_v1.yml"
@@ -39,6 +47,7 @@ basin_ids = delta_polygons['BasinID2'].unique().tolist()
 
 sfincs_executable = r"C:\PhD\SFINCS\SFINCS_cloned\hydromt_sfincs\delta_model\software\SFINCS_v2.3.0_mt_Faber_release_exe\sfincs.exe"
 
+#%%
 for delta_basin_id in basin_ids:
     root_folder = Path(rf"C:\PhD\SFINCS\SFINCS_cloned\output\sfincs_{delta_basin_id}")
     print(f"Building SFINCS model for Basin: {delta_basin_id}...")
@@ -50,19 +59,26 @@ for delta_basin_id in basin_ids:
     )
 
     print(f"Build complete and saved to: {root_folder}")
-
+    
 
 #%%
 # 2. Run SFINCS (for baseline) ----------------------------------------------------------------------------
-print(f"Running SFINCS baseline model...")
 
-run_sfincs_model(
-    model_root = Path(root_folder),
-    sfincs_exe = sfincs_executable
-)
+for delta_basin_id in basin_ids:
+    root_folder = Path(rf"C:\PhD\SFINCS\SFINCS_cloned\output\sfincs_{delta_basin_id}")
+    print(f"Running SFINCS baseline model for Basin: {delta_basin_id}...")
+
+    run_sfincs_model(
+        model_root = root_folder,
+        sfincs_exe = sfincs_executable
+    )
+
 
 
 #%%
+delta_basin_id = 2444235
+root_folder = Path(rf"C:\PhD\SFINCS\SFINCS_cloned\output\sfincs_{delta_basin_id}")
+
 # 3. Visualise time series from obs points to find restarts file ------------------------------------------
 mod = SfincsModel(root = Path(root_folder), 
                   data_libs = [catalog_file], 
@@ -142,15 +158,15 @@ import rasterio.features
 import geopandas as gpd
 from shapely.geometry import shape
 
-scenario =  "coastal_flood" # "river_flood" 
+# scenario =  "coastal_flood" # "river_flood" 
 
 
-# sfincs_root = f"C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}" # path to sfincs root
-sfincs_root = f"C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}_{scenario}" # path to sfincs root
+# # sfincs_root = f"C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}" # path to sfincs root
+# sfincs_root = f"C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}_{scenario}" # path to sfincs root
 
-mod = SfincsModel(root = sfincs_root, 
-                  data_libs = ['data_catalog_v1.yml'], 
-                  mode = "r")
+# mod = SfincsModel(root = sfincs_root, 
+#                   data_libs = ['data_catalog_v1.yml'], 
+#                   mode = "r")
 
 # first we are going to select our highest-resolution elevation dataset
 # with the depfile on subgrid resolution this would be:

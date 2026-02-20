@@ -6,8 +6,8 @@ scenarios:
   river_flood:
     steps:
       - config.update:
-          rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_620947/sfincs.20181210.000000.rst"
-          # rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}/sfincs.20181210.000000.rst" # goal 
+          # rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_620947/sfincs.20181210.000000.rst"
+          rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}/sfincs.20181210.000000.rst" # goal 
           dtmapout: 259200 # output every 3 days 
           dtmaxout: 259200 # output every 3 days
       - discharge_points.create_timeseries: 
@@ -26,8 +26,8 @@ scenarios:
   coastal_flood: 
     steps:
       - config.update:
-          rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_620947/sfincs.20181210.000000.rst"
-          # rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}/sfincs.20181210.000000.rst" # goal
+          # rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_620947/sfincs.20181210.000000.rst"
+          rstfile: "C:/PhD/SFINCS/SFINCS_cloned/output/sfincs_{delta_basin_id}/sfincs.20181210.000000.rst" # goal
           dtmapout: 259200 # output every 3 days 
           dtmaxout: 259200 # output every 3 days
       - water_level.create_timeseries: 

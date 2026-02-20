@@ -19,8 +19,7 @@ import pandas as pd
 import numpy as np
 from pyproj import Transformer
 import logging
-from river_processing import river_depth_estimation
-
+# from river_processing import river_depth_estimation
 
 def build_sfincs_model(delta_basin_id: int, root_folder: Path, data_libs: list = ['data_catalog_v1.yml']):
     
@@ -140,25 +139,36 @@ def build_sfincs_model(delta_basin_id: int, root_folder: Path, data_libs: list =
 
 
     # 7: Add rivers data --------------------------------------------------------------------------------------------
-    rivers_lin = catalog.get_geodataframe("global_rivers_lin", geom=delta_domain)
-    rivers_sword_network = catalog.get_geodataframe("global_SWORD_network", geom=delta_domain)
-    rivers_sword_old = catalog.get_geodataframe("global_SWORD_old", geom=delta_domain)
+    # rivers_clipped = catalog.get_geodataframe("4_small_deltas_rivers", geom=delta_domain) # dataset contains rivdph and rivwth
+    rivers_sword = catalog.get_geodataframe("global_SWORD_old", geom=delta_domain)   # Variables: width, slope
+    rivers_lin = catalog.get_geodataframe("global_rivers_lin", geom=delta_domain)       # Variables: Q2, width_m
 
-    rivers_clipped = river_depth_estimation(delta_domain, rivers_sword_network, rivers_lin, rivers_sword_old) # sword with calc. of rivdph
+    import geopandas as gpd
+    # Join 'lin' attributes to the 'sword' geometry
+    rivers_clipped = gpd.sjoin_nearest(
+        rivers_sword, 
+        rivers_lin, 
+        max_distance = 1000,  # maybe specify if there is nothing witin 100m then make Q2 0 and use a different way to calculate?       
+        how='left'
+    )
+
+    # Calculate river width using power-law relationship 
+    c = 7.2
+    f = 0.50
+    rivers_clipped["rivwth"] = (c * (rivers_clipped["Q2"].astype(float) ** f)).astype(float)
+
+    # Keep the better width data from SWORD (variable = 'width') if available, otherwise keep calculated value from power-law relationship 
+    rivers_clipped.loc[rivers_clipped["width"].notna(), "rivwth"] = (rivers_clipped["width"])
     
+    a = 0.27
+    b = 0.30  
+    rivers_clipped["rivdph"] = a * (rivers_clipped["Q2"].astype(float) ** b)
+
     # Replace 'rivdph' values with the minimum value where they are less than the minimum
     min_rivdph = 0 # Note: Making this value higher or lower can affect results
     rivers_clipped["rivdph"] = (np.where(
         rivers_clipped["rivdph"] < min_rivdph, min_rivdph, rivers_clipped["rivdph"]
     )).astype(float)
-
-    # Calculate river width using power-law relationship 
-    a = 7.2
-    b = 0.50
-    rivers_clipped["rivwth"] = (a * (rivers_clipped["final_Q2"].astype(float) ** b)).astype(float)
-
-    # Keep the better width data from SWORD (variable = 'width') if available, otherwise keep calculated value from power-law relationship 
-    rivers_clipped.loc[rivers_clipped["width"].notna(), "rivwth"] = (rivers_clipped["width"])
 
     # Create rivers list 
     river_list = [
@@ -202,31 +212,41 @@ def build_sfincs_model(delta_basin_id: int, root_folder: Path, data_libs: list =
         src_type = 'inflow'
     )
 
-    # Use final_Q2 as constant river discharge for each inflow point
-    gdf_src = sf.discharge_points.gdf
+    combined_dataset_deltas = catalog.get_dataframe('combined_dataset_deltas') 
+    # Create timeseries based on excel. NOTE the index 0 only adds discharge to the first river inflow point, the rest gets zero
+    sf.discharge_points.create_timeseries(
+        index = [0],
+        shape = "constant",
+        offset = combined_dataset_deltas.loc[combined_dataset_deltas['BasinID2'] == delta_basin_id, 'Discharge_dist'].values[0],
+        timestep = 600,
+    )
 
-    if not gdf_src.empty:
-        # Map Q2 values from the rivers to the points using a spatial join
-        gdf_src_mapped = gpd.sjoin_nearest(
-            gdf_src, 
-            rivers_clipped[["geometry", "final_Q2"]].to_crs(sf.crs), 
-            how="left", 
-            distance_col="dist"
-        )
-        # Ensure one-to-one mapping by keeping the first match if multiple are found
-        gdf_src_mapped = gdf_src_mapped[~gdf_src_mapped.index.duplicated(keep='first')]
+    # # more complex way to automatically make the time series 
+    # # Use final_Q2 as constant river discharge for each inflow point
+    # gdf_src = sf.discharge_points.gdf # TODO check if this is a problem 
+
+    # if not gdf_src.empty:
+    #     # Map Q2 values from the rivers to the points using a spatial join
+    #     gdf_src_mapped = gpd.sjoin_nearest(
+    #         gdf_src, 
+    #         rivers_clipped[["geometry", "final_Q2"]].to_crs(sf.crs), 
+    #         how="left", 
+    #         distance_col="dist"
+    #     )
+    #     # Ensure one-to-one mapping by keeping the first match if multiple are found
+    #     gdf_src_mapped = gdf_src_mapped[~gdf_src_mapped.index.duplicated(keep='first')]
         
-        # Create a constant timeseries for each point
-        times = [sf.config.get("tstart"), sf.config.get("tstop")]
-        dis_df = pd.DataFrame(index=times, columns=gdf_src.index)
-        for idx in gdf_src.index:
-            q_val = gdf_src_mapped.loc[idx, "final_Q2"]
-            dis_df[idx] = float(q_val)
+    #     # Create a constant timeseries for each point
+    #     times = [sf.config.get("tstart"), sf.config.get("tstop")]
+    #     dis_df = pd.DataFrame(index=times, columns=gdf_src.index)
+    #     for idx in gdf_src.index:
+    #         q_val = gdf_src_mapped.loc[idx, "final_Q2"]
+    #         dis_df[idx] = float(q_val)
             
-        # Set the forcing using the create method
-        sf.discharge_points.create(
-            timeseries=dis_df
-        )
+    #     # Set the forcing using the create method
+    #     sf.discharge_points.create(
+    #         timeseries=dis_df
+    #     )
 
     # Plot forcing 
     fig, ax = sf.plot_forcing()
@@ -264,7 +284,7 @@ def build_sfincs_model(delta_basin_id: int, root_folder: Path, data_libs: list =
 #%%
 # To test this script above with an example independently
 if __name__ == "__main__":
-    delta_basin_id = 620947 
+    delta_basin_id = 2433835 
     root_folder = Path('C:/PhD/SFINCS/SFINCS_cloned/output') / f'sfincs_{delta_basin_id}'
     build_sfincs_model(delta_basin_id, root_folder)
 

@@ -11,7 +11,7 @@ meta:
 #     crs: 4326
 #   uri: 40_delta_polygons.geojson
 
-# 4_delta_polygons: # edited domains 
+# 4_delta_polygons: # edited domains, but too big to run on local computer 
 #   data_type: GeoDataFrame
 #   driver:
 #     name: pyogrio
@@ -27,6 +27,17 @@ meta:
     crs: 4326
   uri: 4_small_deltas.geojson
 
+# 4_small_deltas_rivers: # clipped rivers for the 4 deltas 
+#   data_adapter:
+#     rename:
+#       width: rivwth
+#   data_type: GeoDataFrame
+#   driver:
+#     name: pyogrio
+#   metadata:
+#     crs: 4326
+#   uri: rivers_clipped_formatted.gpkg
+
 global_SWORD_old: # works 
   data_type: GeoDataFrame
   driver:
@@ -37,7 +48,7 @@ global_SWORD_old: # works
     notes: SWORD data 
   uri: Global_rivers.gpkg
 
-global_SWORD_network: # gives error 
+global_SWORD_network: # gives error (projection thing i think)
   data_type: GeoDataFrame
   driver:
     name: pyogrio
