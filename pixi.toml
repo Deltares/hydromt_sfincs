@@ -30,3 +30,7 @@ docs-serve = "python -m http.server -d docs/_build/html"
 tests = "pytest -v --cov=hydromt_sfincs -cov-report=term-missing"
 
 [dependencies]
+python = "3.13.*"
+
+[pypi-dependencies]
+hydromt_sfincs = { path = ".", editable = true, extras = ["full"] }
