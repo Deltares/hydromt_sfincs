@@ -412,7 +412,6 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             da_msk=self.model.quadtree_grid.data["snapwave_mask"],
         )
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
-        gdf_msk2["geometry"] = gdf_msk2.buffer(buffer)
         # gdf_msk2 is now used to clip geodataset to get wanted locations
         region = gdf_msk2
 
