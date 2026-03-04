@@ -741,14 +741,13 @@ class SfincsModel(Model):
             # parse rivers
             if "centerlines" in dataset:
                 rivers = dataset.get("centerlines")
-                if isinstance(rivers, str) and rivers in self.geoms:
-                    gdf_riv = self.geoms[rivers].copy()
-                else:
-                    gdf_riv = self.data_catalog.get_geodataframe(
-                        rivers,
-                        bbox=self.bbox,
-                        buffer=1e3,  # 1km
-                    ).to_crs(self.crs)
+                # NOTE if you want to use model.rivers.data as centerlines,
+                # you need to provide this in the river_list
+                gdf_riv = self.data_catalog.get_geodataframe(
+                    rivers,
+                    bbox=self.bbox,
+                    buffer=1e3,  # 1km
+                ).to_crs(self.crs)
                 # update missing attributes based on global values
                 for key in attrs:
                     if key in dataset:
