@@ -113,9 +113,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             da_mask = self.empty_mask
         return da_mask
 
-    def read(
-        self, filename: Union[str, Path] = "sfincs.nc", data_vars: List[dict] = None
-    ):
+    def read(self, filename: Union[str, Path] = None, data_vars: List[dict] = None):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object.
 
         Parameters
