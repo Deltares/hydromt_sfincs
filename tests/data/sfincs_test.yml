@@ -77,7 +77,6 @@ steps:
   - precipitation.create:
       precip: era5_hourly
       aggregate: False
-      buffer: 10
 
   - wind.create_uniform:
       timeseries: wind
