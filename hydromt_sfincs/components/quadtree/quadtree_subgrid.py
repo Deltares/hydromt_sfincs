@@ -79,7 +79,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             raise FileNotFoundError(f"Subgrid file not found: {abs_file_path}")
 
         # Read from netcdf file with xarray
-        self.data = xr.load_dataset(filename)
+        self._data = xr.load_dataset(filename)
 
     def write(self, filename: str | Path = None):
         """Write SFINCS subgrid table (*.sbg) file for Quadree grid
