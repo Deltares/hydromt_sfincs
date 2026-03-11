@@ -113,9 +113,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             da_mask = self.empty_mask
         return da_mask
 
-    def read(
-        self, filename: Union[str, Path] = None, data_vars: List[dict] = None
-    ):
+    def read(self, filename: Union[str, Path] = None, data_vars: List[dict] = None):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object.
 
         Parameters
@@ -185,7 +183,8 @@ class SfincsQuadtreeGrid(MeshComponent):
             for var in variables:
                 try:
                     with xu.load_dataset(var["file_name"]) as ds:
-                        self._data[var["variable"]] = ds[var["variable"]]
+                        ds.grid.set_crs(self.model.crs)
+                        self.set(ds)
                 except Exception as e:
                     logger.error(f"Error reading variable {var['variable']}: {e}")
                     continue
@@ -578,7 +577,9 @@ class SfincsQuadtreeGrid(MeshComponent):
             ifirst = np.zeros(nr_refinement_levels, dtype=int)
             for ilev in range(0, nr_refinement_levels):
                 # Find index of first cell with this level
-                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)[0][0]
+                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)[
+                    0
+                ][0]
             self.ifirst = ifirst
 
         ifirst = self.ifirst
