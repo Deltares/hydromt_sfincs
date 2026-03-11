@@ -166,6 +166,13 @@ class SfincsQuadtreeElevation(MeshComponent):
                         interp_method=interp_method,
                         logger=logger,
                     )
+
+                    # check if no nan data is present in the bed levels
+                    nmissing = int(np.sum(np.isnan(da_dep.values)))
+                    if nmissing > 0:
+                        logger.warning(f"Interpolate elevation at {nmissing} cells")
+                        da_dep = da_dep.raster.interpolate_na(method="rio_idw", extrapolate=True)
+
                     idx_y = np.searchsorted(da_dep.n.values, n_level[in_chunk].values)
                     idx_x = np.searchsorted(da_dep.m.values, m_level[in_chunk].values)
                     zgl[in_chunk] = da_dep.values[idx_y, idx_x]

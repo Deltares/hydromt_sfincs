@@ -114,7 +114,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         return da_mask
 
     def read(
-        self, filename: Union[str, Path] = "sfincs.nc", data_vars: List[dict] = None
+        self, filename: Union[str, Path] = None, data_vars: List[dict] = None
     ):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object.
 
@@ -578,8 +578,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             ifirst = np.zeros(nr_refinement_levels, dtype=int)
             for ilev in range(0, nr_refinement_levels):
                 # Find index of first cell with this level
-                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)
-                [0][0]
+                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)[0][0]
             self.ifirst = ifirst
 
         ifirst = self.ifirst
@@ -727,7 +726,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             bounds = src.bounds
             dx = src.res[0]
             # Get the CRS of the grid
-            self.model.crs = src.crs
+            crs = src.crs
             # Get the nodata value
             nodata = src.nodata
             # Get the transform of the grid
@@ -811,7 +810,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             width=width,
             count=1,
             dtype=ii.dtype,
-            crs=self.model.crs,
+            crs=crs,
             transform=transform,
             nodata=nodata,
             overview_resampling=Resampling.nearest,

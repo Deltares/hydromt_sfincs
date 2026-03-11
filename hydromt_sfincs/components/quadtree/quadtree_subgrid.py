@@ -122,6 +122,8 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         write_dep_tif=True,
         write_man_tif=False,
         weight_option="min",
+        buffer_cells=0,
+        interp_method: str = "linear",
         bathymetry_database=None,
         quiet=False,
         progress_bar=None,
@@ -148,6 +150,8 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             zmin (float, optional): Minimum elevation. Defaults to -999999.0.
             zmax (float, optional): Maximum elevation. Defaults to 999999.0.
             weight_option (str, optional): Weight option. Defaults to "min".
+            buffer_cells (int, optional): Number of buffer cells. Defaults to 0.
+            interp_method (str, optional): Interpolation method for buffer cells. Defaults to "linear".
             bathymetry_database (str, optional): Bathymetry database. Defaults to None.
             quiet (bool, optional): Quiet mode. Defaults to False.
             progress_bar (tqdm, optional): Progress bar. Defaults to None.
@@ -211,6 +215,8 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             write_dep_tif=write_dep_tif,
             write_man_tif=write_man_tif,
             weight_option=weight_option,
+            buffer_cells=buffer_cells,
+            interp_method=interp_method,
             bathymetry_database=bathymetry_database,
             quiet=quiet,
             progress_bar=progress_bar,
