@@ -79,7 +79,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             raise FileNotFoundError(f"Subgrid file not found: {abs_file_path}")
 
         # Read from netcdf file with xarray
-        self._data = xr.load_dataset(filename)
+        self._data = xr.load_dataset(abs_file_path)
 
     def write(self, filename: str | Path = None):
         """Write SFINCS subgrid table (*.sbg) file for Quadree grid
@@ -129,10 +129,6 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         progress_bar=None,
     ):
         """Build SFINCS subgrid table for quadtree grid
-
-        FIXME WARNING: this only works when called from Delft Dashboard
-        The hydromt_sfincs.subgrid_quadtree_builder needs to be updated
-        to work with data catalogs
 
         Args:
             elevation_list (list): List of bathymetry data sets
