@@ -46,6 +46,29 @@ class SfincsCrossSections(ModelComponent):
             self._initialize()
         return self._data
 
+    @property
+    def gdf(self) -> gpd.GeoDataFrame:
+        """Cross-section lines data, returned as a GeoDataFrame."""
+        if self._data is None:
+            self._initialize()
+        return self._data
+
+    @property
+    def nr_lines(self) -> int:
+        """
+        Return the number of line locations currently stored.
+        """
+        if hasattr(self.data, "index"):
+            return len(self.data.index)
+        return 0
+
+    @property
+    def list_names(self) -> list:
+        """Return list of names of cross sections."""
+        if self.data.empty:
+            return []
+        return list(self.data["name"])
+
     # %% core HydroMT-SFINCS functions:
     # _initialize
     # read
@@ -276,13 +299,6 @@ class SfincsCrossSections(ModelComponent):
             )
         snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf
-
-    def list_names(self):
-        """Give list of names of cross sections."""
-        if self.data.empty:
-            return []
-        names = list(self.data["name"])
-        return names
 
     def delete_line(self, index: Union[int, str]):
         """Remove one cross-section based on index or name.

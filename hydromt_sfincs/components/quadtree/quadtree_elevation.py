@@ -92,10 +92,14 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         level = self.data["level"].values - 1
 
         # Precompute elevation sets per level
-        elevation_list_per_level = [
-            self.model._parse_datasets_elevation(elevation_list, res=res / (2**ilev))
-            for ilev in range(nlev)
-        ]
+        # Add try statement here for compatibility with cht_bathymetry approach
+        try:
+            elevation_list_per_level = [
+                self.model._parse_datasets_elevation(elevation_list, res=res / (2**ilev))
+                for ilev in range(nlev)
+            ]
+        except Exception as e:
+            print("Using bathymetry database for interpolation.")
 
         if bathymetry_database is None:
             # Generic workflow using compute_quadtree

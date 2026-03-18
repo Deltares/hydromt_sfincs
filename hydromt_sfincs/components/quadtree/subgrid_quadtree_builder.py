@@ -127,7 +127,7 @@ class SubgridTableQuadtree:
         # this is needed for symmetry around the uv points
         if nr_subgrid_pixels % 2 != 0:
             raise ValueError(
-                "nr_subgrid_pixels must be a multiple of 2 for subgrid table"
+                "nr_subgrid_pixels must be an even number for subgrid table"
             )
 
         time_start = time.time()
@@ -317,16 +317,17 @@ class SubgridTableQuadtree:
             )
             log_info(msg, logger, quiet)
 
+
+            ### CELL CENTRES
+
             ibt = 1
             if progress_bar:
                 progress_bar.set_text(
-                    "               Generating Sub-grid Tables (level "
+                    "               Generating Sub-grid Tables Z (level "
                     + str(ilev)
                     + ") ...                "
                 )
                 progress_bar.set_maximum(nrbm * nrbn)
-
-            ### CELL CENTRES
 
             # Loop through blocks
             ib = -1
@@ -347,6 +348,12 @@ class SubgridTableQuadtree:
                         + " ..."
                     )
                     log_info(msg, logger, quiet)
+
+                    if progress_bar:
+                        progress_bar.set_value(ibt)
+                        if progress_bar.was_canceled():
+                            return
+                        ibt += 1
 
                     # Block n,m indices
                     bn0 = n0 + jj * nrcb  # Index of first n in block
@@ -422,8 +429,8 @@ class SubgridTableQuadtree:
                         # Delft Dashboard
                         # Get bathymetry on subgrid from bathymetry database
 
-                        xg = da_sbg["xc"].values
-                        yg = da_sbg["yc"].values
+                        xg = da_sbg["x"].values
+                        yg = da_sbg["y"].values
 
                         zg = bathymetry_database.get_bathymetry_on_grid(
                             xg, yg, crs, elevation_list, method="linear"
@@ -508,7 +515,6 @@ class SubgridTableQuadtree:
                             return
                         ibt += 1
 
-            # UV Points
             if write_dep_tif or write_man_tif:
                 # determine the output dimensions and transform
                 da_transform, da_width, da_height = utils.make_regular_grid_transform(
@@ -559,6 +565,17 @@ class SubgridTableQuadtree:
                     with rasterio.open(fn_man_tif, "w", **profile):
                         pass
 
+            # UV Points
+
+            ibt = 1
+            if progress_bar:
+                progress_bar.set_text(
+                    "               Generating Sub-grid Tables U/V (level "
+                    + str(ilev)
+                    + ") ...                "
+                )
+                progress_bar.set_maximum(nrbm * nrbn)
+
             # Loop through blocks
             ib = -1
             for ii in range(nrbm):
@@ -574,6 +591,12 @@ class SubgridTableQuadtree:
                         f"Processing U/V points in block {ib + 1} of {nrbn * nrbm} ..."
                     )
                     log_info(msg, logger, quiet)
+
+                    if progress_bar:
+                        progress_bar.set_value(ibt)
+                        if progress_bar.was_canceled():
+                            return
+                        ibt += 1
 
                     # Block n,m indices
                     bn0 = n0 + jj * nrcb  # Index of first n in block
@@ -688,8 +711,8 @@ class SubgridTableQuadtree:
                         # Delft Dashboard
                         # Get bathymetry on subgrid from bathymetry database
 
-                        xg = da_sbg_uv["xc"].values
-                        yg = da_sbg_uv["yc"].values
+                        xg = da_sbg_uv["x"].values
+                        yg = da_sbg_uv["y"].values
 
                         zg = bathymetry_database.get_bathymetry_on_grid(
                             xg, yg, crs, elevation_list
@@ -877,11 +900,11 @@ class SubgridTableQuadtree:
                         roughness_type,
                     )
 
-                    if progress_bar:
-                        progress_bar.set_value(ibt)
-                        if progress_bar.was_canceled():
-                            return
-                        ibt += 1
+                    # if progress_bar:
+                    #     progress_bar.set_value(ibt)
+                    #     if progress_bar.was_canceled():
+                    #         return
+                    #     ibt += 1
 
             if bathymetry_database is None:
                 # Create COG overviews for faster visualization

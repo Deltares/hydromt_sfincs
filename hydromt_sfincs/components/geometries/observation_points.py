@@ -44,6 +44,13 @@ class SfincsObservationPoints(ModelComponent):
         return self._data
 
     @property
+    def gdf(self) -> gpd.GeoDataFrame:
+        """Observation point data, returned as a GeoDataFrame. Same as data property."""
+        if self._data is None:
+            self._initialize()
+        return self._data
+
+    @property
     def nr_points(self) -> int:
         """
         Return the number of point locations currently stored.
@@ -51,6 +58,16 @@ class SfincsObservationPoints(ModelComponent):
         if hasattr(self.data, "index"):
             return len(self.data.index)
         return 0
+
+    @property
+    def list_names(self) -> list:
+        """
+        Return list of names of observation points.
+        """
+        if self.data.empty:
+            return []
+        names = list(self.data["name"])
+        return names
 
     # %% core HydroMT-SFINCS functions:
     # _initialize
@@ -65,8 +82,11 @@ class SfincsObservationPoints(ModelComponent):
         """Initialize observation points."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            if self.root.is_reading_mode() and not skip_read:
-                self.read()
+            # Commenting following lines out for now. obsfile is probably set to none at this time, but
+            # it will try to read sfincs.obs file anyway. If this file is present, it will read it.
+            # This is not desired, as the user might want to start with an empty set of observation points.
+            # if self.root.is_reading_mode() and not skip_read:
+            #     self.read()
 
     def read(self, filename: str | Path = None):
         """Read SFINCS observation points (.obs) file. Filename is obtained from config if not given."""
@@ -297,9 +317,3 @@ class SfincsObservationPoints(ModelComponent):
         self.delete(index)
         return
 
-    def list_names(self):
-        """Give list of names of observation points."""
-        if self.data.empty:
-            return []
-        names = list(self.data["name"])
-        return names
