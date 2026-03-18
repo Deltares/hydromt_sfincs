@@ -227,9 +227,6 @@ def test_create(model_config):
     """Test creating discharge points from a GeoDataFrame and csv file."""
     src_file = Path(TESTMODELDIR) / "gis" / "bnd.geojson"
 
-    print(src_file.resolve())
-    print(src_file.exists())
-
     # Create discharge points from GeoDataFrame
     model_config.water_level.create(locations=src_file, merge=False)
 

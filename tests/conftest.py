@@ -62,6 +62,14 @@ def model(tmp_dir):
 
 
 @pytest.fixture
+def quadtree_model_config():
+    root = join(TESTDATADIR, "sfincs_test_quadtree")
+    mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
+    mod.config.read()
+    return mod
+
+
+@pytest.fixture
 def quadtree_model(tmp_dir):
     root = join(TESTDATADIR, "sfincs_test_quadtree")
     mod = SfincsModel(root=root, mode="r")

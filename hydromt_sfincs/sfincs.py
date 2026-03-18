@@ -40,6 +40,7 @@ from hydromt_sfincs.components.grid import (
 from hydromt_sfincs.components.quadtree import (
     SfincsQuadtreeGrid,
     SfincsQuadtreeElevation,
+    SfincsQuadtreeRoughness,
     SfincsQuadtreeInitialConditions,
     SfincsQuadtreeInfiltration,
     SfincsQuadtreeMask,
@@ -100,6 +101,7 @@ class SfincsModel(Model):
         "quadtree_grid": SfincsQuadtreeGrid,
         "quadtree_elevation": SfincsQuadtreeElevation,
         "quadtree_mask": SfincsQuadtreeMask,
+        "quadtree_roughness": SfincsQuadtreeRoughness,
         "quadtree_infiltration": SfincsQuadtreeInfiltration,
         "quadtree_storage_volume": SfincsQuadtreeStorageVolume,
         "quadtree_initial_conditions": SfincsQuadtreeInitialConditions,
@@ -348,10 +350,10 @@ class SfincsModel(Model):
                 "wind10_v": {"standard_name": "northward wind", "unit": "m/s"},
             },
             "snapwave_boundary_conditions": {
-                "hs": {},
-                "tp": {},
-                "dir": {},
-                "ds": {},
+                "hs": {"standard_name": "significant wave height", "unit": "m"},
+                "tp": {"standard_name": "peak wave period", "unit": "s"},
+                "wd": {"standard_name": "wave direction", "unit": "nautical degrees"},
+                "ds": {"standard_name": "wave direction spread", "unit": "degrees"},
             },
         }
 
@@ -744,14 +746,13 @@ class SfincsModel(Model):
             # parse rivers
             if "centerlines" in dataset:
                 rivers = dataset.get("centerlines")
-                if isinstance(rivers, str) and rivers in self.geoms:
-                    gdf_riv = self.geoms[rivers].copy()
-                else:
-                    gdf_riv = self.data_catalog.get_geodataframe(
-                        rivers,
-                        bbox=self.bbox,
-                        buffer=1e3,  # 1km
-                    ).to_crs(self.crs)
+                # NOTE if you want to use model.rivers.data as centerlines,
+                # you need to provide this in the river_list
+                gdf_riv = self.data_catalog.get_geodataframe(
+                    rivers,
+                    bbox=self.bbox,
+                    buffer=1e3,  # 1km
+                ).to_crs(self.crs)
                 # update missing attributes based on global values
                 for key in attrs:
                     if key in dataset:
