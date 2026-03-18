@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_QT_MAPS = ["manning", "vol", "ini"]
+_QT_MAPS = ["manning", "vol", "ini", "infiltration"]
 
 
 class SfincsQuadtreeGrid(MeshComponent):
@@ -228,17 +228,28 @@ class SfincsQuadtreeGrid(MeshComponent):
 
         if len(variables) > 0:
             for var in variables:
+                if var["variable"] == "infiltration":
+                    # infiltration is a special case, since it can contain multiple variables
+                    # TODO should we remove the variables of non-used infiltrationtypes?
+                    inftype = self.model.config.get("infiltrationtype")
+                    write_vars = (
+                        self.model.quadtree_infiltration.get_vars_by_infiltration_type(
+                            inftype
+                        )
+                    )
+                else:
+                    write_vars = [var["variable"]]
                 try:
                     # get the single variable and convert to dataset
                     # NOTE this allows to read as a standalone file with spatial metadata
                     ds_var = self.data[
-                        [var["variable"], "mesh2d_node_x", "mesh2d_node_y"]
+                        write_vars, "mesh2d_node_x", "mesh2d_node_y"
                     ].ugrid.to_dataset()
                     ds_var.to_netcdf(var["file_name"])
                     # drop the variable from ds
-                    ds = ds.drop_vars(var["variable"])
+                    ds = ds.drop_vars(write_vars)
                 except Exception as e:
-                    logger.error(f"Error writing variable {var['variable']}: {e}")
+                    logger.error(f"Error writing variables {write_vars}: {e}")
                     continue
 
         # RENAME TO FORTRAN CONVENTION

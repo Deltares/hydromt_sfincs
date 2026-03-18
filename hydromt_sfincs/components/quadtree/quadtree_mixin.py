@@ -37,6 +37,16 @@ class SfincsQuadtreeMixin:
         func_name = getattr(compute_chunk, "__name__", repr(compute_chunk))
         logger.info(f"Computing quadtree values for {nlev} levels using '{func_name}'")
 
+        # Ensure output is a dict for multiple variables
+        if isinstance(output, (tuple, list)):
+            output_dict = {i: arr for i, arr in enumerate(output)}
+        elif isinstance(output, np.ndarray):
+            output_dict = {0: output}
+        elif isinstance(output, dict):
+            output_dict = output
+        else:
+            raise ValueError("output must be dict or tuple/list of arrays")
+
         for ilev in range(nlev):
             idx = level_indices[ilev]
             if len(idx) == 0:
@@ -51,7 +61,8 @@ class SfincsQuadtreeMixin:
             x_chunks = np.arange(x_min, x_max, nrmax * dxmin)
             y_chunks = np.arange(y_min, y_max, nrmax * dymin)
 
-            values_level = np.full(len(idx), np.nan)
+            # Prepare storage for this level per output variable
+            values_level_dict = {key: np.full(len(idx), np.nan) for key in output_dict}
 
             logger.info(
                 f"Processing level {ilev+1} of {nlev} with {len(x_chunks)-1}x{len(y_chunks)-1} chunks"
@@ -68,6 +79,7 @@ class SfincsQuadtreeMixin:
                     if len(in_chunk) == 0:
                         continue
 
+                    # Make a regular grid for this chunk
                     da_like = make_regular_grid(
                         x0=self.data.attrs["x0"],
                         y0=self.data.attrs["y0"],
@@ -82,20 +94,27 @@ class SfincsQuadtreeMixin:
                         make_ugrid=False,
                     )
 
-                    da_out = compute_chunk(da_like, ilev=ilev)
+                    # Compute chunk values
+                    da_outs = compute_chunk(da_like, ilev=ilev)
 
-                    if (
-                        hasattr(da_out, "values")
-                        and hasattr(da_out, "n")
-                        and hasattr(da_out, "m")
-                    ):
+                    # If single output, convert to tuple
+                    if not isinstance(da_outs, (tuple, list)):
+                        da_outs = (da_outs,)
+
+                    # Assign each output variable
+                    for i, key in enumerate(values_level_dict):
+                        da_out = da_outs[i]
                         idx_y = np.searchsorted(da_out.n.values, n_level[in_chunk])
                         idx_x = np.searchsorted(da_out.m.values, m_level[in_chunk])
-                        values_level[in_chunk] = da_out.values[idx_y, idx_x]
+                        values_level_dict[key][in_chunk] = da_out.values[idx_y, idx_x]
+
+            # Clip if needed
+            for key, vals in values_level_dict.items():
+                if clip is not None:
+                    if isinstance(clip, dict):
+                        cmin, cmax = clip.get(key, (None, None))
                     else:
-                        values_level[in_chunk] = da_out
-
-            if clip is not None:
-                values_level = np.clip(values_level, clip[0], clip[1])
-
-            output[idx] = values_level
+                        cmin, cmax = clip
+                    if cmin is not None or cmax is not None:
+                        vals = np.clip(vals, cmin, cmax)
+                output_dict[key][idx] = vals
