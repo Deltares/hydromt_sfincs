@@ -232,7 +232,7 @@ class SfincsQuadtreeGrid(MeshComponent):
                     # get the single variable and convert to dataset
                     # NOTE this allows to read as a standalone file with spatial metadata
                     ds_var = self.data[
-                        [var["variable"], "mesh2d_node_x", "mesh2d_node_y"]
+                        var["variable"] + ["mesh2d_node_x", "mesh2d_node_y"]
                     ].ugrid.to_dataset()
                     ds_var.to_netcdf(var["file_name"])
                     # drop the variable from ds
@@ -332,7 +332,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             elevation_list = elevation_list_per_level
 
         # Build the quadtree grid
-        self._data = build_quadtree_xugrid(
+        ds = build_quadtree_xugrid(
             x0,
             y0,
             nmax,
@@ -345,6 +345,10 @@ class SfincsQuadtreeGrid(MeshComponent):
             elevation_list=elevation_list,
             bathymetry_database=bathymetry_database,
         )
+        # add nFaces coordinates to grid
+        ds = xu.UgridDataset(ds.ugrid.to_dataset())
+        ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
+        self._data = ds
 
         # Make sure epsg is stored in the config as well
         self.model.config.set("epsg", self.model.crs.to_epsg())
