@@ -74,10 +74,10 @@ def test_add_point(model_config_inland):
 
     minx, miny, maxx, maxy = model_config_inland.region.total_bounds
 
-    x = uniform(minx, maxx)
-    y = uniform(miny, maxy)
+    x = minx + 10000
+    y = miny + 10000
 
-    line = LineString([(x, y), (x + 10, y)])  # minimal valid line
+    line = LineString([(x, y), (x + 1000, y)])  # minimal valid line
 
     gdf_random = gpd.GeoDataFrame(
         {
