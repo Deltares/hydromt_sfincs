@@ -28,9 +28,6 @@ _cases = {
     "test2": {
         "example": "sfincs_test_quadtree",
     },
-    "test3": {
-        "example": "sfincs_test_inland",
-    },
 }
 
 

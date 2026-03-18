@@ -299,6 +299,11 @@ class SfincsRivers(ModelComponent):
             Outflow geometries to include as outflow boundary cells. This overrides the detected outflow points.
         buffer: float, optional
             Buffer around the model region boundary to define outflow points [m],
+        internal_dist : float, optional
+            Minimum internal distance [m] used when selecting outflow locations,
+            by default 1000.0.
+        slope : float, optional
+            Minimum slope threshold used in outflow detection.
         append_bounds: bool, optional
             If True, write new outflow boundary cells on top of existing. If False (default),
             first reset existing outflow boundary cells to normal active cells.
@@ -307,7 +312,7 @@ class SfincsRivers(ModelComponent):
         reset_bounds: bool, optional
             If True, reset existing outlfow boundary cells before setting new boundary cells,
             by default False.
-        btype: {'waterlevel', 'outflow', 'downstream'}, optional"}
+        btype: {'waterlevel', 'outflow', 'downstream'}, optional
             Boundary type
         reverse_river_geom: bool, optional
             If True, assume that segments in 'rivers' are drawn from downstream to upstream.
