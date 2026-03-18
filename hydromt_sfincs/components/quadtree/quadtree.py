@@ -307,7 +307,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         self.model.quadtree_mask.clear_datashader_dataframe()
 
         # Set grid type and crs in model
-        self.model.grid_type = "quadtree"
+        self.model._grid_type = "quadtree"
         crs = CRS.from_epsg(epsg)
 
         elevation_list_per_level = []
