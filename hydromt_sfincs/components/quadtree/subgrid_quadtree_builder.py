@@ -132,7 +132,7 @@ class SubgridTableQuadtree:
 
         time_start = time.time()
 
-        crs = CRS(int(grid.crs.values))
+        crs = grid.grid.crs
 
         msg = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
         log_info(msg, logger, quiet)
