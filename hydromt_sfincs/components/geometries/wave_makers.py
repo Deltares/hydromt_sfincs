@@ -54,8 +54,11 @@ class SfincsWaveMakers(ModelComponent):
         """Initialize wavemaker lines."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            if self.root.is_reading_mode() and not skip_read:
-                self.read()
+            # Commenting following lines out for now. wvmfile is probably set to none at this time, but
+            # it will try to read sfincs.wvm file anyway. If this file is present, it will read it.
+            # This is not desired, as the user might want to start with an empty set of wave makers.
+            # if self.root.is_reading_mode() and not skip_read:
+            #     self.read()
 
     def read(self, filename: str | Path = None):
         """Read SFINCS wave makers (.wvm) file"""

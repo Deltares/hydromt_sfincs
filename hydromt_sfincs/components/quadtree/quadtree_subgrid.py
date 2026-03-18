@@ -153,6 +153,8 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             progress_bar (tqdm, optional): Progress bar. Defaults to None.
         """
 
+        highres_dir = None
+
         if bathymetry_database is None:
             # get resolution and number of level
             res = self.model.quadtree_grid.data.attrs["dx"]
@@ -188,8 +190,6 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
                 # check if directory exists using pathlib, otherwise create it
                 if not highres_dir.exists():
                     highres_dir.mkdir(parents=True, exist_ok=True)
-            else:
-                highres_dir = None
 
         self._data = build_subgrid_table_quadtree(
             grid=self.model.quadtree_grid.data,

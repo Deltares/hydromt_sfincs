@@ -125,6 +125,20 @@ class SfincsQuadtreeMask(ModelComponent):
 
         """
 
+        # We first make sure that any polygons that are a geodataframe but are empty, are set to None
+        if isinstance(include_polygon, gpd.GeoDataFrame) and include_polygon.empty:
+            include_polygon = None
+        if isinstance(exclude_polygon, gpd.GeoDataFrame) and exclude_polygon.empty:
+            exclude_polygon = None
+        if isinstance(open_boundary_polygon, gpd.GeoDataFrame) and open_boundary_polygon.empty:
+            open_boundary_polygon = None
+        if isinstance(outflow_boundary_polygon, gpd.GeoDataFrame) and outflow_boundary_polygon.empty:
+            outflow_boundary_polygon = None
+        if isinstance(neumann_boundary_polygon, gpd.GeoDataFrame) and neumann_boundary_polygon.empty:
+            neumann_boundary_polygon = None
+        if isinstance(downstream_boundary_polygon, gpd.GeoDataFrame) and downstream_boundary_polygon.empty:
+            downstream_boundary_polygon = None
+
         # Create active model cells
         self.create_active(
             model=model,
@@ -259,7 +273,7 @@ class SfincsQuadtreeMask(ModelComponent):
         gdf_include, gdf_exclude = None, None
         bbox = self.model.region.to_crs(4326).total_bounds
 
-        # FIXME do we still want to support .pol files?
+        # FIXME do we still want to support .pol files? MvO: No!
         if include_polygon is not None:
             if not isinstance(include_polygon, gpd.GeoDataFrame) and str(
                 include_polygon
@@ -582,7 +596,10 @@ class SfincsQuadtreeMask(ModelComponent):
                     uda_include = np.logical_and(uda_include, uda_dep <= include_zmax)
             bounds = np.logical_and(bounds, uda_include)
             if not bounds.any():
-                raise ValueError("No mask boundary cells found within include polygon!")
+                # This should not be an error. Better to just give a warning.                
+                # raise ValueError("No mask boundary cells found within include polygon!")
+                logger.warning("No mask boundary cells found within polygon!")
+            
 
         if gdf_exclude is not None:
             uda_exclude = (
@@ -682,8 +699,8 @@ class SfincsQuadtreeMask(ModelComponent):
         """Sets the datashader dataframe for plotting"""
         # Create a dataframe with points elements
         # Coordinates of cell centers
-        x = self.face_coordinates[:, 0]
-        y = self.face_coordinates[:, 1]
+        x = self.face_coordinates[0][:]
+        y = self.face_coordinates[1][:]
         # Check if grid crosses the dateline
         cross_dateline = False
         if self.model.crs.is_geographic:

@@ -55,6 +55,7 @@ class SnapWaveQuadtreeMask(ModelComponent):
         # The mask values are written when the quadtree grid is written
         pass
 
+    # Is this not supposed to be called "create"?
     def build(
         self,
         zmin=99999.0,
@@ -414,6 +415,10 @@ class SnapWaveQuadtreeMask(ModelComponent):
         self.model.quadtree_grid.data["snapwave_mask"] = xu.UgridDataArray(
             xr.DataArray(data=mask, dims=[ugrid2d.face_dimension]), ugrid2d
         )
+
+        if update_datashader_dataframe:
+            # For use in DelftDashboard
+            self.get_datashader_dataframe()
 
     def to_gdf(self, option="all"):
         """Returns a geodataframe with points for each cell in the mask"""

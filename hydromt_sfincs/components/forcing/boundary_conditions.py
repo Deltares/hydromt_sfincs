@@ -82,7 +82,11 @@ class SfincsBoundaryBase(ModelComponent):
         an empty GeoDataFrame is returned.
         """
         if self.nr_points > 0:
-            return self.data.vector.to_gdf()
+            g = self.data.vector.to_gdf().reset_index(drop=True)
+            # Ensure "name" column exists for display purposes (not saved to file, just for display in list)
+            if "name" not in g.columns:
+                g["name"] = [f"Point {i+1:03d}" for i in g.index]
+            return g
         return gpd.GeoDataFrame()
 
     def set(
@@ -198,7 +202,10 @@ class SfincsBoundaryBase(ModelComponent):
             time = pd.date_range(*self.model.get_model_time(), periods=2)
             ds_new = self._create_dummy_dataset(gdf, time, value)
             # Combine geometry and dataset into a GeoDataset, assign new integer index and store
-            gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=False)
+            # This is where the name column dissappears!!! Should keep_cols=True be used instead?
+            # Or make sure the "name" column is added to the dataset as well?
+            # gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=False)
+            gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=True)
             gds_new = gds_new.assign_coords(index=np.arange(gds_new.sizes["index"]))
             # Return the new indices which will be 0..N-1 since we are replacing all data
             new_indices = gds_new.index
@@ -304,7 +311,8 @@ class SfincsBoundaryBase(ModelComponent):
             index = [index]
         if any(x > (self.nr_points - 1) for x in index):
             raise ValueError("One of the indices exceeds length of index range!")
-        self._data = self.data.drop_isel(index=index)
+        # Drop the points from the dataset and reassign a new integer index
+        self._data = self.data.drop_isel(index=index).assign_coords(index=np.arange(self.nr_points - len(index)))
 
     def clear(self):
         """

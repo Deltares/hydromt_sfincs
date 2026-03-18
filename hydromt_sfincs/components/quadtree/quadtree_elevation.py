@@ -97,10 +97,14 @@ class SfincsQuadtreeElevation(MeshComponent):
         level_indices = [np.where(level == ilev)[0] for ilev in range(nlev)]
 
         # Precompute elevation sets per level
-        elevation_list_per_level = [
-            self.model._parse_datasets_elevation(elevation_list, res=res / (2**ilev))
-            for ilev in range(nlev)
-        ]
+        # Add try statement here for compatibility with cht_bathymetry approach
+        try:
+            elevation_list_per_level = [
+                self.model._parse_datasets_elevation(elevation_list, res=res / (2**ilev))
+                for ilev in range(nlev)
+            ]
+        except Exception as e:
+            print("Using bathymetry database for interpolation.")
 
         # get m and n indices
         n = self.data["n"] - 1  # 0-based
