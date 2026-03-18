@@ -39,7 +39,7 @@ def test_river_source_points(hydrography, data_catalog):
     assert gdf_src.index.size == 6
     gdf_src = river_source_points(src_type="outflow", da_uparea=da_uparea, **kwargs)
     assert gdf_src.index.size == 1
-    assert np.isin(["geometry"], gdf_src.columns).all() 
+    assert np.isin(["geometry"], gdf_src.columns).all()
     np.allclose(gdf_src.geometry[0].coords[0:2][0], [(322650.3, 5044385.7)])
 
     # test reverse oriented line

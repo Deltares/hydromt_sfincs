@@ -31,7 +31,6 @@ _cases = {
     "test3": {
         "example": "sfincs_test_inland",
     },
-
 }
 
 

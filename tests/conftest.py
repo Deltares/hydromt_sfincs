@@ -43,6 +43,7 @@ def model_config():
     mod.config.read()
     return mod
 
+
 @pytest.fixture
 def model_config_inland():
     root = TESTMODELDIR_INLAND
@@ -76,6 +77,7 @@ def quadtree_model(tmp_dir):
     mod.read()
     mod.root.set(tmp_dir, mode="r+")
     return mod
+
 
 @pytest.fixture
 def model_inland(tmp_dir):

@@ -24,17 +24,19 @@ def test_river_boundary_io(model_config_inland, tmp_dir):
     # write river boundary points to file
     model_config_inland.root.set(tmp_dir, mode="w+")
     model_config_inland.river_boundary_points.write()
-    model_config_inland.quadtree_grid.write() # Should not be needed?
+    model_config_inland.quadtree_grid.write()  # Should not be needed?
     model_config_inland.config.write()
     assert isfile(tmp_dir / "sfincs.bdr")
 
     # read back-in to check if it remained the same
     mod = SfincsModel(root=model_config_inland.root.path, mode="r")
     mod.config.read()
-    mod.quadtree_grid.read() # Should not be needed?
+    mod.quadtree_grid.read()  # Should not be needed?
     mod.river_boundary_points.read()
     assert len(mod.river_boundary_points.data.index) == 1
-    assert mod.river_boundary_points.test_equal(model_config_inland.river_boundary_points)
+    assert mod.river_boundary_points.test_equal(
+        model_config_inland.river_boundary_points
+    )
 
     # now change the filename in the configuration
     mod.config.update(
@@ -50,17 +52,20 @@ def test_river_boundary_io(model_config_inland, tmp_dir):
     # write to netcdf file
     mod.root.set(tmp_dir, mode="w+")
     mod.river_boundary_points.write()
-    mod.quadtree_grid.write() # Should not be needed?
+    mod.quadtree_grid.write()  # Should not be needed?
     mod.config.write()
     assert isfile(tmp_dir / "sfincs.bdr")
 
     # read back-in to check if it remained the same
     mod2 = SfincsModel(root=mod.root.path, mode="r")
     mod2.config.read()
-    mod2.quadtree_grid.read() # Should not be needed?
+    mod2.quadtree_grid.read()  # Should not be needed?
     mod2.river_boundary_points.read()
     assert len(mod2.river_boundary_points.data.index) == 1
-    assert mod2.river_boundary_points.test_equal(model_config_inland.river_boundary_points)
+    assert mod2.river_boundary_points.test_equal(
+        model_config_inland.river_boundary_points
+    )
+
 
 def test_add_point(model_config_inland):
     """Test adding a river boundary line to the model."""
@@ -103,7 +108,7 @@ def test_create_from_hydrograph(model_config_inland):
 
     assert nr_masked > 0
     assert idx_masked[0][0] == 1216
-    
+
     # Recreate them from hydrography
     model_config_inland.rivers.create_river_outflow(
         hydrography="merit_hydro",
@@ -120,7 +125,9 @@ def test_create_from_hydrograph(model_config_inland):
 
     # check attributes
     assert np.isclose(result["slope"].values, expected["slope"].values, rtol=1.0e-3)
-    assert np.isclose(result["distance"].values, expected["distance"].values, rtol=1.0e-3)
+    assert np.isclose(
+        result["distance"].values, expected["distance"].values, rtol=1.0e-3
+    )
 
     # check geometry
     for g1, g2 in zip(result.geometry, expected.geometry):
@@ -135,12 +142,10 @@ def test_create_from_hydrograph(model_config_inland):
     assert np.array_equal(idx_masked, idx_masked2)
 
 
-def test_create_river_outflow_from_rivers(
-    model_config_inland
-):
+def test_create_river_outflow_from_rivers(model_config_inland):
     model_config_inland.quadtree_grid.read()
     model_config_inland.river_boundary_points.read()
-    
+
     expected = model_config_inland.river_boundary_points.data.copy()
 
     dir_riv = model_config_inland.root.path / "gis" / "river_centerlines.geojson"
@@ -156,12 +161,14 @@ def test_create_river_outflow_from_rivers(
 
     result = model_config_inland.river_boundary_points.data
 
-       # check number of features
+    # check number of features
     assert len(result) == len(expected)
 
     # check attributes
     assert np.isclose(result["slope"].values, expected["slope"].values, rtol=1.0e-3)
-    assert np.isclose(result["distance"].values, expected["distance"].values, rtol=1.0e-3)
+    assert np.isclose(
+        result["distance"].values, expected["distance"].values, rtol=1.0e-3
+    )
 
     # check geometry
     for g1, g2 in zip(result.geometry, expected.geometry):
@@ -170,7 +177,7 @@ def test_create_river_outflow_from_rivers(
     # remove uparea column
     gdf_riv = gdf_riv.drop(columns=["uparea"])
 
-    with pytest.raises((ValueError), match = "uparea"):
+    with pytest.raises((ValueError), match="uparea"):
         model_config_inland.rivers.create_river_outflow(
             rivers=gdf_riv,
             buffer=50,
@@ -178,6 +185,7 @@ def test_create_river_outflow_from_rivers(
             reset_bounds=True,
             keep_rivers_geom=True,
         )
+
 
 def test_delete_clear(model_config_inland):
     """Test deleting a discharge point from the model."""

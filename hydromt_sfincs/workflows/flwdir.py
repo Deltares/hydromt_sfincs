@@ -215,9 +215,13 @@ def river_source_points(
         if has_graph:
             # optional: basic sanity checks
             if not gdf_riv["idx"].is_unique:
-                logger.warning("gdf_riv['idx'] is not unique; adjacency graph may be invalid.")
+                logger.warning(
+                    "gdf_riv['idx'] is not unique; adjacency graph may be invalid."
+                )
             up_adj = defaultdict(list)
-            for seg_idx, seg_idx_ds in gdf_riv[["idx", "idx_ds"]].dropna().itertuples(index=False):
+            for seg_idx, seg_idx_ds in (
+                gdf_riv[["idx", "idx_ds"]].dropna().itertuples(index=False)
+            ):
                 up_adj[int(seg_idx_ds)].append(int(seg_idx))
 
             logger.info("Built upstream adjacency list once for all outflow points.")
@@ -229,18 +233,26 @@ def river_source_points(
             pnt_buffer_near = p.buffer(100)
 
             gdf_riv_in = gdf_riv[gdf_riv.intersects(pnt_buffer)]
-            gdf_riv_in = gdf_riv_in[~gdf_riv_in.within(pnt_buffer)].reset_index(drop=True)
+            gdf_riv_in = gdf_riv_in[~gdf_riv_in.within(pnt_buffer)].reset_index(
+                drop=True
+            )
 
             if gdf_riv_in.empty:
-                logger.warning(f"No river segments found within {internal_distance} m of outflow point {out_i}.")
+                logger.warning(
+                    f"No river segments found within {internal_distance} m of outflow point {out_i}."
+                )
                 continue
 
             if len(gdf_riv_in) > 1:
                 if "uparea" in gdf_riv_in.columns:
-                    gdf_riv_in = gdf_riv_in.sort_values("uparea", ascending=False).head(1).reset_index(drop=True)
+                    gdf_riv_in = (
+                        gdf_riv_in.sort_values("uparea", ascending=False)
+                        .head(1)
+                        .reset_index(drop=True)
+                    )
                 else:
                     raise ValueError(
-                            f"gdf_riv missing required columns: 'uparea' for disambiguating multiple segments near outflow point {out_i} (found {len(gdf_riv_in)} segments)."
+                        f"gdf_riv missing required columns: 'uparea' for disambiguating multiple segments near outflow point {out_i} (found {len(gdf_riv_in)} segments)."
                     )
                     continue
 
@@ -258,11 +270,17 @@ def river_source_points(
                 # find start segment near outflow point
                 buf10 = p.buffer(10)
                 cand = gdf_riv[gdf_riv.intersects(buf10)]
-                start_row = cand.loc[cand.distance(p).idxmin()] if len(cand) else gdf_riv.loc[gdf_riv.distance(p).idxmin()]
+                start_row = (
+                    cand.loc[cand.distance(p).idxmin()]
+                    if len(cand)
+                    else gdf_riv.loc[gdf_riv.distance(p).idxmin()]
+                )
                 start_idx = int(start_row["idx"])
 
                 if target_idx == start_idx:
-                    full_line = gdf_riv.loc[gdf_riv["idx"] == start_idx, "geometry"].values[0]
+                    full_line = gdf_riv.loc[
+                        gdf_riv["idx"] == start_idx, "geometry"
+                    ].values[0]
                 else:
                     queue = deque([start_idx])
                     parent = {start_idx: None}
@@ -281,7 +299,9 @@ def river_source_points(
                             queue.append(nxt)
 
                     if not found:
-                        logger.warning(f"No upstream path found from outflow point {out_i} start_idx={start_idx} to target_idx={target_idx}. Falling back to merge.")
+                        logger.warning(
+                            f"No upstream path found from outflow point {out_i} start_idx={start_idx} to target_idx={target_idx}. Falling back to merge."
+                        )
                     else:
                         # reconstruct path
                         idx_path = [target_idx]
@@ -302,7 +322,9 @@ def river_source_points(
                     gdf_merge = gdf_riv[gdf_riv.intersects(pnt_buffer)]
                     full_line = linemerge(list(gdf_merge.geometry.values))
                 except Exception as e:
-                    logger.warning(f"Failed to merge segments for outflow point {out_i}. Error: {e}")
+                    logger.warning(
+                        f"Failed to merge segments for outflow point {out_i}. Error: {e}"
+                    )
                     continue
 
             # -------------------------------
@@ -322,13 +344,13 @@ def river_source_points(
             out_lines.append(LineString([p_on, p_in]))
 
         gdf_lines = gpd.GeoDataFrame(geometry=out_lines, crs=gdf_mask.crs)
-        logger.info(f"Found {len(gdf_lines)} internal outflow lines (from {gdf_pnt.index.size} outflow points).")
+        logger.info(
+            f"Found {len(gdf_lines)} internal outflow lines (from {gdf_pnt.index.size} outflow points)."
+        )
         return gdf_lines
 
     else:
-        logger.info(
-            f"Found {gdf_pnt.index.size} {src_type} points."
-        )  
+        logger.info(f"Found {gdf_pnt.index.size} {src_type} points.")
         return gdf_pnt
 
 

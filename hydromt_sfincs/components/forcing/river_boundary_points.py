@@ -44,7 +44,7 @@ class SfincsRiverBoundaryPoints(ModelComponent):
         if self._data is None:
             self._initialize()
         return self._data
-    
+
     @property
     def nr_points(self) -> int:
         """
@@ -181,21 +181,20 @@ class SfincsRiverBoundaryPoints(ModelComponent):
     @hydromt_step
     def create(
         self,
-        locations,   
+        locations,
         internal_dist: float = 1000.0,
         slope: float = None,
         merge: bool = False,
         debug: bool = False,
         **kwargs,
     ) -> gpd.GeoDataFrame:
-
         gdf_out_pts = self.data_catalog.get_geodataframe(
             locations, geom=self.model.region, **kwargs
         ).to_crs(self.model.crs)
 
         if not (gdf_out_pts.geom_type == "LineString").all():
             raise ValueError("gdf_out_pts must contain LineString geometries.")
-        
+
         rows = []
         for _, prow in gdf_out_pts.iterrows():
             line = prow.geometry
@@ -287,4 +286,3 @@ class SfincsRiverBoundaryPoints(ModelComponent):
         """
         self._data = gpd.GeoDataFrame()  # reset to empty GeoDataFrame
         self.model.config.set("bdrfile", None)
-

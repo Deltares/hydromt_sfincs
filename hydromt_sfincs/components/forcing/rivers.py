@@ -70,7 +70,6 @@ class SfincsRivers(ModelComponent):
 
         # write also as geojson:
         if self.model.write_gis:
-
             utils.write_vector(
                 self.data,
                 name="river_centerlines",
@@ -376,8 +375,10 @@ class SfincsRivers(ModelComponent):
         gdf_out_lines = gdf_out.copy()
 
         gdf_out["geometry"] = gdf_out.geometry.apply(
-                lambda geom: Point(geom.coords[0]) if geom.geom_type == "LineString" else geom
-                )
+            lambda geom: Point(geom.coords[0])
+            if geom.geom_type == "LineString"
+            else geom
+        )
 
         if len(gdf_out) > 0:
             if "rivwth" in gdf_out.columns:
