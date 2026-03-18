@@ -197,9 +197,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
     # Function to create curve number for SFINCS quadtree
     @hydromt_step
-    def create_cn(
-        self, cn, antecedent_moisture="avg", reproj_method="median", nrmax=2000
-    ):
+    def create_cn(self, cn, antecedent_moisture="avg", reproj_method="med", nrmax=2000):
         """Setup model potential maximum soil moisture retention map (scsfile)
         from gridded curve number map for quadtree grid.
 
@@ -219,9 +217,8 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             None if data has no antecedent runoff conditions.
             By default `avg`
         reproj_method : str, optional
-            Method to sample from raster data to mesh. By default median. Options include
-            {"centroid", "barycentric", "mean", "harmonic_mean", "geometric_mean", "sum",
-            "minimum", "maximum", "mode", "median", "max_overlap"}.
+            Resampling method for reprojecting the curve number data to the model grid.
+            By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
         """
 
         # Add logger info
