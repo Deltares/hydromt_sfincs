@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "bdr",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32633" } },
+"features": [
+{ "type": "Feature", "properties": { "slope": 0.0032593795776367186, "distance": 5000.0 }, "geometry": { "type": "LineString", "coordinates": [ [ 282749.456166817515623, 5079803.373024448752403 ], [ 279491.034075457253493, 5081814.567600874230266 ] ] } }
+]
+}
