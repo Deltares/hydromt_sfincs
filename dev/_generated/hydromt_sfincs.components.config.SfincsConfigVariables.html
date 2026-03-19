@@ -721,21 +721,21 @@ validated to form a valid model.</p>
 <span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Rotation&quot;</span>
 <span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="nt">&quot;tref&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-01-27T00:00:00&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-03-19T00:00:00&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Reference time for simulation (datetime)&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;date-time&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Tref&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
 <span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="nt">&quot;tstart&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-01-27T00:00:00&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-03-19T00:00:00&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Start time for the simulation (datetime)&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;date-time&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Tstart&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
 <span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="nt">&quot;tstop&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-01-28T00:00:00&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-03-20T00:00:00&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Stop time for the simulation (datetime)&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;date-time&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Tstop&quot;</span><span class="p">,</span>
@@ -2674,6 +2674,19 @@ validated to form a valid model.</p>
 <span class="w">         </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Name of the SnapWave wave spreading time-series file&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Snapwave Bdsfile&quot;</span>
 <span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;netsnapwavefile&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="nt">&quot;anyOf&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">               </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">               </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;null&quot;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">         </span><span class="p">],</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Name of the netcdf SnapWave boundary conditions file&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Netsnapwavefile&quot;</span>
+<span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="nt">&quot;cdnrb&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">         </span><span class="nt">&quot;anyOf&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">            </span><span class="p">{</span>
@@ -2810,6 +2823,7 @@ validated to form a valid model.</p>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">netamprfile</span> <span class="pre">(str</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">netamuamvfile</span> <span class="pre">(str</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">netbndbzsbzifile</span> <span class="pre">(str</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">netsnapwavefile</span> <span class="pre">(str</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">netspwfile</span> <span class="pre">(str</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">netsrcdisfile</span> <span class="pre">(str</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nfreqsig</span> <span class="pre">(int</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
@@ -3502,6 +3516,12 @@ validated to form a valid model.</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.netsnapwavefile">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">netsnapwavefile</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.netsnapwavefile" title="Link to this definition">#</a></dt>
+<dd><p>Name of the netcdf SnapWave boundary conditions file</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.netspwfile">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">netspwfile</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.netspwfile" title="Link to this definition">#</a></dt>
 <dd><p>Name of the Netcdf type spiderweb tropical cyclone input file</p>
@@ -4089,7 +4109,7 @@ validated to form a valid model.</p>
 
 <dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.tref">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tref</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">datetime.datetime(2026,</span> <span class="pre">1,</span> <span class="pre">27,</span> <span class="pre">0,</span> <span class="pre">0)</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.tref" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tref</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">datetime.datetime(2026,</span> <span class="pre">3,</span> <span class="pre">19,</span> <span class="pre">0,</span> <span class="pre">0)</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.tref" title="Link to this definition">#</a></dt>
 <dd><p>Reference time for simulation (datetime)</p>
 </dd></dl>
 
@@ -4114,13 +4134,13 @@ validated to form a valid model.</p>
 
 <dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.tstart">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tstart</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">datetime.datetime(2026,</span> <span class="pre">1,</span> <span class="pre">27,</span> <span class="pre">0,</span> <span class="pre">0)</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.tstart" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tstart</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">datetime.datetime(2026,</span> <span class="pre">3,</span> <span class="pre">19,</span> <span class="pre">0,</span> <span class="pre">0)</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.tstart" title="Link to this definition">#</a></dt>
 <dd><p>Start time for the simulation (datetime)</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.tstop">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tstop</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">datetime.datetime(2026,</span> <span class="pre">1,</span> <span class="pre">28,</span> <span class="pre">0,</span> <span class="pre">0)</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.tstop" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tstop</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">datetime.datetime(2026,</span> <span class="pre">3,</span> <span class="pre">20,</span> <span class="pre">0,</span> <span class="pre">0)</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.tstop" title="Link to this definition">#</a></dt>
 <dd><p>Stop time for the simulation (datetime)</p>
 </dd></dl>
 
@@ -4349,7 +4369,7 @@ validated to form a valid model.</p>
 
 <dl class="py method pydantic_validator">
 <dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.parse_custom_datetime">
-<em class="property"><span class="pre">validator</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_custom_datetime</span></span><em class="autodoc_pydantic_validator_arrow property">&#160; <span class="pre">»</span>&#160; </em><em class="xref py py-obj"><span class="pre">tstop</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tstart</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tref</span></em><a class="reference internal" href="../_modules/hydromt_sfincs/components/config/config_variables.html#SfincsConfigVariables.parse_custom_datetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.parse_custom_datetime" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">validator</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_custom_datetime</span></span><em class="autodoc_pydantic_validator_arrow property">&#160; <span class="pre">»</span>&#160; </em><em class="xref py py-obj"><span class="pre">tref</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tstop</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tstart</span></em><a class="reference internal" href="../_modules/hydromt_sfincs/components/config/config_variables.html#SfincsConfigVariables.parse_custom_datetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.parse_custom_datetime" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -4491,6 +4511,7 @@ validated to form a valid model.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.netamprfile"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.netamprfile</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.netamuamvfile"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.netamuamvfile</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.netbndbzsbzifile"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.netbndbzsbzifile</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.netsnapwavefile"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.netsnapwavefile</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.netspwfile"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.netspwfile</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.netsrcdisfile"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.netsrcdisfile</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.nfreqsig"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.nfreqsig</span></code></a></li>

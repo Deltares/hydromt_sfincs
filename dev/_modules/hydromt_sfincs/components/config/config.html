@@ -705,7 +705,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Determine grid type based on configuration</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">=</span> <span class="s2">&quot;quadtree&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;qtrfile&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;regular&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_grid_type</span> <span class="o">=</span> <span class="s2">&quot;quadtree&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;qtrfile&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;regular&quot;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
             <span class="c1"># update the regular grid properties from the configuration</span>

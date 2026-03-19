@@ -461,6 +461,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.components.quadtree</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SfincsQuadtreeGrid</span><span class="p">,</span>
     <span class="n">SfincsQuadtreeElevation</span><span class="p">,</span>
+    <span class="n">SfincsQuadtreeRoughness</span><span class="p">,</span>
     <span class="n">SfincsQuadtreeInitialConditions</span><span class="p">,</span>
     <span class="n">SfincsQuadtreeInfiltration</span><span class="p">,</span>
     <span class="n">SfincsQuadtreeMask</span><span class="p">,</span>
@@ -522,6 +523,7 @@
         <span class="s2">&quot;quadtree_grid&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeGrid</span><span class="p">,</span>
         <span class="s2">&quot;quadtree_elevation&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeElevation</span><span class="p">,</span>
         <span class="s2">&quot;quadtree_mask&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeMask</span><span class="p">,</span>
+        <span class="s2">&quot;quadtree_roughness&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeRoughness</span><span class="p">,</span>
         <span class="s2">&quot;quadtree_infiltration&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeInfiltration</span><span class="p">,</span>
         <span class="s2">&quot;quadtree_storage_volume&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeStorageVolume</span><span class="p">,</span>
         <span class="s2">&quot;quadtree_initial_conditions&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeInitialConditions</span><span class="p">,</span>
@@ -590,7 +592,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># define some default model properties</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">=</span> <span class="s2">&quot;regular&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grid_type</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_gis</span> <span class="o">=</span> <span class="n">write_gis</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
@@ -617,6 +619,15 @@
                 <span class="n">logger</span><span class="o">.</span><span class="n">removeHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
 
     <span class="c1">## Real properties of the model ##</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">grid_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the grid type of the model.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_grid_type</span> <span class="o">=</span> <span class="s2">&quot;regular&quot;</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">is_reading_mode</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid_type</span>
+
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">crs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CRS</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the model crs&quot;&quot;&quot;</span>
@@ -780,10 +791,10 @@
                 <span class="s2">&quot;wind10_v&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;northward wind&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">},</span>
             <span class="p">},</span>
             <span class="s2">&quot;snapwave_boundary_conditions&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;hs&quot;</span><span class="p">:</span> <span class="p">{},</span>
-                <span class="s2">&quot;tp&quot;</span><span class="p">:</span> <span class="p">{},</span>
-                <span class="s2">&quot;dir&quot;</span><span class="p">:</span> <span class="p">{},</span>
-                <span class="s2">&quot;ds&quot;</span><span class="p">:</span> <span class="p">{},</span>
+                <span class="s2">&quot;hs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;significant wave height&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m&quot;</span><span class="p">},</span>
+                <span class="s2">&quot;tp&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;peak wave period&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;s&quot;</span><span class="p">},</span>
+                <span class="s2">&quot;wd&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;wave direction&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;nautical degrees&quot;</span><span class="p">},</span>
+                <span class="s2">&quot;ds&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;wave direction spread&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;degrees&quot;</span><span class="p">},</span>
             <span class="p">},</span>
         <span class="p">}</span>
 
@@ -1179,14 +1190,13 @@
             <span class="c1"># parse rivers</span>
             <span class="k">if</span> <span class="s2">&quot;centerlines&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="n">rivers</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;centerlines&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rivers</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">:</span>
-                    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="n">rivers</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                        <span class="n">rivers</span><span class="p">,</span>
-                        <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
-                        <span class="n">buffer</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span>  <span class="c1"># 1km</span>
-                    <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+                <span class="c1"># NOTE if you want to use model.rivers.data as centerlines,</span>
+                <span class="c1"># you need to provide this in the river_list</span>
+                <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
+                    <span class="n">rivers</span><span class="p">,</span>
+                    <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+                    <span class="n">buffer</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span>  <span class="c1"># 1km</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
                 <span class="c1"># update missing attributes based on global values</span>
                 <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>

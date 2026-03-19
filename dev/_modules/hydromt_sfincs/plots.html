@@ -699,11 +699,17 @@
     <span class="c1"># by default colorbar on lower right &amp; legend upper right</span>
     <span class="n">kwargs0</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;cbar_kwargs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}}</span>
     <span class="n">kwargs0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
     <span class="c1"># make nice cmap</span>
     <span class="k">if</span> <span class="s2">&quot;cmap&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="s2">&quot;norm&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
         <span class="n">depth_vars</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">depth_vars</span> <span class="ow">and</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+            <span class="c1"># auto-determine vmin and vmax</span>
             <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">variable</span><span class="p">]</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span><span class="o">.</span><span class="n">quantile</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">])</span><span class="o">.</span><span class="n">values</span>
+            <span class="c1"># make sure vmin and vmax are different</span>
+            <span class="k">if</span> <span class="n">vmin</span> <span class="o">==</span> <span class="n">vmax</span><span class="p">:</span>
+                <span class="n">vmax</span> <span class="o">=</span> <span class="n">vmin</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="c1"># overrule auto vmin and vmax with user input</span>
             <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;vmin&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;vmax&quot;</span><span class="p">,</span> <span class="n">vmax</span><span class="p">))</span>
             <span class="n">c_dem</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">terrain</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">vmax</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">vmin</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -789,11 +795,6 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">&quot;No &#39;mask&#39; (sfincs.mask) found in ds required to plot the model bounds &quot;</span>
             <span class="s2">&quot;Set plot_bounds=False or add &#39;mask&#39; to ds&quot;</span>
-        <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">plot_bounds</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataset</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="s2">&quot;Plotting of the boundaries for quadtree grids is not yet implemented. &quot;</span>
-            <span class="s2">&quot;Set plot_bounds=False to proceed.&quot;</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">plot_bounds</span> <span class="ow">and</span> <span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
         <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">get_bounds_vector</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">])</span>
