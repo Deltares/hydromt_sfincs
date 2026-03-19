@@ -150,8 +150,8 @@ class SfincsRiverBoundaryPoints(ModelComponent):
         region = self.model.region.union_all()
 
         def endpoints_inside(ls):
-            x0, y0 = ls.coords[0]
-            x1, y1 = ls.coords[-1]
+            x0, y0, *_ = ls.coords[0]
+            x1, y1, *_ = ls.coords[-1]
             return Point(x0, y0).covered_by(region) and Point(x1, y1).covered_by(region)
 
         within = gdf.geometry.apply(endpoints_inside)
@@ -199,8 +199,10 @@ class SfincsRiverBoundaryPoints(ModelComponent):
         for _, prow in gdf_out_pts.iterrows():
             line = prow.geometry
 
-            # extract endpoints
-            coords = list(line.coords)
+            # extract endpoints and force 2D
+            coords = [(x, y) for x, y, *_ in line.coords]
+            line = LineString(coords)
+
             p_on = Point(coords[0])
             p_in = Point(coords[-1])
 
@@ -213,10 +215,10 @@ class SfincsRiverBoundaryPoints(ModelComponent):
                         and self.model.subgrid is not None
                         and self.model.subgrid.data is not None
                         and len(self.model.subgrid.data.data_vars) > 0
-                        and "z" in self.model.subgrid.data
+                        and "z_zmin" in self.model.subgrid.data
                     ):
                         # regular + subgrid
-                        z = self.model.subgrid.data.z
+                        z = self.model.subgrid.data.z_zmin
                         z_in = z.sel(x=p_in.x, y=p_in.y, method="nearest").item()
                         z_on = z.sel(x=p_on.x, y=p_on.y, method="nearest").item()
                     else:
@@ -232,10 +234,10 @@ class SfincsRiverBoundaryPoints(ModelComponent):
                         and self.model.quadtree_subgrid is not None
                         and self.model.quadtree_subgrid.data is not None
                         and len(self.model.quadtree_subgrid.data.data_vars) > 0
-                        and "z" in self.model.quadtree_subgrid.data
+                        and "z_zmin" in self.model.quadtree_subgrid.data
                     ):
                         # quadtree + subgrid
-                        zsrc = self.model.quadtree_subgrid.data.z.ugrid
+                        zsrc = self.model.quadtree_subgrid.data.z_zmin.ugrid
                         z_in = zsrc.sel_points(x=p_in.x, y=p_in.y).item()
                         z_on = zsrc.sel_points(x=p_on.x, y=p_on.y).item()
                     else:
