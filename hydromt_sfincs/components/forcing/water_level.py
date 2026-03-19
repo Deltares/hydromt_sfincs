@@ -433,7 +433,8 @@ class SfincsWaterLevel(SfincsBoundaryBase):
                 "No waterlevel boundary cells (mask=2) found in your mask, make sure to create these first."
             )
 
-        # Create a buffer around the waterlevel boundary cells (msk==2)
+        # Vectorize the the waterlevel boundary points (msk==2) into lines stored in a GeoDataFrame
+        # Combined with the buffer, this is used to select the relevant locations from the geodataset or locations input.
         gdf_msk = utils.get_bounds_vector(
             da_msk=mask,
         )
