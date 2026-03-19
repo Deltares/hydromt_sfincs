@@ -182,7 +182,7 @@ class SfincsBoundaryBase(ModelComponent):
                 gdf0 = gdf0_dedup
             # Create dataset with dummy values for new points and combine with existing dataset
             ds_new = self._create_dummy_dataset(gdf, ds0.time, value)
-            gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=False)
+            gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=True)
 
             # Ensure new dataset has same variable names and ordering as existing dataset
             varnames = (
@@ -284,14 +284,17 @@ class SfincsBoundaryBase(ModelComponent):
         drop_duplicates : bool, optional
             If True, drop duplicate points in gdf based on 'name' column or geometry.
         """
-        new_index = self.nr_points + 1
-        if name is None:
-            name = f"point_{new_index}"
+        # new_index = self.nr_points + 1
+        # if name is None:
+        #     name = f"point_{new_index}"
 
         gdf = gpd.GeoDataFrame(
             geometry=gpd.points_from_xy([x], [y]), crs=self.model.crs
         )
-        gdf["name"] = name
+
+        if name is not None:
+            gdf["name"] = [name]
+
         self.set_locations(
             gdf=gdf, value=value, merge=True, drop_duplicates=drop_duplicates
         )

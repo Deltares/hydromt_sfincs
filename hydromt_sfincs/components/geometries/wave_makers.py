@@ -41,6 +41,32 @@ class SfincsWaveMakers(ModelComponent):
             self._initialize()
         return self._data
 
+    @property
+    def gdf(self) -> gpd.GeoDataFrame:
+        """Wavemaker lines data, returned as a GeoDataFrame."""
+        if self._data is None:
+            self._initialize()
+        return self._data
+
+    @property
+    def nr_lines(self) -> int:
+        """
+        Return the number of line locations currently stored.
+        """
+        if hasattr(self.data, "index"):
+            return len(self.data.index)
+        return 0
+
+    @property
+    def list_names(self):
+        """Give list of names of wave makers."""
+        if self.data.empty:
+            return []
+        # The wave makers do not really have names,
+        # but we can use the index and turn into strings
+        names = [str(i + 1) for i in self.data.index]
+        return names
+
     # %% core HydroMT-SFINCS functions:
     # _initialize
     # read
@@ -252,7 +278,6 @@ class SfincsWaveMakers(ModelComponent):
 
     # %% DDB GUI focused additional functions:
     # snap_to_grid
-    # list_names
 
     def snap_to_grid(self):
         """Returns GeoDataFrame with wave makers snapped to model grid."""
@@ -263,10 +288,3 @@ class SfincsWaveMakers(ModelComponent):
             )
         snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf
-
-    def list_names(self):
-        """Give list of names of wave makers."""
-        # The wave makers do not really have names,
-        # but we can use the index and turn into strings
-        names = [str(i + 1) for i in self.data.index]
-        return names

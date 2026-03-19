@@ -240,8 +240,8 @@ def read_xyn(fn: str, crs: int = None):
     )
     if len(df.columns) > 2:
         df = df.rename(columns={2: "name"})
-    else:
-        df["name"] = df.index
+    # else:
+    #     df["name"] = df.index
 
     points = gpd.points_from_xy(df["x"], df["y"])
     gdf = gpd.GeoDataFrame(df.drop(columns=["x", "y"]), geometry=points)
@@ -257,11 +257,15 @@ def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, fmt: str = "
     with open(fn, "w") as fid:
         for point in gdf.iterfeatures():
             x, y = point["geometry"]["coordinates"]
-            try:
+            if "properties" in point and "name" in point["properties"]:
                 name = point["properties"]["name"]
-            except:
-                name = "point" + str(point["id"])
-            string = f'{x:{fmt}} {y:{fmt}} "{name}"\n'
+            else:
+                name = None
+                # name = "point" + str(point["id"])
+            if name is not None:    
+                string = f'{x:{fmt}} {y:{fmt}} "{name}"\n'
+            else:
+                string = f'{x:{fmt}} {y:{fmt}}\n'
             fid.write(string)
 
 

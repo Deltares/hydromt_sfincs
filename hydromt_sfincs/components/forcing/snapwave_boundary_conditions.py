@@ -36,6 +36,16 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
     def __init__(self, model: "SfincsModel"):
         super().__init__(model)
 
+    @property
+    def list_names(self):
+        """Give list of names of SnapWave boundary points."""
+        if self.nr_points == 0:
+            return []
+        # The SnapWave boundary points do not really have names,
+        # but we can use the index and turn into strings
+        names = [f"Point {str(i + 1)}" for i in range(self.nr_points)]
+        return names
+
     def read(self, format: str = None):
         """Read SFINCS-SnapWave wave boundary conditions (snapwave*.bnd, *.bhs/btp/bwd/bds, files) or netcdf file.
 
@@ -133,7 +143,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Get absolute file name and set it in config if crsfile is not None
+        # Get absolute file name and set it in config if boundary conditions file is not None
         abs_file_path = self.model.config.get_set_file_variable(varname, value=filename)
 
         # Check if abs_file_path is None
@@ -255,6 +265,13 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         gdf = self.data.vector.to_gdf()
 
         utils.write_xyn(abs_file_path, gdf, fmt=fmt)
+
+    def write_boundary_conditions_timeseries_all(self, filename: str | Path = None):
+        """Write SnapWave boundary condition timeseries (*.bhs, *.btp, *.bwd, *.bds) files for all variables"""
+
+        for var in ["hs", "tp", "wd", "ds"]:
+            varname = f"snapwave_b{var}file"
+            self.write_boundary_conditions_timeseries(var=var, varname=varname)
 
     def write_boundary_conditions_timeseries(
         self, var: str, varname: str, filename: str | Path = None
@@ -841,9 +858,9 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
                 ]
                 # Loop through points in polyline
                 for point in new_points:
-                    name = str(ip + 1).zfill(4)
+                    # name = str(ip + 1).zfill(4)
                     d = {
-                        "name": name,
+                        # "name": name,
                         "geometry": point,
                     }
                     gdf_list.append(d)
@@ -852,3 +869,35 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             gdf = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
 
         self.set_locations(gdf, merge=False)
+
+    def set_uniform_conditions(self, hs, tp, wd, ds, index: int = None):
+        """Set uniform boundary conditions for all points or selected points.
+
+        Parameters
+        ----------
+        hs : float
+            Wave height in meters of the point
+        tp : float
+            Peak period in seconds of the point
+        wd : float
+            Wave direction in nautical degrees of the point
+        ds : float
+            Directional spread in degrees of the point
+        index : int or list of int, optional
+            Index or list of indices of points to set the conditions for. If None, set for all points.
+        """
+
+        if self.nr_points == 0:
+            raise ValueError(
+                "Cannot set boundary conditions without existing waterlevel boundary points"
+            )
+
+        if index is None:
+            indices = self.data.index.values
+        else:
+            indices = [index]
+
+        for index in indices:
+            for var, value in zip(self._default_varname, [hs, tp, wd, ds]):
+                # Replace values in timeseries for this point and variable with the uniform value
+                self.data[var].loc[:, index] = value
