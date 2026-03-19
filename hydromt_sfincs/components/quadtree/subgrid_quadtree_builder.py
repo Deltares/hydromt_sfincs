@@ -963,7 +963,7 @@ class SubgridTableQuadtree:
             progress_bar.close()
 
 
-@njit
+@njit(cache=True)
 def process_block_cells(
     zg,  # array with bathy/topo values for this block
     nr_cells_in_block,  # number of cells in this block
@@ -1028,7 +1028,7 @@ def process_block_cells(
     )
 
 
-@njit
+@njit(cache=True)
 def process_block_uv_points(
     zg,  # array with bathy/topo values for this block
     manning,  # array with manning values for this block

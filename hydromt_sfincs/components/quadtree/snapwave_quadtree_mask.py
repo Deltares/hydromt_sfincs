@@ -457,6 +457,7 @@ class SnapWaveQuadtreeMask(ModelComponent):
 
         return gdf
 
+    @property
     def has_open_boundaries(self):
         """Returns True if mask contains open boundaries (mask = 2)"""
         mask = self.model.quadtree_grid.data["snapwave_mask"]
