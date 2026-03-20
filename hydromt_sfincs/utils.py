@@ -700,8 +700,8 @@ def write_geoms(
     cols = {"pli": 2, "pol": 2, "thd": 2, "weir": 4, "crs": 2, "wvm": 2}[stype.lower()]
 
     fmt = [fmt, fmt] + [fmt_z for _ in range(cols - 2)]
-    if stype.lower() == "weir" and np.any(["z" not in f for f in feats]):
-        raise ValueError('"z" value missing for weir files.')
+    # if stype.lower() == "weir" and np.any(["z" not in f for f in feats]):
+    #     raise ValueError('"z" value missing for weir files.')
     with open(fn, "w") as f:
         for i, feat in enumerate(feats):
             name = feat.get("name", i + 1)
@@ -712,7 +712,7 @@ def write_geoms(
             a[:, 0] = np.asarray(feat["x"])
             a[:, 1] = np.asarray(feat["y"])
             if stype.lower() == "weir":
-                a[:, 2] = feat["z"]
+                a[:, 2] = feat["elevation"]
                 a[:, 3] = feat.get("par1", 0.6)
             s = io.BytesIO()
             np.savetxt(s, a, fmt=fmt)
@@ -735,7 +735,7 @@ def read_geoms(fn: Union[str, Path]) -> List[Dict]:
         List of dictionaries describing structures.
     """
     feats = []
-    col_names = ["x", "y", "z", "par1"]
+    col_names = ["x", "y", "elevation", "par1"]
     with open(fn, "r") as f:
         while True:
             name = f.readline().strip()
@@ -748,10 +748,11 @@ def read_geoms(fn: Union[str, Path]) -> List[Dict]:
             for r in range(rows):
                 for c, v in enumerate(f.readline().strip().split(maxsplit=cols)):
                     feat[col_names[c]][r] = float(v)
-            if cols > 2:
-                for c in col_names[2:]:
-                    if np.unique(feat[c]).size == 1:
-                        feat[c] = feat[c][0]
+            # Always create a list        
+            # if cols > 2:
+            #     for c in col_names[2:]:
+            #         if np.unique(feat[c]).size == 1:
+            #             feat[c] = feat[c][0]
             feats.append(feat)
     return feats
 
@@ -781,9 +782,11 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") 
         "par3",
         "par4",
         "par5",
+        "par6",
     ]
 
     gdf = copy.deepcopy(gdf_drainage)
+
     # get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc
     endpoints = gdf.boundary.explode(index_parts=True).unstack()
     gdf["xsnk"] = endpoints[0].x
@@ -801,7 +804,14 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") 
         gdf[col] = gdf[col].round(int(precision))
 
     # write to file
-    gdf.to_csv(fn, sep=" ", index=False, header=False)
+    if fmt[0] == "%":
+        fmt = fmt[1:]
+    with open(fn, "w") as f:
+        for _, row in gdf.iterrows():
+            f.write(f"{row.xsnk:{fmt}} {row.ysnk:{fmt}} {row.xsrc:{fmt}} {row.ysrc:{fmt}} "
+                    f"{row.type:2.0f} {row.par1:10.3f} {row.par2:10.3f} "
+                    f"{row.par3:10.3f} {row.par4:10.3f} {row.par5:10.3f} {row.par6:10.3f}\n")
+    # gdf.to_csv(fn, sep=" ", index=False, header=False)
 
 
 def read_drn(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:

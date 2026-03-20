@@ -44,6 +44,32 @@ class SfincsWeirs(ModelComponent):
             self._initialize()
         return self._data
 
+    @property
+    def gdf(self) -> gpd.GeoDataFrame:
+        """Alias for data."""
+        if self._data is None:
+            self._initialize()
+        return self.data
+
+    @property
+    def nr_lines(self) -> int:
+        """
+        Return the number of line locations currently stored.
+        """
+        if hasattr(self.data, "index"):
+            return len(self.data.index)
+        return 0
+
+    @property
+    def list_names(self):
+        """Give list of names of weirs."""
+        if self.data.empty:
+            return []
+        # The weirs do not really have names,
+        # but we can use the index and turn into strings
+        names = [f"Weir {i + 1}" for i in self.data.index]
+        return names
+
     # %% core HydroMT-SFINCS functions:
     # _initialize
     # read
@@ -173,6 +199,8 @@ class SfincsWeirs(ModelComponent):
     def create(
         self,
         locations: Union[str, Path, gpd.GeoDataFrame],
+        elevation: float = 0.0,
+        par1: float = 0.6,
         dep: Union[str, Path, xr.DataArray] = None,
         buffer: float = None,
         dz: float = None,
@@ -209,6 +237,13 @@ class SfincsWeirs(ModelComponent):
         buffer : float, optional
             If provided, describes the distance from the centerline to the foot of the structure.
             This distance is supplied to the raster.sample as the window (wdw).
+        elevation: float, optional
+            If provided, this elevation is assigned to all weir lines. This is only used if
+            z values are not provided in the gdf, and dep/dz are not provided
+            to determine elevation on the fly. Default 0.0.    
+        par1: float, optional
+            If provided, this value is assigned to the par1 parameter of all weir lines.
+            This is only used if par1 values are not provided in the gdf. Default 0.6.
         dz: float, optional
             If provided, for weir structures the z value is calculated from
             the model elevation (dep) plus dz.
@@ -227,29 +262,38 @@ class SfincsWeirs(ModelComponent):
 
         # expected columns in gdf
         cols = {
-            "weir": ["name", "z", "par1", "geometry"],
+            "weir": ["name", "elevation", "par1", "geometry"],
         }
 
         # keep relevant columns
         gdf = gdf[[c for c in cols["weir"] if c in gdf.columns]]
 
-        # check whether z values are part of the gdf, or need to be calculated
-        gdf_has_z = (
-            gdf.geometry.apply(lambda geom: geom.has_z).all() or "z" in gdf.columns
+        # check whether elevation values are part of the gdf, or need to be calculated
+        gdf_has_elevation = (
+            gdf.geometry.apply(lambda geom: geom.has_z).all() or "elevation" in gdf.columns
         )
 
-        # check if z values are provided or can be calculated
-        if not gdf_has_z and (dep is None and dz is None):
-            # check if z values are part of the linestrings, so called linestringZ
-            raise ValueError(
-                "Weir structure requires z values, or 'dep' or 'dz' input to determine these on the fly."
-            )
+        # check if elevation values are provided or can be calculated
+        if not gdf_has_elevation and (dep is None and dz is None):
+            # elevation is not provided in the gdf, so we need to set the elevation here as a list for each weir
+            gdf["elevation"] = None  # creates column with object dtype automatically
+            for irow, row in gdf.iterrows():
+                gdf.at[irow, "elevation"] = [elevation] * len(row.geometry.coords)
+            # raise ValueError(
+            #     "Weir structure requires elevation values, or 'dep' or 'dz' input to determine these on the fly."
+            # )
         elif dep is not None or dz is not None:
             # determine elevation from dep and dz, if data parsed
             gdf = self.determine_weir_elevation(gdf, dep, buffer, dz)
             # if dep is not provided, the active dep data in self.grid.data is loaded,
             # within function determine_weir_elevation
             logger.info("Determined elevations for weir based on elevation data.")
+
+        # Set par1 to value if not already provided in gdf 
+        if "par1" not in gdf.columns:
+            gdf["par1"] = None  # creates column with object dtype automatically
+            for irow, row in gdf.iterrows():
+                gdf.at[irow, "par1"] = [par1] * len(row.geometry.coords)
 
         # Set the weir data
         self.set(gdf, merge)
@@ -382,11 +426,11 @@ class SfincsWeirs(ModelComponent):
                     # if still didn't work, raise error
                     raise ValueError("Filling NaN values failed for weirs ")
 
-            s["z"] = zb.values
+            s["elevation"] = zb.values
 
             # in case of dz, add this to the elevation
             if dz is not None:
-                s["z"] += float(dz)
+                s["elevation"] += float(dz)
 
             structs_out.append(s)
 
@@ -402,15 +446,9 @@ class SfincsWeirs(ModelComponent):
         """Returns GeoDataFrame with weirs snapped to model grid."""
         # FIXME - this probably only works for quadtree grids for now
         if self.model.grid_type != "quadtree":
-            raise NotImplementedError(
-                "Snap to grid is only implemented for quadtree grids."
-            )
-        snap_gdf = self.model.grid.snap_to_grid(self.data)
+            return gpd.GeoDataFrame()  # return empty gdf if not quadtree grid
+            # raise NotImplementedError(
+            #     "Snap to grid is only implemented for quadtree grids."
+            # )
+        snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf
-
-    def list_names(self):
-        """Give list of names of cross sections."""
-        if self.data.empty:
-            return []
-        names = list(self.data["name"])
-        return names

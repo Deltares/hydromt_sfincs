@@ -66,7 +66,7 @@ class SfincsThinDams(ModelComponent):
             return []
         # The thin dams do not really have names,
         # but we can use the index and turn into strings
-        names = [str(i + 1) for i in self.data.index]
+        names = [f"Thin Dam {i + 1}" for i in self.data.index]
         return names
 
     # %% core HydroMT-SFINCS functions:
