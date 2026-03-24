@@ -280,7 +280,6 @@ class SfincsPrecipitation(SfincsMeteo):
     def create(
         self,
         precip,
-        buffer: float = 5e3,
         dst_res: float = None,
         cumulative_input: bool = True,
         time_label: Literal["left", "right"] = "right",
@@ -328,9 +327,6 @@ class SfincsPrecipitation(SfincsMeteo):
 
             * Required variables: ['precip' (mm) or 'precip' (mm/hr)]
             * Required coordinates: ['time', 'y', 'x']
-        buffer: float, optional
-            Buffer (m) around the model domain to read the precipitation data.
-            This is useful to avoid edge effects when the precipitation data is clipped at the model domain.
         dst_res: float, optional
             Output resolution (m), by default None and computed from source data.
             Only used in combination with aggregate=False
@@ -351,7 +347,7 @@ class SfincsPrecipitation(SfincsMeteo):
         precip = self.data_catalog.get_rasterdataset(
             precip,
             bbox=self.model.bbox,
-            buffer=buffer,
+            buffer=2,
             time_range=self.model.get_model_time(),
             variables=["precip"],
         )
@@ -512,9 +508,7 @@ class SfincsPressure(SfincsMeteo):
         )
 
     @hydromt_step
-    def create(
-        self, press, buffer: float = 5e3, dst_res=None, fill_value=101325, **kwargs
-    ):
+    def create(self, press, dst_res=None, fill_value=101325, **kwargs):
         """Setup pressure forcing from a gridded spatially varying data source.
 
         Adds one model layer:
@@ -528,9 +522,6 @@ class SfincsPressure(SfincsMeteo):
 
             * Required variables: ['press_msl' (Pa)]
             * Required coordinates: ['time', 'y', 'x']
-        buffer: float, optional
-            Buffer (m) around the model domain to read the pressure data.
-            This is useful to avoid edge effects when the pressure data is clipped at the model domain.
         dst_res: float
             output resolution (m), by default None and computed from source data.
 
@@ -542,7 +533,7 @@ class SfincsPressure(SfincsMeteo):
         press = self.data_catalog.get_rasterdataset(
             press,
             bbox=self.model.bbox,
-            buffer=buffer,
+            buffer=2,
             time_range=self.model.get_model_time(),
             variables=["press_msl"],
         )
@@ -620,7 +611,7 @@ class SfincsWind(SfincsMeteo):
         )
 
     @hydromt_step
-    def create(self, wind, buffer: float = 5e3, dst_res=None, **kwargs):
+    def create(self, wind, dst_res=None, **kwargs):
         """Setup wind forcing from a gridded spatially varying data source.
 
         Adds one model layer:
@@ -634,9 +625,6 @@ class SfincsWind(SfincsMeteo):
 
             * Required variables: ['wind10_u' (m/s), 'wind10_v' (m/s)]
             * Required coordinates: ['time', 'y', 'x']
-        buffer: float, optional
-            Buffer (m) around the model domain to read the wind data.
-            This is useful to avoid edge effects when the wind data is clipped at the model domain.
         dst_res: float
             output resolution (m), by default None and computed from source data.
         """
@@ -644,7 +632,7 @@ class SfincsWind(SfincsMeteo):
         wind = self.data_catalog.get_rasterdataset(
             wind,
             bbox=self.model.bbox,
-            buffer=buffer,
+            buffer=2,
             time_range=self.model.get_model_time(),
             variables=["wind10_u", "wind10_v"],
         )

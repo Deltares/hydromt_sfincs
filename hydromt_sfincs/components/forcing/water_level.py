@@ -421,19 +421,27 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         """
         gdf_locs, df_ts = None, None
         tstart, tstop = self.model.get_model_time()  # model time
-        # buffer around msk==2 values
-        if not self.model.grid_type == "quadtree":
-            if np.any(self.model.grid.mask == 2):
-                # get region around waterlevel boundary cells
-                region = self.model.grid.mask.where(
-                    self.model.grid.mask == 2, 0
-                ).raster.vectorize()
-            else:
-                raise ValueError(
-                    "No waterlevel boundary cells (mask==2) in model grid."
-                )
-        else:
-            region = self.model.region
+
+        mask = (
+            self.model.quadtree_grid.mask
+            if self.model.grid_type == "quadtree"
+            else self.model.grid.mask
+        )
+        # if present, check whether is has values of 2, which indicate the waterlevel boundary cells
+        if not np.any(mask == 2):
+            raise ValueError(
+                "No waterlevel boundary cells (mask=2) found in your mask, make sure to create these first."
+            )
+
+        # Vectorize the the waterlevel boundary points (msk==2) into lines stored in a GeoDataFrame
+        # Combined with the buffer, this is used to select the relevant locations from the geodataset or locations input.
+        gdf_msk = utils.get_bounds_vector(
+            da_msk=mask,
+        )
+        gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
+        # gdf_msk2 is now used to clip geodataset to get wanted locations
+        region = gdf_msk2
+
         # read waterlevel data from geodataset or geodataframe
         if geodataset is not None:
             # read and clip data in time & space
