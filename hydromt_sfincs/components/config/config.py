@@ -262,7 +262,7 @@ class SfincsConfig(ModelComponent):
         """
 
         # Determine grid type based on configuration
-        self.model.grid_type = "quadtree" if self.get("qtrfile") else "regular"
+        self.model._grid_type = "quadtree" if self.get("qtrfile") else "regular"
 
         if self.model.grid_type == "regular":
             # update the regular grid properties from the configuration

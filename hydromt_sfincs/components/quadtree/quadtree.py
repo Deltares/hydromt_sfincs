@@ -317,7 +317,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         self.model.quadtree_mask.clear_datashader_dataframe()
 
         # Set grid type and crs in model
-        self.model.grid_type = "quadtree"
+        self.model._grid_type = "quadtree"
         crs = CRS.from_epsg(epsg)
 
         elevation_list_per_level = []
@@ -592,9 +592,9 @@ class SfincsQuadtreeGrid(MeshComponent):
             ifirst = np.zeros(nr_refinement_levels, dtype=int)
             for ilev in range(0, nr_refinement_levels):
                 # Find index of first cell with this level
-                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)[
-                    0
-                ][0]
+                levels = self.data["level"].to_numpy()[:]
+                indices = np.where(levels == ilev + 1)[0]
+                ifirst[ilev] = indices[0]
             self.ifirst = ifirst
 
         ifirst = self.ifirst
@@ -637,13 +637,10 @@ class SfincsQuadtreeGrid(MeshComponent):
             ind[jind < 0] = -999
             ind[iind >= mmax] = -999
             ind[jind >= nmax] = -999
-
-            ingrid = np.isin(
-                ind, nm_lev[ilev], assume_unique=False
-            )  # return boolean for each pixel that falls inside a grid cell
-            incell = np.where(
-                ingrid
-            )  # tuple of arrays of pixel indices that fall in a cell
+            # return boolean for each pixel that falls inside a grid cell
+            ingrid = np.isin(ind, nm_lev[ilev], assume_unique=False)
+            # tuple of arrays of pixel indices that fall in a cell
+            incell = np.where(ingrid)
 
             if incell[0].size > 0:
                 # Now find the cell indices
