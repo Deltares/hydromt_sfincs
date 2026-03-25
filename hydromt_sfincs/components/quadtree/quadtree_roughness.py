@@ -2,17 +2,14 @@ import logging
 from typing import TYPE_CHECKING, List
 
 import numpy as np
-from scipy.interpolate import RegularGridInterpolator
 import xarray as xr
 import xugrid as xu
 
 from hydromt import hydromt_step
-from hydromt.model.components import MeshComponent
+from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs.utils import make_regular_grid
-from hydromt_sfincs.workflows.merge import (
-    merge_multi_dataarrays,
-)
+from hydromt_sfincs.workflows.merge import merge_multi_dataarrays
+from hydromt_sfincs.components.quadtree import SfincsQuadtreeMixin
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -20,7 +17,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(f"hydromt.{__name__}")
 
 
-class SfincsQuadtreeRoughness(MeshComponent):
+class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
     def __init__(
         self,
         model: "SfincsModel",
@@ -79,110 +76,27 @@ class SfincsQuadtreeRoughness(MeshComponent):
             Maximum number of points to interpolate in a single chunk, by default 2000.
         """
 
-        nlev = self.data.attrs["nr_levels"]
-        xy = self.data.grid.face_coordinates
-        nr_cells = len(xy)
-        manning = np.full(nr_cells, np.nan)
-        dx = self.data.attrs["dx"]
-        dy = self.data.attrs["dy"]
-        res = min(dx, dy)
+        n_cells = self.data.grid.n_face
+        manning = np.full(n_cells, np.nan)
 
-        if self.model.crs.is_geographic:
-            res *= 111111.0  # convert to meters
-
-        # 0-based level indices
-        level = self.data["level"].values - 1
-
-        # Precompute index slices per level
-        level_indices = [np.where(level == ilev)[0] for ilev in range(nlev)]
-
-        # Precompute roughness sets per level
+        # Parse roughness list and prepare for interpolation
         roughness_list = self.model._parse_roughness_list(roughness_list)
 
-        # get m and n indices
-        n = self.data["n"] - 1  # 0-based
-        m = self.data["m"] - 1  # 0-based
-
-        def process_level(ilev):
-            idx = level_indices[ilev]
-            xz, yz = xy[idx, 0], xy[idx, 1]
-            n_level, m_level = n[idx], m[idx]
-            z_level = self.data["z"][idx] if "z" in self.data else None
-            mask_level = self.mask[idx]
-            dxmin, dymin = dx / 2**ilev, dy / 2**ilev
-
-            logger.info(f"Processing roughness level {ilev + 1} of {nlev} ...")
-
-            # Determine chunking
-            x_min, x_max = xz.min() - dxmin, xz.max() + dxmin
-            y_min, y_max = yz.min() - dymin, yz.max() + dymin
-            x_chunks = np.arange(x_min, x_max, nrmax * dxmin)
-            y_chunks = np.arange(y_min, y_max, nrmax * dymin)
-
-            mgl = np.full(len(idx), np.nan)
-
-            def process_chunk(ix, iy):
-                if ix < len(x_chunks) - 1:
-                    x0, x1 = x_chunks[ix], x_chunks[ix + 1]
-                else:
-                    x0, x1 = x_chunks[ix], x_max
-
-                if iy < len(y_chunks) - 1:
-                    y0, y1 = y_chunks[iy], y_chunks[iy + 1]
-                else:
-                    y0, y1 = y_chunks[iy], y_max
-
-                in_chunk = np.where((xz >= x0) & (xz < x1) & (yz >= y0) & (yz < y1))[0]
-                if len(in_chunk) == 0:
-                    return
-
-                da_like = make_regular_grid(
-                    x0=self.data.attrs["x0"],
-                    y0=self.data.attrs["y0"],
-                    dx=dxmin,
-                    dy=dymin,
-                    mmax=m_level[in_chunk].max().values + 1,
-                    nmax=n_level[in_chunk].max().values + 1,
-                    rotation=self.data.attrs["rotation"],
-                    crs=self.model.crs,
-                    mmin=m_level[in_chunk].min().values,
-                    nmin=n_level[in_chunk].min().values,
-                    make_ugrid=False,
+        # Define the function to compute roughness for a chunk of the quadtree grid
+        def compute_roughness(da_like, ilev=None):
+            if len(roughness_list) > 0:
+                da_man = merge_multi_dataarrays(
+                    da_list=roughness_list,
+                    da_like=da_like,
+                    interp_method="linear",
+                    logger=logger,
                 )
-
-                if len(roughness_list) > 0:
-                    da_man = merge_multi_dataarrays(
-                        da_list=roughness_list,
-                        da_like=da_like,
-                        interp_method="linear",
-                        logger=logger,
-                    )
-                else:
-                    da_man = xr.full_like(da_like, np.nan, dtype=np.float32)
-
-                # Get the indices of the "active" unstructured grid points in the regular grid
-                idx_y = np.searchsorted(da_like.n.values, n_level[in_chunk].values)
-                idx_x = np.searchsorted(da_like.m.values, m_level[in_chunk].values)
-                mgl[in_chunk] = da_man.values[idx_y, idx_x]
-
-            # Parallel or sequential chunk processing
-            if len(x_chunks) > 1 or len(y_chunks) > 1:
-                logger.info(
-                    f"Processing in {len(x_chunks)} x {len(y_chunks)} chunks ..."
-                )
-                for ix in range(len(x_chunks)):
-                    for iy in range(len(y_chunks)):
-                        process_chunk(ix, iy)
             else:
-                process_chunk(0, 0)
+                da_man = xr.full_like(da_like, np.nan, dtype=np.float32)
+            return da_man
 
-            # Clip values on zmin and zmax and return
-            return idx, mgl
-
-        # Loop over levels
-        for ilev in range(nlev):
-            idx, mgl_level = process_level(ilev)
-            manning[idx] = mgl_level
+        # Apply the roughness computation in chunks over the quadtree grid
+        self.compute_quadtree(compute_roughness, manning, nrmax=nrmax)
 
         # Now fill any remaining nans with depth-based manning
         nr_nan = np.isnan(manning).sum()
@@ -201,11 +115,10 @@ class SfincsQuadtreeRoughness(MeshComponent):
             )
             manning = np.where(np.isnan(manning), manning_sea, manning)
 
-        # Set manning values in self.data
-        self.data["manning"] = xu.UgridDataArray(
-            xr.DataArray(data=manning, dims=[self.data.grid.face_dimension]),
-            self.data.grid,
-        )
+        # Convert manning to ugrid-dataarray and set in self.data
+        da = xr.DataArray(manning, dims=[self.data.grid.face_dimension])
+        uda = xu.UgridDataArray(da, self.data.grid)
+        self.model.quadtree_grid.set(uda, name="manning")
 
         # Set netcdf manning to config
         self.model.config.set("manningfile", "roughness.nc")

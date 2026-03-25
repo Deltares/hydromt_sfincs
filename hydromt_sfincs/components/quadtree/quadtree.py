@@ -183,7 +183,8 @@ class SfincsQuadtreeGrid(MeshComponent):
             for var in variables:
                 try:
                     with xu.load_dataset(var["file_name"]) as ds:
-                        self._data[var["variable"]] = ds[var["variable"]]
+                        ds.grid.set_crs(self.model.crs)
+                        self.set(ds)
                 except Exception as e:
                     logger.error(f"Error reading variable {var['variable']}: {e}")
                     continue
@@ -231,7 +232,7 @@ class SfincsQuadtreeGrid(MeshComponent):
                     # get the single variable and convert to dataset
                     # NOTE this allows to read as a standalone file with spatial metadata
                     ds_var = self.data[
-                        [var["variable"], "mesh2d_node_x", "mesh2d_node_y"]
+                        var["variable"] + ["mesh2d_node_x", "mesh2d_node_y"]
                     ].ugrid.to_dataset()
                     ds_var.to_netcdf(var["file_name"])
                     # drop the variable from ds
@@ -331,7 +332,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             elevation_list = elevation_list_per_level
 
         # Build the quadtree grid
-        self._data = build_quadtree_xugrid(
+        ds = build_quadtree_xugrid(
             x0,
             y0,
             nmax,
@@ -344,6 +345,10 @@ class SfincsQuadtreeGrid(MeshComponent):
             elevation_list=elevation_list,
             bathymetry_database=bathymetry_database,
         )
+        # add nFaces coordinates to grid
+        ds = xu.UgridDataset(ds.ugrid.to_dataset())
+        ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
+        self._data = ds
 
         # Make sure epsg is stored in the config as well
         self.model.config.set("epsg", self.model.crs.to_epsg())
@@ -576,8 +581,9 @@ class SfincsQuadtreeGrid(MeshComponent):
             ifirst = np.zeros(nr_refinement_levels, dtype=int)
             for ilev in range(0, nr_refinement_levels):
                 # Find index of first cell with this level
-                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)
-                [0][0]
+                levels = self.data["level"].to_numpy()[:]
+                indices = np.where(levels == ilev + 1)[0]
+                ifirst[ilev] = indices[0]
             self.ifirst = ifirst
 
         ifirst = self.ifirst
@@ -620,13 +626,10 @@ class SfincsQuadtreeGrid(MeshComponent):
             ind[jind < 0] = -999
             ind[iind >= mmax] = -999
             ind[jind >= nmax] = -999
-
-            ingrid = np.isin(
-                ind, nm_lev[ilev], assume_unique=False
-            )  # return boolean for each pixel that falls inside a grid cell
-            incell = np.where(
-                ingrid
-            )  # tuple of arrays of pixel indices that fall in a cell
+            # return boolean for each pixel that falls inside a grid cell
+            ingrid = np.isin(ind, nm_lev[ilev], assume_unique=False)
+            # tuple of arrays of pixel indices that fall in a cell
+            incell = np.where(ingrid)
 
             if incell[0].size > 0:
                 # Now find the cell indices
@@ -725,7 +728,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             bounds = src.bounds
             dx = src.res[0]
             # Get the CRS of the grid
-            self.model.crs = src.crs
+            crs = src.crs
             # Get the nodata value
             nodata = src.nodata
             # Get the transform of the grid
@@ -809,7 +812,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             width=width,
             count=1,
             dtype=ii.dtype,
-            crs=self.model.crs,
+            crs=crs,
             transform=transform,
             nodata=nodata,
             overview_resampling=Resampling.nearest,

@@ -79,7 +79,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             raise FileNotFoundError(f"Subgrid file not found: {abs_file_path}")
 
         # Read from netcdf file with xarray
-        self._data = xr.load_dataset(filename)
+        self._data = xr.load_dataset(abs_file_path)
 
     def write(self, filename: str | Path = None):
         """Write SFINCS subgrid table (*.sbg) file for Quadree grid
@@ -122,15 +122,13 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         write_dep_tif=True,
         write_man_tif=False,
         weight_option="min",
+        buffer_cells=0,
+        interp_method: str = "linear",
         bathymetry_database=None,
         quiet=False,
         progress_bar=None,
     ):
         """Build SFINCS subgrid table for quadtree grid
-
-        FIXME WARNING: this only works when called from Delft Dashboard
-        The hydromt_sfincs.subgrid_quadtree_builder needs to be updated
-        to work with data catalogs
 
         Args:
             elevation_list (list): List of bathymetry data sets
@@ -148,6 +146,8 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             zmin (float, optional): Minimum elevation. Defaults to -999999.0.
             zmax (float, optional): Maximum elevation. Defaults to 999999.0.
             weight_option (str, optional): Weight option. Defaults to "min".
+            buffer_cells (int, optional): Number of buffer cells. Defaults to 0.
+            interp_method (str, optional): Interpolation method for buffer cells. Defaults to "linear".
             bathymetry_database (str, optional): Bathymetry database. Defaults to None.
             quiet (bool, optional): Quiet mode. Defaults to False.
             progress_bar (tqdm, optional): Progress bar. Defaults to None.
@@ -211,6 +211,8 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             write_dep_tif=write_dep_tif,
             write_man_tif=write_man_tif,
             weight_option=weight_option,
+            buffer_cells=buffer_cells,
+            interp_method=interp_method,
             bathymetry_database=bathymetry_database,
             quiet=quiet,
             progress_bar=progress_bar,

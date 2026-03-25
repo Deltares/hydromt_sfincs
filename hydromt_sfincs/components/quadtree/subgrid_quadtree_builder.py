@@ -45,6 +45,7 @@ def build_subgrid_table_quadtree(
     weight_option: str = "min",
     roughness_type: str = "manning",
     buffer_cells: int = 0,
+    interp_method: str = "linear",
     write_dep_tif: bool = False,
     write_man_tif: bool = False,
     highres_dir: str = None,
@@ -73,6 +74,8 @@ def build_subgrid_table_quadtree(
         zmax=zmax,
         weight_option=weight_option,
         roughness_type=roughness_type,
+        buffer_cells=buffer_cells,
+        interp_method=interp_method,
         write_dep_tif=write_dep_tif,
         write_man_tif=write_man_tif,
         highres_dir=highres_dir,
@@ -80,7 +83,6 @@ def build_subgrid_table_quadtree(
         quiet=quiet,
         progress_bar=progress_bar,
         logger=logger,
-        buffer_cells=buffer_cells,
     )
 
     return subgrid_table.ds
@@ -110,6 +112,7 @@ class SubgridTableQuadtree:
         weight_option: str = "min",
         roughness_type: str = "manning",
         buffer_cells: int = 0,
+        interp_method: str = "linear",
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
         highres_dir: str = None,
@@ -129,7 +132,7 @@ class SubgridTableQuadtree:
 
         time_start = time.time()
 
-        crs = CRS(int(grid.crs.values))
+        crs = grid.grid.crs
 
         msg = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
         log_info(msg, logger, quiet)
@@ -435,8 +438,8 @@ class SubgridTableQuadtree:
                         da_dep = merge_multi_dataarrays(
                             da_list=elevation_list[ilev],
                             da_like=da_sbg,
-                            buffer_cells=0,
-                            interp_method="linear",
+                            buffer_cells=buffer_cells,
+                            interp_method=interp_method,
                         )
 
                         # burn rivers in bathymetry and manning
@@ -457,7 +460,8 @@ class SubgridTableQuadtree:
 
                         # always interpolate/extrapolate to avoid NaN values
                         da_dep = da_dep.raster.interpolate_na(
-                            method="rio_idw", extrapolate=True
+                            method="rio_idw",
+                            extrapolate=True,
                         )
 
                         zg = da_dep.values
@@ -709,8 +713,8 @@ class SubgridTableQuadtree:
                         da_dep = merge_multi_dataarrays(
                             da_list=elevation_list[ilev],
                             da_like=da_sbg_uv,
-                            buffer_cells=0,
-                            interp_method="linear",
+                            buffer_cells=buffer_cells,
+                            interp_method=interp_method,
                         )
 
                         if np.any(np.isnan(da_dep.values)) > 0:
