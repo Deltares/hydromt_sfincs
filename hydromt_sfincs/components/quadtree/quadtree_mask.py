@@ -27,7 +27,6 @@ try:
     from datashader.utils import export_image
 
     HAS_DATASHADER = True
-
 except ImportError:
     HAS_DATASHADER = False
 
@@ -47,7 +46,8 @@ class SfincsQuadtreeMask(ModelComponent):
         super().__init__(
             model=model,
         )
-        # For plotting map overlay (This is the only data that is stored in the object! All other data is stored in the model.grid.data["mask"])
+        # For plotting map overlay (This is the only data that is stored in the object!
+        # All other data is stored in the model.grid.data["mask"])
         self.datashader_dataframe = pd.DataFrame()
 
     @property
@@ -62,6 +62,15 @@ class SfincsQuadtreeMask(ModelComponent):
     @property
     def face_coordinates(self):
         return self.model.quadtree_grid.face_coordinates
+
+    @property
+    def has_open_boundaries(self):
+        """Returns True if mask contains open boundaries (mask = 2)"""
+        if "mask" not in self.data:
+            return False
+
+        mask = self.data["mask"]
+        return (mask == 2).any().item()
 
     def read(self):
         # The mask values are read when the quadtree grid is read
@@ -130,14 +139,33 @@ class SfincsQuadtreeMask(ModelComponent):
             include_polygon = None
         if isinstance(exclude_polygon, gpd.GeoDataFrame) and exclude_polygon.empty:
             exclude_polygon = None
-        if isinstance(open_boundary_polygon, gpd.GeoDataFrame) and open_boundary_polygon.empty:
+        if (
+            isinstance(open_boundary_polygon, gpd.GeoDataFrame)
+            and open_boundary_polygon.empty
+        ):
             open_boundary_polygon = None
-        if isinstance(outflow_boundary_polygon, gpd.GeoDataFrame) and outflow_boundary_polygon.empty:
+        if (
+            isinstance(outflow_boundary_polygon, gpd.GeoDataFrame)
+            and outflow_boundary_polygon.empty
+        ):
             outflow_boundary_polygon = None
-        if isinstance(neumann_boundary_polygon, gpd.GeoDataFrame) and neumann_boundary_polygon.empty:
+        if (
+            isinstance(neumann_boundary_polygon, gpd.GeoDataFrame)
+            and neumann_boundary_polygon.empty
+        ):
             neumann_boundary_polygon = None
-        if isinstance(downstream_boundary_polygon, gpd.GeoDataFrame) and downstream_boundary_polygon.empty:
+        if (
+            isinstance(downstream_boundary_polygon, gpd.GeoDataFrame)
+            and downstream_boundary_polygon.empty
+        ):
             downstream_boundary_polygon = None
+
+        if model == "sfincs":
+            open_btype = "waterlevel"
+        elif model == "snapwave":
+            open_btype = "waves"
+        else:
+            raise ValueError("Model must be either 'sfincs' or 'snapwave'!")
 
         # Create active model cells
         self.create_active(
@@ -157,7 +185,7 @@ class SfincsQuadtreeMask(ModelComponent):
         if open_boundary_polygon is not None:
             self.create_boundary(
                 model=model,
-                btype="waterlevel",
+                btype=open_btype,
                 include_polygon=open_boundary_polygon,
                 include_zmin=open_boundary_zmin,
                 include_zmax=open_boundary_zmax,
@@ -596,10 +624,9 @@ class SfincsQuadtreeMask(ModelComponent):
                     uda_include = np.logical_and(uda_include, uda_dep <= include_zmax)
             bounds = np.logical_and(bounds, uda_include)
             if not bounds.any():
-                # This should not be an error. Better to just give a warning.                
+                # This should not be an error. Better to just give a warning.
                 # raise ValueError("No mask boundary cells found within include polygon!")
                 logger.warning("No mask boundary cells found within polygon!")
-            
 
         if gdf_exclude is not None:
             uda_exclude = (
@@ -685,17 +712,7 @@ class SfincsQuadtreeMask(ModelComponent):
 
         return gdf
 
-    def has_open_boundaries(self):
-        """Returns True if mask contains open boundaries (mask = 2)"""
-        mask = self.model.quadtree_grid.data["mask"]
-        if mask is None:
-            return False
-        if np.any(mask == 2):
-            return True
-        else:
-            return False
-
-    def get_datashader_dataframe(self):
+    def get_datashader_dataframe(self, variable="mask"):
         """Sets the datashader dataframe for plotting"""
         # Create a dataframe with points elements
         # Coordinates of cell centers
@@ -706,7 +723,7 @@ class SfincsQuadtreeMask(ModelComponent):
         if self.model.crs.is_geographic:
             if np.max(x) > 180.0:
                 cross_dateline = True
-        mask = self.model.quadtree_grid.data["mask"].values[:]
+        mask = self.model.quadtree_grid.data[variable].values[:]
         # Get rid of cells with mask = 0
         iok = np.where(mask > 0)
         x = x[iok]
@@ -774,8 +791,7 @@ class SfincsQuadtreeMask(ModelComponent):
             logger.warning("Datashader is not available. Please install datashader.")
             return False
 
-        if self.model.quadtree_grid.data is None:
-            # No grid or mask points
+        if len(self.model.quadtree_grid.data.data_vars) == 0:
             return False
 
         try:
