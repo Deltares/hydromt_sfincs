@@ -231,7 +231,7 @@ class SfincsQuadtreeGrid(MeshComponent):
                 if var["variable"] == "infiltration":
                     # infiltration is a special case, since it can contain multiple variables
                     # TODO should we remove the variables of non-used infiltrationtypes?
-                    inftype = self.model.config.get("infiltrationtype")
+                    inftype = self.model.config.get("infiltration_type")
                     write_vars = (
                         self.model.quadtree_infiltration.get_vars_by_infiltration_type(
                             inftype

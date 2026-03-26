@@ -148,7 +148,7 @@ class SfincsConfigVariables(BaseSettings):
         lt=20.0,
         description="Infiltration rate, spatially uniform and constant in time (mm/hr)",
     )
-    infiltrationtype: str | None = Field(
+    infiltration_type: str | None = Field(
         None,
         examples=["c2d", "cna", "cnb"],
         description="Infiltration method type (c2d: Constant, cna: Curve Number method A, cnb: Curve Number method B)",
@@ -543,7 +543,7 @@ class SfincsConfigVariables(BaseSettings):
     #
     # Netcdf input
     #
-    infiltrationfile: str | None = Field(
+    infiltration_file: str | None = Field(
         None,
         description="Name of the infiltration input file for spatially distributed infiltration methods",
     )
