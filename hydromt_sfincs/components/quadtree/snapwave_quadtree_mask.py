@@ -1,18 +1,17 @@
 import logging
 import os
+from pathlib import Path
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import shapely
-import xarray as xr
-import xugrid as xu
-from matplotlib import path
 from pyproj import Transformer
 
-from hydromt.model.components import ModelComponent
+from hydromt import hydromt_step
+
+from hydromt_sfincs.components.quadtree import SfincsQuadtreeMask
 
 np.warnings = warnings
 
@@ -34,472 +33,234 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class SnapWaveQuadtreeMask(ModelComponent):
+class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
     def __init__(
         self,
         model: "SfincsModel",
     ):
-        # The data for the mask is stored in the model.quadtree_grid.data["mask"] array
-        self.data = None
         super().__init__(
             model=model,
         )
-        # For plotting map overlay (This is the only data that is stored in the object! All other data is stored in the model.grid.data["mask"])
+        # For plotting map overlay (This is the only data that is stored in the object!
+        # All other data is stored in the model.grid.data["mask"])
         self.datashader_dataframe = pd.DataFrame()
-
-    def read(self):
-        # The mask values are read when the quadtree grid is read
-        pass
-
-    def write(self):
-        # The mask values are written when the quadtree grid is written
-        pass
-
-    # Is this not supposed to be called "create"?
-    def build(
-        self,
-        zmin=99999.0,
-        zmax=-99999.0,
-        include_polygon=None,
-        exclude_polygon=None,
-        open_boundary_polygon=None,
-        neumann_boundary_polygon=None,
-        include_zmin=-99999.0,
-        include_zmax=99999.0,
-        exclude_zmin=-99999.0,
-        exclude_zmax=99999.0,
-        open_boundary_zmin=-99999.0,
-        open_boundary_zmax=99999.0,
-        neumann_boundary_zmin=-99999.0,
-        neumann_boundary_zmax=99999.0,
-        update_datashader_dataframe=False,
-        quiet=True,
-    ):
-        if not quiet:
-            print("Building mask ...")
-
-        nr_cells = self.model.quadtree_grid.data.sizes["mesh2d_nFaces"]
-
-        mask = np.zeros(nr_cells, dtype=np.int8)
-        x, y = self.model.quadtree_grid.face_coordinates
-        z = self.model.quadtree_grid.data["z"].values[:]
-
-        # Indices are 1-based in SFINCS so subtract 1 for python 0-based indexing
-        mu = self.model.quadtree_grid.data["mu"].values[:]
-        mu1 = self.model.quadtree_grid.data["mu1"].values[:] - 1
-        mu2 = self.model.quadtree_grid.data["mu2"].values[:] - 1
-        nu = self.model.quadtree_grid.data["nu"].values[:]
-        nu1 = self.model.quadtree_grid.data["nu1"].values[:] - 1
-        nu2 = self.model.quadtree_grid.data["nu2"].values[:] - 1
-        md = self.model.quadtree_grid.data["md"].values[:]
-        md1 = self.model.quadtree_grid.data["md1"].values[:] - 1
-        md2 = self.model.quadtree_grid.data["md2"].values[:] - 1
-        nd = self.model.quadtree_grid.data["nd"].values[:]
-        nd1 = self.model.quadtree_grid.data["nd1"].values[:] - 1
-        nd2 = self.model.quadtree_grid.data["nd2"].values[:] - 1
-
-        if zmin >= zmax:
-            # Do not include any points initially
-            if include_polygon is None:
-                print(
-                    "WARNING: Entire mask set to zeros! Please ensure zmax is greater than zmin, or provide include polygon(s) !"
-                )
-                return
-        else:
-            if z is not None:
-                # Set initial mask based on zmin and zmax
-                iok = np.where((z >= zmin) & (z <= zmax))
-                mask[iok] = 1
-            else:
-                print(
-                    "WARNING: Entire mask set to zeros! No depth values found on grid."
-                )
-
-        # Include polygons
-        if include_polygon is not None:
-            for ip, polygon in include_polygon.iterrows():
-                inpol = inpolygon(x, y, polygon["geometry"])
-                iok = np.where((inpol) & (z >= include_zmin) & (z <= include_zmax))
-                mask[iok] = 1
-
-        # Exclude polygons
-        if exclude_polygon is not None:
-            for ip, polygon in exclude_polygon.iterrows():
-                inpol = inpolygon(x, y, polygon["geometry"])
-                iok = np.where((inpol) & (z >= exclude_zmin) & (z <= exclude_zmax))
-                mask[iok] = 0
-
-        # Open boundary polygons
-        if open_boundary_polygon is not None:
-            for ip, polygon in open_boundary_polygon.iterrows():
-                inpol = inpolygon(x, y, polygon["geometry"])
-                # Only consider points that are:
-                # 1) Inside the polygon
-                # 2) Have a mask > 0
-                # 3) z>=zmin
-                # 4) z<=zmax
-                iok = np.where(
-                    (inpol)
-                    & (mask > 0)
-                    & (z >= open_boundary_zmin)
-                    & (z <= open_boundary_zmax)
-                )
-                for ic in iok[0]:
-                    okay = False
-                    # Check neighbors, cell must have at least one inactive neighbor
-                    # Left
-                    if md[ic] <= 0:
-                        # Coarser or equal to the left
-                        if md1[ic] >= 0:
-                            # Cell has neighbor to the left
-                            if mask[md1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                    else:
-                        # Finer to the left
-                        if md1[ic] >= 0:
-                            # Cell has neighbor to the left
-                            if mask[md1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                        if md2[ic] >= 0:
-                            # Cell has neighbor to the left
-                            if mask[md2[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-
-                    # Below
-                    if nd[ic] <= 0:
-                        # Coarser or equal below
-                        if nd1[ic] >= 0:
-                            # Cell has neighbor below
-                            if mask[nd1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                    else:
-                        # Finer below
-                        if nd1[ic] >= 0:
-                            # Cell has neighbor below
-                            if mask[nd1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                        if nd2[ic] >= 0:
-                            # Cell has neighbor below
-                            if mask[nd2[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-
-                    # Right
-                    if mu[ic] <= 0:
-                        # Coarser or equal to the right
-                        if mu1[ic] >= 0:
-                            # Cell has neighbor to the right
-                            if mask[mu1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                    else:
-                        # Finer to the left
-                        if mu1[ic] >= 0:
-                            # Cell has neighbor to the right
-                            if mask[mu1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                        if mu2[ic] >= 0:
-                            # Cell has neighbor to the right
-                            if mask[mu2[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-
-                    # Above
-                    if nu[ic] <= 0:
-                        # Coarser or equal above
-                        if nu1[ic] >= 0:
-                            # Cell has neighbor above
-                            if mask[nu1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                    else:
-                        # Finer below
-                        if nu1[ic] >= 0:
-                            # Cell has neighbor above
-                            if mask[nu1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-                        if nu2[ic] >= 0:
-                            # Cell has neighbor above
-                            if mask[nu2[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 2
-                            okay = True
-
-                    if okay:
-                        mask[ic] = 2
-
-        # Outflow boundary polygons
-        if neumann_boundary_polygon is not None:
-            for ip, polygon in neumann_boundary_polygon.iterrows():
-                inpol = inpolygon(x, y, polygon["geometry"])
-                # Only consider points that are:
-                # 1) Inside the polygon
-                # 2) Have a mask > 0
-                # 3) z>=zmin
-                # 4) z<=zmax
-                iok = np.where(
-                    (inpol)
-                    & (mask > 0)
-                    & (z >= neumann_boundary_zmin)
-                    & (z <= neumann_boundary_zmax)
-                )
-                for ic in iok[0]:
-                    okay = False
-                    # Check neighbors, cell must have at least one inactive neighbor
-                    # Left
-                    if md[ic] <= 0:
-                        # Coarser or equal to the left
-                        if md1[ic] >= 0:
-                            # Cell has neighbor to the left
-                            if mask[md1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                    else:
-                        # Finer to the left
-                        if md1[ic] >= 0:
-                            # Cell has neighbor to the left
-                            if mask[md1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                        if md2[ic] >= 0:
-                            # Cell has neighbor to the left
-                            if mask[md2[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-
-                    # Below
-                    if nd[ic] <= 0:
-                        # Coarser or equal below
-                        if nd1[ic] >= 0:
-                            # Cell has neighbor below
-                            if mask[nd1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                    else:
-                        # Finer below
-                        if nd1[ic] >= 0:
-                            # Cell has neighbor below
-                            if mask[nd1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                        if nd2[ic] >= 0:
-                            # Cell has neighbor below
-                            if mask[nd2[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-
-                    # Right
-                    if mu[ic] <= 0:
-                        # Coarser or equal to the right
-                        if mu1[ic] >= 0:
-                            # Cell has neighbor to the right
-                            if mask[mu1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                    else:
-                        # Finer to the left
-                        if mu1[ic] >= 0:
-                            # Cell has neighbor to the right
-                            if mask[mu1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                        if mu2[ic] >= 0:
-                            # Cell has neighbor to the right
-                            if mask[mu2[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-
-                    # Above
-                    if nu[ic] <= 0:
-                        # Coarser or equal above
-                        if nu1[ic] >= 0:
-                            # Cell has neighbor above
-                            if mask[nu1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                    else:
-                        # Finer below
-                        if nu1[ic] >= 0:
-                            # Cell has neighbor above
-                            if mask[nu1[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                        if nu2[ic] >= 0:
-                            # Cell has neighbor above
-                            if mask[nu2[ic]] == 0:
-                                # And it's inactive
-                                okay = True
-                        else:
-                            # No neighbor, so set mask = 3
-                            okay = True
-                    if okay:
-                        mask[ic] = 3
-
-        # Now add the data arrays
-        ugrid2d = self.model.quadtree_grid.data.grid
-        self.model.quadtree_grid.data["snapwave_mask"] = xu.UgridDataArray(
-            xr.DataArray(data=mask, dims=[ugrid2d.face_dimension]), ugrid2d
-        )
-
-        if update_datashader_dataframe:
-            # For use in DelftDashboard
-            self.get_datashader_dataframe()
-
-    def to_gdf(self, option="all"):
-        """Returns a geodataframe with points for each cell in the mask"""
-
-        nr_cells = self.model.quadtree_grid.data.sizes["mesh2d_nFaces"]
-
-        if nr_cells == 0:
-            # Return empty geodataframe
-            return gpd.GeoDataFrame()
-        xz, yz = self.model.quadtree_grid.face_coordinates()
-        mask = self.model.quadtree_grid.data["snapwave_mask"]
-        gdf_list = []
-        okay = np.zeros(mask.shape, dtype=int)
-        if option == "all":
-            iok = np.where((mask > 0))
-        elif option == "include":
-            iok = np.where((mask == 1))
-        elif option == "open":
-            iok = np.where((mask == 2))
-        elif option == "outflow":
-            iok = np.where((mask == 3))
-        else:
-            iok = np.where((mask > -999))
-        okay[iok] = 1
-        for icel in range(nr_cells):
-            if okay[icel] == 1:
-                point = shapely.geometry.Point(xz[icel], yz[icel])
-                d = {"geometry": point}
-                gdf_list.append(d)
-
-        if gdf_list:
-            gdf = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
-        else:
-            # Cannot set crs of gdf with empty list
-            gdf = gpd.GeoDataFrame(gdf_list)
-
-        return gdf
 
     @property
     def has_open_boundaries(self):
         """Returns True if mask contains open boundaries (mask = 2)"""
-        mask = self.model.quadtree_grid.data["snapwave_mask"]
-        if mask is None:
-            return False
-        if np.any(mask == 2):
-            return True
-        else:
+        if "snapwave_mask" not in self.data:
             return False
 
-    def get_datashader_dataframe(self):
+        mask = self.data["snapwave_mask"]
+        return (mask == 2).any().item()
+
+    @hydromt_step
+    def create(
+        self,
+        zmin: float = None,
+        zmax: float = None,
+        include_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        include_zmin: float = None,
+        include_zmax: float = None,
+        exclude_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        exclude_zmin: float = None,
+        exclude_zmax: float = None,
+        open_boundary_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        open_boundary_zmin: float = None,
+        open_boundary_zmax: float = None,
+        neumann_boundary_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        neumann_boundary_zmin: float = None,
+        neumann_boundary_zmax: float = None,
+        all_touched: bool = False,
+        update_datashader_dataframe=False,
+    ):
+        """Setup active model snapwave mask and add boundaries. Note that boundary types can only be set when polygons are provided.
+
+        Parameters
+        ----------
+        model : str, optional
+            Model type, either 'sfincs' (default) or 'snapwave', for which the mask will be created.
+        zmin, zmax : float, optional
+            Minimum and maximum elevation thresholds for active model cells.
+        include_polygon, exclude_polygon: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name of polygons to include/exclude from the active model domain.
+            Note that include (second last) and exclude (last) areas are processed after other critera,
+            i.e. `zmin`, `zmax` and thus overrule these criteria for active model cells.
+        include_zmin, include_zmax: float, optional
+            Minimum and maximum elevation thresholds for included model cells.
+        exclude_zmin, exclude_zmax: float, optional
+            Minimum and maximum elevation thresholds for excluded model cells.
+        open_boundary_polygon, neumann_boundary_polygon: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name for geometries with areas to include as open boundary or neumann boundary.
+            For each polygon, also the minimum and maximum elevation thresholds can be specified using the corresponding `*_zmin` and `*_zmax` arguments.
+
+        See also:
+        ---------
+        * `create_active` method to setup active model cells
+        * `create_boundary` method to setup boundary cells of a specific type
+
+        """
+        super().create(
+            model="snapwave",
+            zmin=zmin,
+            zmax=zmax,
+            include_polygon=include_polygon,
+            include_zmin=include_zmin,
+            include_zmax=include_zmax,
+            exclude_polygon=exclude_polygon,
+            exclude_zmin=exclude_zmin,
+            exclude_zmax=exclude_zmax,
+            open_boundary_polygon=open_boundary_polygon,
+            open_boundary_zmin=open_boundary_zmin,
+            open_boundary_zmax=open_boundary_zmax,
+            neumann_boundary_polygon=neumann_boundary_polygon,
+            neumann_boundary_zmin=neumann_boundary_zmin,
+            neumann_boundary_zmax=neumann_boundary_zmax,
+            all_touched=all_touched,
+            update_datashader_dataframe=update_datashader_dataframe,
+        )
+
+    @hydromt_step
+    def create_active(
+        self,
+        zmin: float = None,
+        zmax: float = None,
+        include_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        include_zmin: float = None,
+        include_zmax: float = None,
+        exclude_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        exclude_zmin: float = None,
+        exclude_zmax: float = None,
+        all_touched: bool = False,
+        reset_mask: bool = True,
+        copy_sfincsmask: bool = False,
+    ):
+        """Setup active model cells.
+
+        The Snapwave model mask defines inactive (msk=0), active (msk=1), and wave boundary (msk=2)
+        cells. This method sets the active and inactive cells.
+
+        Active model cells are based on a region and cells with valid elevation (i.e. not nodata),
+        optionally bounded by areas inside the include geomtries, outside the exclude geomtries,
+        larger or equal than a minimum elevation threshhold and smaller or equal than a
+        maximum elevation threshhold.
+        All conditions are combined using a logical AND operation.
+
+        Adds layer to quadtree grid:
+
+        * **snapwave_mask** map: model mask [-]
+
+        Parameters
+        ----------
+        zmin, zmax : float, optional
+            Minimum and maximum elevation thresholds for active model cells.
+        include_polygon, exclude_polygon: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name of polygons to include/exclude from the active model domain.
+            Note that include (second last) and exclude (last) areas are processed after other critera,
+            i.e. `zmin`, `zmax` and thus overrule these criteria for active model cells.
+        all_touched: bool, optional
+            if True (default) include (or exclude) a cell in the mask if it touches any of the
+            include (or exclude) geometries. If False, include a cell only if its center is
+            within one of the shapes, or if it is selected by Bresenham's line algorithm.
+        reset_mask: bool, optional
+            If True, reset existing mask before creating new active model cells.
+        copy_sfincsmask: bool, optional
+            If True, ccopy the SFINCS mask to the SnapWave mask.
+        """
+
+        super().create_active(
+            model="snapwave",
+            zmin=zmin,
+            zmax=zmax,
+            include_polygon=include_polygon,
+            include_zmin=include_zmin,
+            include_zmax=include_zmax,
+            exclude_polygon=exclude_polygon,
+            exclude_zmin=exclude_zmin,
+            exclude_zmax=exclude_zmax,
+            all_touched=all_touched,
+            reset_mask=reset_mask,
+            copy_sfincsmask=copy_sfincsmask,
+        )
+
+    @hydromt_step
+    def create_boundary(
+        self,
+        btype: str = "waves",
+        zmin: float = None,
+        zmax: float = None,
+        include_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        include_zmin: float = None,
+        include_zmax: float = None,
+        include_polygon_buffer: int = 0,
+        exclude_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
+        exclude_zmin: float = None,
+        exclude_zmax: float = None,
+        all_touched: bool = True,
+        reset_bounds: bool = True,
+        copy_sfincsmask: bool = False,
+        connectivity: int = 8,
+    ):
+        """Set boundary cells in the model mask.
+
+        The Snapwave model mask defines inactive (mask=0), active (mask=1), wave boundary (mask=2)
+        and neumann boundary (mask=3) cells. Active cells set using the `create_active` method,
+        while this method sets the different types of boundary cells, see `btype` argument.
+
+        Boundary cells at the edge of the active model domain,
+        optionally bounded by areas inside the include geomtries, outside the exclude geomtries,
+        larger or equal than a minimum elevation threshhold and smaller or equal than a
+        maximum elevation threshhold. All conditions are combined using a logical AND operation.
+
+        Updates snapwave mask layer in quadtree grid:
+
+        * **snapwave_mask** map: model mask [-]
+
+        Parameters
+        ----------
+        btype: str, optional
+            Boundary type {'waves', 'neumann'}, by default 'waves'.
+        zmin, zmax : float, optional
+            Minimum and maximum elevation thresholds for all boundary cells.
+        include_polygon, exclude_polygon: str, Path, gpd.GeoDataFrame, optional
+            Path or data source name for geometries with areas to include/exclude from
+            the model boundary. These can be combined with `include_zmin` and `include_zmax` to
+            further refine the selection of cells within the polygons.
+        reset_bounds: bool, optional
+            If True, reset existing boundary cells of the selected boundary
+            type (`btype`) before setting new boundary cells, by default False.
+        all_touched: bool, optional
+            if True (default) include (or exclude) a cell in the mask if it touches any of the
+            include (or exclude) geometries. If False, include a cell only if its center is
+            within one of the shapes, or if it is selected by Bresenham's line algorithm.
+        connectivity, {4, 8}:
+            The connectivity used to detect the model edge, if 4 only horizontal and vertical
+            connections are used, if 8 (default) also diagonal connections.
+        """
+        super().create_boundary(
+            model="snapwave",
+            btype=btype,
+            zmin=zmin,
+            zmax=zmax,
+            include_polygon=include_polygon,
+            include_zmin=include_zmin,
+            include_zmax=include_zmax,
+            include_polygon_buffer=include_polygon_buffer,
+            exclude_polygon=exclude_polygon,
+            exclude_zmin=exclude_zmin,
+            exclude_zmax=exclude_zmax,
+            all_touched=all_touched,
+            reset_bounds=reset_bounds,
+            copy_sfincsmask=copy_sfincsmask,
+            connectivity=connectivity,
+        )
+
+    def get_datashader_dataframe(self, variable="snapwave_mask"):
         """Sets the datashader dataframe for plotting"""
-        # Create a dataframe with points elements
-        # Coordinates of cell centers
-        x = self.model.quadtree_grid.data.grid.face_coordinates[:, 0]
-        y = self.model.quadtree_grid.data.grid.face_coordinates[:, 1]
-        # Check if grid crosses the dateline
-        cross_dateline = False
-        if self.model.crs.is_geographic:
-            if np.max(x) > 180.0:
-                cross_dateline = True
-        mask = self.model.quadtree_grid.data["snapwave_mask"].values[:]
-        # Get rid of cells with mask = 0
-        iok = np.where(mask > 0)
-        x = x[iok]
-        y = y[iok]
-        mask = mask[iok]
-        if np.size(x) == 0:
-            # Return empty dataframe
-            self.datashader_dataframe = pd.DataFrame()
-            return
-        # Transform all to 3857 (web mercator)
-        transformer = Transformer.from_crs(self.model.crs, 3857, always_xy=True)
-        x, y = transformer.transform(x, y)
-        if cross_dateline:
-            x[x < 0] += 40075016.68557849
-
-        self.datashader_dataframe = pd.DataFrame(dict(x=x, y=y, mask=mask))
+        super().get_datashader_dataframe(variable=variable)
 
     def clear_datashader_dataframe(self):
         """Clears the datashader dataframe"""
-        # Called in model.grid.build method
         self.datashader_dataframe = pd.DataFrame()
 
     def map_overlay(
@@ -545,8 +306,7 @@ class SnapWaveQuadtreeMask(ModelComponent):
             logger.warning("Datashader is not available. Please install datashader.")
             return False
 
-        if self.model.quadtree_grid.data is None:
-            # No grid or mask points
+        if len(self.model.quadtree_grid.data.data_vars) == 0:
             return False
 
         try:
@@ -573,9 +333,15 @@ class SnapWaveQuadtreeMask(ModelComponent):
             )
 
             # Instead, we can create separate images for each mask and stack them
-            dfact = self.datashader_dataframe[self.datashader_dataframe["mask"] == 1]
-            dfbnd = self.datashader_dataframe[self.datashader_dataframe["mask"] == 2]
-            dfout = self.datashader_dataframe[self.datashader_dataframe["mask"] == 3]
+            dfact = self.datashader_dataframe[
+                self.datashader_dataframe["snapwave_mask"] == 1
+            ]
+            dfbnd = self.datashader_dataframe[
+                self.datashader_dataframe["snapwave_mask"] == 2
+            ]
+            dfout = self.datashader_dataframe[
+                self.datashader_dataframe["snapwave_mask"] == 3
+            ]
             img_a = tf.shade(
                 tf.spread(cvs.points(dfact, "x", "y", ds.any()), px=px),
                 cmap=active_color,
@@ -601,72 +367,3 @@ class SnapWaveQuadtreeMask(ModelComponent):
         except Exception as e:
             print(e)
             return False
-
-
-def get_neighbors_in_larger_cell(n, m):
-    nnbr = [-1, -1, -1, -1]
-    mnbr = [-1, -1, -1, -1]
-    if not odd(n) and not odd(m):
-        # lower left
-        nnbr[0] = n + 1
-        mnbr[0] = m
-        nnbr[1] = n
-        mnbr[1] = m + 1
-        nnbr[2] = n + 1
-        mnbr[2] = m + 1
-    elif not odd(n) and odd(m):
-        # lower right
-        nnbr[1] = n
-        mnbr[1] = m - 1
-        nnbr[2] = n + 1
-        mnbr[2] = m - 1
-        nnbr[3] = n + 1
-        mnbr[3] = m
-    elif odd(n) and not odd(m):
-        # upper left
-        nnbr[1] = n - 1
-        mnbr[1] = m
-        nnbr[2] = n - 1
-        mnbr[2] = m + 1
-        nnbr[3] = n
-        mnbr[3] = m + 1
-    else:
-        # upper right
-        nnbr[1] = n - 1
-        mnbr[1] = m - 1
-        nnbr[2] = n - 1
-        mnbr[2] = m
-        nnbr[3] = n
-        mnbr[3] = m - 1
-    return nnbr, mnbr
-
-
-def odd(num):
-    if (num % 2) == 1:
-        return True
-    else:
-        return False
-
-
-def even(num):
-    if (num % 2) == 0:
-        return True
-    else:
-        return False
-
-
-def inpolygon(xq, yq, p):
-    shape = xq.shape
-    xq = xq.reshape(-1)
-    yq = yq.reshape(-1)
-    q = [(xq[i], yq[i]) for i in range(xq.shape[0])]
-    p = path.Path([(crds[0], crds[1]) for i, crds in enumerate(p.exterior.coords)])
-    return p.contains_points(q).reshape(shape)
-
-
-def binary_search(vals, val):
-    indx = np.searchsorted(vals, val)
-    if indx < np.size(vals):
-        if vals[indx] == val:
-            return indx
-    return None
