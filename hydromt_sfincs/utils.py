@@ -63,6 +63,8 @@ __all__ = [
     "read_sfincs_map_results",
     "read_sfincs_his_results",
     "downscale_floodmap",
+    "compute_flow_connected_mask",
+    "remove_disconnected_flooding",
     "rotated_grid",
     "build_overviews",
     "find_uv_indices",
@@ -1088,10 +1090,13 @@ def write_raster(
 def downscale_floodmap(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
     dep: Union[Path, str, xr.DataArray],
+    method: str = "constant",
     indices: Union[Path, str, xr.DataArray] = None,
+    sbg_fn: Union[Path, str] = None,
     hmin: float = 0.05,
     gdf_mask: gpd.GeoDataFrame = None,
     floodmap_fn: Union[Path, str] = None,
+    zsmap_fn: Union[Path, str] = None,
     reproj_method: str = "nearest",
     zoom_level: Optional[Union[int, tuple]] = None,
     nrmax: int = 2000,
@@ -1100,274 +1105,821 @@ def downscale_floodmap(
 ):
     """Create a downscaled floodmap for (model) region.
 
+    Supports multiple downscaling methods via the *method* parameter:
+
+    * ``"raw"`` -- Paint each DEM pixel with its parent cell's WSE
+      (nearest-neighbor).  No DEM subtraction, no wet/dry masking.
+      Only produces a water-level raster (*zsmap_fn*).
+    * ``"constant"`` -- Assign each DEM pixel the WSE of its parent cell
+      (optionally via a pre-computed index COG), then subtract the DEM.
+      This is the classic "bathtub" approach.
+    * ``"bilinear"`` -- Bilinearly interpolate WSE from surrounding cell
+      centers (Sanders & Schubert 2019), then subtract the DEM.
+    * ``"slope"`` -- Tilt the WSE within each cell by fitting a least-squares
+      plane to the bed elevation.
+    * ``"volume"`` -- Fill each cell hypsometrically until the volume matches
+      the SFINCS subgrid table.  Requires *sbg_fn*.
+    * ``"volume_slope"`` -- Detrend the DEM (remove bed slope), fill
+      hypsometrically, then add slope back (van Ormondt).  Requires *sbg_fn*.
+    * ``"tilt_volume"`` -- Tilt the WSE using the water-surface gradient,
+      then apply a vertical offset via bisection to match the target volume.
+      Requires *sbg_fn*.
+
     Parameters
     ----------
-    zsmax : xr.DataArray
-        Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
-    dep : Path, str, xr.DataArray
-        High-resolution DEM (m) of model region:
-        * If a Path or str is provided, the DEM is read from disk and the floodmap
-        is written to disk (recommened for datasets that do not fit in memory.)
-        * If a xr.DataArray is provided, the floodmap is returned as xr.DataArray
-        and only written to disk when floodmap_fn is provided.
-    indices: Path, str, xr.DataArray, optional
-        Indices of the corresponding SFINCS cells to the DEM cells.
+    zsmax : xr.DataArray or xu.UgridDataArray
+        Maximum water level (m).  When multiple timesteps are present the
+        maximum over all timesteps is used.
+    dep : Path, str, or xr.DataArray
+        High-resolution DEM (m) of the model region.
+    method : str, optional
+        Downscaling method, by default ``"constant"``.
+    indices : Path, str, or xr.DataArray, optional
+        Pre-computed cell-index raster (only used by ``"constant"``).
+    sbg_fn : Path or str, optional
+        Path to the SFINCS subgrid file (.sbg netcdf).  Required for
+        ``"volume"``, ``"volume_slope"`` and ``"tilt_volume"``.
     hmin : float, optional
-        Minimum water depth (m) to be considered as "flooded", by default 0.05
+        Minimum water depth (m) to be considered flooded, by default 0.05.
+        Ignored by ``"raw"``.
     gdf_mask : gpd.GeoDataFrame, optional
-        Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
-        Note that the area outside the polygons is set to nodata.
-    floodmap_fn : Union[Path, str], optional
-        Name (path) of output floodmap, by default None. If provided, the floodmap is written to disk.
+        Polygons to mask the output (area outside is set to NaN).
+    floodmap_fn : Path or str, optional
+        Output flood-depth GeoTIFF.  Required for all methods except ``"raw"``.
+    zsmap_fn : Path or str, optional
+        Output water-level GeoTIFF.
     reproj_method : str, optional
-        Reprojection method for downscaling the water levels, by default "nearest".
-        Other option is "bilinear".
-    zoom_level : int, tuple, optional
-        Overview level of the raster dataset (0 is highest resolution), if present.
-        Using a tuple the zoom level can be specified as (<zoom_resolution>, <unit>), e.g., (1000, 'meter')
-        Note, this only works when dep is a Path or str.
+        Reprojection method for ``"constant"`` downscaling, by default
+        ``"nearest"``.
+    zoom_level : int or tuple, optional
+        Overview level of the raster dataset (only for ``"constant"``).
     nrmax : int, optional
-        Maximum number of cells per block, by default 2000. These blocks are used to prevent memory issues.
+        Block size in pixels, by default 2000.
+    logger : logging.Logger, optional
+        Logger instance.
     kwargs : dict, optional
-        Additional keyword arguments passed to `RasterDataArray.to_raster`.
+        Extra keyword arguments forwarded to ``RasterDataArray.to_raster``
+        (only for the in-memory ``"constant"`` path).
+
     Returns
     -------
-    hmax: xr.Dataset
-        Downscaled and masked floodmap.
-
-    See Also
-    --------
-    hydromt.raster.RasterDataArray.to_raster
+    hmax : xr.DataArray or None
+        Returned only when *dep* is an ``xr.DataArray`` and
+        ``method="constant"``.  Otherwise results are written to disk.
     """
-    # get maximum water level
+    _VALID_METHODS = {
+        "raw", "constant", "bilinear",
+        "slope", "volume", "volume_slope", "tilt_volume",
+    }
+    if method not in _VALID_METHODS:
+        raise ValueError(
+            f"Unknown method {method!r}.  Choose from {sorted(_VALID_METHODS)}."
+        )
+
+    # Volume-based methods require the subgrid file
+    if method in ("volume", "volume_slope", "tilt_volume") and sbg_fn is None:
+        raise ValueError(f"sbg_fn is required for method={method!r}.")
+
+    # --- Reduce time dimension -----------------------------------------------
     if isinstance(zsmax, xu.UgridDataArray):
         timedim = set(zsmax.dims) - set(zsmax.ugrid.grid.dims)
     else:
         timedim = set(zsmax.dims) - set(zsmax.raster.dims)
     if timedim:
-        logger.info(f"Multiple values present in {timedim} dimension.")
-        logger.info(f"Downscaling floodmap for maximum water level over {timedim}.")
+        logger.info(f"Taking maximum water level over {timedim} dimension(s).")
         zsmax = zsmax.max(timedim)
 
-    # Hydromt expects a string so if a Path is provided, convert to str
-    if isinstance(floodmap_fn, Path):
-        floodmap_fn = str(floodmap_fn)
-
-    # indices (if provided) should be of the same type as dep
-    if indices is not None:
-        if isinstance(indices, (str, Path)):
-            if not isinstance(dep, (str, Path)):
-                raise ValueError(
-                    "index should be a xr.DataArray when dep is a xr.DataArray."
-                )
-        elif isinstance(indices, xr.DataArray):
-            if not isinstance(dep, xr.DataArray):
-                raise ValueError(
-                    "index should be a str or Path when dep is a str or Path."
-                )
-        else:
-            raise ValueError("index should be a str, Path or xr.DataArray.")
-
+    # --- In-memory path (xr.DataArray dep) -- only for "constant" ------------
     if isinstance(dep, xr.DataArray):
+        if method != "constant":
+            raise ValueError(
+                "Only method='constant' supports xr.DataArray dep.  "
+                "Use a file path for other methods."
+            )
+        if isinstance(floodmap_fn, Path):
+            floodmap_fn = str(floodmap_fn)
+        if indices is not None:
+            if isinstance(indices, (str, Path)) and not isinstance(dep, (str, Path)):
+                raise ValueError("index should be xr.DataArray when dep is xr.DataArray.")
+            elif isinstance(indices, xr.DataArray) and not isinstance(dep, xr.DataArray):
+                raise ValueError("index should be str/Path when dep is str/Path.")
         hmax = _downscale_floodmap_da(
-            zsmax=zsmax,
-            dep=dep,
-            indices=indices,
-            hmin=hmin,
-            gdf_mask=gdf_mask,
-            reproj_method=reproj_method,
+            zsmax=zsmax, dep=dep, indices=indices, hmin=hmin,
+            gdf_mask=gdf_mask, reproj_method=reproj_method,
         )
-
-        # write floodmap
         if floodmap_fn is not None:
-            if not kwargs:  # write COG by default
+            if not kwargs:
                 kwargs = dict(
-                    driver="GTiff",
-                    tiled=True,
-                    blockxsize=256,
-                    blockysize=256,
-                    compress="deflate",
-                    predictor=2,
-                    profile="COG",
+                    driver="GTiff", tiled=True, blockxsize=256, blockysize=256,
+                    compress="deflate", predictor=2, profile="COG",
                 )
             hmax.raster.to_raster(floodmap_fn, **kwargs)
-
-            # add overviews
             build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
-
         hmax.name = "hmax"
         hmax.attrs.update({"long_name": "Maximum flood depth", "units": "m"})
         return hmax
 
-    elif isinstance(dep, (str, Path)):
+    # --- File-based path (dep is str/Path) -----------------------------------
+    if method == "raw":
+        if zsmap_fn is None:
+            raise ValueError("zsmap_fn is required for method='raw'.")
+    else:
         if floodmap_fn is None:
-            raise ValueError(
-                "floodmap_fn should be provided when dep is a Path or str."
-            )
+            raise ValueError("floodmap_fn is required when dep is a file path.")
 
-        if zoom_level is not None:
-            zls_dict, crs = RasterioDriver._get_zoom_levels_and_crs(dep)
-            overview_level = zoom_to_overview_level(
-                zoom=zoom_level, zls_dict=zls_dict, source_crs=crs
-            )
-            if overview_level:
-                # NOTE: overview levels start at zoom_level 1, see _get_zoom_levels_and_crs
-                overview_level -= 1
+    # Dispatch to the appropriate file-based implementation
+    if method == "constant":
+        _downscale_constant(
+            zsmax=zsmax, dep=dep, indices=indices, hmin=hmin, gdf_mask=gdf_mask,
+            floodmap_fn=floodmap_fn, zsmap_fn=zsmap_fn, reproj_method=reproj_method,
+            zoom_level=zoom_level, nrmax=nrmax, logger=logger,
+        )
+    elif method == "raw":
+        _downscale_raw(
+            zsmax=zsmax, dep=dep, zsmap_fn=zsmap_fn, gdf_mask=gdf_mask,
+            nrmax=nrmax, logger=logger, indices=indices,
+        )
+    elif method == "bilinear":
+        _downscale_bilinear(
+            zsmax=zsmax, dep=dep, hmin=hmin, gdf_mask=gdf_mask,
+            floodmap_fn=floodmap_fn, zsmap_fn=zsmap_fn, nrmax=nrmax, logger=logger,
+        )
+    elif method in ("slope", "volume", "volume_slope", "tilt_volume"):
+        _downscale_cell_based(
+            zsmax=zsmax, dep=dep, method=method, sbg_fn=sbg_fn, hmin=hmin,
+            gdf_mask=gdf_mask, floodmap_fn=floodmap_fn, zsmap_fn=zsmap_fn,
+            logger=logger,
+        )
+
+
+# =============================================================================
+#  Shared helpers
+# =============================================================================
+
+def _open_dem_geometry(dep):
+    """Read only grid geometry (no elevation values) from a DEM GeoTIFF."""
+    with rasterio.open(str(dep)) as src:
+        return dict(
+            transform=src.transform,
+            width=src.width,
+            height=src.height,
+            crs=src.crs,
+            dx=src.transform[0],
+            dy=src.transform[4],
+        )
+
+
+def _make_output_profile(geo):
+    """Standard COG profile for float32 output rasters."""
+    return dict(
+        driver="GTiff", width=geo["width"], height=geo["height"],
+        count=1, dtype=np.float32, crs=geo["crs"], transform=geo["transform"],
+        tiled=True, blockxsize=256, blockysize=256,
+        compress="deflate", predictor=2, profile="COG",
+        nodata=np.nan, BIGTIFF="YES",
+    )
+
+
+def _create_output_rasters(profile, floodmap_fn=None, zsmap_fn=None):
+    """Create empty output GeoTIFF(s)."""
+    if floodmap_fn is not None:
+        with rasterio.open(str(floodmap_fn), "w", **profile):
+            pass
+    if zsmap_fn is not None:
+        with rasterio.open(str(zsmap_fn), "w", **profile):
+            pass
+
+
+def _apply_mask_and_overviews(
+    floodmap_fn, zsmap_fn, gdf_mask, geo, logger,
+):
+    """Apply polygon mask and build overviews on output raster(s)."""
+    if gdf_mask is not None:
+        logger.info("Applying polygon mask...")
+        from rasterio.features import geometry_mask
+        mask = geometry_mask(
+            gdf_mask.geometry,
+            out_shape=(geo["height"], geo["width"]),
+            transform=geo["transform"],
+            invert=True, all_touched=True,
+        )
+        for fn in [floodmap_fn, zsmap_fn]:
+            if fn is None:
+                continue
+            with rasterio.open(str(fn), "r+") as dst:
+                data = dst.read(1)
+                data[~mask] = np.nan
+                dst.write(data, indexes=1)
+
+    for fn in [floodmap_fn, zsmap_fn]:
+        if fn is not None:
+            build_overviews(fn=str(fn), resample_method="nearest", logger=logger)
+
+
+def _get_grid_info(zsmax):
+    """Extract face bounding boxes and centers from a UgridDataArray."""
+    grid = zsmax.ugrid.grid
+    fnc = grid.face_node_connectivity
+    node_x = grid.node_x
+    node_y = grid.node_y
+    fill_value = grid.fill_value
+
+    fnc_safe = fnc.copy()
+    vmask = fnc_safe != fill_value
+    fnc_safe[~vmask] = 0
+    _nx = node_x[fnc_safe]; _nx[~vmask] = np.nan
+    _ny = node_y[fnc_safe]; _ny[~vmask] = np.nan
+
+    return dict(
+        face_xmin=np.nanmin(_nx, axis=1),
+        face_xmax=np.nanmax(_nx, axis=1),
+        face_ymin=np.nanmin(_ny, axis=1),
+        face_ymax=np.nanmax(_ny, axis=1),
+        face_xcen=grid.face_coordinates[:, 0],
+        face_ycen=grid.face_coordinates[:, 1],
+    )
+
+
+def _read_subgrid(sbg_fn, logger):
+    """Read SFINCS subgrid tables (z_level, z_volmax)."""
+    logger.info(f"Reading subgrid tables from {sbg_fn}")
+    sbg = xr.load_dataset(str(sbg_fn))
+    nlevels = sbg.sizes["levels"]
+    return dict(
+        z_level=sbg["z_level"].values,
+        z_volmax=sbg["z_volmax"].values,
+        level_fracs=np.arange(nlevels) / (nlevels - 1),
+    )
+
+
+def _target_volume(zs, fi, sbg):
+    """Interpolate target volume from subgrid table for cell fi at WSE zs."""
+    V_steps = sbg["level_fracs"] * sbg["z_volmax"][fi]
+    return float(np.interp(zs, sbg["z_level"][fi], V_steps))
+
+
+def _hypsometric_fill(ele_sorted, vol_target, pixel_area):
+    """Find water level that produces *vol_target* on a sorted elevation array.
+
+    Returns the water level (float).  Assumes ele_sorted is ascending.
+    """
+    n_pix = len(ele_sorted)
+    cum_ele = np.cumsum(ele_sorted)
+    counts = np.arange(1, n_pix + 1)
+    vol_at_level = (counts * ele_sorted - cum_ele) * pixel_area
+
+    if vol_target >= vol_at_level[-1]:
+        remainder = vol_target - vol_at_level[-1]
+        return ele_sorted[-1] + remainder / (n_pix * pixel_area)
+    if vol_target <= 0:
+        return ele_sorted[0]
+
+    k = max(0, np.searchsorted(vol_at_level, vol_target, side="right") - 1)
+    vol_remaining = vol_target - vol_at_level[k]
+    return ele_sorted[k] + vol_remaining / ((k + 1) * pixel_area)
+
+
+# =============================================================================
+#  Method: raw  (nearest-neighbor WSE, no DEM subtraction)
+# =============================================================================
+
+def _downscale_raw(zsmax, dep, zsmap_fn, gdf_mask, nrmax, logger, indices=None):
+    vals = zsmax.values
+    wet = ~np.isnan(vals)
+    if np.sum(wet) < 1:
+        logger.warning("No wet cells found."); return
+
+    geo = _open_dem_geometry(dep)
+    profile = _make_output_profile(geo)
+    _create_output_rasters(profile, zsmap_fn=zsmap_fn)
+
+    nrcb = nrmax
+    nrbn = int(np.ceil(geo["height"] / nrcb))
+    nrbm = int(np.ceil(geo["width"] / nrcb))
+    total = nrbn * nrbm
+    done = 0
+
+    if indices is not None:
+        # ----- Index-COG path: exact cell containment, no interpolation -----
+        logger.info(f"Raw quadtree (index-COG): {np.sum(wet)} wet cells")
+        nodata_idx = 2147483647
+        indices_src = rasterio.open(str(indices))
+
+        for ii in range(nrbm):
+            bm0 = ii * nrcb; bm1 = min(bm0 + nrcb, geo["width"])
+            for jj in range(nrbn):
+                bn0 = jj * nrcb; bn1 = min(bn0 + nrcb, geo["height"])
+                window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
+
+                idx_block = indices_src.read(1, window=window)
+                zs_block = np.full(idx_block.shape, np.nan, dtype=np.float32)
+                valid = idx_block != nodata_idx
+                zs_block[valid] = vals[idx_block[valid]]
+
+                with rasterio.open(str(zsmap_fn), "r+") as dst:
+                    dst.write(zs_block, window=window, indexes=1)
+
+                done += 1
+                if done % 25 == 0 or done == total:
+                    logger.info(f"  Block {done}/{total} ({100*done/total:.0f}%)")
+
+        indices_src.close()
+    else:
+        # ----- Fallback: NearestNDInterpolator (legacy behaviour) -----------
+        from scipy.interpolate import NearestNDInterpolator
+
+        grid = zsmax.ugrid.grid
+        face_x, face_y = grid.face_coordinates.T
+        interpolator = NearestNDInterpolator(
+            np.column_stack([face_x[wet], face_y[wet]]), vals[wet],
+        )
+        logger.info(f"Raw quadtree (nearest-interp fallback): {np.sum(wet)} wet cells")
+
+        for ii in range(nrbm):
+            bm0 = ii * nrcb; bm1 = min(bm0 + nrcb, geo["width"])
+            for jj in range(nrbn):
+                bn0 = jj * nrcb; bn1 = min(bn0 + nrcb, geo["height"])
+                window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
+
+                xx, yy = np.meshgrid(
+                    geo["transform"][2] + (np.arange(bm0, bm1) + 0.5) * geo["dx"],
+                    geo["transform"][5] + (np.arange(bn0, bn1) + 0.5) * geo["dy"],
+                )
+                zs_block = interpolator(
+                    np.column_stack([xx.ravel(), yy.ravel()])
+                ).reshape(xx.shape).astype(np.float32)
+
+                with rasterio.open(str(zsmap_fn), "r+") as dst:
+                    dst.write(zs_block, window=window, indexes=1)
+
+                done += 1
+                if done % 25 == 0 or done == total:
+                    logger.info(f"  Block {done}/{total} ({100*done/total:.0f}%)")
+
+    _apply_mask_and_overviews(None, zsmap_fn, gdf_mask, geo, logger)
+    logger.info(f"Raw quadtree water level map saved to: {zsmap_fn}")
+
+
+# =============================================================================
+#  Method: constant  (index-COG based, file path)
+# =============================================================================
+
+def _downscale_constant(
+    zsmax, dep, indices, hmin, gdf_mask,
+    floodmap_fn, zsmap_fn, reproj_method, zoom_level, nrmax, logger,
+):
+    """File-based constant (bathtub) downscaling via _downscale_floodmap_da."""
+    if isinstance(floodmap_fn, Path):
+        floodmap_fn = str(floodmap_fn)
+
+    # indices validation
+    if indices is not None:
+        if not isinstance(indices, (str, Path)):
+            raise ValueError("indices should be str/Path when dep is str/Path.")
+
+    if zoom_level is not None:
+        zls_dict, crs = RasterioDriver._get_zoom_levels_and_crs(dep)
+        overview_level = zoom_to_overview_level(
+            zoom=zoom_level, zls_dict=zls_dict, source_crs=crs,
+        )
+        if overview_level:
+            overview_level -= 1
         else:
-            # use highest resolution by default
-            overview_level = 0
+            overview_level = None
+    else:
+        overview_level = None
 
-        with rasterio.open(dep, overview_level=overview_level) as src:
-            # check if index is provided and open it if it is
-            if indices is not None:
-                indices_src = rasterio.open(indices, overview_level=overview_level)
+    _open_kwargs = {"overview_level": overview_level} if overview_level is not None else {}
+    with rasterio.open(dep, **_open_kwargs) as src:
+        if indices is not None:
+            indices_src = rasterio.open(indices, **_open_kwargs)
 
-            # Define block size
-            n1, m1 = src.shape
-            nrcb = nrmax  # nr of cells in a block
-            nrbn = int(np.ceil(n1 / nrcb))  # nr of blocks in n direction
-            nrbm = int(np.ceil(m1 / nrcb))  # nr of blocks in m direction
+        n1, m1 = src.shape
+        nrcb = nrmax
+        nrbn = int(np.ceil(n1 / nrcb))
+        nrbm = int(np.ceil(m1 / nrcb))
 
-            # avoid blocks with width or height of 1
-            merge_last_col = False
-            merge_last_row = False
-            if m1 % nrcb == 1:
-                nrbm -= 1
-                merge_last_col = True
-            if n1 % nrcb == 1:
-                nrbn -= 1
-                merge_last_row = True
+        merge_last_col = m1 % nrcb == 1
+        merge_last_row = n1 % nrcb == 1
+        if merge_last_col:
+            nrbm -= 1
+        if merge_last_row:
+            nrbn -= 1
 
-            profile = dict(
-                driver="GTiff",
-                width=src.width,
-                height=src.height,
-                count=1,
-                dtype=np.float32,
-                crs=src.crs,
-                transform=src.transform,
-                tiled=True,
-                blockxsize=256,
-                blockysize=256,
-                compress="deflate",
-                predictor=2,
-                profile="COG",
-                nodata=np.nan,
-                BIGTIFF="YES",  # Add the BIGTIFF option here
-            )
-
-            with rasterio.open(floodmap_fn, "w", **profile):
+        profile = dict(
+            driver="GTiff", width=src.width, height=src.height,
+            count=1, dtype=np.float32, crs=src.crs, transform=src.transform,
+            tiled=True, blockxsize=256, blockysize=256,
+            compress="deflate", predictor=2, profile="COG",
+            nodata=np.nan, BIGTIFF="YES",
+        )
+        with rasterio.open(floodmap_fn, "w", **profile):
+            pass
+        if zsmap_fn is not None:
+            with rasterio.open(zsmap_fn, "w", **profile):
                 pass
 
-            ## Loop through blocks
-            for ii in range(nrbm):
-                bm0 = ii * nrcb  # Index of first m in block
-                bm1 = min(bm0 + nrcb, m1)  # last m in block
-                if merge_last_col and ii == (nrbm - 1):
-                    bm1 += 1
+        for ii in range(nrbm):
+            bm0 = ii * nrcb
+            bm1 = min(bm0 + nrcb, m1)
+            if merge_last_col and ii == (nrbm - 1):
+                bm1 += 1
+            for jj in range(nrbn):
+                bn0 = jj * nrcb
+                bn1 = min(bn0 + nrcb, n1)
+                if merge_last_row and jj == (nrbn - 1):
+                    bn1 += 1
 
-                for jj in range(nrbn):
-                    bn0 = jj * nrcb  # Index of first n in block
-                    bn1 = min(bn0 + nrcb, n1)  # last n in block
-                    if merge_last_row and jj == (nrbn - 1):
-                        bn1 += 1
+                window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
+                block_data = src.read(window=window)
+                if np.all(np.isnan(block_data)):
+                    continue
 
-                    # Define a window to read a block of data
-                    window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
+                if indices is not None:
+                    block_idx = indices_src.read(window=window)
 
-                    # Read the block of data
-                    block_data = src.read(window=window)
-
-                    # check for nan-data
-                    if np.all(np.isnan(block_data)):
-                        continue
-
-                    if indices is not None:
-                        # Read the corresponding index block
-                        block_indices = indices_src.read(window=window)
-
-                    # Determine if rotation is zero
-                    if src.transform[1] == 0 and src.transform[3] == 0:  # No rotation
-                        # Compute the 1D coordinates for x and y using the affine transformation
-                        x_coords = (
-                            src.transform[2]
-                            + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
-                        )
-                        y_coords = (
-                            src.transform[5]
-                            + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
-                        )
-
-                        # Create xarray DataArray with coordinates
-                        block_dep = xr.DataArray(
-                            block_data.squeeze(),
-                            dims=("y", "x"),
-                            coords={
-                                "y": ("y", y_coords),
-                                "x": ("x", x_coords),
-                            },
-                        )
-                        # create xarray DataArray with coordinates for index
-                        if indices is not None:
-                            block_indices = xr.DataArray(
-                                block_indices.squeeze(),
-                                dims=("y", "x"),
-                                coords={
-                                    "y": ("y", y_coords),
-                                    "x": ("x", x_coords),
-                                },
-                            )
-                    else:
-                        # Convert row and column indices to pixel coordinates
-                        cols, rows = np.meshgrid(
-                            np.arange(bm0, bm1), np.arange(bn0, bn1)
-                        )
-                        x_coords, y_coords = src.transform * (cols + 0.5, rows + 0.5)
-
-                        # Create xarray DataArray with coordinates
-                        block_dep = xr.DataArray(
-                            block_data.squeeze(),
-                            dims=("y", "x"),
-                            coords={
-                                "yc": (("y", "x"), y_coords),
-                                "xc": (("y", "x"), x_coords),
-                            },
-                        )
-                        # create xarray DataArray with coordinates for index
-                        if indices is not None:
-                            block_indices = xr.DataArray(
-                                block_indices.squeeze(),
-                                dims=("y", "x"),
-                                coords={
-                                    "yc": (("y", "x"), y_coords),
-                                    "xc": (("y", "x"), x_coords),
-                                },
-                            )
-
-                    # make sure the nodata value and crs are set
-                    block_dep.raster.set_crs(src.crs.to_epsg())
-                    if indices is not None:
-                        block_indices.raster.set_nodata(int(indices_src.nodata))
-                        block_indices.raster.set_crs(indices_src.crs.to_epsg())
-
-                    block_hmax = _downscale_floodmap_da(
-                        zsmax=zsmax,
-                        dep=block_dep,
-                        indices=block_indices if indices is not None else None,
-                        hmin=hmin,
-                        gdf_mask=gdf_mask,
-                        reproj_method=reproj_method,
+                if src.transform[1] == 0 and src.transform[3] == 0:
+                    x_coords = src.transform[2] + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
+                    y_coords = src.transform[5] + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
+                    block_dep = xr.DataArray(
+                        block_data.squeeze(), dims=("y", "x"),
+                        coords={"y": ("y", y_coords), "x": ("x", x_coords)},
                     )
-
-                    with rasterio.open(floodmap_fn, "r+") as fm_tif:
-                        fm_tif.write(
-                            block_hmax.values,
-                            window=window,
-                            indexes=1,
+                    if indices is not None:
+                        block_idx = xr.DataArray(
+                            block_idx.squeeze(), dims=("y", "x"),
+                            coords={"y": ("y", y_coords), "x": ("x", x_coords)},
+                        )
+                else:
+                    cols, rows = np.meshgrid(np.arange(bm0, bm1), np.arange(bn0, bn1))
+                    xc, yc = src.transform * (cols + 0.5, rows + 0.5)
+                    block_dep = xr.DataArray(
+                        block_data.squeeze(), dims=("y", "x"),
+                        coords={"yc": (("y", "x"), yc), "xc": (("y", "x"), xc)},
+                    )
+                    if indices is not None:
+                        block_idx = xr.DataArray(
+                            block_idx.squeeze(), dims=("y", "x"),
+                            coords={"yc": (("y", "x"), yc), "xc": (("y", "x"), xc)},
                         )
 
-        # add overviews
-        build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
+                block_dep.raster.set_crs(src.crs.to_epsg())
+                if indices is not None:
+                    block_idx.raster.set_nodata(int(indices_src.nodata))
+                    block_idx.raster.set_crs(indices_src.crs.to_epsg())
+
+                block_hmax = _downscale_floodmap_da(
+                    zsmax=zsmax, dep=block_dep,
+                    indices=block_idx if indices is not None else None,
+                    hmin=hmin, gdf_mask=gdf_mask, reproj_method=reproj_method,
+                )
+
+                with rasterio.open(floodmap_fn, "r+") as fm:
+                    fm.write(block_hmax.values, window=window, indexes=1)
+                if zsmap_fn is not None:
+                    block_zs = (block_hmax + block_dep).astype(np.float32)
+                    block_zs = block_zs.where(~np.isnan(block_hmax))
+                    with rasterio.open(zsmap_fn, "r+") as zs:
+                        zs.write(block_zs.values, window=window, indexes=1)
+
+    build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
+    if zsmap_fn is not None:
+        build_overviews(fn=zsmap_fn, resample_method="nearest", logger=logger)
+
+
+# =============================================================================
+#  Method: bilinear  (LinearNDInterpolator, block-based)
+# =============================================================================
+
+def _downscale_bilinear(zsmax, dep, hmin, gdf_mask, floodmap_fn, zsmap_fn, nrmax, logger):
+    from scipy.interpolate import LinearNDInterpolator
+
+    grid = zsmax.ugrid.grid
+    face_x, face_y = grid.face_coordinates.T
+    vals = zsmax.values
+    wet = ~np.isnan(vals)
+    if np.sum(wet) < 3:
+        logger.warning("Fewer than 3 wet cells; cannot interpolate."); return
+
+    interpolator = LinearNDInterpolator(
+        np.column_stack([face_x[wet], face_y[wet]]), vals[wet],
+    )
+    logger.info(f"Bilinear WSE: interpolant from {np.sum(wet)} wet cells")
+
+    geo = _open_dem_geometry(dep)
+    profile = _make_output_profile(geo)
+    _create_output_rasters(profile, floodmap_fn, zsmap_fn)
+
+    nrcb = nrmax
+    nrbn = int(np.ceil(geo["height"] / nrcb))
+    nrbm = int(np.ceil(geo["width"] / nrcb))
+    total = nrbn * nrbm
+    done = 0
+
+    for ii in range(nrbm):
+        bm0 = ii * nrcb; bm1 = min(bm0 + nrcb, geo["width"])
+        for jj in range(nrbn):
+            bn0 = jj * nrcb; bn1 = min(bn0 + nrcb, geo["height"])
+            window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
+
+            with rasterio.open(str(dep)) as src:
+                dem_block = src.read(1, window=window).astype(np.float64)
+
+            xx, yy = np.meshgrid(
+                geo["transform"][2] + (np.arange(bm0, bm1) + 0.5) * geo["dx"],
+                geo["transform"][5] + (np.arange(bn0, bn1) + 0.5) * geo["dy"],
+            )
+            zs_interp = interpolator(
+                np.column_stack([xx.ravel(), yy.ravel()])
+            ).reshape(dem_block.shape).astype(np.float32)
+
+            hmax_block = (zs_interp - dem_block).astype(np.float32)
+            hmax_block[np.isnan(hmax_block)] = np.nan
+            hmax_block[hmax_block <= hmin] = np.nan
+            hmax_block[np.isnan(dem_block)] = np.nan
+            zs_block = zs_interp.copy()
+            zs_block[np.isnan(hmax_block)] = np.nan
+
+            if np.any(~np.isnan(hmax_block)):
+                with rasterio.open(str(floodmap_fn), "r+") as dst:
+                    dst.write(hmax_block, window=window, indexes=1)
+                if zsmap_fn is not None:
+                    with rasterio.open(str(zsmap_fn), "r+") as dst:
+                        dst.write(zs_block, window=window, indexes=1)
+
+            done += 1
+            if done % 25 == 0 or done == total:
+                logger.info(f"  Block {done}/{total} ({100*done/total:.0f}%)")
+
+    _apply_mask_and_overviews(floodmap_fn, zsmap_fn, gdf_mask, geo, logger)
+    logger.info(f"Bilinear WSE floodmap saved to: {floodmap_fn}")
+
+
+# =============================================================================
+#  Cell-based methods: slope, volume, volume_slope, tilt_volume
+# =============================================================================
+
+def _downscale_cell_based(
+    zsmax, dep, method, sbg_fn, hmin, gdf_mask,
+    floodmap_fn, zsmap_fn, logger,
+):
+    """Unified cell-by-cell downscaling loop for slope / volume methods."""
+    geo = _open_dem_geometry(dep)
+    pixel_area = geo["dx"] * abs(geo["dy"])
+    profile = _make_output_profile(geo)
+    _create_output_rasters(profile, floodmap_fn, zsmap_fn)
+
+    gi = _get_grid_info(zsmax)
+    zsmax_vals = zsmax.values
+    valid_faces = np.where(~np.isnan(zsmax_vals))[0]
+
+    # Read subgrid tables if needed
+    sbg = None
+    if method in ("volume", "volume_slope", "tilt_volume"):
+        sbg = _read_subgrid(sbg_fn, logger)
+
+    # Pre-compute WSE gradients for tilt_volume
+    dwse_dx = dwse_dy = None
+    if method == "tilt_volume":
+        dwse_dx, dwse_dy = _compute_wse_gradients(zsmax, gi, logger)
+
+    logger.info(
+        f"Downscaling ({method}): {len(valid_faces)} cells, "
+        f"{geo['width']}x{geo['height']} DEM"
+    )
+
+    n_flooded = 0
+    for count, fi in enumerate(valid_faces):
+        zs = zsmax_vals[fi]
+        cxmin = gi["face_xmin"][fi]; cxmax = gi["face_xmax"][fi]
+        cymin = gi["face_ymin"][fi]; cymax = gi["face_ymax"][fi]
+        xcen = gi["face_xcen"][fi]; ycen = gi["face_ycen"][fi]
+
+        pix = _cell_to_pixel_window(
+            cxmin, cxmax, cymin, cymax,
+            geo["transform"], geo["width"], geo["height"],
+        )
+        if pix is None:
+            continue
+        col0, col1, row0, row1 = pix
+        window = Window(col0, row0, col1 - col0, row1 - row0)
+
+        with rasterio.open(str(dep)) as src:
+            dem_block = src.read(1, window=window).astype(np.float64)
+
+        valid_pix = ~np.isnan(dem_block)
+        if np.sum(valid_pix) < 1:
+            continue
+
+        # Coordinate grids (relative to cell center)
+        x_coords = geo["transform"][2] + (np.arange(col0, col1) + 0.5) * geo["dx"]
+        y_coords = geo["transform"][5] + (np.arange(row0, row1) + 0.5) * geo["dy"]
+        xx, yy = np.meshgrid(x_coords - xcen, y_coords - ycen)
+
+        # ----- Dispatch to method-specific logic -----
+        if method == "slope":
+            zs_block, hmax_block = _compute_slope(
+                zs, dem_block, xx, yy, valid_pix, hmin,
+                cxmax - cxmin, cymax - cymin,
+            )
+        elif method == "volume":
+            vol_target = _target_volume(zs, fi, sbg)
+            if vol_target <= 0:
+                continue
+            zs_block, hmax_block = _compute_volume(
+                zs, dem_block, valid_pix, vol_target, pixel_area, hmin,
+            )
+        elif method == "volume_slope":
+            vol_target = _target_volume(zs, fi, sbg)
+            if vol_target <= 0:
+                continue
+            zs_block, hmax_block = _compute_volume_slope(
+                zs, dem_block, xx, yy, valid_pix, vol_target, pixel_area, hmin,
+            )
+        elif method == "tilt_volume":
+            vol_target = _target_volume(zs, fi, sbg)
+            if vol_target <= 0:
+                continue
+            zs_block, hmax_block = _compute_tilt_volume(
+                zs, dem_block, xx, yy, valid_pix,
+                dwse_dx[fi], dwse_dy[fi], vol_target, pixel_area, hmin,
+            )
+
+        if np.any(~np.isnan(hmax_block)):
+            n_flooded += 1
+            with rasterio.open(str(floodmap_fn), "r+") as dst:
+                dst.write(hmax_block, window=window, indexes=1)
+            if zsmap_fn is not None:
+                with rasterio.open(str(zsmap_fn), "r+") as dst:
+                    dst.write(zs_block, window=window, indexes=1)
+
+        if (count + 1) % 10000 == 0:
+            logger.info(
+                f"  Progress: {count + 1}/{len(valid_faces)} cells "
+                f"({100*(count+1)/len(valid_faces):.0f}%)"
+            )
+
+    logger.info(f"  {n_flooded} cells produced flood pixels.")
+    _apply_mask_and_overviews(floodmap_fn, zsmap_fn, gdf_mask, geo, logger)
+    logger.info(f"Floodmap ({method}) saved to: {floodmap_fn}")
+
+
+# --- Per-cell computation functions -------------------------------------------
+
+def _compute_slope(zs, dem_block, xx, yy, valid_pix, hmin, cell_dx, cell_dy):
+    """Slope-corrected: fit plane to bed, tilt WSE by bed slope."""
+    if np.sum(valid_pix) < 3:
+        # Fallback to constant
+        zs_block = np.full_like(dem_block, zs, dtype=np.float32)
+    else:
+        xv = xx[valid_pix]; yv = yy[valid_pix]; zv = dem_block[valid_pix]
+        A = np.column_stack([xv, yv, np.ones_like(xv)])
+        dzdx, dzdy, _ = np.linalg.lstsq(A, zv, rcond=None)[0]
+
+        # Clamp slopes to prevent runaway values
+        bed_range = np.nanmax(dem_block) - np.nanmin(dem_block)
+        if cell_dx > 0:
+            max_sx = bed_range / cell_dx
+            dzdx = np.clip(dzdx, -max_sx, max_sx)
+        if cell_dy > 0:
+            max_sy = bed_range / cell_dy
+            dzdy = np.clip(dzdy, -max_sy, max_sy)
+
+        zs_block = (zs + dzdx * xx + dzdy * yy).astype(np.float32)
+
+    hmax_block = (zs_block - dem_block).astype(np.float32)
+    hmax_block[hmax_block <= hmin] = np.nan
+    hmax_block[~valid_pix] = np.nan
+    zs_block[np.isnan(hmax_block)] = np.nan
+    return zs_block, hmax_block
+
+
+def _compute_volume(zs, dem_block, valid_pix, vol_target, pixel_area, hmin):
+    """Volume-conserving: hypsometric fill to match target volume."""
+    ele_sorted = np.sort(dem_block[valid_pix])
+    zs_local = _hypsometric_fill(ele_sorted, vol_target, pixel_area)
+    zs_local = min(zs_local, zs)  # cap at cell WSE
+
+    zs_block = np.full_like(dem_block, np.nan, dtype=np.float32)
+    hmax_block = np.full_like(dem_block, np.nan, dtype=np.float32)
+
+    flooded = valid_pix & (dem_block < zs_local)
+    depth = zs_local - dem_block
+    hmax_block[flooded] = depth[flooded].astype(np.float32)
+    hmax_block[hmax_block <= hmin] = np.nan
+    zs_block[~np.isnan(hmax_block)] = zs_local
+    return zs_block, hmax_block
+
+
+def _compute_volume_slope(
+    zs, dem_block, xx, yy, valid_pix, vol_target, pixel_area, hmin,
+):
+    """Volume + slope (van Ormondt): detrend DEM, fill, add slope back."""
+    if np.sum(valid_pix) < 3:
+        return _compute_volume(zs, dem_block, valid_pix, vol_target, pixel_area, hmin)
+
+    # Fit slope and detrend
+    xv = xx[valid_pix]; yv = yy[valid_pix]; zv = dem_block[valid_pix]
+    A = np.column_stack([xv, yv, np.ones_like(xv)])
+    dzdx, dzdy, _ = np.linalg.lstsq(A, zv, rcond=None)[0]
+    slope_surface = dzdx * xx + dzdy * yy
+    dem_detrended = dem_block - slope_surface
+
+    # Fill detrended DEM
+    det_sorted = np.sort(dem_detrended[valid_pix])
+    zs_detrended = _hypsometric_fill(det_sorted, vol_target, pixel_area)
+
+    # Add slope back
+    zs_block = (zs_detrended + slope_surface).astype(np.float32)
+    zs_block = np.minimum(zs_block, zs)
+
+    hmax_block = (zs_block - dem_block).astype(np.float32)
+    hmax_block[hmax_block <= hmin] = np.nan
+    hmax_block[~valid_pix] = np.nan
+    zs_block[np.isnan(hmax_block)] = np.nan
+    return zs_block, hmax_block
+
+
+def _compute_tilt_volume(
+    zs, dem_block, xx, yy, valid_pix,
+    grad_x, grad_y, vol_target, pixel_area, hmin,
+):
+    """Tilted WSE + volume: bisection for delta offset matching target volume."""
+    tilt = grad_x * xx + grad_y * yy
+
+    dem_flat = dem_block[valid_pix]
+    tilt_flat = tilt[valid_pix]
+    eff_dem = dem_flat - tilt_flat
+
+    sort_idx = np.argsort(eff_dem)
+    eff_sorted = eff_dem[sort_idx]
+    n_pix = len(eff_sorted)
+    cum_eff = np.cumsum(eff_sorted)
+
+    def volume_at_wl(wl):
+        wet_mask = eff_sorted < wl
+        if not np.any(wet_mask):
+            return 0.0
+        n_wet = np.sum(wet_mask)
+        return (n_wet * wl - cum_eff[n_wet - 1]) * pixel_area
+
+    wl_min = eff_sorted[0] - 1.0
+    wl_max = eff_sorted[-1] + vol_target / (n_pix * pixel_area) + 1.0
+    if volume_at_wl(wl_max) < vol_target:
+        wl_max = eff_sorted[-1] + vol_target / pixel_area
+
+    for _ in range(60):
+        wl_mid = 0.5 * (wl_min + wl_max)
+        if volume_at_wl(wl_mid) < vol_target:
+            wl_min = wl_mid
+        else:
+            wl_max = wl_mid
+
+    wl_solution = 0.5 * (wl_min + wl_max)
+    delta = wl_solution - zs
+
+    zs_block = (zs + delta + tilt).astype(np.float32)
+    hmax_block = (zs_block - dem_block).astype(np.float32)
+    hmax_block[hmax_block <= hmin] = np.nan
+    hmax_block[~valid_pix] = np.nan
+    zs_block[np.isnan(hmax_block)] = np.nan
+    return zs_block, hmax_block
+
+
+def _compute_wse_gradients(zsmax, gi, logger):
+    """Pre-compute WSE gradients at each cell center for tilt_volume method."""
+    from scipy.interpolate import LinearNDInterpolator
+
+    vals = zsmax.values
+    wet = ~np.isnan(vals)
+    face_x = gi["face_xcen"]; face_y = gi["face_ycen"]
+
+    pts = np.column_stack([face_x[wet], face_y[wet]])
+    wse_interpolator = LinearNDInterpolator(pts, vals[wet])
+
+    logger.info("Computing WSE gradients at cell centers...")
+    dwse_dx = np.zeros(len(vals))
+    dwse_dy = np.zeros(len(vals))
+
+    for fi in np.where(wet)[0]:
+        cell_dx = gi["face_xmax"][fi] - gi["face_xmin"][fi]
+        cell_dy = gi["face_ymax"][fi] - gi["face_ymin"][fi]
+        if cell_dx <= 0 or cell_dy <= 0:
+            continue
+        cx, cy = face_x[fi], face_y[fi]
+        half_dx, half_dy = cell_dx * 0.5, cell_dy * 0.5
+
+        zs_xp = wse_interpolator(cx + half_dx, cy)
+        zs_xm = wse_interpolator(cx - half_dx, cy)
+        zs_yp = wse_interpolator(cx, cy + half_dy)
+        zs_ym = wse_interpolator(cx, cy - half_dy)
+
+        if not (np.isnan(zs_xp) or np.isnan(zs_xm)):
+            dwse_dx[fi] = (zs_xp - zs_xm) / cell_dx
+        if not (np.isnan(zs_yp) or np.isnan(zs_ym)):
+            dwse_dy[fi] = (zs_yp - zs_ym) / cell_dy
+
+    return dwse_dx, dwse_dy
 
 
 def rotated_grid(
@@ -1478,6 +2030,55 @@ def build_overviews(
         src.update_tags(ns="rio_overview", resampling=resample_method)
 
 
+def _cell_to_pixel_window(cxmin, cxmax, cymin, cymax, transform, width, height):
+    """Convert cell bounding box to DEM pixel window.
+
+    Returns pixel indices such that only pixels whose **center** falls within
+    the cell are included.  This avoids counting an extra ring of pixels along
+    cell edges (which would inflate volumes by ~20% for typical quadtree cells).
+
+    Parameters
+    ----------
+    cxmin, cxmax, cymin, cymax : float
+        Cell bounding box in map coordinates.
+    transform : affine.Affine
+        DEM affine transform.
+    width, height : int
+        DEM dimensions in pixels.
+
+    Returns
+    -------
+    col0, col1, row0, row1 : int
+        Pixel index window [col0:col1, row0:row1).  Returns None when the
+        window is empty.
+    """
+    dx = transform[0]   # positive
+    dy = transform[4]   # negative (north-up)
+
+    # Pixel whose center is at: x = origin_x + (col + 0.5) * dx
+    # Include pixel if center_x >= cxmin  =>  col >= (cxmin - origin_x) / dx - 0.5
+    # Exclude pixel if center_x >= cxmax  =>  col >= (cxmax - origin_x) / dx - 0.5
+    col0 = int(np.ceil((cxmin - transform[2]) / dx - 0.5))
+    col1 = int(np.ceil((cxmax - transform[2]) / dx - 0.5))
+
+    # y-axis: dy is negative, so row increases as y decreases
+    # Pixel center_y = origin_y + (row + 0.5) * dy
+    # Include pixel if center_y <= cymax  =>  row >= (cymax - origin_y) / dy - 0.5
+    # Exclude pixel if center_y <= cymin  =>  row >= (cymin - origin_y) / dy - 0.5
+    row0 = int(np.ceil((cymax - transform[5]) / dy - 0.5))
+    row1 = int(np.ceil((cymin - transform[5]) / dy - 0.5))
+
+    # Clip to DEM extent
+    col0 = max(0, col0)
+    col1 = min(width, col1)
+    row0 = max(0, row0)
+    row1 = min(height, row1)
+
+    if col1 <= col0 or row1 <= row0:
+        return None
+    return col0, col1, row0, row1
+
+
 def _downscale_floodmap_da(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
     dep: xr.DataArray,
@@ -1564,6 +2165,307 @@ def _downscale_floodmap_da(
         hmax = hmax.where(mask)
 
     return hmax
+
+
+def compute_flow_connected_mask(
+    zsmax: xu.UgridDataArray,
+    sfincs_nc: Union[Path, str],
+    hmin: float = 0.05,
+    zs_tol: float = 0.01,
+    strict_downhill: bool = False,
+    logger=logger,
+):
+    """Compute a boolean mask of cells reachable from boundary/source cells
+    via the quadtree neighbor connectivity.
+
+    Uses the neighbor connectivity arrays (mu1/md1/nu1/nd1) from sfincs.nc.
+    Starting from boundary cells (mask == 2 or 3), a BFS flood fill propagates
+    to neighboring wet cells.
+
+    Two modes are supported:
+
+    * **strict_downhill=False** (default): any wet neighbor is considered
+      reachable.  This removes truly isolated wet cells that have no
+      wet-neighbor path to the boundary — the most common artifact from
+      bilinear interpolation.
+
+    * **strict_downhill=True**: only propagate to neighbors whose WSE is at
+      most ``zs_tol`` higher than the current cell.  This enforces a
+      physical flow-direction constraint but may be too strict when using
+      ``zsmax`` (maximum over time), because different cells may have
+      peaked at different times.
+
+    Parameters
+    ----------
+    zsmax : xu.UgridDataArray
+        Maximum water level (m) on the quadtree mesh.
+    sfincs_nc : Path or str
+        Path to the SFINCS model definition file (sfincs.nc) containing
+        neighbor connectivity and mask arrays.
+    hmin : float, optional
+        Minimum water depth threshold, by default 0.05.
+    zs_tol : float, optional
+        Tolerance (m) for the downhill criterion.  A neighbor with
+        ``zs[nb] <= zs[ci] + zs_tol`` is considered downstream.
+        Only used when *strict_downhill* is True.  Default 0.01 m.
+    strict_downhill : bool, optional
+        If True, only propagate to neighbors with lower (or near-equal) WSE.
+        If False, propagate to any wet neighbor.  Default False.
+    logger : logging.Logger, optional
+        Logger instance.
+
+    Returns
+    -------
+    reachable : np.ndarray of bool, shape (n_faces,)
+        True for cells that are connected to boundary sources.
+    """
+    from collections import deque
+
+    # --- Reduce time dimension ---
+    timedim = set(zsmax.dims) - set(zsmax.ugrid.grid.dims)
+    if timedim:
+        zsmax = zsmax.max(timedim)
+    zs = zsmax.values
+    n_faces = len(zs)
+
+    # --- Read neighbor connectivity from sfincs.nc ---
+    uds = xu.open_dataset(str(sfincs_nc))
+    mask_arr = uds["mask"].values if "mask" in uds else np.ones(n_faces, dtype=int)
+
+    # Neighbor arrays: 1-based indices, 0 = no neighbor
+    nb_keys = []
+    neighbors = {}
+    for name in ["mu1", "md1", "nu1", "nd1", "mu2", "md2", "nu2", "nd2"]:
+        if name in uds:
+            arr = uds[name].values.astype(np.int64) - 1  # 0-based; original 0 -> -1
+            neighbors[name] = arr
+            nb_keys.append(name)
+
+    # --- Identify source cells ---
+    wet = ~np.isnan(zs) & (zs > -999)
+    is_boundary = (mask_arr == 2) | (mask_arr == 3)
+    sources = np.where(wet & is_boundary)[0]
+
+    if len(sources) == 0:
+        # Fallback: cells with no upstream wet neighbor
+        logger.info("No boundary cells found; using local-maximum WSE cells.")
+        is_source = np.zeros(n_faces, dtype=bool)
+        for i in range(n_faces):
+            if not wet[i]:
+                continue
+            has_upstream = False
+            for key in nb_keys:
+                nb = neighbors[key][i]
+                if 0 <= nb < n_faces and wet[nb] and zs[nb] > zs[i] + zs_tol:
+                    has_upstream = True
+                    break
+            if not has_upstream:
+                is_source[i] = True
+        sources = np.where(is_source)[0]
+
+    logger.info(
+        f"Flow connectivity: {len(sources)} source cells, "
+        f"{np.sum(wet)} wet cells, strict_downhill={strict_downhill}"
+    )
+
+    # --- BFS from sources ---
+    reachable = np.zeros(n_faces, dtype=bool)
+    queue = deque()
+    for s in sources:
+        reachable[s] = True
+        queue.append(s)
+
+    while queue:
+        ci = queue.popleft()
+        for key in nb_keys:
+            nb = neighbors[key][ci]
+            if nb < 0 or nb >= n_faces:
+                continue
+            if reachable[nb] or not wet[nb]:
+                continue
+            if strict_downhill and zs[nb] > zs[ci] + zs_tol:
+                continue  # skip uphill neighbors beyond tolerance
+            reachable[nb] = True
+            queue.append(nb)
+
+    n_reachable = np.sum(reachable)
+    n_disconnected = np.sum(wet) - n_reachable
+    logger.info(
+        f"  {n_reachable} cells reachable, "
+        f"{n_disconnected} wet cells disconnected "
+        f"({100*n_disconnected/max(1, np.sum(wet)):.1f}%)"
+    )
+
+    return reachable
+
+
+def remove_disconnected_flooding(
+    depth_fn: Union[Path, str],
+    bnd_fn: Union[Path, str],
+    hmin: float = 0.02,
+    connection_fn: Union[Path, str] = None,
+    output_fns: dict = None,
+    logger=logger,
+):
+    """Remove disconnected flooding from a downscaled depth raster.
+
+    Identifies connected components in the wet area of a high-resolution
+    depth raster, then keeps only components that are connected to a SFINCS
+    water-level boundary point.  This replaces the need for a manually drawn
+    source polygon (as in the legacy Part-3 workflow).
+
+    Parameters
+    ----------
+    depth_fn : Path or str
+        Path to the downscaled flood-depth GeoTIFF.
+    bnd_fn : Path or str
+        Path to the SFINCS boundary point file (``sfincs.bnd``).
+        Each point marks a location where water enters the domain.
+    hmin : float, optional
+        Minimum water depth (m) to be considered wet, by default 0.02.
+    connection_fn : Path or str, optional
+        If provided, a connection-mask GeoTIFF is written here with values:
+        0 = dry, 1 = connected to boundary, 2 = disconnected (wet but
+        unreachable from any boundary point).
+    output_fns : dict, optional
+        Dictionary of ``{input_fn: output_fn}`` pairs.  For each pair the
+        input raster is read, pixels where ``connection != 1`` are set to
+        NaN, and the result is written to *output_fn*.
+    logger : logging.Logger, optional
+        Logger instance.
+
+    Returns
+    -------
+    connection : np.ndarray
+        2-D integer array (same shape as the depth raster) with values
+        0 (dry), 1 (connected), 2 (disconnected).
+    """
+    from scipy import ndimage as ndi
+
+    # --- 1. Read depth raster and build wet/dry mask -------------------------
+    with rasterio.open(str(depth_fn)) as src:
+        depth = src.read(1)
+        transform = src.transform
+        crs = src.crs
+        profile = src.profile.copy()
+
+    wet = depth > hmin
+    logger.info(
+        f"Disconnected-flooding removal: {np.sum(wet)} wet pixels "
+        f"(hmin={hmin} m)"
+    )
+
+    # --- 2. Label connected components (8-connectivity) ----------------------
+    structure = ndi.generate_binary_structure(2, 2)  # 8-connectivity
+    labeled, num_features = ndi.label(wet, structure=structure)
+    logger.info(f"  {num_features} connected components found")
+
+    # --- 3. Read boundary points and map to pixel coordinates ----------------
+    bnd_gdf = read_xy(str(bnd_fn), crs=crs)
+    bnd_x = np.array([p.x for p in bnd_gdf.geometry])
+    bnd_y = np.array([p.y for p in bnd_gdf.geometry])
+
+    # Convert world coordinates to pixel row/col
+    inv_transform = ~transform
+    bnd_col, bnd_row = inv_transform * (bnd_x, bnd_y)
+    bnd_row = np.round(bnd_row).astype(int)
+    bnd_col = np.round(bnd_col).astype(int)
+
+    # --- 4. Find which labels are connected to boundary points ---------------
+    height, width = labeled.shape
+    connected_labels = set()
+    n_bnd_wet = 0
+
+    for r, c in zip(bnd_row, bnd_col):
+        # Search a small neighbourhood (boundary point may not land exactly
+        # on a wet pixel due to rounding / model discretisation)
+        for dr in range(-2, 3):
+            for dc in range(-2, 3):
+                rr, cc = r + dr, c + dc
+                if 0 <= rr < height and 0 <= cc < width:
+                    lbl = labeled[rr, cc]
+                    if lbl > 0:
+                        connected_labels.add(lbl)
+
+        if 0 <= r < height and 0 <= c < width and wet[r, c]:
+            n_bnd_wet += 1
+
+    logger.info(
+        f"  {len(bnd_gdf)} boundary points, {n_bnd_wet} on wet pixels, "
+        f"{len(connected_labels)} connected component(s) reached"
+    )
+
+    # --- 5. Build connection mask: 0=dry, 1=connected, 2=disconnected --------
+    connection = np.zeros_like(labeled, dtype=np.int32)
+    connection[wet] = 2  # default: all wet pixels are disconnected
+
+    for lbl in connected_labels:
+        connection[labeled == lbl] = 1
+
+    n_connected = np.sum(connection == 1)
+    n_disconnected = np.sum(connection == 2)
+    logger.info(
+        f"  {n_connected} connected pixels, "
+        f"{n_disconnected} disconnected pixels removed "
+        f"({100 * n_disconnected / max(1, n_connected + n_disconnected):.1f}%)"
+    )
+
+    # --- 6. Write connection mask raster (optional) --------------------------
+    if connection_fn is not None:
+        conn_profile = dict(
+            driver="GTiff",
+            height=height,
+            width=width,
+            count=1,
+            dtype="int32",
+            crs=crs,
+            transform=transform,
+            tiled=True,
+            blockxsize=256,
+            blockysize=256,
+            compress="deflate",
+            nodata=0,
+        )
+        with rasterio.open(str(connection_fn), "w", **conn_profile) as dst:
+            # Write in windows for large rasters to avoid memory issues
+            for _, window in dst.block_windows(1):
+                conn_block = connection[
+                    window.row_off : window.row_off + window.height,
+                    window.col_off : window.col_off + window.width,
+                ]
+                dst.write(conn_block, 1, window=window)
+        logger.info(f"  Connection mask written: {connection_fn}")
+
+    # --- 7. Mask additional rasters (optional) -------------------------------
+    # Use windowed read/write to avoid memory errors on large rasters
+    if output_fns:
+        for input_fn, output_fn in output_fns.items():
+            with rasterio.open(str(input_fn)) as src_var:
+                out_meta = src_var.meta.copy()
+                out_meta.update(
+                    dtype="float32",
+                    nodata=np.nan,
+                    tiled=True,
+                    blockxsize=256,
+                    blockysize=256,
+                    compress="deflate",
+                    predictor=2,
+                )
+                with rasterio.open(str(output_fn), "w", **out_meta) as dst:
+                    # Process in windows to avoid memory issues
+                    for _, window in dst.block_windows(1):
+                        var_block = src_var.read(1, window=window)
+                        conn_block = connection[
+                            window.row_off : window.row_off + window.height,
+                            window.col_off : window.col_off + window.width,
+                        ]
+                        masked_block = np.where(
+                            conn_block == 1, var_block, np.nan
+                        ).astype(np.float32)
+                        dst.write(masked_block, 1, window=window)
+            logger.info(f"  Masked raster written: {output_fn}")
+
+    return connection
 
 
 def find_uv_indices(mask: xr.DataArray):
