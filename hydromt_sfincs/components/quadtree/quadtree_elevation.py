@@ -98,13 +98,13 @@ class SfincsQuadtreeElevation(MeshComponent):
 
         # Precompute elevation sets per level
         # Add try statement here for compatibility with cht_bathymetry approach
-        try:
-            elevation_list_per_level = [
-                self.model._parse_datasets_elevation(elevation_list, res=res / (2**ilev))
-                for ilev in range(nlev)
-            ]
-        except Exception as e:
-            print("Using bathymetry database for interpolation.")
+        # try:
+        elevation_list_per_level = [
+            self.model._parse_datasets_elevation(elevation_list, res=res / (2**ilev))
+            for ilev in range(nlev)
+        ]
+        # except Exception as e:
+        #     print("Using bathymetry database for interpolation.")
 
         # get m and n indices
         n = self.data["n"] - 1  # 0-based
@@ -141,38 +141,38 @@ class SfincsQuadtreeElevation(MeshComponent):
                 if len(in_chunk) == 0:
                     return
 
-                if bathymetry_database is not None:
-                    zgl[in_chunk] = bathymetry_database.get_bathymetry_on_points(
-                        xz[in_chunk],
-                        yz[in_chunk],
-                        min(dxmin, dymin),
-                        self.model.crs,
-                        elevation_list,
-                    )
-                else:
-                    da_like = make_regular_grid(
-                        x0=self.data.attrs["x0"],
-                        y0=self.data.attrs["y0"],
-                        dx=dxmin,
-                        dy=dymin,
-                        mmax=m_level[in_chunk].max().values + 1,
-                        nmax=n_level[in_chunk].max().values + 1,
-                        rotation=self.data.attrs["rotation"],
-                        crs=self.model.crs,
-                        mmin=m_level[in_chunk].min().values,
-                        nmin=n_level[in_chunk].min().values,
-                        make_ugrid=False,
-                    )
-                    da_dep = merge_multi_dataarrays(
-                        da_list=elevation_list_per_level[ilev],
-                        da_like=da_like,
-                        buffer_cells=buffer_cells,
-                        interp_method=interp_method,
-                        logger=logger,
-                    )
-                    idx_y = np.searchsorted(da_dep.n.values, n_level[in_chunk].values)
-                    idx_x = np.searchsorted(da_dep.m.values, m_level[in_chunk].values)
-                    zgl[in_chunk] = da_dep.values[idx_y, idx_x]
+                # if bathymetry_database is not None:
+                #     zgl[in_chunk] = bathymetry_database.get_bathymetry_on_points(
+                #         xz[in_chunk],
+                #         yz[in_chunk],
+                #         min(dxmin, dymin),
+                #         self.model.crs,
+                #         elevation_list,
+                #     )
+                # else:
+                da_like = make_regular_grid(
+                    x0=self.data.attrs["x0"],
+                    y0=self.data.attrs["y0"],
+                    dx=dxmin,
+                    dy=dymin,
+                    mmax=m_level[in_chunk].max().values + 1,
+                    nmax=n_level[in_chunk].max().values + 1,
+                    rotation=self.data.attrs["rotation"],
+                    crs=self.model.crs,
+                    mmin=m_level[in_chunk].min().values,
+                    nmin=n_level[in_chunk].min().values,
+                    make_ugrid=False,
+                )
+                da_dep = merge_multi_dataarrays(
+                    da_list=elevation_list_per_level[ilev],
+                    da_like=da_like,
+                    buffer_cells=buffer_cells,
+                    interp_method=interp_method,
+                    logger=logger,
+                )
+                idx_y = np.searchsorted(da_dep.n.values, n_level[in_chunk].values)
+                idx_x = np.searchsorted(da_dep.m.values, m_level[in_chunk].values)
+                zgl[in_chunk] = da_dep.values[idx_y, idx_x]
 
             # Parallel or sequential chunk processing
             if len(x_chunks) > 1 or len(y_chunks) > 1:
