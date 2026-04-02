@@ -233,7 +233,10 @@ class SfincsConfig(ModelComponent):
         """
 
         if not hasattr(self.data, key):
-            raise KeyError(f"'{key}' is not a valid attribute of SfincsConfig.")
+            # Give warning for now instead of error, since you might want to set custom variables that are not in the config model?
+            logger.warning(f"'{key}' is not a valid attribute of SfincsConfig. Adding it as a custom attribute.")
+            setattr(self._data, key, value)
+            return
 
         if not skip_validation:
             # Merge full data to run full validation, including mode="before" for datetimes
