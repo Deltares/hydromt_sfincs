@@ -4,6 +4,7 @@ from .bathymetry import *
 from .curvenumber import *
 from .discharge import *
 from .flwdir import *
+from .infiltration import *
 from .landuse import *
 from .merge import *
 from .storage_volume import *

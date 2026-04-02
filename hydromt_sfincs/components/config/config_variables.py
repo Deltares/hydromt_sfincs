@@ -483,9 +483,27 @@ class SfincsConfigVariables(BaseSettings):
     wvmfile: str | None = Field(
         None, description="Name of the wave maker input points file"
     )
+    infiltrationfile: str | None = Field(
+        None,
+        description="Name of the Netcdf infiltration input file for SFINCS infiltration flavors",
+    )
+    infiltrationtype: str | None = Field(
+        None,
+        description="SFINCS infiltration flavor used with infiltrationfile (c2d, cna, cnb, gai, hor, or bkt)",
+    )
+    bucketfile: str | None = Field(
+        None,
+        description="Name of the bucket-model Netcdf input file",
+    )
+    bucket_loss_frac: float | None = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Uniform bucket loss fraction used when no bucket_loss field is provided (-)",
+    )
     qinffile: str | None = Field(
         None,
-        description="Name of the spatially-uniform, constant in time infiltration file",
+        description="Name of the spatially-varying, constant in time infiltration file",
     )
     #
     # Curve Number files
