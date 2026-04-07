@@ -138,16 +138,41 @@ class SfincsConfig(ModelComponent):
         # include: A set of fields to include in the output.
         # exclude: A set of fields to exclude from the output.
 
+        model_fields = SfincsConfigVariables.model_fields
+        data_dict = self.data.model_dump()
+
         with open(self.filename, "w") as fid:
-            for key, value in self.data.model_dump(
-                exclude_unset=False, exclude_defaults=False, exclude_none=True
-            ).items():
-                # Convert a value to a number if possible, otherwise return the original value
+            for key, value in data_dict.items():
+                # Never write None
+                if value is None:
+                    continue
+
+                field_info = model_fields.get(key)
+                extra = (field_info.json_schema_extra or {}) if field_info else {}
+
+                # Evaluate condition when present
+                condition = extra.get("condition")
+                if condition is not None:
+                    try:
+                        if not eval(condition, {}, data_dict):  # noqa: S307
+                            continue
+                    except Exception:
+                        pass  # condition evaluation failed — write anyway
+
+                # Decide always vs skip-if-default
+                always = extra.get("always", False)
+                if not always:
+                    if field_info is not None:
+                        try:
+                            if value == field_info.default:
+                                continue
+                        except Exception:
+                            pass  # exotic default type — write anyway
+
+                # Serialise and write
                 value = convert_to_number(value)
 
-                if isinstance(value, float):  # remove insignificant traling zeros
-                    string = f"{key.ljust(20)} = {value}"
-                elif isinstance(value, int):
+                if isinstance(value, (int, float)):
                     string = f"{key.ljust(20)} = {value}"
                 elif isinstance(value, list):
                     valstr = " ".join([str(v) for v in value])
@@ -158,10 +183,9 @@ class SfincsConfig(ModelComponent):
                 else:
                     string = f"{key.ljust(20)} = {value}"
 
-                if key in self.data.__class__.model_fields:
-                    description = self.data.__class__.model_fields[key].description
+                if key in model_fields:
+                    description = model_fields[key].description
                     if description and write_description:
-                        # Add description to string
                         string = string.ljust(50) + f" # {description}"
 
                 fid.write(string + "\n")
