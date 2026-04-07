@@ -534,7 +534,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             agg = cvs.line(
                 self.datashader_dataframe, x=["x1", "x2"], y=["y1", "y2"], axis=1
             )
-            img = tf.shade(agg)
+            img = tf.shade(agg, cmap=color)
             path = os.path.dirname(file_name)
             if not path:
                 path = os.getcwd()

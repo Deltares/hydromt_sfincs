@@ -268,40 +268,36 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
         file_name,
         xlim=None,
         ylim=None,
-        active_color="yellow",
-        boundary_color="red",
-        neumann_color="green",
+        colors=None,
         px=2,
         width=800,
+        **kwargs,
     ):
-        """Creates a map overlay image of the mask
+        """Create a map overlay image of the SnapWave mask using datashader.
 
         Parameters
         ----------
         file_name : str
-            The file name of the image
-        xlim : list, optional
-            The x limits of the image
-        ylim : list, optional
-            The y limits of the image
-        active_color : str, optional
-            The color of the active cells
-        boundary_color : str, optional
-            The color of the boundary cells
-        neumann_color : str, optional
-            The color of the neumann cells
+            Output image file name.
+        xlim, ylim : list, optional
+            Geographic (lon/lat) extent of the image.
+        colors : dict, optional
+            Mapping of integer mask values to colour strings, e.g.
+            ``{1: "yellow", 2: "red", 3: "green"}``.  By default
+            ``{1: "yellow", 2: "red", 3: "green"}``.
         px : int, optional
-            The marker size in pixels
+            Marker radius in pixels, by default 2.
         width : int, optional
-            The width of the image in pixels
+            Output image width in pixels, by default 800.
 
         Returns
         -------
         bool
-            True if the image was created successfully, False otherwise
+            True if the image was created successfully, False otherwise.
         """
+        if colors is None:
+            colors = {1: "yellow", 2: "red", 3: "green"}
 
-        # check if datashader is available
         if not HAS_DATASHADER:
             logger.warning("Datashader is not available. Please install datashader.")
             return False
@@ -310,11 +306,9 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
             return False
 
         try:
-            # Check if datashader dataframe is empty (maybe it was not made yet, or it was cleared)
             if self.datashader_dataframe.empty:
                 self.get_datashader_dataframe()
 
-            # If it is still empty (because there are no active cells), return False
             if self.datashader_dataframe.empty:
                 return False
 
@@ -332,29 +326,25 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
                 x_range=xlim, y_range=ylim, plot_height=height, plot_width=width
             )
 
-            # Instead, we can create separate images for each mask and stack them
-            dfact = self.datashader_dataframe[
-                self.datashader_dataframe["snapwave_mask"] == 1
-            ]
-            dfbnd = self.datashader_dataframe[
-                self.datashader_dataframe["snapwave_mask"] == 2
-            ]
-            dfout = self.datashader_dataframe[
-                self.datashader_dataframe["snapwave_mask"] == 3
-            ]
-            img_a = tf.shade(
-                tf.spread(cvs.points(dfact, "x", "y", ds.any()), px=px),
-                cmap=active_color,
-            )
-            img_b = tf.shade(
-                tf.spread(cvs.points(dfbnd, "x", "y", ds.any()), px=px),
-                cmap=boundary_color,
-            )
-            img_o = tf.shade(
-                tf.spread(cvs.points(dfout, "x", "y", ds.any()), px=px),
-                cmap=neumann_color,
-            )
-            img = tf.stack(img_a, img_b, img_o)
+            images = []
+            for mask_val, color in colors.items():
+                df_sub = self.datashader_dataframe[
+                    self.datashader_dataframe["snapwave_mask"] == mask_val
+                ]
+                if len(df_sub) > 0:
+                    images.append(
+                        tf.shade(
+                            tf.spread(cvs.points(df_sub, "x", "y", ds.any()), px=px),
+                            cmap=color,
+                        )
+                    )
+
+            if not images:
+                return False
+
+            img = images[0]
+            for im in images[1:]:
+                img = tf.stack(img, im)
 
             path = os.path.dirname(file_name)
             if not path:
