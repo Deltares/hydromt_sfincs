@@ -78,7 +78,7 @@ class SfincsRunupGauges(ModelComponent):
         """Initialize runup gauge data."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            if self.root.is_reading_mode() and not skip_read:
+            if self.root.is_reading_mode() and not skip_read and self.model.config.get("rugfile") is not None:
                 self.read()
 
     def read(self, filename: Union[str, Path] = None) -> None:
