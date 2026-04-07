@@ -92,7 +92,7 @@ class SfincsDrainageStructures(ModelComponent):
         """Initialize drainage structures."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            if self.root.is_reading_mode() and not skip_read:
+            if self.root.is_reading_mode() and not skip_read and self.model.config.get("drnfile") is not None:
                 self.read()
 
     def read(self, filename: str | Path = None):

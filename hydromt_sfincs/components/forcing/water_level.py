@@ -74,7 +74,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Get absolute file name and set it in config if crsfile is not None
+        # Get absolute file name and set it in config if bndfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
             "bndfile", value=filename
         )
@@ -248,8 +248,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         else:
             fmt = "%11.1f"
 
-        # TODO check whether write_xyn or write_xy
-        utils.write_xyn(abs_file_path, self.gdf, fmt=fmt)
+        # Write x, y only (no name column) — SFINCS bnd file format
+        gdf = self.gdf.drop(columns=["name"], errors="ignore")
+        utils.write_xyn(abs_file_path, gdf, fmt=fmt)
 
     def write_boundary_conditions_timeseries(self, filename: str | Path = None):
         """Write SFINCS boundary condition timeseries (.bzs) file"""
