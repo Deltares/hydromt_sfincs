@@ -1,9 +1,12 @@
 import logging
 import gc
+import os
 import time
 from typing import TYPE_CHECKING, List
 
 import numpy as np
+import pandas as pd
+from pyproj import Transformer
 from scipy.interpolate import RegularGridInterpolator
 import xarray as xr
 import xugrid as xu
@@ -15,6 +18,14 @@ from hydromt_sfincs.utils import make_regular_grid
 from hydromt_sfincs.workflows.merge import (
     merge_multi_dataarrays,
 )
+
+try:
+    import datashader as ds
+    import datashader.transfer_functions as tf
+    from datashader.utils import export_image
+    HAS_DATASHADER = True
+except ImportError:
+    HAS_DATASHADER = False
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -213,6 +224,180 @@ class SfincsQuadtreeElevation(MeshComponent):
         self.data["z"] = xu.UgridDataArray(
             xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d
         )
+
+    # ------------------------------------------------------------------
+    # Datashader overlay
+    # ------------------------------------------------------------------
+
+    def get_datashader_dataframe(self):
+        """Build a trimesh DataFrame for datashader rendering.
+
+        Creates vertices (4 corners per cell) and simplices (2 triangles
+        per cell) in EPSG:3857 for use with ``datashader.Canvas.trimesh()``.
+        """
+        if self.data is None or "z" not in self.data:
+            self.datashader_vertices = pd.DataFrame()
+            self.datashader_simplices = pd.DataFrame()
+            return
+
+        grid = self.data
+        xy = grid.grid.face_coordinates
+        z = grid["z"].values[:]
+        level = grid["level"].values[:] - 1  # 0-based
+        dx0 = grid.attrs["dx"]
+        dy0 = grid.attrs["dy"]
+        rotation = grid.attrs["rotation"]
+        cosrot = np.cos(np.radians(rotation))
+        sinrot = np.sin(np.radians(rotation))
+
+        valid = np.isfinite(z)
+        n_valid = np.sum(valid)
+        if n_valid == 0:
+            self.datashader_vertices = pd.DataFrame()
+            self.datashader_simplices = pd.DataFrame()
+            return
+
+        cx = xy[valid, 0]
+        cy = xy[valid, 1]
+        cz = z[valid]
+        clevel = level[valid]
+
+        hdx = (dx0 / 2.0 ** clevel) / 2.0
+        hdy = (dy0 / 2.0 ** clevel) / 2.0
+
+        dx_offsets = np.array([-1, 1, 1, -1], dtype=np.float64)
+        dy_offsets = np.array([-1, -1, 1, 1], dtype=np.float64)
+
+        local_x = hdx[:, None] * dx_offsets[None, :]
+        local_y = hdy[:, None] * dy_offsets[None, :]
+
+        vx = cx[:, None] + cosrot * local_x - sinrot * local_y
+        vy = cy[:, None] + sinrot * local_x + cosrot * local_y
+
+        vx_flat = vx.ravel()
+        vy_flat = vy.ravel()
+        vz_flat = np.repeat(cz, 4)
+
+        transformer = Transformer.from_crs(self.model.crs, 3857, always_xy=True)
+        vx_3857, vy_3857 = transformer.transform(vx_flat, vy_flat)
+
+        if self.model.crs.is_geographic and np.max(xy[:, 0]) > 180.0:
+            vx_3857[vx_3857 < 0] += 40075016.68557849
+
+        self.datashader_vertices = pd.DataFrame({
+            "x": vx_3857, "y": vy_3857, "z": vz_flat,
+        })
+
+        cell_idx = np.arange(n_valid, dtype=np.int32)
+        v_base = cell_idx * 4
+        t0 = np.column_stack([v_base, v_base + 1, v_base + 2])
+        t1 = np.column_stack([v_base, v_base + 2, v_base + 3])
+        tris = np.vstack([t0, t1])
+
+        self.datashader_simplices = pd.DataFrame({
+            "v0": tris[:, 0], "v1": tris[:, 1], "v2": tris[:, 2],
+        })
+
+    def clear_datashader_dataframe(self):
+        """Clear cached datashader data."""
+        self.datashader_vertices = pd.DataFrame()
+        self.datashader_simplices = pd.DataFrame()
+
+    def map_overlay(
+        self,
+        file_name,
+        xlim=None,
+        ylim=None,
+        cmap="gist_earth",
+        cmin=None,
+        cmax=None,
+        width=800,
+    ):
+        """Create a map overlay image of the bathymetry using datashader.
+
+        Parameters
+        ----------
+        file_name : str
+            Output image file name (without extension — .png is appended).
+        xlim : list
+            [lon_min, lon_max] in WGS84 degrees.
+        ylim : list
+            [lat_min, lat_max] in WGS84 degrees.
+        cmap : str or list
+            Matplotlib colormap name or list of hex colors.
+        cmin, cmax : float, optional
+            Color scale range. If None, auto-scaled from data.
+        width : int
+            Output image width in pixels.
+
+        Returns
+        -------
+        bool
+            True if the image was created successfully.
+        """
+        if not HAS_DATASHADER:
+            logger.warning("datashader is not installed.")
+            return False
+
+        if self.data is None or "z" not in self.data:
+            return False
+
+        try:
+            if not hasattr(self, "datashader_vertices") or self.datashader_vertices.empty:
+                self.get_datashader_dataframe()
+
+            if self.datashader_vertices.empty:
+                return False
+
+            transformer = Transformer.from_crs(4326, 3857, always_xy=True)
+            xl0, yl0 = transformer.transform(xlim[0], ylim[0])
+            xl1, yl1 = transformer.transform(xlim[1], ylim[1])
+            if xl0 > xl1:
+                xl1 += 40075016.68557849
+            x_range = (xl0, xl1)
+            y_range = (yl0, yl1)
+
+            ratio = (y_range[1] - y_range[0]) / (x_range[1] - x_range[0])
+            height = int(width * ratio)
+
+            cvs = ds.Canvas(
+                x_range=x_range, y_range=y_range,
+                plot_width=width, plot_height=height,
+            )
+
+            mesh = ds.utils.mesh(
+                self.datashader_vertices,
+                self.datashader_simplices,
+            )
+
+            agg = cvs.trimesh(
+                self.datashader_vertices,
+                self.datashader_simplices,
+                mesh=mesh,
+                agg=ds.mean("z"),
+                interp=False,
+            )
+
+            if isinstance(cmap, str):
+                from matplotlib import colormaps
+                cmap = colormaps[cmap]
+
+            span = None
+            if cmin is not None and cmax is not None:
+                span = (cmin, cmax)
+
+            img = tf.shade(agg, cmap=cmap, span=span, how="linear")
+
+            path = os.path.dirname(file_name)
+            if not path:
+                path = os.getcwd()
+            name = os.path.splitext(os.path.basename(file_name))[0]
+            export_image(img, name, export_path=path)
+            return True
+
+        except Exception as e:
+            logger.warning(f"map_overlay failed: {e}")
+            return False
 
 
 def interp2(x0, y0, z0, x1, y1, method="linear"):

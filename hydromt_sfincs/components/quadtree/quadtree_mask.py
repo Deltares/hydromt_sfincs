@@ -751,42 +751,36 @@ class SfincsQuadtreeMask(ModelComponent):
         file_name,
         xlim=None,
         ylim=None,
-        active_color="yellow",
-        boundary_color="red",
-        downstream_color="blue",
-        neumann_color="purple",
-        outflow_color="green",
+        colors=None,
         px=2,
         width=800,
+        **kwargs,
     ):
-        """Creates a map overlay image of the mask
+        """Create a map overlay image of the mask using datashader.
 
         Parameters
         ----------
         file_name : str
-            The file name of the image
-        xlim : list, optional
-            The x limits of the image
-        ylim : list, optional
-            The y limits of the image
-        active_color : str, optional
-            The color of the active cells
-        boundary_color : str, optional
-            The color of the boundary cells
-        outflow_color : str, optional
-            The color of the outflow cells
+            Output image file name.
+        xlim, ylim : list, optional
+            Geographic (lon/lat) extent of the image.
+        colors : dict, optional
+            Mapping of integer mask values to colour strings, e.g.
+            ``{1: "yellow", 2: "red", 3: "green"}``.  By default
+            ``{1: "yellow", 2: "red", 3: "green", 5: "purple", 6: "blue"}``.
         px : int, optional
-            The marker size in pixels
+            Marker radius in pixels, by default 2.
         width : int, optional
-            The width of the image in pixels
+            Output image width in pixels, by default 800.
 
         Returns
         -------
         bool
-            True if the image was created successfully, False otherwise
+            True if the image was created successfully, False otherwise.
         """
+        if colors is None:
+            colors = {1: "yellow", 2: "red", 3: "green", 5: "purple", 6: "blue"}
 
-        # check if datashader is available
         if not HAS_DATASHADER:
             logger.warning("Datashader is not available. Please install datashader.")
             return False
@@ -795,11 +789,9 @@ class SfincsQuadtreeMask(ModelComponent):
             return False
 
         try:
-            # Check if datashader dataframe is empty (maybe it was not made yet, or it was cleared)
             if self.datashader_dataframe.empty:
                 self.get_datashader_dataframe()
 
-            # If it is still empty (because there are no active cells), return False
             if self.datashader_dataframe.empty:
                 return False
 
@@ -817,33 +809,25 @@ class SfincsQuadtreeMask(ModelComponent):
                 x_range=xlim, y_range=ylim, plot_height=height, plot_width=width
             )
 
-            # Instead, we can create separate images for each mask and stack them
-            dfact = self.datashader_dataframe[self.datashader_dataframe["mask"] == 1]
-            dfbnd = self.datashader_dataframe[self.datashader_dataframe["mask"] == 2]
-            dfout = self.datashader_dataframe[self.datashader_dataframe["mask"] == 3]
-            dfneu = self.datashader_dataframe[self.datashader_dataframe["mask"] == 5]
-            dfdwn = self.datashader_dataframe[self.datashader_dataframe["mask"] == 6]
-            img_a = tf.shade(
-                tf.spread(cvs.points(dfact, "x", "y", ds.any()), px=px),
-                cmap=active_color,
-            )
-            img_b = tf.shade(
-                tf.spread(cvs.points(dfbnd, "x", "y", ds.any()), px=px),
-                cmap=boundary_color,
-            )
-            img_o = tf.shade(
-                tf.spread(cvs.points(dfout, "x", "y", ds.any()), px=px),
-                cmap=outflow_color,
-            )
-            img_n = tf.shade(
-                tf.spread(cvs.points(dfneu, "x", "y", ds.any()), px=px),
-                cmap=neumann_color,
-            )
-            img_d = tf.shade(
-                tf.spread(cvs.points(dfdwn, "x", "y", ds.any()), px=px),
-                cmap=downstream_color,
-            )
-            img = tf.stack(img_a, img_b, img_o, img_n, img_d)
+            images = []
+            for mask_val, color in colors.items():
+                df_sub = self.datashader_dataframe[
+                    self.datashader_dataframe["mask"] == mask_val
+                ]
+                if len(df_sub) > 0:
+                    images.append(
+                        tf.shade(
+                            tf.spread(cvs.points(df_sub, "x", "y", ds.any()), px=px),
+                            cmap=color,
+                        )
+                    )
+
+            if not images:
+                return False
+
+            img = images[0]
+            for im in images[1:]:
+                img = tf.stack(img, im)
 
             path = os.path.dirname(file_name)
             if not path:
