@@ -81,6 +81,7 @@ class SfincsConfigVariables(BaseSettings):
     )
     tspinup: float = Field(
         0.0, ge=0.0, description="Duration of spinup period (seconds)",
+        json_schema_extra={"always": True},
     )
     t0out: float = Field(
         -999.0, description="Output start time (seconds)",
@@ -92,26 +93,32 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     # Output intervals
     # ================================================================
+    dthisout: float = Field(
+        600.0, description="Timeseries output interval (seconds)",
+        json_schema_extra={"always": True},
+    )
     dtmapout: float = Field(
         0.0, ge=0.0, description="Spatial map output interval (seconds)",
+        json_schema_extra={"always": True},
     )
     dtmaxout: float = Field(
         9999999.0, ge=0.0, description="Maximum map output interval (seconds)",
+        json_schema_extra={"always": True},
     )
     dtrstout: float = Field(
         0.0, ge=0.0, description="Restart file output interval (seconds)",
     )
     trstout: float = Field(
         -999.0, description="Restart file output after specific time (seconds)",
-    )
-    dthisout: float = Field(
-        600.0, description="Timeseries output interval (seconds)",
+        json_schema_extra={"always": True},
     )
     dtwave: float = Field(
         3600.0, description="Interval of running SnapWave (seconds)",
+        json_schema_extra={"condition": "snapwave == 1"},
     )
     dtwnd: float = Field(
         1800.0, description="Interval of updating wind forcing (seconds)",
+        json_schema_extra={"always": True},
     )
 
     # ================================================================
@@ -120,6 +127,7 @@ class SfincsConfigVariables(BaseSettings):
     alpha: float = Field(
         0.5, ge=0.001, le=1.0,
         description="Numerical time step reduction for CFL-condition (-)",
+        json_schema_extra={"always": True},
     )
     theta: float = Field(
         1.0, ge=0.8, le=1.0,
@@ -135,12 +143,14 @@ class SfincsConfigVariables(BaseSettings):
     )
     huthresh: float = Field(
         0.05, gt=0.0, lt=1.0, description="Threshold water depth (meters)",
+        json_schema_extra={"always": True},
     )
     huvmin: float = Field(
         0.0, description="Minimum water depth for velocity computation (meters)",
     )
     advection: int = Field(
         1, ge=0, le=1, description="Enable advection (1: yes, 0: no)",
+        json_schema_extra={"always": True},
     )
     advlim: float = Field(
         1.0, ge=0.0,
@@ -156,13 +166,16 @@ class SfincsConfigVariables(BaseSettings):
     coriolis: int = Field(
         1, ge=0, le=1,
         description="Enable Coriolis term (1: on, 0: off)",
+        json_schema_extra={"always": True},
     )
     viscosity: int = Field(
         0, ge=0, le=1, description="Enable viscosity term (1: yes, 0: no)",
+        json_schema_extra={"always": True},
     )
     nuvisc: float = Field(
         0.01, ge=0.0,
         description="Viscosity coefficient per metre of grid cell length (-)",
+        json_schema_extra={"always": True},
     )
     nuviscfac: float = Field(
         100.0, ge=0.0,
@@ -220,18 +233,22 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     rhoa: float = Field(
         1.25, gt=0.0, description="Air density (kg/m^3)",
+        json_schema_extra={"always": True},
     )
     rhow: float = Field(
         1024.0, gt=0.0, description="Water density (kg/m^3)",
+        json_schema_extra={"always": True},
     )
     latitude: float = Field(
         0.0, description="Latitude of the grid center (degrees)",
     )
     baro: int = Field(
         1, ge=0, le=1, description="Enable atmospheric pressure term (1: yes, 0: no)",
+        json_schema_extra={"always": True},
     )
     pavbnd: float = Field(
         0.0, description="Atmospheric pressure at boundary (Pa)",
+        json_schema_extra={"always": True},
     )
     gapres: float = Field(
         101200.0, description="Background atmospheric pressure for spiderweb (Pa)",
@@ -242,6 +259,7 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     zsini: float = Field(
         0.0, description="Initial water level in entire domain (meters)",
+        json_schema_extra={"always": True},
     )
     bndtype: int = Field(
         1, ge=1, description="Boundary type (-)",
@@ -249,6 +267,7 @@ class SfincsConfigVariables(BaseSettings):
     btfilter: float = Field(
         60.0, ge=0.0,
         description="Water level boundary timeseries filtering period (seconds)",
+        json_schema_extra={"always": True},
     )
     use_bcafile: int = Field(
         1, ge=0, le=1,
@@ -342,10 +361,12 @@ class SfincsConfigVariables(BaseSettings):
     snapwave_wind: int = Field(
         0, ge=0, le=1,
         description="SnapWave wind growth process (1: on, 0: off)",
+        json_schema_extra={"condition": "snapwave == 1"},
     )
     snapwave_use_nearest: int = Field(
         1, ge=0, le=1,
         description="SnapWave use nearest interpolation (1: on, 0: off)",
+        json_schema_extra={"condition": "snapwave == 1"},
     )
     snapwave_igwaves: int = Field(
         1, ge=0, le=1,
@@ -467,14 +488,15 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     cdnrb: int = Field(
         0, description="Number of wind speed ranges for drag coefficient",
+        json_schema_extra={"always": True},
     )
     cdwnd: Optional[List[float]] = Field(
         None, description="Wind speed ranges for drag coefficient (m/s)",
-        json_schema_extra={"condition": "cdnrb > 0"},
+        json_schema_extra={"always": True},
     )
     cdval: Optional[List[float]] = Field(
         None, description="Drag coefficient values corresponding to cdwnd",
-        json_schema_extra={"condition": "cdnrb > 0"},
+        json_schema_extra={"always": True},
     )
 
     # ================================================================
@@ -548,11 +570,16 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     # SnapWave forcing files
     # ================================================================
-    snapwave_bndfile: Optional[str] = Field(None, description="SnapWave boundary points file")
-    snapwave_bhsfile: Optional[str] = Field(None, description="SnapWave wave height file")
-    snapwave_btpfile: Optional[str] = Field(None, description="SnapWave wave period file")
-    snapwave_bwdfile: Optional[str] = Field(None, description="SnapWave wave direction file")
-    snapwave_bdsfile: Optional[str] = Field(None, description="SnapWave wave spreading file")
+    snapwave_bndfile: Optional[str] = Field(None, description="SnapWave boundary points file",
+        json_schema_extra={"condition": "snapwave == 1"})
+    snapwave_bhsfile: Optional[str] = Field(None, description="SnapWave wave height file",
+        json_schema_extra={"condition": "snapwave == 1"})
+    snapwave_btpfile: Optional[str] = Field(None, description="SnapWave wave period file",
+        json_schema_extra={"condition": "snapwave == 1"})
+    snapwave_bwdfile: Optional[str] = Field(None, description="SnapWave wave direction file",
+        json_schema_extra={"condition": "snapwave == 1"})
+    snapwave_bdsfile: Optional[str] = Field(None, description="SnapWave wave spreading file",
+        json_schema_extra={"condition": "snapwave == 1"})
     netsnapwavefile: Optional[str] = Field(None, description="Netcdf SnapWave boundary file")
 
     # ================================================================
@@ -567,12 +594,15 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     storevelmax: int = Field(0, ge=0, le=1, description="Write max velocity output (1: yes, 0: no)")
     storefluxmax: int = Field(0, ge=0, le=1, description="Write max flux output (1: yes, 0: no)")
-    storevel: int = Field(0, ge=0, le=1, description="Write instantaneous velocity output (1: yes, 0: no)")
-    storecumprcp: int = Field(0, ge=0, le=1, description="Write cumulative precipitation output (1: yes, 0: no)")
+    storevel: int = Field(0, ge=0, le=1, description="Write instantaneous velocity output (1: yes, 0: no)",
+        json_schema_extra={"always": True})
+    storecumprcp: int = Field(0, ge=0, le=1, description="Write cumulative precipitation output (1: yes, 0: no)",
+        json_schema_extra={"always": True})
     storetwet: int = Field(0, ge=0, le=1, description="Write time-wet output (1: yes, 0: no)")
     storehsubgrid: int = Field(0, ge=0, le=1, description="Write subgrid depth output (1: yes, 0: no)")
     storehmean: int = Field(0, ge=0, le=1, description="Write mean water depth output (1: yes, 0: no)")
-    storemeteo: int = Field(0, ge=0, le=1, description="Write meteo output (1: yes, 0: no)")
+    storemeteo: int = Field(0, ge=0, le=1, description="Write meteo output (1: yes, 0: no)",
+        json_schema_extra={"always": True})
     storemaxwind: int = Field(0, ge=0, le=1, description="Write max wind speed output (1: yes, 0: no)")
     storefw: int = Field(0, ge=0, le=1, description="Write wave forces output (1: yes, 0: no)")
     storewavdir: int = Field(0, ge=0, le=1, description="Write wave direction output (1: yes, 0: no)")

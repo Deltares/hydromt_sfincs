@@ -170,7 +170,11 @@ class SfincsConfig(ModelComponent):
                             pass  # exotic default type — write anyway
 
                 # Serialise and write
-                value = convert_to_number(value)
+                # Preserve float type if the field is declared as float
+                if field_info is not None and field_info.annotation is float:
+                    value = float(value) if not isinstance(value, float) else value
+                else:
+                    value = convert_to_number(value)
 
                 if isinstance(value, (int, float)):
                     string = f"{key.ljust(20)} = {value}"
