@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Union
 import geopandas as gpd
 import pandas as pd
 import shapely
-
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
@@ -156,15 +155,19 @@ class SfincsObservationPoints(ModelComponent):
 
         if within.any() == True:
             if within.all() == False:
+                # write away the names of points that are removed
+                removed = gdf[~within]
+                if "name" in removed.columns:
+                    logger.info(
+                        "Some of the observation points fall out of model domain. Removing points: "
+                        + str(removed["name"].values)
+                    )
+                else:
+                    logger.info(
+                        f"Some of the observation points fall out of model domain. Removing {(~within).sum()} points."
+                    )
                 # keep points that fall within region
                 gdf = gdf[within]
-
-                # write away the names of points that are removed
-                gdf_name = gdf.name[~within]
-                logger.info(
-                    "Some of the observation points fall out of model domain. Removing points: "
-                    + str(gdf_name.values)
-                )
         else:
             raise ValueError("None of observation points fall within model domain.")
 

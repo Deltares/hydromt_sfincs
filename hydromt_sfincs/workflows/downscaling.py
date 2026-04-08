@@ -111,9 +111,9 @@ def make_index_cog(
             xx, yy = np.meshgrid(x_coords, y_coords)
 
             if model.grid_type == "quadtree":
-                indices = model.quadtree.get_indices_at_points(xx, yy)
+                indices = model.quadtree_grid.get_indices_at_points(xx, yy)
             elif model.grid_type == "regular":
-                indices = model.reggrid.get_indices_at_points(xx, yy)
+                indices = model.grid.get_indices_at_points(xx, yy)
             else:
                 raise ValueError(f"Unknown grid type: {model.grid_type}")
 
