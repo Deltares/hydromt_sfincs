@@ -206,46 +206,35 @@ class SfincsRiverBoundaryPoints(ModelComponent):
             p_on = Point(coords[0])
             p_in = Point(coords[-1])
 
+            gdf_on = gpd.GeoDataFrame(geometry=[p_on], crs=gdf_out_pts.crs)
+            gdf_in = gpd.GeoDataFrame(geometry=[p_in], crs=gdf_out_pts.crs)
+
             # slope
             if slope is None:
                 if self.model.grid_type == "regular":
                     # --- regular grid ---
-                    if (
-                        hasattr(self.model, "subgrid")
-                        and self.model.subgrid is not None
-                        and self.model.subgrid.data is not None
-                        and len(self.model.subgrid.data.data_vars) > 0
-                        and "z_zmin" in self.model.subgrid.data
-                    ):
+                    if (len(self.model.subgrid.data.data_vars) > 0):
                         # regular + subgrid
                         z = self.model.subgrid.data.z_zmin
-                        z_in = z.sel(x=p_in.x, y=p_in.y, method="nearest").item()
-                        z_on = z.sel(x=p_on.x, y=p_on.y, method="nearest").item()
                     else:
                         # regular only
-                        z = self.model.grid.data.z
-                        z_in = z.sel(x=p_in.x, y=p_in.y, method="nearest").item()
-                        z_on = z.sel(x=p_on.x, y=p_on.y, method="nearest").item()
+                        z = self.model.grid.data.dep
+
+                    z_in = z.raster.sample(gdf_in).item()
+                    z_on = z.raster.sample(gdf_on).item()
 
                 else:
                     # --- quadtree grid ---
-                    if (
-                        hasattr(self.model, "quadtree_subgrid")
-                        and self.model.quadtree_subgrid is not None
-                        and self.model.quadtree_subgrid.data is not None
-                        and len(self.model.quadtree_subgrid.data.data_vars) > 0
-                        and "z_zmin" in self.model.quadtree_subgrid.data
-                    ):
+                    if (len(self.model.quadtree_subgrid.data.data_vars) > 0):
                         # quadtree + subgrid
-                        zsrc = self.model.quadtree_subgrid.data.z_zmin.ugrid
-                        z_in = zsrc.sel_points(x=p_in.x, y=p_in.y).item()
-                        z_on = zsrc.sel_points(x=p_on.x, y=p_on.y).item()
+                        z = self.model.quadtree_subgrid.data.z_zmin.ugrid
                     else:
                         # quadtree only
-                        zsrc = self.model.quadtree_grid.data.z.ugrid
-                        z_in = zsrc.sel_points(x=p_in.x, y=p_in.y).item()
-                        z_on = zsrc.sel_points(x=p_on.x, y=p_on.y).item()
-
+                        z = self.model.quadtree_grid.data.z.ugrid
+                    
+                    z_in = z.sel_points(x=p_in.x, y=p_in.y).item()
+                    z_on = z.sel_points(x=p_on.x, y=p_on.y).item()
+                
                 denom = internal_dist  # or line.length if preferred
                 slope_i = 0.0 if denom == 0 else (z_in - z_on) / denom
 
