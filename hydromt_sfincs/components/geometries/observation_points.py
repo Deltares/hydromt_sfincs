@@ -94,6 +94,10 @@ class SfincsObservationPoints(ModelComponent):
         # check that read mode is on
         self.root._assert_read_mode()
 
+        if self.model.config.get("obsfile") is None and filename is None:
+            # No obsfile set in config and no filename given, so nothing to read. Just return.
+            return  
+
         # get absolute file path and set it in config if obsfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
             "obsfile", value=filename
