@@ -474,6 +474,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             elevation_list=elevation_list,
         )
 
+    @hydromt_step
     def cut_inactive_cells(self) -> None:
         """Remove cells that are outside the active mask from the grid.
 
