@@ -323,11 +323,19 @@ class SfincsModel(Model):
                 logger.warning(f"Could not read component {name}: {e}")
                 continue
 
-    def write(self):
+    def write(self, write_batch_file: bool = False):
         """Write SfincsModel to disk.
 
         This methods writes all components that actually contain data to the specified
         model root folder. Finally, the configuration file (sfincs.inp) is written.
+
+        Parameters
+        ----------
+        write_batch_file : bool, optional
+            If True, also write a platform-appropriate launcher script
+            (``run.bat`` on Windows, ``run.sh`` elsewhere) via
+            :meth:`write_batch_file`. Requires ``self.exe_path`` to be
+            set. Default ``False``.
 
         For more information, see specific component write methods.
         """
@@ -353,6 +361,10 @@ class SfincsModel(Model):
                 root=join(self.root.path, "gis"),
                 logger=logger,
             )
+
+        # Optional launcher script (opt-in; DDB passes True explicitly).
+        if write_batch_file:
+            self.write_batch_file()
 
     def clear_spatial_components(self):
         """Clear all spatial components."""
