@@ -16,9 +16,173 @@ from pyproj import Transformer
 
 from .merge import merge_multi_dataarrays
 
-__all__ = ["create_topobathy_tiles", "downscale_floodmap_webmercator"]
+__all__ = [
+    "create_topobathy_tiles",
+    "downscale_floodmap_webmercator",
+    "write_html",
+]
 
 logger = logging.getLogger(__name__)
+
+
+def write_html(
+    file_name: Union[str, Path],
+    title: str = "hydromt-sfincs tiles",
+    legend_title: str = "Legend",
+    max_native_zoom: int = 19,
+) -> None:
+    """Write a standalone Leaflet HTML viewer for a tiled map layer.
+
+    The generated page loads OpenStreetMap and Esri World Imagery base
+    layers and overlays tiles from the URL pattern ``{z}/{x}/{y}.png``
+    relative to the HTML file. Drop it alongside a ``{z}/{x}/{y}.png``
+    tile tree and open it in a browser to preview the tiles.
+
+    Parameters
+    ----------
+    file_name : str or Path
+        Output HTML file path.
+    title : str, optional
+        Page heading shown above the map, by default
+        ``"hydromt-sfincs tiles"``.
+    legend_title : str, optional
+        Text displayed inside the legend box, by default ``"Legend"``.
+    max_native_zoom : int, optional
+        Maximum native zoom level of the tile layer, by default ``19``.
+    """
+    with open(file_name, "w") as f:
+        f.write("<!DOCTYPE html>\r\n")
+        f.write("<head>\r\n")
+        f.write(
+            "  <meta http-equiv='content-type' content='text/html; charset=UTF-8' />\r\n"
+        )
+        f.write("  <script>\r\n")
+        f.write("    L_NO_TOUCH = false;\r\n")
+        f.write("    L_DISABLE_3D = false;\r\n")
+        f.write("  </script>\r\n")
+        f.write(
+            "  <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>\r\n"
+        )
+        f.write(
+            "  <script src='https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.js'></script>\r\n"
+        )
+        f.write(
+            "  <script src='https://code.jquery.com/jquery-1.12.4.min.js'></script>\r\n"
+        )
+        f.write(
+            "  <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js'></script>\r\n"
+        )
+        f.write(
+            "  <script src='https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js'></script>\r\n"
+        )
+        f.write(
+            "  <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.css'/>\r\n"
+        )
+        f.write(
+            "  <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css'/>\r\n"
+        )
+        f.write(
+            "  <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css'/>\r\n"
+        )
+        f.write(
+            "  <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css'/>\r\n"
+        )
+        f.write(
+            "  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css'/>\r\n"
+        )
+        f.write(
+            "  <link rel='stylesheet' href='https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css'/>\r\n"
+        )
+        f.write(
+            "  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />\r\n"
+        )
+        f.write("\r\n")
+        f.write("  <style>\r\n")
+        f.write("      #map { width: 800px; height: 500px; }\r\n")
+        f.write(
+            "      .info { padding: 6px 8px; font: 17px/19px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; }\r\n"
+        )
+        f.write(
+            "      .legend     { text-align: center; line-height: 18px; color: #555; } .legend i     { width: 20px; height: 15px; float: left; margin-right: 8px; opacity: 0.7; border-style: solid; border-width: 1px;}\r\n"
+        )
+        f.write("  </style>\r\n")
+        f.write("\r\n")
+        f.write("</head>\r\n")
+        f.write("<body>\r\n")
+        f.write(f"  <h3> {title}</h3>\r\n")
+        f.write("  <div id='map' style='width: 100%; height: 90%;'></div>\r\n")
+        f.write("</body>\r\n")
+        f.write("<script>\r\n")
+        f.write("\r\n")
+        f.write("// Base layers\r\n")
+        f.write(
+            "var tile_layer_osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',\r\n"
+        )
+        f.write(
+            "    {'attribution': 'Data by http://openstreetmap.org href=http://www.openstreetmap.org',\r\n"
+        )
+        f.write("     'detectRetina': false,\r\n")
+        f.write("     'maxZoom': 19,\r\n")
+        f.write("     'minZoom': 0,\r\n")
+        f.write("     'noWrap': false,\r\n")
+        f.write("     'opacity': 1,\r\n")
+        f.write("     'maxNativeZoom': 13,\r\n")
+        f.write("     'subdomains': 'abc',\r\n")
+        f.write("     'tms': false});\r\n")
+        f.write(
+            "var Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {\r\n"
+        )
+        f.write(
+            "	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'\r\n"
+        )
+        f.write("});\r\n")
+        f.write("\r\n")
+        f.write("// Data layer\r\n")
+        f.write("var tile_layer = L.tileLayer(\r\n")
+        f.write("    '{z}/{x}/{y}.png',\r\n")
+        f.write("    {'attribution': 'hydromt-sfincs',\r\n")
+        f.write("     'detectRetina': false,\r\n")
+        f.write("     'opacity': 0.7,\r\n")
+        f.write(f"     'maxNativeZoom': {max_native_zoom},\r\n")
+        f.write("     'maxZoom': 19,\r\n")
+        f.write("     'minZoom': 0,\r\n")
+        f.write("     'noWrap': false,\r\n")
+        f.write("     'subdomains': 'abc',\r\n")
+        f.write("     'zIndex':10,\r\n")
+        f.write("     'tms': false}\r\n")
+        f.write(");\r\n")
+        f.write("\r\n")
+        f.write("var legend = L.control({position: 'bottomright'});\r\n")
+        f.write("legend.onAdd = function (map) {\r\n")
+        f.write("        var div = L.DomUtil.create('div', 'info legend')\r\n")
+        f.write(f"        div.innerHTML += '{legend_title}<br>'\r\n")
+        f.write("        return div;\r\n")
+        f.write("};\r\n")
+        f.write("\r\n")
+        f.write("// Map\r\n")
+        f.write("var map = L.map('map',{\r\n")
+        f.write("    center: [0, 0],\r\n")
+        f.write("    crs: L.CRS.EPSG3857,\r\n")
+        f.write("    zoom: 2,\r\n")
+        f.write("    zoomControl: true,\r\n")
+        f.write("    preferCanvas: false,\r\n")
+        f.write("    layers: [tile_layer_osm, tile_layer]\r\n")
+        f.write("    }\r\n")
+        f.write(");\r\n")
+        f.write("\r\n")
+        f.write("legend.addTo(map);\r\n")
+        f.write("\r\n")
+        f.write("// Layer control\r\n")
+        f.write("var baseMaps = {\r\n")
+        f.write("    'Open Street Map': tile_layer_osm,\r\n")
+        f.write("    'Satellite': Esri_WorldImagery\r\n")
+        f.write("};\r\n")
+        f.write("\r\n")
+        f.write("var overlayMaps = {};\r\n")
+        f.write("\r\n")
+        f.write("L.control.layers(baseMaps, overlayMaps).addTo(map);\r\n")
+        f.write("\r\n")
+        f.write("</script>\r\n")
 
 
 def downscale_floodmap_webmercator(
@@ -136,9 +300,10 @@ def create_topobathy_tiles(
     index_path: Union[str, Path] = None,
     zoom_range: Union[int, List[int]] = [0, 13],
     z_range: List[int] = [-20000.0, 20000.0],
-    fmt="bin",
-    logger=logger,
-):
+    fmt: str = "bin",
+    write_html_viewer: bool = True,
+    logger: logging.Logger = logger,
+) -> None:
     """Create webmercator topobathy tiles for a given region.
 
     Parameters
@@ -155,8 +320,11 @@ def create_topobathy_tiles(
         Range of zoom levels for which tiles are created, by default [0, 13]
     z_range : List[int], optional
         Range of valid elevations, by default [-20000.0, 20000.0]
-    format : str, optional
+    fmt : str, optional
         The desired output format of the topobathy tiles, by default "bin". Also "png" and "tif" are supported.
+    write_html_viewer : bool, optional
+        If True (default), also write an ``index.html`` Leaflet viewer
+        alongside the tiles so they can be previewed in a browser.
     """
     # TODO change the order of the zoom_levels
     # basing large scale zoom levels on the high-resolution ones prevents memory errors
@@ -257,6 +425,15 @@ def create_topobathy_tiles(
                 elevation2png(da_dep, file_name)
             elif fmt == "tif":
                 da_dep.raster.to_raster(file_name)
+
+    if write_html_viewer and fmt == "png":
+        os.makedirs(topobathy_path, exist_ok=True)
+        write_html(
+            os.path.join(topobathy_path, "index.html"),
+            title="Topobathy tiles",
+            legend_title="Topobathy",
+            max_native_zoom=zoom_range[1],
+        )
 
 
 def deg2num(lat_deg, lon_deg, zoom):

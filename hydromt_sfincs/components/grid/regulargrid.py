@@ -20,7 +20,7 @@ from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs import utils
-from hydromt_sfincs.workflows.tiling import int2png, tile_window
+from hydromt_sfincs.workflows.tiling import int2png, tile_window, write_html
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -660,6 +660,7 @@ class SfincsGrid(GridComponent):
         region: gpd.GeoDataFrame,
         zoom_range: Union[int, List[int]] = [0, 13],
         fmt: str = "bin",
+        write_html_viewer: bool = True,
         logger: logging.Logger = logger,
     ):
         """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the corresponding SFINCS cell.
@@ -674,6 +675,9 @@ class SfincsGrid(GridComponent):
             Range of zoom levels for which tiles are created, by default [0,13]
         fmt : str, optional
             Format of index tiles, either "bin" (binary, default) or "png"
+        write_html_viewer : bool, optional
+            If True (default), also write an ``index.html`` Leaflet viewer
+            alongside the tiles so they can be previewed in a browser.
         """
 
         index_path = os.path.join(root, "indices")
@@ -763,6 +767,15 @@ class SfincsGrid(GridComponent):
                         # for png, change nodata -999 nodata into 0
                         ind[ind == -999] = 0
                         int2png(ind, file_name)
+
+        if write_html_viewer and fmt == "png":
+            os.makedirs(index_path, exist_ok=True)
+            write_html(
+                os.path.join(index_path, "index.html"),
+                title="Index tiles",
+                legend_title="Cell indices",
+                max_native_zoom=zoom_range[1],
+            )
 
     def get_indices_at_points(self, x, y):
         # x and y are 2D arrays of coordinates (x, y) in the same projection as the model
