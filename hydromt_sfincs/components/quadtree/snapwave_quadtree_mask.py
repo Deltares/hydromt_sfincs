@@ -1,30 +1,16 @@
 import logging
-import os
 from pathlib import Path
 import warnings
 from typing import TYPE_CHECKING, Union
 
 import geopandas as gpd
 import numpy as np
-import pandas as pd
-from pyproj import Transformer
 
 from hydromt import hydromt_step
 
 from hydromt_sfincs.components.quadtree import SfincsQuadtreeMask
 
 np.warnings = warnings
-
-# optional dependency
-try:
-    import datashader as ds
-    import datashader.transfer_functions as tf
-    from datashader.utils import export_image
-
-    HAS_DATASHADER = True
-
-except ImportError:
-    HAS_DATASHADER = False
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -34,6 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
+    # Variable name used by the overlay renderer (parent reads "mask"; this
+    # subclass renders the snapwave mask instead).
+    _mask_variable: str = "snapwave_mask"
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -41,9 +31,6 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
         super().__init__(
             model=model,
         )
-        # For plotting map overlay (This is the only data that is stored in the object!
-        # All other data is stored in the model.grid.data["mask"])
-        self.datashader_dataframe = pd.DataFrame()
 
     @property
     def has_open_boundaries(self):
@@ -72,7 +59,6 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
         neumann_boundary_zmin: float = None,
         neumann_boundary_zmax: float = None,
         all_touched: bool = False,
-        update_datashader_dataframe=False,
     ):
         """Setup active model snapwave mask and add boundaries. Note that boundary types can only be set when polygons are provided.
 
@@ -117,7 +103,6 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
             neumann_boundary_zmin=neumann_boundary_zmin,
             neumann_boundary_zmax=neumann_boundary_zmax,
             all_touched=all_touched,
-            update_datashader_dataframe=update_datashader_dataframe,
         )
 
     @hydromt_step
@@ -255,105 +240,6 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
             connectivity=connectivity,
         )
 
-    def get_datashader_dataframe(self, variable="snapwave_mask"):
-        """Sets the datashader dataframe for plotting"""
-        super().get_datashader_dataframe(variable=variable)
-
-    def clear_datashader_dataframe(self):
-        """Clears the datashader dataframe"""
-        self.datashader_dataframe = pd.DataFrame()
-
-    def map_overlay(
-        self,
-        file_name,
-        xlim=None,
-        ylim=None,
-        colors=None,
-        px=2,
-        width=800,
-        **kwargs,
-    ):
-        """Create a map overlay image of the SnapWave mask using datashader.
-
-        Parameters
-        ----------
-        file_name : str
-            Output image file name.
-        xlim, ylim : list, optional
-            Geographic (lon/lat) extent of the image.
-        colors : dict, optional
-            Mapping of integer mask values to colour strings, e.g.
-            ``{1: "yellow", 2: "red", 3: "green"}``.  By default
-            ``{1: "yellow", 2: "red", 3: "green"}``.
-        px : int, optional
-            Marker radius in pixels, by default 2.
-        width : int, optional
-            Output image width in pixels, by default 800.
-
-        Returns
-        -------
-        bool
-            True if the image was created successfully, False otherwise.
-        """
-        if colors is None:
-            colors = {1: "yellow", 2: "red", 3: "green"}
-
-        if not HAS_DATASHADER:
-            logger.warning("Datashader is not available. Please install datashader.")
-            return False
-
-        if len(self.model.quadtree_grid.data.data_vars) == 0:
-            return False
-
-        try:
-            if self.datashader_dataframe.empty:
-                self.get_datashader_dataframe()
-
-            if self.datashader_dataframe.empty:
-                return False
-
-            transformer = Transformer.from_crs(4326, 3857, always_xy=True)
-            xl0, yl0 = transformer.transform(xlim[0], ylim[0])
-            xl1, yl1 = transformer.transform(xlim[1], ylim[1])
-            if xl0 > xl1:
-                xl1 += 40075016.68557849
-            xlim = [xl0, xl1]
-            ylim = [yl0, yl1]
-            ratio = (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
-            height = int(width * ratio)
-
-            cvs = ds.Canvas(
-                x_range=xlim, y_range=ylim, plot_height=height, plot_width=width
-            )
-
-            images = []
-            for mask_val, color in colors.items():
-                df_sub = self.datashader_dataframe[
-                    self.datashader_dataframe["snapwave_mask"] == mask_val
-                ]
-                if len(df_sub) > 0:
-                    images.append(
-                        tf.shade(
-                            tf.spread(cvs.points(df_sub, "x", "y", ds.any()), px=px),
-                            cmap=color,
-                        )
-                    )
-
-            if not images:
-                return False
-
-            img = images[0]
-            for im in images[1:]:
-                img = tf.stack(img, im)
-
-            path = os.path.dirname(file_name)
-            if not path:
-                path = os.getcwd()
-            name = os.path.basename(file_name)
-            name = os.path.splitext(name)[0]
-            export_image(img, name, export_path=path)
-            return True
-
-        except Exception as e:
-            print(e)
-            return False
+    # map_overlay / clear_overlay are inherited from SfincsQuadtreeMask;
+    # they consult ``_mask_variable`` (overridden above) to pick the
+    # right mask field.

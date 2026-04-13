@@ -61,7 +61,6 @@ class SfincsGrid(GridComponent):
         )
         # initialize data attribute
         self._data = None
-        self.datashader_dataframe = pd.DataFrame()
 
     @property
     def transform(self):
@@ -619,37 +618,10 @@ class SfincsGrid(GridComponent):
         lines = [LineString([(x1[i], y1[i]), (x2[i], y2[i])]) for i in range(len(x1))]
         return gpd.GeoDataFrame(geometry=lines, crs=self.model.crs)
 
-    def get_datashader_dataframe(self):
-        """Create a datashader-friendly DataFrame for the regular grid."""
-        x1, y1, x2, y2 = self._get_grid_lines()
-
-        # Check if the grid crosses the dateline
-        cross_dateline = False
-        if self.model.crs.is_geographic:
-            if np.max(x1) > 180.0 or np.max(x2) > 180.0:
-                cross_dateline = True
-
-        # Transform to Web Mercator for Datashader
-        transformer = Transformer.from_crs(self.model.crs, 3857, always_xy=True)
-        x1, y1 = transformer.transform(x1, y1)
-        x2, y2 = transformer.transform(x2, y2)
-
-        # Handle dateline wrapping
-        if cross_dateline:
-            x1[x1 < 0] += 40075016.68557849
-            x2[x2 < 0] += 40075016.68557849
-
-        self.datashader_dataframe = pd.DataFrame(dict(x1=x1, y1=y1, x2=x2, y2=y2))
-
-    def clear_datashader_dataframe(self):
-        """Clears the datashader dataframe"""
-        self.datashader_dataframe = pd.DataFrame()
-
     # %% DDB GUI focused additional functions:
     # create_index_tiles > FIXME - TL: still needed?
     # map_overlay
     # snap_to_grid
-    # _get_datashader_dataframe
 
     # TODO - missing as in cht_sfincs:
     # Many...
