@@ -56,6 +56,45 @@ def test_quadtree_io(tmp_dir):
     os.remove(mod1.root.path / "sfincs.nc")
 
 
+def test_quadtree_create_index_tiles(quadtree_model, tmp_dir):
+    # Zoom range has to be high enough that tile pixels resolve the
+    # ~13 x 10 km test model; keep it tight so the test stays fast.
+    zoom_range = [12, 13]
+
+    # PNG (default format)
+    root_png = tmp_dir / "tiles_png"
+    quadtree_model.quadtree_grid.create_index_tiles(
+        root=root_png, zoom_range=zoom_range
+    )
+    png_files = list((root_png / "indices").rglob("*.png"))
+    assert len(png_files) > 0
+    # Tiles are nested as <indices>/<zoom>/<x>/<y>.png
+    zoom_levels = {int(p.parts[-3]) for p in png_files}
+    assert zoom_levels.issubset(set(range(zoom_range[0], zoom_range[1] + 1)))
+    assert max(zoom_levels) == zoom_range[1]
+    # HTML viewer is written by default alongside PNG tiles
+    html_file = root_png / "indices" / "index.html"
+    assert html_file.is_file()
+    assert "{z}/{x}/{y}.png" in html_file.read_text()
+
+    # Binary format
+    root_bin = tmp_dir / "tiles_bin"
+    quadtree_model.quadtree_grid.create_index_tiles(
+        root=root_bin, zoom_range=zoom_range, fmt="bin"
+    )
+    dat_files = list((root_bin / "indices").rglob("*.dat"))
+    assert len(dat_files) > 0
+    # Each .dat tile should be 256*256 int32 = 262144 bytes
+    assert dat_files[0].stat().st_size == 256 * 256 * 4
+    # Indices in the .dat tile must be valid cell indices (or -999 nodata)
+    data = np.fromfile(dat_files[0], dtype=np.int32).reshape(256, 256)
+    nr_cells = len(quadtree_model.quadtree_grid.data["level"])
+    valid = data[data != -999]
+    assert valid.size > 0
+    assert valid.min() >= 0
+    assert valid.max() < nr_cells
+
+
 def test_xu_open_dataset_delete(tmp_dir):
     # copy the test data to the tmp_path
     fn = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")

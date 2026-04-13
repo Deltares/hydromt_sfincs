@@ -1,8 +1,14 @@
+"""Quadtree grid component for the SFINCS model.
+
+Defines :class:`SfincsQuadtreeGrid`, a mesh-backed grid that supports
+multi-level refinement. Provides I/O, grid construction, mask / bathymetry
+handling, point-to-cell lookup, tiled index output for web viewers, and
+utilities used by DelftDashboard such as map overlays and grid snapping.
+"""
+
 import logging
 import os
-import gc
 from os.path import isfile
-import time
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Union
 
@@ -23,6 +29,7 @@ from hydromt.model.components import MeshComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs.utils import make_regular_grid
+from hydromt_sfincs.workflows.tiling import int2png, tile_window, write_html
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
 # optional dependency
@@ -44,10 +51,13 @@ _QT_MAPS = ["manning", "vol", "ini"]
 
 
 class SfincsQuadtreeGrid(MeshComponent):
+    """Quadtree grid component attached to an :class:`SfincsModel`."""
+
     def __init__(
         self,
         model: "SfincsModel",
-    ):
+    ) -> None:
+        """Initialise the component with a back-reference to its parent model."""
         self._filename: str = "sfincs.nc"
         self._data: xu.UgridDataset = None
         self.version = 0
@@ -68,14 +78,30 @@ class SfincsQuadtreeGrid(MeshComponent):
             raise ValueError("No CRS defined for the quadtree grid.")
 
     @property
-    def face_coordinates(self):
+    def face_coordinates(self) -> Optional[tuple]:
+        """Return the (x, y) coordinates of the cell face centres.
+
+        Returns
+        -------
+        tuple of np.ndarray, or None
+            A pair ``(x, y)`` of 1-D arrays with cell centre coordinates in
+            the model CRS, or ``None`` if no grid has been loaded.
+        """
         if self.data is None:
             return None
         xy = self.data.grid.face_coordinates
         return xy[:, 0], xy[:, 1]
 
     @property
-    def exterior(self):
+    def exterior(self) -> gpd.GeoDataFrame:
+        """Return the outer boundary of the active grid as polygons.
+
+        Returns
+        -------
+        geopandas.GeoDataFrame
+            Polygon geometries in the model CRS, or an empty GeoDataFrame
+            if no grid has been loaded.
+        """
         if self.data is None:
             return gpd.GeoDataFrame()
         indx = self.data.grid.edge_node_connectivity[self.data.grid.exterior_edges, :]
@@ -94,7 +120,8 @@ class SfincsQuadtreeGrid(MeshComponent):
         return gpd.GeoDataFrame(geometry=list(polygons), crs=self.crs)
 
     @property
-    def empty_mask(self):
+    def empty_mask(self) -> Optional[xu.UgridDataArray]:
+        """Return an all-zero mask with the shape of the current grid."""
         if self.data is None:
             return None
         # create empty mask
@@ -453,7 +480,12 @@ class SfincsQuadtreeGrid(MeshComponent):
             elevation_list=elevation_list,
         )
 
-    def cut_inactive_cells(self):
+    def cut_inactive_cells(self) -> None:
+        """Remove cells that are outside the active mask from the grid.
+
+        Also clears any cached datashader dataframes so overlay rendering
+        will pick up the new geometry on the next call.
+        """
         # Clear datashader dataframes (new ones will be created when needed by map_overlay methods)
         self.clear_datashader_dataframe()
         self.model.quadtree_mask.clear_datashader_dataframe()
@@ -461,7 +493,21 @@ class SfincsQuadtreeGrid(MeshComponent):
         self._data = cut_inactive_cells(self.data)
         # self.get_exterior() # FIXME - TL: why is this needed in cht_sfincs? > also, is now a property
 
-    def snap_to_grid(self, polyline):
+    def snap_to_grid(self, polyline: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+        """Snap a set of lines to the edges of the quadtree grid.
+
+        Parameters
+        ----------
+        polyline : geopandas.GeoDataFrame
+            Input lines to snap. Only ``LineString`` geometries are used;
+            other geometry types are ignored.
+
+        Returns
+        -------
+        geopandas.GeoDataFrame
+            Snapped lines in the model CRS, or an empty GeoDataFrame if the
+            input is empty.
+        """
         if len(polyline) == 0:
             return gpd.GeoDataFrame()
         # If geographic coordinates, set max_snap_distance to 0.1 degrees
@@ -482,26 +528,37 @@ class SfincsQuadtreeGrid(MeshComponent):
         snapped_gdf = snapped_gdf.set_crs(self.crs)
         return snapped_gdf
 
-    def map_overlay(self, file_name, xlim=None, ylim=None, color="black", width=800):
-        """Create a map overlay of the grid
+    def map_overlay(
+        self,
+        file_name: Union[str, Path],
+        xlim: Optional[List[float]] = None,
+        ylim: Optional[List[float]] = None,
+        color: str = "black",
+        width: int = 800,
+    ) -> bool:
+        """Render a datashader PNG overlay of the grid edges.
 
         Parameters
         ----------
-        file_name : str | Path
-            File name of the map overlay
-        xlim : list, optional
-            x-axis limits (longitude)
-        ylim : list, optional
-            y-axis limits (latitude)
+        file_name : str or Path
+            Output image path. The extension is stripped; datashader appends
+            ``.png``.
+        xlim : list of float, optional
+            Longitude limits ``[xmin, xmax]`` in EPSG:4326.
+        ylim : list of float, optional
+            Latitude limits ``[ymin, ymax]`` in EPSG:4326.
         color : str, optional
-            Color of the grid lines
+            Line colour, by default ``"black"``.
         width : int, optional
-            Width of the map overlay in pixels
+            Output image width in pixels; height is derived from the aspect
+            ratio of ``xlim`` / ``ylim``. Defaults to ``800``.
 
         Returns
         -------
         bool
-            True if the map overlay was created successfully, False otherwise
+            ``True`` if the overlay was written successfully; ``False`` if
+            datashader is unavailable, the grid is empty, or rendering
+            raised an exception.
         """
         # TODO: xlim and ylim should not be optional and be called lonlim and latlim or just give bbox
 
@@ -545,8 +602,28 @@ class SfincsQuadtreeGrid(MeshComponent):
         except Exception:
             return False
 
-    def get_indices_at_points(self, x, y):
-        # x and y are 2D arrays of coordinates (x, y) in the same projection as the model
+    def get_indices_at_points(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        """Return the cell index at each (x, y) sample.
+
+        Resolves the quadtree by traversing refinement levels from coarse
+        to fine; points that do not fall inside any active cell at any
+        level are returned as ``-999``.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            2-D array of x-coordinates in the model CRS (scalars are
+            promoted to shape ``(1, 1)``).
+        y : np.ndarray
+            2-D array of y-coordinates in the model CRS, same shape as
+            ``x``.
+
+        Returns
+        -------
+        np.ndarray
+            2-D ``int32`` array with the cell index for each sample, or
+            ``-999`` for samples outside the active grid.
+        """
         # if x is a float, convert to 2D array
         if np.ndim(x) == 0:
             x = np.array([[x]])
@@ -578,8 +655,9 @@ class SfincsQuadtreeGrid(MeshComponent):
             ifirst = np.zeros(nr_refinement_levels, dtype=int)
             for ilev in range(0, nr_refinement_levels):
                 # Find index of first cell with this level
-                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)
-                [0][0]
+                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)[
+                    0
+                ][0]
             self.ifirst = ifirst
 
         ifirst = self.ifirst
@@ -645,8 +723,13 @@ class SfincsQuadtreeGrid(MeshComponent):
         return indx
 
     # Internal functions
-    def get_datashader_dataframe(self):
-        """Creates a dataframe with line elements for datashader"""
+    def get_datashader_dataframe(self) -> None:
+        """Build a cached DataFrame of grid edges for datashader rendering.
+
+        Edges are transformed to EPSG:3857 and stored on
+        ``self.datashader_dataframe``; coordinates east of the dateline
+        are wrapped to positive values when the model CRS is geographic.
+        """
         x1 = self.data.grid.edge_node_coordinates[:, 0, 0]
         x2 = self.data.grid.edge_node_coordinates[:, 1, 0]
         y1 = self.data.grid.edge_node_coordinates[:, 0, 1]
@@ -664,14 +747,36 @@ class SfincsQuadtreeGrid(MeshComponent):
             x2[x2 < 0] += 40075016.68557849
         self.datashader_dataframe = pd.DataFrame(dict(x1=x1, y1=y1, x2=x2, y2=y2))
 
-    def clear_datashader_dataframe(self):
-        """Clears the datashader dataframe"""
+    def clear_datashader_dataframe(self) -> None:
+        """Drop the cached datashader edge DataFrame."""
         self.datashader_dataframe = pd.DataFrame()
 
     def make_topobathy_cog(
-        self, filename, bathymetry_sets, bathymetry_database=None, dx=10.0
-    ):
-        """Make a COG file with topobathy. Now only works for projected coordinates. This always make the topobathy COG in the same projection as the model."""
+        self,
+        filename: Union[str, Path],
+        bathymetry_sets: List[dict],
+        bathymetry_database: Optional[object] = None,
+        dx: float = 10.0,
+    ) -> None:
+        """Write a COG raster sampling the model topobathy.
+
+        The COG is written in the model CRS, so the method currently only
+        supports projected coordinate systems.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Output COG file path.
+        bathymetry_sets : list of dict
+            Dataset list passed through to
+            ``bathymetry_database.get_bathymetry_on_points``.
+        bathymetry_database : object, optional
+            Backing bathymetry database providing
+            ``get_bathymetry_on_points``. Required for this method to
+            produce data.
+        dx : float, optional
+            Raster resolution in model CRS units, by default ``10.0``.
+        """
 
         # Get the bounds of the grid
         bounds = self.bounds
@@ -717,9 +822,144 @@ class SfincsQuadtreeGrid(MeshComponent):
         ) as dst:
             dst.write(zz, 1)
 
-    def make_index_cog(self, filename, filename_topobathy):
-        # def make_index_cog(self, filename, dx=10.0):
-        """Make a COG file with indices of the quadtree grid cells."""
+    def create_index_tiles(
+        self,
+        root: Union[str, Path],
+        region: Optional[gpd.GeoDataFrame] = None,
+        zoom_range: Union[int, List[int]] = [0, 13],
+        fmt: str = "png",
+        write_html_viewer: bool = True,
+        logger: logging.Logger = logger,
+    ):
+        """Create index tiles for the quadtree grid.
+
+        Index tiles map each pixel of a webmercator XYZ tile to the
+        corresponding SFINCS cell index, traversing all refinement levels of
+        the quadtree. They are used to quickly render model output onto web
+        maps.
+
+        Parameters
+        ----------
+        root : Union[str, Path]
+            Directory where index tiles are stored. Tiles are written to
+            ``<root>/indices/<zoom>/<x>/<y>.<ext>``.
+        region : gpd.GeoDataFrame, optional
+            GeoDataFrame defining the area for which tiles are generated. If
+            None (default), the grid exterior is used.
+        zoom_range : Union[int, List[int]], optional
+            Range of zoom levels for which tiles are created, by default
+            ``[0, 13]``. If an int is passed, tiles are created up to and
+            including that zoom level.
+        fmt : str, optional
+            Format of index tiles, either ``"png"`` (default) or ``"bin"``
+            (raw int32 binary).
+        write_html_viewer : bool, optional
+            If True (default), also write an ``index.html`` Leaflet viewer
+            alongside the tiles so they can be previewed in a browser.
+        """
+
+        if region is None:
+            region = self.exterior
+
+        index_path = os.path.join(root, "indices")
+        npix = 256
+
+        # for binary format, use .dat extension
+        if fmt == "bin":
+            extension = "dat"
+        # for net, tif and png extension and format are the same
+        else:
+            extension = fmt
+
+        # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
+        if isinstance(zoom_range, int):
+            zoom_range = [0, zoom_range]
+
+        # get bounding box of sfincs model
+        minx, miny, maxx, maxy = region.total_bounds
+        transformer = Transformer.from_crs(region.crs.to_epsg(), 3857)
+
+        # axis order is different for geographic and projected CRS
+        if region.crs.is_geographic:
+            minx, miny = map(
+                max, zip(transformer.transform(miny, minx), [-20037508.34] * 2)
+            )
+            maxx, maxy = map(
+                min, zip(transformer.transform(maxy, maxx), [20037508.34] * 2)
+            )
+        else:
+            minx, miny = map(
+                max, zip(transformer.transform(minx, miny), [-20037508.34] * 2)
+            )
+            maxx, maxy = map(
+                min, zip(transformer.transform(maxx, maxy), [20037508.34] * 2)
+            )
+
+        # transformer from webmercator back to the model CRS
+        transformer_inv = Transformer.from_crs(3857, self.model.crs, always_xy=True)
+
+        for izoom in range(zoom_range[0], zoom_range[1] + 1):
+            logger.debug("Processing zoom level " + str(izoom))
+
+            zoom_path = os.path.join(index_path, str(izoom))
+
+            for transform, col, row in tile_window(izoom, minx, miny, maxx, maxy):
+                # transform is a rasterio Affine object; col, row are tile indices
+                file_name = os.path.join(
+                    zoom_path, str(col), str(row) + "." + extension
+                )
+
+                # get the coordinates of the tile pixel centres in webmercator
+                x = np.arange(0, npix) + 0.5
+                y = np.arange(0, npix) + 0.5
+                x3857, y3857 = transform * (x, y)
+                x3857, y3857 = np.meshgrid(x3857, y3857)
+
+                # convert to model CRS and resolve indices through all levels
+                x, y = transformer_inv.transform(x3857, y3857)
+                ind = self.get_indices_at_points(x, y)
+
+                # only write tiles that link to at least one SFINCS cell
+                if np.any(ind >= 0):
+                    if not os.path.exists(os.path.join(zoom_path, str(col))):
+                        os.makedirs(os.path.join(zoom_path, str(col)))
+                    if fmt == "bin":
+                        with open(file_name, "wb") as fid:
+                            fid.write(ind.astype(np.int32))
+                    elif fmt == "png":
+                        # for png, change nodata -999 into 0
+                        ind = ind.copy()
+                        ind[ind == -999] = 0
+                        int2png(ind, file_name)
+
+        if write_html_viewer and fmt == "png":
+            os.makedirs(index_path, exist_ok=True)
+            write_html(
+                os.path.join(index_path, "index.html"),
+                title="Index tiles",
+                legend_title="Cell indices",
+                max_native_zoom=zoom_range[1],
+            )
+
+    def make_index_cog(
+        self,
+        filename: Union[str, Path],
+        filename_topobathy: Union[str, Path],
+    ) -> None:
+        """Write a COG raster mapping each pixel to a quadtree cell index.
+
+        The output raster matches the resolution and grid of
+        ``filename_topobathy`` (typically produced by
+        :py:meth:`make_topobathy_cog`). Pixels that do not fall inside any
+        active cell are filled with the ``uint32`` sentinel ``2147483647``.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Output COG file path.
+        filename_topobathy : str or Path
+            Reference topobathy COG whose grid / CRS define the output.
+        """
 
         # Read coordinates from topobathy file
         with rasterio.open(filename_topobathy) as src:
@@ -819,14 +1059,32 @@ class SfincsQuadtreeGrid(MeshComponent):
             dst.write(ii, 1)
 
 
-def binary_search(val_array, vals):
+def binary_search(val_array: np.ndarray, vals: np.ndarray) -> np.ndarray:
+    """Return the position of each ``vals`` entry within ``val_array``.
+
+    Entries that are not present in ``val_array`` are returned as ``-1``.
+    ``val_array`` must be sorted.
+
+    Parameters
+    ----------
+    val_array : np.ndarray
+        Sorted 1-D array to search within.
+    vals : np.ndarray
+        1-D array of values to locate.
+
+    Returns
+    -------
+    np.ndarray
+        1-D ``int`` array of the same length as ``vals`` holding the match
+        index into ``val_array``, or ``-1`` where no match exists.
+    """
     indx = np.searchsorted(val_array, vals)  # ind is size of vals
     not_ok = np.where(indx == len(val_array))[
         0
     ]  # size of vals, points that are out of bounds
-    indx[
-        np.where(indx == len(val_array))[0]
-    ] = 0  # Set to zero to avoid out of bounds error
+    indx[np.where(indx == len(val_array))[0]] = (
+        0  # Set to zero to avoid out of bounds error
+    )
     is_ok = np.where(val_array[indx] == vals)[0]  # size of vals
     indices = np.zeros(len(vals), dtype=int) - 1
     indices[is_ok] = indx[is_ok]
