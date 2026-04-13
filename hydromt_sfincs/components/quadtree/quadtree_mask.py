@@ -729,6 +729,10 @@ class SfincsQuadtreeMask(ModelComponent):
             return False
         if len(self.model.quadtree_grid.data.data_vars) == 0:
             return False
+        # Skip when the mask variable this subclass renders isn't built
+        # yet (e.g. SnapWave mask before ``create`` has run).
+        if self._mask_variable not in self.model.quadtree_grid.data:
+            return False
         return self._overlay.render(
             x=self.face_coordinates[0][:],
             y=self.face_coordinates[1][:],
