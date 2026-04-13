@@ -235,7 +235,7 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
 
 
 def read_xyn(fn: str, crs: int = None):
-    df = pd.read_csv(fn, index_col=False, header=None, sep="\s+").rename(
+    df = pd.read_csv(fn, index_col=False, header=None, sep=r"\s+").rename(
         columns={0: "x", 1: "y"}
     )
     if len(df.columns) > 2:
@@ -299,7 +299,7 @@ def read_timeseries(fn: Union[str, Path], tref: Union[str, datetime]) -> pd.Data
         Dataframe of timeseries with parsed time index.
     """
     tref = parse_datetime(tref)
-    df = pd.read_csv(fn, index_col=0, header=None, sep="\s+")
+    df = pd.read_csv(fn, index_col=0, header=None, sep=r"\s+")
     df.index = pd.to_datetime(df.index.values, unit="s", origin=tref)
     df.columns = df.columns.values.astype(int) - 1  # convert to zero-based index
     df.index.name = "time"
@@ -1526,7 +1526,7 @@ def _downscale_floodmap_da(
             # if rotated grid, use xugrid regridder
             else:
                 # need to convert dep to unstructured to enable xugrid regridder
-                uda_dep = xu.UgridDataArray.from_structured(dep, "xc", "yc")
+                uda_dep = xu.UgridDataArray.from_structured2d(dep, "xc", "yc")
                 regridder = xu.CentroidLocatorRegridder(source=zsmax, target=uda_dep)
                 result = regridder.regrid(zsmax)
                 # map back to structured
@@ -1776,9 +1776,9 @@ def make_regular_grid(
     # CRS/Ugrid handling
     if make_ugrid:
         if rotation != 0.0:
-            da = UgridDataArray.from_structured(da, "xc", "yc")
+            da = UgridDataArray.from_structured2d(da, "xc", "yc")
         else:
-            da = UgridDataArray.from_structured(da)
+            da = UgridDataArray.from_structured2d(da)
         if crs is not None:
             da.grid.set_crs(crs)
     else:

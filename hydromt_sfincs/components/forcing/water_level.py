@@ -123,6 +123,29 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         df.columns.name = "index"
         return df
 
+    def set_boundary_conditions_astro(self, gdf: gpd.GeoDataFrame) -> None:
+        """Populate boundary points and astronomical constituents from a gdf.
+
+        The gdf is expected to have an ``"astro"`` column in which each
+        entry is a pandas DataFrame indexed by constituent name with
+        ``amplitude`` and ``phase`` columns (i.e. the format returned by
+        :py:meth:`cht_tide.model.TideModel.get_data_on_points` with
+        ``format="gdf"``).
+
+        Parameters
+        ----------
+        gdf : gpd.GeoDataFrame
+            Boundary points with per-station constituent data.
+        """
+        if "astro" not in gdf.columns:
+            raise ValueError(
+                "gdf must have an 'astro' column with per-point constituent data."
+            )
+        section_data = list(gdf["astro"])
+        gdf_points = gdf.drop(columns=["astro"])
+        self.set(gdf=gdf_points, merge=False, drop_duplicates=False)
+        self._data = add_constituents(self.data, section_data)
+
     def read_boundary_conditions_astro(self, filename: str | Path = None):
         """Read SFINCS boundary condition astro (.bca) file"""
 
@@ -292,11 +315,8 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         with open(abs_file_path, "w") as fid:
             for ip in self.data.index.values:
-                # Optional: if you have names from your dataset
-                if "name" in self.data.coords:
-                    name = f"sfincs_{int(self.data.name.sel(index=ip).item()):04d}"
-                else:
-                    name = f"sfincs_{ip+1:04d}"
+
+                name = f"sfincs_{ip+1:04d}"
 
                 fid.write(f"[forcing]\n")
                 fid.write(f"Name                            = {name}\n")

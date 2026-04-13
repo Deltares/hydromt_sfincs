@@ -13,17 +13,6 @@ from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import utils
 
-# optional dependency
-try:
-    import datashader as ds
-    import datashader.transfer_functions as tf
-    from datashader.utils import export_image
-
-    HAS_DATASHADER = True
-
-except ImportError:
-    HAS_DATASHADER = False
-
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
 
@@ -58,7 +47,6 @@ class SfincsMask(ModelComponent):
             model=model,
         )
         # For plotting map overlay (This is the only data that is stored in the object! All other data is stored in the model.grid.data["mask"])
-        # self.datashader_dataframe = pd.DataFrame()
 
     @property
     def data(self):
@@ -608,15 +596,3 @@ class SfincsMask(ModelComponent):
         else:
             return False
 
-    def get_datashader_dataframe(self):
-        raise NotImplementedError(
-            "Datashader dataframe not yet implemented for regular models"
-        )
-
-    def clear_datashader_dataframe(self):
-        """Clear the datashader dataframe."""
-        if hasattr(self, "datashader_dataframe"):
-            self.datashader_dataframe = pd.DataFrame()
-
-    def map_overlay(self):
-        raise NotImplementedError("Map overlay not yet implemented for regular models")
