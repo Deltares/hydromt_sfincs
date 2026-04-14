@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from types import SimpleNamespace
 import xarray as xr
 
 # from hydromt.log import setuplog
@@ -89,3 +90,23 @@ def test_quadtree_infiltration(model, quadtree_model):
         mod1.quadtree_grid.data["ks"].where(mod1.quadtree_grid.mask > 0).sum(),
         733.27316619,
     )
+
+
+def test_get_vars_by_infiltration_type(quadtree_model):
+    infil = quadtree_model.quadtree_infiltration
+
+    fake_data = {
+        "qinf": None,
+        "scs": None,
+        "smax": None,
+        "seff": None,
+        "ks": None,
+    }
+
+    # patch internal storage
+    quadtree_model.quadtree_grid._data = fake_data
+
+    write_vars, remove_vars = infil.get_vars_by_infiltration_type("cnb")
+
+    assert set(write_vars) == {"smax", "seff", "ks"}
+    assert set(remove_vars) == {"qinf", "scs"}
