@@ -96,7 +96,6 @@ def make_index_cog(
             bm1 += 1
 
         for jj in range(nrbn):
-
             bn0 = jj * nrcb  # Index of first n in block
             bn1 = min(bn0 + nrcb, n1)  # last n in block
 
