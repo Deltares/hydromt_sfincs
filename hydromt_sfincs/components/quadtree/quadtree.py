@@ -143,25 +143,24 @@ class SfincsQuadtreeGrid(MeshComponent):
             raise FileNotFoundError(f"Quadtree grid file not found: {abs_file_path}")
 
         # load dataset and set CRS
-        with xu.load_dataset(abs_file_path) as ds:
-            ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
+        ds = xu.load_dataset(abs_file_path)
+        ds.close()
+        ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
 
-            # rename variables to match Python conventions
-            # ds = ds.rename({"z": "dep"}) if "z" in ds else ds
-            # and for backwards compatibility msk (old) -> mask (new)
-            ds = ds.rename({"msk": "mask"}) if "msk" in ds else ds
-            ds = (
-                ds.rename({"snapwave_msk": "snapwave_mask"})
-                if "snapwave_msk" in ds
-                else ds
-            )
+        # rename variables to match Python conventions
+        # ds = ds.rename({"z": "dep"}) if "z" in ds else ds
+        # and for backwards compatibility msk (old) -> mask (new)
+        ds = ds.rename({"msk": "mask"}) if "msk" in ds else ds
+        ds = (
+            ds.rename({"snapwave_msk": "snapwave_mask"}) if "snapwave_msk" in ds else ds
+        )
 
-            # store attributes
-            self.nr_cells = ds.sizes["mesh2d_nFaces"]
-            for key, value in ds.attrs.items():
-                setattr(self, key, value)
+        # store attributes
+        self.nr_cells = ds.sizes["mesh2d_nFaces"]
+        for key, value in ds.attrs.items():
+            setattr(self, key, value)
 
-            self._data = ds
+        self._data = ds
 
         # Make sure epsg is stored in the config as well
         self.model.config.set("epsg", self.model.crs.to_epsg())
@@ -182,9 +181,10 @@ class SfincsQuadtreeGrid(MeshComponent):
         if len(variables) > 0:
             for var in variables:
                 try:
-                    with xu.load_dataset(var["file_name"]) as ds:
-                        ds.grid.set_crs(self.model.crs)
-                        self.set(ds)
+                    ds = xu.load_dataset(var["file_name"])
+                    ds.close()
+                    ds.grid.set_crs(self.model.crs)
+                    self.set(ds)
                 except Exception as e:
                     logger.error(f"Error reading variable {var['variable']}: {e}")
                     continue
@@ -230,7 +230,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             for var in variables:
                 if var["variable"] == "infiltration":
                     # determine which infiltration variables to write based on the infiltration type
-                    inftype = self.model.config.get("infiltrationtype")
+                    inftype = self.model.config.get("infiltration_type")
                     (
                         write_vars,
                         remove_vars,

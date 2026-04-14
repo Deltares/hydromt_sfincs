@@ -20,27 +20,27 @@ _ATTRS = {
     "qinf": {
         "standard_name": "infiltration rate",
         "unit": "mm.hr-1",
-        "infiltrationtype": "c2d",
+        "infiltration_type": "c2d",
     },
     "scs": {
         "standard_name": "potential soil moisture retention",
         "unit": "in",
-        "infiltrationtype": "cna",
+        "infiltration_type": "cna",
     },
     "smax": {
         "standard_name": "potential maximum soil moisture retention",
         "unit": "m",
-        "infiltrationtype": "cnb",
+        "infiltration_type": "cnb",
     },
     "seff": {
         "standard_name": "effective potential maximum soil moisture retention",
         "unit": "m",
-        "infiltrationtype": "cnb",
+        "infiltration_type": "cnb",
     },
     "ks": {
         "standard_name": "saturated hydraulic conductivity",
         "unit": "mm.hr-1",
-        "infiltrationtype": "cnb",
+        "infiltration_type": "cnb",
     },
 }
 
@@ -82,14 +82,14 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         vars_to_write = {
             var
             for var, attrs in self.attrs.items()
-            if attrs.get("infiltrationtype") == infiltration_type
+            if attrs.get("infiltration_type") == infiltration_type
         }
 
         # Variables that belong to other types
         vars_other_types = {
             var
             for var, attrs in self.attrs.items()
-            if attrs.get("infiltrationtype") != infiltration_type
+            if attrs.get("infiltration_type") != infiltration_type
         }
 
         # Only remove variables that actually exist in self.data
@@ -202,8 +202,8 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         # Update config: remove default inf and set qinf map
         self.model.config.update(
             {
-                "infiltrationfile": "infiltration.nc",
-                "infiltrationtype": "c2d",
+                "infiltration_file": "infiltration.nc",
+                "infiltration_type": "c2d",
                 "qinf": None,
             }
         )
@@ -284,8 +284,8 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         # Update config: remove default inf and set scs map
         self.model.config.update(
             {
-                "infiltrationfile": "infiltration.nc",
-                "infiltrationtype": "cna",
+                "infiltration_file": "infiltration.nc",
+                "infiltration_type": "cna",
                 "qinf": None,
             }
         )
@@ -390,8 +390,8 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         # Update config: remove default inf and set scs map
         self.model.config.update(
             {
-                "infiltrationfile": "infiltration.nc",
-                "infiltrationtype": "cnb",
+                "infiltration_file": "infiltration.nc",
+                "infiltration_type": "cnb",
                 "qinf": None,
             }
         )
