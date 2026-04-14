@@ -666,17 +666,13 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         if write_file:
             self.write_boundary_conditions_timeseries()
 
-    def create_boundary_points_from_mask(self, bnd_dist=5000.0, method="absolute"):
+    def create_boundary_points_from_mask(self, bnd_dist=5000.0):
         """Get boundary points from waterlevel boundary cells of mask in grid or quadtree grid.
 
         Parameters
         ----------
         bnd_dist : float, optional
             Distance [m] between boundary points, by default 5000.0.
-        method : str, optional
-            Method to use for creating boundary points. When "absolute", points are created at a fixed distance
-            of bnd_dist along the boundary. When "relative", points are created such that there is always a point
-            at the start and end of the boundary and the distance between points is approximately bnd_dist.
         """
 
         # select mask depending on grid type
@@ -697,7 +693,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         # create boundary points from mask boundary vector
         gdf_points = utils.create_boundary_points(
-            gdf_msk2, bnd_dist=bnd_dist, method=method, crs=self.model.crs
+            gdf_msk2, bnd_dist=bnd_dist, crs=self.model.crs
         )
 
         # set locations

@@ -478,7 +478,7 @@ def get_bounds_vector(
     return gdf_msk
 
 
-def create_boundary_points(gdf_lines, bnd_dist, method="absolute", crs=None):
+def create_boundary_points(gdf_lines, bnd_dist, method="normalized", crs=None):
     """
     Generate points along line geometries in a GeoDataFrame.
 

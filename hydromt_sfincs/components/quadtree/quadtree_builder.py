@@ -1080,7 +1080,7 @@ class QuadtreeGrid:
         print("Removing inactive cells ...")
 
         # Set crs
-        self.crs = CRS.from_epsg(self.data["crs"].values)
+        self.crs = self.data.ugrid.grid.crs
 
         # In the xugrid data, the indices are 1-based, so we need to subtract 1
         n = self.data["n"].values[:] - 1

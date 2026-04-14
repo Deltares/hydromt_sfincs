@@ -729,17 +729,13 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         self.set_timeseries(df_wd, varname="wd")
         self.set_timeseries(df_ds, varname="ds")
 
-    def create_boundary_points_from_mask(self, bnd_dist=5000.0, method="absolute"):
+    def create_boundary_points_from_mask(self, bnd_dist=5000.0):
         """Get boundary points from snapwave boundary cells of mask in quadtree grid.
 
         Parameters
         ----------
         bnd_dist : float, optional
             Distance [m] between boundary points, by default 5000.0.
-        method : str, optional
-            Method to use for creating boundary points. When "absolute", points are created at a fixed distance
-            of bnd_dist along the boundary. When "relative", points are created such that there is always a point
-            at the start and end of the boundary and the distance between points is approximately bnd_dist.
         """
 
         if not self.model.grid_type == "quadtree":
@@ -758,7 +754,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         # create boundary points from mask boundary vector
         gdf_points = utils.create_boundary_points(
-            gdf_msk2, bnd_dist=bnd_dist, method=method, crs=self.model.crs
+            gdf_msk2, bnd_dist=bnd_dist, crs=self.model.crs
         )
 
         # set locations
