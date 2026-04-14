@@ -539,7 +539,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             discharge,
             bbox=self.model.bbox,
             buffer=2,
-            time_tuple=self.model.get_model_time(),  # model time
+            time_range=self.model.get_model_time(),  # model time
             variables=["discharge"],
             single_var_as_array=False,
         )
