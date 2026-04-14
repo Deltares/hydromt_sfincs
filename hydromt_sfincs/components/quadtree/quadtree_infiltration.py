@@ -78,11 +78,24 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         pass
 
     def get_vars_by_infiltration_type(self, infiltration_type):
-        return [
+        # Variables that belong to the requested type
+        vars_to_write = {
             var
             for var, attrs in self.attrs.items()
             if attrs.get("infiltrationtype") == infiltration_type
-        ]
+        }
+
+        # Variables that belong to other types
+        vars_other_types = {
+            var
+            for var, attrs in self.attrs.items()
+            if attrs.get("infiltrationtype") != infiltration_type
+        }
+
+        # Only remove variables that actually exist in self.data
+        vars_to_remove = vars_other_types.intersection(self.data.keys())
+
+        return list(vars_to_write), list(vars_to_remove)
 
     # Function to create constant spatially varying infiltration
     @hydromt_step
