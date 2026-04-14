@@ -158,9 +158,6 @@ class SfincsRiverBoundaryPoints(ModelComponent):
 
         if within.any() == True:
             if within.all() == False:
-                # keep geometries that fall within region
-                gdf = gdf[within]
-
                 # write away the names of geometries that are removed
                 if "name" in gdf.columns:
                     gdf_name = gdf.loc[~within, "name"]
@@ -168,6 +165,9 @@ class SfincsRiverBoundaryPoints(ModelComponent):
                         "Some of the river boundary points fall out of model domain. Removing points: "
                         + str(gdf_name.values)
                     )
+
+                # keep geometries that fall within region
+                gdf = gdf[within]
         else:
             raise ValueError("None of river boundary points fall within model domain.")
         if merge and not self.data.empty:
