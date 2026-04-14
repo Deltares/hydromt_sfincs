@@ -618,11 +618,22 @@
 <h1>hydromt_sfincs.SfincsModel.write<a class="headerlink" href="#hydromt-sfincs-sfincsmodel-write" title="Link to this heading">#</a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="hydromt_sfincs.SfincsModel.write">
-<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.write" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">SfincsModel.</span></span><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">write_batch_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/sfincs.html#SfincsModel.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.SfincsModel.write" title="Link to this definition">#</a></dt>
 <dd><p>Write SfincsModel to disk.</p>
 <p>This methods writes all components that actually contain data to the specified
 model root folder. Finally, the configuration file (sfincs.inp) is written.</p>
-<p>For more information, see specific component write methods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>write_batch_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – If True, also write a platform-appropriate launcher script
+(<code class="docutils literal notranslate"><span class="pre">run.bat</span></code> on Windows, <code class="docutils literal notranslate"><span class="pre">run.sh</span></code> elsewhere) via
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">write_batch_file()</span></code>. Requires <code class="docutils literal notranslate"><span class="pre">self.exe_path</span></code> to be
+set. Default <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>information</strong> (<em>For more</em>)</p></li>
+<li><p><strong>methods.</strong> (<em>see specific component write</em>)</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
