@@ -77,7 +77,6 @@ def test_xu_open_dataset_overwrite(tmp_dir):
 
     # lazy load
     ds = xu.open_dataset(fn_copy)
-    ds.close()
 
     # now perform a computation on the dataset
     ds = ds.ugrid.to_dataset()
