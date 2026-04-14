@@ -491,6 +491,7 @@
     <span class="n">SfincsCrossSections</span><span class="p">,</span>
     <span class="n">SfincsDrainageStructures</span><span class="p">,</span>
     <span class="n">SfincsObservationPoints</span><span class="p">,</span>
+    <span class="n">SfincsRunupGauges</span><span class="p">,</span>
     <span class="n">SfincsThinDams</span><span class="p">,</span>
     <span class="n">SfincsWaveMakers</span><span class="p">,</span>
     <span class="n">SfincsWeirs</span><span class="p">,</span>
@@ -538,6 +539,7 @@
     <span class="n">_GEOMETRY_COMPONENTS</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;observation_points&quot;</span><span class="p">:</span> <span class="n">SfincsObservationPoints</span><span class="p">,</span>
         <span class="s2">&quot;cross_sections&quot;</span><span class="p">:</span> <span class="n">SfincsCrossSections</span><span class="p">,</span>
+        <span class="s2">&quot;runup_gauges&quot;</span><span class="p">:</span> <span class="n">SfincsRunupGauges</span><span class="p">,</span>
         <span class="s2">&quot;thin_dams&quot;</span><span class="p">:</span> <span class="n">SfincsThinDams</span><span class="p">,</span>
         <span class="s2">&quot;weirs&quot;</span><span class="p">:</span> <span class="n">SfincsWeirs</span><span class="p">,</span>
         <span class="s2">&quot;wave_makers&quot;</span><span class="p">:</span> <span class="n">SfincsWaveMakers</span><span class="p">,</span>
@@ -921,6 +923,7 @@
         <span class="n">_GEOMS</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;observation_points&quot;</span><span class="p">:</span> <span class="s2">&quot;obs&quot;</span><span class="p">,</span>
             <span class="s2">&quot;cross_sections&quot;</span><span class="p">:</span> <span class="s2">&quot;crs&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;runup_gauges&quot;</span><span class="p">:</span> <span class="s2">&quot;rug&quot;</span><span class="p">,</span>
             <span class="s2">&quot;weirs&quot;</span><span class="p">:</span> <span class="s2">&quot;weir&quot;</span><span class="p">,</span>
             <span class="s2">&quot;thin_dams&quot;</span><span class="p">:</span> <span class="s2">&quot;thd&quot;</span><span class="p">,</span>
             <span class="s2">&quot;drainage_structures&quot;</span><span class="p">:</span> <span class="s2">&quot;drn&quot;</span><span class="p">,</span>
@@ -1366,6 +1369,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">cross_sections</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsCrossSections</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.geometries.cross_sections.SfincsCrossSections`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;cross_sections&quot;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">runup_gauges</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsRunupGauges</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.geometries.runup_gauges.SfincsRunupGauges`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;runup_gauges&quot;</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">thin_dams</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsThinDams</span><span class="p">:</span>
