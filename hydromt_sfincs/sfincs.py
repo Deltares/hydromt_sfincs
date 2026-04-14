@@ -66,6 +66,7 @@ from hydromt_sfincs.components.geometries import (
     SfincsCrossSections,
     SfincsDrainageStructures,
     SfincsObservationPoints,
+    SfincsRunupGauges,
     SfincsThinDams,
     SfincsWaveMakers,
     SfincsWeirs,
@@ -111,6 +112,7 @@ class SfincsModel(Model):
     _GEOMETRY_COMPONENTS = {
         "observation_points": SfincsObservationPoints,
         "cross_sections": SfincsCrossSections,
+        "runup_gauges": SfincsRunupGauges,
         "thin_dams": SfincsThinDams,
         "weirs": SfincsWeirs,
         "wave_makers": SfincsWaveMakers,
@@ -544,6 +546,7 @@ class SfincsModel(Model):
         _GEOMS = {
             "observation_points": "obs",
             "cross_sections": "crs",
+            "runup_gauges": "rug",
             "weirs": "weir",
             "thin_dams": "thd",
             "drainage_structures": "drn",
@@ -988,6 +991,11 @@ class SfincsModel(Model):
     def cross_sections(self) -> SfincsCrossSections:
         """Instance of :py:class:`~hydromt_sfincs.components.geometries.cross_sections.SfincsCrossSections`."""
         return self.components["cross_sections"]
+
+    @property
+    def runup_gauges(self) -> SfincsRunupGauges:
+        """Instance of :py:class:`~hydromt_sfincs.components.geometries.runup_gauges.SfincsRunupGauges`."""
+        return self.components["runup_gauges"]
 
     @property
     def thin_dams(self) -> SfincsThinDams:
