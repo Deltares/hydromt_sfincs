@@ -45,6 +45,7 @@ __all__ = [
     "read_timeseries",
     "write_timeseries",
     "get_bounds_vector",
+    "create_boundary_points",
     "mask2gdf",
     "read_xy",
     "write_xy",  # defined in hydromt.io
@@ -359,6 +360,12 @@ def get_bounds_vector(
     gdf_msk: gpd.GeoDataFrame
         GeoDataFrame with line geometries of mask boundaries.
     """
+    # check if da_msk has values greater than 1, if not raise error
+    if da_msk.max() <= 1:
+        raise ValueError(
+            "The mask should have values greater than 1 to determine boundary cells."
+        )
+
     if isinstance(da_msk, xr.DataArray):
         gdf_msk = da_msk.raster.vectorize()
         # small buffer for rounding errors
@@ -469,6 +476,51 @@ def get_bounds_vector(
 
         gdf_msk = gpd.GeoDataFrame(lines, crs=da_msk.grid.crs)
     return gdf_msk
+
+
+def create_boundary_points(gdf_lines, bnd_dist, method="normalized", crs=None):
+    """
+    Generate points along line geometries in a GeoDataFrame.
+
+    Parameters
+    ----------
+    gdf_lines : GeoDataFrame
+        GeoDataFrame containing line geometries.
+    bnd_dist : float
+        Distance between points (for 'absolute') or approximate segment length (for 'normalized').
+    method : str, optional
+        'absolute' for fixed-distance spacing,
+        'normalized' for equal fraction spacing along each line.
+    crs : CRS, optional
+        Coordinate reference system for the output GeoDataFrame.
+
+    Returns
+    -------
+    GeoDataFrame
+        Points along the input line geometries.
+    """
+    points = []
+
+    for _, row in gdf_lines.iterrows():
+        line = row.geometry
+        # TODO discuss whether these methods are needed, probaly we could just pick one
+        if method == "absolute":
+            distances = np.arange(0, line.length + bnd_dist, bnd_dist)
+            for d in distances:
+                d = min(d, line.length)
+                pt = line.interpolate(d)
+                points.append((pt.x, pt.y))
+        elif method == "normalized":
+            num_points = int(line.length / bnd_dist) + 2
+            for i in range(num_points):
+                t = i / float(num_points - 1)
+                pt = line.interpolate(t, normalized=True)
+                points.append((pt.x, pt.y))
+        else:
+            raise ValueError(f"Unknown method: {method}")
+
+    gdf_points = gpd.GeoDataFrame(geometry=gpd.points_from_xy(*zip(*points)), crs=crs)
+    return gdf_points
 
 
 def mask2gdf(
