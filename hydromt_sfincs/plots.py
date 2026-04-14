@@ -368,7 +368,7 @@ def plot_basemap(
             "No 'mask' (sfincs.mask) found in ds required to plot the model bounds "
             "Set plot_bounds=False or add 'mask' to ds"
         )
-    elif plot_bounds and (ds["mask"] >= 1).any():
+    elif plot_bounds and (ds["mask"] > 1).any():
         gdf_msk = get_bounds_vector(ds["mask"])
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
         gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]

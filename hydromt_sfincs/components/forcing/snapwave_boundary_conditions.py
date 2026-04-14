@@ -407,12 +407,12 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         gdf_locs, df_ts = None, None
         tstart, tstop = self.model.get_model_time()  # model time
 
-        # Create a buffer around the snapwave boundary cells (msk==2)
+        # Vectorize the the snapwave boundary cells (msk==2) into lines stored in a GeoDataFrame
+        # Combined with the buffer, this is used to select the relevant locations from the geodataset or locations input.
         gdf_msk = utils.get_bounds_vector(
             da_msk=self.model.quadtree_grid.data["snapwave_mask"],
         )
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
-        gdf_msk2["geometry"] = gdf_msk2.buffer(buffer)
         # gdf_msk2 is now used to clip geodataset to get wanted locations
         region = gdf_msk2
 

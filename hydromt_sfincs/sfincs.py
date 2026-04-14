@@ -169,7 +169,7 @@ class SfincsModel(Model):
         """
 
         # define some default model properties
-        self.grid_type = "regular"
+        self._grid_type = None
         self.write_gis = write_gis
 
         super().__init__(
@@ -195,6 +195,15 @@ class SfincsModel(Model):
                 logger.removeHandler(handler)
 
     ## Real properties of the model ##
+    @property
+    def grid_type(self):
+        """Returns the grid type of the model."""
+        if self._grid_type is None:
+            self._grid_type = "regular"
+            if self.root.is_reading_mode():
+                self.config.read()
+        return self._grid_type
+
     @property
     def crs(self) -> CRS | None:
         """Returns the model crs"""

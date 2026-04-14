@@ -1,5 +1,6 @@
 # import all components that are stored in the subfolders
 from .quadtree import *
+from .quadtree_mixin import *
 from .quadtree_elevation import *
 from .quadtree_roughness import *
 from .quadtree_infiltration import *
