@@ -1,5 +1,6 @@
 from datetime import datetime
 import gc
+import sys
 from os.path import join, dirname, abspath
 import numpy as np
 import os
@@ -68,6 +69,11 @@ def test_xu_open_dataset_delete(tmp_dir):
     os.remove(fn_copy)
 
 
+@pytest.mark.skipif(
+    sys.platform != "win32",
+    reason="Windows-specific file-lock behaviour; POSIX allows overwriting "
+    "a file held open by a lazy reader, which fails mid-write instead.",
+)
 def test_xu_open_dataset_overwrite(tmp_dir):
     # copy the test data to the tmp_path
     fn = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
