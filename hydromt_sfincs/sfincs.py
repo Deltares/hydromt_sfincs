@@ -9,7 +9,7 @@ import logging
 import os
 from os.path import dirname, join
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import geopandas as gpd
 import numpy as np
@@ -147,7 +147,7 @@ class SfincsModel(Model):
         mode: str = "w",
         write_gis: bool = True,
         data_libs: Union[List[str], str] = None,
-        exe_path: Optional[str] = None,
+        exe_path: str = None,
         **catalog_keys,
     ):
         """
@@ -188,7 +188,7 @@ class SfincsModel(Model):
             instance = cls(self)
             self.add_component(name, instance)
 
-    def write_batch_file(self, filename: Optional[str] = None) -> Path:
+    def write_batch_file(self, filename: str = None) -> Path:
         """Write a platform-appropriate launcher script for SFINCS.
 
         On Windows this emits ``run.bat`` (``set HDF5_USE_FILE_LOCKING``);
@@ -218,16 +218,13 @@ class SfincsModel(Model):
         if is_windows:
             exe = Path(self.exe_path) / "sfincs.exe"
             script_path.write_text(
-                "set HDF5_USE_FILE_LOCKING=FALSE\n"
-                f"{exe}\n",
+                "set HDF5_USE_FILE_LOCKING=FALSE\n" f"{exe}\n",
                 encoding="ascii",
             )
         else:
             exe = Path(self.exe_path) / "sfincs"
             script_path.write_text(
-                "#!/bin/bash\n"
-                "export HDF5_USE_FILE_LOCKING=FALSE\n"
-                f'"{exe}"\n',
+                "#!/bin/bash\n" "export HDF5_USE_FILE_LOCKING=FALSE\n" f'"{exe}"\n',
                 encoding="ascii",
             )
             # Mark executable (ignore on systems that don't support it).
