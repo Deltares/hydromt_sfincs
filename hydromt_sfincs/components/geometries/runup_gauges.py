@@ -56,9 +56,7 @@ class SfincsRunupGauges(ModelComponent):
     @property
     def gdf(self) -> gpd.GeoDataFrame:
         """Runup gauge lines as a GeoDataFrame (alias for ``data``)."""
-        if self._data is None:
-            self._initialize()
-        return self._data
+        return self.data
 
     @property
     def nr_lines(self) -> int:
@@ -70,7 +68,7 @@ class SfincsRunupGauges(ModelComponent):
     @property
     def list_names(self) -> List[str]:
         """Return list of runup gauge names."""
-        if self.data.empty:
+        if self.nr_lines == 0:
             return []
         return list(self.data["name"])
 
@@ -169,9 +167,7 @@ class SfincsRunupGauges(ModelComponent):
             raise ValueError("All runup gauges fall outside model domain!")
 
         if merge and self.data is not None and not self.data.empty:
-            gdf = gpd.GeoDataFrame(
-                pd.concat([self.data, gdf], ignore_index=True)
-            )
+            gdf = gpd.GeoDataFrame(pd.concat([self.data, gdf], ignore_index=True))
             logger.info("Adding new runup gauges to existing ones.")
 
         self._data = gdf
@@ -232,9 +228,7 @@ class SfincsRunupGauges(ModelComponent):
             End point coordinates.
         """
         line = LineString([(x0, y0), (x1, y1)])
-        gdf = gpd.GeoDataFrame(
-            {"name": [name], "geometry": [line]}, crs=self.model.crs
-        )
+        gdf = gpd.GeoDataFrame({"name": [name], "geometry": [line]}, crs=self.model.crs)
         self.set(gdf, merge=True)
 
     def delete(self, index: Union[List[int], int]) -> None:
