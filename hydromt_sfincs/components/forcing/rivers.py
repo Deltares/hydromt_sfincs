@@ -366,12 +366,6 @@ class SfincsRivers(ModelComponent):
             internal_distance=internal_dist,
             logger=logger,
         )
-        if gdf_out.empty:
-            logger.info("No river source points found.")
-            return
-
-        if gdf_out_include:
-            gdf_out = gdf_out_include
 
         if gdf_out.empty:
             self.logger.info("No river outflow points found.")
@@ -389,16 +383,6 @@ class SfincsRivers(ModelComponent):
             if "rivwth" in gdf_out.columns:
                 river_width = gdf_out["rivwth"].fillna(river_width)
             gdf_out["geometry"] = gdf_out.buffer(river_width / 2)
-            # TODO remove points near waterlevel boundary cells
-            # if np.any(self.mask == 2) and btype == "outflow":
-            #     gdf_msk2 = utils.get_bounds_vector(self.mask)
-            #     # NOTE: this should be a single geom
-            #     geom = gdf_msk2[gdf_msk2["value"] == 2].union_all()
-            #     gdf_out = gdf_out[~gdf_out.intersects(geom)]
-            # TODO remove outflow points near source points
-            # if "dis" in self.forcing and len(gdf_out) > 0:
-            #     geom = self.forcing["dis"].vector.to_gdf().union_all()
-            #     gdf_out = gdf_out[~gdf_out.intersects(geom)]
 
         # update mask
         n = len(gdf_out.index)
@@ -426,7 +410,6 @@ class SfincsRivers(ModelComponent):
             merge=False,
         )
 
-        self._data = self.model.river_boundary_points.data
         # keep river centerlines
         if keep_rivers_geom and len(gdf_riv) > 0:
             self._data = gdf_riv
