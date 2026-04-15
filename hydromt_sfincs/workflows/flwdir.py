@@ -204,6 +204,7 @@ def river_source_points(
     logger.info(f"Found {gdf_pnt.index.size} {src_type} points.")
     return gdf_pnt
 
+
 def river_outflow_points(
     gdf_riv: gpd.GeoDataFrame,
     gdf_mask: gpd.GeoDataFrame,
@@ -328,9 +329,11 @@ def river_outflow_points(
             internal_distance=internal_distance,
             logger=logger,
         )
-        logger.info(f"Found {gdf_pnt.index.size} {src_type} points after processing downstream boundaries.")
+        logger.info(
+            f"Found {gdf_pnt.index.size} {src_type} points after processing downstream boundaries."
+        )
         return gdf_pnt
-    
+
     else:
         logger.info(f"Found {gdf_pnt.index.size} {src_type} points.")
         return gdf_pnt
@@ -344,7 +347,6 @@ def river_downstream_boundary_points(
     internal_distance: float = 1000,
     logger: logging.Logger = logger,
 ) -> gpd.GeoDataFrame:
-
     # collect lines in a list (faster & safer than repeated pd.concat)
     out_lines = []
 
@@ -375,9 +377,7 @@ def river_downstream_boundary_points(
         pnt_buffer_near = p.buffer(100)
 
         gdf_riv_in = gdf_riv[gdf_riv.intersects(pnt_buffer)]
-        gdf_riv_in = gdf_riv_in[~gdf_riv_in.within(pnt_buffer)].reset_index(
-            drop=True
-        )
+        gdf_riv_in = gdf_riv_in[~gdf_riv_in.within(pnt_buffer)].reset_index(drop=True)
 
         if gdf_riv_in.empty:
             logger.warning(
@@ -420,9 +420,9 @@ def river_downstream_boundary_points(
             start_idx = int(start_row["idx"])
 
             if target_idx == start_idx:
-                full_line = gdf_riv.loc[
-                    gdf_riv["idx"] == start_idx, "geometry"
-                ].values[0]
+                full_line = gdf_riv.loc[gdf_riv["idx"] == start_idx, "geometry"].values[
+                    0
+                ]
             else:
                 queue = deque([start_idx])
                 parent = {start_idx: None}
@@ -490,4 +490,3 @@ def river_downstream_boundary_points(
         f"Found {len(gdf_lines)} internal outflow lines (from {gdf_pnt.index.size} outflow points)."
     )
     return gdf_lines
-

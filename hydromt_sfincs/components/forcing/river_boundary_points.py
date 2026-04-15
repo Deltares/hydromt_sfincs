@@ -213,7 +213,7 @@ class SfincsRiverBoundaryPoints(ModelComponent):
             if slope is None:
                 if self.model.grid_type == "regular":
                     # --- regular grid ---
-                    if (len(self.model.subgrid.data.data_vars) > 0):
+                    if len(self.model.subgrid.data.data_vars) > 0:
                         # regular + subgrid
                         z = self.model.subgrid.data.z_zmin
                     else:
@@ -225,16 +225,16 @@ class SfincsRiverBoundaryPoints(ModelComponent):
 
                 else:
                     # --- quadtree grid ---
-                    if (len(self.model.quadtree_subgrid.data.data_vars) > 0):
+                    if len(self.model.quadtree_subgrid.data.data_vars) > 0:
                         # quadtree + subgrid
                         z = self.model.quadtree_subgrid.data.z_zmin.ugrid
                     else:
                         # quadtree only
                         z = self.model.quadtree_grid.data.z.ugrid
-                    
+
                     z_in = z.sel_points(x=p_in.x, y=p_in.y).item()
                     z_on = z.sel_points(x=p_on.x, y=p_on.y).item()
-                
+
                 denom = internal_dist  # or line.length if preferred
                 slope_i = 0.0 if denom == 0 else (z_in - z_on) / denom
 
