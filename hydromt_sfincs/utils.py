@@ -503,7 +503,7 @@ def create_boundary_points(gdf_lines, bnd_dist, method="normalized", crs=None):
 
     for _, row in gdf_lines.iterrows():
         line = row.geometry
-        # TODO discuss whether these methods are needed, probaly we could just pick one
+
         if method == "absolute":
             distances = np.arange(0, line.length + bnd_dist, bnd_dist)
             for d in distances:

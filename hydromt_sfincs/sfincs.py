@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import os
 from os.path import dirname, join
+from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 import geopandas as gpd
@@ -65,6 +66,7 @@ from hydromt_sfincs.components.geometries import (
     SfincsCrossSections,
     SfincsDrainageStructures,
     SfincsObservationPoints,
+    SfincsRunupGauges,
     SfincsThinDams,
     SfincsWaveMakers,
     SfincsWeirs,
@@ -110,6 +112,7 @@ class SfincsModel(Model):
     _GEOMETRY_COMPONENTS = {
         "observation_points": SfincsObservationPoints,
         "cross_sections": SfincsCrossSections,
+        "runup_gauges": SfincsRunupGauges,
         "thin_dams": SfincsThinDams,
         "weirs": SfincsWeirs,
         "wave_makers": SfincsWaveMakers,
@@ -146,6 +149,7 @@ class SfincsModel(Model):
         mode: str = "w",
         write_gis: bool = True,
         data_libs: Union[List[str], str] = None,
+        exe_path: str = None,
         **catalog_keys,
     ):
         """
@@ -162,6 +166,9 @@ class SfincsModel(Model):
             Write model files additionally to geotiff and geojson, by default True
         data_libs: List, str
             List of data catalog yaml files, by default None
+        exe_path: str, optional
+            Folder containing the ``sfincs.exe`` binary; used by
+            :meth:`write_batch_file`. Defaults to ``None``.
         **catalog_keys:
             Additional keyword arguments to be passed down to the DataCatalog.
         """
@@ -169,6 +176,7 @@ class SfincsModel(Model):
         # define some default model properties
         self._grid_type = None
         self.write_gis = write_gis
+        self.exe_path = exe_path
 
         super().__init__(
             root=root,
@@ -181,6 +189,53 @@ class SfincsModel(Model):
         for name, cls in self._ALL_COMPONENTS.items():
             instance = cls(self)
             self.add_component(name, instance)
+
+    def write_batch_file(self, filename: str = None) -> Path:
+        """Write a platform-appropriate launcher script for SFINCS.
+
+        On Windows this emits ``run.bat`` (``set HDF5_USE_FILE_LOCKING``);
+        on Linux / macOS it emits ``run.sh`` (``#!/bin/bash`` + ``export``
+        + executable bit). The SFINCS binary itself is expected to be
+        ``sfincs.exe`` on Windows and ``sfincs`` elsewhere.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Override the output file name. Defaults to ``run.bat`` on
+            Windows and ``run.sh`` on other platforms.
+
+        Returns
+        -------
+        Path
+            The path of the written launcher script.
+        """
+        if not self.exe_path:
+            raise ValueError(
+                "exe_path not set on SfincsModel; cannot write launcher script."
+            )
+        is_windows = os.name == "nt"
+        if filename is None:
+            filename = "run.bat" if is_windows else "run.sh"
+        script_path = Path(self.root.path) / filename
+        if is_windows:
+            exe = Path(self.exe_path) / "sfincs.exe"
+            script_path.write_text(
+                "set HDF5_USE_FILE_LOCKING=FALSE\n" f"{exe}\n",
+                encoding="ascii",
+            )
+        else:
+            exe = Path(self.exe_path) / "sfincs"
+            script_path.write_text(
+                "#!/bin/bash\n" "export HDF5_USE_FILE_LOCKING=FALSE\n" f'"{exe}"\n',
+                encoding="ascii",
+            )
+            # Mark executable (ignore on systems that don't support it).
+            try:
+                st = script_path.stat().st_mode
+                script_path.chmod(st | 0o111)
+            except OSError:
+                pass
+        return script_path
 
     def __del__(self):
         """Close the model and remove the logger file handler."""
@@ -267,11 +322,19 @@ class SfincsModel(Model):
                 logger.warning(f"Could not read component {name}: {e}")
                 continue
 
-    def write(self):
+    def write(self, write_batch_file: bool = False):
         """Write SfincsModel to disk.
 
         This methods writes all components that actually contain data to the specified
         model root folder. Finally, the configuration file (sfincs.inp) is written.
+
+        Parameters
+        ----------
+        write_batch_file : bool, optional
+            If True, also write a platform-appropriate launcher script
+            (``run.bat`` on Windows, ``run.sh`` elsewhere) via
+            :meth:`write_batch_file`. Requires ``self.exe_path`` to be
+            set. Default ``False``.
 
         For more information, see specific component write methods.
         """
@@ -297,6 +360,10 @@ class SfincsModel(Model):
                 root=join(self.root.path, "gis"),
                 logger=logger,
             )
+
+        # Optional launcher script (opt-in; DDB passes True explicitly).
+        if write_batch_file:
+            self.write_batch_file()
 
     def clear_spatial_components(self):
         """Clear all spatial components."""
@@ -479,6 +546,7 @@ class SfincsModel(Model):
         _GEOMS = {
             "observation_points": "obs",
             "cross_sections": "crs",
+            "runup_gauges": "rug",
             "weirs": "weir",
             "thin_dams": "thd",
             "drainage_structures": "drn",
@@ -923,6 +991,11 @@ class SfincsModel(Model):
     def cross_sections(self) -> SfincsCrossSections:
         """Instance of :py:class:`~hydromt_sfincs.components.geometries.cross_sections.SfincsCrossSections`."""
         return self.components["cross_sections"]
+
+    @property
+    def runup_gauges(self) -> SfincsRunupGauges:
+        """Instance of :py:class:`~hydromt_sfincs.components.geometries.runup_gauges.SfincsRunupGauges`."""
+        return self.components["runup_gauges"]
 
     @property
     def thin_dams(self) -> SfincsThinDams:

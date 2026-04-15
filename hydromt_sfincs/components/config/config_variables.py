@@ -575,6 +575,7 @@ class SfincsConfigVariables(BaseSettings):
     crsfile: str | None = Field(
         None, description="Name of the cross-section lines input file"
     )
+    rugfile: str | None = Field(None, description="Name of the runup gauges input file")
     storevelmax: int | None = Field(
         0,
         ge=0,
