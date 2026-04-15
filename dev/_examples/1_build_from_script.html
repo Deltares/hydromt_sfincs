@@ -564,10 +564,10 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:34:02,789 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2026-04-15 11:34:02,790 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2026-04-15 11:34:03,587 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0.dev0).
-2026-04-15 11:34:03,588 - hydromt.model.model - model - WARNING - No region component found in components.
+2026-04-15 11:49:26,333 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-04-15 11:49:26,334 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-04-15 11:49:27,186 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0.dev0).
+2026-04-15 11:49:27,187 - hydromt.model.model - model - WARNING - No region component found in components.
 </pre></div></div>
 </div>
 </section>
@@ -593,8 +593,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:34:03,595 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2026-04-15 11:34:03,609 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
+2026-04-15 11:49:27,194 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2026-04-15 11:49:27,207 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
 </pre></div></div>
 </div>
 <p>The grid that we just created is described in the SFINCS configuration with x0, y0, dx, dy, mmax, nmax, rotation and epsg. In case you would have known these parameters before, you can also create a grid using <code class="docutils literal notranslate"><span class="pre">SfincsModel.grid.create()</span></code>.</p>
@@ -623,73 +623,104 @@
  &#39;tref&#39;: datetime.datetime(2026, 4, 15, 0, 0),
  &#39;tstart&#39;: datetime.datetime(2026, 4, 15, 0, 0),
  &#39;tstop&#39;: datetime.datetime(2026, 4, 16, 0, 0),
- &#39;tspinup&#39;: None,
- &#39;t0out&#39;: None,
- &#39;t1out&#39;: None,
- &#39;dtmapout&#39;: 3600.0,
- &#39;dtmaxout&#39;: 86400.0,
- &#39;dtrstout&#39;: None,
- &#39;trstout&#39;: None,
+ &#39;tspinup&#39;: 0.0,
+ &#39;t0out&#39;: -999.0,
+ &#39;t1out&#39;: -999.0,
  &#39;dthisout&#39;: 600.0,
- &#39;dtwave&#39;: None,
- &#39;dtwnd&#39;: None,
+ &#39;dtmapout&#39;: 0.0,
+ &#39;dtmaxout&#39;: 86400.0,
+ &#39;dtrstout&#39;: 0.0,
+ &#39;trstout&#39;: -999.0,
+ &#39;dtwave&#39;: 3600.0,
+ &#39;dtwnd&#39;: 1800.0,
  &#39;alpha&#39;: 0.5,
  &#39;theta&#39;: 1.0,
- &#39;hmin_cfl&#39;: None,
- &#39;manning&#39;: None,
+ &#39;hmin_cfl&#39;: 0.1,
+ &#39;dtmax&#39;: 60.0,
+ &#39;huthresh&#39;: 0.01,
+ &#39;huvmin&#39;: 0.0,
+ &#39;advection&#39;: 1,
+ &#39;advlim&#39;: 1.0,
+ &#39;advection_scheme&#39;: &#39;upw1&#39;,
+ &#39;advection_mask&#39;: 1,
+ &#39;coriolis&#39;: 1,
+ &#39;viscosity&#39;: 1,
+ &#39;nuvisc&#39;: 0.01,
+ &#39;nuviscfac&#39;: 100.0,
+ &#39;friction2d&#39;: 1,
+ &#39;uvlim&#39;: 10.0,
+ &#39;uvmax&#39;: 1000.0,
+ &#39;wiggle_suppression&#39;: 1,
+ &#39;wiggle_factor&#39;: 0.1,
+ &#39;wiggle_threshold&#39;: 0.1,
+ &#39;slopelim&#39;: 9999.9,
+ &#39;btrelax&#39;: 3600.0,
+ &#39;manning&#39;: 0.04,
  &#39;manning_land&#39;: 0.04,
  &#39;manning_sea&#39;: 0.02,
  &#39;rgh_lev_land&#39;: 0.0,
+ &#39;rhoa&#39;: 1.25,
+ &#39;rhow&#39;: 1024.0,
+ &#39;latitude&#39;: 0.0,
+ &#39;baro&#39;: 1,
+ &#39;pavbnd&#39;: 0.0,
+ &#39;gapres&#39;: 101200.0,
  &#39;zsini&#39;: 0.0,
+ &#39;bndtype&#39;: 1,
+ &#39;btfilter&#39;: 60.0,
+ &#39;use_bcafile&#39;: 1,
  &#39;qinf&#39;: 0.0,
- &#39;infiltration_type&#39;: None,
- &#39;dtmax&#39;: None,
- &#39;huthresh&#39;: 0.01,
- &#39;rhoa&#39;: None,
- &#39;rhow&#39;: None,
+ &#39;qinf_zmin&#39;: 0.0,
+ &#39;sfacinf&#39;: 0.2,
+ &#39;horton_kr_kd&#39;: 10.0,
+ &#39;nfreqsig&#39;: 100,
+ &#39;freqminig&#39;: 0.0,
+ &#39;freqmaxig&#39;: 0.1,
+ &#39;wmtfilter&#39;: 600.0,
+ &#39;wmfred&#39;: 0.99,
+ &#39;wmsignal&#39;: &#39;spectrum&#39;,
+ &#39;wmhmin&#39;: 0.1,
+ &#39;amprblock&#39;: 1,
+ &#39;spwmergefrac&#39;: 0.5,
+ &#39;usespwprecip&#39;: 1,
+ &#39;spinup_meteo&#39;: 0,
+ &#39;waveage&#39;: -999.0,
+ &#39;factor_wind&#39;: 1.0,
+ &#39;factor_pres&#39;: 1.0,
+ &#39;factor_prcp&#39;: 1.0,
+ &#39;factor_spw_size&#39;: 1.0,
+ &#39;snapwave&#39;: 0,
+ &#39;snapwave_wind&#39;: 0,
+ &#39;snapwave_use_nearest&#39;: 1,
+ &#39;snapwave_igwaves&#39;: 1,
+ &#39;snapwave_dtheta&#39;: 10.0,
+ &#39;snapwave_nrsweeps&#39;: 4,
+ &#39;snapwave_crit&#39;: 0.001,
+ &#39;snapwave_hmin&#39;: 0.1,
+ &#39;wave_enhanced_roughness&#39;: 0,
+ &#39;nonh&#39;: 0,
+ &#39;nh_fnudge&#39;: 0.9,
+ &#39;nh_tstop&#39;: -999.0,
+ &#39;nh_tol&#39;: 0.001,
+ &#39;nh_itermax&#39;: 100,
+ &#39;structure_relax&#39;: 10.0,
+ &#39;bathtub&#39;: 0,
+ &#39;bathtub_fachs&#39;: 0.2,
+ &#39;bathtub_dt&#39;: -999.0,
+ &#39;global_&#39;: 0,
+ &#39;crsgeo&#39;: 0,
+ &#39;epsg&#39;: 32633,
+ &#39;utmzone&#39;: None,
  &#39;inputformat&#39;: &#39;bin&#39;,
  &#39;outputformat&#39;: &#39;net&#39;,
  &#39;outputtype_map&#39;: None,
  &#39;outputtype_his&#39;: None,
- &#39;nc_deflate_level&#39;: None,
- &#39;bndtype&#39;: None,
- &#39;advection&#39;: 1,
- &#39;nfreqsig&#39;: None,
- &#39;freqminig&#39;: None,
- &#39;freqmaxig&#39;: None,
- &#39;latitude&#39;: 0.0,
- &#39;pavbnd&#39;: None,
- &#39;gapres&#39;: None,
- &#39;baro&#39;: 1,
- &#39;utmzone&#39;: None,
- &#39;epsg&#39;: 32633,
- &#39;advlim&#39;: None,
- &#39;slopelim&#39;: None,
- &#39;qinf_zmin&#39;: None,
- &#39;btfilter&#39;: None,
- &#39;sfacinf&#39;: None,
- &#39;crsgeo&#39;: 0,
- &#39;coriolis&#39;: 1,
- &#39;amprblock&#39;: None,
- &#39;spwmergefrac&#39;: None,
- &#39;usespwprecip&#39;: None,
- &#39;global_&#39;: None,
- &#39;nuvisc&#39;: None,
- &#39;viscosity&#39;: 1,
- &#39;spinup_meteo&#39;: None,
- &#39;waveage&#39;: None,
- &#39;snapwave&#39;: None,
- &#39;wmtfilter&#39;: None,
- &#39;wmfred&#39;: None,
- &#39;wmsignal&#39;: None,
- &#39;advection_scheme&#39;: None,
- &#39;btrelax&#39;: None,
- &#39;wiggle_suppression&#39;: None,
- &#39;wiggle_factor&#39;: None,
- &#39;wiggle_threshold&#39;: None,
- &#39;friction2d&#39;: None,
- &#39;advection_mask&#39;: None,
- &#39;use_bcafile&#39;: None,
+ &#39;nc_deflate_level&#39;: 2,
+ &#39;rugdepth&#39;: 0.05,
+ &#39;h73table&#39;: 0,
+ &#39;cdnrb&#39;: 0,
+ &#39;cdwnd&#39;: None,
+ &#39;cdval&#39;: None,
  &#39;qtrfile&#39;: None,
  &#39;depfile&#39;: None,
  &#39;inifile&#39;: None,
@@ -725,6 +756,8 @@
  &#39;z0lfile&#39;: None,
  &#39;wvmfile&#39;: None,
  &#39;qinffile&#39;: None,
+ &#39;infiltration_file&#39;: None,
+ &#39;infiltration_type&#39;: None,
  &#39;scsfile&#39;: None,
  &#39;smaxfile&#39;: None,
  &#39;sefffile&#39;: None,
@@ -734,14 +767,18 @@
  &#39;f0file&#39;: None,
  &#39;fcfile&#39;: None,
  &#39;kdfile&#39;: None,
- &#39;horton_kr_kd&#39;: None,
- &#39;infiltration_file&#39;: None,
  &#39;netbndbzsbzifile&#39;: None,
  &#39;netsrcdisfile&#39;: None,
  &#39;netamuamvfile&#39;: None,
  &#39;netamprfile&#39;: None,
  &#39;netampfile&#39;: None,
  &#39;netspwfile&#39;: None,
+ &#39;snapwave_bndfile&#39;: None,
+ &#39;snapwave_bhsfile&#39;: None,
+ &#39;snapwave_btpfile&#39;: None,
+ &#39;snapwave_bwdfile&#39;: None,
+ &#39;snapwave_bdsfile&#39;: None,
+ &#39;netsnapwavefile&#39;: None,
  &#39;obsfile&#39;: None,
  &#39;crsfile&#39;: None,
  &#39;rugfile&#39;: None,
@@ -749,29 +786,24 @@
  &#39;storefluxmax&#39;: 0,
  &#39;storevel&#39;: 0,
  &#39;storecumprcp&#39;: 0,
- &#39;storetwet&#39;: None,
- &#39;storehsubgrid&#39;: None,
- &#39;twet_threshold&#39;: None,
- &#39;store_tsunami_arrival_time&#39;: None,
- &#39;tsunami_arrival_threshold&#39;: None,
- &#39;storeqdrain&#39;: None,
- &#39;storezvolume&#39;: None,
- &#39;debug&#39;: None,
+ &#39;storetwet&#39;: 0,
+ &#39;storehsubgrid&#39;: 0,
+ &#39;storehmean&#39;: 0,
  &#39;storemeteo&#39;: 0,
  &#39;storemaxwind&#39;: 0,
- &#39;storefw&#39;: None,
- &#39;storewavdir&#39;: None,
- &#39;regular_output_on_mesh&#39;: None,
- &#39;snapwave_wind&#39;: None,
- &#39;snapwave_bndfile&#39;: None,
- &#39;snapwave_bhsfile&#39;: None,
- &#39;snapwave_btpfile&#39;: None,
- &#39;snapwave_bwdfile&#39;: None,
- &#39;snapwave_bdsfile&#39;: None,
- &#39;netsnapwavefile&#39;: None,
- &#39;cdnrb&#39;: None,
- &#39;cdwnd&#39;: None,
- &#39;cdval&#39;: None}
+ &#39;storefw&#39;: 0,
+ &#39;storewavdir&#39;: 0,
+ &#39;storeqdrain&#39;: 1,
+ &#39;storezvolume&#39;: 0,
+ &#39;storestoragevolume&#39;: 0,
+ &#39;store_tsunami_arrival_time&#39;: 0,
+ &#39;store_dynamic_bed_level&#39;: 0,
+ &#39;regular_output_on_mesh&#39;: 0,
+ &#39;twet_threshold&#39;: 0.01,
+ &#39;tsunami_arrival_threshold&#39;: 0.01,
+ &#39;timestep_analysis&#39;: 0,
+ &#39;debug&#39;: 0,
+ &#39;percentage_done&#39;: 5}
 </pre></div></div>
 </div>
 <p>HydroMT-SFINCS has so very usefull tools to plot your model and all of its components. The main functionality to plot the model can be found in <code class="docutils literal notranslate"><span class="pre">SfincsModel.plot_basemap()</span></code> where you can specify which background map (<code class="docutils literal notranslate"><span class="pre">bmap</span></code>) to use, and which layers to plot. Throughout this notebook, we will explore the different options of this method.</p>
@@ -823,8 +855,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:34:05,218 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-04-15 11:34:05,251 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-04-15 11:49:28,787 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-04-15 11:49:28,816 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -859,8 +891,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:34:06,780 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 1 gaps outside valid elevation range &lt; 10.0 km2.
-2026-04-15 11:34:06,785 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
+2026-04-15 11:49:30,337 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 1 gaps outside valid elevation range &lt; 10.0 km2.
+2026-04-15 11:49:30,341 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -897,7 +929,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:34:08,052 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
+2026-04-15 11:49:31,613 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -921,8 +953,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:34:08,058 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_outflow_boundary_polygon.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_outflow_boundary_polygon.geojson
-2026-04-15 11:34:08,089 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
+2026-04-15 11:49:31,618 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_outflow_boundary_polygon.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_outflow_boundary_polygon.geojson
+2026-04-15 11:49:31,645 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -990,18 +1022,64 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:34:09,332 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2026-04-15 11:34:09,346 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2026-04-15 11:34:09,351 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2026-04-15 11:34:09,426 - hydromt.hydromt_sfincs.components.grid.roughness - roughness - INFO - Set other manning options to None in config that are unused in SFINCS in case of specifying manningfile (manning, manning_land, manning_sea, rgh_lev_land).
+2026-04-15 11:49:32,891 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-04-15 11:49:32,904 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-04-15 11:49:32,908 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_1_build_from_script_26_1.png" src="../_images/_examples_1_build_from_script_26_1.png" />
-</div>
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">ValidationError</span>                           Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[11]</span><span class="ansi-green-fg">, line 8</span>
+<span class="ansi-green-fg">      5</span> <span style="color: rgb(95,135,135)"># use the river manning raster in combination with vito_2015 land to derive the manning roughness file</span>
+<span class="ansi-green-fg">      6</span> roughness_list = [{<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">lulc</span><span class="ansi-yellow-fg">&#34;</span>: <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">vito_2015</span><span class="ansi-yellow-fg">&#34;</span>, <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">reclass_table</span><span class="ansi-yellow-fg">&#34;</span>: reclass_table}]
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">8</span> <span class="ansi-yellow-bg">sf</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">roughness</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">create</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg">      9</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">roughness_list</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">roughness_list</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">     10</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">manning_land</span><span class="ansi-yellow-bg">=</span><span class="ansi-green-fg ansi-yellow-bg">0.04</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">     11</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">manning_sea</span><span class="ansi-yellow-bg">=</span><span class="ansi-green-fg ansi-yellow-bg">0.02</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">     12</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">rgh_lev_land</span><span class="ansi-yellow-bg">=</span><span class="ansi-green-fg ansi-yellow-bg">0</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg">  </span><span class="ansi-yellow-bg" style="color: rgb(95,135,135)"># the minimum elevation of the land</span>
+<span class="ansi-green-fg">     13</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">     14</span> _ = sf.plot_basemap(variable=<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">manning</span><span class="ansi-yellow-fg">&#34;</span>, plot_bounds=<span class="ansi-bold" style="color: rgb(0,135,0)">False</span>, bmap=<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">sat</span><span class="ansi-yellow-fg">&#34;</span>, zoomlevel=<span class="ansi-green-fg">12</span>)
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/roughness.py:142</span>, in <span class="ansi-cyan-fg">SfincsRoughness.create</span><span class="ansi-blue-fg">(self, roughness_list, manning_land, manning_sea, rgh_lev_land)</span>
+<span class="ansi-green-fg">    139</span> <span style="color: rgb(0,135,0)">self</span>.model.config.set(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">&#34;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>mname<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">file</span><span class="ansi-yellow-fg">&#34;</span>, <span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">sfincs.</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>mname[:<span class="ansi-green-fg">3</span>]<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">&#34;</span>)
+<span class="ansi-green-fg">    141</span> <span style="color: rgb(95,135,135)"># set other manning options to None in config</span>
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">142</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">config</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">set</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-fg ansi-yellow-bg">manning</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">None</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">    143</span> <span style="color: rgb(0,135,0)">self</span>.model.config.set(<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">manning_land</span><span class="ansi-yellow-fg">&#34;</span>, <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>)
+<span class="ansi-green-fg">    144</span> <span style="color: rgb(0,135,0)">self</span>.model.config.set(<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">manning_sea</span><span class="ansi-yellow-fg">&#34;</span>, <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>)
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/config/config.py:247</span>, in <span class="ansi-cyan-fg">SfincsConfig.set</span><span class="ansi-blue-fg">(self, key, value, skip_validation)</span>
+<span class="ansi-green-fg">    245</span>     new_data = <span style="color: rgb(0,135,0)">self</span>.data.model_dump()
+<span class="ansi-green-fg">    246</span>     new_data[key] = value
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">247</span>     <span style="color: rgb(0,135,0)">self</span>._data = <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">data</span><span class="ansi-yellow-bg">.</span><span class="ansi-blue-fg ansi-yellow-bg">__class__</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">model_validate</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">new_data</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">    248</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">    249</span>     <span style="color: rgb(0,135,0)">setattr</span>(<span style="color: rgb(0,135,0)">self</span>._data, key, value)
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/pydantic/main.py:732</span>, in <span class="ansi-cyan-fg">BaseModel.model_validate</span><span class="ansi-blue-fg">(cls, obj, strict, extra, from_attributes, context, by_alias, by_name)</span>
+<span class="ansi-green-fg">    726</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> by_alias <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">False</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> by_name <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">True</span>:
+<span class="ansi-green-fg">    727</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> PydanticUserError(
+<span class="ansi-green-fg">    728</span>         <span class="ansi-yellow-fg">&#39;</span><span class="ansi-yellow-fg">At least one of `by_alias` or `by_name` must be set to True.</span><span class="ansi-yellow-fg">&#39;</span>,
+<span class="ansi-green-fg">    729</span>         code=<span class="ansi-yellow-fg">&#39;</span><span class="ansi-yellow-fg">validate-by-alias-and-name-false</span><span class="ansi-yellow-fg">&#39;</span>,
+<span class="ansi-green-fg">    730</span>     )
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">732</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">cls</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">__pydantic_validator__</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">validate_python</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg">    733</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">obj</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    734</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">strict</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">strict</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    735</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">extra</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">extra</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    736</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">from_attributes</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">from_attributes</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    737</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">context</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">context</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    738</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">by_alias</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">by_alias</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    739</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">by_name</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">by_name</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    740</span> <span class="ansi-yellow-bg">)</span>
+
+<span class="ansi-red-fg">ValidationError</span>: 1 validation error for SfincsConfigVariables
+manning
+  Input should be a valid number [type=float_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_type
+</pre></div></div>
 </div>
 </section>
 <section id="7.-Make-subgrid-derived-tables:">
@@ -1039,21 +1117,21 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:34:10,650 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-04-15 11:34:10,668 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
-2026-04-15 11:34:10,685 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2026-04-15 11:34:10,697 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
-2026-04-15 11:34:10,697 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2026-04-15 11:34:10,701 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2026-04-15 11:34:10,713 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of regular cells in a block : 333
-2026-04-15 11:34:10,714 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in n direction    : 1
-2026-04-15 11:34:10,714 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in m direction    : 1
-2026-04-15 11:34:10,715 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of flux grid            : dx=50.000000000000654, dy=50.00000000000095
-2026-04-15 11:34:10,715 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of subgrid pixels       : dx=8.333333333333442, dy=8.333333333333492
-2026-04-15 11:34:10,716 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - block 1/1 -- col 0:250 | row 0:107
-2026-04-15 11:34:23,623 - hydromt.hydromt_sfincs.components.grid.subgrid - utils - INFO - Building 2 overviews with average
-2026-04-15 11:34:23,656 - hydromt.hydromt_sfincs.components.grid.subgrid - utils - INFO - Building 2 overviews with average
-2026-04-15 11:34:23,720 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Set other manning options to None in config that are unused  in SFINCS in case of subgrid (manning, manning_land, manning_sea, rgh_lev_land, manningfile).
+2026-04-15 11:49:33,513 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-04-15 11:49:33,530 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-04-15 11:49:33,545 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-04-15 11:49:33,556 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
+2026-04-15 11:49:33,556 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-04-15 11:49:33,560 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-04-15 11:49:33,572 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of regular cells in a block : 333
+2026-04-15 11:49:33,572 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in n direction    : 1
+2026-04-15 11:49:33,572 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in m direction    : 1
+2026-04-15 11:49:33,573 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of flux grid            : dx=50.000000000000654, dy=50.00000000000095
+2026-04-15 11:49:33,573 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of subgrid pixels       : dx=8.333333333333442, dy=8.333333333333492
+2026-04-15 11:49:33,574 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - block 1/1 -- col 0:250 | row 0:107
+2026-04-15 11:49:46,165 - hydromt.hydromt_sfincs.components.grid.subgrid - utils - INFO - Building 2 overviews with average
+2026-04-15 11:49:46,198 - hydromt.hydromt_sfincs.components.grid.subgrid - utils - INFO - Building 2 overviews with average
+2026-04-15 11:49:46,216 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Subgrid tables created. Note that the subgrid tables overwrite previously defined information on elevation and roughness.
 </pre></div></div>
 </div>
 <div style="border-left: 4px solid #4CAF50; padding: 0.5em; background-color: #f0fff0;"><p>⚠️ Note: If you have a very large domain with more than a millions cells, and very high-resolution datasets (e.g. 1 m), this step might take minutes to hours!!!</p>
@@ -1113,8 +1191,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:34:24,990 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
-2026-04-15 11:34:25,041 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
+2026-04-15 11:49:47,518 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
+2026-04-15 11:49:47,559 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
 </pre></div></div>
 </div>
 </section>
