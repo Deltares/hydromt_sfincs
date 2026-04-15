@@ -995,15 +995,8 @@ class SfincsSubgridTable(ModelComponent):
                 logger=logger,
             )
 
-        # set other manning options to None in config
-        self.model.config.set("manning", None)
-        self.model.config.set("manning_land", None)
-        self.model.config.set("manning_sea", None)
-        self.model.config.set("rgh_lev_land", None)
-        self.model.config.set("manningfile", None)
         logger.info(
-            "Set other manning options to None in config that are unused  in SFINCS in case"
-            " of subgrid (manning, manning_land, manning_sea, rgh_lev_land, manningfile)."
+            "Subgrid tables created. Note that the subgrid tables overwrite previously defined information on elevation and roughness."
         )
 
     def to_xarray(self, dims, coords):

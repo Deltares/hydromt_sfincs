@@ -114,7 +114,7 @@ class SfincsConfigVariables(BaseSettings):
         json_schema_extra={"always": True},
     )
     dtmaxout: float = Field(
-        9999999.0,
+        86400.0,
         ge=0.0,
         description="Maximum map output interval (seconds)",
         json_schema_extra={"always": True},
@@ -167,7 +167,7 @@ class SfincsConfigVariables(BaseSettings):
         description="Maximum allowed internal timestep (seconds)",
     )
     huthresh: float = Field(
-        0.05,
+        0.01,
         gt=0.0,
         lt=1.0,
         description="Threshold water depth (meters)",
@@ -275,11 +275,11 @@ class SfincsConfigVariables(BaseSettings):
         description="Manning's n coefficient for spatially uniform roughness (s/m^(1/3))",
     )
     manning_land: float = Field(
-        -999.0,
+        0.04,
         description="Manning's n for land areas; -999 = not set (s/m^(1/3))",
     )
     manning_sea: float = Field(
-        -999.0,
+        0.02,
         description="Manning's n for sea areas; -999 = not set (s/m^(1/3))",
     )
     rgh_lev_land: float = Field(
