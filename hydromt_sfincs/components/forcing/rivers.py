@@ -354,7 +354,7 @@ class SfincsRivers(ModelComponent):
             )
 
         # get river inflow / headwater source points
-        gdf_out = workflows.river_source_points(
+        gdf_out = workflows.river_outflow_points(
             gdf_riv=gdf_riv,
             gdf_mask=self.model.region,
             src_type="outflow",
