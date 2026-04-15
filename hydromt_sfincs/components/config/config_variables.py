@@ -16,7 +16,6 @@ Write policy (controls which fields appear in sfincs.inp):
 """
 
 from datetime import datetime, timedelta
-from typing import List, Optional
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
@@ -31,36 +30,36 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     # Grid
     # ================================================================
-    mmax: Optional[int] = Field(
+    mmax: int | None = Field(
         None,
         ge=1,
         description="Number of grid cells in x-direction",
         json_schema_extra={"always": True},
     )
-    nmax: Optional[int] = Field(
+    nmax: int | None = Field(
         None,
         ge=1,
         description="Number of grid cells in y-direction",
         json_schema_extra={"always": True},
     )
-    dx: Optional[float] = Field(
+    dx: float | None = Field(
         None,
         gt=0,
         description="Grid size in x-direction",
         json_schema_extra={"always": True},
     )
-    dy: Optional[float] = Field(
+    dy: float | None = Field(
         None,
         gt=0,
         description="Grid size in y-direction",
         json_schema_extra={"always": True},
     )
-    x0: Optional[float] = Field(
+    x0: float | None = Field(
         None,
         description="Origin of the grid in the x-direction",
         json_schema_extra={"always": True},
     )
-    y0: Optional[float] = Field(
+    y0: float | None = Field(
         None,
         description="Origin of the grid in the y-direction",
         json_schema_extra={"always": True},
@@ -97,14 +96,8 @@ class SfincsConfigVariables(BaseSettings):
         description="Duration of spinup period (seconds)",
         json_schema_extra={"always": True},
     )
-    t0out: float = Field(
-        -999.0,
-        description="Output start time (seconds)",
-    )
-    t1out: float = Field(
-        -999.0,
-        description="Output stop time (seconds)",
-    )
+    t0out: float = Field(-999.0, description="Output start time (seconds)")
+    t1out: float = Field(-999.0, description="Output stop time (seconds)")
 
     # ================================================================
     # Output intervals
@@ -599,11 +592,11 @@ class SfincsConfigVariables(BaseSettings):
         le=1,
         description="Geographical coordinate system flag (1: yes, 0: no)",
     )
-    epsg: Optional[int] = Field(
+    epsg: int | None = Field(
         None,
         description="EPSG code for spatial reference system",
     )
-    utmzone: Optional[str] = Field(
+    utmzone: str | None = Field(
         None,
         description="UTM zone for spatial reference (-)",
     )
@@ -615,11 +608,11 @@ class SfincsConfigVariables(BaseSettings):
         "net",
         description="Output file format (net or asc or bin)",
     )
-    outputtype_map: Optional[str] = Field(
+    outputtype_map: str | None = Field(
         None,
         description="Output format for map file (net or asc or bin)",
     )
-    outputtype_his: Optional[str] = Field(
+    outputtype_his: str | None = Field(
         None,
         description="Output format for his file (net or asc or bin)",
     )
@@ -646,149 +639,139 @@ class SfincsConfigVariables(BaseSettings):
         description="Number of wind speed ranges for drag coefficient",
         json_schema_extra={"always": True},
     )
-    cdwnd: Optional[List[float]] = Field(
+    cdwnd: list[float] | None = Field(
         None,
         description="Wind speed ranges for drag coefficient (m/s)",
         json_schema_extra={"always": True},
     )
-    cdval: Optional[List[float]] = Field(
+    cdval: list[float] | None = Field(
         None,
         description="Drag coefficient values corresponding to cdwnd",
         json_schema_extra={"always": True},
     )
 
     # ================================================================
-    # Domain files
+    # Domain files (example of Optional → | None)
     # ================================================================
-    qtrfile: Optional[str] = Field(None, description="Quadtree file")
-    depfile: Optional[str] = Field(None, description="Depth file")
-    inifile: Optional[str] = Field(None, description="Initial water level file")
-    rstfile: Optional[str] = Field(None, description="Restart file")
-    ncinifile: Optional[str] = Field(
-        None, description="Netcdf initial water level file"
-    )
-    mskfile: Optional[str] = Field(None, description="Mask file")
-    indexfile: Optional[str] = Field(None, description="Index file")
-    sbgfile: Optional[str] = Field(None, description="Subgrid file")
-    thdfile: Optional[str] = Field(None, description="Thin dam structure file")
-    weirfile: Optional[str] = Field(None, description="Weir structure file")
-    manningfile: Optional[str] = Field(None, description="Manning's n file")
-    drnfile: Optional[str] = Field(None, description="Drainage structure file")
-    volfile: Optional[str] = Field(None, description="Storage volume file")
+    qtrfile: str | None = Field(None, description="Quadtree file")
+    depfile: str | None = Field(None, description="Depth file")
+    inifile: str | None = Field(None, description="Initial water level file")
+    rstfile: str | None = Field(None, description="Restart file")
+    ncinifile: str | None = Field(None, description="Netcdf initial water level file")
+    mskfile: str | None = Field(None, description="Mask file")
+    indexfile: str | None = Field(None, description="Index file")
+    sbgfile: str | None = Field(None, description="Subgrid file")
+    thdfile: str | None = Field(None, description="Thin dam structure file")
+    weirfile: str | None = Field(None, description="Weir structure file")
+    manningfile: str | None = Field(None, description="Manning's n file")
+    drnfile: str | None = Field(None, description="Drainage structure file")
+    volfile: str | None = Field(None, description="Storage volume file")
 
     # ================================================================
     # Forcing files
     # ================================================================
-    bndfile: Optional[str] = Field(None, description="Water level boundary points file")
-    bzsfile: Optional[str] = Field(None, description="Water level time-series file")
-    bcafile: Optional[str] = Field(None, description="Tidal boundary component file")
-    bzifile: Optional[str] = Field(None, description="Individual wave water level file")
-    bdrfile: Optional[str] = Field(None, description="Downstream river boundary file")
-    wfpfile: Optional[str] = Field(None, description="Wavemaker location points file")
-    whifile: Optional[str] = Field(None, description="Wavemaker IG wave height file")
-    wtifile: Optional[str] = Field(None, description="Wavemaker IG wave period file")
-    wstfile: Optional[str] = Field(None, description="Wavemaker setup file")
-    srcfile: Optional[str] = Field(None, description="Discharge input points file")
-    disfile: Optional[str] = Field(None, description="Discharge input time-series file")
-    spwfile: Optional[str] = Field(None, description="Spiderweb tropical cyclone file")
-    wndfile: Optional[str] = Field(None, description="Spatially uniform wind file")
-    prcfile: Optional[str] = Field(
+    bndfile: str | None = Field(None, description="Water level boundary points file")
+    bzsfile: str | None = Field(None, description="Water level time-series file")
+    bcafile: str | None = Field(None, description="Tidal boundary component file")
+    bzifile: str | None = Field(None, description="Individual wave water level file")
+    bdrfile: str | None = Field(None, description="Downstream river boundary file")
+    wfpfile: str | None = Field(None, description="Wavemaker location points file")
+    whifile: str | None = Field(None, description="Wavemaker IG wave height file")
+    wtifile: str | None = Field(None, description="Wavemaker IG wave period file")
+    wstfile: str | None = Field(None, description="Wavemaker setup file")
+    srcfile: str | None = Field(None, description="Discharge input points file")
+    disfile: str | None = Field(None, description="Discharge input time-series file")
+    spwfile: str | None = Field(None, description="Spiderweb tropical cyclone file")
+    wndfile: str | None = Field(None, description="Spatially uniform wind file")
+    prcfile: str | None = Field(
         None, description="Spatially uniform precipitation file"
     )
-    precipfile: Optional[str] = Field(
+    precipfile: str | None = Field(
         None, description="LEGACY precipitation file (use prcfile)"
     )
-    amufile: Optional[str] = Field(None, description="Wind u-component file")
-    amvfile: Optional[str] = Field(None, description="Wind v-component file")
-    ampfile: Optional[str] = Field(None, description="Atmospheric pressure file")
-    amprfile: Optional[str] = Field(None, description="Precipitation file")
-    z0lfile: Optional[str] = Field(None, description="Wind reduction over land file")
-    wvmfile: Optional[str] = Field(None, description="Wave maker input points file")
-    qinffile: Optional[str] = Field(None, description="Infiltration file")
-    infiltration_file: Optional[str] = Field(
+    amufile: str | None = Field(None, description="Wind u-component file")
+    amvfile: str | None = Field(None, description="Wind v-component file")
+    ampfile: str | None = Field(None, description="Atmospheric pressure file")
+    amprfile: str | None = Field(None, description="Precipitation file")
+    z0lfile: str | None = Field(None, description="Wind reduction over land file")
+    wvmfile: str | None = Field(None, description="Wave maker input points file")
+    qinffile: str | None = Field(None, description="Infiltration file")
+    infiltration_file: str | None = Field(
         None, description="Infiltration file (alternative)"
     )
-    infiltration_type: Optional[str] = Field(None, description="Infiltration type")
+    infiltration_type: str | None = Field(None, description="Infiltration type")
 
     # ================================================================
     # Curve Number / Green-Ampt / Horton files
     # ================================================================
-    scsfile: Optional[str] = Field(
-        None, description="Curve Number max soil moisture file"
-    )
-    smaxfile: Optional[str] = Field(None, description="Curve Number max storage file")
-    sefffile: Optional[str] = Field(
-        None, description="Curve Number initial storage file"
-    )
-    psifile: Optional[str] = Field(None, description="Green-Ampt suction head file")
-    sigmafile: Optional[str] = Field(
+    scsfile: str | None = Field(None, description="Curve Number max soil moisture file")
+    smaxfile: str | None = Field(None, description="Curve Number max storage file")
+    sefffile: str | None = Field(None, description="Curve Number initial storage file")
+    psifile: str | None = Field(None, description="Green-Ampt suction head file")
+    sigmafile: str | None = Field(
         None, description="Green-Ampt max moisture deficit file"
     )
-    ksfile: Optional[str] = Field(
+    ksfile: str | None = Field(
         None, description="Green-Ampt hydraulic conductivity file"
     )
-    f0file: Optional[str] = Field(
+    f0file: str | None = Field(
         None, description="Horton max infiltration capacity file"
     )
-    fcfile: Optional[str] = Field(None, description="Horton min infiltration rate file")
-    kdfile: Optional[str] = Field(None, description="Horton decay constant file")
+    fcfile: str | None = Field(None, description="Horton min infiltration rate file")
+    kdfile: str | None = Field(None, description="Horton decay constant file")
 
     # ================================================================
     # Netcdf input files
     # ================================================================
-    netbndbzsbzifile: Optional[str] = Field(
+    netbndbzsbzifile: str | None = Field(
         None, description="Netcdf water level input file"
     )
-    netsrcdisfile: Optional[str] = Field(
-        None, description="Netcdf discharge input file"
-    )
-    netamuamvfile: Optional[str] = Field(None, description="Netcdf wind input file")
-    netamprfile: Optional[str] = Field(
-        None, description="Netcdf precipitation input file"
-    )
-    netampfile: Optional[str] = Field(
+    netsrcdisfile: str | None = Field(None, description="Netcdf discharge input file")
+    netamuamvfile: str | None = Field(None, description="Netcdf wind input file")
+    netamprfile: str | None = Field(None, description="Netcdf precipitation input file")
+    netampfile: str | None = Field(
         None, description="Netcdf atmospheric pressure input file"
     )
-    netspwfile: Optional[str] = Field(None, description="Netcdf spiderweb input file")
+    netspwfile: str | None = Field(None, description="Netcdf spiderweb input file")
 
     # ================================================================
     # SnapWave forcing files
     # ================================================================
-    snapwave_bndfile: Optional[str] = Field(
+    snapwave_bndfile: str | None = Field(
         None,
         description="SnapWave boundary points file",
         json_schema_extra={"condition": "snapwave == 1"},
     )
-    snapwave_bhsfile: Optional[str] = Field(
+    snapwave_bhsfile: str | None = Field(
         None,
         description="SnapWave wave height file",
         json_schema_extra={"condition": "snapwave == 1"},
     )
-    snapwave_btpfile: Optional[str] = Field(
+    snapwave_btpfile: str | None = Field(
         None,
         description="SnapWave wave period file",
         json_schema_extra={"condition": "snapwave == 1"},
     )
-    snapwave_bwdfile: Optional[str] = Field(
+    snapwave_bwdfile: str | None = Field(
         None,
         description="SnapWave wave direction file",
         json_schema_extra={"condition": "snapwave == 1"},
     )
-    snapwave_bdsfile: Optional[str] = Field(
+    snapwave_bdsfile: str | None = Field(
         None,
         description="SnapWave wave spreading file",
         json_schema_extra={"condition": "snapwave == 1"},
     )
-    netsnapwavefile: Optional[str] = Field(
+    netsnapwavefile: str | None = Field(
         None, description="Netcdf SnapWave boundary file"
     )
 
     # ================================================================
     # Output observation files
     # ================================================================
-    obsfile: Optional[str] = Field(None, description="Observation points file")
-    crsfile: Optional[str] = Field(None, description="Cross-section lines file")
-    rugfile: Optional[str] = Field(None, description="Runup gauges file")
+    obsfile: str | None = Field(None, description="Observation points file")
+    crsfile: str | None = Field(None, description="Cross-section lines file")
+    rugfile: str | None = Field(None, description="Runup gauges file")
 
     # ================================================================
     # Output storage options
