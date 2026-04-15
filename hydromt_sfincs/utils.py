@@ -263,10 +263,10 @@ def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, fmt: str = "
             else:
                 name = None
                 # name = "point" + str(point["id"])
-            if name is not None:    
+            if name is not None:
                 string = f'{x:{fmt}} {y:{fmt}} "{name}"\n'
             else:
-                string = f'{x:{fmt}} {y:{fmt}}\n'
+                string = f"{x:{fmt}} {y:{fmt}}\n"
             fid.write(string)
 
 
@@ -800,7 +800,7 @@ def read_geoms(fn: Union[str, Path]) -> List[Dict]:
             for r in range(rows):
                 for c, v in enumerate(f.readline().strip().split(maxsplit=cols)):
                     feat[col_names[c]][r] = float(v)
-            # Always create a list        
+            # Always create a list
             # if cols > 2:
             #     for c in col_names[2:]:
             #         if np.unique(feat[c]).size == 1:
@@ -860,9 +860,11 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") 
         fmt = fmt[1:]
     with open(fn, "w") as f:
         for _, row in gdf.iterrows():
-            f.write(f"{row.xsnk:{fmt}} {row.ysnk:{fmt}} {row.xsrc:{fmt}} {row.ysrc:{fmt}} "
-                    f"{row.type:2.0f} {row.par1:10.3f} {row.par2:10.3f} "
-                    f"{row.par3:10.3f} {row.par4:10.3f} {row.par5:10.3f} {row.par6:10.3f}\n")
+            f.write(
+                f"{row.xsnk:{fmt}} {row.ysnk:{fmt}} {row.xsrc:{fmt}} {row.ysrc:{fmt}} "
+                f"{row.type:2.0f} {row.par1:10.3f} {row.par2:10.3f} "
+                f"{row.par3:10.3f} {row.par4:10.3f} {row.par5:10.3f} {row.par6:10.3f}\n"
+            )
     # gdf.to_csv(fn, sep=" ", index=False, header=False)
 
 

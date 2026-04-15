@@ -144,12 +144,16 @@ class SfincsConfigVariables(BaseSettings):
     # Numerics
     # ================================================================
     alpha: float = Field(
-        0.5, ge=0.001, le=1.0,
+        0.5,
+        ge=0.001,
+        le=1.0,
         description="Numerical time step reduction for CFL-condition (-)",
         json_schema_extra={"always": True},
     )
     theta: float = Field(
-        1.0, ge=0.8, le=1.0,
+        1.0,
+        ge=0.8,
+        le=1.0,
         description="Numerical smoothing factor in momentum equation (-)",
     )
     hmin_cfl: float = Field(

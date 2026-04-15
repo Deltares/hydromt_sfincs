@@ -92,7 +92,11 @@ class SfincsDrainageStructures(ModelComponent):
         """Initialize drainage structures."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            if self.root.is_reading_mode() and not skip_read and self.model.config.get("drnfile") is not None:
+            if (
+                self.root.is_reading_mode()
+                and not skip_read
+                and self.model.config.get("drnfile") is not None
+            ):
                 self.read()
 
     def read(self, filename: str | Path = None):
@@ -288,7 +292,7 @@ class SfincsDrainageStructures(ModelComponent):
             if "par5" not in gdf_structures:
                 gdf_structures["par5"] = zmax
             if "par6" not in gdf_structures:
-                gdf_structures["par6"] = closing_time    
+                gdf_structures["par6"] = closing_time
 
         # add par1, par2, par3, par4, par5 if not present
         if "par1" not in gdf_structures:
@@ -309,11 +313,11 @@ class SfincsDrainageStructures(ModelComponent):
         # get start [0] and end [1] points
         endpoints = lines.boundary.explode(index_parts=True).unstack()
         # merge start and end points into a single linestring
-        geom = endpoints.apply(
-            lambda x: LineString(x.values.tolist()), axis=1
-        )
+        geom = endpoints.apply(lambda x: LineString(x.values.tolist()), axis=1)
         # Set geometry of the new lines to the merged linestring
-        gdf_structures = gdf_structures.reset_index(drop=True).set_geometry(geom.reset_index(drop=True))
+        gdf_structures = gdf_structures.reset_index(drop=True).set_geometry(
+            geom.reset_index(drop=True)
+        )
         # set structures
         self.set(gdf_structures, merge=merge)
         # set config

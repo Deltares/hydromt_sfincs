@@ -85,7 +85,11 @@ class SfincsObservationPoints(ModelComponent):
             # Commenting following lines out for now. obsfile is probably set to none at this time, but
             # it will try to read sfincs.obs file anyway. If this file is present, it will read it.
             # This is not desired, as the user might want to start with an empty set of observation points.
-            if self.root.is_reading_mode() and not skip_read and self.model.config.get("obsfile") is not None:
+            if (
+                self.root.is_reading_mode()
+                and not skip_read
+                and self.model.config.get("obsfile") is not None
+            ):
                 self.read()
 
     def read(self, filename: str | Path = None):
@@ -96,7 +100,7 @@ class SfincsObservationPoints(ModelComponent):
 
         if self.model.config.get("obsfile") is None and filename is None:
             # No obsfile set in config and no filename given, so nothing to read. Just return.
-            return  
+            return
 
         # get absolute file path and set it in config if obsfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
@@ -320,4 +324,3 @@ class SfincsObservationPoints(ModelComponent):
 
         self.delete(index)
         return
-

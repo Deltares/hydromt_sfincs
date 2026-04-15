@@ -315,7 +315,6 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         with open(abs_file_path, "w") as fid:
             for ip in self.data.index.values:
-
                 name = f"sfincs_{ip+1:04d}"
 
                 fid.write(f"[forcing]\n")

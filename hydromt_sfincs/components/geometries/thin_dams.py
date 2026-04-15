@@ -42,7 +42,7 @@ class SfincsThinDams(ModelComponent):
         if self._data is None:
             self._initialize()
         return self._data
-    
+
     @property
     def gdf(self) -> gpd.GeoDataFrame:
         """Alias for data."""
@@ -82,7 +82,11 @@ class SfincsThinDams(ModelComponent):
         """Initialize thin dams."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            if self.root.is_reading_mode() and not skip_read and self.model.config.get("thdfile") is not None:
+            if (
+                self.root.is_reading_mode()
+                and not skip_read
+                and self.model.config.get("thdfile") is not None
+            ):
                 self.read()
 
     def read(self, filename: str | Path = None):
@@ -287,4 +291,3 @@ class SfincsThinDams(ModelComponent):
             )
         snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf
-

@@ -597,4 +597,3 @@ class SfincsMask(ModelComponent):
             return True
         else:
             return False
-

@@ -76,7 +76,11 @@ class SfincsRunupGauges(ModelComponent):
         """Initialize runup gauge data."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            if self.root.is_reading_mode() and not skip_read and self.model.config.get("rugfile") is not None:
+            if (
+                self.root.is_reading_mode()
+                and not skip_read
+                and self.model.config.get("rugfile") is not None
+            ):
                 self.read()
 
     def read(self, filename: Union[str, Path] = None) -> None:
@@ -167,9 +171,7 @@ class SfincsRunupGauges(ModelComponent):
             raise ValueError("All runup gauges fall outside model domain!")
 
         if merge and self.data is not None and not self.data.empty:
-            gdf = gpd.GeoDataFrame(
-                pd.concat([self.data, gdf], ignore_index=True)
-            )
+            gdf = gpd.GeoDataFrame(pd.concat([self.data, gdf], ignore_index=True))
             logger.info("Adding new runup gauges to existing ones.")
 
         self._data = gdf
@@ -230,9 +232,7 @@ class SfincsRunupGauges(ModelComponent):
             End point coordinates.
         """
         line = LineString([(x0, y0), (x1, y1)])
-        gdf = gpd.GeoDataFrame(
-            {"name": [name], "geometry": [line]}, crs=self.model.crs
-        )
+        gdf = gpd.GeoDataFrame({"name": [name], "geometry": [line]}, crs=self.model.crs)
         self.set(gdf, merge=True)
 
     def delete(self, index: Union[List[int], int]) -> None:

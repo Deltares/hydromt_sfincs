@@ -312,7 +312,9 @@ class SfincsBoundaryBase(ModelComponent):
         if any(x > (self.nr_points - 1) for x in index):
             raise ValueError("One of the indices exceeds length of index range!")
         # Drop the points from the dataset and reassign a new integer index
-        self._data = self.data.drop_isel(index=index).assign_coords(index=np.arange(self.nr_points - len(index)))
+        self._data = self.data.drop_isel(index=index).assign_coords(
+            index=np.arange(self.nr_points - len(index))
+        )
 
     def clear(self):
         """

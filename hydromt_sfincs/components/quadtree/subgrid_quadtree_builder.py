@@ -317,7 +317,6 @@ class SubgridTableQuadtree:
             )
             log_info(msg, logger, quiet)
 
-
             ### CELL CENTRES
 
             ibt = 1

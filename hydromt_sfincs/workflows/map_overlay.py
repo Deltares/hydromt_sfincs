@@ -302,8 +302,13 @@ class MaskOverlay:
         if self._df.empty:
             self._df = make_mask_dataframe(x, y, mask, source_crs)
         return make_mask_overlay(
-            self._df, file_name, xlim=xlim, ylim=ylim,
-            colors=colors, px=px, width=width,
+            self._df,
+            file_name,
+            xlim=xlim,
+            ylim=ylim,
+            colors=colors,
+            px=px,
+            width=width,
         )
 
 
@@ -341,7 +346,12 @@ class MeshOverlay:
         if self._df.empty:
             self._df = make_edge_dataframe(ugrid, source_crs)
         return make_map_overlay(
-            self._df, file_name, xlim=xlim, ylim=ylim, color=color, width=width,
+            self._df,
+            file_name,
+            xlim=xlim,
+            ylim=ylim,
+            color=color,
+            width=width,
         )
 
 
@@ -446,11 +456,18 @@ def make_elevation_overlay(
         height = int(width * ratio)
 
         cvs = Canvas(
-            x_range=x_range, y_range=y_range, plot_width=width, plot_height=height,
+            x_range=x_range,
+            y_range=y_range,
+            plot_width=width,
+            plot_height=height,
         )
         mesh = ds.utils.mesh(vertices, simplices)
         agg = cvs.trimesh(
-            vertices, simplices, mesh=mesh, agg=ds.mean("z"), interp=False,
+            vertices,
+            simplices,
+            mesh=mesh,
+            agg=ds.mean("z"),
+            interp=False,
         )
 
         if isinstance(cmap, str):
@@ -500,9 +517,22 @@ class ElevationOverlay:
         """Render the elevation overlay, rebuilding the trimesh if needed."""
         if self._vertices.empty:
             self._vertices, self._simplices = make_elevation_trimesh(
-                face_xy, z, level, dx0, dy0, rotation, source_crs,
+                face_xy,
+                z,
+                level,
+                dx0,
+                dy0,
+                rotation,
+                source_crs,
             )
         return make_elevation_overlay(
-            self._vertices, self._simplices, file_name,
-            xlim=xlim, ylim=ylim, cmap=cmap, cmin=cmin, cmax=cmax, width=width,
+            self._vertices,
+            self._simplices,
+            file_name,
+            xlim=xlim,
+            ylim=ylim,
+            cmap=cmap,
+            cmin=cmin,
+            cmax=cmax,
+            width=width,
         )

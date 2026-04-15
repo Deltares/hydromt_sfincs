@@ -83,7 +83,11 @@ class SfincsWeirs(ModelComponent):
         """Initialize weir lines."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            if self.root.is_reading_mode() and not skip_read and self.model.config.get("weirfile") is not None:
+            if (
+                self.root.is_reading_mode()
+                and not skip_read
+                and self.model.config.get("weirfile") is not None
+            ):
                 self.read()
 
     def read(self, filename: str | Path = None):
@@ -240,7 +244,7 @@ class SfincsWeirs(ModelComponent):
         elevation: float, optional
             If provided, this elevation is assigned to all weir lines. This is only used if
             z values are not provided in the gdf, and dep/dz are not provided
-            to determine elevation on the fly. Default 0.0.    
+            to determine elevation on the fly. Default 0.0.
         par1: float, optional
             If provided, this value is assigned to the par1 parameter of all weir lines.
             This is only used if par1 values are not provided in the gdf. Default 0.6.
@@ -270,7 +274,8 @@ class SfincsWeirs(ModelComponent):
 
         # check whether elevation values are part of the gdf, or need to be calculated
         gdf_has_elevation = (
-            gdf.geometry.apply(lambda geom: geom.has_z).all() or "elevation" in gdf.columns
+            gdf.geometry.apply(lambda geom: geom.has_z).all()
+            or "elevation" in gdf.columns
         )
 
         # check if elevation values are provided or can be calculated
@@ -289,7 +294,7 @@ class SfincsWeirs(ModelComponent):
             # within function determine_weir_elevation
             logger.info("Determined elevations for weir based on elevation data.")
 
-        # Set par1 to value if not already provided in gdf 
+        # Set par1 to value if not already provided in gdf
         if "par1" not in gdf.columns:
             gdf["par1"] = None  # creates column with object dtype automatically
             for irow, row in gdf.iterrows():

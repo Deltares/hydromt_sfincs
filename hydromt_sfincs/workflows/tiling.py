@@ -357,7 +357,9 @@ def make_index_tiles(
         )
         maxx, maxy = map(min, zip(transformer.transform(maxx, maxy), [20037508.34] * 2))
 
-    transformer_inv = Transformer.from_crs(3857, quadtree_grid.model.crs, always_xy=True)
+    transformer_inv = Transformer.from_crs(
+        3857, quadtree_grid.model.crs, always_xy=True
+    )
 
     # Eagerly touch the lazy ifirst cache to avoid a race in worker threads.
     _ = quadtree_grid.get_indices_at_points(np.array([[0.0]]), np.array([[0.0]]))
@@ -482,7 +484,9 @@ def create_topobathy_tiles(
 
     # Fall back to the data catalog when no explicit elevation_list was
     # supplied. An explicit elevation_list always wins over the catalog.
-    if (elevation_list is None or len(elevation_list) == 0) and data_catalog is not None:
+    if (
+        elevation_list is None or len(elevation_list) == 0
+    ) and data_catalog is not None:
         res = 40075016.686 / 256 / 2 ** zoom_range[1]
         bbox = tuple(region.to_crs(4326).total_bounds)
         elevation_list = _resolve_elevation_list_from_catalog(
