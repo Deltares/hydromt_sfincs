@@ -993,6 +993,24 @@ validated to form a valid model.</p>
 <span class="w">         </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Infiltration rate, spatially uniform and constant in time (mm/hr)&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Qinf&quot;</span>
 <span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;infiltration_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="nt">&quot;anyOf&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">               </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">               </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;null&quot;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">         </span><span class="p">],</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Infiltration method type (c2d: Constant, cna: Curve Number method A, cnb: Curve Number method B)&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;examples&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="s2">&quot;c2d&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;cna&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;cnb&quot;</span>
+<span class="w">         </span><span class="p">],</span>
+<span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Infiltration Type&quot;</span>
+<span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="nt">&quot;dtmax&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">         </span><span class="nt">&quot;anyOf&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">            </span><span class="p">{</span>
@@ -2245,6 +2263,19 @@ validated to form a valid model.</p>
 <span class="w">         </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Horton infiltration recovery vs decay ration (-)&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Horton Kr Kd&quot;</span>
 <span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;infiltration_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="nt">&quot;anyOf&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">               </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">               </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;null&quot;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">         </span><span class="p">],</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Name of the infiltration input file for spatially distributed infiltration methods&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Infiltration File&quot;</span>
+<span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="nt">&quot;netbndbzsbzifile&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">         </span><span class="nt">&quot;anyOf&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">            </span><span class="p">{</span>
@@ -2831,6 +2862,8 @@ validated to form a valid model.</p>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">horton_kr_kd</span> <span class="pre">(float</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">huthresh</span> <span class="pre">(float)</span></code></p></li>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">indexfile</span> <span class="pre">(str</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">infiltration_file</span> <span class="pre">(str</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">infiltration_type</span> <span class="pre">(str</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">inifile</span> <span class="pre">(str</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">inputformat</span> <span class="pre">(str)</span></code></p></li>
 <li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">kdfile</span> <span class="pre">(str</span> <span class="pre">|</span> <span class="pre">None)</span></code></p></li>
@@ -3406,6 +3439,18 @@ validated to form a valid model.</p>
 <dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.indexfile">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">indexfile</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.indexfile" title="Link to this definition">#</a></dt>
 <dd><p>Name of the index file</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.infiltration_file">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">infiltration_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.infiltration_file" title="Link to this definition">#</a></dt>
+<dd><p>Name of the infiltration input file for spatially distributed infiltration methods</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.infiltration_type">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">infiltration_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.infiltration_type" title="Link to this definition">#</a></dt>
+<dd><p>Infiltration method type (c2d: Constant, cna: Curve Number method A, cnb: Curve Number method B)</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
@@ -4401,7 +4446,7 @@ validated to form a valid model.</p>
 
 <dl class="py method pydantic_validator">
 <dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.parse_custom_datetime">
-<em class="property"><span class="pre">validator</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_custom_datetime</span></span><em class="autodoc_pydantic_validator_arrow property">&#160; <span class="pre">»</span>&#160; </em><em class="xref py py-obj"><span class="pre">tstart</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tref</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tstop</span></em><a class="reference internal" href="../_modules/hydromt_sfincs/components/config/config_variables.html#SfincsConfigVariables.parse_custom_datetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.parse_custom_datetime" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">validator</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_custom_datetime</span></span><em class="autodoc_pydantic_validator_arrow property">&#160; <span class="pre">»</span>&#160; </em><em class="xref py py-obj"><span class="pre">tref</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tstop</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tstart</span></em><a class="reference internal" href="../_modules/hydromt_sfincs/components/config/config_variables.html#SfincsConfigVariables.parse_custom_datetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.parse_custom_datetime" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -4526,6 +4571,8 @@ validated to form a valid model.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.horton_kr_kd"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.horton_kr_kd</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.huthresh"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.huthresh</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.indexfile"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.indexfile</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.infiltration_file"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.infiltration_file</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.infiltration_type"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.infiltration_type</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.inifile"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.inifile</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.inputformat"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.inputformat</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.components.config.SfincsConfigVariables.kdfile"><code class="docutils literal notranslate"><span class="pre">SfincsConfigVariables.kdfile</span></code></a></li>

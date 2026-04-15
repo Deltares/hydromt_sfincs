@@ -579,6 +579,11 @@
         <span class="n">lt</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Infiltration rate, spatially uniform and constant in time (mm/hr)&quot;</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">infiltration_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">examples</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;c2d&quot;</span><span class="p">,</span> <span class="s2">&quot;cna&quot;</span><span class="p">,</span> <span class="s2">&quot;cnb&quot;</span><span class="p">],</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Infiltration method type (c2d: Constant, cna: Curve Number method A, cnb: Curve Number method B)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">dtmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">examples</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">,</span>
@@ -969,6 +974,10 @@
     <span class="c1">#</span>
     <span class="c1"># Netcdf input</span>
     <span class="c1">#</span>
+    <span class="n">infiltration_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Name of the infiltration input file for spatially distributed infiltration methods&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">netbndbzsbzifile</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Name of the Netcdf type water level input file&quot;</span>
     <span class="p">)</span>
