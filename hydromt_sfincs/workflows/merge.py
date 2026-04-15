@@ -100,10 +100,18 @@ def merge_multi_dataarrays(
         method = "bilinear"
 
     if da_like is not None:  # reproject first raster to destination grid
-        # clip before reproject
+        # Clip before reproject. If da_like's bbox falls (entirely) outside
+        # da1's extent, ``clip_bbox`` can raise "negative dimensions are
+        # not allowed" — treat that the same as an empty clip and start
+        # from an empty array shaped like da_like.
         bbox = da_like.raster.transform_bounds(da1.raster.crs)
-        da1 = da1.raster.clip_bbox(bbox, buffer=2)
-        if np.any(np.array(da1.shape) <= 2):
+        clip_failed = False
+        try:
+            da1 = da1.raster.clip_bbox(bbox, buffer=2)
+        except (ValueError, IndexError) as exc:
+            logger.debug(f"No data in da1 within bbox [{bbox}] ({exc})")
+            clip_failed = True
+        if clip_failed or np.any(np.array(da1.shape) <= 2):
             # no data in da1 so use an empty array like da_like
             logger.debug("No data da1, start with empty array")
             da1 = xr.full_like(da_like, np.nan)
@@ -248,9 +256,15 @@ def merge_dataarrays(
     dtype = da1.dtype
     if not np.isnan(nodata):
         da1 = da1.raster.mask_nodata()
-    # clip before reproject
+    # Clip before reproject. If da1's bbox falls (entirely) outside da2's
+    # extent, ``clip_bbox`` can raise "negative dimensions are not
+    # allowed" — treat that the same as an empty clip and skip da2.
     bbox = da1.raster.transform_bounds(da2.raster.crs)
-    da2 = da2.raster.clip_bbox(bbox, buffer=2)
+    try:
+        da2 = da2.raster.clip_bbox(bbox, buffer=2)
+    except (ValueError, IndexError) as exc:
+        logger.debug(f"No data in dataset 2 within bbox [{bbox}], skip ({exc})")
+        return da1
     if np.any(np.array(da2.shape) <= 2):
         logger.debug(f"No data in dataset 2 within bbox [{bbox}], skip")
         return da1
@@ -366,8 +380,15 @@ def merge_multi_dataarrays_on_mesh(
         # get extent of mesh
         bbox = uda_out.ugrid.to_crs(da.raster.crs).ugrid.total_bounds
 
-        # clip before reproject
-        da = da.raster.clip_bbox(bbox, buffer=2)
+        # Clip before reproject. If the mesh bbox falls (entirely) outside
+        # the dataset, ``clip_bbox`` can raise "negative dimensions are
+        # not allowed" — treat the same as an empty clip and skip this
+        # dataset.
+        try:
+            da = da.raster.clip_bbox(bbox, buffer=2)
+        except (ValueError, IndexError) as exc:
+            logger.debug(f"No data in dataset within bbox [{bbox}], skip ({exc})")
+            continue
         if np.any(np.array(da.shape) <= 2):
             logger.debug(f"No data in dataset within bbox [{bbox}], skip")
             continue
