@@ -901,6 +901,86 @@ def read_drn(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:
     return gdf
 
 
+def write_bdr_points(
+    fn: Union[str, Path], gdf_bdr: gpd.GeoDataFrame, fmt="%.1f"
+) -> None:
+    """Write SFINCS downstream river boundary points file (.bdr).
+
+    Each row:
+    xbdr ybdr xbdr_in ybdr_in slope distance
+
+    NOTE: This version expects geometry to be LineString with 2 vertices:
+    - first vertex: boundary point
+    - second vertex: inland control point
+    """
+    # expected columns for river boundary structures
+    gdf = copy.deepcopy(gdf_bdr)
+    # get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc
+    endpoints = gdf.boundary.explode(index_parts=True).unstack()
+    gdf["xbdr"] = endpoints[0].x
+    gdf["ybdr"] = endpoints[0].y
+    gdf["x_bdr_in"] = endpoints[1].x
+    gdf["y_bdr_in"] = endpoints[1].y
+    gdf.drop(["geometry"], axis=1, inplace=True)
+
+    # required columns
+    required = ["slope", "distance"]
+    missing = [c for c in required if c not in gdf.columns]
+    if missing:
+        raise ValueError(f"Missing required columns in gdf_bdr: {missing}")
+
+    # order columns as SFINCS expects
+    gdf = gdf[["xbdr", "ybdr", "x_bdr_in", "y_bdr_in", "slope", "distance"]]
+
+    # format coords
+    for col in ["xbdr", "ybdr", "x_bdr_in", "y_bdr_in"]:
+        gdf[col] = gdf[col].apply(lambda x: fmt % float(x))
+
+    gdf["slope"] = gdf["slope"].apply(lambda x: f"{float(x):.6f}")
+    gdf["distance"] = gdf["distance"].apply(lambda x: f"{float(x):.3f}")
+
+    Path(fn).parent.mkdir(parents=True, exist_ok=True)
+    gdf.to_csv(fn, sep=" ", index=False, header=False)
+
+
+def read_bdr(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:
+    """Read river boundary file to geodataframe.
+
+    Parameters
+    ----------
+    fn : str, Path
+        Path to river boundary file.
+    crs : int
+        EPSG code for coordinate reference system.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        Dataframe with river boundary parameters and geometry.
+    """
+
+    # expected columns for river boundary structures
+    col_names = ["xbdr", "ybdr", "x_bdr_in", "y_bdr_in", "slope", "distance"]
+
+    # read structure file
+    df = pd.read_csv(fn, sep="\\s+", names=col_names)
+
+    # get geometry linestring
+    geom = [
+        LineString([(xbdr, ybdr), (x_bdr_in, y_bdr_in)])
+        for xbdr, ybdr, x_bdr_in, y_bdr_in in zip(
+            df["xbdr"], df["ybdr"], df["x_bdr_in"], df["y_bdr_in"]
+        )
+    ]
+    df.drop(["xbdr", "ybdr", "x_bdr_in", "y_bdr_in"], axis=1, inplace=True)
+
+    # convert to geodataframe
+    gdf = gpd.GeoDataFrame(df, geometry=geom)
+    if crs is not None:
+        gdf.set_crs(crs, inplace=True)
+    return gdf
+
+
 ## OUTPUT: sfincs_map.nc, sfincs_his.nc ##
 
 
