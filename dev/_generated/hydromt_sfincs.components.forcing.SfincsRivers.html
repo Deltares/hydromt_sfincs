@@ -639,16 +639,19 @@ The rivers themselves are not used by the SFINCS model, but useful for visualiza
 <tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsRivers.create_river_inflow.html#hydromt_sfincs.components.forcing.SfincsRivers.create_river_inflow" title="hydromt_sfincs.components.forcing.SfincsRivers.create_river_inflow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_river_inflow</span></code></a>([rivers, hydrography, ...])</p></td>
 <td><p>Setup discharge (src) points where a river enters the model domain.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">finish_write</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_river_outflow</span></code>([rivers, hydrography, ...])</p></td>
+<td><p>Setup open boundary cells (mask=5) where a river flows out of the model domain.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">finish_write</span></code>()</p></td>
 <td><p>Finish the write functionality after cleanup was called for all components in the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsRivers.read.html#hydromt_sfincs.components.forcing.SfincsRivers.read" title="hydromt_sfincs.components.forcing.SfincsRivers.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsRivers.read.html#hydromt_sfincs.components.forcing.SfincsRivers.read" title="hydromt_sfincs.components.forcing.SfincsRivers.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>()</p></td>
 <td><p>Read the file(s) into the component.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
 <td><p>Test if two components are equal.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsRivers.write.html#hydromt_sfincs.components.forcing.SfincsRivers.write" title="hydromt_sfincs.components.forcing.SfincsRivers.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsRivers.write.html#hydromt_sfincs.components.forcing.SfincsRivers.write" title="hydromt_sfincs.components.forcing.SfincsRivers.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>()</p></td>
 <td><p>Write the river inflow data to a gis-file.</p></td>
 </tr>
 </tbody>

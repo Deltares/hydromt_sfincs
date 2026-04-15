@@ -1393,6 +1393,86 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">write_bdr_points</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">gdf_bdr</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write SFINCS downstream river boundary points file (.bdr).</span>
+
+<span class="sd">    Each row:</span>
+<span class="sd">    xbdr ybdr xbdr_in ybdr_in slope distance</span>
+
+<span class="sd">    NOTE: This version expects geometry to be LineString with 2 vertices:</span>
+<span class="sd">    - first vertex: boundary point</span>
+<span class="sd">    - second vertex: inland control point</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># expected columns for river boundary structures</span>
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">gdf_bdr</span><span class="p">)</span>
+    <span class="c1"># get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc</span>
+    <span class="n">endpoints</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">unstack</span><span class="p">()</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;xbdr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;ybdr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;x_bdr_in&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;y_bdr_in&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;geometry&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># required columns</span>
+    <span class="n">required</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;slope&quot;</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">]</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">required</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing required columns in gdf_bdr: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># order columns as SFINCS expects</span>
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[[</span><span class="s2">&quot;xbdr&quot;</span><span class="p">,</span> <span class="s2">&quot;ybdr&quot;</span><span class="p">,</span> <span class="s2">&quot;x_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;y_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;slope&quot;</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">]]</span>
+
+    <span class="c1"># format coords</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;xbdr&quot;</span><span class="p">,</span> <span class="s2">&quot;ybdr&quot;</span><span class="p">,</span> <span class="s2">&quot;x_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;y_bdr_in&quot;</span><span class="p">]:</span>
+        <span class="n">gdf</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">fmt</span> <span class="o">%</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;slope&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;slope&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;distance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;distance&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">Path</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">read_bdr</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read river boundary file to geodataframe.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn : str, Path</span>
+<span class="sd">        Path to river boundary file.</span>
+<span class="sd">    crs : int</span>
+<span class="sd">        EPSG code for coordinate reference system.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gpd.GeoDataFrame</span>
+<span class="sd">        Dataframe with river boundary parameters and geometry.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># expected columns for river boundary structures</span>
+    <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;xbdr&quot;</span><span class="p">,</span> <span class="s2">&quot;ybdr&quot;</span><span class="p">,</span> <span class="s2">&quot;x_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;y_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;slope&quot;</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">]</span>
+
+    <span class="c1"># read structure file</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">s+&quot;</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">col_names</span><span class="p">)</span>
+
+    <span class="c1"># get geometry linestring</span>
+    <span class="n">geom</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">LineString</span><span class="p">([(</span><span class="n">xbdr</span><span class="p">,</span> <span class="n">ybdr</span><span class="p">),</span> <span class="p">(</span><span class="n">x_bdr_in</span><span class="p">,</span> <span class="n">y_bdr_in</span><span class="p">)])</span>
+        <span class="k">for</span> <span class="n">xbdr</span><span class="p">,</span> <span class="n">ybdr</span><span class="p">,</span> <span class="n">x_bdr_in</span><span class="p">,</span> <span class="n">y_bdr_in</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">&quot;xbdr&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;ybdr&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;x_bdr_in&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;y_bdr_in&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;xbdr&quot;</span><span class="p">,</span> <span class="s2">&quot;ybdr&quot;</span><span class="p">,</span> <span class="s2">&quot;x_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;y_bdr_in&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># convert to geodataframe</span>
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geom</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">gdf</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gdf</span>
+
+
 <span class="c1">## OUTPUT: sfincs_map.nc, sfincs_his.nc ##</span>
 
 

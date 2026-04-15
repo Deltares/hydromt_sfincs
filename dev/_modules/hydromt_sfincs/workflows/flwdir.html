@@ -430,15 +430,21 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hydromt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pyflwdir</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">shapely.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">LineString</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">shapely.ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">linemerge</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">deque</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;river_source_points&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;river_outflow_points&quot;</span><span class="p">,</span>
     <span class="s2">&quot;river_centerline_from_hydrography&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
@@ -520,6 +526,7 @@
     <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
     <span class="n">river_upa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">river_len</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e3</span><span class="p">,</span>
+    <span class="n">internal_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="n">da_uparea</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">reverse_river_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="p">,</span>
@@ -596,7 +603,8 @@
         <span class="k">return</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
 
     <span class="c1"># remove lines that fully are within the buffer of the mask boundary</span>
-    <span class="n">bnd</span> <span class="o">=</span> <span class="n">gdf_mask</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span><span class="o">.</span><span class="n">union_all</span><span class="p">()</span>
+    <span class="n">_buffer</span> <span class="o">=</span> <span class="n">buffer</span> <span class="k">if</span> <span class="n">buffer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">bnd</span> <span class="o">=</span> <span class="n">gdf_mask</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">_buffer</span><span class="p">)</span><span class="o">.</span><span class="n">union_all</span><span class="p">()</span>
     <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="o">~</span><span class="n">gdf_riv</span><span class="o">.</span><span class="n">within</span><span class="p">(</span><span class="n">bnd</span><span class="p">)]</span>
 
     <span class="c1"># get source points 1m before the start/end of the river</span>
@@ -615,20 +623,305 @@
         <span class="n">pnts_up</span> <span class="o">=</span> <span class="n">gdf_up</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">union_all</span><span class="p">()</span>
         <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_ds</span><span class="p">[</span><span class="o">~</span><span class="n">gdf_ds</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">pnts_up</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="c1"># get buffer around gdf_mask, in- and outflow points should be within this buffer</span>
-    <span class="k">if</span> <span class="n">src_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;inflow&quot;</span><span class="p">,</span> <span class="s2">&quot;outflow&quot;</span><span class="p">]:</span>
-        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_pnt</span><span class="p">[</span><span class="n">gdf_pnt</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">bnd</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="c1"># log numer of source points</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="n">gdf_pnt</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">src_type</span><span class="si">}</span><span class="s2"> points.&quot;</span><span class="p">)</span>
-
-    <span class="c1"># add uparea attribute if da_uparea is provided</span>
+        <span class="c1"># add uparea attribute if da_uparea is provided</span>
     <span class="k">if</span> <span class="n">da_uparea</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">gdf_pnt</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_uparea</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">gdf_pnt</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
         <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_pnt</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+        <span class="c1"># get buffer around gdf_mask, in- and outflow points should be within this buffer</span>
+    <span class="k">if</span> <span class="n">src_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;inflow&quot;</span><span class="p">,</span> <span class="s2">&quot;outflow&quot;</span><span class="p">]:</span>
+        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_pnt</span><span class="p">[</span><span class="n">gdf_pnt</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">bnd</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="n">gdf_pnt</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">src_type</span><span class="si">}</span><span class="s2"> points.&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gdf_pnt</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">river_outflow_points</span><span class="p">(</span>
+    <span class="n">gdf_riv</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
+    <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
+    <span class="n">src_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;inflow&quot;</span><span class="p">,</span>
+    <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+    <span class="n">river_upa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">river_len</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e3</span><span class="p">,</span>
+    <span class="n">internal_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">da_uparea</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">reverse_river_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the locations where a river flows in (`inflow=True`)</span>
+<span class="sd">    or out (`inflow=False`) of the model gdf_mask.</span>
+
+<span class="sd">    Rivers are based on either a river network vector data (`gdf_riv`) or</span>
+<span class="sd">    a flow direction raster data (`da_flwdir`).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gdf_riv: geopandas.GeoDataFrame</span>
+<span class="sd">        River network vector data, by default None.</span>
+<span class="sd">        Requires &#39;uparea&#39; and &#39;rivlen&#39; attributes to</span>
+<span class="sd">        check for river length and upstream area thresholds.</span>
+<span class="sd">    gdf_mask: geopandas.GeoDataFrame</span>
+<span class="sd">        Polygon of model gdf_mask of interest.</span>
+<span class="sd">    src_type: [&#39;inflow&#39;, &#39;outflow&#39;, &#39;headwater&#39;], optional</span>
+<span class="sd">        Type of river source points to return, by default &#39;inflow&#39;.</span>
+<span class="sd">        If &#39;inflow&#39;, return points where the river flows into the model domain.</span>
+<span class="sd">        If &#39;outflow&#39;, return points where the river flows out of the model domain.</span>
+<span class="sd">        If &#39;headwater&#39;, return all headwater (including inflow) points within the model domain.</span>
+<span class="sd">    buffer: float, optional</span>
+<span class="sd">        Buffer around gdf_mask to select river source points, by default 200 m.</span>
+<span class="sd">        Inflow points are moved to a downstream confluence if within the buffer.</span>
+<span class="sd">    river_upa : float, optional</span>
+<span class="sd">        Minimum upstream area threshold for rivers [km2], by default 10.0</span>
+<span class="sd">    river_len: float, optional</span>
+<span class="sd">        Mimimum river length [m] within the model domain to define river cells, by default 1000 m.</span>
+<span class="sd">    da_uparea: xarray.DataArray, optional</span>
+<span class="sd">        River upstream area raster data, by default None.</span>
+<span class="sd">    reverse_river_geom: bool, optional</span>
+<span class="sd">        If True, assume that segments in &#39;rivers&#39; are drawn from downstream to upstream.</span>
+<span class="sd">        Only used if &#39;rivers&#39; is not None, By default False</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gdf_pnt: geopandas.GeoDataFrame</span>
+<span class="sd">        Source points</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># data checks</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">gdf_mask</span><span class="p">,</span> <span class="p">(</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoSeries</span><span class="p">))</span>
+        <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">gdf_mask</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;Polygon&quot;</span><span class="p">,</span> <span class="s2">&quot;MultiPolygon&quot;</span><span class="p">]))</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;gdf_mask must be a GeoDataFrame of Polygons.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">,</span> <span class="p">(</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoSeries</span><span class="p">))</span>
+        <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">gdf_riv</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;LineString&quot;</span><span class="p">,</span> <span class="s2">&quot;MultiLineString&quot;</span><span class="p">]))</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;gdf_riv must be a GeoDataFrame of LineStrings.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">src_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;inflow&quot;</span><span class="p">,</span> <span class="s2">&quot;outflow&quot;</span><span class="p">,</span> <span class="s2">&quot;headwater&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;src_type must be either &#39;inflow&#39;, &#39;outflow&#39;, or &#39;headwater&#39;.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">gdf_mask</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>  <span class="c1"># to pseudo mercator</span>
+        <span class="n">gdf_mask</span> <span class="o">=</span> <span class="n">gdf_mask</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="s2">&quot;epsg:3857&quot;</span><span class="p">)</span>
+
+    <span class="c1"># clip river to model gdf_mask</span>
+    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">gdf_mask</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">gdf_mask</span><span class="o">.</span><span class="n">union_all</span><span class="p">())</span>
+    <span class="c1"># keep only lines</span>
+    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span>
+        <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;LineString&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">geom_type</span><span class="p">]</span>
+    <span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># filter river network based on uparea and length</span>
+    <span class="k">if</span> <span class="s2">&quot;uparea&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">river_upa</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s2">&quot;rivlen&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;rivlen&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">river_len</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;No rivers matching the uparea and rivlen thresholds found in gdf_riv.&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
+
+    <span class="c1"># remove lines that fully are within the buffer of the mask boundary</span>
+    <span class="n">_buffer</span> <span class="o">=</span> <span class="n">buffer</span> <span class="k">if</span> <span class="n">buffer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">bnd</span> <span class="o">=</span> <span class="n">gdf_mask</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">_buffer</span><span class="p">)</span><span class="o">.</span><span class="n">union_all</span><span class="p">()</span>
+    <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="o">~</span><span class="n">gdf_riv</span><span class="o">.</span><span class="n">within</span><span class="p">(</span><span class="n">bnd</span><span class="p">)]</span>
+
+    <span class="c1"># get source points 1m before the start/end of the river</span>
+    <span class="c1"># a positive dx results in a point near the start of the line (inflow)</span>
+    <span class="c1"># a negative dx results in a point near the end of the line (outflow)</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">reverse_river_geom</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="n">gdf_up</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">)</span>
+    <span class="n">gdf_ds</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="o">-</span><span class="n">dx</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">)</span>
+
+    <span class="c1"># get points that do not intersect with up/downstream end of other river segments</span>
+    <span class="c1"># use a small buffer of 5m around these points to account for dx and avoid issues with imprecise river geometries</span>
+    <span class="k">if</span> <span class="n">src_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;inflow&quot;</span><span class="p">,</span> <span class="s2">&quot;headwater&quot;</span><span class="p">]:</span>
+        <span class="n">pnts_ds</span> <span class="o">=</span> <span class="n">gdf_ds</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">union_all</span><span class="p">()</span>
+        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_up</span><span class="p">[</span><span class="o">~</span><span class="n">gdf_up</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">pnts_ds</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">src_type</span> <span class="o">==</span> <span class="s2">&quot;outflow&quot;</span><span class="p">:</span>
+        <span class="n">pnts_up</span> <span class="o">=</span> <span class="n">gdf_up</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">union_all</span><span class="p">()</span>
+        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_ds</span><span class="p">[</span><span class="o">~</span><span class="n">gdf_ds</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">pnts_up</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># add uparea attribute if da_uparea is provided</span>
+    <span class="k">if</span> <span class="n">da_uparea</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">gdf_pnt</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_uparea</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">gdf_pnt</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_pnt</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># get buffer around gdf_mask, in- and outflow points should be within this buffer</span>
+    <span class="k">if</span> <span class="n">src_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;inflow&quot;</span><span class="p">,</span> <span class="s2">&quot;outflow&quot;</span><span class="p">]:</span>
+        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">gdf_pnt</span><span class="p">[</span><span class="n">gdf_pnt</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">bnd</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># for outflow points, find the all other points that are within the buffer of the outflow point and chose an internal point</span>
+    <span class="c1"># to do so, do somethin similar as for the inflow points, but now with a buffer around the outflow points and check which points are within this buffer.</span>
+
+    <span class="k">if</span> <span class="n">src_type</span> <span class="o">==</span> <span class="s2">&quot;outflow&quot;</span><span class="p">:</span>
+        <span class="n">gdf_pnt</span> <span class="o">=</span> <span class="n">river_downstream_boundary_points</span><span class="p">(</span>
+            <span class="n">gdf_pnt</span><span class="p">,</span>
+            <span class="n">gdf_riv</span><span class="p">,</span>
+            <span class="n">gdf_mask</span><span class="p">,</span>
+            <span class="n">src_type</span><span class="o">=</span><span class="n">src_type</span><span class="p">,</span>
+            <span class="n">internal_distance</span><span class="o">=</span><span class="n">internal_distance</span><span class="p">,</span>
+            <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="n">gdf_pnt</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">src_type</span><span class="si">}</span><span class="s2"> points after processing downstream boundaries.&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">gdf_pnt</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="n">gdf_pnt</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">src_type</span><span class="si">}</span><span class="s2"> points.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">gdf_pnt</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">river_downstream_boundary_points</span><span class="p">(</span>
+    <span class="n">gdf_pnt</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
+    <span class="n">gdf_riv</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
+    <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
+    <span class="n">src_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;outflow&quot;</span><span class="p">,</span>
+    <span class="n">internal_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+    <span class="c1"># collect lines in a list (faster &amp; safer than repeated pd.concat)</span>
+    <span class="n">out_lines</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># -------------------------------</span>
+    <span class="c1"># build upstream adjacency ONCE</span>
+    <span class="c1"># -------------------------------</span>
+    <span class="n">has_graph</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">c</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="s2">&quot;idx&quot;</span><span class="p">,</span> <span class="s2">&quot;idx_ds&quot;</span><span class="p">])</span>
+    <span class="n">up_adj</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">has_graph</span><span class="p">:</span>
+        <span class="c1"># optional: basic sanity checks</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">is_unique</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;gdf_riv[&#39;idx&#39;] is not unique; adjacency graph may be invalid.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">up_adj</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">seg_idx</span><span class="p">,</span> <span class="n">seg_idx_ds</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">gdf_riv</span><span class="p">[[</span><span class="s2">&quot;idx&quot;</span><span class="p">,</span> <span class="s2">&quot;idx_ds&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">up_adj</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">seg_idx_ds</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">seg_idx</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Built upstream adjacency list once for all outflow points.&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">out_i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gdf_pnt</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">geometry</span>
+
+        <span class="n">pnt_buffer</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">internal_distance</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="n">pnt_buffer_near</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+
+        <span class="n">gdf_riv_in</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">pnt_buffer</span><span class="p">)]</span>
+        <span class="n">gdf_riv_in</span> <span class="o">=</span> <span class="n">gdf_riv_in</span><span class="p">[</span><span class="o">~</span><span class="n">gdf_riv_in</span><span class="o">.</span><span class="n">within</span><span class="p">(</span><span class="n">pnt_buffer</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">gdf_riv_in</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;No river segments found within </span><span class="si">{</span><span class="n">internal_distance</span><span class="si">}</span><span class="s2"> m of outflow point </span><span class="si">{</span><span class="n">out_i</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_riv_in</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;uparea&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv_in</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">gdf_riv_in</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">gdf_riv_in</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;gdf_riv missing required columns: &#39;uparea&#39; for disambiguating multiple segments near outflow point </span><span class="si">{</span><span class="n">out_i</span><span class="si">}</span><span class="s2"> (found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gdf_riv_in</span><span class="p">)</span><span class="si">}</span><span class="s2"> segments).&quot;</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+
+        <span class="c1"># target segment idx (single-row gdf_riv_in)</span>
+        <span class="n">target_idx</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s2">&quot;idx&quot;</span> <span class="ow">in</span> <span class="n">gdf_riv_in</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">target_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">gdf_riv_in</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;idx&quot;</span><span class="p">])</span>
+
+        <span class="c1"># -------------------------------</span>
+        <span class="c1"># choose full_line via BFS path if possible, else fallback merge</span>
+        <span class="c1"># -------------------------------</span>
+        <span class="n">full_line</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">has_graph</span> <span class="ow">and</span> <span class="n">up_adj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">target_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># find start segment near outflow point</span>
+            <span class="n">buf10</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+            <span class="n">cand</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">buf10</span><span class="p">)]</span>
+            <span class="n">start_row</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">cand</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">cand</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cand</span><span class="p">)</span>
+                <span class="k">else</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">gdf_riv</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()]</span>
+            <span class="p">)</span>
+            <span class="n">start_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">start_row</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="n">target_idx</span> <span class="o">==</span> <span class="n">start_idx</span><span class="p">:</span>
+                <span class="n">full_line</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">start_idx</span><span class="p">,</span> <span class="s2">&quot;geometry&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span>
+                    <span class="mi">0</span>
+                <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">queue</span> <span class="o">=</span> <span class="n">deque</span><span class="p">([</span><span class="n">start_idx</span><span class="p">])</span>
+                <span class="n">parent</span> <span class="o">=</span> <span class="p">{</span><span class="n">start_idx</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+
+                <span class="k">while</span> <span class="n">queue</span><span class="p">:</span>
+                    <span class="n">cur</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">nxt</span> <span class="ow">in</span> <span class="n">up_adj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="p">[]):</span>
+                        <span class="k">if</span> <span class="n">nxt</span> <span class="ow">in</span> <span class="n">parent</span><span class="p">:</span>
+                            <span class="k">continue</span>
+                        <span class="n">parent</span><span class="p">[</span><span class="n">nxt</span><span class="p">]</span> <span class="o">=</span> <span class="n">cur</span>
+                        <span class="k">if</span> <span class="n">nxt</span> <span class="o">==</span> <span class="n">target_idx</span><span class="p">:</span>
+                            <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="n">queue</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                            <span class="k">break</span>
+                        <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nxt</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;No upstream path found from outflow point </span><span class="si">{</span><span class="n">out_i</span><span class="si">}</span><span class="s2"> start_idx=</span><span class="si">{</span><span class="n">start_idx</span><span class="si">}</span><span class="s2"> to target_idx=</span><span class="si">{</span><span class="n">target_idx</span><span class="si">}</span><span class="s2">. Falling back to merge.&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># reconstruct path</span>
+                    <span class="n">idx_path</span> <span class="o">=</span> <span class="p">[</span><span class="n">target_idx</span><span class="p">]</span>
+                    <span class="k">while</span> <span class="n">parent</span><span class="p">[</span><span class="n">idx_path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">idx_path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parent</span><span class="p">[</span><span class="n">idx_path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+                    <span class="n">idx_path</span> <span class="o">=</span> <span class="n">idx_path</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+                    <span class="n">path_gdf</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">idx_path</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">order</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">idx_path</span><span class="p">)}</span>
+                    <span class="n">path_gdf</span><span class="p">[</span><span class="s2">&quot;__ord&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_gdf</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+                    <span class="n">path_gdf</span> <span class="o">=</span> <span class="n">path_gdf</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;__ord&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s2">&quot;__ord&quot;</span><span class="p">)</span>
+
+                    <span class="n">full_line</span> <span class="o">=</span> <span class="n">linemerge</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">path_gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">full_line</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># fallback: merge all segments within buffer</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gdf_merge</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">gdf_riv</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">pnt_buffer</span><span class="p">)]</span>
+                <span class="n">full_line</span> <span class="o">=</span> <span class="n">linemerge</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">gdf_merge</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Failed to merge segments for outflow point </span><span class="si">{</span><span class="n">out_i</span><span class="si">}</span><span class="s2">. Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+
+        <span class="c1"># -------------------------------</span>
+        <span class="c1"># ensure we have a LineString to project onto</span>
+        <span class="c1"># -------------------------------</span>
+        <span class="k">if</span> <span class="n">full_line</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s2">&quot;MultiLineString&quot;</span><span class="p">:</span>
+            <span class="c1"># pick the component closest to the outflow point</span>
+            <span class="n">full_line</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">full_line</span><span class="o">.</span><span class="n">geoms</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ls</span><span class="p">:</span> <span class="n">ls</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+
+        <span class="c1"># snap p to the line (optional but helps)</span>
+        <span class="n">p_on</span> <span class="o">=</span> <span class="n">full_line</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">full_line</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+
+        <span class="n">s0</span> <span class="o">=</span> <span class="n">full_line</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">p_on</span><span class="p">)</span>
+        <span class="n">s_in</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">s0</span> <span class="o">-</span> <span class="n">internal_distance</span><span class="p">)</span>  <span class="c1"># clamp</span>
+        <span class="n">p_in</span> <span class="o">=</span> <span class="n">full_line</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">s_in</span><span class="p">)</span>
+
+        <span class="n">out_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">LineString</span><span class="p">([</span><span class="n">p_on</span><span class="p">,</span> <span class="n">p_in</span><span class="p">]))</span>
+
+    <span class="n">gdf_lines</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="n">out_lines</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">gdf_mask</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gdf_lines</span><span class="p">)</span><span class="si">}</span><span class="s2"> internal outflow lines (from </span><span class="si">{</span><span class="n">gdf_pnt</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> outflow points).&quot;</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">gdf_lines</span>
 </pre></div>
 
                 </article>

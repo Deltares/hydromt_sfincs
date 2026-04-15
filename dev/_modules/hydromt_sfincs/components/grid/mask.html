@@ -902,9 +902,11 @@
 
         <span class="c1"># determine boundary type value</span>
         <span class="n">btype</span> <span class="o">=</span> <span class="n">btype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="n">bvalues</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;waterlevel&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;outflow&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+        <span class="n">bvalues</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;waterlevel&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;outflow&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;downstream&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">btype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bvalues</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;btype must be one of &quot;waterlevel&quot;, &quot;outflow&quot;&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;btype must be one of &quot;waterlevel&quot;, &quot;outflow&quot;, &quot;downstream&quot;&#39;</span>
+            <span class="p">)</span>
         <span class="n">bvalue</span> <span class="o">=</span> <span class="n">bvalues</span><span class="p">[</span><span class="n">btype</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="n">reset_bounds</span><span class="p">:</span>  <span class="c1"># reset existing boundary cells</span>
