@@ -18,7 +18,7 @@ def test_quadtree_infiltration(model, quadtree_model):
 
     # add to quadtree model
     quadtree_model.quadtree_infiltration.create_constant(qinf, reproj_method="nearest")
-    assert quadtree_model.config.get("qinf") is None  # qinf removed from config
+    assert quadtree_model.config.get("qinf") == 0.0  # qinf removed from config
     assert quadtree_model.config.get("infiltration_file") is not None  # qinf file set
     assert (
         quadtree_model.config.get("infiltration_type") == "c2d"

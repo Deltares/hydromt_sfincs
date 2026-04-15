@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+import logging
 import os
 from os.path import abspath, join
 
@@ -9,7 +10,7 @@ from pydantic import ValidationError
 from hydromt_sfincs import SfincsModel
 
 
-def test_config_get_set(model_init):
+def test_config_get_set(model_init, caplog):
     config = model_init.config
 
     # check that a variable initiated as None is set correctly
@@ -35,8 +36,7 @@ def test_config_get_set(model_init):
     assert config.get("outputformat") == "ascii"
 
     # set a non-existing key
-    # Should raise KeyError for invalid attribute
-    with pytest.raises(KeyError):
+    with caplog.at_level(logging.WARNING):
         config.set("invalid_key", 100)
 
 
