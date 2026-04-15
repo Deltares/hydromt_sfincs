@@ -207,7 +207,7 @@ class SfincsConfigVariables(BaseSettings):
         json_schema_extra={"always": True},
     )
     viscosity: int = Field(
-        0,
+        1,
         ge=0,
         le=1,
         description="Enable viscosity term (1: yes, 0: no)",
