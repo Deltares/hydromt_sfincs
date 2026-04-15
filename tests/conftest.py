@@ -13,6 +13,7 @@ from hydromt_sfincs.sfincs import SfincsModel
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
 TESTMODELDIR = join(TESTDATADIR, "sfincs_test")
+TESTMODELDIR_INLAND = join(TESTDATADIR, "sfincs_test_inland")
 
 local_data_yaml = join(TESTDATADIR, "local_data.yml")
 
@@ -43,6 +44,14 @@ def model_config():
     return mod
 
 
+@pytest.fixture
+def model_config_inland():
+    root = TESTMODELDIR_INLAND
+    mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
+    mod.config.read()
+    return mod
+
+
 # read full model instance and set to write mode in a temporary directory
 @pytest.fixture
 def model(tmp_dir):
@@ -64,6 +73,15 @@ def quadtree_model_config():
 @pytest.fixture
 def quadtree_model(tmp_dir):
     root = join(TESTDATADIR, "sfincs_test_quadtree")
+    mod = SfincsModel(root=root, mode="r")
+    mod.read()
+    mod.root.set(tmp_dir, mode="r+")
+    return mod
+
+
+@pytest.fixture
+def model_inland(tmp_dir):
+    root = join(TESTDATADIR, "sfincs_test_inland")
     mod = SfincsModel(root=root, mode="r")
     mod.read()
     mod.root.set(tmp_dir, mode="r+")

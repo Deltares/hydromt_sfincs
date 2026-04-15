@@ -234,7 +234,9 @@ class SfincsConfig(ModelComponent):
 
         if not hasattr(self.data, key):
             # Give warning for now instead of error, since you might want to set custom variables that are not in the config model?
-            logger.warning(f"'{key}' is not a valid attribute of SfincsConfig. Adding it as a custom attribute.")
+            logger.warning(
+                f"'{key}' is not a valid attribute of SfincsConfig. Adding it as a custom attribute."
+            )
             setattr(self._data, key, value)
             return
 
@@ -293,7 +295,7 @@ class SfincsConfig(ModelComponent):
         """
 
         # Determine grid type based on configuration
-        self.model.grid_type = "quadtree" if self.get("qtrfile") else "regular"
+        self.model._grid_type = "quadtree" if self.get("qtrfile") else "regular"
 
         if self.model.grid_type == "regular":
             # update the regular grid properties from the configuration

@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_QT_MAPS = ["manning", "vol", "ini"]
+_QT_MAPS = ["manning", "vol", "ini", "infiltration"]
 
 
 class SfincsQuadtreeGrid(MeshComponent):
@@ -134,9 +134,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             da_mask = self.empty_mask
         return da_mask
 
-    def read(
-        self, filename: Union[str, Path] = "sfincs.nc", data_vars: List[dict] = None
-    ):
+    def read(self, filename: Union[str, Path] = None, data_vars: List[dict] = None):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object.
 
         Parameters
@@ -166,25 +164,24 @@ class SfincsQuadtreeGrid(MeshComponent):
             raise FileNotFoundError(f"Quadtree grid file not found: {abs_file_path}")
 
         # load dataset and set CRS
-        with xu.load_dataset(abs_file_path) as ds:
-            ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
+        ds = xu.load_dataset(abs_file_path)
+        ds.close()
+        ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
 
-            # rename variables to match Python conventions
-            # ds = ds.rename({"z": "dep"}) if "z" in ds else ds
-            # and for backwards compatibility msk (old) -> mask (new)
-            ds = ds.rename({"msk": "mask"}) if "msk" in ds else ds
-            ds = (
-                ds.rename({"snapwave_msk": "snapwave_mask"})
-                if "snapwave_msk" in ds
-                else ds
-            )
+        # rename variables to match Python conventions
+        # ds = ds.rename({"z": "dep"}) if "z" in ds else ds
+        # and for backwards compatibility msk (old) -> mask (new)
+        ds = ds.rename({"msk": "mask"}) if "msk" in ds else ds
+        ds = (
+            ds.rename({"snapwave_msk": "snapwave_mask"}) if "snapwave_msk" in ds else ds
+        )
 
-            # store attributes
-            self.nr_cells = ds.sizes["mesh2d_nFaces"]
-            for key, value in ds.attrs.items():
-                setattr(self, key, value)
+        # store attributes
+        self.nr_cells = ds.sizes["mesh2d_nFaces"]
+        for key, value in ds.attrs.items():
+            setattr(self, key, value)
 
-            self._data = ds
+        self._data = ds
 
         # Make sure epsg is stored in the config as well
         self.model.config.set("epsg", self.model.crs.to_epsg())
@@ -205,8 +202,10 @@ class SfincsQuadtreeGrid(MeshComponent):
         if len(variables) > 0:
             for var in variables:
                 try:
-                    with xu.load_dataset(var["file_name"]) as ds:
-                        self._data[var["variable"]] = ds[var["variable"]]
+                    ds = xu.load_dataset(var["file_name"])
+                    ds.close()
+                    ds.grid.set_crs(self.model.crs)
+                    self.set(ds)
                 except Exception as e:
                     logger.error(f"Error reading variable {var['variable']}: {e}")
                     continue
@@ -250,17 +249,37 @@ class SfincsQuadtreeGrid(MeshComponent):
 
         if len(variables) > 0:
             for var in variables:
+                if var["variable"] == "infiltration":
+                    # determine which infiltration variables to write based on the infiltration type
+                    inftype = self.model.config.get("infiltration_type")
+                    (
+                        write_vars,
+                        remove_vars,
+                    ) = self.model.quadtree_infiltration.get_vars_by_infiltration_type(
+                        inftype
+                    )
+
+                    # Log what is being removed (only if anything to remove)
+                    if remove_vars:
+                        logger.info(
+                            f"Removing unused infiltration variables not matching type '{inftype}': {remove_vars}"
+                        )
+
+                    # Drop unwanted variables from dataset BEFORE writing
+                    ds = ds.drop_vars(remove_vars, errors="ignore")
+                else:
+                    write_vars = [var["variable"]]
                 try:
                     # get the single variable and convert to dataset
                     # NOTE this allows to read as a standalone file with spatial metadata
                     ds_var = self.data[
-                        [var["variable"], "mesh2d_node_x", "mesh2d_node_y"]
+                        write_vars + ["mesh2d_node_x", "mesh2d_node_y"]
                     ].ugrid.to_dataset()
                     ds_var.to_netcdf(var["file_name"])
                     # drop the variable from ds
-                    ds = ds.drop_vars(var["variable"])
+                    ds = ds.drop_vars(write_vars)
                 except Exception as e:
-                    logger.error(f"Error writing variable {var['variable']}: {e}")
+                    logger.error(f"Error writing variables {write_vars}: {e}")
                     continue
 
         # RENAME TO FORTRAN CONVENTION
@@ -328,7 +347,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         self.model.quadtree_mask.clear_overlay()
 
         # Set grid type and crs in model
-        self.model.grid_type = "quadtree"
+        self.model._grid_type = "quadtree"
         crs = CRS.from_epsg(epsg)
 
         elevation_list_per_level = []
@@ -354,7 +373,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             elevation_list = elevation_list_per_level
 
         # Build the quadtree grid
-        self._data = build_quadtree_xugrid(
+        ds = build_quadtree_xugrid(
             x0,
             y0,
             nmax,
@@ -367,6 +386,10 @@ class SfincsQuadtreeGrid(MeshComponent):
             elevation_list=elevation_list,
             bathymetry_database=bathymetry_database,
         )
+        # add nFaces coordinates to grid
+        ds = xu.UgridDataset(ds.ugrid.to_dataset())
+        ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
+        self._data = ds
 
         # Make sure epsg is stored in the config as well
         self.model.config.set("epsg", self.model.crs.to_epsg())
@@ -599,9 +622,9 @@ class SfincsQuadtreeGrid(MeshComponent):
             ifirst = np.zeros(nr_refinement_levels, dtype=int)
             for ilev in range(0, nr_refinement_levels):
                 # Find index of first cell with this level
-                ifirst[ilev] = np.where(self.data["level"].to_numpy()[:] == ilev + 1)[
-                    0
-                ][0]
+                levels = self.data["level"].to_numpy()[:]
+                indices = np.where(levels == ilev + 1)[0]
+                ifirst[ilev] = indices[0]
             self.ifirst = ifirst
 
         ifirst = self.ifirst
@@ -644,13 +667,10 @@ class SfincsQuadtreeGrid(MeshComponent):
             ind[jind < 0] = -999
             ind[iind >= mmax] = -999
             ind[jind >= nmax] = -999
-
-            ingrid = np.isin(
-                ind, nm_lev[ilev], assume_unique=False
-            )  # return boolean for each pixel that falls inside a grid cell
-            incell = np.where(
-                ingrid
-            )  # tuple of arrays of pixel indices that fall in a cell
+            # return boolean for each pixel that falls inside a grid cell
+            ingrid = np.isin(ind, nm_lev[ilev], assume_unique=False)
+            # tuple of arrays of pixel indices that fall in a cell
+            incell = np.where(ingrid)
 
             if incell[0].size > 0:
                 # Now find the cell indices

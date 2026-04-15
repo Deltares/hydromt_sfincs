@@ -1,4 +1,4 @@
-name: hydromt-sfincs-v1
+name: hydromt-sfincs-dev
 
 channels:
 - conda-forge

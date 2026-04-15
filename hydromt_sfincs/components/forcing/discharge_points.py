@@ -10,7 +10,7 @@ import pandas as pd
 from hydromt import hydromt_step
 from hydromt.gis.vector import GeoDataset
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import utils, workflows
 
 from .boundary_conditions import SfincsBoundaryBase
 
@@ -468,3 +468,118 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         else:
             self.model.config.set("srcfile", "sfincs.src")
             self.model.config.set("disfile", "sfincs.dis")
+
+    def create_from_grid(
+        self,
+        discharge,
+        locations=None,
+        uparea=None,
+        wdw=1,
+        rel_error=0.05,
+        abs_error=50,
+    ):
+        """Create discharge forcing based on a gridded discharge dataset.
+
+        Discharge boundary timesereis are read from the `discharge` dataset
+        with gridded discharge time series data.
+
+        The `locations` are snapped to the `uparea` grid if provided based their
+        uparea attribute. If not provided, the nearest grid cell is used.
+
+        Adds model layers:
+
+        * **dis** forcing: discharge time series [m3/s]
+
+        Adds meta layer (not used by SFINCS):
+
+        * **src_snapped** geom: snapped gauge location on discharge grid
+
+        Parameters
+        ----------
+        discharge: str, Path, xr.DataArray optional
+            Path,  data source name or xarray data object for gridded discharge timeseries dataset.
+
+            * Required variables: ['discharge' (m3/s)]
+            * Required coordinates: ['time', 'y', 'x']
+        locations: str, Path, gpd.GeoDataFrame, optional
+            Path, data source name, or geopandas data object for point location dataset.
+            Not required if point location have previously been set, e.g. using the
+            :py:meth:`~hydromt_sfincs.SfincsModel.setup_river_inflow` method.
+
+            * Required variables: ['uparea' (km2)]
+        uparea: str, Path, optional
+            Path, data source name, or xarray data object for upstream area grid.
+
+            * Required variables: ['uparea' (km2)]
+        wdw: int, optional
+            Window size in number of cells around discharge boundary locations
+            to snap to, only used if ``uparea`` is provided. By default 1.
+        rel_error, abs_error: float, optional
+            Maximum relative error (default 0.05) and absolute error (default 50 km2)
+            between the discharge boundary location upstream area and the upstream area of
+            the best fit grid cell, only used if "discharge" geoms has a "uparea" column.
+
+        See Also
+        --------
+        setup_river_inflow
+        """
+        if locations is not None:
+            gdf = self.data_catalog.get_geodataframe(
+                locations, geom=self.model.region, assert_gtype="Point"
+            ).to_crs(self.model.crs)
+        elif self.nr_points > 0:
+            # TODO check how to store the uparea for points that were created earlier
+            # previously we stored it in a geojson file in the gis folder
+            gdf = self.gdf
+        else:
+            raise ValueError("No discharge boundary (src) points provided.")
+
+        # read data
+        ds = self.data_catalog.get_rasterdataset(
+            discharge,
+            bbox=self.model.bbox,
+            buffer=2,
+            time_range=self.model.get_model_time(),  # model time
+            variables=["discharge"],
+            single_var_as_array=False,
+        )
+        if uparea is not None and "uparea" in gdf.columns:
+            da_upa = self.data_catalog.get_rasterdataset(
+                uparea,
+                bbox=self.model.bbox,
+                buffer=2,
+                variables=["uparea"],
+            )
+            # make sure ds and da_upa align
+            ds["uparea"] = da_upa.raster.reproject_like(ds, method="nearest")
+        elif "uparea" not in gdf.columns:
+            logger.warning('No "uparea" column found in location data.')
+
+        # TODO use hydromt core method
+        ds_snapped = workflows.snap_discharge(
+            ds=ds,
+            gdf=gdf,
+            wdw=wdw,
+            rel_error=rel_error,
+            abs_error=abs_error,
+            uparea_name="uparea",
+            discharge_name="discharge",
+            logger=logger,
+        )
+        # set zeros for src points without matching discharge
+        da_q = ds_snapped["discharge"].reindex(index=gdf.index, fill_value=0).fillna(0)
+        df_q = da_q.transpose("time", ...).to_pandas()
+        # update forcing, note this overwrites any existing discharge timeseries
+        self.set(df=df_q, gdf=gdf, merge=False)
+        # make sure to update the config to use netcdf format for discharge conditions,
+        # since then we can store more attributes like the uparea
+        self.model.config.update(
+            {
+                "netsrcdisfile": "sfincs_netsrcdisfile.nc",
+                "srcfile": None,
+                "disfile": None,
+            }
+        )
+
+        # TODO do we want to keep the snapped geometries in the model?
+        # self.set_geoms(ds_snapped.vector.to_gdf(), "src_snapped")

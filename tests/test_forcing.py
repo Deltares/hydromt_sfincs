@@ -78,12 +78,12 @@ def test_create_meteo_latlon(tmp_dir):
     ds = ds.rename({"u10": "wind10_u", "v10": "wind10_v"})
 
     # add precipitation, wind and presssure to the model
-    mod.precipitation.create(precip=ds, buffer=10)
+    mod.precipitation.create(precip=ds)
     assert "precip_2d" in mod.precipitation.data
-    mod.wind.create(wind=ds, buffer=10)
+    mod.wind.create(wind=ds)
     assert "wind10_u" in mod.wind.data
     assert "wind10_v" in mod.wind.data
-    mod.pressure.create(press=ds, buffer=10)
+    mod.pressure.create(press=ds)
     assert "press_2d" in mod.pressure.data
 
     # now check the dimensions of the forcing data of each model component

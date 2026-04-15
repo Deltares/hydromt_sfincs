@@ -9,7 +9,7 @@ import logging
 import os
 from os.path import dirname, join
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import geopandas as gpd
 import numpy as np
@@ -54,6 +54,7 @@ from hydromt_sfincs.components.quadtree import (
 # Boundary conditions / forcing components
 from hydromt_sfincs.components.forcing import (
     SfincsDischargePoints,
+    SfincsRiverBoundaryPoints,
     SfincsPrecipitation,
     SfincsPressure,
     SfincsRivers,
@@ -121,6 +122,7 @@ class SfincsModel(Model):
     }
     _FORCING_COMPONENTS = {
         "rivers": SfincsRivers,
+        "river_boundary_points": SfincsRiverBoundaryPoints,
         "water_level": SfincsWaterLevel,
         "discharge_points": SfincsDischargePoints,
         "snapwave_boundary_conditions": SnapWaveBoundaryConditions,
@@ -150,7 +152,7 @@ class SfincsModel(Model):
         mode: str = "w",
         write_gis: bool = True,
         data_libs: Union[List[str], str] = None,
-        exe_path: Optional[str] = None,
+        exe_path: str = None,
         **catalog_keys,
     ):
         """
@@ -175,7 +177,7 @@ class SfincsModel(Model):
         """
 
         # define some default model properties
-        self.grid_type = "regular"
+        self._grid_type = None
         self.write_gis = write_gis
         self.exe_path = exe_path
 
@@ -191,7 +193,7 @@ class SfincsModel(Model):
             instance = cls(self)
             self.add_component(name, instance)
 
-    def write_batch_file(self, filename: Optional[str] = None) -> Path:
+    def write_batch_file(self, filename: str = None) -> Path:
         """Write a platform-appropriate launcher script for SFINCS.
 
         On Windows this emits ``run.bat`` (``set HDF5_USE_FILE_LOCKING``);
@@ -221,16 +223,13 @@ class SfincsModel(Model):
         if is_windows:
             exe = Path(self.exe_path) / "sfincs.exe"
             script_path.write_text(
-                "set HDF5_USE_FILE_LOCKING=FALSE\n"
-                f"{exe}\n",
+                "set HDF5_USE_FILE_LOCKING=FALSE\n" f"{exe}\n",
                 encoding="ascii",
             )
         else:
             exe = Path(self.exe_path) / "sfincs"
             script_path.write_text(
-                "#!/bin/bash\n"
-                "export HDF5_USE_FILE_LOCKING=FALSE\n"
-                f'"{exe}"\n',
+                "#!/bin/bash\n" "export HDF5_USE_FILE_LOCKING=FALSE\n" f'"{exe}"\n',
                 encoding="ascii",
             )
             # Mark executable (ignore on systems that don't support it).
@@ -252,6 +251,15 @@ class SfincsModel(Model):
                 logger.removeHandler(handler)
 
     ## Real properties of the model ##
+    @property
+    def grid_type(self):
+        """Returns the grid type of the model."""
+        if self._grid_type is None:
+            self._grid_type = "regular"
+            if self.root.is_reading_mode():
+                self.config.read()
+        return self._grid_type
+
     @property
     def crs(self) -> CRS | None:
         """Returns the model crs"""
@@ -546,6 +554,7 @@ class SfincsModel(Model):
             "thin_dams": "thd",
             "drainage_structures": "drn",
             "rivers": "rivers",
+            "river_boundary_points": "bdr",
             "discharge_points": "src",
             "water_level": "bnd",
         }  # parsed to dict of geopandas.GeoDataFrame
@@ -1050,3 +1059,6 @@ class SfincsModel(Model):
     def output(self) -> SfincsOutput:
         """Instance of :py:class:`~hydromt_sfincs.components.output.SfincsOutput`."""
         return self.components["output"]
+
+
+# %%

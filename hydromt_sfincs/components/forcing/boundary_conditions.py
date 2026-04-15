@@ -190,7 +190,7 @@ class SfincsBoundaryBase(ModelComponent):
                 if isinstance(self._default_varname, str)
                 else self._default_varname
             )
-            gds_combined = xr.concat([ds0[varnames], gds_new], dim="index")
+            gds_combined = _safe_concat([ds0[varnames], gds_new], dim="index")
             gds_combined = gds_combined.assign_coords(
                 index=np.arange(gds_combined.sizes["index"])
             )
@@ -202,9 +202,6 @@ class SfincsBoundaryBase(ModelComponent):
             time = pd.date_range(*self.model.get_model_time(), periods=2)
             ds_new = self._create_dummy_dataset(gdf, time, value)
             # Combine geometry and dataset into a GeoDataset, assign new integer index and store
-            # This is where the name column dissappears!!! Should keep_cols=True be used instead?
-            # Or make sure the "name" column is added to the dataset as well?
-            # gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=False)
             gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=True)
             gds_new = gds_new.assign_coords(index=np.arange(gds_new.sizes["index"]))
             # Return the new indices which will be 0..N-1 since we are replacing all data
@@ -428,3 +425,17 @@ class SfincsBoundaryBase(ModelComponent):
             )
 
         return xr.merge(da_list)
+
+
+def _safe_concat(ds_list, dim):
+    """Concatenate datasets along a dimension while preserving all coordinates. If some datasets are missing certain coordinates,
+    those coordinates will be retained with NaN values for the missing entries instead of being dropped.
+    """
+    coord_sets = [set(ds.coords) for ds in ds_list]
+    common = set.intersection(*coord_sets)
+    all_coords = set.union(*coord_sets)
+    problem = all_coords - common
+
+    fixed = [ds.reset_coords(problem & set(ds.coords)) for ds in ds_list]
+
+    return xr.concat(fixed, dim=dim, join="outer", compat="no_conflicts")

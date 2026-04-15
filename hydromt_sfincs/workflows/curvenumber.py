@@ -26,7 +26,7 @@ def scs_recovery_determination(
         gridded data with land use classes (e.g. NLCD)
     da_HSG: xr.DataArray
         gridded data with hydrologic soil group classes (HSG)
-    da: xr.DataArray
+    da_Ksat: xr.DataArray
         gridded data with saturated hydraulic conductivity (Ksat)
     df_map: pd.DataFrame
         mapping table that related landuse and HSG to each other (matrix; not list)

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Union
 import numpy as np
 import rasterio
 from rasterio.windows import Window
+from pyproj import Transformer
 
 from hydromt_sfincs.utils import build_overviews
 
@@ -45,9 +46,9 @@ def make_index_cog(
     # Read coordinates from topobathy file
     with rasterio.open(topobathy_fn) as src:
         # Get the CRS of the grid
-        crs = src.crs
+        dem_crs = src.crs
         # Get the transform of the grid
-        transform = src.transform
+        dem_transform = src.transform
         # Get the width and height of the grid
         width = src.width
         height = src.height
@@ -73,12 +74,12 @@ def make_index_cog(
             width=width,
             count=1,
             dtype=np.uint32,
-            crs=crs,
+            crs=dem_crs,
             tiled=True,
             blockxsize=256,
             blockysize=256,
             compress="deflate",
-            transform=transform,
+            transform=dem_transform,
             nodata=nodata,
             predictor=2,
             profile="COG",
@@ -87,6 +88,9 @@ def make_index_cog(
 
     with rasterio.open(indices_fn, "w", **profile):
         pass
+
+    # Get the computational grid component of the model
+    grid_comp = model.quadtree_grid if model.grid_type == "quadtree" else model.grid
 
     ## Loop through blocks
     for ii in range(nrbm):
@@ -98,27 +102,26 @@ def make_index_cog(
         for jj in range(nrbn):
             bn0 = jj * nrcb  # Index of first n in block
             bn1 = min(bn0 + nrcb, n1)  # last n in block
+
             if merge_last_row and jj == (nrbn - 1):
                 bn1 += 1
 
             # Define a window to read a block of data
             window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
 
-            x_coords = transform[2] + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
-            y_coords = transform[5] + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
-
-            ii = np.empty((bn1 - bn0, bm1 - bm0), dtype=np.uint32)
+            # Calculate the coordinates of the center of each pixel in the block
+            x_coords = dem_transform[2] + (np.arange(bm0, bm1) + 0.5) * dem_transform[0]
+            y_coords = dem_transform[5] + (np.arange(bn0, bn1) + 0.5) * dem_transform[4]
             xx, yy = np.meshgrid(x_coords, y_coords)
 
-            if model.grid_type == "quadtree":
-                indices = model.quadtree.get_indices_at_points(xx, yy)
-            elif model.grid_type == "regular":
-                indices = model.reggrid.get_indices_at_points(xx, yy)
-            else:
-                raise ValueError(f"Unknown grid type: {model.grid_type}")
-
+            # Transform the coordinates to the model's CRS and get the corresponding indices
+            proj = Transformer.from_crs(dem_crs, model.crs, always_xy=True)
+            xx, yy = proj.transform(xx, yy)
+            indices = grid_comp.get_indices_at_points(xx, yy)
             indices[np.where(indices == -999)] = nodata
+
             # Fill the array with indices
+            ii = np.empty((bn1 - bn0, bm1 - bm0), dtype=np.uint32)
             ii[:, :] = indices
 
             with rasterio.open(indices_fn, "r+") as fm_tif:

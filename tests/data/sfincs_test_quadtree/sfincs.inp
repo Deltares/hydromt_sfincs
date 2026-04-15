@@ -37,6 +37,7 @@ outputformat         = net
 cdnrb                = 3
 cdwnd                = 0.0 28.0 50.0
 cdval                = 0.001 0.0025 0.0015
+snapwave             = 1
 snapwave_bndfile     = snapwave.bnd
 snapwave_bhsfile     = snapwave.bhs
 snapwave_btpfile     = snapwave.btp

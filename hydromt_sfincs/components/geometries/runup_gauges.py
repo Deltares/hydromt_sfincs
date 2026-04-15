@@ -56,9 +56,7 @@ class SfincsRunupGauges(ModelComponent):
     @property
     def gdf(self) -> gpd.GeoDataFrame:
         """Runup gauge lines as a GeoDataFrame (alias for ``data``)."""
-        if self._data is None:
-            self._initialize()
-        return self._data
+        return self.data
 
     @property
     def nr_lines(self) -> int:
@@ -70,7 +68,7 @@ class SfincsRunupGauges(ModelComponent):
     @property
     def list_names(self) -> List[str]:
         """Return list of runup gauge names."""
-        if self.data.empty:
+        if self.nr_lines == 0:
             return []
         return list(self.data["name"])
 
