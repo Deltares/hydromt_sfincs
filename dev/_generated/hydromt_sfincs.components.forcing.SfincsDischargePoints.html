@@ -657,49 +657,52 @@ associated time series data in SFINCS format, including both ASCII and netCDF fi
 <tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsDischargePoints.create.html#hydromt_sfincs.components.forcing.SfincsDischargePoints.create" title="hydromt_sfincs.components.forcing.SfincsDischargePoints.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a>([geodataset, timeseries, locations, ...])</p></td>
 <td><p>Setup discharge forcing.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsDischargePoints.create_timeseries.html#hydromt_sfincs.components.forcing.SfincsDischargePoints.create_timeseries" title="hydromt_sfincs.components.forcing.SfincsDischargePoints.create_timeseries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_timeseries</span></code></a>([index, shape, timestep, ...])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_from_grid</span></code>(discharge[, locations, ...])</p></td>
+<td><p>Create discharge forcing based on a gridded discharge dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsDischargePoints.create_timeseries.html#hydromt_sfincs.components.forcing.SfincsDischargePoints.create_timeseries" title="hydromt_sfincs.components.forcing.SfincsDischargePoints.create_timeseries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_timeseries</span></code></a>([index, shape, timestep, ...])</p></td>
 <td><p>Applies time series discharges for each point Create numpy datetime64 array for time series with python datetime.datetime objects</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code>(index)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code>(index)</p></td>
 <td><p>Delete boundary points and clear config when no points remain.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">finish_write</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">finish_write</span></code>()</p></td>
 <td><p>Finish the write functionality after cleanup was called for all components in the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsDischargePoints.read.html#hydromt_sfincs.components.forcing.SfincsDischargePoints.read" title="hydromt_sfincs.components.forcing.SfincsDischargePoints.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>([format])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsDischargePoints.read.html#hydromt_sfincs.components.forcing.SfincsDischargePoints.read" title="hydromt_sfincs.components.forcing.SfincsDischargePoints.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>([format])</p></td>
 <td><p>Read SFINCS discharge points (.dis, .src files) or netcdf file.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_discharge_conditions_netcdf</span></code>([filename])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_discharge_conditions_netcdf</span></code>([filename])</p></td>
 <td><p>Read SFINCS discharge conditions netcdf file</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_discharge_points</span></code>([filename])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_discharge_points</span></code>([filename])</p></td>
 <td><p>Read SFINCS discharge points (.src) file</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_discharge_timeseries</span></code>([filename])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_discharge_timeseries</span></code>([filename])</p></td>
 <td><p>Read SFINCS discharge condition timeseries (.dis) file</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>([df, gdf, geodataset, merge, ...])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>([df, gdf, geodataset, merge, ...])</p></td>
 <td><p>Set or update the internal data from either a GeoDataArray (geodataset) or the pair (df, gdf).</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_locations</span></code>(gdf[, value, merge, ...])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_locations</span></code>(gdf[, value, merge, ...])</p></td>
 <td><p>Add or update point locations.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_timeseries</span></code>(data[, varname])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_timeseries</span></code>(data[, varname])</p></td>
 <td><p>Add or update timeseries for existing locations.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
 <td><p>Test if two components are equal.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsDischargePoints.write.html#hydromt_sfincs.components.forcing.SfincsDischargePoints.write" title="hydromt_sfincs.components.forcing.SfincsDischargePoints.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([format])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsDischargePoints.write.html#hydromt_sfincs.components.forcing.SfincsDischargePoints.write" title="hydromt_sfincs.components.forcing.SfincsDischargePoints.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([format])</p></td>
 <td><p>Write SFINCS discharges (.src, .dis files) or netcdf file.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_discharge_conditions_netcdf</span></code>([filename])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_discharge_conditions_netcdf</span></code>([filename])</p></td>
 <td><p>Write SFINCS discharge conditions netcdf file</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_discharge_points</span></code>([filename])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_discharge_points</span></code>([filename])</p></td>
 <td><p>Write SFINCS discharge points (.src) file</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_discharge_timeseries</span></code>([filename])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_discharge_timeseries</span></code>([filename])</p></td>
 <td><p>Write SFINCS discharge timeseries (.dis) file</p></td>
 </tr>
 </tbody>
