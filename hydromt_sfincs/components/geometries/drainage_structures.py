@@ -45,9 +45,7 @@ class SfincsDrainageStructures(ModelComponent):
     @property
     def gdf(self) -> gpd.GeoDataFrame:
         """Drainage structures data, returns geopandas.GeoDataFrame"""
-        if self._data is None:
-            self._initialize()
-        return self._data
+        return self.data
 
     @property
     def nr_lines(self) -> int:

@@ -49,9 +49,7 @@ class SfincsCrossSections(ModelComponent):
     @property
     def gdf(self) -> gpd.GeoDataFrame:
         """Cross-section lines data, returned as a GeoDataFrame."""
-        if self._data is None:
-            self._initialize()
-        return self._data
+        return self.data
 
     @property
     def nr_lines(self) -> int:
