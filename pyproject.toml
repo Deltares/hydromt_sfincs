@@ -18,7 +18,7 @@ dependencies = [
     "mapbox_earcut",
     "numba",
     "numpy",
-    "pandas<3.0.0",
+    "pandas<4",
     "pillow",
     "pyflwdir>=0.5.10",
     "pyproj",
