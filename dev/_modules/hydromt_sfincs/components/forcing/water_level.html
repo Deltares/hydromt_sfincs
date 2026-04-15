@@ -1122,150 +1122,38 @@
 
 <div class="viewcode-block" id="SfincsWaterLevel.create_boundary_points_from_mask">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsWaterLevel.create_boundary_points_from_mask.html#hydromt_sfincs.components.forcing.SfincsWaterLevel.create_boundary_points_from_mask">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_boundary_points_from_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_dist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bnd_dist</span><span class="o">=</span><span class="mf">5000.0</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get boundary points from mask in quadtree grid.</span>
-<span class="sd">        Should make utils function as sfincs_snapwave_boundary conditions uses nearly same code</span>
-<span class="sd">        Also, regular grid has similar code. Maybe that is more efficient or better.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_boundary_points_from_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bnd_dist</span><span class="o">=</span><span class="mf">5000.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get boundary points from waterlevel boundary cells of mask in grid or quadtree grid.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bnd_dist : float, optional</span>
+<span class="sd">            Distance [m] between boundary points, by default 5000.0.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># select mask depending on grid type</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
-            <span class="c1"># get waterlevel boundary vector based on mask</span>
-            <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_bounds_vector</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span>
-            <span class="n">gdf_msk2</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="p">[</span><span class="n">gdf_msk</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span>
-
-            <span class="c1"># convert to meters if crs is geographic</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-                <span class="n">bnd_dist</span> <span class="o">=</span> <span class="n">bnd_dist</span> <span class="o">/</span> <span class="mf">111111.0</span>
-
-            <span class="c1"># create points along boundary</span>
-            <span class="n">points</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gdf_msk2</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-                <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="n">bnd_dist</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">distances</span><span class="p">:</span>
-                    <span class="n">point</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-                    <span class="n">points</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">point</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">point</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
-
-            <span class="c1"># create geodataframe with points</span>
-            <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span>
-                <span class="n">geometry</span><span class="o">=</span><span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="o">*</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">points</span><span class="p">)),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
-            <span class="p">)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">min_dist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="c1"># Set minimum distance between to grid boundary points on polyline to 2 * dx</span>
-                <span class="n">min_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;dx&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">mask</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown grid type: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-            <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span>
-            <span class="n">ibnd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="n">xz</span><span class="p">,</span> <span class="n">yz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">face_coordinates</span>
-            <span class="n">xp</span> <span class="o">=</span> <span class="n">xz</span><span class="p">[</span><span class="n">ibnd</span><span class="p">]</span>
-            <span class="n">yp</span> <span class="o">=</span> <span class="n">yz</span><span class="p">[</span><span class="n">ibnd</span><span class="p">]</span>
+        <span class="c1"># get boundary vector based on mask</span>
+        <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_bounds_vector</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+        <span class="n">gdf_msk2</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="p">[</span><span class="n">gdf_msk</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span>
 
-            <span class="c1"># Make boolean array for points that are include in a polyline</span>
-            <span class="n">used</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">xp</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="c1"># convert to meters if CRS is geographic</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
+            <span class="n">bnd_dist</span> <span class="o">=</span> <span class="n">bnd_dist</span> <span class="o">/</span> <span class="mf">111111.0</span>
 
-            <span class="c1"># Make list of polylines. Each polyline is a list of indices of boundary points.</span>
-            <span class="n">polylines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># create boundary points from mask boundary vector</span>
+        <span class="n">gdf_points</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">create_boundary_points</span><span class="p">(</span>
+            <span class="n">gdf_msk2</span><span class="p">,</span> <span class="n">bnd_dist</span><span class="o">=</span><span class="n">bnd_dist</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
+        <span class="p">)</span>
 
-            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">used</span><span class="p">):</span>
-                    <span class="c1"># All boundary grid points have been used. We can stop now.</span>
-                    <span class="k">break</span>
-
-                <span class="c1"># Find first the unused points</span>
-                <span class="n">i1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">used</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-
-                <span class="c1"># Set this point to used</span>
-                <span class="n">used</span><span class="p">[</span><span class="n">i1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-
-                <span class="c1"># Start new polyline with index i1</span>
-                <span class="n">polyline</span> <span class="o">=</span> <span class="p">[</span><span class="n">i1</span><span class="p">]</span>
-
-                <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-                    <span class="c1"># Compute distances to all points that have not been used</span>
-                    <span class="n">xpunused</span> <span class="o">=</span> <span class="n">xp</span><span class="p">[</span><span class="o">~</span><span class="n">used</span><span class="p">]</span>
-                    <span class="n">ypunused</span> <span class="o">=</span> <span class="n">yp</span><span class="p">[</span><span class="o">~</span><span class="n">used</span><span class="p">]</span>
-                    <span class="c1"># Get all indices of unused points</span>
-                    <span class="n">unused_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">used</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-
-                    <span class="n">dst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">xpunused</span> <span class="o">-</span> <span class="n">xp</span><span class="p">[</span><span class="n">i1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">ypunused</span> <span class="o">-</span> <span class="n">yp</span><span class="p">[</span><span class="n">i1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dst</span><span class="p">)):</span>
-                        <span class="k">break</span>
-                    <span class="n">inear</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanargmin</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
-                    <span class="n">inearall</span> <span class="o">=</span> <span class="n">unused_indices</span><span class="p">[</span><span class="n">inear</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="n">dst</span><span class="p">[</span><span class="n">inear</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_dist</span><span class="p">:</span>
-                        <span class="c1"># Found next point along polyline</span>
-                        <span class="n">polyline</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inearall</span><span class="p">)</span>
-                        <span class="n">used</span><span class="p">[</span><span class="n">inearall</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-                        <span class="n">i1</span> <span class="o">=</span> <span class="n">inearall</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="c1"># Last point found</span>
-                        <span class="k">break</span>
-
-                <span class="c1"># Now work the other way</span>
-                <span class="c1"># Start with first point of polyline</span>
-                <span class="n">i1</span> <span class="o">=</span> <span class="n">polyline</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">used</span><span class="p">):</span>
-                        <span class="c1"># All boundary grid points have been used. We can stop now.</span>
-                        <span class="k">break</span>
-                    <span class="c1"># Now we go in the other direction</span>
-                    <span class="n">xpunused</span> <span class="o">=</span> <span class="n">xp</span><span class="p">[</span><span class="o">~</span><span class="n">used</span><span class="p">]</span>
-                    <span class="n">ypunused</span> <span class="o">=</span> <span class="n">yp</span><span class="p">[</span><span class="o">~</span><span class="n">used</span><span class="p">]</span>
-                    <span class="n">unused_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">used</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="n">dst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">xpunused</span> <span class="o">-</span> <span class="n">xp</span><span class="p">[</span><span class="n">i1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">ypunused</span> <span class="o">-</span> <span class="n">yp</span><span class="p">[</span><span class="n">i1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-                    <span class="n">inear</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanargmin</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
-                    <span class="n">inearall</span> <span class="o">=</span> <span class="n">unused_indices</span><span class="p">[</span><span class="n">inear</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="n">dst</span><span class="p">[</span><span class="n">inear</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_dist</span><span class="p">:</span>
-                        <span class="c1"># Found next point along polyline</span>
-                        <span class="n">polyline</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inearall</span><span class="p">)</span>
-                        <span class="n">used</span><span class="p">[</span><span class="n">inearall</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-                        <span class="c1"># Set index of next point</span>
-                        <span class="n">i1</span> <span class="o">=</span> <span class="n">inearall</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="c1"># Last nearby point found</span>
-                        <span class="k">break</span>
-
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">polyline</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">polylines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">polyline</span><span class="p">)</span>
-
-            <span class="n">gdf_list</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">ip</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="c1"># Transform to web mercator to get distance in metres</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-                <span class="n">transformer</span> <span class="o">=</span> <span class="n">Transformer</span><span class="o">.</span><span class="n">from_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="mi">3857</span><span class="p">,</span> <span class="n">always_xy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="c1"># Loop through polylines</span>
-            <span class="k">for</span> <span class="n">polyline</span> <span class="ow">in</span> <span class="n">polylines</span><span class="p">:</span>
-                <span class="n">x</span> <span class="o">=</span> <span class="n">xp</span><span class="p">[</span><span class="n">polyline</span><span class="p">]</span>
-                <span class="n">y</span> <span class="o">=</span> <span class="n">yp</span><span class="p">[</span><span class="n">polyline</span><span class="p">]</span>
-                <span class="n">points</span> <span class="o">=</span> <span class="p">[(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">y</span><span class="o">.</span><span class="n">ravel</span><span class="p">())]</span>
-                <span class="n">line</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-                    <span class="c1"># Line in web mercator (to get length in metres)</span>
-                    <span class="n">xm</span><span class="p">,</span> <span class="n">ym</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-                    <span class="n">pointsm</span> <span class="o">=</span> <span class="p">[(</span><span class="n">xm</span><span class="p">,</span> <span class="n">ym</span><span class="p">)</span> <span class="k">for</span> <span class="n">xm</span><span class="p">,</span> <span class="n">ym</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">xm</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">ym</span><span class="o">.</span><span class="n">ravel</span><span class="p">())]</span>
-                    <span class="n">linem</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">pointsm</span><span class="p">)</span>
-                    <span class="n">num_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">linem</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="n">bnd_dist</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">num_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="n">bnd_dist</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
-                <span class="c1"># Interpolate to new points</span>
-                <span class="n">new_points</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="n">line</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">i</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">num_points</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">normalized</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_points</span><span class="p">)</span>
-                <span class="p">]</span>
-                <span class="c1"># Loop through points in polyline</span>
-                <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">new_points</span><span class="p">:</span>
-                    <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ip</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
-                    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span>
-                        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
-                        <span class="s2">&quot;timeseries&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(),</span>
-                        <span class="s2">&quot;astro&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(),</span>
-                        <span class="s2">&quot;geometry&quot;</span><span class="p">:</span> <span class="n">point</span><span class="p">,</span>
-                    <span class="p">}</span>
-                    <span class="n">gdf_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-                    <span class="n">ip</span> <span class="o">+=</span> <span class="mi">1</span>
-
-            <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">gdf_list</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_locations</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+        <span class="c1"># set locations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_locations</span><span class="p">(</span><span class="n">gdf_points</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 </div>
 
 

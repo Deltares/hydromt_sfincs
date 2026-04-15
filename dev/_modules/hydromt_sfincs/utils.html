@@ -471,6 +471,7 @@
     <span class="s2">&quot;read_timeseries&quot;</span><span class="p">,</span>
     <span class="s2">&quot;write_timeseries&quot;</span><span class="p">,</span>
     <span class="s2">&quot;get_bounds_vector&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;create_boundary_points&quot;</span><span class="p">,</span>
     <span class="s2">&quot;mask2gdf&quot;</span><span class="p">,</span>
     <span class="s2">&quot;read_xy&quot;</span><span class="p">,</span>
     <span class="s2">&quot;write_xy&quot;</span><span class="p">,</span>  <span class="c1"># defined in hydromt.io</span>
@@ -823,6 +824,12 @@
 <span class="sd">    gdf_msk: gpd.GeoDataFrame</span>
 <span class="sd">        GeoDataFrame with line geometries of mask boundaries.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># check if da_msk has values greater than 1, if not raise error</span>
+    <span class="k">if</span> <span class="n">da_msk</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;The mask should have values greater than 1 to determine boundary cells.&quot;</span>
+        <span class="p">)</span>
+
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">da_msk</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
         <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">da_msk</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
         <span class="c1"># small buffer for rounding errors</span>
@@ -934,6 +941,51 @@
         <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">da_msk</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gdf_msk</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">create_boundary_points</span><span class="p">(</span><span class="n">gdf_lines</span><span class="p">,</span> <span class="n">bnd_dist</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;normalized&quot;</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate points along line geometries in a GeoDataFrame.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gdf_lines : GeoDataFrame</span>
+<span class="sd">        GeoDataFrame containing line geometries.</span>
+<span class="sd">    bnd_dist : float</span>
+<span class="sd">        Distance between points (for &#39;absolute&#39;) or approximate segment length (for &#39;normalized&#39;).</span>
+<span class="sd">    method : str, optional</span>
+<span class="sd">        &#39;absolute&#39; for fixed-distance spacing,</span>
+<span class="sd">        &#39;normalized&#39; for equal fraction spacing along each line.</span>
+<span class="sd">    crs : CRS, optional</span>
+<span class="sd">        Coordinate reference system for the output GeoDataFrame.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    GeoDataFrame</span>
+<span class="sd">        Points along the input line geometries.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gdf_lines</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">geometry</span>
+
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;absolute&quot;</span><span class="p">:</span>
+            <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">length</span> <span class="o">+</span> <span class="n">bnd_dist</span><span class="p">,</span> <span class="n">bnd_dist</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">distances</span><span class="p">:</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>
+                <span class="n">pt</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                <span class="n">points</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">pt</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;normalized&quot;</span><span class="p">:</span>
+            <span class="n">num_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="n">bnd_dist</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_points</span><span class="p">):</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">num_points</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">pt</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">normalized</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">points</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">pt</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">gdf_points</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="o">*</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">points</span><span class="p">)),</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gdf_points</span>
 
 
 <div class="viewcode-block" id="mask2gdf">
