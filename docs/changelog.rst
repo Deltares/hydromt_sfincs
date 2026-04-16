@@ -10,10 +10,12 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 
 v2.0.0-rc2 (16-4-2026)
 =============================
-**This release contains breaking changes in the SfincsModel API. However, models that were built with v1.x.x can still be read/write/updates.**
+**This release contains minor bugfixes and improvements to the v2.0.0-rc1 release.**
 
 Added
 -----
+- Added script to easily run SFINCS models from Python using local executable or docker (#312)
+- Added the option to visualize the grid in the plot_basemap method (#312)
 - plotting boundaries for quadtree models (#318)
 - quadree roughness and infiltration maps (#342 en #354)
 - added back the option to create discharge forcing from a grid (previously named`setup_discharge_forcing_from_grid`) (#358)
@@ -24,7 +26,8 @@ Fixed
 -----
 - fixed setting up SFINCS with geographical grid (#307)
 - parentheses appeared in the drnfile causing the kernel to crash (#308)
-- netcdf boundary conditions not matching the SFINCS kernel conventions (#316)
+- fixed connectivity of quadtree mask necessary for "staircase" boundaries of SnapWave (#312)
+- made variables in netcdf forcing files compliant with conventions of SFINCS kernel (#316)
 - Ensure vmax is at least 1 for depth variable plot_basemap (#325)
 - fix buffer for clipping meteo datasets after buffer denition changed in hydromt core (#348)
 - bugfixed in generating index file (#357)
