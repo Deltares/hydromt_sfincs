@@ -373,7 +373,7 @@ class SfincsMask(ModelComponent):
         exclude_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
         exclude_zmin: float = None,
         exclude_zmax: float = None,
-        connectivity: int = 8,
+        connectivity: int = 4,
         all_touched: bool = False,
         reset_bounds: bool = False,
     ):
