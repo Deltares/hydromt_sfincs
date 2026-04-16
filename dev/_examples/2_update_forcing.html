@@ -552,10 +552,10 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:49:54,976 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2026-04-15 11:49:54,977 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2026-04-15 11:49:55,842 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0.dev0).
-2026-04-15 11:49:55,843 - hydromt.model.model - model - WARNING - No region component found in components.
+2026-04-16 07:14:58,076 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-04-16 07:14:58,077 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-04-16 07:14:58,747 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0.dev0).
+2026-04-16 07:14:58,747 - hydromt.model.model - model - WARNING - No region component found in components.
 </pre></div></div>
 </div>
 </section>
@@ -622,7 +622,7 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># # hourly rainfall rates of ECMWF&#39; ERA5 data for the specific area and period have been made available for this period in the artefact data</span>
-<span class="n">sf</span><span class="o">.</span><span class="n">precipitation</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">precip</span><span class="o">=</span><span class="s2">&quot;era5_hourly&quot;</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mf">30e3</span><span class="p">)</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">precipitation</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">precip</span><span class="o">=</span><span class="s2">&quot;era5_hourly&quot;</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <span class="c1"># NOTE: when specifying an output name, the image is also saved to file</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">plot_forcing</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;forcing.png&quot;</span><span class="p">)</span>
@@ -634,33 +634,28 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:49:58,095 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading era5_hourly RasterDataset data from /home/runner/.hydromt/artifact_data/latest/era5_hourly.nc
+2026-04-16 07:15:01,192 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading era5_hourly RasterDataset data from /home/runner/.hydromt/artifact_data/latest/era5_hourly.nc
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(&lt;Figure size 600x900 with 3 Axes&gt;,
+ array([&lt;Axes: title={&#39;center&#39;: &#39;SFINCS waterlevel forcing (bzs)&#39;}, ylabel=&#39;waterlevel\n[m+ref]&#39;&gt;,
+        &lt;Axes: title={&#39;center&#39;: &#39;SFINCS discharge forcing (dis)&#39;}, ylabel=&#39;discharge\n[m3.s-1]&#39;&gt;,
+        &lt;Axes: title={&#39;center&#39;: &#39;SFINCS precipitation forcing (precip_2d)&#39;}, ylabel=&#39;mean precipitation\n[mm.hr-1]&#39;&gt;],
+       dtype=object))
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">TypeError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[4]</span><span class="ansi-green-fg">, line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># # hourly rainfall rates of ECMWF&#39; ERA5 data for the specific area and period have been made available for this period in the artefact data</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> <span class="ansi-yellow-bg">sf</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">precipitation</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">create</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">precip</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-fg ansi-yellow-bg">era5_hourly</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">aggregate</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">False</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">buffer</span><span class="ansi-yellow-bg">=</span><span class="ansi-green-fg ansi-yellow-bg">30e3</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">      4</span> <span style="color: rgb(95,135,135)"># NOTE: when specifying an output name, the image is also saved to file</span>
-<span class="ansi-green-fg">      5</span> sf.plot_forcing(fn_out=<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">forcing.png</span><span class="ansi-yellow-fg">&#34;</span>)
-
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/forcing/meteo.py:407</span>, in <span class="ansi-cyan-fg">SfincsPrecipitation.create</span><span class="ansi-blue-fg">(self, precip, dst_res, cumulative_input, time_label, aggregate, **kwargs)</span>
-<span class="ansi-green-fg">    405</span> meth = kwargs0[<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">method</span><span class="ansi-yellow-fg">&#34;</span>]
-<span class="ansi-green-fg">    406</span> logger.debug(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">Resample precip using </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>meth<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">.</span><span class="ansi-yellow-fg">&#34;</span>)
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">407</span> precip_out = <span class="ansi-yellow-bg">precip</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">raster</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">reproject</span><span class="ansi-yellow-bg">(</span>
-<span class="ansi-green-fg">    408</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">dst_crs</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">crs</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">dst_res</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">dst_res</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span>
-<span class="ansi-green-fg">    409</span> <span class="ansi-yellow-bg">)</span>.fillna(<span class="ansi-green-fg">0</span>)
-<span class="ansi-green-fg">    411</span> precip_out = precip_out.rename(<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">precip_2d</span><span class="ansi-yellow-fg">&#34;</span>)
-<span class="ansi-green-fg">    413</span> <span style="color: rgb(95,135,135)"># rename dimensions to match SFINCS conventions (always x and y)</span>
-
-<span class="ansi-red-fg">TypeError</span>: RasterDataArray.reproject() got an unexpected keyword argument &#39;buffer&#39;
-</pre></div></div>
+<img alt="../_images/_examples_2_update_forcing_11_2.png" src="../_images/_examples_2_update_forcing_11_2.png" />
+</div>
 </div>
 <div style="border-left: 4px solid #4CAF50; padding: 10px; margin: 5px 0; background-color: #f0fff0;"><p>💡 Tip: In case you want to add other types of forcing, read more in the SFINCS manual.</p>
 </div></section>
@@ -684,8 +679,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:49:58,615 - hydromt.hydromt_sfincs.components.grid.infiltration - infiltration - INFO - Creating curve number values for SFINCS with antecedent moisture condition: avg.
-2026-04-15 11:49:58,621 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gcn250 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gcn250/{variable}.tif
+2026-04-16 07:15:02,025 - hydromt.hydromt_sfincs.components.grid.infiltration - infiltration - INFO - Creating curve number values for SFINCS with antecedent moisture condition: avg.
+2026-04-16 07:15:02,031 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gcn250 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gcn250/{variable}.tif
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -711,7 +706,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-15 11:50:00,717 - hydromt.hydromt_sfincs.utils - utils - INFO - No changes detected; skipping write to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_compound/sfincs_netbndbzsbzifile.nc
+2026-04-16 07:15:04,164 - hydromt.hydromt_sfincs.utils - utils - INFO - No changes detected; skipping write to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_compound/sfincs_netbndbzsbzifile.nc
 </pre></div></div>
 </div>
 <p>Now your model has new boundary conditions, you can progress (or run again) to the notebook: <a class="reference internal" href="4_run_model.html"><span class="doc">Run SFINCS model</span></a>. In case you want to add some geometries and structures to your model first, continue with notebook <a class="reference internal" href="3_update_geometries.html"><span class="doc">Update Geometries</span></a></p>
