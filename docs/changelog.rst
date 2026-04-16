@@ -29,7 +29,7 @@ Fixed
 - fixed connectivity of quadtree mask necessary for "staircase" boundaries of SnapWave (#312)
 - made variables in netcdf forcing files compliant with conventions of SFINCS kernel (#316)
 - Ensure vmax is at least 1 for depth variable plot_basemap (#325)
-- fix buffer for clipping meteo datasets after buffer denition changed in hydromt core (#348)
+- fix buffer for clipping meteo datasets after buffer definition changed in hydromt core (#348)
 - bugfixed in generating index file (#357)
 - fixed errors that were introduced by pandas releases ≥ 3.0.0 (#371)
 
