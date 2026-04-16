@@ -82,11 +82,7 @@ class SfincsThinDams(ModelComponent):
         """Initialize thin dams."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            if (
-                self.root.is_reading_mode()
-                and not skip_read
-                and self.model.config.get("thdfile") is not None
-            ):
+            if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
     def read(self, filename: str | Path = None):

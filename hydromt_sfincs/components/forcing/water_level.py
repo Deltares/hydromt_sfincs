@@ -91,8 +91,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             )
 
         # Read bnd file
-        # TODO check if we want read_xyn? Before we used read_xy, so without name column
-        gdf = utils.read_xyn(abs_file_path, crs=self.model.crs)
+        gdf = utils.read_xy(abs_file_path, crs=self.model.crs)
         return gdf
 
     def read_boundary_conditions_timeseries(self, filename: str | Path = None):
@@ -273,7 +272,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         # Write x, y only (no name column) — SFINCS bnd file format
         gdf = self.gdf.drop(columns=["name"], errors="ignore")
-        utils.write_xyn(abs_file_path, gdf, fmt=fmt)
+        utils.write_xy(abs_file_path, gdf, fmt=fmt)
 
     def write_boundary_conditions_timeseries(self, filename: str | Path = None):
         """Write SFINCS boundary condition timeseries (.bzs) file"""

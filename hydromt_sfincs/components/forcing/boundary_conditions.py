@@ -82,12 +82,20 @@ class SfincsBoundaryBase(ModelComponent):
         an empty GeoDataFrame is returned.
         """
         if self.nr_points > 0:
-            g = self.data.vector.to_gdf().reset_index(drop=True)
+            return self.data.vector.to_gdf()
+        return gpd.GeoDataFrame()
+
+    @property
+    def list_names(self):
+        """Give list of names of all the points in the dataset, for display purposes.
+        If no "name" column is present, a default name based on index is returned."""
+        if self.nr_points > 0:
             # Ensure "name" column exists for display purposes (not saved to file, just for display in list)
+            g = self.gdf.copy()
             if "name" not in g.columns:
                 g["name"] = [f"Point {i+1:03d}" for i in g.index]
-            return g
-        return gpd.GeoDataFrame()
+            return g["name"].tolist()
+        return []
 
     def set(
         self,
@@ -275,15 +283,12 @@ class SfincsBoundaryBase(ModelComponent):
         x, y : float
             Coordinates of the point.
         name : str, optional
-            Optional point name.
+            Optional point name. This is recommended to use for discharge points.
         value : float or list, optional
             Default timeseries value(s) assigned to the new point. Can be a single float or a list of floats for multiple variables.
         drop_duplicates : bool, optional
             If True, drop duplicate points in gdf based on 'name' column or geometry.
         """
-        # new_index = self.nr_points + 1
-        # if name is None:
-        #     name = f"point_{new_index}"
 
         gdf = gpd.GeoDataFrame(
             geometry=gpd.points_from_xy([x], [y]), crs=self.model.crs

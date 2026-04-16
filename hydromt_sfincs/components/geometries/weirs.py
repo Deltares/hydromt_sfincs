@@ -83,11 +83,7 @@ class SfincsWeirs(ModelComponent):
         """Initialize weir lines."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            if (
-                self.root.is_reading_mode()
-                and not skip_read
-                and self.model.config.get("weirfile") is not None
-            ):
+            if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
     def read(self, filename: str | Path = None):
@@ -284,9 +280,9 @@ class SfincsWeirs(ModelComponent):
             gdf["elevation"] = None  # creates column with object dtype automatically
             for irow, row in gdf.iterrows():
                 gdf.at[irow, "elevation"] = [elevation] * len(row.geometry.coords)
-            # raise ValueError(
-            #     "Weir structure requires elevation values, or 'dep' or 'dz' input to determine these on the fly."
-            # )
+            logger.info(
+                "Used elevation parameter for weir with constant heights, as no elevation data or dep/dz provided."
+            )
         elif dep is not None or dz is not None:
             # determine elevation from dep and dz, if data parsed
             gdf = self.determine_weir_elevation(gdf, dep, buffer, dz)
@@ -449,11 +445,10 @@ class SfincsWeirs(ModelComponent):
 
     def snap_to_grid(self):
         """Returns GeoDataFrame with weirs snapped to model grid."""
-        # FIXME - this probably only works for quadtree grids for now
         if self.model.grid_type != "quadtree":
+            logger.warning(
+                "Snap to grid is only implemented for quadtree grids. Returning original weirs GeoDataFrame."
+            )
             return gpd.GeoDataFrame()  # return empty gdf if not quadtree grid
-            # raise NotImplementedError(
-            #     "Snap to grid is only implemented for quadtree grids."
-            # )
         snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf

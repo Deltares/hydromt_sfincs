@@ -124,7 +124,6 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         weight_option="min",
         buffer_cells=0,
         interp_method: str = "linear",
-        bathymetry_database=None,
         quiet=False,
         progress_bar=None,
     ):
@@ -148,48 +147,44 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             weight_option (str, optional): Weight option. Defaults to "min".
             buffer_cells (int, optional): Number of buffer cells. Defaults to 0.
             interp_method (str, optional): Interpolation method for buffer cells. Defaults to "linear".
-            bathymetry_database (str, optional): Bathymetry database. Defaults to None.
             quiet (bool, optional): Quiet mode. Defaults to False.
             progress_bar (tqdm, optional): Progress bar. Defaults to None.
         """
 
         highres_dir = None
 
-        if bathymetry_database is None:
-            # get resolution and number of level
-            res = self.model.quadtree_grid.data.attrs["dx"]
-            nrlevels = self.model.quadtree_grid.data.attrs["nr_levels"]
+        # get resolution and number of level
+        res = self.model.quadtree_grid.data.attrs["dx"]
+        nrlevels = self.model.quadtree_grid.data.attrs["nr_levels"]
 
-            # convert to meters if geographic
-            if self.model.crs.is_geographic:
-                res = res * 111111.0
-            # append parsed datasets per level
-            elevation_list_per_level = []
-            for ilev in range(nrlevels):
-                # compute resolution per level
-                res_level = res / (2**ilev)
-                # convert to subgrid resolution for this level
-                res_subgrid = res_level / nr_subgrid_pixels
-                # parse datasets closest to subgrid resolution
-                elevation_list_per_level.append(
-                    self.model._parse_datasets_elevation(
-                        elevation_list, res=res_subgrid
-                    )
-                )
-            elevation_list = elevation_list_per_level
+        # convert to meters if geographic
+        if self.model.crs.is_geographic:
+            res = res * 111111.0
+        # append parsed datasets per level
+        elevation_list_per_level = []
+        for ilev in range(nrlevels):
+            # compute resolution per level
+            res_level = res / (2**ilev)
+            # convert to subgrid resolution for this level
+            res_subgrid = res_level / nr_subgrid_pixels
+            # parse datasets closest to subgrid resolution
+            elevation_list_per_level.append(
+                self.model._parse_datasets_elevation(elevation_list, res=res_subgrid)
+            )
+        elevation_list = elevation_list_per_level
 
-            if len(roughness_list) > 0:
-                # NOTE conversion from landuse/landcover to manning happens here
-                roughness_list = self.model._parse_roughness_list(roughness_list)
+        if len(roughness_list) > 0:
+            # NOTE conversion from landuse/landcover to manning happens here
+            roughness_list = self.model._parse_roughness_list(roughness_list)
 
-            if len(river_list) > 0:
-                river_list = self.model._parse_river_list(river_list)
+        if len(river_list) > 0:
+            river_list = self.model._parse_river_list(river_list)
 
-            if write_dep_tif or write_man_tif:
-                highres_dir = self.model.root.path / "subgrid"
-                # check if directory exists using pathlib, otherwise create it
-                if not highres_dir.exists():
-                    highres_dir.mkdir(parents=True, exist_ok=True)
+        if write_dep_tif or write_man_tif:
+            highres_dir = self.model.root.path / "subgrid"
+            # check if directory exists using pathlib, otherwise create it
+            if not highres_dir.exists():
+                highres_dir.mkdir(parents=True, exist_ok=True)
 
         self._data = build_subgrid_table_quadtree(
             grid=self.model.quadtree_grid.data,
@@ -213,7 +208,6 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             weight_option=weight_option,
             buffer_cells=buffer_cells,
             interp_method=interp_method,
-            bathymetry_database=bathymetry_database,
             quiet=quiet,
             progress_bar=progress_bar,
             logger=logger,

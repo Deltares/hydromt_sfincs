@@ -105,7 +105,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             )
 
         # Read bnd file
-        gdf = utils.read_xyn(abs_file_path, crs=self.model.crs)
+        gdf = utils.read_xy(abs_file_path, crs=self.model.crs)
 
         return gdf
 
@@ -264,7 +264,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         gdf = self.data.vector.to_gdf()
 
-        utils.write_xyn(abs_file_path, gdf, fmt=fmt)
+        utils.write_xy(abs_file_path, gdf, fmt=fmt)
 
     def write_boundary_conditions_timeseries_all(self, filename: str | Path = None):
         """Write SnapWave boundary condition timeseries (*.bhs, *.btp, *.bwd, *.bds) files for all variables"""

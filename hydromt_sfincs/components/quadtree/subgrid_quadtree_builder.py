@@ -49,7 +49,6 @@ def build_subgrid_table_quadtree(
     write_dep_tif: bool = False,
     write_man_tif: bool = False,
     highres_dir: str = None,
-    bathymetry_database: object = None,
     quiet: bool = True,
     progress_bar: object = None,
     logger: logging.Logger = None,
@@ -79,7 +78,6 @@ def build_subgrid_table_quadtree(
         write_dep_tif=write_dep_tif,
         write_man_tif=write_man_tif,
         highres_dir=highres_dir,
-        bathymetry_database=bathymetry_database,
         quiet=quiet,
         progress_bar=progress_bar,
         logger=logger,
@@ -116,7 +114,6 @@ class SubgridTableQuadtree:
         write_dep_tif: bool = False,
         write_man_tif: bool = False,
         highres_dir: str = None,
-        bathymetry_database: object = None,
         quiet: bool = True,
         progress_bar: object = None,
         logger: logging.Logger = None,
@@ -389,9 +386,6 @@ class SubgridTableQuadtree:
                         # No cells in this block
                         continue
 
-                    # TODO - TL: here missing is "# Check if active SFINCS cells exist in mask"
-                    # RdG: I think this is not needed since cut_inactive_cells should have been applied already
-
                     index_cells_in_block = index_cells_in_block[0:nr_cells_in_block]
 
                     msg = f"Number of cells in this block      : {nr_cells_in_block}"
@@ -424,53 +418,36 @@ class SubgridTableQuadtree:
                     )
 
                     # FIXME, merging dep datasets is now done twice, seems very ineffcicient, especially with burning in rivers etc.
-                    if bathymetry_database:
-                        # Delft Dashboard
-                        # Get bathymetry on subgrid from bathymetry database
+                    da_dep = merge_multi_dataarrays(
+                        da_list=elevation_list[ilev],
+                        da_like=da_sbg,
+                        buffer_cells=buffer_cells,
+                        interp_method=interp_method,
+                    )
 
-                        xg = da_sbg["x"].values
-                        yg = da_sbg["y"].values
-
-                        zg = bathymetry_database.get_bathymetry_on_grid(
-                            xg, yg, crs, elevation_list, method="linear"
-                        )
-
-                        # replace NaNs with 0.0
-                        # FIXME this is a very bad idea?!!!
-                        zg[np.isnan(zg)] = 0.0
-
-                    else:
-                        # HydroMT
-                        da_dep = merge_multi_dataarrays(
-                            da_list=elevation_list[ilev],
-                            da_like=da_sbg,
-                            buffer_cells=buffer_cells,
-                            interp_method=interp_method,
-                        )
-
-                        # burn rivers in bathymetry and manning
-                        if len(river_list) > 0:
-                            logger.debug("Burn rivers in bathymetry and manning data")
-                            for riv_kwargs in river_list:
-                                da_dep, _ = burn_river_rect(
-                                    da_elv=da_dep,
-                                    logger=logger,
-                                    **riv_kwargs,
-                                )
-
-                        if np.any(np.isnan(da_dep.values)) > 0:
-                            npx = int(np.sum(np.isnan(da_dep.values)))
-                            logger.warning(
-                                f"Interpolate elevation data at {npx} subgrid pixels"
+                    # burn rivers in bathymetry and manning
+                    if len(river_list) > 0:
+                        logger.debug("Burn rivers in bathymetry and manning data")
+                        for riv_kwargs in river_list:
+                            da_dep, _ = burn_river_rect(
+                                da_elv=da_dep,
+                                logger=logger,
+                                **riv_kwargs,
                             )
 
-                        # always interpolate/extrapolate to avoid NaN values
-                        da_dep = da_dep.raster.interpolate_na(
-                            method="rio_idw",
-                            extrapolate=True,
+                    if np.any(np.isnan(da_dep.values)) > 0:
+                        npx = int(np.sum(np.isnan(da_dep.values)))
+                        logger.warning(
+                            f"Interpolate elevation data at {npx} subgrid pixels"
                         )
 
-                        zg = da_dep.values
+                    # always interpolate/extrapolate to avoid NaN values
+                    da_dep = da_dep.raster.interpolate_na(
+                        method="rio_idw",
+                        extrapolate=True,
+                    )
+
+                    zg = da_dep.values
 
                     # Multiply zg with depth factor (had to use 0.9746 to get arrival
                     # times right in the Pacific)
@@ -706,124 +683,61 @@ class SubgridTableQuadtree:
                     )
 
                     # Get the numpy array zg with bathy/topo values for this block
-                    if bathymetry_database:
-                        # Delft Dashboard
-                        # Get bathymetry on subgrid from bathymetry database
+                    da_dep = merge_multi_dataarrays(
+                        da_list=elevation_list[ilev],
+                        da_like=da_sbg_uv,
+                        buffer_cells=buffer_cells,
+                        interp_method=interp_method,
+                    )
 
-                        xg = da_sbg_uv["x"].values
-                        yg = da_sbg_uv["y"].values
-
-                        zg = bathymetry_database.get_bathymetry_on_grid(
-                            xg, yg, crs, elevation_list
+                    if np.any(np.isnan(da_dep.values)) > 0:
+                        npx = int(np.sum(np.isnan(da_dep.values)))
+                        logger.warning(
+                            f"Interpolate elevation data at {npx} subgrid pixels"
                         )
+                    # always interpolate/extrapolate to avoid NaN values
+                    da_dep = da_dep.raster.interpolate_na(
+                        method="rio_idw", extrapolate=True
+                    )
 
-                        # Multiply zg with depth factor (had to use 0.9746 to get arrival
-                        # times right in the Pacific)
-                        # TODO this depth factor is also an option of the data-catalog stuff ...
-                        zg = zg * depth_factor
+                    # TODO this depth factor is also an option of the data-catalog stuff ...
+                    da_dep.values = da_dep.values * depth_factor
 
-                        # Set minimum depth
-                        zg = np.maximum(zg, zminimum)
-                        zg = np.minimum(zg, zmaximum)
-
-                        # replace NaNs with 0.0
-                        # FIXME this is a very bad idea?!!!
-                        zg[np.isnan(zg)] = 0.0
-
-                    else:
-                        # HydroMT
-                        da_dep = merge_multi_dataarrays(
-                            da_list=elevation_list[ilev],
-                            da_like=da_sbg_uv,
-                            buffer_cells=buffer_cells,
-                            interp_method=interp_method,
-                        )
-
-                        if np.any(np.isnan(da_dep.values)) > 0:
-                            npx = int(np.sum(np.isnan(da_dep.values)))
-                            logger.warning(
-                                f"Interpolate elevation data at {npx} subgrid pixels"
-                            )
-                        # always interpolate/extrapolate to avoid NaN values
-                        da_dep = da_dep.raster.interpolate_na(
-                            method="rio_idw", extrapolate=True
-                        )
-
-                        # TODO this depth factor is also an option of the data-catalog stuff ...
-                        da_dep.values = da_dep.values * depth_factor
-
-                        # Set minimum depth
-                        da_dep = np.maximum(da_dep, zminimum)
-                        da_dep = np.minimum(da_dep, zmaximum)
-                        zg = da_dep.values
+                    # Set minimum depth
+                    da_dep = np.maximum(da_dep, zminimum)
+                    da_dep = np.minimum(da_dep, zmaximum)
+                    zg = da_dep.values
 
                     # Manning's n values
 
                     # Initialize roughness of subgrid at NaN
                     manning_grid = np.full(da_sbg_uv.shape, np.nan)
 
-                    if bathymetry_database:
-                        # Loop through roughness sets, check if one has polygon file
-                        manning_grid = bathymetry_database.get_bathymetry_on_grid(
-                            xg, yg, crs, roughness_list
+                    if len(roughness_list) > 0:
+                        da_man = merge_multi_dataarrays(
+                            da_list=roughness_list,
+                            da_like=da_sbg_uv,
+                            interp_method="linear",
+                            buffer_cells=buffer_cells,
                         )
-
-                        for roughness_set in roughness_list:
-                            if (
-                                "polygon_file" in roughness_set
-                                and "value" in roughness_set
-                            ):
-                                polygon_file = roughness_set["polygon_file"]
-                                # Read the polygon file and get the values
-                                gdf = gpd.read_file(polygon_file)
-                                value = roughness_set["value"]
-
-                                # Loop through polygons in gdf
-                                inpols = np.full(xg.shape, False)
-                                for ip, polygon in gdf.iterrows():
-                                    inpol = inpolygon(xg, yg, polygon["geometry"])
-                                    inpols = np.logical_or(inpols, inpol)
-
-                                manning_grid[inpols] = value
-
-                        # Fill in remaining NaNs with default values
-                        isn = np.where(np.isnan(manning_grid))
-                        try:
-                            manning_grid[
-                                (isn and np.where(zg <= manning_level))
-                            ] = manning_water
-                        except:
-                            pass
-                        manning_grid[
-                            (isn and np.where(zg > manning_level))
-                        ] = manning_land
-
+                        # raise warning if NaN values in active cells
+                        if np.isnan(da_man.values).any():
+                            npx = int(np.sum(np.isnan(da_man.values)))
+                            logger.warning(
+                                f"Fill manning roughness data at {npx} subgrid pixels with default values"
+                            )
+                        # always fill based on land/sea elevation to avoid NaN values
+                        da_man0 = xr.where(
+                            da_dep >= manning_level, manning_land, manning_water
+                        )
+                        da_man = da_man.where(~np.isnan(da_man), da_man0)
                     else:
-                        if len(roughness_list) > 0:
-                            da_man = merge_multi_dataarrays(
-                                da_list=roughness_list,
-                                da_like=da_sbg_uv,
-                                interp_method="linear",
-                                buffer_cells=buffer_cells,
-                            )
-                            # raise warning if NaN values in active cells
-                            if np.isnan(da_man.values).any():
-                                npx = int(np.sum(np.isnan(da_man.values)))
-                                logger.warning(
-                                    f"Fill manning roughness data at {npx} subgrid pixels with default values"
-                                )
-                            # always fill based on land/sea elevation to avoid NaN values
-                            da_man0 = xr.where(
-                                da_dep >= manning_level, manning_land, manning_water
-                            )
-                            da_man = da_man.where(~np.isnan(da_man), da_man0)
-                        else:
-                            da_man = xr.where(
-                                da_dep >= manning_level, manning_land, manning_water
-                            )
-                            da_man.raster.set_nodata(np.nan)
-                        # convert to numpy values
-                        manning_grid = da_man.values
+                        da_man = xr.where(
+                            da_dep >= manning_level, manning_land, manning_water
+                        )
+                        da_man.raster.set_nodata(np.nan)
+                    # convert to numpy values
+                    manning_grid = da_man.values
 
                     # burn rivers in bathymetry and manning
                     if len(river_list) > 0:
@@ -838,30 +752,29 @@ class SubgridTableQuadtree:
                         zg = da_dep.values
                         manning_grid = da_man.values
 
-                    if bathymetry_database is None:
-                        # optional write tile to file
-                        x_dim_dep, y_dim_dep = da_dep.raster.x_dim, da_dep.raster.y_dim
-                        window = Window(
-                            bm0 * nr_subgrid_pixels,
-                            bn0 * nr_subgrid_pixels,
-                            da_dep[:-refi, :-refi].sizes[x_dim_dep],
-                            da_dep[:-refi, :-refi].sizes[y_dim_dep],
-                        )
-                        if write_dep_tif:
-                            # write the block to the output COG
-                            with rasterio.open(fn_dep_tif, "r+") as dep_tif:
-                                dep_tif.write(
-                                    da_dep[:-refi, :-refi].values,
-                                    window=window,
-                                    indexes=1,
-                                )
-                        if write_man_tif:
-                            with rasterio.open(fn_man_tif, "r+") as man_tif:
-                                man_tif.write(
-                                    da_man[:-refi, :-refi].values,
-                                    window=window,
-                                    indexes=1,
-                                )
+                    # optional write tile to file
+                    x_dim_dep, y_dim_dep = da_dep.raster.x_dim, da_dep.raster.y_dim
+                    window = Window(
+                        bm0 * nr_subgrid_pixels,
+                        bn0 * nr_subgrid_pixels,
+                        da_dep[:-refi, :-refi].sizes[x_dim_dep],
+                        da_dep[:-refi, :-refi].sizes[y_dim_dep],
+                    )
+                    if write_dep_tif:
+                        # write the block to the output COG
+                        with rasterio.open(fn_dep_tif, "r+") as dep_tif:
+                            dep_tif.write(
+                                da_dep[:-refi, :-refi].values,
+                                window=window,
+                                indexes=1,
+                            )
+                    if write_man_tif:
+                        with rasterio.open(fn_man_tif, "r+") as man_tif:
+                            man_tif.write(
+                                da_man[:-refi, :-refi].values,
+                                window=window,
+                                indexes=1,
+                            )
 
                     ###############################
                     # Process U/V points in block #
@@ -899,28 +812,21 @@ class SubgridTableQuadtree:
                         roughness_type,
                     )
 
-                    # if progress_bar:
-                    #     progress_bar.set_value(ibt)
-                    #     if progress_bar.was_canceled():
-                    #         return
-                    #     ibt += 1
-
-            if bathymetry_database is None:
-                # Create COG overviews for faster visualization
-                if write_dep_tif:
-                    utils.build_overviews(
-                        fn=fn_dep_tif,
-                        resample_method="average",
-                        overviews="auto",
-                        logger=logger,
-                    )
-                if write_man_tif:
-                    utils.build_overviews(
-                        fn=fn_man_tif,
-                        resample_method="average",
-                        overviews="auto",
-                        logger=logger,
-                    )
+            # Create COG overviews for faster visualization
+            if write_dep_tif:
+                utils.build_overviews(
+                    fn=fn_dep_tif,
+                    resample_method="average",
+                    overviews="auto",
+                    logger=logger,
+                )
+            if write_man_tif:
+                utils.build_overviews(
+                    fn=fn_man_tif,
+                    resample_method="average",
+                    overviews="auto",
+                    logger=logger,
+                )
 
         # Now create the xarray dataset (FIXME do we transpose here? is this necessary for fortan?)
         self.ds = xr.Dataset()

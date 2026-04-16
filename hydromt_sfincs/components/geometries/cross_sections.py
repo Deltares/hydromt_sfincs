@@ -80,11 +80,7 @@ class SfincsCrossSections(ModelComponent):
         """Initialize cross-section lines."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            if (
-                self.root.is_reading_mode()
-                and not skip_read
-                and self.model.config.get("crsfile") is not None
-            ):
+            if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
     def read(self, filename: str | Path = None):

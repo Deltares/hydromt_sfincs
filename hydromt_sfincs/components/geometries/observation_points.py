@@ -46,9 +46,7 @@ class SfincsObservationPoints(ModelComponent):
     @property
     def gdf(self) -> gpd.GeoDataFrame:
         """Observation point data, returned as a GeoDataFrame. Same as data property."""
-        if self._data is None:
-            self._initialize()
-        return self._data
+        return self.data
 
     @property
     def nr_points(self) -> int:
@@ -82,14 +80,7 @@ class SfincsObservationPoints(ModelComponent):
         """Initialize observation points."""
         if self._data is None:
             self._data = gpd.GeoDataFrame()
-            # Commenting following lines out for now. obsfile is probably set to none at this time, but
-            # it will try to read sfincs.obs file anyway. If this file is present, it will read it.
-            # This is not desired, as the user might want to start with an empty set of observation points.
-            if (
-                self.root.is_reading_mode()
-                and not skip_read
-                and self.model.config.get("obsfile") is not None
-            ):
+            if self.root.is_reading_mode() and not skip_read:
                 self.read()
 
     def read(self, filename: str | Path = None):
@@ -97,10 +88,6 @@ class SfincsObservationPoints(ModelComponent):
 
         # check that read mode is on
         self.root._assert_read_mode()
-
-        if self.model.config.get("obsfile") is None and filename is None:
-            # No obsfile set in config and no filename given, so nothing to read. Just return.
-            return
 
         # get absolute file path and set it in config if obsfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
