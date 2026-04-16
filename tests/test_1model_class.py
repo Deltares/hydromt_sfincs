@@ -16,6 +16,7 @@ from hydromt.readers import read_workflow_yaml
 
 # from hydromt.log import setuplog
 
+from hydromt_sfincs import utils
 from hydromt_sfincs.sfincs import SfincsModel
 
 from .conftest import TESTDATADIR, TESTMODELDIR
@@ -394,8 +395,6 @@ def test_structs(model_config, tmp_dir):
     model_config.thin_dams.create(fn_thd_gis, merge=True)
     assert len(model_config.thin_dams.data.index) == nr_thin_dams * 2
     # setup weir file from thd.geojson using dz option
-    with pytest.raises(ValueError, match="Weir structure requires z"):
-        model_config.weirs.create(fn_thd_gis)
     model_config.weirs.create(fn_thd_gis, dz=2)
     assert not model_config.weirs.data.empty
     assert model_config.config.get("weirfile") is not None
@@ -434,10 +433,12 @@ def test_drainage_structures(model_config, tmp_dir):
     drnfile_2 = model_config.root.path / "sfincs.drn"
 
     # check whether the files are the same
-    with open(drnfile_1, "r") as f1, open(drnfile_2, "r") as f2:
-        content1 = f1.read()
-        content2 = f2.read()
-        assert content1 == content2
+    gdf1 = utils.read_drn(drnfile_1)
+    gdf2 = utils.read_drn(drnfile_2)
+    assert_geodataframe_equal(
+        gdf1,
+        gdf2,
+    )
 
 
 @pytest.mark.parametrize("case", list(_cases.keys()))

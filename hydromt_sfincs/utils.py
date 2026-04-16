@@ -236,13 +236,14 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
 
 
 def read_xyn(fn: str, crs: int = None):
+    """Read xyn files, for example observation points with names. When name column is not present, it will be generated as "point001", "point002", etc."""
     df = pd.read_csv(fn, index_col=False, header=None, sep=r"\s+").rename(
         columns={0: "x", 1: "y"}
     )
     if len(df.columns) > 2:
         df = df.rename(columns={2: "name"})
-    # else:
-    #     df["name"] = df.index
+    else:
+        df["name"] = [f"point{i:03d}" for i in range(1, len(df) + 1)]
 
     points = gpd.points_from_xy(df["x"], df["y"])
     gdf = gpd.GeoDataFrame(df.drop(columns=["x", "y"]), geometry=points)
@@ -252,6 +253,7 @@ def read_xyn(fn: str, crs: int = None):
 
 
 def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, fmt: str = "%.1f"):
+    """Write xyn files, for example observation points with names. When name column is not present, it will be generated as "point001", "point002", etc."""
     # strip %-sign of fmt if present
     fmt = fmt.replace("%", "")
 
@@ -577,7 +579,7 @@ def gdf2linestring(gdf: gpd.GeoDataFrame) -> List[Dict]:
     """Convert GeoDataFrame[LineString] to list of structure dictionaries
 
     The x,y are taken from the geometry.
-    For weir structures to additional paramters are required, a "z" (elevation) and
+    For weir structures to additional paramters are required, a "elevation" (elevation) and
     "par1" (Cd coefficient in weir formula) are required which should be supplied
     as columns (or z-coordinate) of the GeoDataFrame. These columns should either
     contain a float or 1D-array of floats with same length as the LineString.
@@ -604,7 +606,7 @@ def gdf2linestring(gdf: gpd.GeoDataFrame) -> List[Dict]:
         xyz = tuple(zip(*line.coords[:]))
         feat["x"], feat["y"] = list(xyz[0]), list(xyz[1])
         if len(xyz) == 3:
-            feat["z"] = list(xyz[2])
+            feat["elevation"] = list(xyz[2])
         feats.append(feat)
     return feats
 
@@ -658,8 +660,8 @@ def linestring2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDat
     for f in feats:
         feat = copy.deepcopy(f)
         xyz = [feat.pop("x"), feat.pop("y")]
-        if "z" in feat and np.atleast_1d(feat["z"]).size == len(xyz[0]):
-            xyz.append(feat.pop("z"))
+        if "elevation" in feat and np.atleast_1d(feat["elevation"]).size == len(xyz[0]):
+            xyz.append(feat.pop("elevation"))
         feat.update({"geometry": LineString(list(zip(*xyz)))})
         records.append(feat)
     gdf = gpd.GeoDataFrame.from_records(records)
@@ -736,14 +738,14 @@ def write_geoms(
                 "name": 'WEIR01',
                 "x": [0, 10, 20],
                 "y": [100, 100, 100],
-                "z": 5.0,
+                "elevation": 5.0,
                 "par1": 0.6,
             },
             {
                 "name": 'WEIR02',
                 "x": [100, 110, 120],
                 "y": [100, 100, 100],
-                "z": [5.0, 5.1, 5.0],
+                "elevation": [5.0, 5.1, 5.0],
                 "par1": 0.6,
             },
         ]
@@ -752,8 +754,8 @@ def write_geoms(
     cols = {"pli": 2, "pol": 2, "thd": 2, "weir": 4, "crs": 2, "wvm": 2}[stype.lower()]
 
     fmt = [fmt, fmt] + [fmt_z for _ in range(cols - 2)]
-    # if stype.lower() == "weir" and np.any(["z" not in f for f in feats]):
-    #     raise ValueError('"z" value missing for weir files.')
+    if stype.lower() == "weir" and np.any(["elevation" not in f for f in feats]):
+        raise ValueError('"elevation" value missing for weir files.')
     with open(fn, "w") as f:
         for i, feat in enumerate(feats):
             name = feat.get("name", i + 1)
@@ -896,10 +898,25 @@ def read_drn(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:
         "par3",
         "par4",
         "par5",
+        "par6",
     ]
 
     # read structure file
-    df = pd.read_csv(fn, sep="\\s+", names=col_names)
+    df = pd.read_csv(fn, sep="\\s+", header=None, dtype=float)
+
+    # trim or expand columns to expected size
+    n_expected = len(col_names)
+
+    if df.shape[1] < n_expected:
+        # add missing columns
+        for i in range(df.shape[1], n_expected):
+            df[i] = 0.0
+    elif df.shape[1] > n_expected:
+        # drop extra columns
+        df = df.iloc[:, :n_expected]
+
+    # assign names
+    df.columns = col_names
 
     # get geometry linestring
     geom = [

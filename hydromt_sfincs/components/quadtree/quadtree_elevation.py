@@ -11,7 +11,6 @@ import xugrid as xu
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs.utils import make_regular_grid
 from hydromt_sfincs.workflows.map_overlay import ElevationOverlay
 from hydromt_sfincs.workflows.merge import (
     merge_multi_dataarrays,
@@ -63,7 +62,6 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         interp_method: str = "linear",
         zmin: float = -1.0e9,
         zmax: float = 1.0e9,
-        bathymetry_database: object = None,
     ):
         """Interpolate topobathy (z) data to the model grid.
 
@@ -84,7 +82,6 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         """
 
         nlev = self.data.attrs["nr_levels"]
-        xy = self.data.grid.face_coordinates
         n_cells = self.data.grid.n_face
         zz = np.full(n_cells, np.nan)
         dx = self.data.attrs["dx"]
@@ -93,9 +90,6 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
 
         if self.model.crs.is_geographic:
             res *= 111111.0  # convert to meters
-
-        # get 0-based level
-        level = self.data["level"].values - 1
 
         # Precompute elevation sets per level
         # Add try statement here for compatibility with cht_bathymetry approach

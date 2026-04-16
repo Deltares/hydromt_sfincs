@@ -163,23 +163,23 @@ def test_create_timeseries(quadtree_model_config):
     )
 
     # Check that the timeseries is created correctly
-    point_data = mod.snapwave_boundary_conditions.data["hs"].isel(index=1)
+    point_data = mod.snapwave_boundary_conditions.data["hs"].sel(index=1)
     assert np.isclose(point_data.values.min(), 2.0, atol=0.06)
     assert point_data.values.max() == 5
-    point_data = mod.snapwave_boundary_conditions.data["tp"].isel(index=1)
+    point_data = mod.snapwave_boundary_conditions.data["tp"].sel(index=1)
     assert point_data.values.min() == 14
     assert point_data.values.max() == 14
-    point_data = mod.snapwave_boundary_conditions.data["wd"].isel(index=1)
+    point_data = mod.snapwave_boundary_conditions.data["wd"].sel(index=1)
     assert point_data.values.min() == 245
     assert point_data.values.max() == 245
-    point_data = mod.snapwave_boundary_conditions.data["ds"].isel(index=1)
+    point_data = mod.snapwave_boundary_conditions.data["ds"].sel(index=1)
     assert point_data.values.min() == 25
     assert point_data.values.max() == 25
 
     assert len(point_data.time) == 49  # 49 hours with 1 hour timestep
 
     # also check that the min, max of the other points are still the same
-    point_data = mod.snapwave_boundary_conditions.data["hs"].isel(index=0)
+    point_data = mod.snapwave_boundary_conditions.data["hs"].sel(index=2)
     assert point_data.values.min() == 3
     assert point_data.values.max() == 3
     # but length has changed accordingly

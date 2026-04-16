@@ -32,6 +32,31 @@ class SfincsDischargePoints(SfincsBoundaryBase):
     def __init__(self, model: "SfincsModel"):
         super().__init__(model)
 
+    @property
+    def gdf(self) -> gpd.GeoDataFrame:
+        if self.nr_points == 0:
+            return gpd.GeoDataFrame()
+
+        g = self.data.vector.to_gdf().copy()
+
+        if "name" not in g.columns:
+            g["name"] = [f"Point {i+1:03d}" for i in range(len(g))]
+
+        # enforce no missing names
+        if g["name"].isna().any():
+            missing = g["name"].isna()
+            g.loc[missing, "name"] = [
+                f"Point {i+1:03d}" for i in missing[missing].index
+            ]
+        return g
+
+    @property
+    def list_names(self):
+        """Return list of point names for display purposes."""
+        if self.nr_points == 0:
+            return []
+        return self.gdf["name"].tolist()
+
     def read(self, format: str = None):
         """Read SFINCS discharge points (.dis, .src files) or netcdf file.
 
@@ -81,8 +106,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         if not abs_file_path.exists():
             raise FileNotFoundError(f"Discharge points file not found: {abs_file_path}")
 
-        # Read bnd file
-        # TODO check if we want read_xyn? Before we used read_xy, so without name column
+        # Read src file
         gdf = utils.read_xyn(abs_file_path, crs=self.model.crs)
         return gdf
 
@@ -202,7 +226,6 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         else:
             fmt = "%11.1f"
 
-        # TODO check whether write_xyn or write_xy
         utils.write_xyn(abs_file_path, self.gdf, fmt=fmt)
 
     def write_discharge_timeseries(self, filename: str | Path = None):
