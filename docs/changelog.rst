@@ -17,7 +17,7 @@ Added
 - Added script to easily run SFINCS models from Python using local executable or docker (#312)
 - Added the option to visualize the grid in the plot_basemap method (#312)
 - plotting boundaries for quadtree models (#318)
-- quadree roughness and infiltration maps (#342 en #354)
+- quadtree roughness and infiltration maps (#342 en #354)
 - added back the option to create discharge forcing from a grid (previously named`setup_discharge_forcing_from_grid`) (#358)
 - add runup gauges geometry component (#366)
 - platform aware launcher script (exe_path + write_batch_file) (#367)
