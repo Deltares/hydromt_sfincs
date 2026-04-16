@@ -457,7 +457,7 @@ class SfincsPrecipitation(SfincsMeteo):
                 },
             )
         elif magnitude is not None:
-            times = pd.date_range(*self.model.get_model_time(), freq="10T")
+            times = pd.date_range(*self.model.get_model_time(), freq="10min")
             df_ts = pd.DataFrame(
                 index=times, data=np.full((len(times), 1), magnitude, dtype=float)
             )
