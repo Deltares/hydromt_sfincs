@@ -317,8 +317,13 @@ class SfincsMask(ModelComponent):
                     if include_zmax is not None:
                         _msk = np.logical_and(_msk, da_dep <= include_zmax)
                 da_mask = np.logical_or(da_mask, _msk)  # NOTE logical OR statement
-            except:
-                logger.debug("No mask cells found within include polygon!")
+            except ValueError as e:
+                if "No shapes found" in str(e):
+                    logger.debug(
+                        "No mask cells found within include polygon. Skipping this polygon."
+                    )
+                else:
+                    raise
         if gdf_exclude is not None:
             try:
                 _msk = da_mask.raster.geometry_mask(
@@ -334,8 +339,13 @@ class SfincsMask(ModelComponent):
                     if exclude_zmax is not None:
                         _msk = np.logical_and(_msk, da_dep <= exclude_zmax)
                 da_mask = np.logical_and(da_mask, ~_msk)
-            except:
-                logger.debug("No mask cells found within exclude polygon!")
+            except ValueError as e:
+                if "No shapes found" in str(e):
+                    logger.debug(
+                        "No mask cells found within exclude polygon. Skipping this polygon."
+                    )
+                else:
+                    raise
 
         # update sfincs mask name, nodata value and crs
         da_mask = da_mask.where(da_mask, 0).astype(np.uint8).rename("mask")
@@ -363,7 +373,7 @@ class SfincsMask(ModelComponent):
         exclude_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
         exclude_zmin: float = None,
         exclude_zmax: float = None,
-        connectivity: int = 8,
+        connectivity: int = 4,
         all_touched: bool = False,
         reset_bounds: bool = False,
     ):
@@ -456,9 +466,11 @@ class SfincsMask(ModelComponent):
 
         # determine boundary type value
         btype = btype.lower()
-        bvalues = {"waterlevel": 2, "outflow": 3}
+        bvalues = {"waterlevel": 2, "outflow": 3, "downstream": 5}
         if btype not in bvalues:
-            raise ValueError('btype must be one of "waterlevel", "outflow"')
+            raise ValueError(
+                'btype must be one of "waterlevel", "outflow", "downstream"'
+            )
         bvalue = bvalues[btype]
 
         if reset_bounds:  # reset existing boundary cells
@@ -483,9 +495,17 @@ class SfincsMask(ModelComponent):
         if zmax is not None:
             bounds = np.logical_and(bounds, da_dep <= zmax)
         if gdf_include is not None:
-            da_include = da_mask.raster.geometry_mask(
-                gdf_include, all_touched=all_touched
-            )
+            try:
+                da_include = da_mask.raster.geometry_mask(
+                    gdf_include, all_touched=all_touched
+                )
+            except ValueError as e:
+                if "No shapes found" in str(e):
+                    logger.debug(
+                        "No mask boundary cells found within include boundary polygon. Skipping this polygon."
+                    )
+                else:
+                    raise
             if include_zmin is not None or include_zmax is not None:
                 if da_dep is None:
                     raise ValueError(
@@ -498,9 +518,19 @@ class SfincsMask(ModelComponent):
             # bounds = np.logical_or(bounds, np.logical_and(bounds0, da_include))
             bounds = np.logical_and(bounds, da_include)
         if gdf_exclude is not None:
-            da_exclude = da_mask.raster.geometry_mask(
-                gdf_exclude, all_touched=all_touched
-            )
+            try:
+                da_exclude = da_mask.raster.geometry_mask(
+                    gdf_exclude, all_touched=all_touched
+                )
+            except ValueError as e:
+                if "No shapes found" in str(e):
+                    logger.debug(
+                        "No mask boundary cells found within exclude boundary polygon. Skipping this polygon."
+                    )
+                else:
+                    raise
+            except Exception:
+                raise
             if exclude_zmin is not None or exclude_zmax is not None:
                 if da_dep is None:
                     raise ValueError(

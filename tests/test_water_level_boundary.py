@@ -227,9 +227,6 @@ def test_create(model_config):
     """Test creating discharge points from a GeoDataFrame and csv file."""
     src_file = Path(TESTMODELDIR) / "gis" / "bnd.geojson"
 
-    print(src_file.resolve())
-    print(src_file.exists())
-
     # Create discharge points from GeoDataFrame
     model_config.water_level.create(locations=src_file, merge=False)
 
@@ -299,6 +296,18 @@ def test_create(model_config):
 
     assert model_config.water_level.nr_points == 1
     assert model_config.water_level.data["bzs"].index[-1] == 0
+
+
+@pytest.mark.parametrize("model_fixture", ["model", "quadtree_model"])
+def test_create_boundary_points_from_mask(request, model_fixture):
+    """Test creating boundary points from a mask."""
+    example = request.getfixturevalue(model_fixture)
+
+    # note this should always overwrite existing points, so no need to clear first
+    example.water_level.create_boundary_points_from_mask(bnd_dist=2000)
+
+    # Check that the number of points is correct
+    assert example.water_level.nr_points > 0
 
 
 def test_delete_clear(model_config):

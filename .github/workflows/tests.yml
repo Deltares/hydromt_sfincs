@@ -2,14 +2,18 @@ name: Tests
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - release/*
     paths:
       - hydromt_sfincs/**/*
       - tests/**/*
       - pyproject.toml
       - .github/workflows/tests.yml
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - release/*
     paths:
       - hydromt_sfincs/**/*
       - tests/**/*

@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import xarray as xr
 
@@ -79,7 +79,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             raise FileNotFoundError(f"Subgrid file not found: {abs_file_path}")
 
         # Read from netcdf file with xarray
-        self.data = xr.load_dataset(filename)
+        self._data = xr.load_dataset(abs_file_path)
 
     def write(self, filename: str | Path = None):
         """Write SFINCS subgrid table (*.sbg) file for Quadree grid
@@ -105,8 +105,9 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
 
     def create(
         self,
-        bathymetry_sets,
+        elevation_list,
         roughness_list: list = [],
+        river_list: List[dict] = [],
         manning_land=0.04,
         manning_water=0.020,
         manning_level=1.0,
@@ -121,19 +122,18 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         write_dep_tif=True,
         write_man_tif=False,
         weight_option="min",
+        buffer_cells=0,
+        interp_method: str = "linear",
         bathymetry_database=None,
         quiet=False,
         progress_bar=None,
     ):
         """Build SFINCS subgrid table for quadtree grid
 
-        FIXME WARNING: this only works when called from Delft Dashboard
-        The hydromt_sfincs.subgrid_quadtree_builder needs to be updated
-        to work with data catalogs
-
         Args:
-            bathymetry_sets (list): List of bathymetry data sets
+            elevation_list (list): List of bathymetry data sets
             roughness_list (list): List of roughness data sets
+            river_list (list): List of river data sets
             manning_land (float, optional): Manning's n value for land. Defaults to 0.04.
             manning_water (float, optional): Manning's n value for water. Defaults to 0.020.
             manning_level (float, optional): Manning's n value for level. Defaults to 1.0.
@@ -146,6 +146,8 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             zmin (float, optional): Minimum elevation. Defaults to -999999.0.
             zmax (float, optional): Maximum elevation. Defaults to 999999.0.
             weight_option (str, optional): Weight option. Defaults to "min".
+            buffer_cells (int, optional): Number of buffer cells. Defaults to 0.
+            interp_method (str, optional): Interpolation method for buffer cells. Defaults to "linear".
             bathymetry_database (str, optional): Bathymetry database. Defaults to None.
             quiet (bool, optional): Quiet mode. Defaults to False.
             progress_bar (tqdm, optional): Progress bar. Defaults to None.
@@ -169,18 +171,17 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
                 # parse datasets closest to subgrid resolution
                 elevation_list_per_level.append(
                     self.model._parse_datasets_elevation(
-                        bathymetry_sets, res=res_subgrid
+                        elevation_list, res=res_subgrid
                     )
                 )
-            bathymetry_sets = elevation_list_per_level
+            elevation_list = elevation_list_per_level
 
             if len(roughness_list) > 0:
                 # NOTE conversion from landuse/landcover to manning happens here
                 roughness_list = self.model._parse_roughness_list(roughness_list)
 
-            # if len(river+sets) > 0:
-            #     rivers_sets = self.model._parse_river_list(river_list)
-            # folder where high-resolution topobathy and manning geotiffs are stored
+            if len(river_list) > 0:
+                river_list = self.model._parse_river_list(river_list)
 
             if write_dep_tif or write_man_tif:
                 highres_dir = self.model.root.path / "subgrid"
@@ -192,8 +193,9 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
 
         self._data = build_subgrid_table_quadtree(
             grid=self.model.quadtree_grid.data,
-            bathymetry_sets=bathymetry_sets,
+            elevation_list=elevation_list,
             roughness_list=roughness_list,
+            river_list=river_list,
             manning_land=manning_land,
             manning_water=manning_water,
             manning_level=manning_level,
@@ -209,6 +211,8 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             write_dep_tif=write_dep_tif,
             write_man_tif=write_man_tif,
             weight_option=weight_option,
+            buffer_cells=buffer_cells,
+            interp_method=interp_method,
             bathymetry_database=bathymetry_database,
             quiet=quiet,
             progress_bar=progress_bar,

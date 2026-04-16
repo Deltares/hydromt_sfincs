@@ -16,13 +16,12 @@ __all__ = ["plot_forcing", "plot_basemap"]
 
 geom_style = {
     "rivers": dict(linestyle="-", linewidth=1.0, color="darkblue"),
-    "rivers_inflow": dict(linestyle=":", linewidth=1.0, color="darkblue"),
-    "rivers_outflow": dict(linestyle=":", linewidth=1.0, color="darkgreen"),
     "mask2": dict(linestyle="-", linewidth=1.5, color="r"),
     "mask3": dict(linestyle="-", linewidth=1.5, color="m"),
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=False),
     "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=False),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
+    "bdr": dict(color="g", linewidth=2, annotate=True, arrow=True),
     "src": dict(marker=">", markersize=75, c="w", edgecolor="k", annotate=True),
     "obs": dict(marker="d", markersize=75, c="w", edgecolor="r", annotate=True),
     "crs": dict(linestyle="-", linewidth=1.5, color="deeppink", annotate=False),
@@ -132,6 +131,7 @@ def plot_basemap(
     figsize: Tuple[int] = None,
     geom_names: List[str] = None,
     geom_kwargs: Dict = {},
+    grid_kwargs: Dict = {},
     legend_kwargs: Dict = {},
     bmap_kwargs: Dict = {},
     logger=logger,
@@ -168,6 +168,9 @@ def plot_basemap(
     geom_kwargs : Dict of Dict, optional
         Model geometry styling per geometry, passed to geopandas.GeoDataFrame.plot method.
         For instance: {'src': {'markersize': 30}}.
+    grid_kwargs : Dict, optional
+        Styling options for grid plotting (e.g. color, linewidth) passed to matplotlib plot / ugrid.plot.line.
+        Defaults: {"color": "black", "linewidth": 0.7}
     legend_kwargs : Dict, optional
         Legend kwargs, passed to ax.legend method.
 
@@ -269,11 +272,17 @@ def plot_basemap(
     # by default colorbar on lower right & legend upper right
     kwargs0 = {"cbar_kwargs": {"shrink": 0.5, "anchor": (0, 0)}}
     kwargs0.update(kwargs)
+
     # make nice cmap
     if "cmap" not in kwargs or "norm" not in kwargs:
         depth_vars = ["dep", "z"]
         if variable in depth_vars and variable in ds:
+            # auto-determine vmin and vmax
             vmin, vmax = ds[variable].raster.mask_nodata().quantile([0.0, 0.98]).values
+            # make sure vmin and vmax are different
+            if vmin == vmax:
+                vmax = vmin + 1
+            # overrule auto vmin and vmax with user input
             vmin, vmax = int(kwargs.pop("vmin", vmin)), int(kwargs.pop("vmax", vmax))
             c_dem = plt.cm.terrain(np.linspace(0.25, 1, vmax))
             if vmin < 0:
@@ -285,12 +294,11 @@ def plot_basemap(
             kwargs0.update(norm=norm, cmap=cmap)
         elif variable == "mask" and "mask" in ds:
             cmap = colors.LinearSegmentedColormap.from_list(
-                "Set1", ["grey", "r", "m"], N=3
+                "Set1", ["grey", "r", "m", "g", "b"], N=5
             )
-            norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5], 3)
+            norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5, 4.5, 5.5], 5)
             kwargs0.update(norm=norm, cmap=cmap)
-            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3])
-
+            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3, 4, 5])
     if variable in ds:
         da = ds[variable]
         if "mask" in ds and np.any(ds["mask"] > 0):
@@ -321,6 +329,26 @@ def plot_basemap(
                 rgb.plot.imshow(transform=crs, ax=ax, zorder=1)
         elif isinstance(da, xu.UgridDataArray):
             da.ugrid.plot(transform=crs, ax=ax, zorder=1, **kwargs0)
+    elif variable == "grid":
+        if isinstance(ds, xr.Dataset):
+            grid_kwargs0 = {"color": "black", "linewidth": 0.7}
+            grid_kwargs0.update(**grid_kwargs)
+            if ds.raster.rotation != 0 and "xc" in ds.coords and "yc" in ds.coords:
+                x, y = ds["xc"].values, ds["yc"].values
+            else:
+                x, y = np.meshgrid(ds["x"].values, ds["y"].values)
+
+            ax.plot(
+                x,
+                y,
+                zorder=1,
+                transform=crs,
+                **grid_kwargs0,
+            )
+        elif isinstance(ds, xu.UgridDataset):
+            grid_kwargs0 = {"color": "black", "linewidth": 0.3}
+            grid_kwargs0.update(**grid_kwargs)
+            ds["level"].ugrid.plot.line(ax=ax, zorder=1, transform=crs, **grid_kwargs0)
 
     # geometry plotting and annotate kwargs
     for k, d in geom_kwargs.items():
@@ -340,12 +368,7 @@ def plot_basemap(
             "No 'mask' (sfincs.mask) found in ds required to plot the model bounds "
             "Set plot_bounds=False or add 'mask' to ds"
         )
-    elif plot_bounds and isinstance(ds, xu.UgridDataset):
-        raise NotImplementedError(
-            "Plotting of the boundaries for quadtree grids is not yet implemented. "
-            "Set plot_bounds=False to proceed."
-        )
-    elif plot_bounds and (ds["mask"] >= 1).any():
+    elif plot_bounds and (ds["mask"] > 1).any():
         gdf_msk = get_bounds_vector(ds["mask"])
         gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
         gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
@@ -366,7 +389,26 @@ def plot_basemap(
             # copy is important to keep annotate working if repeated
             kwargs = geom_style.get(name, {}).copy()
             annotate = kwargs.pop("annotate", False)
-            gdf.plot(ax=ax, zorder=3, label=name, **kwargs)
+            arrow = kwargs.pop("arrow", False)
+            if arrow and np.all(gdf.geometry.type == "LineString"):
+                for _, row in gdf.iterrows():
+                    coords = list(row.geometry.coords)
+                    if len(coords) >= 2:
+                        # arrow from 2nd point to 1st point
+                        ax.annotate(
+                            "",
+                            xy=coords[0],  # arrow head
+                            xytext=coords[1],  # arrow tail
+                            arrowprops=dict(
+                                arrowstyle="->",
+                                color=kwargs.get("color", "k"),
+                                linewidth=kwargs.get("linewidth", 1.5),
+                            ),
+                            zorder=4,
+                            transform=crs,
+                        )
+            else:
+                gdf.plot(ax=ax, zorder=3, label=name, **kwargs)
             if annotate and np.all(gdf.geometry.type == "Point"):
                 for label, row in gdf.iterrows():
                     x, y = row.geometry.x, row.geometry.y

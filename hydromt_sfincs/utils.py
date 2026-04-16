@@ -45,6 +45,7 @@ __all__ = [
     "read_timeseries",
     "write_timeseries",
     "get_bounds_vector",
+    "create_boundary_points",
     "mask2gdf",
     "read_xy",
     "write_xy",  # defined in hydromt.io
@@ -343,14 +344,14 @@ def write_timeseries(
 
 
 ## MASK
-
-
-def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
+def get_bounds_vector(
+    da_msk: Union[xr.DataArray, xu.UgridDataArray],
+) -> gpd.GeoDataFrame:
     """Get bounds of vectorized mask as GeoDataFrame.
 
     Parameters
     ----------
-    da_msk: xr.DataArray
+    da_msk: Union[xr.DataArray, xu.UgridDataArray]
         Mask as DataArray with values 0 (inactive), 1 (active),
         and boundary cells 2 (waterlevels) and 3 (outflow).
 
@@ -359,21 +360,167 @@ def get_bounds_vector(da_msk: xr.DataArray) -> gpd.GeoDataFrame:
     gdf_msk: gpd.GeoDataFrame
         GeoDataFrame with line geometries of mask boundaries.
     """
-    gdf_msk = da_msk.raster.vectorize()
-    # small buffer for rounding errors
-    if da_msk.raster.crs.is_geographic:
-        gdf_msk["geometry"] = gdf_msk.buffer(1e-6)
-    else:
-        gdf_msk["geometry"] = gdf_msk.buffer(1)
-    region = (da_msk >= 1).astype("int16").raster.vectorize()
-    region = region[region["value"] == 1].drop(columns="value")
-    region["geometry"] = region.boundary
-    gdf_msk = gdf_msk[gdf_msk["value"] != 1]
-    gdf_msk = gpd.overlay(
-        region, gdf_msk, "intersection", keep_geom_type=False
-    ).explode(index_parts=True)
-    gdf_msk = gdf_msk[gdf_msk.length > 0]
+    # check if da_msk has values greater than 1, if not raise error
+    if da_msk.max() <= 1:
+        raise ValueError(
+            "The mask should have values greater than 1 to determine boundary cells."
+        )
+
+    if isinstance(da_msk, xr.DataArray):
+        gdf_msk = da_msk.raster.vectorize()
+        # small buffer for rounding errors
+        if da_msk.raster.crs.is_geographic:
+            gdf_msk["geometry"] = gdf_msk.buffer(1e-6)
+        else:
+            gdf_msk["geometry"] = gdf_msk.buffer(1)
+        region = (da_msk >= 1).astype("int16").raster.vectorize()
+        region = region[region["value"] == 1].drop(columns="value")
+        region["geometry"] = region.boundary
+        gdf_msk = gdf_msk[gdf_msk["value"] != 1]
+        gdf_msk = gpd.overlay(
+            region, gdf_msk, "intersection", keep_geom_type=False
+        ).explode(index_parts=True)
+        gdf_msk = gdf_msk[gdf_msk.length > 0]
+    elif isinstance(da_msk, xu.UgridDataArray):
+        lines = []
+
+        xz = da_msk.grid.face_coordinates[:, 0]
+        yz = da_msk.grid.face_coordinates[:, 1]
+        min_dist = da_msk.grid.edge_length.max() * 2
+
+        mask_vals = np.unique(da_msk.values)
+        mask_vals = mask_vals[mask_vals > 1]
+
+        for mval in mask_vals:
+            # Indices for this mask value
+            ibnd = np.where(da_msk.values == mval)
+
+            xp = xz[ibnd]
+            yp = yz[ibnd]
+
+            if xp.size == 0:
+                continue
+
+            used = np.full(xp.shape, False, dtype=bool)
+            polylines = []
+
+            while True:
+                if np.all(used):
+                    break
+
+                i1 = np.where(~used)[0][0]
+                used[i1] = True
+                polyline = [i1]
+
+                # Forward direction
+                while True:
+                    xpunused = xp[~used]
+                    ypunused = yp[~used]
+                    unused_indices = np.where(~used)[0]
+
+                    if unused_indices.size == 0:
+                        break
+
+                    dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
+                    inear = np.nanargmin(dst)
+                    inearall = unused_indices[inear]
+
+                    if dst[inear] < min_dist:
+                        polyline.append(inearall)
+                        used[inearall] = True
+                        i1 = inearall
+                    else:
+                        break
+
+                # Backward direction
+                i1 = polyline[0]
+                while True:
+                    xpunused = xp[~used]
+                    ypunused = yp[~used]
+                    unused_indices = np.where(~used)[0]
+
+                    if unused_indices.size == 0:
+                        break
+
+                    dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
+                    inear = np.nanargmin(dst)
+                    inearall = unused_indices[inear]
+
+                    if dst[inear] < min_dist:
+                        polyline.insert(0, inearall)
+                        used[inearall] = True
+                        i1 = inearall
+                    else:
+                        break
+
+                if len(polyline) > 1:
+                    polylines.append(polyline)
+
+            # Convert polylines to LineStrings
+            for polyline in polylines:
+                x = xp[polyline]
+                y = yp[polyline]
+                coords = list(zip(x.ravel(), y.ravel()))
+
+                line = LineString(coords)
+
+                if line.length == 0:
+                    continue
+
+                lines.append(
+                    {
+                        "value": int(mval),
+                        "geometry": line,
+                    }
+                )
+
+        gdf_msk = gpd.GeoDataFrame(lines, crs=da_msk.grid.crs)
     return gdf_msk
+
+
+def create_boundary_points(gdf_lines, bnd_dist, method="normalized", crs=None):
+    """
+    Generate points along line geometries in a GeoDataFrame.
+
+    Parameters
+    ----------
+    gdf_lines : GeoDataFrame
+        GeoDataFrame containing line geometries.
+    bnd_dist : float
+        Distance between points (for 'absolute') or approximate segment length (for 'normalized').
+    method : str, optional
+        'absolute' for fixed-distance spacing,
+        'normalized' for equal fraction spacing along each line.
+    crs : CRS, optional
+        Coordinate reference system for the output GeoDataFrame.
+
+    Returns
+    -------
+    GeoDataFrame
+        Points along the input line geometries.
+    """
+    points = []
+
+    for _, row in gdf_lines.iterrows():
+        line = row.geometry
+
+        if method == "absolute":
+            distances = np.arange(0, line.length + bnd_dist, bnd_dist)
+            for d in distances:
+                d = min(d, line.length)
+                pt = line.interpolate(d)
+                points.append((pt.x, pt.y))
+        elif method == "normalized":
+            num_points = int(line.length / bnd_dist) + 2
+            for i in range(num_points):
+                t = i / float(num_points - 1)
+                pt = line.interpolate(t, normalized=True)
+                points.append((pt.x, pt.y))
+        else:
+            raise ValueError(f"Unknown method: {method}")
+
+    gdf_points = gpd.GeoDataFrame(geometry=gpd.points_from_xy(*zip(*points)), crs=crs)
+    return gdf_points
 
 
 def mask2gdf(
@@ -696,9 +843,10 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") 
     # reorder columns based on col_names
     gdf = gdf[col_names]
 
-    # change the format of the coordinates according to fmt
+    # change the format/precision of the coordinates according to fmt
     for col in ["xsnk", "ysnk", "xsrc", "ysrc"]:
-        gdf[col] = gdf[col].apply(lambda x: fmt % x)
+        precision = fmt.split(".")[-1].replace("%", "").replace("f", "")
+        gdf[col] = gdf[col].round(int(precision))
 
     # write to file
     gdf.to_csv(fn, sep=" ", index=False, header=False)
@@ -745,6 +893,86 @@ def read_drn(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:
         )
     ]
     df.drop(["xsnk", "ysnk", "xsrc", "ysrc"], axis=1, inplace=True)
+
+    # convert to geodataframe
+    gdf = gpd.GeoDataFrame(df, geometry=geom)
+    if crs is not None:
+        gdf.set_crs(crs, inplace=True)
+    return gdf
+
+
+def write_bdr_points(
+    fn: Union[str, Path], gdf_bdr: gpd.GeoDataFrame, fmt="%.1f"
+) -> None:
+    """Write SFINCS downstream river boundary points file (.bdr).
+
+    Each row:
+    xbdr ybdr xbdr_in ybdr_in slope distance
+
+    NOTE: This version expects geometry to be LineString with 2 vertices:
+    - first vertex: boundary point
+    - second vertex: inland control point
+    """
+    # expected columns for river boundary structures
+    gdf = copy.deepcopy(gdf_bdr)
+    # get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc
+    endpoints = gdf.boundary.explode(index_parts=True).unstack()
+    gdf["xbdr"] = endpoints[0].x
+    gdf["ybdr"] = endpoints[0].y
+    gdf["x_bdr_in"] = endpoints[1].x
+    gdf["y_bdr_in"] = endpoints[1].y
+    gdf.drop(["geometry"], axis=1, inplace=True)
+
+    # required columns
+    required = ["slope", "distance"]
+    missing = [c for c in required if c not in gdf.columns]
+    if missing:
+        raise ValueError(f"Missing required columns in gdf_bdr: {missing}")
+
+    # order columns as SFINCS expects
+    gdf = gdf[["xbdr", "ybdr", "x_bdr_in", "y_bdr_in", "slope", "distance"]]
+
+    # format coords
+    for col in ["xbdr", "ybdr", "x_bdr_in", "y_bdr_in"]:
+        gdf[col] = gdf[col].apply(lambda x: fmt % float(x))
+
+    gdf["slope"] = gdf["slope"].apply(lambda x: f"{float(x):.6f}")
+    gdf["distance"] = gdf["distance"].apply(lambda x: f"{float(x):.3f}")
+
+    Path(fn).parent.mkdir(parents=True, exist_ok=True)
+    gdf.to_csv(fn, sep=" ", index=False, header=False)
+
+
+def read_bdr(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:
+    """Read river boundary file to geodataframe.
+
+    Parameters
+    ----------
+    fn : str, Path
+        Path to river boundary file.
+    crs : int
+        EPSG code for coordinate reference system.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        Dataframe with river boundary parameters and geometry.
+    """
+
+    # expected columns for river boundary structures
+    col_names = ["xbdr", "ybdr", "x_bdr_in", "y_bdr_in", "slope", "distance"]
+
+    # read structure file
+    df = pd.read_csv(fn, sep="\\s+", names=col_names)
+
+    # get geometry linestring
+    geom = [
+        LineString([(xbdr, ybdr), (x_bdr_in, y_bdr_in)])
+        for xbdr, ybdr, x_bdr_in, y_bdr_in in zip(
+            df["xbdr"], df["ybdr"], df["x_bdr_in"], df["y_bdr_in"]
+        )
+    ]
+    df.drop(["xbdr", "ybdr", "x_bdr_in", "y_bdr_in"], axis=1, inplace=True)
 
     # convert to geodataframe
     gdf = gpd.GeoDataFrame(df, geometry=geom)
@@ -1822,7 +2050,7 @@ def partition_quadtree(
         return partitions
 
 
-def write_netcdf_safely(ds, abs_file_path: Path) -> Path:
+def write_netcdf_safely(ds, abs_file_path: Path, encoding=None) -> Path:
     """
     NetCDF files have the tendency to get locked by other processes (e.g. other notebooks), or because they were
     opened in a lazy manner. This function attempts to write the dataset to the specified path,
@@ -1834,6 +2062,9 @@ def write_netcdf_safely(ds, abs_file_path: Path) -> Path:
         Dataset to write (should already have CRS if needed).
     abs_file_path : Path
         Absolute target path for the NetCDF file.
+    encoding: dict, optional
+        Encoding dictionary passed to xarray.to_netcdf, here for instance used for time variable;
+        e.g. encoding = dict(time={"units": f"minutes since {tref_str}", "dtype": "float64"}))
 
     Returns
     -------
@@ -1857,12 +2088,16 @@ def write_netcdf_safely(ds, abs_file_path: Path) -> Path:
             logger.info(f"No changes detected; skipping write to {abs_file_path}")
             return abs_file_path
 
-    # Step 2: write to temporary file
+    # Step 2: remove cryptic encoding per variable
+    for var in ds.data_vars:
+        ds[var].encoding.clear()  # remove all encoding hints
+
+    # Step 3: write to temporary file
     tmp_fd, tmp_path = tempfile.mkstemp(suffix=".nc", dir=abs_file_path.parent)
     os.close(tmp_fd)
-    ds.vector.to_xy().to_netcdf(tmp_path)
+    ds.vector.to_xy().to_netcdf(tmp_path, encoding=encoding)
 
-    # Step 3: move temp file to target, or create versioned file if locked
+    # Step 4: move temp file to target, or create versioned file if locked
     try:
         shutil.move(tmp_path, abs_file_path)
         final_path = abs_file_path

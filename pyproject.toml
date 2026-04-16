@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.4.0,<4"]
+requires = ["flit_core >=3.12.0,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -13,12 +13,12 @@ authors = [
 dependencies = [
     "affine",
     "cht_tide",
-    "geopandas>1.0",
-    "hydromt==1.3.0-rc5",
+    "geopandas>=1.1.3",
+    "hydromt>=1.3.0,<2.0",
     "mapbox_earcut",
     "numba",
     "numpy",
-    "pandas",
+    "pandas<4",
     "pillow",
     "pyflwdir>=0.5.10",
     "pyproj",
@@ -26,7 +26,7 @@ dependencies = [
     "scipy",
     "shapely",
     "xarray",
-    "xugrid>=0.14, <1.0",
+    "xugrid>=0.15.1, <1.0",
 ]
 requires-python = ">=3.11" # fix tests to support older versions
 readme = "README.rst"
@@ -51,9 +51,9 @@ test = [
 doc = [
 	"hydromt_sfincs[examples]",     # examples are included in the docs
 	"nbsphinx",                     # build notebooks in docs
-	"pydata-sphinx-theme>=0.15.2",  # theme
+	"pydata-sphinx-theme>=0.17.0",  # theme
 	"sphinx_autosummary_accessors", # doc layout
-	"sphinx",                       # build docks
+	"sphinx>=8.0.0,<9.0.0",         # build docs
 	"sphinx_design",                # doc layout
 	"autodoc_pydantic",             # pydantic autodoc
 ]
@@ -93,7 +93,6 @@ deps_not_in_conda = [
   "autodoc_pydantic",
   "black[jupyter]",
   "cht_tide",
-  "hydromt",  # temporary until hydromt v1.3.0 is released
   "mapbox_earcut",
   "pyflwdir", # temporary until pyflwdir v0.5.10 is released on conda-forge
   "sphinx_autosummary_accessors",

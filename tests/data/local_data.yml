@@ -51,3 +51,25 @@ vito_mapping:
     name: pandas
     options:
       index_col: 0
+
+era5_dummy:
+  uri: local_data/era5_dummy.nc
+  data_type: RasterDataset
+  driver:
+    name: raster_xarray
+    options:
+      chunks:
+        latitude: 250
+        longitude: 240
+        time: 30
+      combine: by_coords
+      decode_times: true
+      parallel: true
+  metadata:
+    crs: 4326
+  data_adapter:
+    rename:
+      swh: hs
+      pp1d: tp
+      mwd: wd
+      wdw: ds

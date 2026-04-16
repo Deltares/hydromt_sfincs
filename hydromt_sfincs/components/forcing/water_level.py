@@ -86,7 +86,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         # Check if bnd file exists
         if not abs_file_path.exists():
-            raise FileNotFoundError(f"Discharge points file not found: {abs_file_path}")
+            raise FileNotFoundError(
+                f"Water level boundary points file not found: {abs_file_path}"
+            )
 
         # Read bnd file
         # TODO check if we want read_xyn? Before we used read_xy, so without name column
@@ -179,6 +181,12 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         # Read netcdf file
         ds = GeoDataset.from_netcdf(abs_file_path, crs=self.model.crs, chunks="auto")
+
+        # Rename variables to match internal naming
+        ds = ds.rename({"stations": "index"}) if "stations" in ds.dims else ds
+        ds = ds.rename({"zs": "bzs"}) if "zs" in ds.data_vars else ds
+        ds = ds.rename({"zi": "bzi"}) if "zi" in ds.data_vars else ds
+
         return ds
 
     def write(self, format: str = None):
@@ -331,8 +339,18 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         ds = self.data.load()
 
+        tref = self.model.config.get("tref")
+        tref_str = tref.strftime("%Y-%m-%d %H:%M:%S")
+
+        encoding = dict(time={"units": f"minutes since {tref_str}", "dtype": "float64"})
+
+        # rename variables to match sfincs naming
+        ds = ds.rename({"index": "stations"}) if "index" in ds.dims else ds
+        ds = ds.rename({"bzs": "zs"}) if "bzs" in ds.data_vars else ds
+        ds = ds.rename({"bzi": "zi"}) if "bzi" in ds.data_vars else ds
+
         # Write netcdf file safely (might get locked)
-        final_path = utils.write_netcdf_safely(ds, abs_file_path)
+        final_path = utils.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
         if final_path != abs_file_path:
             self.model.config.set("netbndbzsbzifile", final_path.name)
 
@@ -403,19 +421,27 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         """
         gdf_locs, df_ts = None, None
         tstart, tstop = self.model.get_model_time()  # model time
-        # buffer around msk==2 values
-        if not self.model.grid_type == "quadtree":
-            if np.any(self.model.grid.mask == 2):
-                # get region around waterlevel boundary cells
-                region = self.model.grid.mask.where(
-                    self.model.grid.mask == 2, 0
-                ).raster.vectorize()
-            else:
-                raise ValueError(
-                    "No waterlevel boundary cells (mask==2) in model grid."
-                )
-        else:
-            region = self.model.region
+
+        mask = (
+            self.model.quadtree_grid.mask
+            if self.model.grid_type == "quadtree"
+            else self.model.grid.mask
+        )
+        # if present, check whether is has values of 2, which indicate the waterlevel boundary cells
+        if not np.any(mask == 2):
+            raise ValueError(
+                "No waterlevel boundary cells (mask=2) found in your mask, make sure to create these first."
+            )
+
+        # Vectorize the the waterlevel boundary points (msk==2) into lines stored in a GeoDataFrame
+        # Combined with the buffer, this is used to select the relevant locations from the geodataset or locations input.
+        gdf_msk = utils.get_bounds_vector(
+            da_msk=mask,
+        )
+        gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
+        # gdf_msk2 is now used to clip geodataset to get wanted locations
+        region = gdf_msk2
+
         # read waterlevel data from geodataset or geodataframe
         if geodataset is not None:
             # read and clip data in time & space
@@ -428,6 +454,8 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             )
             df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
             gdf_locs = da.vector.to_gdf()
+            if gdf_locs.index.name == "stations":
+                gdf_locs.index.name = "index"
         elif timeseries is not None:
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
@@ -646,150 +674,38 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         if write_file:
             self.write_boundary_conditions_timeseries()
 
-    def create_boundary_points_from_mask(self, min_dist=None, bnd_dist=5000.0):
-        """Get boundary points from mask in quadtree grid.
-        Should make utils function as sfincs_snapwave_boundary conditions uses nearly same code
-        Also, regular grid has similar code. Maybe that is more efficient or better.
+    def create_boundary_points_from_mask(self, bnd_dist=5000.0):
+        """Get boundary points from waterlevel boundary cells of mask in grid or quadtree grid.
+
+        Parameters
+        ----------
+        bnd_dist : float, optional
+            Distance [m] between boundary points, by default 5000.0.
         """
+
+        # select mask depending on grid type
         if self.model.grid_type == "regular":
-            # get waterlevel boundary vector based on mask
-            gdf_msk = utils.get_bounds_vector(self.model.grid.mask)
-            gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
-
-            # convert to meters if crs is geographic
-            if self.model.crs.is_geographic:
-                bnd_dist = bnd_dist / 111111.0
-
-            # create points along boundary
-            points = []
-            for _, row in gdf_msk2.iterrows():
-                distances = np.arange(0, row.geometry.length, bnd_dist)
-                for d in distances:
-                    point = row.geometry.interpolate(d)
-                    points.append((point.x, point.y))
-
-            # create geodataframe with points
-            gdf = gpd.GeoDataFrame(
-                geometry=gpd.points_from_xy(*zip(*points)), crs=self.model.crs
-            )
+            mask = self.model.grid.mask
         elif self.model.grid_type == "quadtree":
-            if min_dist is None:
-                # Set minimum distance between to grid boundary points on polyline to 2 * dx
-                min_dist = self.model.quadtree_grid.data.attrs["dx"] * 2
+            mask = self.model.quadtree_grid.mask
+        else:
+            raise ValueError(f"Unknown grid type: {self.model.grid_type}")
 
-            mask = self.model.quadtree_grid.data["mask"]
-            ibnd = np.where(mask == 2)
-            xz, yz = self.model.quadtree_grid.face_coordinates
-            xp = xz[ibnd]
-            yp = yz[ibnd]
+        # get boundary vector based on mask
+        gdf_msk = utils.get_bounds_vector(mask)
+        gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
 
-            # Make boolean array for points that are include in a polyline
-            used = np.full(xp.shape, False, dtype=bool)
+        # convert to meters if CRS is geographic
+        if self.model.crs.is_geographic:
+            bnd_dist = bnd_dist / 111111.0
 
-            # Make list of polylines. Each polyline is a list of indices of boundary points.
-            polylines = []
+        # create boundary points from mask boundary vector
+        gdf_points = utils.create_boundary_points(
+            gdf_msk2, bnd_dist=bnd_dist, crs=self.model.crs
+        )
 
-            while True:
-                if np.all(used):
-                    # All boundary grid points have been used. We can stop now.
-                    break
-
-                # Find first the unused points
-                i1 = np.where(~used)[0][0]
-
-                # Set this point to used
-                used[i1] = True
-
-                # Start new polyline with index i1
-                polyline = [i1]
-
-                while True:
-                    # Compute distances to all points that have not been used
-                    xpunused = xp[~used]
-                    ypunused = yp[~used]
-                    # Get all indices of unused points
-                    unused_indices = np.where(~used)[0]
-
-                    dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
-                    if np.all(np.isnan(dst)):
-                        break
-                    inear = np.nanargmin(dst)
-                    inearall = unused_indices[inear]
-                    if dst[inear] < min_dist:
-                        # Found next point along polyline
-                        polyline.append(inearall)
-                        used[inearall] = True
-                        i1 = inearall
-                    else:
-                        # Last point found
-                        break
-
-                # Now work the other way
-                # Start with first point of polyline
-                i1 = polyline[0]
-                while True:
-                    if np.all(used):
-                        # All boundary grid points have been used. We can stop now.
-                        break
-                    # Now we go in the other direction
-                    xpunused = xp[~used]
-                    ypunused = yp[~used]
-                    unused_indices = np.where(~used)[0]
-                    dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
-                    inear = np.nanargmin(dst)
-                    inearall = unused_indices[inear]
-                    if dst[inear] < min_dist:
-                        # Found next point along polyline
-                        polyline.insert(0, inearall)
-                        used[inearall] = True
-                        # Set index of next point
-                        i1 = inearall
-                    else:
-                        # Last nearby point found
-                        break
-
-                if len(polyline) > 1:
-                    polylines.append(polyline)
-
-            gdf_list = []
-            ip = 0
-            # Transform to web mercator to get distance in metres
-            if self.model.crs.is_geographic:
-                transformer = Transformer.from_crs(self.model.crs, 3857, always_xy=True)
-            # Loop through polylines
-            for polyline in polylines:
-                x = xp[polyline]
-                y = yp[polyline]
-                points = [(x, y) for x, y in zip(x.ravel(), y.ravel())]
-                line = shapely.geometry.LineString(points)
-                if self.model.crs.is_geographic:
-                    # Line in web mercator (to get length in metres)
-                    xm, ym = transformer.transform(x, y)
-                    pointsm = [(xm, ym) for xm, ym in zip(xm.ravel(), ym.ravel())]
-                    linem = shapely.geometry.LineString(pointsm)
-                    num_points = int(linem.length / bnd_dist) + 2
-                else:
-                    num_points = int(line.length / bnd_dist) + 2
-                # Interpolate to new points
-                new_points = [
-                    line.interpolate(i / float(num_points - 1), normalized=True)
-                    for i in range(num_points)
-                ]
-                # Loop through points in polyline
-                for point in new_points:
-                    name = str(ip + 1).zfill(4)
-                    d = {
-                        "name": name,
-                        "timeseries": pd.DataFrame(),
-                        "astro": pd.DataFrame(),
-                        "geometry": point,
-                    }
-                    gdf_list.append(d)
-                    ip += 1
-
-            gdf = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
-
-        self.set_locations(gdf, merge=False)
+        # set locations
+        self.set_locations(gdf_points, merge=False)
 
 
 def add_constituents(ds, section_data):
@@ -818,7 +734,7 @@ def add_constituents(ds, section_data):
 
     # Ensure we have a Dataset
     if isinstance(ds, xr.DataArray):
-        ds = ds.to_dataset(name="bzs")
+        ds = ds.to_dataset(name="zs")
 
     # Collect all constituent names across all points
     all_constituents = sorted(set().union(*[df.index for df in section_data]))

@@ -8,6 +8,34 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+v2.0.0-rc2 (16-4-2026)
+=============================
+**This release contains breaking changes in the SfincsModel API. However, models that were built with v1.x.x can still be read/write/updates.**
+
+Added
+-----
+- plotting boundaries for quadtree models (#318)
+- quadree roughness and infiltration maps (#342 en #354)
+- added back the option to create discharge forcing from a grid (previously named`setup_discharge_forcing_from_grid`) (#358)
+- add runup gauges geometry component (#366)
+- platform aware launcher script (exe_path + write_batch_file) (#367)
+
+Fixed
+-----
+- fixed setting up SFINCS with geographical grid (#307)
+- parentheses appeared in the drnfile causing the kernel to crash (#308)
+- netcdf boundary conditions not matching the SFINCS kernel conventions (#316)
+- Ensure vmax is at least 1 for depth variable plot_basemap (#325)
+- fix buffer for clipping meteo datasets after buffer denition changed in hydromt core (#348)
+- bugfixed in generating index file (#357)
+- fixed errors that were introduced by pandas releases ≥ 3.0.0 (#371)
+
+Changed
+-------
+- convert multipolygon into polygons and improve logging for creation of masks (#319)
+- some minor quadtree enhancements for missing and interpolating data (#352)
+- refactored config system: reorganized variables, improved keyword persistence logic, downgraded invalid keyword errors to warnings (#368)
+
 v2.0.0-rc1 (25-11-2025)
 =============================
 **This release contains breaking changes in the SfincsModel API. However, models that were built with v1.x.x can still be read/write/updates.**

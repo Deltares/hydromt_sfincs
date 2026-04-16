@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import os
 from os.path import dirname, join
+from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 import geopandas as gpd
@@ -40,6 +41,7 @@ from hydromt_sfincs.components.grid import (
 from hydromt_sfincs.components.quadtree import (
     SfincsQuadtreeGrid,
     SfincsQuadtreeElevation,
+    SfincsQuadtreeRoughness,
     SfincsQuadtreeInitialConditions,
     SfincsQuadtreeInfiltration,
     SfincsQuadtreeMask,
@@ -51,6 +53,7 @@ from hydromt_sfincs.components.quadtree import (
 # Boundary conditions / forcing components
 from hydromt_sfincs.components.forcing import (
     SfincsDischargePoints,
+    SfincsRiverBoundaryPoints,
     SfincsPrecipitation,
     SfincsPressure,
     SfincsRivers,
@@ -64,6 +67,7 @@ from hydromt_sfincs.components.geometries import (
     SfincsCrossSections,
     SfincsDrainageStructures,
     SfincsObservationPoints,
+    SfincsRunupGauges,
     SfincsThinDams,
     SfincsWaveMakers,
     SfincsWeirs,
@@ -99,6 +103,7 @@ class SfincsModel(Model):
         "quadtree_grid": SfincsQuadtreeGrid,
         "quadtree_elevation": SfincsQuadtreeElevation,
         "quadtree_mask": SfincsQuadtreeMask,
+        "quadtree_roughness": SfincsQuadtreeRoughness,
         "quadtree_infiltration": SfincsQuadtreeInfiltration,
         "quadtree_storage_volume": SfincsQuadtreeStorageVolume,
         "quadtree_initial_conditions": SfincsQuadtreeInitialConditions,
@@ -108,6 +113,7 @@ class SfincsModel(Model):
     _GEOMETRY_COMPONENTS = {
         "observation_points": SfincsObservationPoints,
         "cross_sections": SfincsCrossSections,
+        "runup_gauges": SfincsRunupGauges,
         "thin_dams": SfincsThinDams,
         "weirs": SfincsWeirs,
         "wave_makers": SfincsWaveMakers,
@@ -115,6 +121,7 @@ class SfincsModel(Model):
     }
     _FORCING_COMPONENTS = {
         "rivers": SfincsRivers,
+        "river_boundary_points": SfincsRiverBoundaryPoints,
         "water_level": SfincsWaterLevel,
         "discharge_points": SfincsDischargePoints,
         "snapwave_boundary_conditions": SnapWaveBoundaryConditions,
@@ -144,6 +151,7 @@ class SfincsModel(Model):
         mode: str = "w",
         write_gis: bool = True,
         data_libs: Union[List[str], str] = None,
+        exe_path: str = None,
         **catalog_keys,
     ):
         """
@@ -160,13 +168,17 @@ class SfincsModel(Model):
             Write model files additionally to geotiff and geojson, by default True
         data_libs: List, str
             List of data catalog yaml files, by default None
+        exe_path: str, optional
+            Folder containing the ``sfincs.exe`` binary; used by
+            :meth:`write_batch_file`. Defaults to ``None``.
         **catalog_keys:
             Additional keyword arguments to be passed down to the DataCatalog.
         """
 
         # define some default model properties
-        self.grid_type = "regular"
+        self._grid_type = None
         self.write_gis = write_gis
+        self.exe_path = exe_path
 
         super().__init__(
             root=root,
@@ -180,6 +192,53 @@ class SfincsModel(Model):
             instance = cls(self)
             self.add_component(name, instance)
 
+    def write_batch_file(self, filename: str = None) -> Path:
+        """Write a platform-appropriate launcher script for SFINCS.
+
+        On Windows this emits ``run.bat`` (``set HDF5_USE_FILE_LOCKING``);
+        on Linux / macOS it emits ``run.sh`` (``#!/bin/bash`` + ``export``
+        + executable bit). The SFINCS binary itself is expected to be
+        ``sfincs.exe`` on Windows and ``sfincs`` elsewhere.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Override the output file name. Defaults to ``run.bat`` on
+            Windows and ``run.sh`` on other platforms.
+
+        Returns
+        -------
+        Path
+            The path of the written launcher script.
+        """
+        if not self.exe_path:
+            raise ValueError(
+                "exe_path not set on SfincsModel; cannot write launcher script."
+            )
+        is_windows = os.name == "nt"
+        if filename is None:
+            filename = "run.bat" if is_windows else "run.sh"
+        script_path = Path(self.root.path) / filename
+        if is_windows:
+            exe = Path(self.exe_path) / "sfincs.exe"
+            script_path.write_text(
+                "set HDF5_USE_FILE_LOCKING=FALSE\n" f"{exe}\n",
+                encoding="ascii",
+            )
+        else:
+            exe = Path(self.exe_path) / "sfincs"
+            script_path.write_text(
+                "#!/bin/bash\n" "export HDF5_USE_FILE_LOCKING=FALSE\n" f'"{exe}"\n',
+                encoding="ascii",
+            )
+            # Mark executable (ignore on systems that don't support it).
+            try:
+                st = script_path.stat().st_mode
+                script_path.chmod(st | 0o111)
+            except OSError:
+                pass
+        return script_path
+
     def __del__(self):
         """Close the model and remove the logger file handler."""
         for handler in logger.handlers:
@@ -191,6 +250,15 @@ class SfincsModel(Model):
                 logger.removeHandler(handler)
 
     ## Real properties of the model ##
+    @property
+    def grid_type(self):
+        """Returns the grid type of the model."""
+        if self._grid_type is None:
+            self._grid_type = "regular"
+            if self.root.is_reading_mode():
+                self.config.read()
+        return self._grid_type
+
     @property
     def crs(self) -> CRS | None:
         """Returns the model crs"""
@@ -256,11 +324,19 @@ class SfincsModel(Model):
                 logger.warning(f"Could not read component {name}: {e}")
                 continue
 
-    def write(self):
+    def write(self, write_batch_file: bool = False):
         """Write SfincsModel to disk.
 
         This methods writes all components that actually contain data to the specified
         model root folder. Finally, the configuration file (sfincs.inp) is written.
+
+        Parameters
+        ----------
+        write_batch_file : bool, optional
+            If True, also write a platform-appropriate launcher script
+            (``run.bat`` on Windows, ``run.sh`` elsewhere) via
+            :meth:`write_batch_file`. Requires ``self.exe_path`` to be
+            set. Default ``False``.
 
         For more information, see specific component write methods.
         """
@@ -286,6 +362,10 @@ class SfincsModel(Model):
                 root=join(self.root.path, "gis"),
                 logger=logger,
             )
+
+        # Optional launcher script (opt-in; DDB passes True explicitly).
+        if write_batch_file:
+            self.write_batch_file()
 
     def clear_spatial_components(self):
         """Clear all spatial components."""
@@ -346,10 +426,10 @@ class SfincsModel(Model):
                 "wind10_v": {"standard_name": "northward wind", "unit": "m/s"},
             },
             "snapwave_boundary_conditions": {
-                "hs": {},
-                "tp": {},
-                "dir": {},
-                "ds": {},
+                "hs": {"standard_name": "significant wave height", "unit": "m"},
+                "tp": {"standard_name": "peak wave period", "unit": "s"},
+                "wd": {"standard_name": "wave direction", "unit": "nautical degrees"},
+                "ds": {"standard_name": "wave direction spread", "unit": "degrees"},
             },
         }
 
@@ -415,6 +495,7 @@ class SfincsModel(Model):
         figsize: Tuple[int] = None,
         geom_names: List[str] = None,
         geom_kwargs: Dict = {},
+        grid_kwargs: Dict = {},
         legend_kwargs: Dict = {},
         **kwargs,
     ):
@@ -451,6 +532,9 @@ class SfincsModel(Model):
         geom_kwargs : Dict of Dict, optional
             Model geometry styling per geometry, passed to geopandas.GeoDataFrame.plot method.
             For instance: {'src': {'markersize': 30}}.
+        grid_kwargs : Dict, optional
+            Styling options for grid plotting (e.g. color, linewidth) passed to matplotlib plot / ugrid.plot.line.
+            Defaults: {"color": "black", "linewidth": 0.7}
         legend_kwargs : Dict, optional
             Legend kwargs, passed to ax.legend method.
 
@@ -464,10 +548,12 @@ class SfincsModel(Model):
         _GEOMS = {
             "observation_points": "obs",
             "cross_sections": "crs",
+            "runup_gauges": "rug",
             "weirs": "weir",
             "thin_dams": "thd",
             "drainage_structures": "drn",
             "rivers": "rivers",
+            "river_boundary_points": "bdr",
             "discharge_points": "src",
             "water_level": "bnd",
         }  # parsed to dict of geopandas.GeoDataFrame
@@ -530,6 +616,7 @@ class SfincsModel(Model):
             figsize=figsize,
             geom_names=geom_names,
             geom_kwargs=geom_kwargs,
+            grid_kwargs=grid_kwargs,
             legend_kwargs=legend_kwargs,
             logger=logger,
             **kwargs,
@@ -736,14 +823,13 @@ class SfincsModel(Model):
             # parse rivers
             if "centerlines" in dataset:
                 rivers = dataset.get("centerlines")
-                if isinstance(rivers, str) and rivers in self.geoms:
-                    gdf_riv = self.geoms[rivers].copy()
-                else:
-                    gdf_riv = self.data_catalog.get_geodataframe(
-                        rivers,
-                        bbox=self.bbox,
-                        buffer=1e3,  # 1km
-                    ).to_crs(self.crs)
+                # NOTE if you want to use model.rivers.data as centerlines,
+                # you need to provide this in the river_list
+                gdf_riv = self.data_catalog.get_geodataframe(
+                    rivers,
+                    bbox=self.bbox,
+                    buffer=1e3,  # 1km
+                ).to_crs(self.crs)
                 # update missing attributes based on global values
                 for key in attrs:
                     if key in dataset:
@@ -910,6 +996,11 @@ class SfincsModel(Model):
         return self.components["cross_sections"]
 
     @property
+    def runup_gauges(self) -> SfincsRunupGauges:
+        """Instance of :py:class:`~hydromt_sfincs.components.geometries.runup_gauges.SfincsRunupGauges`."""
+        return self.components["runup_gauges"]
+
+    @property
     def thin_dams(self) -> SfincsThinDams:
         """Instance of :py:class:`~hydromt_sfincs.components.geometries.thin_dams.SfincsThinDams`."""
         return self.components["thin_dams"]
@@ -968,3 +1059,6 @@ class SfincsModel(Model):
     def output(self) -> SfincsOutput:
         """Instance of :py:class:`~hydromt_sfincs.components.output.SfincsOutput`."""
         return self.components["output"]
+
+
+# %%
