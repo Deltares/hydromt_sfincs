@@ -1,0 +1,26 @@
+global:
+  data_libs:
+    - artifact_data             # add optional paths to data_catalog yml files
+
+steps:
+  - config.update:
+      tref: 20100201 000000
+      tstart: 20100201 000000
+      tstop: 20100202 000000
+  - grid.create_from_region:
+      region:
+        geom: data//region.geojson
+      res: 150                      # model resolution
+      crs: utm                     # model CRS (must be UTM zone)
+      rotated: True                # allow a rotated grid
+  - elevation.create:
+      elevation_list:
+      - elevation: merit_hydro     # 1st elevation dataset
+        zmin: 0.001                # only use where values > 0.001
+      - elevation: gebco           # 2nd eleveation dataset (to be merged with the first)
+  - mask.create_active:
+      include_polygon: data//region.geojson   # Note that this is local data and only valid for this example
+      include_zmin: -5             # set cells below zmin to inactive
+  - mask.create_boundary:
+      btype: waterlevel            # Set waterlevel boundaries
+      zmax: -1                     # only cells below zmax can be waterlevel boundaries
