@@ -694,28 +694,31 @@ allows to generate time series from astronomical constituents (if available).</p
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>([df, gdf, geodataset, merge, ...])</p></td>
 <td><p>Set or update the internal data from either a GeoDataArray (geodataset) or the pair (df, gdf).</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_locations</span></code>(gdf[, value, merge, ...])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_boundary_conditions_astro</span></code>(gdf)</p></td>
+<td><p>Populate boundary points and astronomical constituents from a gdf.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_locations</span></code>(gdf[, value, merge, ...])</p></td>
 <td><p>Add or update point locations.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_timeseries</span></code>(data[, varname])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_timeseries</span></code>(data[, varname])</p></td>
 <td><p>Add or update timeseries for existing locations.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
 <td><p>Test if two components are equal.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsWaterLevel.write.html#hydromt_sfincs.components.forcing.SfincsWaterLevel.write" title="hydromt_sfincs.components.forcing.SfincsWaterLevel.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([format])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.forcing.SfincsWaterLevel.write.html#hydromt_sfincs.components.forcing.SfincsWaterLevel.write" title="hydromt_sfincs.components.forcing.SfincsWaterLevel.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([format])</p></td>
 <td><p>Write SFINCS boundary conditions (.bnd, .bzs, .bca files) or netcdf file.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_boundary_conditions_astro</span></code>([filename])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_boundary_conditions_astro</span></code>([filename])</p></td>
 <td><p>Write SFINCS boundary condition astro (.bca) file</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_boundary_conditions_netcdf</span></code>([filename])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_boundary_conditions_netcdf</span></code>([filename])</p></td>
 <td><p>Write SFINCS boundary condition netcdf (.nc) file</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_boundary_conditions_timeseries</span></code>([filename])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_boundary_conditions_timeseries</span></code>([filename])</p></td>
 <td><p>Write SFINCS boundary condition timeseries (.bzs) file</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_boundary_points</span></code>([filename])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_boundary_points</span></code>([filename])</p></td>
 <td><p>Write SFINCS boundary condition points (.bnd) file</p></td>
 </tr>
 </tbody>
@@ -733,16 +736,19 @@ allows to generate time series from astronomical constituents (if available).</p
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">gdf</span></code></p></td>
 <td><p>Return the point locations as a GeoDataFrame.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_names</span></code></p></td>
+<td><p>Give list of names of all the points in the dataset, for display purposes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></p></td>
 <td><p>Return the model object this component is associated with.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name_in_model</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name_in_model</span></code></p></td>
 <td><p>Find the name of the component in the parent model components.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nr_points</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nr_points</span></code></p></td>
 <td><p>Return the number of point locations currently stored.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">root</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">root</span></code></p></td>
 <td><p>Return the root of the model this component is associated with.</p></td>
 </tr>
 </tbody>

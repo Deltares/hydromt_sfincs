@@ -642,43 +642,34 @@ for water level and outflow boundaries.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#hydromt_sfincs.components.grid.SfincsMask.__init__" title="hydromt_sfincs.components.grid.SfincsMask.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(model)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_datashader_dataframe</span></code>()</p></td>
-<td><p>Clear the datashader dataframe.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">close</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">close</span></code>()</p></td>
 <td><p>Clean up all open datasets.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code>([zmin, zmax, include_polygon, ...])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code>([zmin, zmax, include_polygon, ...])</p></td>
 <td><p>Setup active model mask and add boundaries.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.grid.SfincsMask.create_active.html#hydromt_sfincs.components.grid.SfincsMask.create_active" title="hydromt_sfincs.components.grid.SfincsMask.create_active"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_active</span></code></a>([zmin, zmax, include_polygon, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.grid.SfincsMask.create_active.html#hydromt_sfincs.components.grid.SfincsMask.create_active" title="hydromt_sfincs.components.grid.SfincsMask.create_active"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_active</span></code></a>([zmin, zmax, include_polygon, ...])</p></td>
 <td><p>Create an integer mask with inactive (mask=0) and active (mask=1) cells, optionally bounded by several criteria.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.grid.SfincsMask.create_boundary.html#hydromt_sfincs.components.grid.SfincsMask.create_boundary" title="hydromt_sfincs.components.grid.SfincsMask.create_boundary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_boundary</span></code></a>([btype, zmin, zmax, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.grid.SfincsMask.create_boundary.html#hydromt_sfincs.components.grid.SfincsMask.create_boundary" title="hydromt_sfincs.components.grid.SfincsMask.create_boundary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_boundary</span></code></a>([btype, zmin, zmax, ...])</p></td>
 <td><p>Set boundary cells in the model mask.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">finish_write</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">finish_write</span></code>()</p></td>
 <td><p>Finish the write functionality after cleanup was called for all components in the model.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_datashader_dataframe</span></code>()</p></td>
-<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_open_boundaries</span></code>()</p></td>
 <td><p>Returns True if mask contains open boundaries (mask = 2)</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">map_overlay</span></code>()</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code>()</p></td>
 <td><p>Not implemented, mask data is read when the grid is read.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
 <td><p>Test if two components are equal.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_gdf</span></code>([option])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_gdf</span></code>([option])</p></td>
 <td><p>Convert a boolean mask to a GeoDataFrame of polygons.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code>()</p></td>
 <td><p>Not implemented, mask data is written when the grid is written.</p></td>
 </tr>
 </tbody>

@@ -640,7 +640,7 @@ are represented as LineString geometries (with elevation) in a GeoDataFrame.</p>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">close</span></code>()</p></td>
 <td><p>Clean up all open datasets.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsWeirs.create.html#hydromt_sfincs.components.geometries.SfincsWeirs.create" title="hydromt_sfincs.components.geometries.SfincsWeirs.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a>(locations[, dep, buffer, dz, merge])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsWeirs.create.html#hydromt_sfincs.components.geometries.SfincsWeirs.create" title="hydromt_sfincs.components.geometries.SfincsWeirs.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a>(locations[, elevation, par1, dep, ...])</p></td>
 <td><p>Create model weir lines (old name: setup_structures).</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code>(index)</p></td>
@@ -652,22 +652,19 @@ are represented as LineString geometries (with elevation) in a GeoDataFrame.</p>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">finish_write</span></code>()</p></td>
 <td><p>Finish the write functionality after cleanup was called for all components in the model.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_names</span></code>()</p></td>
-<td><p>Give list of names of cross sections.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsWeirs.read.html#hydromt_sfincs.components.geometries.SfincsWeirs.read" title="hydromt_sfincs.components.geometries.SfincsWeirs.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>([filename])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsWeirs.read.html#hydromt_sfincs.components.geometries.SfincsWeirs.read" title="hydromt_sfincs.components.geometries.SfincsWeirs.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>([filename])</p></td>
 <td><p>Read SFINCS weir (.weir) file.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(gdf[, merge])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(gdf[, merge])</p></td>
 <td><p>Set SFINCS weir lines.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">snap_to_grid</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">snap_to_grid</span></code>()</p></td>
 <td><p>Returns GeoDataFrame with weirs snapped to model grid.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
 <td><p>Test if two components are equal.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsWeirs.write.html#hydromt_sfincs.components.geometries.SfincsWeirs.write" title="hydromt_sfincs.components.geometries.SfincsWeirs.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([filename])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsWeirs.write.html#hydromt_sfincs.components.geometries.SfincsWeirs.write" title="hydromt_sfincs.components.geometries.SfincsWeirs.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([filename])</p></td>
 <td><p>Write SFINCS weir (.weir) file, and set weirfile in config (if it was not already set).</p></td>
 </tr>
 </tbody>
@@ -682,13 +679,22 @@ are represented as LineString geometries (with elevation) in a GeoDataFrame.</p>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">data_catalog</span></code></p></td>
 <td><p>Return the data catalog of the model this component is associated with.</p></td>
 </tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">gdf</span></code></p></td>
+<td><p>Alias for data.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_names</span></code></p></td>
+<td><p>Give list of names of weirs.</p></td>
+</tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></p></td>
 <td><p>Return the model object this component is associated with.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name_in_model</span></code></p></td>
 <td><p>Find the name of the component in the parent model components.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">root</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nr_lines</span></code></p></td>
+<td><p>Return the number of line locations currently stored.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">root</span></code></p></td>
 <td><p>Return the root of the model this component is associated with.</p></td>
 </tr>
 </tbody>

@@ -475,6 +475,32 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gdf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Alias for data.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nr_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the number of line locations currently stored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Give list of names of weirs.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="c1"># The weirs do not really have names,</span>
+        <span class="c1"># but we can use the index and turn into strings</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Weir </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">names</span>
+
     <span class="c1"># %% core HydroMT-SFINCS functions:</span>
     <span class="c1"># _initialize</span>
     <span class="c1"># read</span>
@@ -612,6 +638,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">locations</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
+        <span class="n">elevation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">par1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.6</span><span class="p">,</span>
         <span class="n">dep</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">dz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -648,6 +676,13 @@
 <span class="sd">        buffer : float, optional</span>
 <span class="sd">            If provided, describes the distance from the centerline to the foot of the structure.</span>
 <span class="sd">            This distance is supplied to the raster.sample as the window (wdw).</span>
+<span class="sd">        elevation: float, optional</span>
+<span class="sd">            If provided, this elevation is assigned to all weir lines. This is only used if</span>
+<span class="sd">            z values are not provided in the gdf, and dep/dz are not provided</span>
+<span class="sd">            to determine elevation on the fly. Default 0.0.</span>
+<span class="sd">        par1: float, optional</span>
+<span class="sd">            If provided, this value is assigned to the par1 parameter of all weir lines.</span>
+<span class="sd">            This is only used if par1 values are not provided in the gdf. Default 0.6.</span>
 <span class="sd">        dz: float, optional</span>
 <span class="sd">            If provided, for weir structures the z value is calculated from</span>
 <span class="sd">            the model elevation (dep) plus dz.</span>
@@ -666,22 +701,26 @@
 
         <span class="c1"># expected columns in gdf</span>
         <span class="n">cols</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;weir&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;par1&quot;</span><span class="p">,</span> <span class="s2">&quot;geometry&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;weir&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;elevation&quot;</span><span class="p">,</span> <span class="s2">&quot;par1&quot;</span><span class="p">,</span> <span class="s2">&quot;geometry&quot;</span><span class="p">],</span>
         <span class="p">}</span>
 
         <span class="c1"># keep relevant columns</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">[</span><span class="s2">&quot;weir&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">]]</span>
 
-        <span class="c1"># check whether z values are part of the gdf, or need to be calculated</span>
-        <span class="n">gdf_has_z</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">geom</span><span class="p">:</span> <span class="n">geom</span><span class="o">.</span><span class="n">has_z</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;z&quot;</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span>
+        <span class="c1"># check whether elevation values are part of the gdf, or need to be calculated</span>
+        <span class="n">gdf_has_elevation</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">geom</span><span class="p">:</span> <span class="n">geom</span><span class="o">.</span><span class="n">has_z</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="ow">or</span> <span class="s2">&quot;elevation&quot;</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span>
         <span class="p">)</span>
 
-        <span class="c1"># check if z values are provided or can be calculated</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf_has_z</span> <span class="ow">and</span> <span class="p">(</span><span class="n">dep</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">dz</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
-            <span class="c1"># check if z values are part of the linestrings, so called linestringZ</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Weir structure requires z values, or &#39;dep&#39; or &#39;dz&#39; input to determine these on the fly.&quot;</span>
+        <span class="c1"># check if elevation values are provided or can be calculated</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf_has_elevation</span> <span class="ow">and</span> <span class="p">(</span><span class="n">dep</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">dz</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="c1"># elevation is not provided in the gdf, so we need to set the elevation here as a list for each weir</span>
+            <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;elevation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># creates column with object dtype automatically</span>
+            <span class="k">for</span> <span class="n">irow</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="n">gdf</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">irow</span><span class="p">,</span> <span class="s2">&quot;elevation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">elevation</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Used elevation parameter for weir with constant heights, as no elevation data or dep/dz provided.&quot;</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">dep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># determine elevation from dep and dz, if data parsed</span>
@@ -689,6 +728,12 @@
             <span class="c1"># if dep is not provided, the active dep data in self.grid.data is loaded,</span>
             <span class="c1"># within function determine_weir_elevation</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Determined elevations for weir based on elevation data.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Set par1 to value if not already provided in gdf</span>
+        <span class="k">if</span> <span class="s2">&quot;par1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># creates column with object dtype automatically</span>
+            <span class="k">for</span> <span class="n">irow</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="n">gdf</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">irow</span><span class="p">,</span> <span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">par1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
 
         <span class="c1"># Set the weir data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">merge</span><span class="p">)</span>
@@ -822,11 +867,11 @@
                     <span class="c1"># if still didn&#39;t work, raise error</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Filling NaN values failed for weirs &quot;</span><span class="p">)</span>
 
-            <span class="n">s</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zb</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">s</span><span class="p">[</span><span class="s2">&quot;elevation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zb</span><span class="o">.</span><span class="n">values</span>
 
             <span class="c1"># in case of dz, add this to the elevation</span>
             <span class="k">if</span> <span class="n">dz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">s</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">dz</span><span class="p">)</span>
+                <span class="n">s</span><span class="p">[</span><span class="s2">&quot;elevation&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">dz</span><span class="p">)</span>
 
             <span class="n">structs_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
@@ -840,20 +885,13 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">snap_to_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns GeoDataFrame with weirs snapped to model grid.&quot;&quot;&quot;</span>
-        <span class="c1"># FIXME - this probably only works for quadtree grids for now</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">!=</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">&quot;Snap to grid is only implemented for quadtree grids.&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Snap to grid is only implemented for quadtree grids. Returning original weirs GeoDataFrame.&quot;</span>
             <span class="p">)</span>
-        <span class="n">snap_gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">snap_to_grid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">snap_gdf</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">list_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Give list of names of cross sections.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[]</span>
-        <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">names</span></div>
+            <span class="k">return</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>  <span class="c1"># return empty gdf if not quadtree grid</span>
+        <span class="n">snap_gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">snap_to_grid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">snap_gdf</span></div>
 
 </pre></div>
 

@@ -446,7 +446,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.processes.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_grid_from_region</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.workflows.tiling</span><span class="w"> </span><span class="kn">import</span> <span class="n">int2png</span><span class="p">,</span> <span class="n">tile_window</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.workflows.tiling</span><span class="w"> </span><span class="kn">import</span> <span class="n">int2png</span><span class="p">,</span> <span class="n">tile_window</span><span class="p">,</span> <span class="n">write_html</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
@@ -490,8 +490,7 @@
             <span class="n">region_filename</span><span class="o">=</span><span class="s2">&quot;region.geojson&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># initialize data attribute</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">datashader_dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
     <span class="nd">@property</span>
@@ -1062,37 +1061,10 @@
         <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">LineString</span><span class="p">([(</span><span class="n">x1</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y1</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="p">(</span><span class="n">x2</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y2</span><span class="p">[</span><span class="n">i</span><span class="p">])])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x1</span><span class="p">))]</span>
         <span class="k">return</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="n">lines</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_datashader_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a datashader-friendly DataFrame for the regular grid.&quot;&quot;&quot;</span>
-        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_grid_lines</span><span class="p">()</span>
-
-        <span class="c1"># Check if the grid crosses the dateline</span>
-        <span class="n">cross_dateline</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">180.0</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">x2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">180.0</span><span class="p">:</span>
-                <span class="n">cross_dateline</span> <span class="o">=</span> <span class="kc">True</span>
-
-        <span class="c1"># Transform to Web Mercator for Datashader</span>
-        <span class="n">transformer</span> <span class="o">=</span> <span class="n">Transformer</span><span class="o">.</span><span class="n">from_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="mi">3857</span><span class="p">,</span> <span class="n">always_xy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span>
-        <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
-
-        <span class="c1"># Handle dateline wrapping</span>
-        <span class="k">if</span> <span class="n">cross_dateline</span><span class="p">:</span>
-            <span class="n">x1</span><span class="p">[</span><span class="n">x1</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">40075016.68557849</span>
-            <span class="n">x2</span><span class="p">[</span><span class="n">x2</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">40075016.68557849</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">datashader_dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">x1</span><span class="o">=</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="o">=</span><span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="o">=</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="o">=</span><span class="n">y2</span><span class="p">))</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">clear_datashader_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clears the datashader dataframe&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">datashader_dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
-
     <span class="c1"># %% DDB GUI focused additional functions:</span>
     <span class="c1"># create_index_tiles &gt; FIXME - TL: still needed?</span>
     <span class="c1"># map_overlay</span>
     <span class="c1"># snap_to_grid</span>
-    <span class="c1"># _get_datashader_dataframe</span>
 
     <span class="c1"># TODO - missing as in cht_sfincs:</span>
     <span class="c1"># Many...</span>
@@ -1103,6 +1075,7 @@
         <span class="n">region</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
         <span class="n">zoom_range</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span>
         <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span>
+        <span class="n">write_html_viewer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the corresponding SFINCS cell.</span>
@@ -1117,6 +1090,9 @@
 <span class="sd">            Range of zoom levels for which tiles are created, by default [0,13]</span>
 <span class="sd">        fmt : str, optional</span>
 <span class="sd">            Format of index tiles, either &quot;bin&quot; (binary, default) or &quot;png&quot;</span>
+<span class="sd">        write_html_viewer : bool, optional</span>
+<span class="sd">            If True (default), also write an ``index.html`` Leaflet viewer</span>
+<span class="sd">            alongside the tiles so they can be previewed in a browser.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">index_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;indices&quot;</span><span class="p">)</span>
@@ -1206,6 +1182,15 @@
                         <span class="c1"># for png, change nodata -999 nodata into 0</span>
                         <span class="n">ind</span><span class="p">[</span><span class="n">ind</span> <span class="o">==</span> <span class="o">-</span><span class="mi">999</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
                         <span class="n">int2png</span><span class="p">(</span><span class="n">ind</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">write_html_viewer</span> <span class="ow">and</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">write_html</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="s2">&quot;index.html&quot;</span><span class="p">),</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Index tiles&quot;</span><span class="p">,</span>
+                <span class="n">legend_title</span><span class="o">=</span><span class="s2">&quot;Cell indices&quot;</span><span class="p">,</span>
+                <span class="n">max_native_zoom</span><span class="o">=</span><span class="n">zoom_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_indices_at_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
         <span class="c1"># x and y are 2D arrays of coordinates (x, y) in the same projection as the model</span>

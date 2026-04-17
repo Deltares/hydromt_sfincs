@@ -639,8 +639,8 @@ such as pumps, culverts, and valves in a SFINCS model.</p>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">close</span></code>()</p></td>
 <td><p>Clean up all open datasets.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsDrainageStructures.create.html#hydromt_sfincs.components.geometries.SfincsDrainageStructures.create" title="hydromt_sfincs.components.geometries.SfincsDrainageStructures.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a>(locations[, stype, discharge, merge])</p></td>
-<td><p>Create drainage structures such as pumps, culverts, or valves (old name: setup_drainage_structures).</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsDrainageStructures.create.html#hydromt_sfincs.components.geometries.SfincsDrainageStructures.create" title="hydromt_sfincs.components.geometries.SfincsDrainageStructures.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a>(locations[, stype, discharge, alpha, ...])</p></td>
+<td><p>Create drainage structures such as pumps, culverts, valves, or gates (old name: setup_drainage_structures).</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code>(index)</p></td>
 <td><p>Remove one or more drainage structures.</p></td>
@@ -672,13 +672,22 @@ such as pumps, culverts, and valves in a SFINCS model.</p>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">data_catalog</span></code></p></td>
 <td><p>Return the data catalog of the model this component is associated with.</p></td>
 </tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">gdf</span></code></p></td>
+<td><p>Drainage structures data, returns geopandas.GeoDataFrame</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_names</span></code></p></td>
+<td><p>Give list of names of drainage structures.</p></td>
+</tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></p></td>
 <td><p>Return the model object this component is associated with.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name_in_model</span></code></p></td>
 <td><p>Find the name of the component in the parent model components.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">root</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nr_lines</span></code></p></td>
+<td><p>Return the number of line locations currently stored.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">root</span></code></p></td>
 <td><p>Return the root of the model this component is associated with.</p></td>
 </tr>
 </tbody>

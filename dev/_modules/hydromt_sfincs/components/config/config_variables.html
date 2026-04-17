@@ -1066,17 +1066,17 @@
     <span class="c1"># Wind drag</span>
     <span class="c1"># ================================================================</span>
     <span class="n">cdnrb</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of wind speed ranges for drag coefficient&quot;</span><span class="p">,</span>
         <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;always&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">cdwnd</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="kc">None</span><span class="p">,</span>
+        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">28.0</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">],</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Wind speed ranges for drag coefficient (m/s)&quot;</span><span class="p">,</span>
         <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;always&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">cdval</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="kc">None</span><span class="p">,</span>
+        <span class="p">[</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.0025</span><span class="p">,</span> <span class="mf">0.0025</span><span class="p">],</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Drag coefficient values corresponding to cdwnd&quot;</span><span class="p">,</span>
         <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;always&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
     <span class="p">)</span>

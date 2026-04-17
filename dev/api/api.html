@@ -886,7 +886,7 @@ and other model data.</p>
 <td><p>Write SFINCS drainage structures (.drn) file, and make sure drnfile is in config (if it was not already set).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.components.geometries.SfincsDrainageStructures.create.html#hydromt_sfincs.components.geometries.SfincsDrainageStructures.create" title="hydromt_sfincs.components.geometries.SfincsDrainageStructures.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">components.geometries.SfincsDrainageStructures.create</span></code></a>(...)</p></td>
-<td><p>Create drainage structures such as pumps, culverts, or valves (old name: setup_drainage_structures).</p></td>
+<td><p>Create drainage structures such as pumps, culverts, valves, or gates (old name: setup_drainage_structures).</p></td>
 </tr>
 </tbody>
 </table>
@@ -1048,7 +1048,7 @@ and other model data.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.workflows.cn_to_s.html#hydromt_sfincs.workflows.cn_to_s" title="hydromt_sfincs.workflows.cn_to_s"><code class="xref py py-obj docutils literal notranslate"><span class="pre">workflows.cn_to_s</span></code></a>(da_cn[, da_mask, nodata])</p></td>
 <td><p>Convert Curve Numbers to potential maximum soil moisture retention S [inch].</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.workflows.create_topobathy_tiles.html#hydromt_sfincs.workflows.create_topobathy_tiles" title="hydromt_sfincs.workflows.create_topobathy_tiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">workflows.create_topobathy_tiles</span></code></a>(root, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.workflows.create_topobathy_tiles.html#hydromt_sfincs.workflows.create_topobathy_tiles" title="hydromt_sfincs.workflows.create_topobathy_tiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">workflows.create_topobathy_tiles</span></code></a>(root, region)</p></td>
 <td><p>Create webmercator topobathy tiles for a given region.</p></td>
 </tr>
 </tbody>
@@ -1092,10 +1092,10 @@ and other model data.</p>
 <td><p>Write geopandas.GeoDataFrame with Point geometries to point xy files.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_xyn.html#hydromt_sfincs.utils.read_xyn" title="hydromt_sfincs.utils.read_xyn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_xyn</span></code></a>(fn[, crs])</p></td>
-<td><p></p></td>
+<td><p>Read xyn files, for example observation points with names.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_xyn.html#hydromt_sfincs.utils.write_xyn" title="hydromt_sfincs.utils.write_xyn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_xyn</span></code></a>([fn, gdf, fmt])</p></td>
-<td><p></p></td>
+<td><p>Write xyn files, for example observation points with names.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_geoms.html#hydromt_sfincs.utils.read_geoms" title="hydromt_sfincs.utils.read_geoms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_geoms</span></code></a>(fn)</p></td>
 <td><p>Read structure files to list of dictionaries.</p></td>

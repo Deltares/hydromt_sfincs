@@ -473,6 +473,50 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gdf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Drainage structures data, returns geopandas.GeoDataFrame&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nr_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the number of line locations currently stored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Give list of names of drainage structures.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="c1"># The drainage structures do not really have names,</span>
+        <span class="c1"># but we can use the index and turn into strings</span>
+        <span class="c1"># Loop through rows in gdf and get the type</span>
+        <span class="n">ipump</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">iculvert</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">ivalve</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">igate</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">ipump</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pump </span><span class="si">{</span><span class="n">ipump</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">iculvert</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Culvert </span><span class="si">{</span><span class="n">iculvert</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">ivalve</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Valve </span><span class="si">{</span><span class="n">ivalve</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="n">igate</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gate </span><span class="si">{</span><span class="n">igate</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Drainage </span><span class="si">{</span><span class="n">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">names</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">skip_read</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize drainage structures.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -605,10 +649,17 @@
         <span class="n">locations</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
         <span class="n">stype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pump&quot;</span><span class="p">,</span>
         <span class="n">discharge</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">sill_elevation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">manning_n</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.024</span><span class="p">,</span>
+        <span class="n">zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">closing_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">600.0</span><span class="p">,</span>
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create drainage structures such as pumps, culverts, or valves (old name: setup_drainage_structures).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create drainage structures such as pumps, culverts, valves, or gates (old name: setup_drainage_structures).</span>
 
 <span class="sd">        Adds model layer:</span>
 <span class="sd">        * **drn** geom: drainage pump or culvert</span>
@@ -618,9 +669,9 @@
 <span class="sd">        locations : str, Path</span>
 <span class="sd">            Path, data source name, or geopandas object to structure line geometry file.</span>
 <span class="sd">            The line should consist of only 2 points (else first and last points are used), ordered from up to downstream.</span>
-<span class="sd">            The &quot;type&quot; (1 for pump, 2 for culvert and 3 for valve), &quot;par1&quot; (&quot;discharge&quot; also accepted) variables are optional.</span>
+<span class="sd">            The &quot;type&quot; (1 for pump, 2 for culvert, 3 for valve, 4 for gate), &quot;par1&quot; (&quot;discharge&quot; also accepted) variables are optional.</span>
 <span class="sd">            If &quot;type&quot; or &quot;par1&quot; are not provided, they are based on stype or discharge Parameters.</span>
-<span class="sd">        stype : {&#39;pump&#39;, &#39;culvert&#39;, &#39;valve&#39;}, optional</span>
+<span class="sd">        stype : {&#39;pump&#39;, &#39;culvert&#39;, &#39;valve&#39;, &#39;gate&#39;}, optional</span>
 <span class="sd">            Structure type, by default &quot;pump&quot;. stype is converted to integer &quot;type&quot; to match with SFINCS expectations.</span>
 <span class="sd">        discharge : float, optional</span>
 <span class="sd">            Discharge of the structure, by default 0.0. For culverts and one-way-valves, this is the maximum discharge,</span>
@@ -630,9 +681,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">stype</span> <span class="o">=</span> <span class="n">stype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="n">svalues</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;pump&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;culvert&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;valve&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+        <span class="n">svalues</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;pump&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;culvert&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;valve&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;gate&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">stype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">svalues</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;stype must be one of &quot;pump&quot;, &quot;culvert&quot;, &quot;valve&quot;&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;stype must be one of &quot;pump&quot;, &quot;culvert&quot;, &quot;valve&quot;, &quot;gate&quot;&#39;</span><span class="p">)</span>
         <span class="n">svalue</span> <span class="o">=</span> <span class="n">svalues</span><span class="p">[</span><span class="n">stype</span><span class="p">]</span>
 
         <span class="c1"># read, clip and reproject</span>
@@ -648,28 +699,58 @@
         <span class="k">if</span> <span class="s2">&quot;discharge&quot;</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
             <span class="n">gdf_structures</span> <span class="o">=</span> <span class="n">gdf_structures</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;discharge&quot;</span><span class="p">:</span> <span class="s2">&quot;par1&quot;</span><span class="p">})</span>
 
+        <span class="c1"># Now for the different structure types</span>
+        <span class="k">if</span> <span class="n">svalue</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Pump</span>
+            <span class="k">if</span> <span class="s2">&quot;par1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">discharge</span>
+        <span class="k">elif</span> <span class="n">svalue</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># Culvert</span>
+            <span class="k">if</span> <span class="s2">&quot;par1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="k">elif</span> <span class="n">svalue</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="c1"># Check valve</span>
+            <span class="k">if</span> <span class="s2">&quot;par1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="k">elif</span> <span class="n">svalue</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="c1"># Gate</span>
+            <span class="k">if</span> <span class="s2">&quot;par1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">width</span>
+            <span class="k">if</span> <span class="s2">&quot;par2&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sill_elevation</span>
+            <span class="k">if</span> <span class="s2">&quot;par3&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par3&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">manning_n</span>
+            <span class="k">if</span> <span class="s2">&quot;par4&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par4&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zmin</span>
+            <span class="k">if</span> <span class="s2">&quot;par5&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par5&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zmax</span>
+            <span class="k">if</span> <span class="s2">&quot;par6&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par6&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">closing_time</span>
+
         <span class="c1"># add par1, par2, par3, par4, par5 if not present</span>
-        <span class="c1"># NOTE only par1 is used in the model</span>
         <span class="k">if</span> <span class="s2">&quot;par1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">discharge</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="k">if</span> <span class="s2">&quot;par2&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="k">if</span> <span class="s2">&quot;par3&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par3&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par3&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="k">if</span> <span class="s2">&quot;par4&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par4&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par4&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="k">if</span> <span class="s2">&quot;par5&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par5&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par5&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="s2">&quot;par6&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par6&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
 
         <span class="c1"># multi to single lines</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="n">gdf_structures</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="s2">&quot;geometry&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># get start [0] and end [1] points</span>
         <span class="n">endpoints</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">unstack</span><span class="p">()</span>
         <span class="c1"># merge start and end points into a single linestring</span>
-        <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">LineString</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">endpoints</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">LineString</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># Set geometry of the new lines to the merged linestring</span>
+        <span class="n">gdf_structures</span> <span class="o">=</span> <span class="n">gdf_structures</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">set_geometry</span><span class="p">(</span>
+            <span class="n">geom</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="p">)</span>
-
         <span class="c1"># set structures</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">gdf_structures</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">)</span>
         <span class="c1"># set config</span>

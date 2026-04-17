@@ -655,19 +655,16 @@ of output at these points can be controlled via the “dthisout” parameter in 
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">finish_write</span></code>()</p></td>
 <td><p>Finish the write functionality after cleanup was called for all components in the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_names</span></code>()</p></td>
-<td><p>Give list of names of observation points.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsObservationPoints.read.html#hydromt_sfincs.components.geometries.SfincsObservationPoints.read" title="hydromt_sfincs.components.geometries.SfincsObservationPoints.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>([filename])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsObservationPoints.read.html#hydromt_sfincs.components.geometries.SfincsObservationPoints.read" title="hydromt_sfincs.components.geometries.SfincsObservationPoints.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>([filename])</p></td>
 <td><p>Read SFINCS observation points (.obs) file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(gdf[, merge])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(gdf[, merge])</p></td>
 <td><p>Set SFINCS observation points.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
 <td><p>Test if two components are equal.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsObservationPoints.write.html#hydromt_sfincs.components.geometries.SfincsObservationPoints.write" title="hydromt_sfincs.components.geometries.SfincsObservationPoints.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([filename])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.geometries.SfincsObservationPoints.write.html#hydromt_sfincs.components.geometries.SfincsObservationPoints.write" title="hydromt_sfincs.components.geometries.SfincsObservationPoints.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([filename])</p></td>
 <td><p>Write SFINCS observation points (.obs) file, and set obsfile in config (if it was not already set)</p></td>
 </tr>
 </tbody>
@@ -681,6 +678,12 @@ of output at these points can be controlled via the “dthisout” parameter in 
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">data_catalog</span></code></p></td>
 <td><p>Return the data catalog of the model this component is associated with.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">gdf</span></code></p></td>
+<td><p>Observation point data, returned as a GeoDataFrame.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_names</span></code></p></td>
+<td><p>Return list of names of observation points.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></p></td>
 <td><p>Return the model object this component is associated with.</p></td>

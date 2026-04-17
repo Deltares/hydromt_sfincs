@@ -439,17 +439,6 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
 
-<span class="c1"># optional dependency</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">datashader</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ds</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">datashader.transfer_functions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">datashader.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">export_image</span>
-
-    <span class="n">HAS_DATASHADER</span> <span class="o">=</span> <span class="kc">True</span>
-
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="n">HAS_DATASHADER</span> <span class="o">=</span> <span class="kc">False</span>
-
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 
@@ -489,7 +478,6 @@
         <span class="p">)</span></div>
 
         <span class="c1"># For plotting map overlay (This is the only data that is stored in the object! All other data is stored in the model.grid.data[&quot;mask&quot;])</span>
-        <span class="c1"># self.datashader_dataframe = pd.DataFrame()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1045,20 +1033,7 @@
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">2</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_datashader_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="s2">&quot;Datashader dataframe not yet implemented for regular models&quot;</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">clear_datashader_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the datashader dataframe.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;datashader_dataframe&quot;</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">datashader_dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">map_overlay</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Map overlay not yet implemented for regular models&quot;</span><span class="p">)</span></div>
+            <span class="k">return</span> <span class="kc">False</span></div>
 
 </pre></div>
 
