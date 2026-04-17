@@ -8,7 +8,7 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
-v2.0.0-rc2 (unreleased)
+v2.0.0-rc2 (16-4-2026)
 =============================
 **This release contains minor bugfixes and improvements to the v2.0.0-rc1 release.**
 
@@ -16,12 +16,28 @@ Added
 -----
 - Added script to easily run SFINCS models from Python using local executable or docker (#312)
 - Added the option to visualize the grid in the plot_basemap method (#312)
+- plotting boundaries for quadtree models (#318)
+- quadtree roughness and infiltration maps (#342 en #354)
+- added back the option to create discharge forcing from a grid (previously named `setup_discharge_forcing_from_grid`) (#358)
+- add runup gauges geometry component (#366)
+- platform aware launcher script (exe_path + write_batch_file) (#367)
 
 Fixed
 -----
-- Made variables in netcdf forcing files compliant with conventions of SFINCS kernel (#316)
-- Fixed connectivity of quadtree mask necessary for "staircase" boundaries of SnapWave (#312)
+- fixed setting up SFINCS with geographical grid (#307)
+- parentheses appeared in the drnfile causing the kernel to crash (#308)
+- fixed connectivity of quadtree mask necessary for "staircase" boundaries of SnapWave (#312)
+- made variables in netcdf forcing files compliant with conventions of SFINCS kernel (#316)
+- Ensure vmax is at least 1 for depth variable plot_basemap (#325)
+- fix buffer for clipping meteo datasets after buffer definition changed in hydromt core (#348)
+- bugfixed in generating index file (#357)
+- fixed errors that were introduced by pandas releases ≥ 3.0.0 (#371)
 
+Changed
+-------
+- convert multipolygon into polygons and improve logging for creation of masks (#319)
+- some minor quadtree enhancements for missing and interpolating data (#352)
+- refactored config system: reorganized variables, improved keyword persistence logic, downgraded invalid keyword errors to warnings (#368)
 
 v2.0.0-rc1 (25-11-2025)
 =============================

@@ -15,4 +15,4 @@ dependencies:
   - python=3.11                   # fixing python version for binder
   - pip                           # ensure pip itself is installed
   - pip:
-    - hydromt-sfincs==2.0.0rc1
+    - hydromt-sfincs==2.0.0rc2
