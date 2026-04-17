@@ -56,10 +56,10 @@ def test_geoms(tmp_dir, weirs):
     # non LineString geomtry types raise a ValueError
     with pytest.raises(ValueError, match="Invalid geometry type"):
         utils.gdf2linestring(gpd.GeoDataFrame(geometry=[Point(0, 0)]))
-    # weir structure requires z data
+    # weir structure requires elevation data
     w = copy.deepcopy(weirs[0])
-    w.pop("z")
-    with pytest.raises(ValueError, match='"z" value missing'):
+    w.pop("elevation")
+    with pytest.raises(ValueError, match='"elevation" value missing'):
         utils.write_geoms("fail", [w], stype="weir")
     # test I/O
     fn_out = str(tmp_dir.joinpath("test.weir"))

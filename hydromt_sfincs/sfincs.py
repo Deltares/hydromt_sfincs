@@ -18,6 +18,7 @@ import xarray as xr
 import xugrid as xu
 
 # %% Import model components
+from hydromt.error import NoDataException
 from hydromt.model import Model
 
 from hydromt_sfincs import DATADIR, plots, utils
@@ -676,8 +677,7 @@ class SfincsModel(Model):
                     )
                     # rename elevtn to elevation if present
                     da_elv.name = "elevation"
-                # TODO remove ValueError after fix in hydromt core
-                except (IndexError, ValueError):
+                except (IndexError, ValueError, NoDataException):
                     data_name = dataset.get("elevation")
                     logger.warning(f"No data in domain for {data_name}, skipped.")
                     continue

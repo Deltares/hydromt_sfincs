@@ -74,7 +74,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Get absolute file name and set it in config if crsfile is not None
+        # Get absolute file name and set it in config if bndfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
             "bndfile", value=filename
         )
@@ -91,8 +91,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             )
 
         # Read bnd file
-        # TODO check if we want read_xyn? Before we used read_xy, so without name column
-        gdf = utils.read_xyn(abs_file_path, crs=self.model.crs)
+        gdf = utils.read_xy(abs_file_path, crs=self.model.crs)
         return gdf
 
     def read_boundary_conditions_timeseries(self, filename: str | Path = None):
@@ -122,6 +121,29 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         df.index.name = "time"
         df.columns.name = "index"
         return df
+
+    def set_boundary_conditions_astro(self, gdf: gpd.GeoDataFrame) -> None:
+        """Populate boundary points and astronomical constituents from a gdf.
+
+        The gdf is expected to have an ``"astro"`` column in which each
+        entry is a pandas DataFrame indexed by constituent name with
+        ``amplitude`` and ``phase`` columns (i.e. the format returned by
+        :py:meth:`cht_tide.model.TideModel.get_data_on_points` with
+        ``format="gdf"``).
+
+        Parameters
+        ----------
+        gdf : gpd.GeoDataFrame
+            Boundary points with per-station constituent data.
+        """
+        if "astro" not in gdf.columns:
+            raise ValueError(
+                "gdf must have an 'astro' column with per-point constituent data."
+            )
+        section_data = list(gdf["astro"])
+        gdf_points = gdf.drop(columns=["astro"])
+        self.set(gdf=gdf_points, merge=False, drop_duplicates=False)
+        self._data = add_constituents(self.data, section_data)
 
     def read_boundary_conditions_astro(self, filename: str | Path = None):
         """Read SFINCS boundary condition astro (.bca) file"""
@@ -248,8 +270,9 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         else:
             fmt = "%11.1f"
 
-        # TODO check whether write_xyn or write_xy
-        utils.write_xyn(abs_file_path, self.gdf, fmt=fmt)
+        # Write x, y only (no name column) — SFINCS bnd file format
+        gdf = self.gdf.drop(columns=["name"], errors="ignore")
+        utils.write_xy(abs_file_path, gdf, fmt=fmt)
 
     def write_boundary_conditions_timeseries(self, filename: str | Path = None):
         """Write SFINCS boundary condition timeseries (.bzs) file"""
@@ -291,11 +314,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         with open(abs_file_path, "w") as fid:
             for ip in self.data.index.values:
-                # Optional: if you have names from your dataset
-                if "name" in self.data.coords:
-                    name = f"sfincs_{int(self.data.name.sel(index=ip).item()):04d}"
-                else:
-                    name = f"sfincs_{ip+1:04d}"
+                name = f"sfincs_{ip+1:04d}"
 
                 fid.write(f"[forcing]\n")
                 fid.write(f"Name                            = {name}\n")

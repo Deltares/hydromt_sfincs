@@ -635,17 +635,17 @@ class SfincsConfigVariables(BaseSettings):
     # Wind drag
     # ================================================================
     cdnrb: int = Field(
-        0,
+        3,
         description="Number of wind speed ranges for drag coefficient",
         json_schema_extra={"always": True},
     )
     cdwnd: list[float] | None = Field(
-        None,
+        [0.0, 28.0, 50.0],
         description="Wind speed ranges for drag coefficient (m/s)",
         json_schema_extra={"always": True},
     )
     cdval: list[float] | None = Field(
-        None,
+        [0.001, 0.0025, 0.0025],
         description="Drag coefficient values corresponding to cdwnd",
         json_schema_extra={"always": True},
     )
