@@ -42,6 +42,50 @@ class SfincsDrainageStructures(ModelComponent):
             self._initialize()
         return self._data
 
+    @property
+    def gdf(self) -> gpd.GeoDataFrame:
+        """Drainage structures data, returns geopandas.GeoDataFrame"""
+        return self.data
+
+    @property
+    def nr_lines(self) -> int:
+        """
+        Return the number of line locations currently stored.
+        """
+        if hasattr(self.data, "index"):
+            return len(self.data.index)
+        return 0
+
+    @property
+    def list_names(self):
+        """Give list of names of drainage structures."""
+        if self.data.empty:
+            return []
+        # The drainage structures do not really have names,
+        # but we can use the index and turn into strings
+        # Loop through rows in gdf and get the type
+        ipump = 0
+        iculvert = 0
+        ivalve = 0
+        igate = 0
+        names = []
+        for index, row in self.data.iterrows():
+            if row["type"] == 1:
+                ipump += 1
+                names.append(f"Pump {ipump}")
+            elif row["type"] == 2:
+                iculvert += 1
+                names.append(f"Culvert {iculvert}")
+            elif row["type"] == 3:
+                ivalve += 1
+                names.append(f"Valve {ivalve}")
+            elif row["type"] == 4:
+                igate += 1
+                names.append(f"Gate {igate}")
+            else:
+                names.append(f"Drainage {index + 1}")
+        return names
+
     def _initialize(self, skip_read: bool = False) -> None:
         """Initialize drainage structures."""
         if self._data is None:
@@ -166,10 +210,17 @@ class SfincsDrainageStructures(ModelComponent):
         locations: Union[str, Path, gpd.GeoDataFrame],
         stype: str = "pump",
         discharge: float = 0.0,
+        alpha: float = 0.5,
+        width: float = 1.0,
+        sill_elevation: float = 0.0,
+        manning_n: float = 0.024,
+        zmin: float = 0.0,
+        zmax: float = 1.0,
+        closing_time: float = 600.0,
         merge: bool = True,
         **kwargs,
     ):
-        """Create drainage structures such as pumps, culverts, or valves (old name: setup_drainage_structures).
+        """Create drainage structures such as pumps, culverts, valves, or gates (old name: setup_drainage_structures).
 
         Adds model layer:
         * **drn** geom: drainage pump or culvert
@@ -179,9 +230,9 @@ class SfincsDrainageStructures(ModelComponent):
         locations : str, Path
             Path, data source name, or geopandas object to structure line geometry file.
             The line should consist of only 2 points (else first and last points are used), ordered from up to downstream.
-            The "type" (1 for pump, 2 for culvert and 3 for valve), "par1" ("discharge" also accepted) variables are optional.
+            The "type" (1 for pump, 2 for culvert, 3 for valve, 4 for gate), "par1" ("discharge" also accepted) variables are optional.
             If "type" or "par1" are not provided, they are based on stype or discharge Parameters.
-        stype : {'pump', 'culvert', 'valve'}, optional
+        stype : {'pump', 'culvert', 'valve', 'gate'}, optional
             Structure type, by default "pump". stype is converted to integer "type" to match with SFINCS expectations.
         discharge : float, optional
             Discharge of the structure, by default 0.0. For culverts and one-way-valves, this is the maximum discharge,
@@ -191,9 +242,9 @@ class SfincsDrainageStructures(ModelComponent):
         """
 
         stype = stype.lower()
-        svalues = {"pump": 1, "culvert": 2, "valve": 3}
+        svalues = {"pump": 1, "culvert": 2, "valve": 3, "gate": 4}
         if stype not in svalues:
-            raise ValueError('stype must be one of "pump", "culvert", "valve"')
+            raise ValueError('stype must be one of "pump", "culvert", "valve", "gate"')
         svalue = svalues[stype]
 
         # read, clip and reproject
@@ -209,28 +260,58 @@ class SfincsDrainageStructures(ModelComponent):
         if "discharge" in gdf_structures:
             gdf_structures = gdf_structures.rename(columns={"discharge": "par1"})
 
+        # Now for the different structure types
+        if svalue == 1:
+            # Pump
+            if "par1" not in gdf_structures:
+                gdf_structures["par1"] = discharge
+        elif svalue == 2:
+            # Culvert
+            if "par1" not in gdf_structures:
+                gdf_structures["par1"] = alpha
+        elif svalue == 3:
+            # Check valve
+            if "par1" not in gdf_structures:
+                gdf_structures["par1"] = alpha
+        elif svalue == 4:
+            # Gate
+            if "par1" not in gdf_structures:
+                gdf_structures["par1"] = width
+            if "par2" not in gdf_structures:
+                gdf_structures["par2"] = sill_elevation
+            if "par3" not in gdf_structures:
+                gdf_structures["par3"] = manning_n
+            if "par4" not in gdf_structures:
+                gdf_structures["par4"] = zmin
+            if "par5" not in gdf_structures:
+                gdf_structures["par5"] = zmax
+            if "par6" not in gdf_structures:
+                gdf_structures["par6"] = closing_time
+
         # add par1, par2, par3, par4, par5 if not present
-        # NOTE only par1 is used in the model
         if "par1" not in gdf_structures:
-            gdf_structures["par1"] = discharge
+            gdf_structures["par1"] = 0.0
         if "par2" not in gdf_structures:
-            gdf_structures["par2"] = 0
+            gdf_structures["par2"] = 0.0
         if "par3" not in gdf_structures:
-            gdf_structures["par3"] = 0
+            gdf_structures["par3"] = 0.0
         if "par4" not in gdf_structures:
-            gdf_structures["par4"] = 0
+            gdf_structures["par4"] = 0.0
         if "par5" not in gdf_structures:
-            gdf_structures["par5"] = 0
+            gdf_structures["par5"] = 0.0
+        if "par6" not in gdf_structures:
+            gdf_structures["par6"] = 0.0
 
         # multi to single lines
         lines = gdf_structures.explode(column="geometry").reset_index(drop=True)
         # get start [0] and end [1] points
         endpoints = lines.boundary.explode(index_parts=True).unstack()
         # merge start and end points into a single linestring
-        gdf_structures["geometry"] = endpoints.apply(
-            lambda x: LineString(x.values.tolist()), axis=1
+        geom = endpoints.apply(lambda x: LineString(x.values.tolist()), axis=1)
+        # Set geometry of the new lines to the merged linestring
+        gdf_structures = gdf_structures.reset_index(drop=True).set_geometry(
+            geom.reset_index(drop=True)
         )
-
         # set structures
         self.set(gdf_structures, merge=merge)
         # set config
