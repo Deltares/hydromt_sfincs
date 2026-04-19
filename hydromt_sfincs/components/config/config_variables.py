@@ -665,6 +665,7 @@ class SfincsConfigVariables(BaseSettings):
     weirfile: str | None = Field(None, description="Weir structure file")
     manningfile: str | None = Field(None, description="Manning's n file")
     drnfile: str | None = Field(None, description="Drainage structure file")
+    urbfile: str | None = Field(None, description="Urban drainage areas file")
     volfile: str | None = Field(None, description="Storage volume file")
 
     # ================================================================

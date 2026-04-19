@@ -70,6 +70,7 @@ from hydromt_sfincs.components.geometries import (
     SfincsObservationPoints,
     SfincsRunupGauges,
     SfincsThinDams,
+    SfincsUrbanDrainageAreas,
     SfincsWaveMakers,
     SfincsWeirs,
 )
@@ -119,6 +120,7 @@ class SfincsModel(Model):
         "weirs": SfincsWeirs,
         "wave_makers": SfincsWaveMakers,
         "drainage_structures": SfincsDrainageStructures,
+        "urban_drainage_areas": SfincsUrbanDrainageAreas,
     }
     _FORCING_COMPONENTS = {
         "rivers": SfincsRivers,
@@ -553,6 +555,7 @@ class SfincsModel(Model):
             "weirs": "weir",
             "thin_dams": "thd",
             "drainage_structures": "drn",
+            "urban_drainage_areas": "urb",
             "rivers": "rivers",
             "river_boundary_points": "bdr",
             "discharge_points": "src",
@@ -1019,6 +1022,11 @@ class SfincsModel(Model):
     def drainage_structures(self) -> SfincsDrainageStructures:
         """Instance of :py:class:`~hydromt_sfincs.components.geometries.drainage_structures.SfincsDrainageStructures`."""
         return self.components["drainage_structures"]
+
+    @property
+    def urban_drainage_areas(self) -> SfincsUrbanDrainageAreas:
+        """Instance of :py:class:`~hydromt_sfincs.components.geometries.urban_drainage_areas.SfincsUrbanDrainageAreas`."""
+        return self.components["urban_drainage_areas"]
 
     @property
     def rivers(self) -> SfincsRivers:
