@@ -172,7 +172,8 @@ class SfincsUrbanDrainageAreas(ModelComponent):
             geoms.append(Polygon(polys[name]))
             rows.append(dict(z))
 
-        self._data = gpd.GeoDataFrame(rows, geometry=geoms, crs=self.model.crs)
+        gdf = gpd.GeoDataFrame(rows, geometry=geoms, crs=self.model.crs)
+        self._data = self._fill_defaults(gdf)
 
     def write(self, filename: Union[str, Path] = None) -> None:
         """Write the ``sfincs.urb`` TOML file and its ``.pol`` polygon files."""
@@ -303,7 +304,51 @@ class SfincsUrbanDrainageAreas(ModelComponent):
             )
             logger.info("Adding new urban drainage areas to existing ones.")
 
-        self._data = gdf.reset_index(drop=True)
+        self._data = self._fill_defaults(gdf.reset_index(drop=True))
+
+    def _fill_defaults(self, gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+        """Stamp per-type SFINCS defaults onto any rows missing them.
+
+        Applied at the end of :meth:`read` and :meth:`set` so every row
+        in :attr:`data` carries the full set of columns appropriate to
+        its ``type`` (no silent ``KeyError`` / ``NaN`` for optional
+        keys). The ``design_precip`` vs ``max_outfall_rate`` pair is
+        left alone — exactly one is populated per row.
+        """
+        if gdf is None or gdf.empty:
+            return gdf
+
+        for col in ("h_threshold",):
+            if col not in gdf.columns:
+                gdf[col] = 0.0
+            else:
+                gdf[col] = gdf[col].fillna(0.0)
+
+        piped = gdf["type"] == "piped_drainage"
+        if piped.any():
+            piped_defaults = {
+                "outfall_x": 0.0,
+                "outfall_y": 0.0,
+                "dh_design_min": 0.1,
+                "include_outfall": True,
+                "check_valve": False,
+            }
+            for col, default in piped_defaults.items():
+                if col not in gdf.columns:
+                    gdf[col] = default
+                else:
+                    gdf.loc[piped & gdf[col].isna(), col] = default
+
+        # Booleans should end up as bool, not object. Using .map here to
+        # avoid pandas' deprecated silent-downcast path in .fillna on
+        # object-dtype columns.
+        for col in ("include_outfall", "check_valve"):
+            if col in gdf.columns:
+                gdf[col] = gdf[col].map(
+                    lambda v: False if pd.isna(v) else bool(v)
+                ).astype(bool)
+
+        return gdf
 
     @hydromt_step
     def create(
