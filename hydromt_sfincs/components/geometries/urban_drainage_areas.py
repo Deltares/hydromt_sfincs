@@ -21,6 +21,7 @@ zone's type are serialised to the TOML file.
 from __future__ import annotations
 
 import logging
+import re
 from os.path import join
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
@@ -48,6 +49,27 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 _VALID_TYPES = ("piped_drainage", "injection_well")
+
+
+# Default value for every non-core column. :meth:`set` applies these to
+# every row so that the GeoDataFrame always carries the full schema
+# regardless of which zone types are present. Columns whose default is
+# ``np.nan`` are the XOR / per-type fields (``design_precip`` vs
+# ``max_outfall_rate`` for piped drainage, ``injection_rate`` /
+# ``maximum_capacity`` for injection wells); the relevant one is
+# populated by the user and the irrelevant one stays NaN.
+_DEFAULTS: dict = {
+    "h_threshold": 0.02,
+    "outfall_x": 0.0,
+    "outfall_y": 0.0,
+    "design_precip": np.nan,
+    "max_outfall_rate": np.nan,
+    "dh_design_min": 0.1,
+    "include_outfall": True,
+    "check_valve": False,
+    "injection_rate": 0.2,
+    "maximum_capacity": 1000.0,
+}
 
 
 class SfincsUrbanDrainageAreas(ModelComponent):
@@ -181,7 +203,7 @@ class SfincsUrbanDrainageAreas(ModelComponent):
             rows.append(row)
 
         gdf = gpd.GeoDataFrame(rows, geometry=geoms, crs=self.model.crs)
-        self._data = self._fill_defaults(gdf)
+        self.set(gdf, merge=False)
 
     def write(self, filename: Union[str, Path] = None) -> None:
         """Write the ``sfincs.urb`` TOML file and its ``.pol`` polygon files."""
@@ -217,8 +239,18 @@ class SfincsUrbanDrainageAreas(ModelComponent):
             poly_path.parent.mkdir(parents=True, exist_ok=True)
             utils.write_geoms(poly_path, feats, stype="pol", fmt=fmt)
 
-        with open(abs_file_path, "wb") as f:
-            tomli_w.dump({"urban_drainage_zone": zone_tables}, f)
+        # tomli_w always wraps arrays across multiple lines. Collapse
+        # the two-element ``outfall`` array back onto one line for
+        # readability — done as a post-process text substitution since
+        # the library has no inline-array option.
+        doc = tomli_w.dumps({"urban_drainage_zone": zone_tables})
+        doc = re.sub(
+            r"outfall = \[\s*([^,\]]+?)\s*,\s*([^,\]]+?)\s*,?\s*\]",
+            r"outfall = [\1, \2]",
+            doc,
+        )
+        with open(abs_file_path, "w") as f:
+            f.write(doc)
 
         if self.model.write_gis:
             utils.write_vector(
@@ -312,51 +344,25 @@ class SfincsUrbanDrainageAreas(ModelComponent):
             )
             logger.info("Adding new urban drainage areas to existing ones.")
 
-        self._data = self._fill_defaults(gdf.reset_index(drop=True))
+        gdf = gdf.reset_index(drop=True)
 
-    def _fill_defaults(self, gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-        """Stamp per-type SFINCS defaults onto any rows missing them.
-
-        Applied at the end of :meth:`read` and :meth:`set` so every row
-        in :attr:`data` carries the full set of columns appropriate to
-        its ``type`` (no silent ``KeyError`` / ``NaN`` for optional
-        keys). The ``design_precip`` vs ``max_outfall_rate`` pair is
-        left alone — exactly one is populated per row.
-        """
-        if gdf is None or gdf.empty:
-            return gdf
-
-        for col in ("h_threshold",):
+        # Ensure every non-core column exists with its default and fill
+        # any missing values. After this, every row carries the full
+        # column set regardless of its zone type — columns that are
+        # irrelevant for a given row still hold their default. Boolean
+        # columns go through .map so they land as bool dtype (pandas'
+        # fillna on object-dtype columns is noisy and deprecated).
+        for col, default in _DEFAULTS.items():
             if col not in gdf.columns:
-                gdf[col] = 0.0
-            else:
-                gdf[col] = gdf[col].fillna(0.0)
-
-        piped = gdf["type"] == "piped_drainage"
-        if piped.any():
-            piped_defaults = {
-                "outfall_x": 0.0,
-                "outfall_y": 0.0,
-                "dh_design_min": 0.1,
-                "include_outfall": True,
-                "check_valve": False,
-            }
-            for col, default in piped_defaults.items():
-                if col not in gdf.columns:
-                    gdf[col] = default
-                else:
-                    gdf.loc[piped & gdf[col].isna(), col] = default
-
-        # Booleans should end up as bool, not object. Using .map here to
-        # avoid pandas' deprecated silent-downcast path in .fillna on
-        # object-dtype columns.
-        for col in ("include_outfall", "check_valve"):
-            if col in gdf.columns:
+                gdf[col] = default
+            elif isinstance(default, bool):
                 gdf[col] = gdf[col].map(
-                    lambda v: False if pd.isna(v) else bool(v)
+                    lambda v, d=default: d if pd.isna(v) else bool(v)
                 ).astype(bool)
+            else:
+                gdf[col] = gdf[col].fillna(default)
 
-        return gdf
+        self._data = gdf
 
     @hydromt_step
     def create(
@@ -426,46 +432,27 @@ class SfincsUrbanDrainageAreas(ModelComponent):
 def _row_to_toml_table(row: pd.Series) -> dict:
     """Convert one GeoDataFrame row into its TOML-serialisable dict.
 
-    Every keyword relevant to the zone's type is emitted; missing values
-    fall back to the SFINCS defaults. The only exclusion is
-    ``design_precip`` vs ``max_outfall_rate`` — whichever the user
-    supplied is written; the other is omitted (``set()`` guarantees
-    exactly one is populated).
+    ``set()`` guarantees every relevant column is populated, so only
+    the per-type emission logic is applied here. ``design_precip`` and
+    ``max_outfall_rate`` are XOR — whichever the user populated is
+    emitted and the other is skipped.
     """
     out: dict = {
         "name": str(row["name"]),
         "type": str(row["type"]),
         "polygon_file": str(row["polygon_file"]),
+        "h_threshold": float(row["h_threshold"]),
     }
 
-    h_threshold = row.get("h_threshold")
-    out["h_threshold"] = float(h_threshold) if pd.notna(h_threshold) else 0.0
-
     if row["type"] == "piped_drainage":
-        out["outfall"] = [
-            float(row["outfall_x"]) if pd.notna(row.get("outfall_x")) else 0.0,
-            float(row["outfall_y"]) if pd.notna(row.get("outfall_y")) else 0.0,
-        ]
-
-        # design_precip XOR max_outfall_rate — emit whichever the user set.
-        if pd.notna(row.get("design_precip")):
+        out["outfall"] = [float(row["outfall_x"]), float(row["outfall_y"])]
+        if pd.notna(row["design_precip"]):
             out["design_precip"] = float(row["design_precip"])
         else:
             out["max_outfall_rate"] = float(row["max_outfall_rate"])
-
-        dh_min = row.get("dh_design_min")
-        out["dh_design_min"] = float(dh_min) if pd.notna(dh_min) else 0.1
-
-        include_outfall = row.get("include_outfall")
-        out["include_outfall"] = (
-            bool(include_outfall) if pd.notna(include_outfall) else True
-        )
-
-        check_valve = row.get("check_valve")
-        out["check_valve"] = (
-            bool(check_valve) if pd.notna(check_valve) else False
-        )
-
+        out["dh_design_min"] = float(row["dh_design_min"])
+        out["include_outfall"] = bool(row["include_outfall"])
+        out["check_valve"] = bool(row["check_valve"])
     elif row["type"] == "injection_well":
         out["injection_rate"] = float(row["injection_rate"])
         out["maximum_capacity"] = float(row["maximum_capacity"])
