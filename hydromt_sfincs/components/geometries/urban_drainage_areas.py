@@ -170,7 +170,15 @@ class SfincsUrbanDrainageAreas(ModelComponent):
                 )
 
             geoms.append(Polygon(polys[name]))
-            rows.append(dict(z))
+            row = dict(z)
+            # TOML stores piped outfall as a 2-element ``outfall = [x, y]``
+            # array; the gdf keeps the split ``outfall_x`` / ``outfall_y``
+            # columns so the rest of the code can index into them directly.
+            outfall = row.pop("outfall", None)
+            if outfall is not None:
+                row["outfall_x"] = float(outfall[0])
+                row["outfall_y"] = float(outfall[1])
+            rows.append(row)
 
         gdf = gpd.GeoDataFrame(rows, geometry=geoms, crs=self.model.crs)
         self._data = self._fill_defaults(gdf)
@@ -434,9 +442,10 @@ def _row_to_toml_table(row: pd.Series) -> dict:
     out["h_threshold"] = float(h_threshold) if pd.notna(h_threshold) else 0.0
 
     if row["type"] == "piped_drainage":
-        for k in ("outfall_x", "outfall_y"):
-            val = row.get(k)
-            out[k] = float(val) if pd.notna(val) else 0.0
+        out["outfall"] = [
+            float(row["outfall_x"]) if pd.notna(row.get("outfall_x")) else 0.0,
+            float(row["outfall_y"]) if pd.notna(row.get("outfall_y")) else 0.0,
+        ]
 
         # design_precip XOR max_outfall_rate — emit whichever the user set.
         if pd.notna(row.get("design_precip")):

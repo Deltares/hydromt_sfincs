@@ -86,8 +86,7 @@ def test_urban_drainage_areas_io(model_config, zones_gdf, tmp_path):
     # piped: full set of piped keys, and NOT the injection-well-only keys.
     # design_precip XOR max_outfall_rate — the user supplied design_precip.
     for k in (
-        "outfall_x",
-        "outfall_y",
+        "outfall",
         "design_precip",
         "dh_design_min",
         "include_outfall",
@@ -95,6 +94,9 @@ def test_urban_drainage_areas_io(model_config, zones_gdf, tmp_path):
         "h_threshold",
     ):
         assert k in piped
+    # outfall is emitted as a 2-element [x, y] array.
+    assert isinstance(piped["outfall"], list)
+    assert len(piped["outfall"]) == 2
     assert "max_outfall_rate" not in piped
     assert "injection_rate" not in piped
     assert "maximum_capacity" not in piped
@@ -104,8 +106,7 @@ def test_urban_drainage_areas_io(model_config, zones_gdf, tmp_path):
     for k in (
         "design_precip",
         "max_outfall_rate",
-        "outfall_x",
-        "outfall_y",
+        "outfall",
         "check_valve",
         "include_outfall",
         "dh_design_min",
