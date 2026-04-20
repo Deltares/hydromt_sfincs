@@ -260,10 +260,10 @@ class SfincsDrainageStructures(ModelComponent):
                 )
                 continue
 
-            x1 = float(entry.get("src_1_x", 0.0))
-            y1 = float(entry.get("src_1_y", 0.0))
-            x2 = float(entry.get("src_2_x", 0.0))
-            y2 = float(entry.get("src_2_y", 0.0))
+            src_1 = entry.get("src_1", [0.0, 0.0])
+            src_2 = entry.get("src_2", [0.0, 0.0])
+            x1, y1 = float(src_1[0]), float(src_1[1])
+            x2, y2 = float(src_2[0]), float(src_2[1])
 
             names.append(str(entry.get("name", "") or ""))
             types.append(t)
@@ -499,10 +499,8 @@ class SfincsDrainageStructures(ModelComponent):
             entry: dict = {
                 "type": type_str,
                 "name": name,
-                "src_1_x": x1,
-                "src_1_y": y1,
-                "src_2_x": x2,
-                "src_2_y": y2,
+                "src_1": [x1, y1],
+                "src_2": [x2, y2],
             }
             if t == 1:
                 entry["q"] = float(row["q"])
