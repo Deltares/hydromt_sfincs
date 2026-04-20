@@ -660,9 +660,8 @@ def linestring2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDat
     for f in feats:
         feat = copy.deepcopy(f)
         xyz = [feat.pop("x"), feat.pop("y")]
-        # Try without Z
-        # if "elevation" in feat and np.atleast_1d(feat["elevation"]).size == len(xyz[0]):
-        #     xyz.append(feat.pop("elevation"))
+        if "elevation" in feat and np.atleast_1d(feat["elevation"]).size == len(xyz[0]):
+            xyz.append(feat.pop("elevation"))
         feat.update({"geometry": LineString(list(zip(*xyz)))})
         records.append(feat)
     gdf = gpd.GeoDataFrame.from_records(records)
