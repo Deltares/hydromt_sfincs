@@ -64,6 +64,8 @@ __all__ = [
     "read_sfincs_map_results",
     "read_sfincs_his_results",
     "downscale_floodmap",
+    "dilate_zsmax",
+    "apply_energy_head",
     "compute_flow_connected_mask",
     "remove_disconnected_flooding",
     "rotated_grid",
@@ -232,7 +234,13 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
     gdf: gpd.GeoDataFrame
         GeoDataFrame with point geomtries
     """
-    gdf = open_vector(fn, crs=crs, driver="xy")
+    df = pd.read_csv(fn, index_col=False, header=None, sep=r"\s+").rename(
+        columns={0: "x", 1: "y"}
+    )
+    points = gpd.points_from_xy(df["x"], df["y"])
+    gdf = gpd.GeoDataFrame(geometry=points)
+    if crs is not None:
+        gdf.set_crs(crs, inplace=True)
     gdf.index = np.arange(1, gdf.index.size + 1, dtype=int)  # index starts at 1
     return gdf
 
@@ -762,7 +770,7 @@ def write_geoms(
             if isinstance(name, int):
                 name = f"{stype:s}{name:02d}"
             rows = len(feat["x"])
-            a = np.zeros((rows, cols), dtype=np.float32)
+            a = np.zeros((rows, cols), dtype=np.float64)
             a[:, 0] = np.asarray(feat["x"])
             a[:, 1] = np.asarray(feat["y"])
             if stype.lower() == "weir":
@@ -1250,16 +1258,265 @@ def write_raster(
         )
 
 
+def dilate_zsmax(
+    zsmax: Union[xu.UgridDataArray, xr.DataArray],
+    factor: float,
+) -> Union[xu.UgridDataArray, xr.DataArray]:
+    """Cell-space WSE dilation — works on both quadtree and regular grids.
+
+    For each *already-wet* cell/pixel, raise its zsmax to the max of (own,
+    wet-neighbour values) within a radius of ``(0.5 + factor)`` cell widths.
+    Dry cells stay dry — the wet-cell set is preserved (key safeguard:
+    no new cells are flooded).
+
+    Typical use is to close 1 m-DEM connectivity gaps behind coarse-cell
+    levees, where the parent cell's single WSE sits below the levee crest
+    on the fine DEM.  Expanding each cell's WSE plateau by a modest
+    fraction of its own size lets the flood cross the crest continuously
+    without introducing new wet cells elsewhere.
+
+    Parameters
+    ----------
+    zsmax : xu.UgridDataArray or xr.DataArray
+        Maximum water level (m).  NaN where dry.  Quadtree grids are
+        dispatched to a cKDTree-based implementation on the cell centres;
+        regular grids to a ``scipy.ndimage.maximum_filter`` with a disk
+        footprint in pixel units.
+    factor : float
+        Fraction of cell size.  ``factor=0`` picks up only the cell itself
+        on a uniform grid; ``factor=0.5`` reaches the 4 edge-neighbours;
+        ``factor=1.0`` reaches ~1.5 cell widths (full 3×3 stencil on a
+        uniform grid).  Must be ``>= 0``.  Returned unchanged when
+        ``factor <= 0``.
+
+    Returns
+    -------
+    xu.UgridDataArray or xr.DataArray
+        Dilated zsmax on the same grid and with the same wet-cell set as
+        the input.  ``dilated >= zsmax`` on every wet cell.
+    """
+    if isinstance(zsmax, xu.UgridDataArray):
+        return _dilate_zsmax_quadtree(zsmax, factor)
+    if isinstance(zsmax, xr.DataArray):
+        return _dilate_zsmax_regular(zsmax, factor)
+    raise TypeError(
+        "zsmax must be xu.UgridDataArray or xr.DataArray; "
+        f"got {type(zsmax).__name__}."
+    )
+
+
+def _dilate_zsmax_quadtree(
+    zsmax: xu.UgridDataArray,
+    factor: float,
+) -> xu.UgridDataArray:
+    """Quadtree-grid dilation via cKDTree (see :func:`dilate_zsmax`)."""
+    from scipy.spatial import cKDTree
+
+    grid = zsmax.ugrid.grid
+    face_x, face_y = grid.face_coordinates.T
+    fb = grid.face_bounds                     # (n, 4): xmin, ymin, xmax, ymax
+    dx_cell = fb[:, 2] - fb[:, 0]
+    dy_cell = fb[:, 3] - fb[:, 1]
+    dcell = np.maximum(dx_cell, dy_cell)
+
+    vals = zsmax.values.astype(np.float64, copy=True)
+    wet_before = ~np.isnan(vals)
+
+    if factor <= 0.0:
+        out = zsmax.copy()
+        out.values = vals.astype(zsmax.dtype)
+        return out
+
+    tree = cKDTree(np.column_stack([face_x, face_y]))
+    radii = dcell * (0.5 + factor)
+
+    nbr_lists = tree.query_ball_point(
+        np.column_stack([face_x, face_y]), r=radii,
+    )
+
+    dilated = vals.copy()
+    for i, nbrs in enumerate(nbr_lists):
+        if not nbrs:
+            continue
+        nbr_vals = vals[nbrs]
+        wet_nbrs = nbr_vals[~np.isnan(nbr_vals)]
+        if wet_nbrs.size == 0:
+            continue
+        nbr_max = float(wet_nbrs.max())
+        if np.isnan(dilated[i]):
+            dilated[i] = nbr_max
+        else:
+            dilated[i] = max(dilated[i], nbr_max)
+
+    # Enforce the no-new-wet-cells constraint
+    dilated[~wet_before] = np.nan
+
+    _check_dilation_invariants(vals, dilated, wet_before)
+
+    out = zsmax.copy()
+    out.values = dilated.astype(zsmax.dtype)
+    return out
+
+
+def _dilate_zsmax_regular(
+    zsmax: xr.DataArray,
+    factor: float,
+) -> xr.DataArray:
+    """Regular-grid dilation via a disk footprint max-filter.
+
+    Footprint radius is ``(0.5 + factor)`` pixels (Euclidean), matching
+    the quadtree convention: ``factor=0.5`` reaches edge neighbours,
+    ``factor=1.0`` reaches diagonal (full 3×3 stencil).
+    """
+    from scipy.ndimage import maximum_filter
+
+    vals = zsmax.values.astype(np.float64, copy=True)
+    wet_before = ~np.isnan(vals)
+
+    if factor <= 0.0:
+        out = zsmax.copy()
+        out.values = vals.astype(zsmax.dtype)
+        return out
+
+    # Disk footprint in pixel units (Euclidean radius 0.5 + factor)
+    R = 0.5 + float(factor)
+    r = int(np.ceil(R))
+    yy, xx = np.mgrid[-r:r + 1, -r:r + 1]
+    footprint = (xx * xx + yy * yy) <= (R * R)
+
+    # Fill NaN with -inf so the max ignores dry cells
+    filled = np.where(wet_before, vals, -np.inf)
+    dilated = maximum_filter(filled, footprint=footprint, mode="constant", cval=-np.inf)
+
+    # Enforce no-new-wet-cells: dry cells stay dry
+    dilated = np.where(wet_before, dilated, np.nan)
+
+    # A wet cell with no wet neighbour in-range still has its own value
+    # in the footprint centre, so dilated >= vals on every wet cell.
+    _check_dilation_invariants(vals, dilated, wet_before)
+
+    out = zsmax.copy()
+    out.values = dilated.astype(zsmax.dtype)
+    return out
+
+
+def _check_dilation_invariants(vals, dilated, wet_before):
+    """Assert wet-set preservation + monotonic lift for dilation helpers."""
+    wet_after = ~np.isnan(dilated)
+    if not np.array_equal(wet_before, wet_after):
+        raise RuntimeError("dilation changed the wet-cell set")
+    raised = np.where(
+        wet_before,
+        dilated - np.where(wet_before, vals, 0.0),
+        0.0,
+    )
+    if not np.all(raised >= -1e-9):
+        raise RuntimeError("dilation lowered zsmax on some cell")
+
+
+def apply_energy_head(
+    zsmax: xu.UgridDataArray,
+    qmax: xu.UgridDataArray,
+    zb: Optional[xu.UgridDataArray] = None,
+    hmin: float = 0.05,
+    q_threshold: float = 0.01,
+) -> xu.UgridDataArray:
+    """Add the velocity head v²/(2g) to zsmax (Bernoulli correction).
+
+    Lifts the water level on wet cells where the unit discharge exceeds
+    ``q_threshold``, converting zsmax to the total-energy head
+    ``H = zsmax + v² / (2g)``.  The wet-cell set is preserved: NaN cells
+    stay NaN.
+
+    This is a **method-agnostic pre-step** — the returned UgridDataArray
+    can be consumed by any downscaling method (constant, bilinear, raw,
+    volume-family, etc.).
+
+    Parameters
+    ----------
+    zsmax : xu.UgridDataArray
+        Maximum water level (m) on a SFINCS quadtree grid.  NaN where dry.
+    qmax : xu.UgridDataArray
+        Maximum unit discharge magnitude (m²/s), **cell-centred** — one
+        value per cell, with the same shape and grid as ``zsmax``.  This is
+        the convention SFINCS writes to ``sfincs_map.nc`` (variable
+        ``qmax``) when ``storefluxmax=1``; no face-to-centre reduction is
+        needed.  The sign is ignored (``|qmax|`` is used internally).
+        The formula matches the legacy in-bilinear branch at
+        ``utils._downscale_bilinear``: ``vel_head = q² / (h² * 2g)`` with
+        ``h = max(zsmax - zb, hmin)``.
+    zb : xu.UgridDataArray, optional
+        Bed elevation (m) at cell centres, used to estimate depth.  If
+        omitted, a constant depth of ``hmin`` is assumed (conservative —
+        overestimates velocity and therefore the head correction).
+    hmin : float, optional
+        Minimum depth (m) for velocity estimation, by default 0.05.
+    q_threshold : float, optional
+        Minimum unit discharge magnitude (m²/s) to apply the correction,
+        by default 0.01.  Cells below this threshold keep their original
+        zsmax.
+
+    Returns
+    -------
+    xu.UgridDataArray
+        zsmax with the velocity head added on qualifying cells.  Same grid
+        and same wet-cell set as the input.  ``result >= zsmax`` on every
+        wet cell (velocity head is always non-negative).
+    """
+    GRAVITY = 9.81
+
+    zs_vals = zsmax.values.astype(np.float64, copy=True)
+    q_vals = np.abs(qmax.values.astype(np.float64, copy=False))
+    wet_before = ~np.isnan(zs_vals)
+
+    if zb is not None:
+        zb_vals = zb.values.astype(np.float64, copy=False)
+        h = np.where(wet_before, np.maximum(zs_vals - zb_vals, hmin), hmin)
+    else:
+        h = np.full_like(zs_vals, hmin)
+
+    v = np.where(h > 0, q_vals / h, 0.0)
+    dH = np.where(
+        np.isfinite(q_vals) & (q_vals > q_threshold),
+        0.5 * v * v / GRAVITY,
+        0.0,
+    )
+
+    zs_new = zs_vals + np.where(wet_before, dH, 0.0)
+    zs_new[~wet_before] = np.nan
+
+    # Invariants
+    wet_after = ~np.isnan(zs_new)
+    if not np.array_equal(wet_before, wet_after):
+        raise RuntimeError("energy-head correction changed the wet-cell set")
+    raised = np.where(
+        wet_before,
+        zs_new - np.where(wet_before, zs_vals, 0.0),
+        0.0,
+    )
+    if not np.all(raised >= -1e-9):
+        raise RuntimeError("energy-head correction lowered zsmax on some cell")
+
+    out = zsmax.copy()
+    out.values = zs_new.astype(zsmax.dtype)
+    return out
+
+
 def downscale_floodmap(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
     dep: Union[Path, str, xr.DataArray],
     method: str = "constant",
     indices: Union[Path, str, xr.DataArray] = None,
-    sbg_fn: Union[Path, str] = None,
     hmin: float = 0.05,
     gdf_mask: gpd.GeoDataFrame = None,
     floodmap_fn: Union[Path, str] = None,
     zsmap_fn: Union[Path, str] = None,
+    dilation: Optional[float] = None,
+    energy_flux: Optional[bool] = None,
+    qmax: xu.UgridDataArray = None,
+    zb: xu.UgridDataArray = None,
+    q_threshold: float = 0.01,
+    q_scale: float = 0.5,
     reproj_method: str = "nearest",
     zoom_level: Optional[Union[int, tuple]] = None,
     nrmax: int = 2000,
@@ -1278,15 +1535,6 @@ def downscale_floodmap(
       This is the classic "bathtub" approach.
     * ``"bilinear"`` -- Bilinearly interpolate WSE from surrounding cell
       centers (Sanders & Schubert 2019), then subtract the DEM.
-    * ``"slope"`` -- Tilt the WSE within each cell by fitting a least-squares
-      plane to the bed elevation.
-    * ``"volume"`` -- Fill each cell hypsometrically until the volume matches
-      the SFINCS subgrid table.  Requires *sbg_fn*.
-    * ``"volume_slope"`` -- Detrend the DEM (remove bed slope), fill
-      hypsometrically, then add slope back (van Ormondt).  Requires *sbg_fn*.
-    * ``"tilt_volume"`` -- Tilt the WSE using the water-surface gradient,
-      then apply a vertical offset via bisection to match the target volume.
-      Requires *sbg_fn*.
 
     Parameters
     ----------
@@ -1299,9 +1547,6 @@ def downscale_floodmap(
         Downscaling method, by default ``"constant"``.
     indices : Path, str, or xr.DataArray, optional
         Pre-computed cell-index raster (only used by ``"constant"``).
-    sbg_fn : Path or str, optional
-        Path to the SFINCS subgrid file (.sbg netcdf).  Required for
-        ``"volume"``, ``"volume_slope"`` and ``"tilt_volume"``.
     hmin : float, optional
         Minimum water depth (m) to be considered flooded, by default 0.05.
         Ignored by ``"raw"``.
@@ -1311,6 +1556,42 @@ def downscale_floodmap(
         Output flood-depth GeoTIFF.  Required for all methods except ``"raw"``.
     zsmap_fn : Path or str, optional
         Output water-level GeoTIFF.
+    dilation : float, optional
+        Cell-space WSE dilation factor.  When ``> 0``, each wet cell's
+        zsmax is raised to the maximum of its wet neighbours within a
+        radius of ``(0.5 + dilation)`` cell widths.  Dry cells stay dry
+        (the wet-cell set is preserved).  Works on both quadtree
+        (``xu.UgridDataArray``) and regular (``xr.DataArray``) ``zsmax``
+        via :func:`dilate_zsmax`.  Default ``None`` (no dilation).
+    energy_flux : bool, optional
+        Method-agnostic Bernoulli / velocity-head correction switch.  When
+        ``True``, ``zsmax`` is pre-modified via
+        :func:`apply_energy_head` — ``H = zsmax + v²/(2g)`` on cells with
+        ``|qmax| > q_threshold`` — before dispatch, so every downscaling
+        method consumes the energy-adjusted water level.  Requires ``qmax``.
+        When ``False``, the legacy in-bilinear Bernoulli blend (if any) is
+        disabled by setting ``qmax`` to ``None`` internally.  Default
+        ``None`` → *legacy auto*: if ``qmax`` is provided with
+        ``method="bilinear"``, the in-bilinear blend runs; otherwise no
+        correction is applied.
+    qmax : xu.UgridDataArray, optional
+        Maximum unit discharge (m²/s).  With ``energy_flux=True`` (any
+        method), it feeds the pre-step velocity head; with
+        ``energy_flux=None`` and ``method="bilinear"``, it feeds the legacy
+        in-bilinear blend (face-based ``qmax`` with upstream energy
+        propagation — see ``q_scale``).  Requires ``storefluxmax=1`` in the
+        SFINCS configuration.
+    zb : xu.UgridDataArray, optional
+        Bed elevation at cell centres (m).  Used with *qmax* to compute
+        water depth for velocity estimation.  If omitted, *hmin* is used as
+        the minimum depth (conservative: overestimates velocity).
+    q_threshold : float, optional
+        Minimum unit discharge (m²/s) to activate the energy-head or
+        upstream-energy propagation, by default 0.01.
+    q_scale : float, optional
+        Unit discharge (m²/s) at which the legacy in-bilinear upstream blend
+        factor reaches 1.0, by default 0.5.  Ignored by the
+        ``energy_flux=True`` pre-step path.
     reproj_method : str, optional
         Reprojection method for ``"constant"`` downscaling, by default
         ``"nearest"``.
@@ -1330,18 +1611,11 @@ def downscale_floodmap(
         Returned only when *dep* is an ``xr.DataArray`` and
         ``method="constant"``.  Otherwise results are written to disk.
     """
-    _VALID_METHODS = {
-        "raw", "constant", "bilinear",
-        "slope", "volume", "volume_slope", "tilt_volume",
-    }
+    _VALID_METHODS = {"raw", "constant", "bilinear"}
     if method not in _VALID_METHODS:
         raise ValueError(
             f"Unknown method {method!r}.  Choose from {sorted(_VALID_METHODS)}."
         )
-
-    # Volume-based methods require the subgrid file
-    if method in ("volume", "volume_slope", "tilt_volume") and sbg_fn is None:
-        raise ValueError(f"sbg_fn is required for method={method!r}.")
 
     # --- Reduce time dimension -----------------------------------------------
     if isinstance(zsmax, xu.UgridDataArray):
@@ -1351,6 +1625,38 @@ def downscale_floodmap(
     if timedim:
         logger.info(f"Taking maximum water level over {timedim} dimension(s).")
         zsmax = zsmax.max(timedim)
+
+    if qmax is not None and isinstance(qmax, xu.UgridDataArray):
+        q_timedim = set(qmax.dims) - set(qmax.ugrid.grid.dims)
+        if q_timedim:
+            qmax = qmax.max(q_timedim)
+
+    # --- Pre-step 1: cell-space WSE dilation (quadtree or regular grid) ------
+    if dilation is not None and dilation > 0.0:
+        logger.info(f"Applying WSE dilation with factor={dilation:g}.")
+        zsmax = dilate_zsmax(zsmax, factor=float(dilation))
+
+    # --- Pre-step 2: energy-flux (Bernoulli velocity head) -------------------
+    # Method-agnostic: runs before dispatch, so every method consumes the
+    # energy-adjusted zsmax.  Takes precedence over the legacy in-bilinear
+    # blend (which is disabled by setting qmax=None after the pre-step).
+    if energy_flux is True:
+        if not isinstance(zsmax, xu.UgridDataArray):
+            raise ValueError(
+                "energy_flux=True requires zsmax on a SFINCS quadtree "
+                "(xu.UgridDataArray); got xr.DataArray."
+            )
+        if qmax is None:
+            raise ValueError("energy_flux=True requires qmax.")
+        logger.info("Applying velocity-head correction (energy_flux=True).")
+        zsmax = apply_energy_head(
+            zsmax, qmax=qmax, zb=zb, hmin=hmin, q_threshold=q_threshold,
+        )
+        qmax = None  # prevent the legacy in-bilinear branch from re-applying
+    elif energy_flux is False:
+        qmax = None  # force-disable the legacy in-bilinear branch too
+    # energy_flux is None → legacy auto-behaviour: qmax passes through to
+    #   _downscale_bilinear and drives its in-function Bernoulli blend.
 
     # --- In-memory path (xr.DataArray dep) -- only for "constant" ------------
     if isinstance(dep, xr.DataArray):
@@ -1406,12 +1712,7 @@ def downscale_floodmap(
         _downscale_bilinear(
             zsmax=zsmax, dep=dep, hmin=hmin, gdf_mask=gdf_mask,
             floodmap_fn=floodmap_fn, zsmap_fn=zsmap_fn, nrmax=nrmax, logger=logger,
-        )
-    elif method in ("slope", "volume", "volume_slope", "tilt_volume"):
-        _downscale_cell_based(
-            zsmax=zsmax, dep=dep, method=method, sbg_fn=sbg_fn, hmin=hmin,
-            gdf_mask=gdf_mask, floodmap_fn=floodmap_fn, zsmap_fn=zsmap_fn,
-            logger=logger,
+            indices=indices, qmax=qmax, zb=zb, q_threshold=q_threshold, q_scale=q_scale,
         )
 
 
@@ -1477,69 +1778,6 @@ def _apply_mask_and_overviews(
     for fn in [floodmap_fn, zsmap_fn]:
         if fn is not None:
             build_overviews(fn=str(fn), resample_method="nearest", logger=logger)
-
-
-def _get_grid_info(zsmax):
-    """Extract face bounding boxes and centers from a UgridDataArray."""
-    grid = zsmax.ugrid.grid
-    fnc = grid.face_node_connectivity
-    node_x = grid.node_x
-    node_y = grid.node_y
-    fill_value = grid.fill_value
-
-    fnc_safe = fnc.copy()
-    vmask = fnc_safe != fill_value
-    fnc_safe[~vmask] = 0
-    _nx = node_x[fnc_safe]; _nx[~vmask] = np.nan
-    _ny = node_y[fnc_safe]; _ny[~vmask] = np.nan
-
-    return dict(
-        face_xmin=np.nanmin(_nx, axis=1),
-        face_xmax=np.nanmax(_nx, axis=1),
-        face_ymin=np.nanmin(_ny, axis=1),
-        face_ymax=np.nanmax(_ny, axis=1),
-        face_xcen=grid.face_coordinates[:, 0],
-        face_ycen=grid.face_coordinates[:, 1],
-    )
-
-
-def _read_subgrid(sbg_fn, logger):
-    """Read SFINCS subgrid tables (z_level, z_volmax)."""
-    logger.info(f"Reading subgrid tables from {sbg_fn}")
-    sbg = xr.load_dataset(str(sbg_fn))
-    nlevels = sbg.sizes["levels"]
-    return dict(
-        z_level=sbg["z_level"].values,
-        z_volmax=sbg["z_volmax"].values,
-        level_fracs=np.arange(nlevels) / (nlevels - 1),
-    )
-
-
-def _target_volume(zs, fi, sbg):
-    """Interpolate target volume from subgrid table for cell fi at WSE zs."""
-    V_steps = sbg["level_fracs"] * sbg["z_volmax"][fi]
-    return float(np.interp(zs, sbg["z_level"][fi], V_steps))
-
-
-def _hypsometric_fill(ele_sorted, vol_target, pixel_area):
-    """Find water level that produces *vol_target* on a sorted elevation array.
-
-    Returns the water level (float).  Assumes ele_sorted is ascending.
-    """
-    n_pix = len(ele_sorted)
-    cum_ele = np.cumsum(ele_sorted)
-    counts = np.arange(1, n_pix + 1)
-    vol_at_level = (counts * ele_sorted - cum_ele) * pixel_area
-
-    if vol_target >= vol_at_level[-1]:
-        remainder = vol_target - vol_at_level[-1]
-        return ele_sorted[-1] + remainder / (n_pix * pixel_area)
-    if vol_target <= 0:
-        return ele_sorted[0]
-
-    k = max(0, np.searchsorted(vol_at_level, vol_target, side="right") - 1)
-    vol_remaining = vol_target - vol_at_level[k]
-    return ele_sorted[k] + vol_remaining / ((k + 1) * pixel_area)
 
 
 # =============================================================================
@@ -1682,6 +1920,14 @@ def _downscale_constant(
             with rasterio.open(zsmap_fn, "w", **profile):
                 pass
 
+        total = nrbm * nrbn
+        done = 0
+        skipped = 0
+        logger.info(
+            f"Constant WSE: {total} blocks to process "
+            f"({m1}x{n1} pixels, block size {nrcb})"
+        )
+
         for ii in range(nrbm):
             bm0 = ii * nrcb
             bm1 = min(bm0 + nrcb, m1)
@@ -1694,12 +1940,20 @@ def _downscale_constant(
                     bn1 += 1
 
                 window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
-                block_data = src.read(window=window)
-                if np.all(np.isnan(block_data)):
-                    continue
 
+                # Read indices first — skip block early if no SFINCS cells
                 if indices is not None:
                     block_idx = indices_src.read(window=window)
+                    if np.all(block_idx == indices_src.nodata):
+                        done += 1
+                        skipped += 1
+                        continue
+
+                block_data = src.read(window=window)
+                if np.all(np.isnan(block_data)):
+                    done += 1
+                    skipped += 1
+                    continue
 
                 if src.transform[1] == 0 and src.transform[3] == 0:
                     x_coords = src.transform[2] + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
@@ -1745,6 +1999,13 @@ def _downscale_constant(
                     with rasterio.open(zsmap_fn, "r+") as zs:
                         zs.write(block_zs.values, window=window, indexes=1)
 
+                done += 1
+                if done % 25 == 0 or done == total:
+                    logger.info(f"  Block {done}/{total} ({100*done/total:.0f}%)")
+
+        if skipped:
+            logger.info(f"  Skipped {skipped}/{total} empty blocks")
+
     build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
     if zsmap_fn is not None:
         build_overviews(fn=zsmap_fn, resample_method="nearest", logger=logger)
@@ -1754,20 +2015,110 @@ def _downscale_constant(
 #  Method: bilinear  (LinearNDInterpolator, block-based)
 # =============================================================================
 
-def _downscale_bilinear(zsmax, dep, hmin, gdf_mask, floodmap_fn, zsmap_fn, nrmax, logger):
+def _downscale_bilinear(zsmax, dep, hmin, gdf_mask, floodmap_fn, zsmap_fn, nrmax, logger,
+                         indices=None, qmax=None, zb=None, q_threshold=0.01, q_scale=0.5):
     from scipy.interpolate import LinearNDInterpolator
 
     grid = zsmax.ugrid.grid
     face_x, face_y = grid.face_coordinates.T
     vals = zsmax.values
-    wet = ~np.isnan(vals)
-    if np.sum(wet) < 3:
+    if np.sum(~np.isnan(vals)) < 3:
         logger.warning("Fewer than 3 wet cells; cannot interpolate."); return
 
+    if qmax is not None:
+        # qmax is face-based (one value per cell, same shape as zsmax)
+        q_cell_max = np.abs(qmax.values).astype(np.float64)  # (n_faces,)
+
+        # Step 2 — local Bernoulli: H_local = zsmax + (q/h)²/2g
+        h_cell = np.maximum(vals - zb.values, hmin) if zb is not None else np.full(len(vals), hmin)
+        vel_head = q_cell_max**2 / (h_cell**2 * 2.0 * 9.81)
+        H_local = np.where(~np.isnan(vals), vals + vel_head, np.nan)
+
+        # Step 3 — upstream energy propagation via face-face adjacency
+        # edge_face_connectivity may raise IndexError on malformed quadtree grids
+        # where the internal invert_dense call fails; fall back to KD-tree in that case.
+        _ef_ok = False
+        try:
+            ef = grid.edge_face_connectivity
+            _ef_ok = ef.ndim == 2 and ef.shape[1] >= 2
+        except (IndexError, ValueError):
+            pass
+        if _ef_ok:
+            both_valid = (ef[:, 0] >= 0) & (ef[:, 1] >= 0)
+            f0_safe = np.where(ef[:, 0] >= 0, ef[:, 0], 0)
+            f1_safe = np.where(ef[:, 1] >= 0, ef[:, 1], 0)
+            edge_q = np.where(both_valid, np.maximum(q_cell_max[f0_safe], q_cell_max[f1_safe]), 0.0)
+            active = (edge_q > q_threshold) & both_valid
+            ef_f0 = ef[active, 0]
+            ef_f1 = ef[active, 1]
+        else:
+            # Malformed connectivity — rebuild face pairs spatially via KD-tree
+            from scipy.spatial import cKDTree as _cKDTree
+            fb = grid.face_bounds          # (n_face, 4): xmin, ymin, xmax, ymax
+            _dx = fb[:, 2] - fb[:, 0]
+            _dy = fb[:, 3] - fb[:, 1]
+            _n_face = len(face_x)
+            _max_cell = max(_dx.max(), _dy.max())
+            _tree = _cKDTree(np.column_stack([face_x, face_y]))
+            _offsets = np.array([[1, 0], [-1, 0], [0, 1], [0, -1]], dtype=np.float64)
+            _probes = np.vstack([
+                np.column_stack([face_x + _dx * _offsets[d, 0],
+                                 face_y + _dy * _offsets[d, 1]])
+                for d in range(4)
+            ])
+            _dists, _idxs = _tree.query(_probes, k=1, distance_upper_bound=_max_cell + 1.0)
+            _src = np.tile(np.arange(_n_face), 4)
+            _valid = (_dists < _max_cell + 0.5) & (_src != _idxs)
+            _src, _idxs = _src[_valid], _idxs[_valid]
+            _keep = _src < _idxs
+            _pairs = np.unique(np.column_stack([_src[_keep], _idxs[_keep]]), axis=0)
+            _f0_all, _f1_all = _pairs[:, 0], _pairs[:, 1]
+            _edge_q_all = np.maximum(q_cell_max[_f0_all], q_cell_max[_f1_all])
+            _active = _edge_q_all > q_threshold
+            ef_f0 = _f0_all[_active]
+            ef_f1 = _f1_all[_active]
+            active = _active  # for .any() check below
+
+        upstream_H = np.full(len(vals), np.nan)
+        if active.any():
+            f0, f1 = ef_f0, ef_f1
+            H0, H1 = H_local[f0], H_local[f1]
+            fwd = ~np.isnan(H0) & (np.isnan(H1) | (H0 > H1))
+            rev = ~np.isnan(H1) & (np.isnan(H0) | (H1 > H0))
+            np.fmax.at(upstream_H, f1[fwd], H0[fwd])
+            np.fmax.at(upstream_H, f0[rev], H1[rev])
+
+        # Step 4 — blend: H_eff = H_local + blend × max(0, upstream_H − H_local)
+        blend = np.minimum(1.0, q_cell_max / q_scale)
+        H_eff = H_local.copy()
+        boosted = ~np.isnan(upstream_H) & ~np.isnan(H_local)
+        H_eff[boosted] += blend[boosted] * np.maximum(0.0, upstream_H[boosted] - H_local[boosted])
+
+        # Also extend to truly dry cells that receive upstream energy (transitional cells)
+        dry_with_upstream = np.isnan(vals) & ~np.isnan(upstream_H)
+        H_eff[dry_with_upstream] = upstream_H[dry_with_upstream] * blend[dry_with_upstream]
+
+        n_boost = int(np.sum(boosted & (upstream_H > H_local)))
+        n_trans = int(np.sum(dry_with_upstream))
+        logger.info(f"Bilinear WSE: Bernoulli + upstream energy applied ({n_boost} boosted, {n_trans} transitional cells)")
+    else:
+        H_eff = vals.copy()
+
+    wet_ext = ~np.isnan(H_eff)
     interpolator = LinearNDInterpolator(
-        np.column_stack([face_x[wet], face_y[wet]]), vals[wet],
+        np.column_stack([face_x[wet_ext], face_y[wet_ext]]), H_eff[wet_ext],
     )
-    logger.info(f"Bilinear WSE: interpolant from {np.sum(wet)} wet cells")
+    logger.info(f"Bilinear WSE: interpolant from {np.sum(wet_ext)} cells")
+
+    # Open index COG to mask pixels not belonging to a wet SFINCS cell.
+    # Without this, LinearNDInterpolator fills across dry-cell gaps inside
+    # the convex hull of wet cell centres.
+    indices_src = None
+    idx_nodata = None
+    if indices is not None:
+        indices_src = rasterio.open(str(indices))
+        idx_nodata = indices_src.nodata
+        logger.info("  Using index COG to mask dry-cell gaps")
 
     geo = _open_dem_geometry(dep)
     profile = _make_output_profile(geo)
@@ -1796,6 +2147,22 @@ def _downscale_bilinear(zsmax, dep, hmin, gdf_mask, floodmap_fn, zsmap_fn, nrmax
                 np.column_stack([xx.ravel(), yy.ravel()])
             ).reshape(dem_block.shape).astype(np.float32)
 
+            # Mask pixels outside any wet SFINCS cell
+            if indices_src is not None:
+                idx_block = indices_src.read(1, window=window)
+                outside = (idx_block == idx_nodata)
+                # Also mask pixels whose parent cell is dry (NaN zsmax)
+                inside = ~outside
+                if inside.any():
+                    pidx = idx_block[inside].astype(int)
+                    parent_zs = vals[pidx]
+                    parent_H  = H_eff[pidx]
+                    dry_parent = np.isnan(parent_zs) & np.isnan(parent_H)
+                    mask_arr = np.zeros_like(outside)
+                    mask_arr[inside] = dry_parent
+                    outside |= mask_arr
+                zs_interp[outside] = np.nan
+
             hmax_block = (zs_interp - dem_block).astype(np.float32)
             hmax_block[np.isnan(hmax_block)] = np.nan
             hmax_block[hmax_block <= hmin] = np.nan
@@ -1814,275 +2181,11 @@ def _downscale_bilinear(zsmax, dep, hmin, gdf_mask, floodmap_fn, zsmap_fn, nrmax
             if done % 25 == 0 or done == total:
                 logger.info(f"  Block {done}/{total} ({100*done/total:.0f}%)")
 
+    if indices_src is not None:
+        indices_src.close()
+
     _apply_mask_and_overviews(floodmap_fn, zsmap_fn, gdf_mask, geo, logger)
     logger.info(f"Bilinear WSE floodmap saved to: {floodmap_fn}")
-
-
-# =============================================================================
-#  Cell-based methods: slope, volume, volume_slope, tilt_volume
-# =============================================================================
-
-def _downscale_cell_based(
-    zsmax, dep, method, sbg_fn, hmin, gdf_mask,
-    floodmap_fn, zsmap_fn, logger,
-):
-    """Unified cell-by-cell downscaling loop for slope / volume methods."""
-    geo = _open_dem_geometry(dep)
-    pixel_area = geo["dx"] * abs(geo["dy"])
-    profile = _make_output_profile(geo)
-    _create_output_rasters(profile, floodmap_fn, zsmap_fn)
-
-    gi = _get_grid_info(zsmax)
-    zsmax_vals = zsmax.values
-    valid_faces = np.where(~np.isnan(zsmax_vals))[0]
-
-    # Read subgrid tables if needed
-    sbg = None
-    if method in ("volume", "volume_slope", "tilt_volume"):
-        sbg = _read_subgrid(sbg_fn, logger)
-
-    # Pre-compute WSE gradients for tilt_volume
-    dwse_dx = dwse_dy = None
-    if method == "tilt_volume":
-        dwse_dx, dwse_dy = _compute_wse_gradients(zsmax, gi, logger)
-
-    logger.info(
-        f"Downscaling ({method}): {len(valid_faces)} cells, "
-        f"{geo['width']}x{geo['height']} DEM"
-    )
-
-    n_flooded = 0
-    for count, fi in enumerate(valid_faces):
-        zs = zsmax_vals[fi]
-        cxmin = gi["face_xmin"][fi]; cxmax = gi["face_xmax"][fi]
-        cymin = gi["face_ymin"][fi]; cymax = gi["face_ymax"][fi]
-        xcen = gi["face_xcen"][fi]; ycen = gi["face_ycen"][fi]
-
-        pix = _cell_to_pixel_window(
-            cxmin, cxmax, cymin, cymax,
-            geo["transform"], geo["width"], geo["height"],
-        )
-        if pix is None:
-            continue
-        col0, col1, row0, row1 = pix
-        window = Window(col0, row0, col1 - col0, row1 - row0)
-
-        with rasterio.open(str(dep)) as src:
-            dem_block = src.read(1, window=window).astype(np.float64)
-
-        valid_pix = ~np.isnan(dem_block)
-        if np.sum(valid_pix) < 1:
-            continue
-
-        # Coordinate grids (relative to cell center)
-        x_coords = geo["transform"][2] + (np.arange(col0, col1) + 0.5) * geo["dx"]
-        y_coords = geo["transform"][5] + (np.arange(row0, row1) + 0.5) * geo["dy"]
-        xx, yy = np.meshgrid(x_coords - xcen, y_coords - ycen)
-
-        # ----- Dispatch to method-specific logic -----
-        if method == "slope":
-            zs_block, hmax_block = _compute_slope(
-                zs, dem_block, xx, yy, valid_pix, hmin,
-                cxmax - cxmin, cymax - cymin,
-            )
-        elif method == "volume":
-            vol_target = _target_volume(zs, fi, sbg)
-            if vol_target <= 0:
-                continue
-            zs_block, hmax_block = _compute_volume(
-                zs, dem_block, valid_pix, vol_target, pixel_area, hmin,
-            )
-        elif method == "volume_slope":
-            vol_target = _target_volume(zs, fi, sbg)
-            if vol_target <= 0:
-                continue
-            zs_block, hmax_block = _compute_volume_slope(
-                zs, dem_block, xx, yy, valid_pix, vol_target, pixel_area, hmin,
-            )
-        elif method == "tilt_volume":
-            vol_target = _target_volume(zs, fi, sbg)
-            if vol_target <= 0:
-                continue
-            zs_block, hmax_block = _compute_tilt_volume(
-                zs, dem_block, xx, yy, valid_pix,
-                dwse_dx[fi], dwse_dy[fi], vol_target, pixel_area, hmin,
-            )
-
-        if np.any(~np.isnan(hmax_block)):
-            n_flooded += 1
-            with rasterio.open(str(floodmap_fn), "r+") as dst:
-                dst.write(hmax_block, window=window, indexes=1)
-            if zsmap_fn is not None:
-                with rasterio.open(str(zsmap_fn), "r+") as dst:
-                    dst.write(zs_block, window=window, indexes=1)
-
-        if (count + 1) % 10000 == 0:
-            logger.info(
-                f"  Progress: {count + 1}/{len(valid_faces)} cells "
-                f"({100*(count+1)/len(valid_faces):.0f}%)"
-            )
-
-    logger.info(f"  {n_flooded} cells produced flood pixels.")
-    _apply_mask_and_overviews(floodmap_fn, zsmap_fn, gdf_mask, geo, logger)
-    logger.info(f"Floodmap ({method}) saved to: {floodmap_fn}")
-
-
-# --- Per-cell computation functions -------------------------------------------
-
-def _compute_slope(zs, dem_block, xx, yy, valid_pix, hmin, cell_dx, cell_dy):
-    """Slope-corrected: fit plane to bed, tilt WSE by bed slope."""
-    if np.sum(valid_pix) < 3:
-        # Fallback to constant
-        zs_block = np.full_like(dem_block, zs, dtype=np.float32)
-    else:
-        xv = xx[valid_pix]; yv = yy[valid_pix]; zv = dem_block[valid_pix]
-        A = np.column_stack([xv, yv, np.ones_like(xv)])
-        dzdx, dzdy, _ = np.linalg.lstsq(A, zv, rcond=None)[0]
-
-        # Clamp slopes to prevent runaway values
-        bed_range = np.nanmax(dem_block) - np.nanmin(dem_block)
-        if cell_dx > 0:
-            max_sx = bed_range / cell_dx
-            dzdx = np.clip(dzdx, -max_sx, max_sx)
-        if cell_dy > 0:
-            max_sy = bed_range / cell_dy
-            dzdy = np.clip(dzdy, -max_sy, max_sy)
-
-        zs_block = (zs + dzdx * xx + dzdy * yy).astype(np.float32)
-
-    hmax_block = (zs_block - dem_block).astype(np.float32)
-    hmax_block[hmax_block <= hmin] = np.nan
-    hmax_block[~valid_pix] = np.nan
-    zs_block[np.isnan(hmax_block)] = np.nan
-    return zs_block, hmax_block
-
-
-def _compute_volume(zs, dem_block, valid_pix, vol_target, pixel_area, hmin):
-    """Volume-conserving: hypsometric fill to match target volume."""
-    ele_sorted = np.sort(dem_block[valid_pix])
-    zs_local = _hypsometric_fill(ele_sorted, vol_target, pixel_area)
-    zs_local = min(zs_local, zs)  # cap at cell WSE
-
-    zs_block = np.full_like(dem_block, np.nan, dtype=np.float32)
-    hmax_block = np.full_like(dem_block, np.nan, dtype=np.float32)
-
-    flooded = valid_pix & (dem_block < zs_local)
-    depth = zs_local - dem_block
-    hmax_block[flooded] = depth[flooded].astype(np.float32)
-    hmax_block[hmax_block <= hmin] = np.nan
-    zs_block[~np.isnan(hmax_block)] = zs_local
-    return zs_block, hmax_block
-
-
-def _compute_volume_slope(
-    zs, dem_block, xx, yy, valid_pix, vol_target, pixel_area, hmin,
-):
-    """Volume + slope (van Ormondt): detrend DEM, fill, add slope back."""
-    if np.sum(valid_pix) < 3:
-        return _compute_volume(zs, dem_block, valid_pix, vol_target, pixel_area, hmin)
-
-    # Fit slope and detrend
-    xv = xx[valid_pix]; yv = yy[valid_pix]; zv = dem_block[valid_pix]
-    A = np.column_stack([xv, yv, np.ones_like(xv)])
-    dzdx, dzdy, _ = np.linalg.lstsq(A, zv, rcond=None)[0]
-    slope_surface = dzdx * xx + dzdy * yy
-    dem_detrended = dem_block - slope_surface
-
-    # Fill detrended DEM
-    det_sorted = np.sort(dem_detrended[valid_pix])
-    zs_detrended = _hypsometric_fill(det_sorted, vol_target, pixel_area)
-
-    # Add slope back
-    zs_block = (zs_detrended + slope_surface).astype(np.float32)
-    zs_block = np.minimum(zs_block, zs)
-
-    hmax_block = (zs_block - dem_block).astype(np.float32)
-    hmax_block[hmax_block <= hmin] = np.nan
-    hmax_block[~valid_pix] = np.nan
-    zs_block[np.isnan(hmax_block)] = np.nan
-    return zs_block, hmax_block
-
-
-def _compute_tilt_volume(
-    zs, dem_block, xx, yy, valid_pix,
-    grad_x, grad_y, vol_target, pixel_area, hmin,
-):
-    """Tilted WSE + volume: bisection for delta offset matching target volume."""
-    tilt = grad_x * xx + grad_y * yy
-
-    dem_flat = dem_block[valid_pix]
-    tilt_flat = tilt[valid_pix]
-    eff_dem = dem_flat - tilt_flat
-
-    sort_idx = np.argsort(eff_dem)
-    eff_sorted = eff_dem[sort_idx]
-    n_pix = len(eff_sorted)
-    cum_eff = np.cumsum(eff_sorted)
-
-    def volume_at_wl(wl):
-        wet_mask = eff_sorted < wl
-        if not np.any(wet_mask):
-            return 0.0
-        n_wet = np.sum(wet_mask)
-        return (n_wet * wl - cum_eff[n_wet - 1]) * pixel_area
-
-    wl_min = eff_sorted[0] - 1.0
-    wl_max = eff_sorted[-1] + vol_target / (n_pix * pixel_area) + 1.0
-    if volume_at_wl(wl_max) < vol_target:
-        wl_max = eff_sorted[-1] + vol_target / pixel_area
-
-    for _ in range(60):
-        wl_mid = 0.5 * (wl_min + wl_max)
-        if volume_at_wl(wl_mid) < vol_target:
-            wl_min = wl_mid
-        else:
-            wl_max = wl_mid
-
-    wl_solution = 0.5 * (wl_min + wl_max)
-    delta = wl_solution - zs
-
-    zs_block = (zs + delta + tilt).astype(np.float32)
-    hmax_block = (zs_block - dem_block).astype(np.float32)
-    hmax_block[hmax_block <= hmin] = np.nan
-    hmax_block[~valid_pix] = np.nan
-    zs_block[np.isnan(hmax_block)] = np.nan
-    return zs_block, hmax_block
-
-
-def _compute_wse_gradients(zsmax, gi, logger):
-    """Pre-compute WSE gradients at each cell center for tilt_volume method."""
-    from scipy.interpolate import LinearNDInterpolator
-
-    vals = zsmax.values
-    wet = ~np.isnan(vals)
-    face_x = gi["face_xcen"]; face_y = gi["face_ycen"]
-
-    pts = np.column_stack([face_x[wet], face_y[wet]])
-    wse_interpolator = LinearNDInterpolator(pts, vals[wet])
-
-    logger.info("Computing WSE gradients at cell centers...")
-    dwse_dx = np.zeros(len(vals))
-    dwse_dy = np.zeros(len(vals))
-
-    for fi in np.where(wet)[0]:
-        cell_dx = gi["face_xmax"][fi] - gi["face_xmin"][fi]
-        cell_dy = gi["face_ymax"][fi] - gi["face_ymin"][fi]
-        if cell_dx <= 0 or cell_dy <= 0:
-            continue
-        cx, cy = face_x[fi], face_y[fi]
-        half_dx, half_dy = cell_dx * 0.5, cell_dy * 0.5
-
-        zs_xp = wse_interpolator(cx + half_dx, cy)
-        zs_xm = wse_interpolator(cx - half_dx, cy)
-        zs_yp = wse_interpolator(cx, cy + half_dy)
-        zs_ym = wse_interpolator(cx, cy - half_dy)
-
-        if not (np.isnan(zs_xp) or np.isnan(zs_xm)):
-            dwse_dx[fi] = (zs_xp - zs_xm) / cell_dx
-        if not (np.isnan(zs_yp) or np.isnan(zs_ym)):
-            dwse_dy[fi] = (zs_yp - zs_ym) / cell_dy
-
-    return dwse_dx, dwse_dy
 
 
 def rotated_grid(
@@ -2472,10 +2575,14 @@ def remove_disconnected_flooding(
 ):
     """Remove disconnected flooding from a downscaled depth raster.
 
-    Identifies connected components in the wet area of a high-resolution
-    depth raster, then keeps only components that are connected to a SFINCS
-    water-level boundary point.  This replaces the need for a manually drawn
-    source polygon (as in the legacy Part-3 workflow).
+    Identifies wet pixels reachable from SFINCS boundary points via BFS
+    flood-fill (8-connectivity), then masks pixels that are wet but
+    unreachable.  This replaces the need for a manually drawn source
+    polygon (as in the legacy Part-3 workflow).
+
+    Uses a vectorised level-set BFS instead of ``scipy.ndimage.label``
+    to avoid allocating a full int64 label array, which can exceed
+    available memory for large high-resolution domains.
 
     Parameters
     ----------
@@ -2499,81 +2606,113 @@ def remove_disconnected_flooding(
 
     Returns
     -------
-    connection : np.ndarray
-        2-D integer array (same shape as the depth raster) with values
-        0 (dry), 1 (connected), 2 (disconnected).
+    None
     """
-    from scipy import ndimage as ndi
-
-    # --- 1. Read depth raster and build wet/dry mask -------------------------
+    # --- 1. Get raster metadata without loading the full array ---------------
     with rasterio.open(str(depth_fn)) as src:
-        depth = src.read(1)
+        height = src.height
+        width = src.width
         transform = src.transform
         crs = src.crs
-        profile = src.profile.copy()
 
-    wet = depth > hmin
+    # --- 2. Build wet mask tile-by-tile (avoids holding full depth) ----------
+    wet = np.empty((height, width), dtype=np.bool_)
+    with rasterio.open(str(depth_fn)) as src:
+        for _, window in src.block_windows(1):
+            r0, c0 = window.row_off, window.col_off
+            block = src.read(1, window=window)
+            wet[r0 : r0 + window.height, c0 : c0 + window.width] = block > hmin
+
+    n_wet = int(np.sum(wet))
     logger.info(
-        f"Disconnected-flooding removal: {np.sum(wet)} wet pixels "
+        f"Disconnected-flooding removal: {n_wet} wet pixels "
         f"(hmin={hmin} m)"
     )
-
-    # --- 2. Label connected components (8-connectivity) ----------------------
-    structure = ndi.generate_binary_structure(2, 2)  # 8-connectivity
-    labeled, num_features = ndi.label(wet, structure=structure)
-    logger.info(f"  {num_features} connected components found")
 
     # --- 3. Read boundary points and map to pixel coordinates ----------------
     bnd_gdf = read_xy(str(bnd_fn), crs=crs)
     bnd_x = np.array([p.x for p in bnd_gdf.geometry])
     bnd_y = np.array([p.y for p in bnd_gdf.geometry])
 
-    # Convert world coordinates to pixel row/col
     inv_transform = ~transform
     bnd_col, bnd_row = inv_transform * (bnd_x, bnd_y)
     bnd_row = np.round(bnd_row).astype(int)
     bnd_col = np.round(bnd_col).astype(int)
 
-    # --- 4. Find which labels are connected to boundary points ---------------
-    height, width = labeled.shape
-    connected_labels = set()
+    # --- 4. BFS flood-fill from boundary points (8-connectivity) -------------
+    connected = np.zeros((height, width), dtype=np.bool_)
+    seed_indices = []
     n_bnd_wet = 0
 
     for r, c in zip(bnd_row, bnd_col):
-        # Search a small neighbourhood (boundary point may not land exactly
-        # on a wet pixel due to rounding / model discretisation)
         for dr in range(-2, 3):
             for dc in range(-2, 3):
                 rr, cc = r + dr, c + dc
                 if 0 <= rr < height and 0 <= cc < width:
-                    lbl = labeled[rr, cc]
-                    if lbl > 0:
-                        connected_labels.add(lbl)
-
+                    if wet[rr, cc] and not connected[rr, cc]:
+                        connected[rr, cc] = True
+                        seed_indices.append(rr * width + cc)
         if 0 <= r < height and 0 <= c < width and wet[r, c]:
             n_bnd_wet += 1
 
     logger.info(
         f"  {len(bnd_gdf)} boundary points, {n_bnd_wet} on wet pixels, "
-        f"{len(connected_labels)} connected component(s) reached"
+        f"{len(seed_indices)} seed pixels for BFS"
     )
 
-    # --- 5. Build connection mask: 0=dry, 1=connected, 2=disconnected --------
-    connection = np.zeros_like(labeled, dtype=np.int32)
-    connection[wet] = 2  # default: all wet pixels are disconnected
+    # Vectorised level-set BFS: expand frontier one ring at a time using numpy
+    _neighbors = [(-1, -1), (-1, 0), (-1, 1),
+                  (0, -1),           (0, 1),
+                  (1, -1),  (1, 0),  (1, 1)]
 
-    for lbl in connected_labels:
-        connection[labeled == lbl] = 1
+    wet_flat = wet.ravel()
+    conn_flat = connected.ravel()
+    frontier = np.array(seed_indices, dtype=np.intp)
 
-    n_connected = np.sum(connection == 1)
-    n_disconnected = np.sum(connection == 2)
+    iteration = 0
+    total_processed = len(frontier)
+    while len(frontier) > 0:
+        iteration += 1
+
+        fr = frontier // width
+        fc = frontier % width
+
+        new_seeds = []
+        for dr, dc in _neighbors:
+            nr = fr + dr
+            nc = fc + dc
+            valid = (nr >= 0) & (nr < height) & (nc >= 0) & (nc < width)
+            flat_idx = nr[valid] * width + nc[valid]
+            mask = wet_flat[flat_idx] & ~conn_flat[flat_idx]
+            new_pixels = flat_idx[mask]
+            if len(new_pixels) > 0:
+                conn_flat[new_pixels] = True
+                new_seeds.append(new_pixels)
+
+        if new_seeds:
+            frontier = np.unique(np.concatenate(new_seeds))
+            total_processed += len(frontier)
+        else:
+            frontier = np.array([], dtype=np.intp)
+
+        if iteration % 500 == 0:
+            logger.info(
+                f"  BFS iteration {iteration}: {total_processed:,} pixels "
+                f"reached, frontier {len(frontier):,}"
+            )
+
+    n_connected = int(np.sum(connected))
+    n_disconnected = n_wet - n_connected
     logger.info(
         f"  {n_connected} connected pixels, "
         f"{n_disconnected} disconnected pixels removed "
-        f"({100 * n_disconnected / max(1, n_connected + n_disconnected):.1f}%)"
+        f"({100 * n_disconnected / max(1, n_wet):.1f}%)"
     )
 
-    # --- 6. Write connection mask raster (optional) --------------------------
+    # Free wet mask — connected mask is all we need from here
+    del wet, wet_flat
+
+    # --- 5. Write connection mask raster (optional) --------------------------
     if connection_fn is not None:
         conn_profile = dict(
             driver="GTiff",
@@ -2589,18 +2728,23 @@ def remove_disconnected_flooding(
             compress="deflate",
             nodata=0,
         )
-        with rasterio.open(str(connection_fn), "w", **conn_profile) as dst:
-            # Write in windows for large rasters to avoid memory issues
-            for _, window in dst.block_windows(1):
-                conn_block = connection[
-                    window.row_off : window.row_off + window.height,
-                    window.col_off : window.col_off + window.width,
-                ]
-                dst.write(conn_block, 1, window=window)
+        with rasterio.open(str(depth_fn)) as src_dep:
+            with rasterio.open(str(connection_fn), "w", **conn_profile) as dst:
+                for _, window in dst.block_windows(1):
+                    r0 = window.row_off
+                    c0 = window.col_off
+                    h_blk = window.height
+                    w_blk = window.width
+                    dep_blk = src_dep.read(1, window=window)
+                    wet_blk = dep_blk > hmin
+                    conn_blk = connected[r0 : r0 + h_blk, c0 : c0 + w_blk]
+                    blk = np.zeros((h_blk, w_blk), dtype=np.int32)
+                    blk[wet_blk] = 2
+                    blk[conn_blk & wet_blk] = 1
+                    dst.write(blk, 1, window=window)
         logger.info(f"  Connection mask written: {connection_fn}")
 
-    # --- 7. Mask additional rasters (optional) -------------------------------
-    # Use windowed read/write to avoid memory errors on large rasters
+    # --- 6. Mask additional rasters (optional) -------------------------------
     if output_fns:
         for input_fn, output_fn in output_fns.items():
             with rasterio.open(str(input_fn)) as src_var:
@@ -2615,20 +2759,20 @@ def remove_disconnected_flooding(
                     predictor=2,
                 )
                 with rasterio.open(str(output_fn), "w", **out_meta) as dst:
-                    # Process in windows to avoid memory issues
                     for _, window in dst.block_windows(1):
+                        r0 = window.row_off
+                        c0 = window.col_off
                         var_block = src_var.read(1, window=window)
-                        conn_block = connection[
-                            window.row_off : window.row_off + window.height,
-                            window.col_off : window.col_off + window.width,
+                        conn_blk = connected[
+                            r0 : r0 + window.height, c0 : c0 + window.width
                         ]
                         masked_block = np.where(
-                            conn_block == 1, var_block, np.nan
+                            conn_blk, var_block, np.nan
                         ).astype(np.float32)
                         dst.write(masked_block, 1, window=window)
             logger.info(f"  Masked raster written: {output_fn}")
 
-    return connection
+    return None
 
 
 def find_uv_indices(mask: xr.DataArray):
