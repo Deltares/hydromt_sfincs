@@ -356,6 +356,13 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                 reclass_table = self._default_lookup("green_ampt")
             if reclass_table is None:
                 raise ValueError("A reclass_table is required for Green-Ampt estimation.")
+            da_lulc = None
+            df_modifiers = None
+            if lulc is not None:
+                if lulc_modifiers is None:
+                    lulc_modifiers = self._default_lookup("lulc_modifiers")
+                da_lulc = self._sample(lulc, method="mode")
+                df_modifiers = self._read_dataframe(lulc_modifiers)
             da_soil = self._as_dataarray(self._read_rasterdataset(soil_source))
             df_map = self._read_dataframe(reclass_table)
             da_ksat = None
@@ -363,20 +370,37 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                 da_ksat = self._as_dataarray(self._read_rasterdataset(ksat))
                 da_ksat = da_ksat.raster.reproject_like(da_soil, method="average")
             if lulc is not None:
-                if lulc_modifiers is None:
-                    lulc_modifiers = self._default_lookup("lulc_modifiers")
-                da_lulc = self._as_dataarray(self._read_rasterdataset(lulc))
-                da_lulc = da_lulc.raster.reproject_like(da_soil, method="nearest")
-                df_modifiers = self._read_dataframe(lulc_modifiers)
-                ds = workflows.green_ampt_from_soil_landuse(
-                    da_soil,
-                    da_lulc,
+                da_workflow_soil = (
+                    workflows.normalize_hsg_codes(da_soil, mode=dual_hsg)
+                    if hsg is not None
+                    else da_soil
+                )
+                ds = workflows.green_ampt_from_soil(
+                    da_workflow_soil,
                     df_map,
-                    df_modifiers,
                     da_ksat=da_ksat,
                     factor_ksat=factor_ksat,
-                    dual_hsg=dual_hsg,
                 )
+                layers = {
+                    name: self._sample_from_dataset(ds, name, method=reproj_method)
+                    for name in ("psi", "sigma", "ks")
+                }
+                layers["sigma"] = (
+                    layers["sigma"]
+                    * workflows.nlcd_modifier_layer(
+                        da_lulc,
+                        df_modifiers,
+                        "storage_factor",
+                    )
+                ).astype(np.float32)
+                layers["ks"] = (
+                    layers["ks"]
+                    * workflows.nlcd_modifier_layer(
+                        da_lulc,
+                        df_modifiers,
+                        "surface_factor",
+                    )
+                ).astype(np.float32)
             else:
                 ds = workflows.green_ampt_from_soil(
                     da_soil,
@@ -384,10 +408,10 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                     da_ksat=da_ksat,
                     factor_ksat=factor_ksat,
                 )
-            layers = {
-                name: self._sample_from_dataset(ds, name, method=reproj_method)
-                for name in ("psi", "sigma", "ks")
-            }
+                layers = {
+                    name: self._sample_from_dataset(ds, name, method=reproj_method)
+                    for name in ("psi", "sigma", "ks")
+                }
         self._set_layers(layers, flavor="gai")
 
     @hydromt_step
@@ -424,6 +448,13 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                 reclass_table = self._default_lookup("horton")
             if reclass_table is None:
                 raise ValueError("A reclass_table is required for Horton estimation.")
+            da_lulc = None
+            df_modifiers = None
+            if lulc is not None:
+                if lulc_modifiers is None:
+                    lulc_modifiers = self._default_lookup("lulc_modifiers")
+                da_lulc = self._sample(lulc, method="mode")
+                df_modifiers = self._read_dataframe(lulc_modifiers)
             da_soil = self._as_dataarray(self._read_rasterdataset(soil_source))
             df_map = self._read_dataframe(reclass_table)
             da_ksat = None
@@ -431,20 +462,44 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                 da_ksat = self._as_dataarray(self._read_rasterdataset(ksat))
                 da_ksat = da_ksat.raster.reproject_like(da_soil, method="average")
             if lulc is not None:
-                if lulc_modifiers is None:
-                    lulc_modifiers = self._default_lookup("lulc_modifiers")
-                da_lulc = self._as_dataarray(self._read_rasterdataset(lulc))
-                da_lulc = da_lulc.raster.reproject_like(da_soil, method="nearest")
-                df_modifiers = self._read_dataframe(lulc_modifiers)
-                ds = workflows.horton_from_soil_landuse(
-                    da_soil,
-                    da_lulc,
+                da_workflow_soil = (
+                    workflows.normalize_hsg_codes(da_soil, mode=dual_hsg)
+                    if hsg is not None
+                    else da_soil
+                )
+                ds = workflows.horton_from_soil(
+                    da_workflow_soil,
                     df_map,
-                    df_modifiers,
                     da_ksat=da_ksat,
                     factor_ksat=factor_ksat,
-                    dual_hsg=dual_hsg,
                 )
+                layers = {
+                    name: self._sample_from_dataset(ds, name, method=reproj_method)
+                    for name in ("f0", "fc", "kd")
+                }
+                surface_factor = workflows.nlcd_modifier_layer(
+                    da_lulc,
+                    df_modifiers,
+                    "surface_factor",
+                )
+                storage_factor = workflows.nlcd_modifier_layer(
+                    da_lulc,
+                    df_modifiers,
+                    "storage_factor",
+                )
+                drainage_factor = workflows.nlcd_modifier_layer(
+                    da_lulc,
+                    df_modifiers,
+                    "drainage_factor",
+                )
+                f0_factor = xr.where(
+                    surface_factor >= storage_factor,
+                    surface_factor,
+                    storage_factor,
+                )
+                layers["fc"] = (layers["fc"] * surface_factor).astype(np.float32)
+                layers["f0"] = (layers["f0"] * f0_factor).astype(np.float32)
+                layers["kd"] = (layers["kd"] * drainage_factor).astype(np.float32)
             else:
                 ds = workflows.horton_from_soil(
                     da_soil,
@@ -452,10 +507,10 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                     da_ksat=da_ksat,
                     factor_ksat=factor_ksat,
                 )
-            layers = {
-                name: self._sample_from_dataset(ds, name, method=reproj_method)
-                for name in ("f0", "fc", "kd")
-            }
+                layers = {
+                    name: self._sample_from_dataset(ds, name, method=reproj_method)
+                    for name in ("f0", "fc", "kd")
+                }
         self._set_layers(layers, flavor="hor")
 
     @hydromt_step
@@ -497,6 +552,13 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                 reclass_table = self._default_lookup("bucket")
             if reclass_table is None:
                 raise ValueError("A reclass_table is required for bucket estimation.")
+            da_lulc = None
+            df_modifiers = None
+            if lulc is not None:
+                if lulc_modifiers is None:
+                    lulc_modifiers = self._default_lookup("lulc_modifiers")
+                da_lulc = self._sample(lulc, method="mode")
+                df_modifiers = self._read_dataframe(lulc_modifiers)
             da_soil = self._as_dataarray(self._read_rasterdataset(soil_source))
             df_map = self._read_dataframe(reclass_table)
             da_ksat = None
@@ -504,21 +566,40 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                 da_ksat = self._as_dataarray(self._read_rasterdataset(ksat))
                 da_ksat = da_ksat.raster.reproject_like(da_soil, method="average")
             if lulc is not None:
-                if lulc_modifiers is None:
-                    lulc_modifiers = self._default_lookup("lulc_modifiers")
-                da_lulc = self._as_dataarray(self._read_rasterdataset(lulc))
-                da_lulc = da_lulc.raster.reproject_like(da_soil, method="nearest")
-                df_modifiers = self._read_dataframe(lulc_modifiers)
-                ds = workflows.bucket_from_soil_landuse(
-                    da_soil,
-                    da_lulc,
+                da_workflow_soil = (
+                    workflows.normalize_hsg_codes(da_soil, mode=dual_hsg)
+                    if hsg is not None
+                    else da_soil
+                )
+                ds = workflows.bucket_from_soil(
+                    da_workflow_soil,
                     df_map,
-                    df_modifiers,
                     da_ksat=da_ksat,
                     factor_ksat=factor_ksat,
-                    dual_hsg=dual_hsg,
                     bucket_loss=0.10 if bucket_loss is None else bucket_loss,
                 )
+                layers = {
+                    name: self._sample_from_dataset(ds, name, method=reproj_method)
+                    for name in BUCKET_VARS
+                }
+                storage_factor = workflows.nlcd_modifier_layer(
+                    da_lulc,
+                    df_modifiers,
+                    "storage_factor",
+                )
+                drainage_factor = workflows.nlcd_modifier_layer(
+                    da_lulc,
+                    df_modifiers,
+                    "drainage_factor",
+                )
+                loss_value = 0.10 if bucket_loss is None else bucket_loss
+                layers["bucket_smax"] = (
+                    layers["bucket_smax"] * storage_factor
+                ).astype(np.float32)
+                layers["bucket_k"] = (
+                    layers["bucket_k"] * drainage_factor
+                ).astype(np.float32)
+                layers["bucket_loss"] = self._constant_layer(loss_value, "bucket_loss")
             else:
                 ds = workflows.bucket_from_soil(
                     da_soil,
@@ -527,8 +608,8 @@ class SfincsQuadtreeInfiltration(ModelComponent):
                     factor_ksat=factor_ksat,
                     bucket_loss=bucket_loss if np.isscalar(bucket_loss) else None,
                 )
-            layers = {
-                name: self._sample_from_dataset(ds, name, method=reproj_method)
-                for name in BUCKET_VARS
-            }
+                layers = {
+                    name: self._sample_from_dataset(ds, name, method=reproj_method)
+                    for name in BUCKET_VARS
+                }
         self._set_layers(layers, flavor="bkt")

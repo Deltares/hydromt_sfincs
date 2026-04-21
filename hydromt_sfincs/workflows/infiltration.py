@@ -27,6 +27,7 @@ __all__ = [
     "horton_from_soil",
     "bucket_from_soil",
     "ksat_to_mmhr",
+    "nlcd_modifier_layer",
     "normalize_hsg_codes",
 ]
 
@@ -134,8 +135,24 @@ def _modifier_layer(
         da_factor = da_factor.where(
             da_groups != group_code,
             np.float32(df_modifiers.loc[group_name, column]),
-        )
+    )
     return da_factor.where(np.isfinite(da_lulc))
+
+
+def nlcd_modifier_layer(
+    da_lulc: xr.DataArray,
+    df_modifiers: pd.DataFrame | str | Path,
+    column: str,
+    *,
+    default: float = 1.0,
+) -> xr.DataArray:
+    """Create an NLCD-based modifier layer for the requested column."""
+    return _modifier_layer(
+        da_lulc,
+        _ensure_modifier_dataframe(df_modifiers),
+        column,
+        default=default,
+    )
 
 
 def _valid_values(
