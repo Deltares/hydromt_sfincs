@@ -16,6 +16,17 @@ Added
 -----
 - Added script to easily run SFINCS models from Python using local executable or docker (#312)
 - Added the option to visualize the grid in the plot_basemap method (#312)
+- New public helpers in ``hydromt_sfincs.workflows.downscaling``: ``dilate_zsmax`` (cell-space WSE dilation) and ``apply_energy_head`` (per-cell Bernoulli velocity-head correction). Both work on quadtree (``xu.UgridDataArray``) *and* regular (``xr.DataArray``) grids and preserve the wet-cell set.
+- ``downscale_floodmap`` gained two new kwargs: ``dilation`` (factor for the cell-space WSE dilation pre-step) and ``energy_flux`` (boolean switch for the Bernoulli velocity-head correction; requires ``qmax``). When ``energy_flux=True`` and ``method="bilinear"``, ``qmax`` is passed into ``_downscale_bilinear`` for per-cell Bernoulli + upstream-energy propagation (scaled by ``q_scale``); for any other method, :func:`apply_energy_head` runs as a pre-step (pure per-cell Bernoulli, no upstream propagation).
+
+Changed
+-------
+- Reorganised the downscaling stack into the ``hydromt_sfincs.workflows.downscaling`` submodule. ``downscale_floodmap``, ``remove_disconnected_flooding``, and ``make_index_cog`` are now importable from ``hydromt_sfincs.workflows.downscaling`` (and re-exported via ``hydromt_sfincs.workflows``). ``hydromt_sfincs.utils`` now retains only generic I/O and grid utilities.
+
+Removed
+-------
+- Removed the cell-based downscaling methods ``slope``, ``volume``, ``volume_slope``, and ``tilt_volume`` from ``downscale_floodmap``. Only ``raw``, ``constant``, and ``bilinear`` remain. These may be reinstated later if needed.
+- Dropped the ``sbg_fn`` kwarg from ``downscale_floodmap`` (only used by the removed cell-based methods).
 
 Fixed
 -----

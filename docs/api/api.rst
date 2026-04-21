@@ -228,6 +228,19 @@ SFINCS workflows
    workflows.cn_to_s
    workflows.create_topobathy_tiles
 
+Flood map downscaling
+---------------------
+
+.. autosummary::
+   :toctree: ../_generated/
+
+   workflows.downscaling.downscale_floodmap
+   workflows.downscaling.dilate_zsmax
+   workflows.downscaling.apply_energy_head
+   workflows.downscaling.remove_disconnected_flooding
+   workflows.downscaling.make_index_cog
+   workflows.downscale_floodmap_webmercator
+
 .. _methods:
 
 SFINCS low-level methods
@@ -281,5 +294,3 @@ Visualization
 
    plots.plot_basemap
    plots.plot_forcing
-   utils.downscale_floodmap
-   workflows.downscale_floodmap_webmercator
