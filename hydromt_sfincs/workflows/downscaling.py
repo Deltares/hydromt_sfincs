@@ -200,12 +200,12 @@ def _check_dilation_invariants(vals, dilated, wet_before):
     if not np.all(raised >= -1e-9):
         raise RuntimeError("dilation lowered zsmax on some cell")
 def apply_energy_head(
-    zsmax: xu.UgridDataArray,
-    qmax: xu.UgridDataArray,
-    zb: Optional[xu.UgridDataArray] = None,
+    zsmax: Union[xr.DataArray, xu.UgridDataArray],
+    qmax: Union[xr.DataArray, xu.UgridDataArray],
+    zb: Optional[Union[xr.DataArray, xu.UgridDataArray]] = None,
     hmin: float = 0.05,
     q_threshold: float = 0.01,
-) -> xu.UgridDataArray:
+) -> Union[xr.DataArray, xu.UgridDataArray]:
     """Add the velocity head v²/(2g) to zsmax (Bernoulli correction).
 
     Lifts the water level on wet cells where the unit discharge exceeds
@@ -213,24 +213,27 @@ def apply_energy_head(
     ``H = zsmax + v² / (2g)``.  The wet-cell set is preserved: NaN cells
     stay NaN.
 
-    This is a **method-agnostic pre-step** — the returned UgridDataArray
-    can be consumed by any downscaling method (constant, bilinear, raw,
-    volume-family, etc.).
+    This is a **method-agnostic pre-step** — the returned DataArray can be
+    consumed by any downscaling method (constant, bilinear, raw, etc.).
+    Works on both SFINCS quadtree grids (``xu.UgridDataArray``) and
+    regular grids (``xr.DataArray``); ``zsmax``, ``qmax``, and ``zb`` must
+    all share the same grid.
 
     Parameters
     ----------
-    zsmax : xu.UgridDataArray
-        Maximum water level (m) on a SFINCS quadtree grid.  NaN where dry.
-    qmax : xu.UgridDataArray
+    zsmax : xu.UgridDataArray or xr.DataArray
+        Maximum water level (m) on a SFINCS grid — quadtree
+        (``xu.UgridDataArray``) or regular (``xr.DataArray``).  NaN where
+        dry.
+    qmax : xu.UgridDataArray or xr.DataArray
         Maximum unit discharge magnitude (m²/s), **cell-centred** — one
         value per cell, with the same shape and grid as ``zsmax``.  This is
         the convention SFINCS writes to ``sfincs_map.nc`` (variable
         ``qmax``) when ``storefluxmax=1``; no face-to-centre reduction is
         needed.  The sign is ignored (``|qmax|`` is used internally).
-        The formula matches the legacy in-bilinear branch at
-        :func:`_downscale_bilinear`: ``vel_head = q² / (h² * 2g)`` with
+        Formula: ``vel_head = q² / (h² · 2g)`` with
         ``h = max(zsmax - zb, hmin)``.
-    zb : xu.UgridDataArray, optional
+    zb : xu.UgridDataArray or xr.DataArray, optional
         Bed elevation (m) at cell centres, used to estimate depth.  If
         omitted, a constant depth of ``hmin`` is assumed (conservative —
         overestimates velocity and therefore the head correction).
@@ -243,7 +246,7 @@ def apply_energy_head(
 
     Returns
     -------
-    xu.UgridDataArray
+    xu.UgridDataArray or xr.DataArray
         zsmax with the velocity head added on qualifying cells.  Same grid
         and same wet-cell set as the input.  ``result >= zsmax`` on every
         wet cell (velocity head is always non-negative).
@@ -296,9 +299,9 @@ def downscale_floodmap(
     floodmap_fn: Union[Path, str] = None,
     zsmap_fn: Union[Path, str] = None,
     dilation: Optional[float] = None,
-    energy_flux: Optional[bool] = None,
-    qmax: xu.UgridDataArray = None,
-    zb: xu.UgridDataArray = None,
+    energy_flux: bool = False,
+    qmax: Union[xr.DataArray, xu.UgridDataArray] = None,
+    zb: Union[xr.DataArray, xu.UgridDataArray] = None,
     q_threshold: float = 0.01,
     q_scale: float = 0.5,
     reproj_method: str = "nearest",
@@ -348,34 +351,40 @@ def downscale_floodmap(
         (``xu.UgridDataArray``) and regular (``xr.DataArray``) ``zsmax``
         via :func:`dilate_zsmax`.  Default ``None`` (no dilation).
     energy_flux : bool, optional
-        Method-agnostic Bernoulli / velocity-head correction switch.  When
-        ``True``, ``zsmax`` is pre-modified via
-        :func:`apply_energy_head` — ``H = zsmax + v²/(2g)`` on cells with
-        ``|qmax| > q_threshold`` — before dispatch, so every downscaling
-        method consumes the energy-adjusted water level.  Requires ``qmax``.
-        When ``False``, the legacy in-bilinear Bernoulli blend (if any) is
-        disabled by setting ``qmax`` to ``None`` internally.  Default
-        ``None`` → *legacy auto*: if ``qmax`` is provided with
-        ``method="bilinear"``, the in-bilinear blend runs; otherwise no
+        Enable the Bernoulli velocity-head correction ``H = zsmax + v²/(2g)``
+        on cells with ``|qmax| > q_threshold``.  Requires ``qmax``.  Routing
+        depends on *method*:
+
+        * ``method="bilinear"`` — ``qmax`` is passed into
+          :func:`_downscale_bilinear`, which applies the per-cell Bernoulli
+          lift *and* propagates upstream energy across wet edges, blended by
+          ``q_scale``.
+        * any other method — :func:`apply_energy_head` runs as a pre-step
+          (pure per-cell Bernoulli; no upstream propagation, ``q_scale``
+          unused).
+
+        When ``False`` (default), ``qmax`` is ignored and no velocity-head
         correction is applied.
-    qmax : xu.UgridDataArray, optional
-        Maximum unit discharge (m²/s).  With ``energy_flux=True`` (any
-        method), it feeds the pre-step velocity head; with
-        ``energy_flux=None`` and ``method="bilinear"``, it feeds the legacy
-        in-bilinear blend (face-based ``qmax`` with upstream energy
-        propagation — see ``q_scale``).  Requires ``storefluxmax=1`` in the
-        SFINCS configuration.
-    zb : xu.UgridDataArray, optional
+    qmax : xu.UgridDataArray or xr.DataArray, optional
+        Maximum unit discharge magnitude (m²/s), cell-centred (same shape
+        as ``zsmax``).  Matches the ``qmax`` variable SFINCS writes to
+        ``sfincs_map.nc`` when ``storefluxmax=1``.  Only used when
+        ``energy_flux=True``.
+    zb : xu.UgridDataArray or xr.DataArray, optional
         Bed elevation at cell centres (m).  Used with *qmax* to compute
         water depth for velocity estimation.  If omitted, *hmin* is used as
         the minimum depth (conservative: overestimates velocity).
     q_threshold : float, optional
-        Minimum unit discharge (m²/s) to activate the energy-head or
-        upstream-energy propagation, by default 0.01.
+        Minimum unit discharge (m²/s) at which the velocity-head correction
+        becomes active (below it, cells keep their original ``zsmax``), by
+        default 0.01.  Used by both the pre-step and the bilinear path.
     q_scale : float, optional
-        Unit discharge (m²/s) at which the legacy in-bilinear upstream blend
-        factor reaches 1.0, by default 0.5.  Ignored by the
-        ``energy_flux=True`` pre-step path.
+        Upstream-energy-propagation blend scale (m²/s), only used by
+        ``method="bilinear"`` when ``energy_flux=True``.  At each wet edge,
+        the blend weight is ``min(1, |qmax| / q_scale)``; so ``q_scale``
+        sets the unit discharge at which full upstream propagation kicks
+        in.  Default 0.5.  Ignored for all other methods (they apply the
+        pure per-cell Bernoulli pre-step instead).
     reproj_method : str, optional
         Reprojection method for ``"constant"`` downscaling, by default
         ``"nearest"``.
@@ -410,8 +419,11 @@ def downscale_floodmap(
         logger.info(f"Taking maximum water level over {timedim} dimension(s).")
         zsmax = zsmax.max(timedim)
 
-    if qmax is not None and isinstance(qmax, xu.UgridDataArray):
-        q_timedim = set(qmax.dims) - set(qmax.ugrid.grid.dims)
+    if qmax is not None:
+        if isinstance(qmax, xu.UgridDataArray):
+            q_timedim = set(qmax.dims) - set(qmax.ugrid.grid.dims)
+        else:
+            q_timedim = set(qmax.dims) - set(qmax.raster.dims)
         if q_timedim:
             qmax = qmax.max(q_timedim)
 
@@ -420,27 +432,25 @@ def downscale_floodmap(
         logger.info(f"Applying WSE dilation with factor={dilation:g}.")
         zsmax = dilate_zsmax(zsmax, factor=float(dilation))
 
-    # --- Pre-step 2: energy-flux (Bernoulli velocity head) -------------------
-    # Method-agnostic: runs before dispatch, so every method consumes the
-    # energy-adjusted zsmax.  Takes precedence over the legacy in-bilinear
-    # blend (which is disabled by setting qmax=None after the pre-step).
-    if energy_flux is True:
-        if not isinstance(zsmax, xu.UgridDataArray):
-            raise ValueError(
-                "energy_flux=True requires zsmax on a SFINCS quadtree "
-                "(xu.UgridDataArray); got xr.DataArray."
-            )
+    # --- Pre-step 2: Bernoulli velocity-head correction ----------------------
+    # Route depends on the method:
+    #   * bilinear     → qmax flows into _downscale_bilinear, which does
+    #                    per-cell Bernoulli *and* upstream propagation.
+    #   * other method → pure per-cell Bernoulli pre-step here; drop qmax so
+    #                    downstream code doesn't see it.
+    if energy_flux:
         if qmax is None:
             raise ValueError("energy_flux=True requires qmax.")
-        logger.info("Applying velocity-head correction (energy_flux=True).")
-        zsmax = apply_energy_head(
-            zsmax, qmax=qmax, zb=zb, hmin=hmin, q_threshold=q_threshold,
-        )
-        qmax = None  # prevent the legacy in-bilinear branch from re-applying
-    elif energy_flux is False:
-        qmax = None  # force-disable the legacy in-bilinear branch too
-    # energy_flux is None → legacy auto-behaviour: qmax passes through to
-    #   _downscale_bilinear and drives its in-function Bernoulli blend.
+        if method == "bilinear":
+            logger.info("Applying velocity-head + upstream propagation (bilinear).")
+        else:
+            logger.info("Applying velocity-head pre-step.")
+            zsmax = apply_energy_head(
+                zsmax, qmax=qmax, zb=zb, hmin=hmin, q_threshold=q_threshold,
+            )
+            qmax = None
+    else:
+        qmax = None  # ignored when the switch is off
 
     # --- In-memory path (xr.DataArray dep) -- only for "constant" ------------
     if isinstance(dep, xr.DataArray):
@@ -608,7 +618,7 @@ def _downscale_raw(zsmax, dep, zsmap_fn, gdf_mask, nrmax, logger, indices=None):
 
         indices_src.close()
     else:
-        # ----- Fallback: NearestNDInterpolator (legacy behaviour) -----------
+        # ----- Fallback: NearestNDInterpolator (no index COG supplied) ------
         from scipy.interpolate import NearestNDInterpolator
 
         grid = zsmax.ugrid.grid
@@ -1247,8 +1257,7 @@ def remove_disconnected_flooding(
 
     Identifies wet pixels reachable from SFINCS boundary points via BFS
     flood-fill (8-connectivity), then masks pixels that are wet but
-    unreachable.  This replaces the need for a manually drawn source
-    polygon (as in the legacy Part-3 workflow).
+    unreachable.  Removes the need for a manually drawn source polygon.
 
     Uses a vectorised level-set BFS instead of ``scipy.ndimage.label``
     to avoid allocating a full int64 label array, which can exceed
