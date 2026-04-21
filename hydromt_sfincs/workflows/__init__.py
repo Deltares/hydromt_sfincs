@@ -3,6 +3,7 @@
 from .bathymetry import *
 from .curvenumber import *
 from .discharge import *
+from .downscaling import *
 from .flwdir import *
 from .infiltration import *
 from .landuse import *
